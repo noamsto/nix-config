@@ -1,6 +1,11 @@
 { config, pkgs, ... }:
 
 {
+
+  imports = [
+    ../../modules/nixos/core.nix
+  ]
+
   home.username = "noams";
   home.homeDirectory = "/home/noams";
 
@@ -95,6 +100,7 @@
     usbutils # lsusb
   ];
 
+  
   # starship - an customizable prompt for any shell
   programs.starship = {
     enable = true;
