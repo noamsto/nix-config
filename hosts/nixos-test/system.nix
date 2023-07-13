@@ -9,5 +9,6 @@
   imports = [
     ../../modules/nixos/core.nix
     ../../modules/nixos/kde.nix
+    # ../../modules/nixos/hyprland.nix
   ];
 }
