@@ -12,7 +12,8 @@
 
   # Configure keymap in X11
   services.xserver = {
-    layout = "us";
+    layout = "us,il";
     xkbVariant = "";
+    xkbOptions = "eurosign:e, compose:menu, grp:win_space_toggle";
   };
 }
