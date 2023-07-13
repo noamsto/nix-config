@@ -9,5 +9,5 @@
   imports = [
     ../../modules/nixos/core.nix
     ../../modules/nixos/kde.nix
-  ]
+  ];
 }

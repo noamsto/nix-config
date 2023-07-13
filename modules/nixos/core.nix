@@ -1,6 +1,8 @@
-
-{ config, pkgs, ... }:
 {
+  config,
+  pkgs,
+  ...
+}: {
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
   boot.loader.grub.enable = true;
@@ -18,7 +20,7 @@
   nix.settings.auto-optimise-store = true;
 
   # enable flakes globally
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = ["nix-command" "flakes"];
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -30,9 +32,9 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   i18n.extraLocaleSettings = {
-    LANG="en_US.UTF-8";
-    LC_ALL="en_US.UTF-8";
-    LC_CTYPE="en_US.UTF-8";
+    LANG = "en_US.UTF-8";
+    LC_ALL = "en_US.UTF-8";
+    LC_CTYPE = "en_US.UTF-8";
     LC_ADDRESS = "en_IL";
     LC_IDENTIFICATION = "en_IL";
     LC_MEASUREMENT = "en_IL";
@@ -44,12 +46,10 @@
     LC_TIME = "en_IL";
   };
 
-
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
   networking.firewall.enable = false;
-
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
   fonts = {
@@ -62,30 +62,31 @@
       material-design-icons
       font-awesome
 
-      noto-fonts        
-      noto-fonts-emoji 
+      noto-fonts
+      noto-fonts-emoji
       noto-fonts-extra
 
-      source-sans       
-      source-serif     
+      source-sans
+      source-serif
 
       # nerdfonts
-      (nerdfonts.override { fonts = [
-        "FiraCode"
-        "JetBrainsMono"
-        "Iosevka"
-      ];})
-
+      (nerdfonts.override {
+        fonts = [
+          "FiraCode"
+          "JetBrainsMono"
+          "Iosevka"
+        ];
+      })
     ];
 
     # user defined fonts
     # the reason there's Noto Color Emoji everywhere is to override DejaVu's
     # B&W emojis that would sometimes show instead of some Color emojis
     fontconfig.defaultFonts = {
-      serif = [ "Noto Serif" "Noto Color Emoji" ];
-      sansSerif = [ "Noto Sans" "Noto Color Emoji" ];
-      monospace = [ "JetBrainsMono Nerd Font" "Noto Color Emoji" ];
-      emoji = [ "Noto Color Emoji" ];
+      serif = ["Noto Serif" "Noto Color Emoji"];
+      sansSerif = ["Noto Sans" "Noto Color Emoji"];
+      monospace = ["JetBrainsMono Nerd Font" "Noto Color Emoji"];
+      emoji = ["Noto Color Emoji"];
     };
   };
 
@@ -105,16 +106,16 @@
     # no need to redefine it in your config for now)
     #media-session.enable = true;
   };
-  
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.noams = {
     isNormalUser = true;
     description = "Noam Stolero";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = ["networkmanager" "wheel"];
     packages = with pkgs; [
       firefox
       kate
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -125,26 +126,26 @@
     wget
     git
     curl
+    alejandra
   ];
 
-    # Set environment variables
+  # Set environment variables
   environment.variables = {
     EDITOR = "vim";
   };
 
-
   # enable bluetooth & gui paring tools - blueman
   # or you can use cli:
-    # $ bluetoothctl
-    # [bluetooth] # power on
-    # [bluetooth] # agent on
-    # [bluetooth] # default-agent
-    # [bluetooth] # scan on
-    # ...put device in pairing mode and wait [hex-address] to appear here...
-    # [bluetooth] # pair [hex-address]
-    # [bluetooth] # connect [hex-address]
-    # Bluetooth devices automatically connect with bluetoothctl as well:
-    # [bluetooth] # trust [hex-address]
+  # $ bluetoothctl
+  # [bluetooth] # power on
+  # [bluetooth] # agent on
+  # [bluetooth] # default-agent
+  # [bluetooth] # scan on
+  # ...put device in pairing mode and wait [hex-address] to appear here...
+  # [bluetooth] # pair [hex-address]
+  # [bluetooth] # connect [hex-address]
+  # Bluetooth devices automatically connect with bluetoothctl as well:
+  # [bluetooth] # trust [hex-address]
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
@@ -154,15 +155,14 @@
   security.polkit.enable = true;
 
   services = {
-    dbus.packages = [ pkgs.gcr ];
+    dbus.packages = [pkgs.gcr];
     geoclue2.enable = true;
 
-    udev.packages = with pkgs; [ 
-      platformio  # udev rules for platformio
+    udev.packages = with pkgs; [
+      platformio # udev rules for platformio
       android-udev-rules
     ];
   };
 
   system.stateVersion = "23.05"; # Did you read the comment?
-
 }
