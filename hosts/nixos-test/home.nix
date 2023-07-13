@@ -3,8 +3,7 @@
 {
 
   imports = [
-    ../../modules/nixos/core.nix
-  ]
+  ];
 
   home.username = "noams";
   home.homeDirectory = "/home/noams";

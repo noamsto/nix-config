@@ -35,7 +35,7 @@
                     modules = [
                         { networking.hostName = hostname; }
                         # General configuration (users, networking, sound, etc)
-                        # ./configuration.nix
+                        (./. + "/hosts/${hostname}/system.nix")
                         # Hardware config (bootloader, kernel modules, filesystems, etc)
                         # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
                         (./. + "/hosts/${hostname}/hardware-configuration.nix")

@@ -3,6 +3,9 @@
 {
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/sda";
+  boot.loader.grub.useOSProber = true;
   # do garbage collection weekly to keep disk usage low
   nix.gc = {
     automatic = true;
@@ -73,12 +76,18 @@
         "Iosevka"
       ];})
 
-      (pkgs.callPackage ../../fonts/icomoon-feather-icon-font.nix { })
-
-      # arch linux icon, used temporarily in waybar
-      (pkgs.callPackage ../../fonts/archcraft-icon-font.nix { })
-
     ];
+
+    # user defined fonts
+    # the reason there's Noto Color Emoji everywhere is to override DejaVu's
+    # B&W emojis that would sometimes show instead of some Color emojis
+    fontconfig.defaultFonts = {
+      serif = [ "Noto Serif" "Noto Color Emoji" ];
+      sansSerif = [ "Noto Sans" "Noto Color Emoji" ];
+      monospace = [ "JetBrainsMono Nerd Font" "Noto Color Emoji" ];
+      emoji = [ "Noto Color Emoji" ];
+    };
+  };
 
   # Enable sound with pipewire.
   sound.enable = true;
@@ -121,7 +130,7 @@
     # Set environment variables
   environment.variables = {
     EDITOR = "vim";
-  }
+  };
 
 
   # enable bluetooth & gui paring tools - blueman
@@ -139,9 +148,6 @@
   hardware.bluetooth.enable = true;
   services.blueman.enable = true;
 
-  # https://flatpak.org/setup/NixOS
-  services.flatpak.enable = true;
-
   services.power-profiles-daemon.enable = true;
 
   # security with polkit
@@ -158,4 +164,5 @@
   };
 
   system.stateVersion = "23.05"; # Did you read the comment?
+
 }
