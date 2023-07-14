@@ -5,9 +5,6 @@
 }: {
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/vda";
-  boot.loader.grub.useOSProber = true;
   # do garbage collection weekly to keep disk usage low
   nix.gc = {
     automatic = true;
@@ -163,6 +160,8 @@
       android-udev-rules
     ];
   };
+
+  services.openssh.enable = true;
 
   system.stateVersion = "23.05"; # Did you read the comment?
 }
