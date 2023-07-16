@@ -4,6 +4,7 @@
   ...
 }: {
   imports = [
+    # ../../modules/home/gtk.nix  # Current conlficts with current settings. will enable in the future
   ];
 
   home.username = "noams";
