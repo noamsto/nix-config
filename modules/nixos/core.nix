@@ -70,8 +70,6 @@
       (nerdfonts.override {
         fonts = [
           "FiraCode"
-          "JetBrainsMono"
-          "Iosevka"
         ];
       })
     ];
@@ -82,7 +80,7 @@
     fontconfig.defaultFonts = {
       serif = ["Noto Serif" "Noto Color Emoji"];
       sansSerif = ["Noto Sans" "Noto Color Emoji"];
-      monospace = ["JetBrainsMono Nerd Font" "Noto Color Emoji"];
+      monospace = ["Fira Code Nerd Font" "Noto Color Emoji"];
       emoji = ["Noto Color Emoji"];
     };
   };
@@ -124,6 +122,11 @@
     git
     curl
     alejandra
+    # python
+    (python311.withPackages (ps: with ps; [
+      ipython
+      requests
+    ]))
   ];
 
   # Set environment variables
