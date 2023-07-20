@@ -1,8 +1,12 @@
-{pkgs, config, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
-    syntaxHighlighting.enable = true;
+    #syntaxHighlighting.enable = true;
 
     shellAliases = {
       ll = "exa -l";
@@ -18,5 +22,22 @@
       plugins = ["git" "thefuck"];
       theme = "";
     };
+    plugins = [
+      {
+        name = "forgit";
+        src = pkgs.fetchFromGitHub {
+          owner = "wfxr";
+          repo = "forgit";
+          rev = "23.07.0";
+          sha256 = "sha256-PNeS/YpL56Ir3xoiUzOU5Tkhq0B5eyudzEuOt2yCqh4=";
+        };
+      }
+    ];
+  };
+  programs.fzf = {
+    enable = true;
+    tmux.enableShellIntegration = true;
+    tmux.shellIntegrationOptions = ["-p80%,60%"];
+    defaultOptions = ["--height 40%" "--reverse"];
   };
 }

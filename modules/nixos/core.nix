@@ -3,6 +3,14 @@
   pkgs,
   ...
 }: {
+  imports = [
+    ./vim
+  ];
+
+  programs.thefuck.enable = true;
+  programs.zsh.enable = true;
+  users.defaultUserShell = pkgs.zsh;
+
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
   # do garbage collection weekly to keep disk usage low
@@ -130,10 +138,7 @@
       ]))
   ];
 
-  # Set environment variables
-  environment.variables = {
-    EDITOR = "vim";
-  };
+  environment.shells = with pkgs; [zsh];
 
   # enable bluetooth & gui paring tools - blueman
   # or you can use cli:
