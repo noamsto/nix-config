@@ -38,6 +38,6 @@
     enable = true;
     tmux.enableShellIntegration = true;
     tmux.shellIntegrationOptions = ["-p80%,60%"];
-    defaultOptions = ["--height 40%" "--reverse"];
+    defaultOptions = ["--height 40%"];
   };
 }

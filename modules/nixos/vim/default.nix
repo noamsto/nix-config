@@ -11,16 +11,16 @@
           opt = [];
         };
         vimrcConfig.customRC = ''
-                 " your custom vimrc
-                        set nocompatible
-                        set backspace=indent,eol,start
-                        " Turn on syntax highlighting by default
-                        syntax on
+          " your custom vimrc
+          set nocompatible
+          set backspace=indent,eol,start
+          " Turn on syntax highlighting by default
+          syntax on
 
-                        set background=dark
-                        set mouse=a
+          set background=dark
+          set mouse=a
           set ttymouse=xterm2
-                        filetype indent on
+          filetype indent on
         '';
       }
     )
