@@ -1,5 +1,8 @@
-{ config, pkgs, ...} :
 {
+  config,
+  pkgs,
+  ...
+}: {
   gtk = rec {
     enable = true;
     iconTheme = {
@@ -12,7 +15,6 @@
     };
     gtk4.extraConfig = {
       gtk-application-prefer-dark-theme = true;
-      
     };
     gtk3.extraConfig = gtk4.extraConfig;
   };

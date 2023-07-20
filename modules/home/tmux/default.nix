@@ -28,11 +28,11 @@ in {
       {
         plugin = tmuxPlugins.catppuccin;
         extraConfig = ''
-          set -g @catppuccin_flavour 'frappe'
-          set -g @catppuccin_window_tabs_enabled "on"
-          set -g @catppuccin_host "on"
-          set -g @catppuccin_date_time "%H:%M"
-	  set -g @catppuccin_datetime_icon ""
+                 set -g @catppuccin_flavour 'frappe'
+                 set -g @catppuccin_window_tabs_enabled "on"
+                 set -g @catppuccin_host "on"
+                 set -g @catppuccin_date_time "%H:%M"
+          set -g @catppuccin_datetime_icon ""
         '';
       }
       {
@@ -61,18 +61,18 @@ in {
 
       # Fix vim colors
       set -ga terminal-overrides ",*256col*:Tc"
-      
+
       # Make prefix Ctrl+Space
       unbind C-b
       set-option -g prefix C-Space
-      
+
       # Copy mode vim
       setw -g mode-keys vi
       unbind-key -T copy-mode-vi v
       bind-key -T copy-mode-vi v send -X begin-selection
       bind-key -T copy-mode-vi C-v send -X rectangle-toggle
       bind-key -T copy-mode-vi 'y' send -X copy-selection
-      
+
     '';
   };
 }

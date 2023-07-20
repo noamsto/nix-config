@@ -123,10 +123,11 @@
     curl
     alejandra
     # python
-    (python311.withPackages (ps: with ps; [
-      ipython
-      requests
-    ]))
+    (python311.withPackages (ps:
+      with ps; [
+        ipython
+        requests
+      ]))
   ];
 
   # Set environment variables
