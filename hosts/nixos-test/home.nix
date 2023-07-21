@@ -9,6 +9,7 @@
     ../../modules/home/foot
     ../../modules/home/tmux
     ../../modules/home/alacritty
+    ../../modules/home/starship
   ];
 
   home.username = "noams";
@@ -104,17 +105,6 @@
     pciutils # lspci
     usbutils # lsusb
   ];
-
-  # starship - an customizable prompt for any shell
-  programs.starship = {
-    enable = true;
-    # custom settings
-    settings = {
-      add_newline = false;
-      aws.disabled = true;
-      gcloud.disabled = true;
-    };
-  };
 
   # This value determines the home Manager release that your
   # configuration is compatible with. This helps avoid breakage
