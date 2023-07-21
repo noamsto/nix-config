@@ -11,6 +11,7 @@
     ../../modules/home/alacritty
     ../../modules/home/starship
     ../../modules/home/xdg
+    ../../modules/home/vscode
   ];
 
   home.username = "noams";
