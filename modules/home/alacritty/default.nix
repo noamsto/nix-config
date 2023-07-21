@@ -7,9 +7,9 @@
     enable = true;
     # custom settings
     settings = {
-	    imports = [
-	   pkgs.alacritty-theme.catppuccin
-	    ];
+      imports = [
+        pkgs.alacritty-theme.catppuccin
+      ];
       env.TERM = "xterm-256color";
       font = {
         size = 12;
@@ -19,7 +19,4 @@
       selection.save_to_clipboard = true;
     };
   };
-
-
 }
-

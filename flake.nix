@@ -24,7 +24,7 @@
     };
 
     # Alacritty themes overlay
-    alacritty-theme.url ="github:alexghr/alacritty-theme.nix";
+    alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
   };
 
   # All outputs for the system (configs)
