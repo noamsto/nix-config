@@ -22,8 +22,8 @@
           {
             owner = "catppuccin";
             repo = "starship";
-            rev = ""; # Replace with the latest commit hash
-            sha256 = "";
+            rev = "5629d23"; # Replace with the latest commit hash
+            sha256 = "sha256-nsRuxQFKbQkyEI4TXgvAjcroVdG+heKX5Pauq/4Ota0=";
           }
           + /palettes/${flavour}.toml));
   };

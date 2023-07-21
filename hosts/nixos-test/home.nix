@@ -10,6 +10,7 @@
     ../../modules/home/tmux
     ../../modules/home/alacritty
     ../../modules/home/starship
+    ../../modules/home/xdg
   ];
 
   home.username = "noams";
