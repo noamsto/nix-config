@@ -12,6 +12,7 @@
     ../../modules/home/starship
     ../../modules/home/xdg
     ../../modules/home/vscode
+    ../../modules/home/git
   ];
 
   home.username = "noams";
@@ -31,13 +32,6 @@
   # home.file.".xxx".text = ''
   #     xxx
   # '';
-
-  # basic configuration of git, please change to your own
-  programs.git = {
-    enable = true;
-    userName = "Noam Stolero";
-    userEmail = "noamstolero@gmail.com";
-  };
 
   # Packages that should be installed to the user profile.
   home.packages = with pkgs; [

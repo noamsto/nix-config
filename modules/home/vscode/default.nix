@@ -6,12 +6,12 @@
   programs.vscode = {
     enable = true;
     extensions = with pkgs.vscode-extensions; [
-      Catppuccin.catppuccin-vsc
+      catppuccin.catppuccin-vsc
       vscodevim.vim
       yzhang.markdown-all-in-one
     ];
     userSettings = {
-      "catppuccin.accentColor" = "frappe";
+      "workbench.colorTheme" = "Catppuccin Mocha";
     };
   };
 }
