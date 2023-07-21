@@ -22,6 +22,9 @@
       # to avoid problems caused by different versions of nixpkgs dependencies.
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Alacritty themes overlay
+    alacritty-theme.url ="github:alexghr/alacritty-theme.nix";
   };
 
   # All outputs for the system (configs)
@@ -58,6 +61,7 @@
               users.noams = ./. + "/hosts/${hostname}/home.nix";
             };
             nixpkgs.overlays = [
+              inputs.alacritty-theme.overlays.default
             ];
           }
         ];
