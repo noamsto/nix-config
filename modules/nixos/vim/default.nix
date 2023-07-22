@@ -1,5 +1,9 @@
 {pkgs, ...}: {
-  environment.variables = {EDITOR = "vim";};
+  environment.variables = {
+    EDITOR = "vim";
+    BROWSER = "firefox";
+    TERMINAL = "alacritty";
+  };
 
   environment.systemPackages = with pkgs; [
     (
