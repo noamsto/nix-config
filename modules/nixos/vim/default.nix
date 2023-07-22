@@ -11,33 +11,33 @@
           opt = [];
         };
         vimrcConfig.customRC = ''
-          " your custom vimrc
-          set nocompatible
-          set backspace=indent,eol,start
-          " Turn on syntax highlighting by default
-          syntax on
+                 " your custom vimrc
+                 set nocompatible
+                 set backspace=indent,eol,start
+                 " Turn on syntax highlighting by default
+                 syntax on
 
-          set background=dark
-          set mouse=a
-          set ttymouse=xterm2
-          filetype indent on
+                 set background=dark
+                 set mouse=a
+                 set ttymouse=xterm2
+                 filetype indent on
 
 
-	  " line numbers toggle
-          set number relativenumber
-          augroup numbertoggle
-            autocmd!
-            autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
-            autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
-          augroup END
+          " line numbers toggle
+                 set number relativenumber
+                 augroup numbertoggle
+                   autocmd!
+                   autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+                   autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+                 augroup END
 
-	  " for trailing spaces
-          highlight ExtraWhitespace ctermbg=darkgreen guibg=darkgreen
-          match ExtraWhitespace /\s\+$/
+          " for trailing spaces
+                 highlight ExtraWhitespace ctermbg=darkgreen guibg=darkgreen
+                 match ExtraWhitespace /\s\+$/
 
-	  " for column 100
-	  set colorcolumn=100
-	  highlight ColorColumn ctermbg=103 guibg=lightgrey
+          " for column 100
+          set colorcolumn=100
+          highlight ColorColumn ctermbg=103 guibg=lightgrey
 
         '';
       }

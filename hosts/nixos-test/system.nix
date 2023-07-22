@@ -9,7 +9,8 @@
   imports = [
     ../../modules/nixos/core.nix
     ../../modules/nixos/kde.nix
-    ../../modules/nixos/docker
+    ../../modules/nixos/containers
+    ../../modules/nixos/cloud
     # ../../modules/nixos/hyprland.nix
   ];
   boot.loader.grub.enable = true;
