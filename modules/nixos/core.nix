@@ -114,7 +114,7 @@
   users.users.noams = {
     isNormalUser = true;
     description = "Noam Stolero";
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["networkmanager" "wheel" "docker"];
     packages = with pkgs; [
       firefox
       kate
