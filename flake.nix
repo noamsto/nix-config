@@ -72,6 +72,7 @@
       # Now, defining a new system is can be done in one line
       #                                Architecture   Hostname
       nixos-test = mkSystem inputs.nixpkgs "x86_64-linux" "nixos-test";
+      noams-barracuda = mkSystem inputs.nixpkgs "x86_64-linux" "noams-barracuda";
     };
     formatter.${system} = pkgs.alejandra;
   };

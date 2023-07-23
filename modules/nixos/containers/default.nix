@@ -15,5 +15,4 @@
     enable = true;
     setSocketVariable = true;
   };
-  # virtualisation.docker.storageDriver = "btrfs"
 }

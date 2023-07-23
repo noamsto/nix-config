@@ -55,6 +55,7 @@
   services.printing.enable = true;
 
   networking.firewall.enable = false;
+  networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
   fonts = {
@@ -115,8 +116,9 @@
     isNormalUser = true;
     description = "Noam Stolero";
     extraGroups = ["networkmanager" "wheel" "docker"];
+    initialHashedPassword = "noams";
     packages = with pkgs; [
-      firefox
+      firefox-wayland
       kate
       #  thunderbird
     ];
@@ -153,7 +155,7 @@
   # Bluetooth devices automatically connect with bluetoothctl as well:
   # [bluetooth] # trust [hex-address]
   hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
+  # services.blueman.enable = true;
 
   services.power-profiles-daemon.enable = true;
 
@@ -171,6 +173,16 @@
   };
 
   services.openssh.enable = true;
+
+  xdg = {
+    portal = {
+      enable = true;
+      extraPortals = with pkgs; [
+        xdg-desktop-portal-wlr
+        xdg-desktop-portal-gtk
+      ];
+    };
+  };
 
   system.stateVersion = "23.05"; # Did you read the comment?
 }
