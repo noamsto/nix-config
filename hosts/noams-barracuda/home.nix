@@ -86,7 +86,14 @@
     ethtool
     pciutils # lspci
     usbutils # lsusb
+
+    slack
+    spotify
   ];
+
+  home.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+  };
 
   # This value determines the home Manager release that your
   # configuration is compatible with. This helps avoid breakage
