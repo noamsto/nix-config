@@ -21,6 +21,7 @@
     device = "nodev";
     efiSupport = true;
     enableCryptodisk = true;
+    useOSProber = true;
   };
 
   boot.initrd = {
