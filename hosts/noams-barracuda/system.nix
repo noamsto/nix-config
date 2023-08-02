@@ -9,7 +9,7 @@
   imports = [
     ../../modules/nixos/core.nix
     ../../modules/nixos/kde.nix
-    ../../modules/nixos/containers
+    ../../modules/nixos/docker
     ../../modules/nixos/cloud
     # ../../modules/nixos/hyprland.nix
   ];

@@ -13,6 +13,7 @@
     ../../modules/home/xdg
     ../../modules/home/vscode
     ../../modules/home/git
+    ../../modules/home/kubernetes
   ];
 
   home.username = "noams";
