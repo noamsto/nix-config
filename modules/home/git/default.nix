@@ -7,7 +7,7 @@
   programs.git = {
     enable = true;
     userName = "Noam Stolero";
-    userEmail = "noamstolero@gmail.com";
+    userEmail = "nstolero@barracuda.com";
     diff-so-fancy.enable = true;
     extraConfig = {
       color = {
