@@ -4,16 +4,7 @@
   ...
 }: {
   imports = [
-    # ../../modules/home/gtk.nix  # Current conlficts with current settings. will enable in the future
-    ../../modules/home/zsh
-    ../../modules/home/foot
-    ../../modules/home/tmux
-    ../../modules/home/alacritty
-    ../../modules/home/starship
-    ../../modules/home/xdg
-    ../../modules/home/vscode
-    ../../modules/home/git
-    ../../modules/home/kubernetes
+    ../../modules/kde-plasma.nix
   ];
 
   home.username = "noams";
@@ -72,7 +63,6 @@
     hugo # static site generator
     glow # markdown previewer in terminal
 
-    btop # replacement of htop/nmon
     iotop # io monitoring
     iftop # network monitoring
 
@@ -88,7 +78,10 @@
     pciutils # lspci
     usbutils # lsusb
 
+    # social
     slack
+    ferdium
+
     spotify
   ];
 
