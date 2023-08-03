@@ -3,6 +3,9 @@
   pkgs,
   ...
 }: {
+  environment.systemPackages = with pkgs; [
+    yakuake
+  ];
   programs.kdeconnect.enable = true;
   services.xserver = {
     # Enable the X11 windowing system.

@@ -20,9 +20,17 @@
     options = "--delete-older-than 3d";
   };
 
+  # To protect nix-shell agains GC (development env)
+  nix.settings = {
+    keep-outputs = true;
+    keep-derivations = true;
+  };
+
   # Manual optimise storage: nix-store --optimise
   # https://nixos.org/manual/nix/stable/command-ref/conf-file.html#conf-auto-optimise-store
   nix.settings.auto-optimise-store = true;
+
+  nix.settings.builders-use-substitutes = true;
 
   # enable flakes globally
   nix.settings.experimental-features = ["nix-command" "flakes"];
@@ -124,6 +132,8 @@
     ];
   };
 
+  nix.settings.trusted-users = ["noams"];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -132,6 +142,7 @@
     git
     curl
     alejandra
+
     # python
     (python311.withPackages (ps:
       with ps; [

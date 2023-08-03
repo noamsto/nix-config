@@ -11,5 +11,6 @@
     ./home/git
     ./home/kubernetes
     ./home/btop
+    ./home/dev
   ];
 }
