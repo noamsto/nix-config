@@ -5,11 +5,11 @@
 }: {
   imports = [
     # ./modules/home/gtk.nix  # Current conlficts with current settings. will enable in the future
-    ./modules/home/terminal/term-alacritty.nix
-    ./modules/home/xdg
-    ./modules/home/vscode
-    ./modules/home/git
-    ./modules/home/kubernetes
-    ./modules/home/btop
+    ./home/terminal/term-alacritty.nix
+    ./home/xdg
+    ./home/vscode
+    ./home/git
+    ./home/kubernetes
+    ./home/btop
   ];
 }

@@ -7,7 +7,7 @@
   programs.btop = {
     enable = true;
     settings = {
-      color_theme = catpuccin_mocha;
+      color_theme = "catpuccin_mocha";
     };
   };
 }
