@@ -12,5 +12,6 @@
     ./home/kubernetes
     ./home/btop
     ./home/dev
+    ./home/zoom
   ];
 }

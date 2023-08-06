@@ -2,6 +2,12 @@
 
 ############################### FOLDER ICONS ###################################
 
+if nixos-version ; then
+  TMUX_TMPDIR="/run/user/$(id -u)"
+  export TMUX_TMPDIR
+fi
+
+
 folder="$(pwd)"
 
 # Construct the path for the folder icon
@@ -18,14 +24,14 @@ fi
 folder_name="$(basename $folder)"
 
 # Construct the session name
-SESSION="$folder_icon $folder_name"
+SESSION="$folder_icon  $folder_name"
 
 # Attach to Tmux
 
 if [ -z "$TMUX" ]; then
     # We're not inside Tmux
     echo "Attaching to $SESSION"
-    tmux attach-session -d -t "$SESSION" || tmux new-session -s "$SESSION"
+    tmux attach-session -t "$SESSION" -d || tmux new-session -s "$SESSION"
 else
     # We're inside Tmux
     if [ -z "$(tmux ls | grep $SESSION)" ]; then

@@ -6,7 +6,6 @@
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;
-    #syntaxHighlighting.enable = true;
 
     shellAliases = {
       ll = "exa -l";
