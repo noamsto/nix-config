@@ -87,6 +87,7 @@
       (nerdfonts.override {
         fonts = [
           "FiraCode"
+          # "NerdFontsSymbolsOnly"
         ];
       })
     ];
