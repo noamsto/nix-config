@@ -13,5 +13,6 @@
     ./home/btop
     ./home/dev
     ./home/zoom
+    ./home/packages.nix
   ];
 }
