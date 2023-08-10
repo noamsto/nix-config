@@ -5,6 +5,7 @@
 }: {
   environment.systemPackages = with pkgs; [
     yakuake
+    kcalc
   ];
   programs.kdeconnect.enable = true;
   services.xserver = {
