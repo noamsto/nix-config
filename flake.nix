@@ -25,6 +25,9 @@
 
     # Alacritty themes overlay
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
+
+    # Sops-nix
+    sops-nix.url = "github:Mic92/sops-nix";
   };
 
   # All outputs for the system (configs)
@@ -50,6 +53,7 @@
           # Hardware config (bootloader, kernel modules, filesystems, etc)
           # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
           (./. + "/hosts/${hostname}/hardware-configuration.nix")
+          inputs.sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           {
             home-manager = {

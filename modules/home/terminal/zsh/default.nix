@@ -18,7 +18,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "thefuck" "tmux" "python"];
+      plugins = ["git" "thefuck" "tmux" "python" "z"];
       theme = "";
     };
     plugins = [

@@ -1,12 +1,12 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
     ./vim
   ];
-
   programs.thefuck.enable = true;
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
