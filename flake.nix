@@ -8,11 +8,11 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
-      # build with your own instance of nixpkgs
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # hyprland = {
+    #   url = "github:hyprwm/Hyprland";
+    #   # build with your own instance of nixpkgs
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
 
     # home-manager, used for managing user configuration
     home-manager = {
@@ -31,7 +31,6 @@
   outputs = {
     home-manager,
     nixpkgs,
-    nur,
     ...
   } @ inputs: let
     system = "x86_64-linux"; #current system
