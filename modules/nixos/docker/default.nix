@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  username,
   ...
 }: {
   environment.systemPackages = with pkgs; [
@@ -11,4 +12,5 @@
     enable = true;
     setSocketVariable = true;
   };
+  users.users.${username}.extraGroups = ["docker"];
 }

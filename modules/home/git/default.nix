@@ -10,6 +10,9 @@
     userEmail = "nstolero@barracuda.com";
     diff-so-fancy.enable = true;
     extraConfig = {
+      init = {
+        defaultBranch = "main";
+      };
       color = {
         ui = true;
         diff-highlight = {

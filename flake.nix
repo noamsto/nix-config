@@ -42,7 +42,14 @@
     # This lets us reuse the code to "create" a system
     # Credits go to sioodmy on this one!
     # https://github.com/sioodmy/dotfiles/blob/main/flake.nix
-    mkSystem = pkgs: system: hostname: let
+    mkSystem = {
+      pkgs,
+      system,
+      hostname,
+      username,
+      user_full_name,
+      user_email,
+    }: let
       pkgs-stable = nixpkgs-stable.legacyPackages.${system};
     in
       pkgs.lib.nixosSystem {
@@ -61,21 +68,28 @@
               useGlobalPkgs = true;
               extraSpecialArgs = {inherit inputs;};
               # Home manager config (configures programs like firefox, zsh, eww, etc)
-              users.noams = ./. + "/hosts/${hostname}/home.nix";
+              users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
             nixpkgs.overlays = [
               inputs.alacritty-theme.overlays.default
             ];
           }
         ];
-        specialArgs = {inherit inputs pkgs-stable;};
+        specialArgs = {inherit inputs pkgs-stable hostname username user_full_name user_email;};
       };
   in {
     nixosConfigurations = {
       # Now, defining a new system is can be done in one line
       #                                     Architecture   Hostname
       nixos-test = mkSystem inputs.nixpkgs "x86_64-linux" "nixos-test";
-      noams-barracuda = mkSystem inputs.nixpkgs "x86_64-linux" "noams-barracuda";
+      noams-barracuda = mkSystem {
+        pkgs = inputs.nixpkgs;
+        system = "x86_64-linux";
+        hostname = "noams-barracuda";
+        username = "noams";
+        user_full_name = "Noam Stolero";
+        user_email = "nstolero@barracuda.com";
+      };
     };
     formatter.x86_64-linux = pkgs-linux.alejandra;
   };

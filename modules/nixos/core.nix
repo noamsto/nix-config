@@ -2,6 +2,9 @@
   config,
   pkgs,
   inputs,
+  username,
+  user_full_name,
+  user_email,
   ...
 }: {
   imports = [
@@ -124,9 +127,9 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.noams = {
     isNormalUser = true;
-    description = "Noam Stolero";
+    description = user_email;
     extraGroups = ["networkmanager" "wheel" "docker"];
-    initialHashedPassword = "noams";
+    initialHashedPassword = username;
     packages = with pkgs; [
       firefox-wayland
       kate
@@ -134,7 +137,7 @@
     ];
   };
 
-  nix.settings.trusted-users = ["noams"];
+  nix.settings.trusted-users = [username];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
