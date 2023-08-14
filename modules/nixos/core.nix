@@ -5,6 +5,7 @@
   username,
   user_full_name,
   user_email,
+  system,
   ...
 }: {
   imports = [
@@ -125,10 +126,10 @@
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.noams = {
+  users.users.${username} = {
     isNormalUser = true;
-    description = user_email;
-    extraGroups = ["networkmanager" "wheel" "docker"];
+    description = user_full_name;
+    extraGroups = ["networkmanager" "wheel"];
     initialHashedPassword = username;
     packages = with pkgs; [
       firefox-wayland
@@ -147,6 +148,8 @@
     git
     curl
     alejandra
+
+    inputs.agenix.packages.${system}.default
 
     # python
     (python311.withPackages (ps:

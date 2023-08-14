@@ -1,13 +1,15 @@
 {
   config,
   pkgs,
+  user_email,
+  user_full_name,
   ...
 }: {
   # basic configuration of git, please change to your own
   programs.git = {
     enable = true;
-    userName = "Noam Stolero";
-    userEmail = "nstolero@barracuda.com";
+    userName = user_full_name;
+    userEmail = user_email;
     diff-so-fancy.enable = true;
     extraConfig = {
       init = {
