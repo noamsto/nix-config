@@ -51,6 +51,7 @@
       user_email,
     }: let
       pkgs-stable = nixpkgs-stable.legacyPackages.${system};
+      args = {inherit inputs pkgs-stable system hostname username user_full_name user_email;};
     in
       pkgs.lib.nixosSystem {
         system = system;
@@ -66,7 +67,7 @@
             home-manager = {
               useUserPackages = true;
               useGlobalPkgs = true;
-              extraSpecialArgs = {inherit inputs;};
+              extraSpecialArgs = args;
               # Home manager config (configures programs like firefox, zsh, eww, etc)
               users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
@@ -75,7 +76,7 @@
             ];
           }
         ];
-        specialArgs = {inherit inputs pkgs-stable hostname username user_full_name user_email;};
+        specialArgs = args;
       };
   in {
     nixosConfigurations = {
