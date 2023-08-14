@@ -138,6 +138,23 @@
         "type": "github"
       }
     },
+    "mysecrets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692023053,
+        "narHash": "sha256-49awLm4aIb6Z9mJ+vpxpVegnLtjHLzb/hOrFBdDImVg=",
+        "ref": "refs/heads/main",
+        "rev": "c3efba799a96b32f0e860d58c554059392ede7da",
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/noamsto/nix-secrets.git"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/noamsto/nix-secrets.git"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1677676435,
@@ -225,6 +242,7 @@
         "agenix": "agenix",
         "alacritty-theme": "alacritty-theme",
         "home-manager": "home-manager_2",
+        "mysecrets": "mysecrets",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-stable": "nixpkgs-stable"
       }

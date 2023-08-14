@@ -10,7 +10,6 @@
 }: {
   imports = [
     ./vim
-    inputs.agenix.nixosModules.default
   ];
   programs.thefuck.enable = true;
   programs.zsh.enable = true;
@@ -130,7 +129,7 @@
     isNormalUser = true;
     description = user_full_name;
     extraGroups = ["networkmanager" "wheel"];
-    initialHashedPassword = username;
+    passwordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
       firefox-wayland
       kate
@@ -148,8 +147,6 @@
     git
     curl
     alejandra
-
-    inputs.agenix.packages.${system}.default
 
     # python
     (python311.withPackages (ps:

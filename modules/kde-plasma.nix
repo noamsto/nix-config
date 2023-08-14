@@ -13,6 +13,7 @@
     ./home/btop
     ./home/dev
     ./home/zoom
+    ./home/ssh
     ./home/packages.nix
   ];
 }

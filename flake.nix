@@ -27,6 +27,11 @@
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
 
     agenix.url = "github:ryantm/agenix";
+
+    mysecrets = {
+      url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
+      flake = false;
+    };
   };
 
   # All outputs for the system (configs)
@@ -51,7 +56,7 @@
       user_email,
     }: let
       pkgs-stable = nixpkgs-stable.legacyPackages.${system};
-      args = {inherit inputs pkgs-stable system hostname username user_full_name user_email;};
+      args = {inherit pkgs-stable system hostname username user_full_name user_email;} // inputs;
     in
       pkgs.lib.nixosSystem {
         system = system;
@@ -63,6 +68,7 @@
           # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
           (./. + "/hosts/${hostname}/hardware-configuration.nix")
           home-manager.nixosModules.home-manager
+          ./secrets
           {
             home-manager = {
               useUserPackages = true;
