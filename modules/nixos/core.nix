@@ -6,6 +6,7 @@
 }: {
   imports = [
     ./vim
+    inputs.agenix.nixosModules.default
   ];
   programs.thefuck.enable = true;
   programs.zsh.enable = true;

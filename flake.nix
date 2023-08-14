@@ -26,24 +26,25 @@
     # Alacritty themes overlay
     alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
 
-    # Sops-nix
-    sops-nix.url = "github:Mic92/sops-nix";
+    agenix.url = "github:ryantm/agenix";
   };
 
   # All outputs for the system (configs)
   outputs = {
     home-manager,
     nixpkgs,
+    nixpkgs-stable,
     ...
   } @ inputs: let
-    system = "x86_64-linux"; #current system
-    pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+    pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
     lib = nixpkgs.lib;
 
     # This lets us reuse the code to "create" a system
     # Credits go to sioodmy on this one!
     # https://github.com/sioodmy/dotfiles/blob/main/flake.nix
-    mkSystem = pkgs: system: hostname:
+    mkSystem = pkgs: system: hostname: let
+      pkgs-stable = nixpkgs-stable.legacyPackages.${system};
+    in
       pkgs.lib.nixosSystem {
         system = system;
         modules = [
@@ -53,7 +54,6 @@
           # Hardware config (bootloader, kernel modules, filesystems, etc)
           # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
           (./. + "/hosts/${hostname}/hardware-configuration.nix")
-          inputs.sops-nix.nixosModules.sops
           home-manager.nixosModules.home-manager
           {
             home-manager = {
@@ -68,16 +68,16 @@
             ];
           }
         ];
-        specialArgs = {inherit inputs;};
+        specialArgs = {inherit inputs pkgs-stable;};
       };
   in {
     nixosConfigurations = {
       # Now, defining a new system is can be done in one line
-      #                                Architecture   Hostname
+      #                                     Architecture   Hostname
       nixos-test = mkSystem inputs.nixpkgs "x86_64-linux" "nixos-test";
       noams-barracuda = mkSystem inputs.nixpkgs "x86_64-linux" "noams-barracuda";
     };
-    formatter.${system} = pkgs.alejandra;
+    formatter.x86_64-linux = pkgs-linux.alejandra;
   };
 
   # the nixConfig here only affects the flake itself, not the system configuration!
