@@ -55,7 +55,10 @@
       user_full_name,
       user_email,
     }: let
-      pkgs-stable = nixpkgs-stable.legacyPackages.${system};
+      pkgs-stable = import nixpkgs-stable {
+        system = system;
+        config.allowUnfree = true;
+      };
       args = {inherit pkgs-stable system hostname username user_full_name user_email;} // inputs;
     in
       pkgs.lib.nixosSystem {

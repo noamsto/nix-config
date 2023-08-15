@@ -53,6 +53,7 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
+      tmuxPlugins.sidebar
     ];
     extraConfig = ''
       set -g mouse on
@@ -73,6 +74,8 @@ in {
       bind-key -T copy-mode-vi C-v send -X rectangle-toggle
       bind-key -T copy-mode-vi 'y' send -X copy-selection
 
+      # restore clear screen to <prefix> C-l
+      bind C-l send-keys 'C-l'
     '';
   };
 }

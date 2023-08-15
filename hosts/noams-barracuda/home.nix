@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  pkgs-stable,
   ...
 }: {
   imports = [
@@ -77,9 +78,8 @@
     ethtool
     pciutils # lspci
     usbutils # lsusb
-
     # social
-    slack
+    pkgs-stable.slack
     ferdium
 
     spotify
