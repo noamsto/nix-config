@@ -19,44 +19,30 @@
   #   "*.dpi" = 162;
   # };
 
-  gtk = rec {
+  gtk = {
     enable = true;
-    iconTheme = {
-      package = pkgs.breeze-icons;
-      name = "breeze-dark";
-    };
-    theme = {
-      package = pkgs.breeze-gtk;
-      name = "breeze-dark";
-    };
+
     font = {
-      name = "Noto Sans";
-      size = 10;
+      name = "Roboto";
+      package = pkgs.roboto;
     };
-    gtk4.extraConfig = {
-      gtk-application-prefer-dark-theme = true;
-      gtk-decoration-layout = "icon:minimize,maximize,close";
-      gtk-modules = "colorreload-gtk-module";
-      gtk-enable-animations = true;
-      gtk-primary-button-warps-slider = false;
-      gtk-xft-dpi = 98304;
-    };
-    gtk3.extraConfig =
-      gtk4.extraConfig
-      // {
-        gtk-menu-images = true;
-        gtk-toolbar-style = 3;
-        gtk-button-images = true;
-      };
-    gtk2.extraConfig = ''
-      gtk-font-name="Noto Sans,  10"
-      gtk-icon-theme-name="breeze-dark"
-      gtk-menu-images=1
-      gtk-button-images=1
-      gtk-enable-animations=1
-      gtk-primary-button-warps-slider=0
-      gtk-toolbar-style=3
-    '';
+
     gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+
+    theme = {
+      # https://github.com/catppuccin/gtk
+      name = "Catppuccin-Macchiato-Compact-Pink-dark";
+      package = pkgs.catppuccin-gtk.override {
+        # https://github.com/NixOS/nixpkgs/blob/nixos-23.05/pkgs/data/themes/catppuccin-gtk/default.nix
+        accents = ["pink"];
+        size = "compact";
+        variant = "mocha";
+      };
+    };
   };
 }
