@@ -8,11 +8,16 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
-    # hyprland = {
-    #   url = "github:hyprwm/Hyprland";
-    #   # build with your own instance of nixpkgs
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      # build with your own instance of nixpkgs
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    catppuccin-hyprland = {
+      url = "github:catppuccin/hyprland";
+      flake = false;
+    };
 
     # home-manager, used for managing user configuration
     home-manager = {
@@ -111,7 +116,7 @@
     substituters = [
       "https://cache.nixos.org"
       # "https://anyrun.cachix.org"
-      # "https://hyprland.cachix.org"
+      "https://hyprland.cachix.org"
     ];
 
     # nix community's cache server
@@ -126,7 +131,7 @@
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       # "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA="
       # "anyrun.cachix.org-1:pqBobmOjI7nKlsUMV25u9QHa9btJK65/C8vnO3p346s="
-      # "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+      "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
   };
 }
