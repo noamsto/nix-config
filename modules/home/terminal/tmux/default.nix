@@ -1,28 +1,10 @@
-{pkgs, ...}: let
-  tmux-super-fingers =
-    pkgs.tmuxPlugins.mkTmuxPlugin
-    {
-      pluginName = "tmux-super-fingers";
-      version = "unstable-2023-01-06";
-      src = pkgs.fetchFromGitHub {
-        owner = "artemave";
-        repo = "tmux_super_fingers";
-        rev = "2c12044984124e74e21a5a87d00f844083e4bdf7";
-        sha256 = "sha256-cPZCV8xk9QpU49/7H8iGhQYK6JwWjviL29eWabuqruc=";
-      };
-    };
-in {
+{pkgs, ...}: {
   programs.tmux = {
     enable = true;
-    #shell = "bash";
     terminal = "tmux-256color";
     sensibleOnTop = true;
     historyLimit = 100000;
     plugins = with pkgs; [
-      {
-        plugin = tmux-super-fingers;
-        extraConfig = "set -g @super-fingers-key f";
-      }
       tmuxPlugins.better-mouse-mode
       # must be before continuum edits right status bar
       {
@@ -54,6 +36,18 @@ in {
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
       tmuxPlugins.sidebar
+      tmuxPlugins.yank
+      {
+        plugin = tmuxPlugins.tmux-thumbs;
+        extraConfig = ''
+          set -g @thumbs-key f
+          set -g @thumbs-fg-color yellow
+          set -g @thumbs-select-fg-color red
+          set -g @thumbs-hint-fg-color blue
+          set -g @thumbs-command 'echo -n {} | xclip -selection clipboard'
+          set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
+        '';
+      }
     ];
     extraConfig = ''
       set -g mouse on

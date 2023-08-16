@@ -8,7 +8,8 @@
     enableAutosuggestions = true;
 
     shellAliases = {
-      ll = "exa -l";
+      ll = "exa -l --icons --git";
+      tree = "exa --tree --icons";
       update = "sudo nixos-rebuild switch";
     };
 

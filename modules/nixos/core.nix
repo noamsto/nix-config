@@ -14,6 +14,7 @@
   programs.thefuck.enable = true;
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
+  programs.dconf.enable = true;
 
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
@@ -147,6 +148,7 @@
     git
     curl
     alejandra
+    xclip
 
     # python
     (python311.withPackages (ps:

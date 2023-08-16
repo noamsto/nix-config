@@ -54,7 +54,6 @@
     cowsay
     file
     which
-    tree
     gnused
     gnutar
     gawk

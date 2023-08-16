@@ -4,7 +4,7 @@
   ...
 }: {
   imports = [
-    # ./home/gtk.nix # Current conlficts with current settings. will enable in the future
+    ./home/gtk.nix # Current conlficts with current settings. will enable in the future
     ./home/terminal/term-alacritty.nix
     ./home/xdg
     ./home/vscode
