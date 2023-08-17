@@ -35,7 +35,12 @@
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      tmuxPlugins.sidebar
+      {
+        plugin = tmuxPlugins.sidebar;
+        extraConfig = ''
+          set -g @sidebar-tree-command 'tree -C'
+        '';
+      }
       tmuxPlugins.yank
       {
         plugin = tmuxPlugins.tmux-thumbs;
