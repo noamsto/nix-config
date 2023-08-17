@@ -56,16 +56,10 @@
 
     initExtra = ''
       auto-ls-ll () {
-        exa -l
+        exa -l --icons --git
       }
 
-      auto-ls-gsb () {
-        if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) == true ]]; then
-          gsb
-        fi
-      }
-
-      AUTO_LS_COMMANDS=(ll gsb)
+      AUTO_LS_COMMANDS=(ll)
       AUTO_LS_NEWLINE=false
     '';
   };
