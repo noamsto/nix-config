@@ -37,6 +37,12 @@
       url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
       flake = false;
     };
+
+    # NvChad feature-rich neovim config.
+    # nvchad = {
+    #   url = "github:NvChad/NvChad/";
+    #   flake = false;
+    # };
   };
 
   # All outputs for the system (configs)

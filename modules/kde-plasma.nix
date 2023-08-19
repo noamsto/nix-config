@@ -15,5 +15,6 @@
     ./home/zoom
     ./home/ssh
     ./home/packages.nix
+    ./home/nvim
   ];
 }

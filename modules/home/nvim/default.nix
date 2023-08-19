@@ -1,0 +1,90 @@
+{
+  pkgs,
+  config,
+  nvchad,
+  ...
+}: let
+  ruff-lsp = pkgs.python311Packages.buildPythonPackage rec {
+    name = "ruff-lsp";
+    version = "v0.0.36";
+    format = "pyproject";
+    src = pkgs.fetchFromGitHub {
+      owner = "astral-sh";
+      repo = name;
+      rev = version;
+      sha256 = "sha256-29LK/upjtgv9LIOn4bJMHkWXUJEkR0pR5fuyOYP9hAI=";
+    };
+    postPatch = ''
+      # ruff binary is used directly, the ruff python package is not needed
+      sed -i '/"ruff>=/d' pyproject.toml
+    '';
+    propagatedBuildInputs = with pkgs.python311Packages; [hatchling lsprotocol pygls typing-extensions pkgs.ruff];
+    doCheck = true;
+  };
+in {
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    vimAlias = true;
+    vimdiffAlias = true;
+    withPython3 = true;
+    withNodeJs = true;
+    extraPython3Packages = ps: [ps.debugpy];
+  };
+
+  home.packages = with pkgs; [
+    #-- c/c++
+    cmake
+    cmake-language-server
+    gnumake
+    checkmake
+    gcc # c/c++ compiler, required by nvim-treesitter!
+    llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
+    gdb
+    lldb
+
+    #-- python
+    nodePackages.pyright # python language server
+    python311Packages.black # python formatter
+    ruff-lsp
+
+    #-- nix
+    nil
+    rnix-lsp
+    # nixd
+    statix # Lints and suggestions for the nix programming language
+    deadnix # Find and remove unused code in .nix source files
+    alejandra # Nix Code Formatter
+
+    #-- lua
+    stylua
+    lua-language-server
+
+    #-- javascript/typescript --#
+    nodePackages.typescript
+    nodePackages.typescript-language-server
+    # HTML/CSS/JSON/ESLint language servers extracted from vscode
+    nodePackages.vscode-langservers-extracted
+    nodePackages."@tailwindcss/language-server"
+
+    #-- CloudNative
+    nodePackages.dockerfile-language-server-nodejs
+    terraform
+    terraform-ls
+    jsonnet
+    jsonnet-language-server
+    hadolint # Dockerfile linter
+
+    #-- Others
+    taplo # TOML language server / formatter / validator
+    nodePackages.yaml-language-server
+    sqlfluff # SQL linter
+    actionlint # GitHub Actions linter
+    buf # protoc plugin for linting and formatting
+    proselint # English prose linter
+
+    #-- Optional Requirements:
+    gdu # disk usage analyzer, required by AstroNvim
+    ripgrep # fast search tool, required by AstroNvim's '<leader>fw'(<leader> is space key)
+  ];
+}

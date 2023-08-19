@@ -11,6 +11,7 @@
     ../../modules/nixos/kde.nix
     ../../modules/nixos/docker
     ../../modules/nixos/cloud
+    ../../modules/nixos/tailscale
     # ../../modules/nixos/hyprland.nix
   ];
 
