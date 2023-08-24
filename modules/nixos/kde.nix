@@ -19,6 +19,6 @@
     # Configure keymap in X11
     layout = "us,il";
     xkbVariant = "";
-    xkbOptions = "eurosign:e, compose:menu, grp:win_space_toggle";
+    xkbOptions = "compose:menu, grp:alt_shift_toggle";
   };
 }

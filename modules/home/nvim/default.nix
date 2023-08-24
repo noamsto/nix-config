@@ -60,27 +60,11 @@ in {
     stylua
     lua-language-server
 
-    #-- javascript/typescript --#
-    nodePackages.typescript
-    nodePackages.typescript-language-server
-    # HTML/CSS/JSON/ESLint language servers extracted from vscode
-    nodePackages.vscode-langservers-extracted
-    nodePackages."@tailwindcss/language-server"
-
-    #-- CloudNative
-    nodePackages.dockerfile-language-server-nodejs
-    terraform
-    terraform-ls
-    jsonnet
-    jsonnet-language-server
-    hadolint # Dockerfile linter
-
     #-- Others
     taplo # TOML language server / formatter / validator
     nodePackages.yaml-language-server
     sqlfluff # SQL linter
     actionlint # GitHub Actions linter
-    buf # protoc plugin for linting and formatting
     proselint # English prose linter
 
     #-- Optional Requirements:

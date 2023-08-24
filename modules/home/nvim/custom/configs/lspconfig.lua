@@ -5,31 +5,48 @@ local capabilities = config.capabilities
 local lspconfig = require("lspconfig")
 
 -- if you just want default config for the servers then put them in a table
-local servers = {"pyright"}
+-- local servers = { "pyright" }
+--
+-- for _, lsp in ipairs(servers) do
+-- 	lspconfig[lsp].setup({
+-- 		on_attach = on_attach,
+-- 		capabilities = capabilities,
+-- 	})
+-- end
 
-for _, lsp in ipairs(servers) do
-  lspconfig[lsp].setup {
-    on_attach = on_attach,
-    capabilities = capabilities,
-  }
+lspconfig.pyright.setup({
+	on_attach = on_attach,
+	capabilities = capabilities,
+	settings = {
+		python = {
+			analysis = {
+				autoSearchPaths = true,
+				useLibraryCodeForTypes = true,
+				diagnosticMode = "openFilesOnly",
+				typeCheckingMode = "basic",
+			},
+		},
+	},
+})
+
+local ruff_on_attach = function(client, bufnr)
+	-- Disable hover in favor of Pyright
+	client.server_capabilities.hoverProvider = false
 end
 
-lspconfig.ruff_lsp.setup {
-  on_attach = on_attach,
-  capabilities =capabilities,
-    init_options = {
-    logLevel="debug",
-    settings = {
-      -- Any extra CLI arguments for `ruff` go here.
-      args = {},
-    }
-  }
-
-}
+lspconfig.ruff_lsp.setup({
+	on_attach = ruff_on_attach,
+	capabilities = capabilities,
+	init_options = {
+		logLevel = "debug",
+		settings = {
+			-- Any extra CLI arguments for `ruff` go here.
+			args = {},
+		},
+	},
+})
 
 -- lspconfig.pyright.setup { blabla}
-
-
 
 -- local lsp = require('lsp-zero').preset({})
 --

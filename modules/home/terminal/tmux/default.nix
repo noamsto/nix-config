@@ -62,9 +62,9 @@
       # Fix vim colors
       set -ga terminal-overrides ",*256col*:Tc"
 
-      # Make prefix Ctrl+Space
+      # Make prefix Ctrl+y
       unbind C-b
-      set-option -g prefix C-Space
+      set-option -g prefix C-y
 
       # Copy mode vim
       setw -g mode-keys vi
@@ -73,8 +73,8 @@
       bind-key -T copy-mode-vi C-v send -X rectangle-toggle
       bind-key -T copy-mode-vi 'y' send -X copy-selection
 
-      # restore clear screen to <prefix> C-l
-      bind C-l send-keys 'C-l'
+      # restore clear screen to <prefix> C-L
+      bind -n C-L send-keys 'C-l'
     '';
   };
 }
