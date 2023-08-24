@@ -8,7 +8,7 @@
   stable = inputs.nixpkgs-stable;
 in {
   environment.systemPackages = with pkgs; [
-    pkgs-stable.azure-cli
+    azure-cli
     awscli2
     ssm-session-manager-plugin
   ];
