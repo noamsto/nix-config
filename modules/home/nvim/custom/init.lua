@@ -1,8 +1,9 @@
--- local autocmd = vim.api.nvim_create_autocmd
+vim.g.maplocalleader = ","
+
+local autocmd = vim.api.nvim_create_autocmd
 
 -- Auto resize panes when resizing nvim window
--- autocmd("VimResized", {
---   pattern = "*",
---   command = "tabdo wincmd =",
--- })
-
+autocmd("VimResized", {
+	pattern = "*",
+	command = "tabdo wincmd =",
+})
