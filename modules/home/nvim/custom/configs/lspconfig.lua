@@ -38,10 +38,10 @@ lspconfig.ruff_lsp.setup({
 	on_attach = ruff_on_attach,
 	capabilities = capabilities,
 	init_options = {
-		logLevel = "debug",
+		-- logLevel = "debug",
 		settings = {
 			-- Any extra CLI arguments for `ruff` go here.
-			args = {},
+			args = { "--ignore=E501" },
 		},
 	},
 })

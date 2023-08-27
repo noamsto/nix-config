@@ -6,6 +6,16 @@ local plugins = {
 	-- Override plugin definition options
 
 	{
+		"nvim-treesitter/nvim-treesitter",
+		opts = overrides.treesitter,
+	},
+
+	{
+		"nvim-tree/nvim-tree.lua",
+		opts = overrides.nvimtree,
+	},
+
+	{
 		"neovim/nvim-lspconfig",
 		dependencies = {
 			-- format & linting
@@ -19,21 +29,11 @@ local plugins = {
 		config = function()
 			require("plugins.configs.lspconfig")
 			require("custom.configs.lspconfig")
-		end, -- Override to setup mason-lspconfig
+		end,
 	},
 
-	{
-		"nvim-treesitter/nvim-treesitter",
-		opts = {
-			ensure_installed = { "nix", "python", "lua" },
-		},
-	},
-
-	{
-		"nvim-tree/nvim-tree.lua",
-		opts = overrides.nvimtree,
-	},
 	-- Install a plugin
+
 	{
 		"max397574/better-escape.nvim",
 		event = "InsertEnter",
@@ -48,6 +48,7 @@ local plugins = {
 			require("core.utils").load_mappings("dap")
 		end,
 	},
+
 	{
 		"mfussenegger/nvim-dap-python",
 		ft = "python",
@@ -60,6 +61,7 @@ local plugins = {
 			require("core.utils").load_mappings("dap_python")
 		end,
 	},
+
 	{
 		"rcarriga/nvim-dap-ui",
 		dependencies = "mfussenegger/nvim-dap",
@@ -88,6 +90,29 @@ local plugins = {
 		config = function()
 			require("goto-preview").setup({})
 			require("core.utils").load_mappings("goto_preview")
+		end,
+		lazy = false,
+	},
+
+	{
+		"nvim-neorg/neorg",
+		build = ":Neorg sync-parsers",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		config = function()
+			require("neorg").setup({
+				load = {
+					["core.defaults"] = {}, -- Loads default behaviour
+					["core.concealer"] = {}, -- Adds pretty icons to your documents
+					["core.dirman"] = { -- Manages Neorg workspaces
+						config = {
+							workspaces = {
+								notes = "~/notes",
+							},
+							default_workspace = "notes",
+						},
+					},
+				},
+			})
 		end,
 		lazy = false,
 	},
