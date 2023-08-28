@@ -6,6 +6,7 @@
   inputs = {
     # Official NixOS package source, using nixos-unstable branch here
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=91a22f76cd1716f9d0149e8a5c68424bb691de15";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
     hyprland = {
@@ -50,6 +51,7 @@
     home-manager,
     nixpkgs,
     nixpkgs-stable,
+    nixpkgs-old,
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
@@ -93,6 +95,10 @@
             };
             nixpkgs.overlays = [
               inputs.alacritty-theme.overlays.default
+              (final: prev: {
+                inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
+                # azure-cli = nixos-old.legacyPackages.${prev.system}.azure-cli;
+              })
             ];
           }
         ];

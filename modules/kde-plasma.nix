@@ -16,5 +16,6 @@
     ./home/ssh
     ./home/packages.nix
     ./home/nvim
+    ./home/emacs
   ];
 }
