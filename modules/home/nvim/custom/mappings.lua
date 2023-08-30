@@ -34,10 +34,29 @@ M.dap_python = {
 	},
 }
 
+M.multi_cusrsors = {
+	n = {
+		["<leader>mc"] = {
+			function()
+				require("multicursors.nvim").MCstart()
+			end,
+			"Create a selection for selected text or word under the cursor",
+		},
+	},
+	v = {
+		["<leader>mc"] = {
+			function()
+				require("multicursors.nvim").MCstart()
+			end,
+			"Create a selection for selected text or word under the cursor",
+		},
+	},
+}
+
 M.goto_preview = {
 	plugin = true,
 	n = {
-		["gr"] = {
+		["gpr"] = {
 			function()
 				require("goto-preview").goto_preview_references()
 			end,

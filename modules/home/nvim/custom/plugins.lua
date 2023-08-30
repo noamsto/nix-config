@@ -32,7 +32,24 @@ local plugins = {
 		end,
 	},
 
-	-- Install a plugin
+	{
+		"f3fora/cmp-spell",
+		config = function()
+			local cmp = require("cmp")
+			local config = cmp.get_config()
+			table.insert(config.sources, {
+				name = "spell",
+				option = {
+					keep_all_entries = false,
+					enable_in_context = function()
+						return require("cmp.config.context").in_treesitter_capture("spell")
+					end,
+				},
+				cmp.setup(config),
+			})
+		end,
+		lazy = false,
+	},
 
 	{
 		"max397574/better-escape.nvim",
@@ -117,6 +134,40 @@ local plugins = {
 		end,
 		lazy = false,
 	},
+
+	{
+		"nvim-treesitter/nvim-treesitter-context",
+		config = function()
+			require("treesitter-context").setup({
+				multiline_threshold = 1,
+			})
+		end,
+		event = "BufEnter *.py",
+	},
+
+	{
+		"smoka7/multicursors.nvim",
+		event = "VeryLazy",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+			"smoka7/hydra.nvim",
+		},
+		opts = {},
+		cmd = { "MCstart", "MCvisual", "MCclear", "MCpattern", "MCvisualPattern", "MCunderCursor" },
+		keys = {
+			{
+				mode = { "v", "n" },
+				"<Leader>m",
+				"<cmd>MCstart<cr>",
+				desc = "Create a selection for selected text or word under the cursor",
+			},
+		},
+	},
+
+	-- {
+	-- 	"mg979/vim-visual-multi",
+	-- 	lazy = false,
+	-- },
 
 	-- To make a plugin not be loaded
 	-- {

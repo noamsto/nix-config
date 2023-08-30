@@ -10,6 +10,10 @@ M.override = {
 		italic = true,
 		fg = "#6a687d",
 	},
+	SpellBad = {
+		underline = true,
+		sp = "red",
+	},
 }
 
 ---@type HLTable
