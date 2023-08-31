@@ -2,18 +2,7 @@ local overrides = require("custom.configs.overrides")
 
 ---@type NvPluginSpec[]
 local plugins = {
-
 	-- Override plugin definition options
-
-	{
-		"nvim-treesitter/nvim-treesitter",
-		opts = overrides.treesitter,
-	},
-
-	{
-		"nvim-tree/nvim-tree.lua",
-		opts = overrides.nvimtree,
-	},
 
 	{
 		"neovim/nvim-lspconfig",
@@ -33,6 +22,29 @@ local plugins = {
 	},
 
 	{
+		"williamboman/mason.nvim",
+		opts = overrides.mason,
+	},
+
+	{
+		"nvim-treesitter/nvim-treesitter",
+		opts = overrides.treesitter,
+	},
+
+	{
+		"nvim-tree/nvim-tree.lua",
+		opts = overrides.nvimtree,
+	},
+
+	{
+		"max397574/better-escape.nvim",
+		event = "InsertEnter",
+		config = function()
+			require("better_escape").setup()
+		end,
+	},
+
+	{
 		"f3fora/cmp-spell",
 		config = function()
 			local cmp = require("cmp")
@@ -48,15 +60,7 @@ local plugins = {
 				cmp.setup(config),
 			})
 		end,
-		lazy = false,
-	},
-
-	{
-		"max397574/better-escape.nvim",
 		event = "InsertEnter",
-		config = function()
-			require("better_escape").setup()
-		end,
 	},
 
 	{
@@ -100,15 +104,13 @@ local plugins = {
 
 	{ "sitiom/nvim-numbertoggle", lazy = false },
 
-	{ "kevinhwang91/nvim-hlslens" },
-
 	{
 		"rmagatti/goto-preview",
 		config = function()
 			require("goto-preview").setup({})
 			require("core.utils").load_mappings("goto_preview")
 		end,
-		lazy = false,
+		event = "BufEnter",
 	},
 
 	{
@@ -146,28 +148,12 @@ local plugins = {
 	},
 
 	{
-		"smoka7/multicursors.nvim",
-		event = "VeryLazy",
-		dependencies = {
-			"nvim-treesitter/nvim-treesitter",
-			"smoka7/hydra.nvim",
-		},
-		opts = {},
-		cmd = { "MCstart", "MCvisual", "MCclear", "MCpattern", "MCvisualPattern", "MCunderCursor" },
-		keys = {
-			{
-				mode = { "v", "n" },
-				"<Leader>m",
-				"<cmd>MCstart<cr>",
-				desc = "Create a selection for selected text or word under the cursor",
-			},
-		},
+		"christoomey/vim-tmux-navigator",
+		lazy = false,
+		init = function()
+			vim.g.tmux_navigator_disable_when_zoomed = 1
+		end,
 	},
-
-	-- {
-	-- 	"mg979/vim-visual-multi",
-	-- 	lazy = false,
-	-- },
 
 	-- To make a plugin not be loaded
 	-- {

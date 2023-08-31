@@ -6,7 +6,7 @@
   inputs = {
     # Official NixOS package source, using nixos-unstable branch here
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=91a22f76cd1716f9d0149e8a5c68424bb691de15";
+    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
     hyprland = {
@@ -44,6 +44,8 @@
     #   url = "github:NvChad/NvChad/";
     #   flake = false;
     # };
+
+    emacs-overlay.url = "github:nix-community/emacs-overlay/76e1604362f675c6b9ee37bd9feca2b87730a987";
   };
 
   # All outputs for the system (configs)
@@ -95,10 +97,14 @@
             };
             nixpkgs.overlays = [
               inputs.alacritty-theme.overlays.default
+              # Borken packages
               (final: prev: {
                 inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
-                # azure-cli = nixos-old.legacyPackages.${prev.system}.azure-cli;
+                inherit (nixpkgs-old.legacyPackages.${prev.system}) ferdium;
               })
+
+              # Latest emacs
+              (import inputs.emacs-overlay)
             ];
           }
         ];
