@@ -17,6 +17,7 @@
     ./home/packages.nix
     ./home/nvim
     ./home/bat
+    ./home/fzf
     # ./home/emacs
   ];
 }

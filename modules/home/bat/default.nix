@@ -6,13 +6,16 @@
   programs.bat = {
     enable = true;
     themes = {
-      dracula = builtins.readFile (pkgs.fetchFromGitHub {
+      catppuccin = builtins.readFile (pkgs.fetchFromGitHub {
           owner = "catppuccin";
-          repo = "bat"; # Bat uses sublime syntax for its themes
+          repo = "bat";
           rev = "ba4d16880d63e656acced2b7d4e034e4a93f74b1";
-          sha256 = "019hfl4zbn4vm4154hh3bwk6hm7bdxbr1hdww83nabxwjn99ndhv";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
         }
         + "/Catppuccin-mocha.tmTheme");
+    };
+    config = {
+      theme = "catppuccin";
     };
   };
 }
