@@ -16,23 +16,23 @@ M.treesitter = {
 }
 
 M.mason = {
-  ensure_installed = {
-    -- Since we are on NixOS we don't use Mason for installation
-    -- -- lua stuff
-    -- "lua-language-server",
-    -- "stylua",
-    --
-    -- -- web dev stuff
-    -- "css-lsp",
-    -- "html-lsp",
-    -- "typescript-language-server",
-    -- "deno",
-    -- "prettier",
-    --
-    -- -- c/cpp stuff
-    -- "clangd",
-    -- "clang-format",
-  },
+	ensure_installed = {
+		-- Since we are on NixOS we don't use Mason for installation
+		-- -- lua stuff
+		-- "lua-language-server",
+		-- "stylua",
+		--
+		-- -- web dev stuff
+		-- "css-lsp",
+		-- "html-lsp",
+		-- "typescript-language-server",
+		-- "deno",
+		-- "prettier",
+		--
+		-- -- c/cpp stuff
+		-- "clangd",
+		-- "clang-format",
+	},
 }
 
 -- git support in nvimtree
@@ -50,5 +50,22 @@ M.nvimtree = {
 		},
 	},
 }
+
+M.cmp = function()
+	local conf = require("plugins.configs.cmp")
+
+	local spell_source = {
+		name = "spell",
+		option = {
+			keep_all_entries = false,
+			enable_in_context = function()
+				return require("cmp.config.context").in_treesitter_capture("spell")
+			end,
+		},
+	}
+	table.insert(conf.sources, spell_source)
+
+	return conf
+end
 
 return M

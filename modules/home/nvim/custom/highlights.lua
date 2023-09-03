@@ -10,6 +10,9 @@ M.override = {
 		italic = true,
 		fg = "#6a687d",
 	},
+	Folded = {
+		fg = " #848297",
+	},
 	SpellBad = {
 		underline = true,
 		sp = "red",

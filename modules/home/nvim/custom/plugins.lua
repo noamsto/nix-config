@@ -36,31 +36,14 @@ local plugins = {
 		opts = overrides.nvimtree,
 	},
 
+	-- { "hrsh7th/nvim-cmp", opts = overrides.cmp, dependencies = { "f3fora/cmp-spell" } },
+
 	{
 		"max397574/better-escape.nvim",
 		event = "InsertEnter",
 		config = function()
 			require("better_escape").setup()
 		end,
-	},
-
-	{
-		"f3fora/cmp-spell",
-		config = function()
-			local cmp = require("cmp")
-			local config = cmp.get_config()
-			table.insert(config.sources, {
-				name = "spell",
-				option = {
-					keep_all_entries = false,
-					enable_in_context = function()
-						return require("cmp.config.context").in_treesitter_capture("spell")
-					end,
-				},
-				cmp.setup(config),
-			})
-		end,
-		event = "InsertEnter",
 	},
 
 	{
@@ -153,6 +136,37 @@ local plugins = {
 		init = function()
 			vim.g.tmux_navigator_disable_when_zoomed = 1
 		end,
+	},
+
+	{ "tpope/vim-fugitive", lazy = false },
+
+	{
+		"folke/trouble.nvim",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
+		opts = {
+			-- your configuration comes here
+			-- or leave it empty to use the default settings
+			-- refer to the configuration section below
+		},
+		event = "BufEnter",
+	},
+
+  {
+		"cappyzawa/trim.nvim",
+		config = function()
+			require("trim").setup({
+				-- if you want to ignore markdown file.
+				-- you can specify filetypes.
+				ft_blocklist = { "markdown" },
+				trim_last_line = false,
+
+				-- if you want to remove multiple blank lines
+				patterns = {
+					[[%s/\($\n\s*\)\+\%$//]], -- replace multiple blank lines with a single line
+				},
+			})
+		end,
+		event = "BufEnter",
 	},
 
 	-- To make a plugin not be loaded

@@ -10,28 +10,23 @@
     enable = true;
     userName = user_full_name;
     userEmail = user_email;
-    diff-so-fancy.enable = true;
+    delta = {
+      enable = true;
+      options = {
+        navigate = true;
+        light = false;
+        line-numbers = true;
+      };
+    };
     extraConfig = {
       init = {
         defaultBranch = "main";
       };
-      color = {
-        ui = true;
-        diff-highlight = {
-          oldNormal = "red bold";
-          oldHighlight = "red bold 52";
-          newNormal = "green bold";
-          newHighlight = "green bold 22";
-        };
-        diff = {
-          meta = "11";
-          frag = "magenta bold";
-          func = "146 bold";
-          commit = "yellow bold";
-          old = "red bold";
-          new = "green bold";
-          whitespace = "red reverse";
-        };
+      merge = {
+        conflictstyle = "diff3";
+      };
+      diff = {
+        colorMoved = "default";
       };
     };
   };

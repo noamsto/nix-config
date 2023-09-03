@@ -45,7 +45,10 @@
     #   flake = false;
     # };
 
-    emacs-overlay.url = "github:nix-community/emacs-overlay/76e1604362f675c6b9ee37bd9feca2b87730a987";
+    emacs-overlay = {
+      url = "github:nix-community/emacs-overlay?rev=76e1604362f675c6b9ee37bd9feca2b87730a987";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # All outputs for the system (configs)
