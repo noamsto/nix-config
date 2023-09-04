@@ -6,7 +6,7 @@
   programs.fzf = {
     enable = true;
     fileWidgetOptions = [
-      "--preview 'bat -n --color=always {}'"
+      "--preview '${pkgs.bat}/bin/bat -n --color=always {}'"
       "--bind 'ctrl-/:change-preview-window(down|hidden|)'"
     ];
   };

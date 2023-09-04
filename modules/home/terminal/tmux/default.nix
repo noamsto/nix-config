@@ -74,7 +74,7 @@
       bind-key -T copy-mode-vi 'y' send -X copy-selection
 
       # restore clear screen to <prefix> C-L
-      bind -n M-L send-keys 'C-l'
+      bind -n M-l send-keys 'C-l'
     '';
   };
 }

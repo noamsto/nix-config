@@ -3,9 +3,11 @@
   pkgs,
   user_email,
   user_full_name,
+  delta,
   ...
 }: {
   # basic configuration of git, please change to your own
+  xdg.configFile."delta/themes.gitconfig".source = "${delta}/themes.gitconfig";
   programs.git = {
     enable = true;
     userName = user_full_name;
@@ -16,9 +18,14 @@
         navigate = true;
         light = false;
         line-numbers = true;
+        true-color = "always";
+        features = "villsau";
       };
     };
     extraConfig = {
+      include = {
+        path = "${config.xdg.configHome}/delta/themes.gitconfig";
+      };
       init = {
         defaultBranch = "main";
       };

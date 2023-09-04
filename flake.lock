@@ -94,6 +94,23 @@
         "type": "github"
       }
     },
+    "delta": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1691962118,
+        "narHash": "sha256-HvmslKkzc97+SVS/n6aAZsKyczGw9PLnO7JnVWzUCiU=",
+        "owner": "dandavison",
+        "repo": "delta",
+        "rev": "7375f7a165dabe430e12d531fedd84bb3a027c6b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dandavison",
+        "repo": "delta",
+        "rev": "7375f7a165dabe430e12d531fedd84bb3a027c6b",
+        "type": "github"
+      }
+    },
     "emacs-overlay": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -380,6 +397,7 @@
         "agenix": "agenix",
         "alacritty-theme": "alacritty-theme",
         "catppuccin-hyprland": "catppuccin-hyprland",
+        "delta": "delta",
         "emacs-overlay": "emacs-overlay",
         "home-manager": "home-manager_2",
         "hyprland": "hyprland",

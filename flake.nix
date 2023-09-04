@@ -49,6 +49,13 @@
       url = "github:nix-community/emacs-overlay?rev=76e1604362f675c6b9ee37bd9feca2b87730a987";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Used for better git diffs, need this for themes
+    delta = {
+      url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
+      flake = false;
+    };
+
   };
 
   # All outputs for the system (configs)
