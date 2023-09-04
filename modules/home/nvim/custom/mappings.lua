@@ -3,10 +3,18 @@ local M = {}
 
 M.disabled = {
 	n = {
+		-- Vim movement
 		["<C-h>"] = "",
 		["<C-l>"] = "",
 		["<C-j>"] = "",
 		["<C-k>"] = "",
+
+		-- For trouble mapping
+		["<leader>q"] = "",
+	},
+	i = {
+		-- For cmp complete
+		["<C-c>"] = "",
 	},
 }
 
@@ -76,6 +84,12 @@ M.goto_preview = {
 			end,
 			"goto preview LSP reference",
 		},
+		["gpd"] = {
+			function()
+				require("goto-preview").goto_preview_defintion()
+			end,
+			"goto preview LSP definition",
+		},
 	},
 }
 M.telescope = {
@@ -125,6 +139,15 @@ M.telescope = {
 	},
 
 	plugin = true,
+}
+M.trouble = {
+	n = {
+		["<leader>q"] = {
+			function()
+				require("trouble").open()
+			end,
+		},
+	},
 }
 -- more keybinds!
 

@@ -35,12 +35,6 @@
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      {
-        plugin = tmuxPlugins.sidebar;
-        extraConfig = ''
-          set -g @sidebar-tree-command 'tree -C'
-        '';
-      }
       tmuxPlugins.yank
       {
         plugin = tmuxPlugins.tmux-thumbs;
@@ -62,9 +56,9 @@
       # Fix vim colors
       set -ga terminal-overrides ",*256col*:Tc"
 
-      # Make prefix Ctrl+y
+      # Make prefix Ctrl+Space
       unbind C-b
-      set-option -g prefix C-y
+      set-option -g prefix C-Space
 
       # Copy mode vim
       setw -g mode-keys vi
@@ -75,6 +69,15 @@
 
       # restore clear screen to <prefix> C-L
       bind -n M-l send-keys 'C-l'
+
+      # Bind window spliting
+      bind | split-window -h -c "#{pane_current_path}"
+      bind _ split-window -v -c "#{pane_current_path}"
+
+      # Bind windows movment alt-shift l/h
+      bind -n M-H previous-window
+      bind -n M-L next-window
+
     '';
   };
 }

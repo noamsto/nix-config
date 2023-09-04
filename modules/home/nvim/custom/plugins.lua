@@ -36,7 +36,7 @@ local plugins = {
 		opts = overrides.nvimtree,
 	},
 
-	-- { "hrsh7th/nvim-cmp", opts = overrides.cmp, dependencies = { "f3fora/cmp-spell" } },
+	{ "hrsh7th/nvim-cmp", opts = overrides.cmp, dependencies = { "f3fora/cmp-spell" } },
 
 	{
 		"max397574/better-escape.nvim",
@@ -161,9 +161,9 @@ local plugins = {
 				trim_last_line = false,
 
 				-- if you want to remove multiple blank lines
-				patterns = {
-					[[%s/\($\n\s*\)\+\%$//]], -- replace multiple blank lines with a single line
-				},
+				-- patterns = {
+				-- 	[[%s/\($\n\s*\)\+\%$//]], -- replace multiple blank lines with a single line
+				-- },
 			})
 		end,
 		event = "BufEnter",

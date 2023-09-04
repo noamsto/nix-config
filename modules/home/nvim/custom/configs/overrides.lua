@@ -64,7 +64,8 @@ M.cmp = function()
 		},
 	}
 	table.insert(conf.sources, spell_source)
-
+  conf.mapping["<C-c>"] = conf.mapping["<C-Space>"]
+  conf.mapping["<C-Space>"] = nil
 	return conf
 end
 
