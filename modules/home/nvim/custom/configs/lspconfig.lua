@@ -23,19 +23,20 @@ lspconfig.pyright.setup({
 				autoSearchPaths = true,
 				useLibraryCodeForTypes = true,
 				diagnosticMode = "openFilesOnly",
-				typeCheckingMode = "basic",
+				typeCheckingMode = "off",
+				stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs",
 			},
 		},
 	},
 })
 
-local ruff_on_attach = function(client, bufnr)
+local on_attach_no_hover = function(client, bufnr)
 	-- Disable hover in favor of Pyright
 	client.server_capabilities.hoverProvider = false
 end
 
 lspconfig.ruff_lsp.setup({
-	on_attach = ruff_on_attach,
+	on_attach = on_attach_no_hover,
 	capabilities = capabilities,
 	init_options = {
 		-- logLevel = "debug",
@@ -46,7 +47,26 @@ lspconfig.ruff_lsp.setup({
 	},
 })
 
--- lspconfig.pyright.setup { blabla}
+lspconfig.pylsp.setup({
+	on_attach = on_attach_no_hover,
+	capabilities = capabilities,
+	cmd = { "nvim-python3", "-m", "pylsp" },
+	settings = {
+		pylsp = {
+			plugins = {
+				ruff = { enabled = false, ignore = { "E501" }, hover = false },
+				python_lsp_black = { enabled = true, line_length = 99 },
+				pylsp_mypy = { enabled = true, hover = false },
+				jedi = { enabled = false },
+				jedi_hover = { enabled = false },
+				jedi_completion = { enabled = false },
+				jedi_definition = { enabled = false },
+				jedi_references = { enabled = false },
+				jedi_symbols = { enabled = false },
+			},
+		},
+	},
+})
 
 -- local lsp = require('lsp-zero').preset({})
 --

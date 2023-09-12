@@ -53,6 +53,9 @@
       set -g base-index 1
       setw -g pane-base-index 1
 
+      # Set escape-time as recomended by nvim
+      set-option -sg escape-time 12
+
       # Fix vim colors
       set -ga terminal-overrides ",*256col*:Tc"
 

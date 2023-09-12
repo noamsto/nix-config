@@ -151,7 +151,7 @@ local plugins = {
 		event = "BufEnter",
 	},
 
-  {
+	{
 		"cappyzawa/trim.nvim",
 		config = function()
 			require("trim").setup({
@@ -168,6 +168,24 @@ local plugins = {
 		end,
 		event = "BufEnter",
 	},
+
+	-- Pyright type-stubs
+	{
+		"microsoft/python-type-stubs",
+		-- cond = false,
+	},
+
+	{
+		"nvim-neotest/neotest",
+		requires = {
+			"nvim-lua/plenary.nvim",
+			"nvim-treesitter/nvim-treesitter",
+			"antoinemadec/FixCursorHold.nvim",
+		},
+		ft = "python",
+	},
+
+	{ "sindrets/diffview.nvim", lazy = false },
 
 	-- To make a plugin not be loaded
 	-- {

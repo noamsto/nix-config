@@ -29,7 +29,12 @@ in {
     vimdiffAlias = true;
     withPython3 = true;
     withNodeJs = true;
-    extraPython3Packages = ps: [ps.debugpy];
+    extraPython3Packages = ps: [
+      ps.debugpy
+      ps.python-lsp-server
+      ps.python-lsp-black
+      ps.pylsp-mypy
+    ];
   };
 
   home.packages = with pkgs; [

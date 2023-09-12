@@ -8,8 +8,8 @@
     enableAutosuggestions = true;
 
     shellAliases = {
-      ll = "exa -l --icons --git";
-      tree = "exa --tree --icons";
+      ll = "eza -l --icons --git";
+      tree = "eza --tree --icons";
       update = "sudo nixos-rebuild switch";
     };
 
@@ -56,7 +56,7 @@
 
     initExtra = ''
       auto-ls-ll () {
-        exa -l --icons --git
+        eza -l --icons --git
       }
 
       AUTO_LS_COMMANDS=(ll)

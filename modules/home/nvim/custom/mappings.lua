@@ -122,13 +122,13 @@ M.telescope = {
 			function()
 				require("telescope.builtin").lsp_document_symbols()
 			end,
-			"Lists LSP document symbols in the current buffer",
+			"Lists LSP buffer symbols",
 		},
 		["gsw"] = {
 			function()
 				require("telescope.builtin").lsp_workspace_symbols()
 			end,
-			"Lists LSP document symbols in the current workspace",
+			"Lists LSP workspace symbols",
 		},
 		["gswd"] = {
 			function()
@@ -146,6 +146,7 @@ M.trouble = {
 			function()
 				require("trouble").open()
 			end,
+      "Open Troubles"
 		},
 	},
 }

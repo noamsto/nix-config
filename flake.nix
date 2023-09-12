@@ -110,7 +110,7 @@
               # Borken packages
               (final: prev: {
                 inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
-                inherit (nixpkgs-old.legacyPackages.${prev.system}) ferdium;
+                inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
               })
 
               # Latest emacs

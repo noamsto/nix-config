@@ -36,5 +36,9 @@
         colorMoved = "default";
       };
     };
+    ignores = [
+      "**/.direnv"
+      "**/.devenv"
+    ];
   };
 }
