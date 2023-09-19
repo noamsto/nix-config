@@ -56,6 +56,23 @@
         "type": "github"
       }
     },
+    "astronvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1695119958,
+        "narHash": "sha256-jtTaWtQ06Vf7icoWB6YGuBmLCVQv+WUdz2bBh00pj2A=",
+        "owner": "AstroNvim",
+        "repo": "AstroNvim",
+        "rev": "00c4abb95bf83ff1f00f411b65faa1b098d9a9d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "AstroNvim",
+        "ref": "v3.36.11",
+        "repo": "AstroNvim",
+        "type": "github"
+      }
+    },
     "catppuccin-hyprland": {
       "flake": false,
       "locked": {
@@ -412,6 +429,7 @@
       "inputs": {
         "agenix": "agenix",
         "alacritty-theme": "alacritty-theme",
+        "astronvim": "astronvim",
         "catppuccin-hyprland": "catppuccin-hyprland",
         "catpuccin-bottom": "catpuccin-bottom",
         "delta": "delta",

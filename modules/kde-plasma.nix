@@ -16,7 +16,7 @@
     ./home/zoom
     ./home/ssh
     ./home/packages.nix
-    ./home/nvim
+    ./home/nvim-astro
     ./home/bat
     ./home/fzf
     # ./home/emacs

@@ -44,11 +44,11 @@
       flake = false;
     };
 
-    # NvChad feature-rich neovim config.
-    # nvchad = {
-    #   url = "github:NvChad/NvChad/";
-    #   flake = false;
-    # };
+    # AstroNvim is an aesthetic and feature-rich neovim config.
+    astronvim = {
+      url = "github:AstroNvim/AstroNvim/v3.36.11";
+      flake = false;
+    };
 
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay?rev=76e1604362f675c6b9ee37bd9feca2b87730a987";
