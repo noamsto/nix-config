@@ -55,6 +55,12 @@
     ];
 
     initExtra = ''
+      work_aliases=/etc/agenix/work_aliases.zsh
+      if [ -f $work_aliases ]; then
+        echo "Loading Work Aliases"
+        source $work_aliases
+      fi
+
       auto-ls-ll () {
         eza -l --icons --git
       }

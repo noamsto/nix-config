@@ -37,6 +37,7 @@ M.mason = {
 
 -- git support in nvimtree
 M.nvimtree = {
+
 	git = {
 		enable = true,
 	},
@@ -68,5 +69,10 @@ M.cmp = function()
   conf.mapping["<C-Space>"] = nil
 	return conf
 end
+
+M.blankline = {
+  show_current_context= true,
+  show_current_context_start = true,
+}
 
 return M

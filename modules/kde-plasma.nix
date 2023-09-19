@@ -11,6 +11,7 @@
     ./home/git
     ./home/kubernetes
     ./home/btop
+    ./home/bottom
     ./home/dev
     ./home/zoom
     ./home/ssh

@@ -39,6 +39,7 @@
     ignores = [
       "**/.direnv"
       "**/.devenv"
+      "**/.venv"
     ];
   };
 }

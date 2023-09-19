@@ -20,6 +20,11 @@
       flake = false;
     };
 
+    catpuccin-bottom = {
+      url = "github:catppuccin/bottom";
+      flake = false;
+    };
+
     # home-manager, used for managing user configuration
     home-manager = {
       url = "github:nix-community/home-manager/release-23.05";
@@ -55,7 +60,6 @@
       url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
       flake = false;
     };
-
   };
 
   # All outputs for the system (configs)
@@ -67,7 +71,7 @@
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
-    lib = nixpkgs.lib;
+    inherit (nixpkgs) lib;
 
     # This lets us reuse the code to "create" a system
     # Credits go to sioodmy on this one!
@@ -81,13 +85,13 @@
       user_email,
     }: let
       pkgs-stable = import nixpkgs-stable {
-        system = system;
+        inherit system;
         config.allowUnfree = true;
       };
       args = {inherit pkgs-stable system hostname username user_full_name user_email;} // inputs;
     in
       pkgs.lib.nixosSystem {
-        system = system;
+        inherit system;
         modules = [
           {networking.hostName = hostname;}
           # General configuration (users, networking, sound, etc)
@@ -96,6 +100,8 @@
           # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
           (./. + "/hosts/${hostname}/hardware-configuration.nix")
           home-manager.nixosModules.home-manager
+
+          # Agenix secrets-manager
           ./secrets
           {
             home-manager = {

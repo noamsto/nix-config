@@ -12,6 +12,7 @@
     ../../modules/nixos/docker
     ../../modules/nixos/cloud
     ../../modules/nixos/tailscale
+    ./barracuda_secrets.nix
     # ../../modules/nixos/hyprland.nix
   ];
 

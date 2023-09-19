@@ -185,7 +185,9 @@ local plugins = {
 		ft = "python",
 	},
 
-	{ "sindrets/diffview.nvim", lazy = false },
+	-- { "sindrets/diffview.nvim", lazy = false }, Commented out
+
+	{ "sindrets/diffview.nvim", lazy = false }, -- New Addition
 
 	-- To make a plugin not be loaded
 	-- {

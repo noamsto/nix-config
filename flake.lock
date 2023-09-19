@@ -72,6 +72,22 @@
         "type": "github"
       }
     },
+    "catpuccin-bottom": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1672359880,
+        "narHash": "sha256-VaHX2I/Gn82wJWzybpWNqU3dPi3206xItOlt0iF6VVQ=",
+        "owner": "catppuccin",
+        "repo": "bottom",
+        "rev": "c0efe9025f62f618a407999d89b04a231ba99c92",
+        "type": "github"
+      },
+      "original": {
+        "owner": "catppuccin",
+        "repo": "bottom",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -264,10 +280,10 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1692023053,
-        "narHash": "sha256-49awLm4aIb6Z9mJ+vpxpVegnLtjHLzb/hOrFBdDImVg=",
+        "lastModified": 1694603154,
+        "narHash": "sha256-SGpwB4VFOZSl4LmbXDQAxifZ3TSTM46EwLiCHy4aFss=",
         "ref": "refs/heads/main",
-        "rev": "c3efba799a96b32f0e860d58c554059392ede7da",
+        "rev": "904b6915d20ccb91b44f1409149790521d8540fd",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
@@ -397,6 +413,7 @@
         "agenix": "agenix",
         "alacritty-theme": "alacritty-theme",
         "catppuccin-hyprland": "catppuccin-hyprland",
+        "catpuccin-bottom": "catpuccin-bottom",
         "delta": "delta",
         "emacs-overlay": "emacs-overlay",
         "home-manager": "home-manager_2",
