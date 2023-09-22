@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  nvchad,
   astronvim,
   ...
 }: let
@@ -42,6 +41,9 @@ in {
       ps.python-lsp-black
       ps.pylsp-mypy
     ];
+    extraPackages = with pkgs; [
+      lua-language-server
+    ];
   };
 
   home.packages = with pkgs; [
@@ -70,7 +72,6 @@ in {
 
     #-- lua
     stylua
-    lua-language-server
 
     #-- bash
     nodePackages.bash-language-server
@@ -78,9 +79,9 @@ in {
     shfmt
 
     # #-- CloudNative
-    # nodePackages.dockerfile-language-server-nodejs
-    # terraform
-    # terraform-ls
+    nodePackages.dockerfile-language-server-nodejs
+    terraform
+    terraform-ls
     # hadolint # Dockerfile linter
 
     #-- Others

@@ -6,5 +6,6 @@
   home.packages = with pkgs; [
     joplin-desktop
     logseq
+    vlc
   ];
 }

@@ -172,7 +172,6 @@ local plugins = {
 	-- Pyright type-stubs
 	{
 		"microsoft/python-type-stubs",
-		-- cond = false,
 	},
 
 	{
