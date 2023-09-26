@@ -7,5 +7,6 @@
     joplin-desktop
     logseq
     vlc
+    lazygit
   ];
 }

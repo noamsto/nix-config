@@ -24,7 +24,8 @@
 in {
   xdg.configFile = {
     "nvim".source = astronvim;
-    "astronvim/lua/user".source = ./astronvim_user;
+    # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/modules/home/nvim-astro/astronvim_user";
+    # "astronvim/lua/user".source = ./astronvim_user;   # Enable after finishing configuring nvim
   };
   programs.neovim = {
     enable = true;
@@ -43,6 +44,7 @@ in {
     ];
     extraPackages = with pkgs; [
       lua-language-server
+      efm-langserver
     ];
   };
 

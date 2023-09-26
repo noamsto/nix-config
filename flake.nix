@@ -34,8 +34,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Alacritty themes overlay
-    alacritty-theme.url = "github:alexghr/alacritty-theme.nix";
+    catpuccin-alacritty = {
+      url = "github:catppuccin/alacritty";
+      flake = false;
+    };
 
     agenix.url = "github:ryantm/agenix";
 
@@ -112,7 +114,6 @@
               users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
             nixpkgs.overlays = [
-              inputs.alacritty-theme.overlays.default
               # Borken packages
               (final: prev: {
                 inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
