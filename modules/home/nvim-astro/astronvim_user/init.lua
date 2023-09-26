@@ -23,31 +23,10 @@ return {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 	lsp = {
 		config = {
-			-- pylsp = {
-			--   cmd = { "nvim-python3", "-m", "pylsp" },
-			--   settings = {
-			--     pylsp = {
-			--       plugins = {
-			--         ruff = { enabled = false, ignore = { "E501" }, hover = false },
-			--         python_lsp_black = { enabled = false, line_length = 99 },
-			--         pylsp_mypy = { enabled = true, hover = false },
-			--         jedi = { enabled = false },
-			--         jedi_hover = { enabled = false },
-			--         jedi_completion = { enabled = false },
-			--         jedi_definition = { enabled = false },
-			--         jedi_references = { enabled = false },
-			--         jedi_symbols = { enabled = false },
-			--         jedi_signature_help = { enabled = false },
-			--       },
-			--     },
-			--   },
-			-- },
-			yamlls = {
-				settings = {
-					yaml = {
-						format = {
-							enable = true,
-						},
+			ruff_lsp = {
+				init_options = {
+					settings = {
+						args = { "--ignore=E501" },
 					},
 				},
 			},
@@ -98,8 +77,9 @@ return {
 			format_on_save = {
 				enabled = true,
 				allow_filetypes = {
-					"python",
+					-- "python",
 					"lua",
+					"nix",
 				},
 			},
 		},
