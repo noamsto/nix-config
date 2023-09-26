@@ -27,15 +27,6 @@ return {
 	{ import = "astrocommunity.editing-support.todo-comments-nvim" },
 	{ import = "astrocommunity.editing-support.telescope-undo-nvim" },
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
-	{
-		"ThePrimeagen/refactoring.nvim",
-		keys = {
-			{
-				"<leader>rr",
-				nil,
-			},
-		},
-	},
 	-- The plugin offers the abilibty to search and replace.
 	{ import = "astrocommunity.project.nvim-spectre" },
 
@@ -60,7 +51,30 @@ return {
 
 	-- Note taking
 	{ import = "astrocommunity.note-taking.neorg" },
-
+	{
+		"nvim-neorg/neorg",
+		lazy = "VeryLazy",
+		opts = {
+			load = {
+				["core.defaults"] = {}, -- Loads default behaviour
+				["core.concealer"] = {}, -- Adds pretty icons to your documents
+				["core.summary"] = {},
+				["core.dirman"] = { -- Manages Neorg workspaces
+					config = {
+						workspaces = {
+							notes = "~/notes",
+						},
+						default_workspace = "notes",
+					},
+				},
+			},
+		},
+	},
+	{
+		"creativenull/efmls-configs-nvim",
+		version = "v1.x.x", -- version is optional, but recommended
+		dependencies = { "neovim/nvim-lspconfig" },
+	},
 	-- markdown preview
 	{
 		"0x00-ketsu/markdown-preview.nvim",
@@ -83,9 +97,6 @@ return {
 				storage = "shada",
 			},
 		},
-	},
-	{
-		"gbprod/yanky.nvim",
 		keys = {
 			{
 				"<leader>yh",
@@ -137,10 +148,10 @@ return {
 			opts.incremental_selection = {
 				enable = true,
 				keymaps = {
-					init_selection = "<C-c>", -- Ctrl + c
-					node_incremental = "<C-c>",
-					scope_incremental = "<A-c>", -- Alt + c
-					node_decremental = "<bs>", -- Backspace
+					init_selection = "<A-=>", -- Ctrl + c
+					node_incremental = "<A-=>",
+					scope_incremental = "<A-+>", -- Alt + c
+					node_decremental = "<A-->", -- Backspace
 				},
 			}
 			opts.ensure_installed = utils.list_insert_unique(opts.ensure_installed, {
