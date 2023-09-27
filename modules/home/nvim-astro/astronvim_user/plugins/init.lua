@@ -298,4 +298,12 @@ return {
 	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
+	{
+		"hrsh7th/nvim-cmp",
+		opts = function(_, opts)
+			opts.mapping["<C-c>"] = opts.mapping["<C-Space>"]
+			opts.mapping["<C-Space>"] = nil
+			return opts
+		end,
+	},
 }

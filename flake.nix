@@ -62,6 +62,9 @@
       url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
       flake = false;
     };
+
+    # Xremap for remapping keys
+    xremap.url = "github:xremap/nix-flake";
   };
 
   # All outputs for the system (configs)

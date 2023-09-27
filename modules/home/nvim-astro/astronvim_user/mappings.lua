@@ -18,6 +18,8 @@ return {
 		["<leader>bn"] = { "<cmd>tabnew<cr>", desc = "New tab" },
 		-- quick save
 		["<C-s>"] = { ":w!<cr>", desc = "Save File" }, -- change description but the same command
+
+		-- Toggle terminal
 		["<leader>tp"] = {
 			function()
 				utils.toggle_term_cmd("ipython")
@@ -41,30 +43,54 @@ return {
 
 		-- implementation/definition preview
 		["gp"] = { name = "󱂬 Goto Preview" },
-		["gpd"] = { "<cmd>lua require('goto-preview').goto_preview_definition()<CR>", desc = "goto_preview_definition" },
+		["gpd"] = {
+			function()
+				require("goto-preview").goto_preview_definition()
+			end,
+			desc = "Goto Oreview Definition",
+		},
 		["gpt"] = {
-			"<cmd>lua require('goto-preview').goto_preview_type_definition()<CR>",
-			desc = "goto_preview_type_definition",
+			function()
+				require("goto-preview").goto_preview_type_definition()
+			end,
+			desc = "Goto Preview Type Definition",
 		},
 		["gpi"] = {
-			"<cmd>lua require('goto-preview').goto_preview_implementation()<CR>",
-			desc = "goto_preview_implementation",
+			function()
+				require("goto-preview").goto_preview_implementation()
+			end,
+			desc = "Goto Preview Implementation",
 		},
-		["gpc"] = { "<cmd>lua require('goto-preview').close_all_win()<CR>", desc = "close_all_win" },
-		["gpr"] = { "<cmd>lua require('goto-preview').goto_preview_references()<CR>", desc = "goto_preview_references" },
+		["gpc"] = {
+			function()
+				require("goto-preview").close_all_win()
+			end,
+			desc = "Close All Win",
+		},
+		["gpr"] = {
+			function()
+				require("goto-preview").goto_preview_references()
+			end,
+			desc = "Goto Preview References",
+		},
+
 		["<leader>r"] = { name = "󰣪 Refactor" },
 		["<leader>y"] = { name = "  Yanky" },
 	},
 
-	-- visual mode(what's the difference `etween v and x???)
+	-- visual mode(what's the difference Between v and x???)
 	x = {
 		-- refactoring
+		["<leader>r"] = { name = "󰣪 Refactor" },
 		["<leader>rr"] = {
 			function()
 				require("telescope").extensions.refactoring.refactors()
 			end,
 			desc = "Prompt for a refactor to apply",
 		},
-		["<leader>r"] = { name = "󰣪 Refactor" },
+	},
+
+	i = {
+		["<C-Space>"] = false,
 	},
 }
