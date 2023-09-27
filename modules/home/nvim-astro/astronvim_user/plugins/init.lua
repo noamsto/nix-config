@@ -126,6 +126,14 @@ return {
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		opts = {
+			window = {
+				mappings = {
+					["S"] = "none",
+					["s"] = "none",
+					["<C-h>"] = "open_split",
+					["<C-v>"] = "open_vsplit",
+				},
+			},
 			filesystem = {
 				filtered_items = {
 					visible = true, -- visible by default
