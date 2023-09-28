@@ -8,5 +8,6 @@
     logseq
     vlc
     lazygit
+    solaar
   ];
 }

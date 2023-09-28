@@ -80,11 +80,7 @@ return {
 		"0x00-ketsu/markdown-preview.nvim",
 		ft = { "md", "markdown", "mkd", "mkdn", "mdwn", "mdown", "mdtxt", "mdtext", "rmd", "wiki" },
 		config = function()
-			require("markdown-preview").setup({
-				-- your configuration comes here
-				-- or leave it empty to use the default settings
-				-- refer to the setup section below
-			})
+			require("markdown-preview").setup({})
 		end,
 	},
 
@@ -145,8 +141,8 @@ return {
 	},
 
 	-- full signature help, docs and completion for the nvim lua API.
-	{ "folke/neodev.nvim", opts = {} },
-	{ "RRethy/vim-illuminate", config = function() end },
+	{ "folke/neodev.nvim" },
+	{ "RRethy/vim-illuminate" },
 
 	-- Language Parser for syntax highlighting / indentation / folding / Incremental selection
 	{
@@ -156,10 +152,10 @@ return {
 			opts.incremental_selection = {
 				enable = true,
 				keymaps = {
-					init_selection = "<A-=>", -- Ctrl + c
+					init_selection = "<A-=>", -- Alt++
 					node_incremental = "<A-=>",
-					scope_incremental = "<A-+>", -- Alt + c
-					node_decremental = "<A-->", -- Backspace
+					scope_incremental = "<A-+>", -- Alt+Shift++
+					node_decremental = "<A-->", -- Alt+-
 				},
 			}
 			opts.ensure_installed = utils.list_insert_unique(opts.ensure_installed, {
@@ -306,12 +302,12 @@ return {
 	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
-	{
-		"hrsh7th/nvim-cmp",
-		opts = function(_, opts)
-			opts.mapping["<C-c>"] = opts.mapping["<C-Space>"]
-			opts.mapping["<C-Space>"] = nil
-			return opts
-		end,
-	},
+	-- {
+	-- 	"hrsh7th/nvim-cmp",
+	-- 	opts = function(_, opts)
+	-- 		opts.mapping["<C-c>"] = opts.mapping["<C-Space>"]
+	-- 		opts.mapping["<C-Space>"] = nil
+	-- 		return opts
+	-- 	end,
+	-- },
 }

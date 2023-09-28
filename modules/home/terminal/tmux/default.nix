@@ -59,9 +59,10 @@
       # Fix vim colors
       set -ga terminal-overrides ",*256col*:Tc"
 
-      # Make prefix Ctrl+Space
+      # Make prefix back-tick
       unbind C-b
-      set-option -g prefix C-Space
+      set-option -g prefix `
+      bind ` send-prefix
 
       # Copy mode vim
       setw -g mode-keys vi
