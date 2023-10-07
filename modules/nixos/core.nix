@@ -67,6 +67,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
 
   networking.firewall.enable = false;
   networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.

@@ -75,7 +75,9 @@
       bind -n M-l send-keys 'C-l'
 
       # Bind window spliting
+      unbind %
       bind | split-window -h -c "#{pane_current_path}"
+      unbind '"'
       bind _ split-window -v -c "#{pane_current_path}"
 
       # Bind windows movment alt-shift l/h

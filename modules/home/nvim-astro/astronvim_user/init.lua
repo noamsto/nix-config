@@ -71,6 +71,8 @@ return {
 			"bashls", -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
+			"graphql",
+			-- "docker_compose_language_service",
 		},
 		formatting = {
 			disabled = {},

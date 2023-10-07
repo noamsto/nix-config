@@ -43,8 +43,25 @@ in {
       ps.pylsp-mypy
     ];
     extraPackages = with pkgs; [
+      # Lua
       lua-language-server
+
+      # General purpose Language Server (for sevices like black, mypy and others)
       efm-langserver
+
+      # DB
+      sqlite
+      postgresql
+
+      # Graphql
+      nodePackages.graphql-language-service-cli
+
+      # Containers
+      # nodePackages.compose-language-service
+      nodePackages.dockerfile-language-server-nodejs
+      terraform
+      terraform-ls
+      # hadolint # dockerfile linter
     ];
   };
 
@@ -80,12 +97,6 @@ in {
     shellcheck
     shfmt
 
-    # #-- CloudNative
-    nodePackages.dockerfile-language-server-nodejs
-    terraform
-    terraform-ls
-    # hadolint # Dockerfile linter
-
     #-- Others
     taplo # TOML language server / formatter / validator
     nodePackages.yaml-language-server
@@ -103,5 +114,7 @@ in {
     #-- Optional Requirements:
     gdu # disk usage analyzer, required by AstroNvim
     ripgrep # fast search tool, required by AstroNvim's '<leader>fw'(<leader> is space key)
+
+    fd # Find files
   ];
 }

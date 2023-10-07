@@ -38,7 +38,8 @@ return {
 	{ import = "astrocommunity.pack.toml" },
 	---- Backend
 	{ import = "astrocommunity.pack.lua" },
-	{ import = "astrocommunity.pack.python" },
+	---- Database
+	{ import = "astrocommunity.pack.full-dadbod" },
 	---- Operation & Cloud Native
 	{ import = "astrocommunity.pack.terraform" },
 	{ import = "astrocommunity.pack.bash" },
@@ -168,6 +169,8 @@ return {
 				"regex",
 				"terraform",
 				"nix",
+				"sql",
+				"graphql",
 			})
 		end,
 	},
@@ -246,9 +249,23 @@ return {
 		opts = function(_, opts)
 			opts.ensure_installed = nil
 			opts.automatic_installation = false
+			opts.automatic_setup = false
 		end,
 	},
-
+	{
+		"mfussenegger/nvim-dap-python",
+		dependencies = "mfussenegger/nvim-dap",
+		ft = "python", -- NOTE: ft: lazy-load on filetype
+		config = function(_, opts)
+			path = "nvim-python3"
+			require("dap-python").setup(path, opts)
+		end,
+	},
+	{
+		"linux-cultist/venv-selector.nvim",
+		opts = {},
+		keys = { { "<leader>lv", "<cmd>:VenvSelect<cr>", desc = "Select VirtualEnv" } },
+	},
 	{
 		"nvim-telescope/telescope.nvim",
 		branch = "0.1.x",
@@ -259,7 +276,7 @@ return {
 			local previewers = require("telescope.previewers")
 
 			local _bad = { ".*%.csv", ".*%.min.js" } -- Put all filetypes that slow you down in this array
-			local filesize_threshold = 1024 * 1024 -- 300KB
+			local filesize_threshold = 1024 * 1024 -- 1MB
 			local bad_files = function(filepath)
 				for _, v in ipairs(_bad) do
 					if filepath:match(v) then
@@ -302,12 +319,4 @@ return {
 	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
-	-- {
-	-- 	"hrsh7th/nvim-cmp",
-	-- 	opts = function(_, opts)
-	-- 		opts.mapping["<C-c>"] = opts.mapping["<C-Space>"]
-	-- 		opts.mapping["<C-Space>"] = nil
-	-- 		return opts
-	-- 	end,
-	-- },
 }
