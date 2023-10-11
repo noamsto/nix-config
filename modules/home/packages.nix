@@ -9,5 +9,6 @@
     vlc
     lazygit
     solaar
+    jetbrains.pycharm-professional
   ];
 }

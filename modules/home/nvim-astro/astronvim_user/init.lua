@@ -4,7 +4,7 @@ return {
 	options = {
 		opt = {
 			signcolumn = "auto", -- Show sign column when used only
-			spell = false, -- Spell checking
+			spell = false,    -- Spell checking
 			swapfile = false, -- Swapfile
 		},
 	},
@@ -68,10 +68,11 @@ return {
 			-- "pylsp",
 			"efm",
 			---- Operation & Cloud Nativautoindente
-			"bashls", -- bash
+			"bashls",   -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
+			"bufls",
 			-- "docker_compose_language_service",
 		},
 		formatting = {
