@@ -27,7 +27,7 @@
 
     # home-manager, used for managing user configuration
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.05";
+      url = "github:nix-community/home-manager/";
       # The `follows` keyword in inputs is used for inheritance.
       # Here, `inputs.nixpkgs` of home-manager is kept consistent with the `inputs.nixpkgs` of the current flake,
       # to avoid problems caused by different versions of nixpkgs dependencies.
@@ -118,10 +118,10 @@
             };
             nixpkgs.overlays = [
               # Borken packages
-              (final: prev: {
-                inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
-                inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
-              })
+              # (final: prev: {
+              #   inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
+              #   inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
+              # })
 
               # Latest emacs
               (import inputs.emacs-overlay)
@@ -152,6 +152,8 @@
     experimental-features = ["nix-command" "flakes"];
 
     substituters = [
+      # replace official cache with a mirror located in China
+      "https://mirrors.ustc.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
       # "https://anyrun.cachix.org"
       "https://hyprland.cachix.org"

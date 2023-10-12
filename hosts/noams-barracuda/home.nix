@@ -80,7 +80,7 @@
     pciutils # lspci
     usbutils # lsusb
     # social
-    pkgs-stable.slack
+    slack
     ferdium
 
     spotify

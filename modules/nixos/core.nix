@@ -128,7 +128,7 @@
     isNormalUser = true;
     description = user_full_name;
     extraGroups = ["networkmanager" "wheel"];
-    passwordFile = config.age.secrets.noams_password.path;
+    hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
       firefox-wayland
       kate
