@@ -64,9 +64,12 @@ in {
       nodePackages.dockerfile-language-server-nodejs
       terraform
       terraform-ls
-      # hadolint # dockerfile linter
+      hadolint # dockerfile linter
 
+      # protobuf
+      protolint
       buf-language-server
+      buf
     ];
   };
 

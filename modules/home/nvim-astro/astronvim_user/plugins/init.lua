@@ -73,7 +73,7 @@ return {
 	},
 	{
 		"creativenull/efmls-configs-nvim",
-		version = "v1.x.x", -- version is optional, but recommended
+		-- version = "v1.x.x", -- version is optional, but recommended
 		dependencies = { "neovim/nvim-lspconfig" },
 	},
 	-- markdown preview
@@ -123,14 +123,14 @@ return {
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		opts = {
-			window = {
-				mappings = {
-					["S"] = "none",
-					["s"] = "none",
-					["<C-h>"] = "open_split",
-					["<C-v>"] = "open_vsplit",
-				},
-			},
+			-- window = {
+			-- 	mappings = {
+			-- 		["S"] = "none",
+			-- 		["s"] = "none",
+			-- 		["<C-h>"] = "open_split",
+			-- 		["<C-v>"] = "open_vsplit",
+			-- 	},
+			-- },
 			filesystem = {
 				filtered_items = {
 					visible = true, -- visible by default
@@ -222,19 +222,12 @@ return {
 				code_actions.proselint, -- English prose linter
 				code_actions.statix, -- Lints and suggestions for Nix.
 
-				-- backend
-				diagnostics.mypy, -- Python type checker
-
 				-- Diagnostic
 				diagnostics.actionlint, -- GitHub Actions workflow syntax checking
 				diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
 				diagnostics.hadolint, -- Dockerfile linter
-				formatting.black, -- Python formatter
-				formatting.shfmt, -- Shell formatter
-				formatting.stylua, -- Lua formatter
 				formatting.taplo, -- TOML formatteautoindentr
 				formatting.terraform_fmt, -- Terraform formatter
-				formatting.alejandra, -- Nix formatter
 				formatting.sqlfluff.with({ -- SQL formatter
 					extra_args = { "--dialect", "postgres" }, -- change to your dialect
 				}),
