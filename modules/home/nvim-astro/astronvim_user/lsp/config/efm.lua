@@ -16,7 +16,7 @@ local protolint_fmt = require("efmls-configs.formatters.protolint")
 
 local fs = require("efmls-configs.fs")
 local sourceText = require("efmls-configs.utils").sourceText
-protolint = "protolint"
+local protolint = "protolint"
 local command = string.format("%s lint -reporter unix '${INPUT}'", fs.executable(protolint))
 local protolint_lint = {
 

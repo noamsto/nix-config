@@ -44,14 +44,6 @@ return {
 				},
 			},
 		},
-		on_attach = function(client, buffer)
-			local clients_no_hover = { "ruff_lsp" }
-			for _, no_hover_client_name in pairs(clients_no_hover) do
-				if client.name == no_hover_client_name then
-					client.server_capibilities.hoverProvider = false
-				end
-			end
-		end,
 
 		-- enable servers that installed by home-manager instead of mason
 		servers = {
