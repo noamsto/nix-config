@@ -72,6 +72,9 @@
   networking.firewall.enable = false;
   networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.
 
+  # For discovering zero-conf network sharing
+  services.avahi.enable = true;
+
   services.resolved.enable = true;
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts

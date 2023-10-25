@@ -252,6 +252,15 @@ return {
 		config = function(_, opts)
 			path = "nvim-python3"
 			require("dap-python").setup(path, opts)
+			-- table.insert(require("dap").configurations.python, {
+			-- 	type = "python",
+			-- 	request = "launch",
+			-- 	name = "Django runserver",
+			-- 	program = function()
+			-- 		return vim.fn.findfile("manage.py", "**")
+			-- 	end,
+			-- 	args = { "runserver", "--noreload" },
+			-- })
 		end,
 	},
 	{

@@ -12,59 +12,9 @@ local alejandra = require("efmls-configs.formatters.alejandra")
 local prettier = require("efmls-configs.formatters.prettier")
 
 -- protobuf
-local protolint_fmt = require("efmls-configs.formatters.protolint")
-
-local fs = require("efmls-configs.fs")
-local sourceText = require("efmls-configs.utils").sourceText
-local protolint = "protolint"
-local command = string.format("%s lint -reporter unix '${INPUT}'", fs.executable(protolint))
-local protolint_lint = {
-
-	prefix = protolint,
-	lintSource = sourceText(protolint),
-	lintCommand = command,
-	lintStdin = false,
-	lintFormats = {
-		"%f:%l:%c: %m",
-	},
-	lintSeverity = 2,
-	rootMarkers = {
-		".protolint.yaml",
-		".protolint.yml",
-	},
-}
-
--- -- buf formatting
---
--- local formatter = "buf"
--- local command = string.format("%s format '${INPUT}'", fs.executable(formatter))
---
--- local buf = {
--- 	formatCommand = command,
--- 	formatStdin = false,
--- 	rootMarkers = {
--- 		"buf.yaml",
--- 	},
--- }
---
--- -- buf linting
---
--- local buf_linter = "buf"
--- local buf_lint_command = string.format("%s lint", fs.executable(buf_linter))
---
--- local buf_lint = {
--- 	prefix = buf_linter,
--- 	lintSource = sourceText(buf_linter),
--- 	lintCommand = buf_lint_command,
--- 	lintStdin = false,
--- 	lintFormats = {
--- 		"%f:%l:%c:%m",
--- 	},
--- 	lintSeverity = 2,
--- 	rootMarkers = {
--- 		"buf.yaml",
--- 	},
--- }
+-- local protolint_fmt = require("efmls-configs.formatters.protolint")
+local buf_fmt = require("efmls-configs.formatters.buf")
+local buf_lint = require("efmls-configs.linters.buf")
 
 -- bash
 local shfmt = require("efmls-configs.formatters.shfmt")
@@ -74,7 +24,8 @@ local languages = {
 	python = { mypy, black },
 	nix = { alejandra },
 	yaml = { prettier },
-	proto = { protolint_fmt, protolint_lint },
+	-- proto = { protolint_fmt, protolint_lint },
+	proto = { buf_fmt, buf_lint },
 	bash = { shfmt },
 }
 local efmls_config = {

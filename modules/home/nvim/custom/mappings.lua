@@ -146,7 +146,7 @@ M.trouble = {
 			function()
 				require("trouble").open()
 			end,
-      "Open Troubles"
+			"Open Troubles",
 		},
 	},
 }

@@ -3,7 +3,7 @@ return {
 
 	options = {
 		opt = {
-			signcolumn = "auto", -- Show sign column when used only
+			signcolumn = "auto:2", -- Show sign column when used only
 			spell = false, -- Spell checking
 			swapfile = false, -- Swapfile
 		},
