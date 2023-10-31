@@ -133,7 +133,8 @@
     extraGroups = ["networkmanager" "wheel"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
-      firefox-wayland
+      # firefox-wayland
+      # firefox
       kate
       #  thunderbird
     ];

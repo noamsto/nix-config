@@ -19,6 +19,7 @@
     ./home/nvim-astro
     ./home/bat
     ./home/fzf
+    ./home/firefox
     # ./home/emacs
   ];
 }
