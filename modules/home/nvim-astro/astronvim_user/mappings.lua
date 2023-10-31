@@ -10,9 +10,18 @@ local utils = require("astronvim.utils")
 
 require("telescope").load_extension("refactoring")
 
+local continue = function()
+	if vim.fn.filereadable(".vscode/launch.json") then
+		require("dap.ext.vscode").load_launchjs()
+	end
+	require("dap").continue()
+end
+
 return {
 	-- normal mode
 	n = {
+
+		["<leader>dc"] = { continue, desc = "Start/Continue (F5)" },
 		-- second key is the lefthand side of the map
 		-- mappings seen under group name "Buffer"
 		["<leader>bn"] = { "<cmd>tabnew<cr>", desc = "New tab" },

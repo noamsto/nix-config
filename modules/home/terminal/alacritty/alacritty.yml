@@ -19,3 +19,8 @@ scrolling:
 selection:
   save_to_clipboard: true
 
+
+window:
+  opacity: 1
+  dynamic_title: true
+  decorations_theme_variant: None

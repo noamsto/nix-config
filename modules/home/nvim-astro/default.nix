@@ -71,6 +71,9 @@ in {
       buf-language-server
       buf
     ];
+
+    # For development
+    # extraLuaPackages = luaPkgs: with luaPkgs; [plenary-nvim luv];
   };
 
   home.packages = with pkgs; [

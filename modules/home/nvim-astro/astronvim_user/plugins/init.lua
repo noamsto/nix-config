@@ -27,6 +27,21 @@ return {
 	{ import = "astrocommunity.editing-support.todo-comments-nvim" },
 	{ import = "astrocommunity.editing-support.telescope-undo-nvim" },
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
+	{
+		"smoka7/multicursors.nvim",
+		event = "VeryLazy",
+		dependencies = { "smoka7/hydra.nvim" },
+		opts = {},
+		keys = {
+			{
+				mode = { "v", "n" },
+				"<Leader>m",
+				"<cmd>MCunderCursor<cr>",
+				desc = "Create a selection for char under the cursor",
+			},
+		},
+	},
+
 	-- The plugin offers the abilibty to search and replace.
 	{ import = "astrocommunity.project.nvim-spectre" },
 
@@ -49,7 +64,12 @@ return {
 	{ import = "astrocommunity.motion.flash-nvim" },
 	-- Lua implementation of CamelCaseMotion, with extra consideration of punctuation.
 	{ import = "astrocommunity.motion.nvim-spider" },
-
+	{
+		"chrisgrieser/nvim-spider",
+		opts = {
+			skipInsignificantPunctuation = false,
+		},
+	},
 	-- Note taking
 	{ import = "astrocommunity.note-taking.neorg" },
 	{
@@ -60,7 +80,7 @@ return {
 				["core.defaults"] = {}, -- Loads default behaviour
 				["core.concealer"] = {}, -- Adds pretty icons to your documents
 				["core.summary"] = {},
-				["core.dirman"] = { -- Manages Neorg workspaces
+				["core.dirman"] = {  -- Manages Neorg workspaces
 					config = {
 						workspaces = {
 							notes = "~/notes",
@@ -68,6 +88,7 @@ return {
 						default_workspace = "notes",
 					},
 				},
+				["core.export"] = {}, -- Export to supported file types
 			},
 		},
 	},
@@ -123,14 +144,6 @@ return {
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		opts = {
-			-- window = {
-			-- 	mappings = {
-			-- 		["S"] = "none",
-			-- 		["s"] = "none",
-			-- 		["<C-h>"] = "open_split",
-			-- 		["<C-v>"] = "open_vsplit",
-			-- 	},
-			-- },
 			filesystem = {
 				filtered_items = {
 					visible = true, -- visible by default
@@ -223,12 +236,12 @@ return {
 				code_actions.statix, -- Lints and suggestions for Nix.
 
 				-- Diagnostic
-				diagnostics.actionlint, -- GitHub Actions workflow syntax checking
-				diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
-				diagnostics.hadolint, -- Dockerfile linter
-				formatting.taplo, -- TOML formatteautoindentr
-				formatting.terraform_fmt, -- Terraform formatter
-				formatting.sqlfluff.with({ -- SQL formatter
+				diagnostics.actionlint,                -- GitHub Actions workflow syntax checking
+				diagnostics.deadnix,                   -- Scan Nix files for deid code. Formatting
+				diagnostics.hadolint,                  -- Dockerfile linter
+				formatting.taplo,                      -- TOML formatteautoindentr
+				formatting.terraform_fmt,              -- Terraform formatter
+				formatting.sqlfluff.with({             -- SQL formatter
 					extra_args = { "--dialect", "postgres" }, -- change to your dialect
 				}),
 			})
@@ -318,7 +331,7 @@ return {
 			})
 		end,
 	},
-	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
+	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
 }
