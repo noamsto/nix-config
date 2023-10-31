@@ -5,7 +5,8 @@
 }: {
   home.packages = with pkgs; [
     joplin-desktop
-    logseq
+    # logseq
+    google-chrome
     vlc
     lazygit
     solaar

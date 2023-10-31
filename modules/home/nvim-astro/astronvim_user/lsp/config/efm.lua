@@ -4,7 +4,7 @@ local stylua = require("efmls-configs.formatters.stylua")
 -- python
 local mypy = require("efmls-configs.linters.mypy") -- Works better with Django
 local black = require("efmls-configs.formatters.black")
-black.formatCommand = black.formatCommand .. " --line-length 99"
+black.formatCommand = black.formatCommand .. " --line-length 120"
 -- nix
 local alejandra = require("efmls-configs.formatters.alejandra")
 
