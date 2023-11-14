@@ -11,5 +11,6 @@
     lazygit
     solaar
     jetbrains.pycharm-professional
+    evince
   ];
 }

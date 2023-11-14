@@ -4,7 +4,7 @@ return {
 	options = {
 		opt = {
 			signcolumn = "auto:2", -- Show sign column when used only
-			spell = false, -- Spell checking
+			spell = true, -- Spell checking
 			swapfile = false, -- Swapfile
 		},
 	},
