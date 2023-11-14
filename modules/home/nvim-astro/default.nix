@@ -6,13 +6,13 @@
 }: let
   ruff-lsp = pkgs.python311Packages.buildPythonPackage rec {
     name = "ruff-lsp";
-    version = "v0.0.36";
+    version = "v0.0.42";
     format = "pyproject";
     src = pkgs.fetchFromGitHub {
       owner = "astral-sh";
       repo = name;
       rev = version;
-      sha256 = "sha256-29LK/upjtgv9LIOn4bJMHkWXUJEkR0pR5fuyOYP9hAI=";
+      sha256 = "sha256-Dn/xPjYCyJYlDNMUfl61L/tWq5mRJ8WD0G5qZH9OepY=";
     };
     postPatch = ''
       # ruff binary is used directly, the ruff python package is not needed
