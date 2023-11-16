@@ -5,6 +5,7 @@ return {
 		opt = {
 			signcolumn = "auto:2", -- Show sign column when used only
 			spell = true, -- Spell checking
+			spelloptions = { "camel" },
 			swapfile = false, -- Swapfile
 		},
 	},

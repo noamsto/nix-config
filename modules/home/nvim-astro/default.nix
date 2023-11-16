@@ -6,7 +6,7 @@
 }: let
   ruff-lsp = pkgs.python311Packages.buildPythonPackage rec {
     name = "ruff-lsp";
-    version = "v0.0.42";
+    version = "v0.0.45";
     format = "pyproject";
     src = pkgs.fetchFromGitHub {
       owner = "astral-sh";
