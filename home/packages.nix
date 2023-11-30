@@ -1,22 +1,7 @@
-{
-  config,
-  pkgs,
-  pkgs-stable,
-  agenix,
-  ...
-}: {
-  imports = [
-    ../../modules/kde-plasma.nix
-  ];
-
-  home.username = "noams";
-  home.homeDirectory = "/home/noams";
-
-  # Packages that should be installed to the user profile.
+{pkgs, ...}: {
   home.packages = with pkgs; [
     # here is some command line tools I use frequently
     # feel free to add your own or remove some of them
-    bat
 
     neofetch
     nnn # terminal file manager
@@ -84,22 +69,12 @@
     ferdium
 
     spotify
+    joplin-desktop
+    google-chrome
+    vlc
+    lazygit
+    solaar
+    jetbrains.pycharm-professional
+    evince
   ];
-
-  home.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-  };
-
-  # This value determines the home Manager release that your
-  # configuration is compatible with. This helps avoid breakage
-  # when a new home Manager release introduces backwards
-  # incompatible changes.
-  #
-  # You can update home Manager without changing this value. See
-  # the home Manager release notes for a list of state version
-  # changes in each release.
-  home.stateVersion = "23.05";
-
-  # Let home Manager install and manage itself.
-  programs.home-manager.enable = true;
 }

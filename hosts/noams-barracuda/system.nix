@@ -10,7 +10,6 @@
     ../../modules/nixos/core.nix
     ../../modules/nixos/kde.nix
     ../../modules/nixos/docker
-    ../../modules/nixos/cloud
     ../../modules/nixos/tailscale
     ../../modules/nixos/xremap
     ./barracuda_secrets.nix

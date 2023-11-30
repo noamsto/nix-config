@@ -112,7 +112,7 @@
               useGlobalPkgs = true;
               extraSpecialArgs = args;
               # Home manager config (configures programs like firefox, zsh, eww, etc)
-              users.${username} = ./. + "/hosts/${hostname}/home.nix";
+              users.${username} = "./home";
             };
             nixpkgs.overlays = [
               # Broken packages
@@ -120,9 +120,6 @@
               #   inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
               #   inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
               # })
-
-              # Latest Firefox
-              # inputs.mozilla.overlays.firefox
             ];
           }
         ];

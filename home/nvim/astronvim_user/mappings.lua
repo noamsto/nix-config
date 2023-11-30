@@ -89,6 +89,13 @@ return {
 		["<leader>i"] = { name = " Icon" },
 		["<leader>ip"] = { "<cmd>IconPickerNormal emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker" },
 		["<leader>iy"] = { "<cmd>IconPickerYank emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker (Yank)" },
+
+		["<leader>tt"] = {
+			function()
+				utils.toggle_term_cmd("btop")
+			end,
+			desc = "ToggleTerm btop",
+		},
 	},
 
 	-- visual mode(what's the difference Between v and x???)

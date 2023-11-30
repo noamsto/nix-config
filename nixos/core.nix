@@ -5,17 +5,21 @@
   username,
   user_full_name,
   user_email,
-  system,
   ...
 }: {
   imports = [
     ./vim
   ];
-  programs.thefuck.enable = true;
-  programs.zsh.enable = true;
+
   users.defaultUserShell = pkgs.zsh;
-  programs.dconf.enable = true;
-  programs.ssh.startAgent = true;
+
+  programs = {
+    thefuck.enable = true;
+    zsh.enable = true;
+    dconf.enable = true;
+    ssh.startAgent = true;
+    nix-ld.enable = true;
+  };
 
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
@@ -65,17 +69,8 @@
     LC_TIME = "en_IL";
   };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-  services.printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
-
   networking.firewall.enable = false;
   networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.
-
-  # For discovering zero-conf network sharing
-  services.avahi.enable = true;
-
-  services.resolved.enable = true;
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
   fonts = {
@@ -119,6 +114,7 @@
   sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
+  security.polkit.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -133,10 +129,7 @@
     extraGroups = ["networkmanager" "wheel"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
-      # firefox-wayland
-      # firefox
-      kate
-      #  thunderbird
+      firefox
     ];
   };
 
@@ -145,7 +138,6 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
     git
     curl
@@ -156,44 +148,31 @@
     (python311.withPackages (ps:
       with ps; [
         ipython
-        requests
       ]))
   ];
 
   environment.shells = with pkgs; [zsh];
 
-  # enable bluetooth & gui paring tools - blueman
-  # or you can use cli:
-  # $ bluetoothctl
-  # [bluetooth] # power on
-  # [bluetooth] # agent on
-  # [bluetooth] # default-agent
-  # [bluetooth] # scan on
-  # ...put device in pairing mode and wait [hex-address] to appear here...
-  # [bluetooth] # pair [hex-address]
-  # [bluetooth] # connect [hex-address]
-  # Bluetooth devices automatically connect with bluetoothctl as well:
-  # [bluetooth] # trust [hex-address]
   hardware.bluetooth.enable = true;
-  # services.blueman.enable = true;
-
-  services.power-profiles-daemon.enable = true;
-  services.fwupd.enable = true;
-
-  # security with polkit
-  security.polkit.enable = true;
 
   services = {
     dbus.packages = [pkgs.gcr];
     geoclue2.enable = true;
 
-    udev.packages = with pkgs; [
-      platformio # udev rules for platformio
-      android-udev-rules
-    ];
-  };
+    openssh.enable = true;
+    power-profiles-daemon.enable = true;
+    fwupd.enable = true;
 
-  services.openssh.enable = true;
+    # For discovering zero-conf network sharing
+    avahi.enable = true;
+
+    # DNS service
+    resolved.enable = true;
+
+    # Enable CUPS to print documents.
+    printing.enable = true;
+    printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
+  };
 
   xdg = {
     portal = {
@@ -204,8 +183,6 @@
       ];
     };
   };
-
-  programs.nix-ld.enable = true;
 
   system.stateVersion = "23.05"; # Did you read the comment?
 }

@@ -8,6 +8,7 @@
     enable = true;
     settings = {
       color_theme = "catpuccin_mocha";
+      vim_keys = true;
     };
   };
 }
