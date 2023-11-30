@@ -1,7 +1,11 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  username,
+  ...
+}: {
   imports = [
-    ./packages
-    ./gtk.nix
+    ./packages.nix
+    ./gtk
     ./terminal/term-alacritty.nix
     ./xdg
     ./vscode
@@ -15,12 +19,8 @@
     ./cloud
   ];
 
-  home.username = "noams";
-  home.homeDirectory = "/home/noams";
-
-  home.sessionVariables = {
-    NIXOS_OZONE_WL = "1";
-  };
+  home.username = username;
+  home.homeDirectory = "/home/${username}";
 
   # This value determines the home Manager release that your
   # configuration is compatible with. This helps avoid breakage

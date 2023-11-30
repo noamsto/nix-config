@@ -9,11 +9,7 @@
     nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
-      # build with your own instance of nixpkgs
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    hyprland.url = "github:hyprwm/Hyprland";
 
     catppuccin-hyprland = {
       url = "github:catppuccin/hyprland";
@@ -112,7 +108,7 @@
               useGlobalPkgs = true;
               extraSpecialArgs = args;
               # Home manager config (configures programs like firefox, zsh, eww, etc)
-              users.${username} = "./home";
+              users.${username} = ./home;
             };
             nixpkgs.overlays = [
               # Broken packages

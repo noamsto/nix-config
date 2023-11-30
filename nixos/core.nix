@@ -110,16 +110,18 @@
     };
   };
 
+  security.polkit.enable = true;
+
   # Enable sound with pipewire.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
-  security.polkit.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -172,16 +174,6 @@
     # Enable CUPS to print documents.
     printing.enable = true;
     printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
-  };
-
-  xdg = {
-    portal = {
-      enable = true;
-      extraPortals = with pkgs; [
-        xdg-desktop-portal-wlr
-        xdg-desktop-portal-gtk
-      ];
-    };
   };
 
   system.stateVersion = "23.05"; # Did you read the comment?

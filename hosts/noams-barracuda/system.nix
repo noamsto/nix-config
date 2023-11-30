@@ -7,13 +7,12 @@
   ...
 }: {
   imports = [
-    ../../modules/nixos/core.nix
-    ../../modules/nixos/kde.nix
-    ../../modules/nixos/docker
-    ../../modules/nixos/tailscale
-    ../../modules/nixos/xremap
+    ../../nixos/core.nix
+    ../../nixos/kde.nix
+    ../../nixos/docker
+    ../../nixos/tailscale
+    ../../nixos/xremap
     ./barracuda_secrets.nix
-    # ../../modules/nixos/hyprland.nix
   ];
 
   boot.loader.efi.canTouchEfiVariables = true;
