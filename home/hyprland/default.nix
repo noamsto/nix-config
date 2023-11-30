@@ -1,5 +1,6 @@
 _: {
-  xdg.configFile."alacritty/alacritty.yml".source = ./hyprland.conf;
-  imports = [
-  ];
+  xdg.configFile = {
+    "hypr/hyprland.conf".source = ./hyprland.conf;
+    "hypr/start.sh".source = ./start.sh;
+  };
 }
