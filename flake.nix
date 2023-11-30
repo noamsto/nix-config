@@ -108,7 +108,7 @@
               useGlobalPkgs = true;
               extraSpecialArgs = args;
               # Home manager config (configures programs like firefox, zsh, eww, etc)
-              users.${username} = ./home;
+              users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
             nixpkgs.overlays = [
               # Broken packages
@@ -130,6 +130,14 @@
         pkgs = inputs.nixpkgs;
         system = "x86_64-linux";
         hostname = "noams-barracuda";
+        username = "noams";
+        user_full_name = "Noam Stolero";
+        user_email = "nstolero@barracuda.com";
+      };
+      noams-barracuda-hypr = mkSystem {
+        pkgs = inputs.nixpkgs;
+        system = "x86_64-linux";
+        hostname = "noams-barracuda-hypr";
         username = "noams";
         user_full_name = "Noam Stolero";
         user_email = "nstolero@barracuda.com";
