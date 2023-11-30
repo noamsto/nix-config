@@ -95,5 +95,11 @@ return {
 				vim.diagnostic.disable(args.buf)
 			end,
 		})
+
+		vim.filetype.add({
+			filename = {
+				[".envrc"] = "sh",
+			},
+		})
 	end,
 }

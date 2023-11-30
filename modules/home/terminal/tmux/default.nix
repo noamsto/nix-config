@@ -84,6 +84,9 @@
       bind -n M-H previous-window
       bind -n M-L next-window
 
+      # Order sessions alphabeticaly
+      bind s choose-tree -Zs -O name
+
     '';
   };
 }

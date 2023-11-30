@@ -40,7 +40,7 @@ return {
 		},
 	},
 
-	-- The plugin offers the abilibty to search and replace.
+	-- The plugin offers the ability to search and replace.
 	{ import = "astrocommunity.project.nvim-spectre" },
 
 	-- Language Support
@@ -332,4 +332,14 @@ return {
 	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
+	{
+		"ziontee113/icon-picker.nvim",
+		config = function()
+			require("icon-picker").setup({
+				disable_legacy_commands = true,
+			})
+		end,
+		dependencies = { "stevearc/dressing.nvim" },
+		event = "VeryLazy",
+	},
 }

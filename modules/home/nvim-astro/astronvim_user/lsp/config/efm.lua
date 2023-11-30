@@ -3,8 +3,7 @@ local stylua = require("efmls-configs.formatters.stylua")
 
 -- python
 local mypy = require("efmls-configs.linters.mypy") -- Works better with Django
-local black = require("efmls-configs.formatters.black")
-black.formatCommand = black.formatCommand .. " --line-length 120"
+
 -- nix
 local alejandra = require("efmls-configs.formatters.alejandra")
 
@@ -12,7 +11,6 @@ local alejandra = require("efmls-configs.formatters.alejandra")
 local prettier = require("efmls-configs.formatters.prettier")
 
 -- protobuf
--- local protolint_fmt = require("efmls-configs.formatters.protolint")
 local buf_fmt = require("efmls-configs.formatters.buf")
 local buf_lint = require("efmls-configs.linters.buf")
 
@@ -21,10 +19,9 @@ local shfmt = require("efmls-configs.formatters.shfmt")
 
 local languages = {
 	lua = { stylua },
-	python = { mypy, black },
+	python = { mypy },
 	nix = { alejandra },
 	yaml = { prettier },
-	-- proto = { protolint_fmt, protolint_lint },
 	proto = { buf_fmt, buf_lint },
 	bash = { shfmt },
 }

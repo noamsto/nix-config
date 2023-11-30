@@ -84,7 +84,11 @@ return {
 		},
 
 		["<leader>r"] = { name = "󰣪 Refactor" },
-		["<leader>y"] = { name = "  Yanky" },
+		["<leader>y"] = { name = " Yanky" },
+
+		["<leader>i"] = { name = " Icon" },
+		["<leader>ip"] = { "<cmd>IconPickerNormal emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker" },
+		["<leader>iy"] = { "<cmd>IconPickerYank emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker (Yank)" },
 	},
 
 	-- visual mode(what's the difference Between v and x???)
@@ -100,6 +104,7 @@ return {
 	},
 
 	i = {
+		["<A-i>"] = { "<cmd>IconPickerInsert<cr>", desc = "Icon picker insert mode" },
 		["<C-Space>"] = false,
 	},
 }

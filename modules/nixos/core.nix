@@ -178,6 +178,7 @@
   # services.blueman.enable = true;
 
   services.power-profiles-daemon.enable = true;
+  services.fwupd.enable = true;
 
   # security with polkit
   security.polkit.enable = true;
