@@ -9,8 +9,6 @@
     nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
-    hyprland.url = "github:hyprwm/Hyprland";
-
     catppuccin-hyprland = {
       url = "github:catppuccin/hyprland";
       flake = false;
@@ -54,11 +52,21 @@
       flake = false;
     };
 
+    # Used for better git diffs, need this for themes
+    sddm-theme = {
+      url = "github:MarianArlt/sddm-sugar-dark";
+      flake = false;
+    };
+
     # Xremap for remapping keys
     xremap.url = "github:xremap/nix-flake";
 
     # Mozilla overlay for latest version
     # mozilla.url = "github:mozilla/nixpkgs-mozilla";
+
+    # Hyprland
+    hyprland.url = "github:hyprwm/Hyprland";
+    nix-colors.url = "github:misterio77/nix-colors";
   };
 
   # All outputs for the system (configs)

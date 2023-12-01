@@ -38,9 +38,6 @@ in {
     withNodeJs = true;
     extraPython3Packages = ps: [
       ps.debugpy
-      ps.python-lsp-server
-      ps.python-lsp-black
-      ps.pylsp-mypy
     ];
     extraPackages = with pkgs; [
       # Lua
@@ -67,7 +64,6 @@ in {
       hadolint # dockerfile linter
 
       # protobuf
-      protolint
       buf-language-server
       buf
     ];
@@ -89,13 +85,10 @@ in {
 
     #-- python
     nodePackages.pyright # python language server
-    python311Packages.black # python formatter
     ruff-lsp
 
     #-- nix
     nil
-    rnix-lsp
-    # nixd
     statix # Lints and suggestions for the nix programming language
     deadnix # Find and remove unused code in .nix source files
     alejandra # Nix Code Formatter

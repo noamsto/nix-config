@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   imports = [
     ./blueman
+    ./sddm
   ];
   environment.systemPackages = with pkgs; [
     # Top bar
@@ -18,6 +19,5 @@
     networkmanagerapplet
   ];
   programs.hyprland.enable = true;
-  services.xserver.displayManager.sddm.enable = true;
   services.xserver.enable = true;
 }
