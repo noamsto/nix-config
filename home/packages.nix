@@ -64,6 +64,7 @@
     ethtool
     pciutils # lspci
     usbutils # lsusb
+
     # social
     slack
     ferdium

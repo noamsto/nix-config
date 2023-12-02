@@ -3,25 +3,7 @@
   config,
   astronvim,
   ...
-}: let
-  ruff-lsp = pkgs.python311Packages.buildPythonPackage rec {
-    name = "ruff-lsp";
-    version = "v0.0.45";
-    format = "pyproject";
-    src = pkgs.fetchFromGitHub {
-      owner = "astral-sh";
-      repo = name;
-      rev = version;
-      sha256 = "sha256-Dn/xPjYCyJYlDNMUfl61L/tWq5mRJ8WD0G5qZH9OepY=";
-    };
-    postPatch = ''
-      # ruff binary is used directly, the ruff python package is not needed
-      sed -i '/"ruff>=/d' pyproject.toml
-    '';
-    propagatedBuildInputs = with pkgs.python311Packages; [hatchling lsprotocol pygls typing-extensions pkgs.ruff];
-    doCheck = true;
-  };
-in {
+}: {
   xdg.configFile = {
     "nvim".source = astronvim;
     # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/modules/home/nvim-astro/astronvim_user";
@@ -66,59 +48,58 @@ in {
       # protobuf
       buf-language-server
       buf
+
+      #-- python
+      nodePackages.pyright # python language server
+      ruff-lsp
+
+      #-- nix
+      nil
+      statix # Lints and suggestions for the nix programming language
+      deadnix # Find and remove unused code in .nix source files
+      alejandra # Nix Code Formatter
+
+      #-- lua
+      stylua
+
+      #-- bash
+      nodePackages.bash-language-server
+      shellcheck
+      shfmt
+
+      #-- Others
+      taplo # TOML language server / formatter / validator
+      nodePackages.yaml-language-server
+      sqlfluff # SQL linter
+      actionlint # GitHub Actions linter
+      proselint # English prose linter
+
+      #-- Misc
+      tree-sitter # common language parser/highlighter
+      nodePackages.prettier # common code formatter
+      marksman # language server for markdown
+      glow # markdown previewer
+
+      #-- Optional Requirements:
+      gdu # disk usage analyzer, required by AstroNvim
+      ripgrep # fast search tool, required by AstroNvim's '<leader>fw'(<leader> is space key)
+
+      fd # Find files
+
+      cmake
+      cmake-language-server
+      checkmake
+      gnumake
+      gcc # c/c++ compiler, required by nvim-treesitter!
+      llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
+      gdb
+      lldb
+
+      # Wayland clipboard
+      wl-clipboard
     ];
 
     # For development
     # extraLuaPackages = luaPkgs: with luaPkgs; [plenary-nvim luv];
   };
-
-  home.packages = with pkgs; [
-    #-- c/c++
-    cmake
-    cmake-language-server
-    gnumake
-    checkmake
-    gcc # c/c++ compiler, required by nvim-treesitter!
-    llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
-    gdb
-    lldb
-
-    #-- python
-    nodePackages.pyright # python language server
-    ruff-lsp
-
-    #-- nix
-    nil
-    statix # Lints and suggestions for the nix programming language
-    deadnix # Find and remove unused code in .nix source files
-    alejandra # Nix Code Formatter
-
-    #-- lua
-    stylua
-
-    #-- bash
-    nodePackages.bash-language-server
-    shellcheck
-    shfmt
-
-    #-- Others
-    taplo # TOML language server / formatter / validator
-    nodePackages.yaml-language-server
-    sqlfluff # SQL linter
-    actionlint # GitHub Actions linter
-    buf # protoc plugin for linting and formatting
-    proselint # English prose linter
-
-    #-- Misc
-    tree-sitter # common language parser/highlighter
-    nodePackages.prettier # common code formatter
-    marksman # language server for markdown
-    glow # markdown previewer
-
-    #-- Optional Requirements:
-    gdu # disk usage analyzer, required by AstroNvim
-    ripgrep # fast search tool, required by AstroNvim's '<leader>fw'(<leader> is space key)
-
-    fd # Find files
-  ];
 }

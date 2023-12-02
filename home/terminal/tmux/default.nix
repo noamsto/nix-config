@@ -43,7 +43,8 @@
           set -g @thumbs-fg-color yellow
           set -g @thumbs-select-fg-color red
           set -g @thumbs-hint-fg-color blue
-          set -g @thumbs-command 'echo -n {} | xclip -selection clipboard'
+          # set -g @thumbs-command 'echo -n {} | xclip -selection clipboard'
+          set -g @thumbs-command 'echo -n {} | wl-copy clipboard'
           set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
         '';
       }
@@ -87,6 +88,9 @@
       # Order sessions alphabeticaly
       bind s choose-tree -Zs -O name
 
+      # Sync window name with terminal name
+      set-option -g set-titles on
+      set-option -g set-titles-string "#S / #W"
     '';
   };
 }

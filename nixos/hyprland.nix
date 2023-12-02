@@ -20,4 +20,10 @@
   ];
   programs.hyprland.enable = true;
   services.xserver.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland
+    ];
+  };
 }

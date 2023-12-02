@@ -16,18 +16,12 @@
     enable = true;
 
     # Enable the KDE Plasma Desktop Environment.
-    # displayManager.sddm.enable = true;
     desktopManager.plasma5.enable = true;
+    displayManager.defaultSession = "plasmawayland";
 
     # Configure keymap in X11
     layout = "us,il";
     xkbVariant = "";
     xkbOptions = "compose:menu, grp:win_space_toggle";
-  };
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
-    ];
   };
 }

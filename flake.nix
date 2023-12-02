@@ -53,7 +53,7 @@
     };
 
     # Used for better git diffs, need this for themes
-    sddm-theme = {
+    sddm-sugar-dark = {
       url = "github:MarianArlt/sddm-sugar-dark";
       flake = false;
     };
