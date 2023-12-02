@@ -111,7 +111,7 @@ return {
 	},
 
 	i = {
-		["<A-i>"] = { "<cmd>IconPickerInsert<cr>", desc = "Icon picker insert mode" },
+		["<A-i>"] = { "<cmd>IconPickerInsert emoji nerd_font_v3 symbols<cr>", desc = "Icon picker insert mode" },
 		["<C-Space>"] = false,
 	},
 }
