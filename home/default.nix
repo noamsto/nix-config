@@ -5,7 +5,7 @@
 }: {
   imports = [
     ./packages.nix
-    ./gtk
+    # ./gtk
     ./terminal/term-alacritty.nix
     ./xdg
     ./vscode
@@ -17,6 +17,7 @@
     ./nvim
     ./firefox
     ./cloud
+    ./theme
   ];
 
   home.username = username;

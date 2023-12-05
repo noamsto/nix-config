@@ -87,6 +87,7 @@
 
       # Order sessions alphabeticaly
       bind s choose-tree -Zs -O name
+      bind w choose-tree -Zw -O name
 
       # Sync window name with terminal name
       set-option -g set-titles on

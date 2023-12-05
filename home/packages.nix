@@ -77,5 +77,7 @@
     solaar
     jetbrains.pycharm-professional
     evince
+
+    fd # find files
   ];
 }

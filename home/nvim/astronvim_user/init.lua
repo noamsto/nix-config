@@ -73,7 +73,7 @@ return {
 			format_on_save = {
 				enabled = true,
 				allow_filetypes = {
-					-- "python",
+					"python",
 					"lua",
 					"nix",
 				},
