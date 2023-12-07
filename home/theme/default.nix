@@ -47,6 +47,8 @@ in rec {
     @define-color error_fg_color #d5c4a1;
     @define-color window_bg_color #282828;
     @define-color window_fg_color #d5c4a1;
+    @define-color sidebar_bg_color #282828;
+    @define-color sidebar_fg_color #d5c4a1;
     @define-color view_bg_color #3c3836;
     @define-color view_fg_color #d5c4a1;
     @define-color headerbar_bg_color mix(#282828,black,0.2);

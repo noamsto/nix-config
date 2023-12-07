@@ -79,5 +79,7 @@
     evince
 
     fd # find files
+
+    insomnia
   ];
 }

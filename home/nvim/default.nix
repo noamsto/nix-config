@@ -2,6 +2,7 @@
   pkgs,
   config,
   astronvim,
+  pkgs-stable,
   ...
 }: {
   xdg.configFile = {
@@ -10,6 +11,7 @@
     # "astronvim/lua/user".source = ./astronvim_user;   # Enable after finishing configuring nvim
   };
   programs.neovim = {
+    package = pkgs-stable.neovim-unwrapped;
     enable = true;
     defaultEditor = true;
 

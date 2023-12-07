@@ -13,7 +13,6 @@
     swww
     # App launcher
     rofi-wayland
-    fuzzel
 
     # Network applet
     networkmanagerapplet

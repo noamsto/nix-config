@@ -42,7 +42,7 @@
 
     # AstroNvim is an aesthetic and feature-rich neovim config.
     astronvim = {
-      url = "github:AstroNvim/AstroNvim/v3.36.11";
+      url = "github:AstroNvim/AstroNvim/v3.39.0";
       flake = false;
     };
 
