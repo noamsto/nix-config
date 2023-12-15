@@ -81,5 +81,8 @@
     fd # find files
 
     insomnia
+
+    # Wayland clipboard
+    wl-clipboard
   ];
 }

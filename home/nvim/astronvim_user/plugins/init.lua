@@ -347,4 +347,31 @@ return {
 		dependencies = { "stevearc/dressing.nvim" },
 		event = "VeryLazy",
 	},
+	{ -- override nvim-cmp plugin
+		"hrsh7th/nvim-cmp",
+		dependencies = { "lukas-reineke/cmp-under-comparator" },
+		-- override the options table that is used in the `require("cmp").setup()` call
+		opts = function(_, opts)
+			-- opts parameter is the default options table
+			-- the function is lazy loaded so cmp is able to be required
+			local cmp = require("cmp")
+			opts.sorting = {
+				comparators = {
+					cmp.config.compare.score,
+					cmp.config.compare.locality,
+					cmp.config.compare.offset,
+					require("cmp-under-comparator").under,
+					-- cmp.config.compare.locality,
+					-- cmp.config.compare.recently_used,
+					-- cmp.config.compare.offset,
+					-- cmp.config.compare.exact,
+					-- cmp.config.compare.scope,
+					-- cmp.config.compare.kind,
+				},
+			}
+
+			-- return the new table to be used
+			return opts
+		end,
+	},
 }

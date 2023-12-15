@@ -124,11 +124,13 @@
     jack.enable = true;
   };
 
+  programs.adb.enable = true;
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${username} = {
     isNormalUser = true;
     description = user_full_name;
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["adbusers" "networkmanager" "wheel"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
       firefox
@@ -174,6 +176,13 @@
     # Enable CUPS to print documents.
     printing.enable = true;
     printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
+  };
+
+  system.activationScripts.binbash = {
+    deps = ["binsh"];
+    text = ''
+      ln -s /bin/sh /bin/bash
+    '';
   };
 
   system.stateVersion = "23.05"; # Did you read the comment?

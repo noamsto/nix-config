@@ -22,6 +22,7 @@ local languages = {
 	python = { mypy },
 	nix = { alejandra },
 	yaml = { prettier },
+	html = { prettier },
 	proto = { buf_fmt, buf_lint },
 	bash = { shfmt },
 }
