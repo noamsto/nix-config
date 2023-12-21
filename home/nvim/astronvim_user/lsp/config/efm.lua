@@ -23,8 +23,9 @@ local languages = {
 	nix = { alejandra },
 	yaml = { prettier },
 	html = { prettier },
+	css = { prettier },
 	proto = { buf_fmt, buf_lint },
-	bash = { shfmt },
+	sh = { shfmt },
 }
 local efmls_config = {
 	filetypes = vim.tbl_keys(languages),

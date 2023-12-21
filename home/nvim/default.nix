@@ -2,16 +2,15 @@
   pkgs,
   config,
   astronvim,
-  pkgs-stable,
   ...
 }: {
   xdg.configFile = {
     "nvim".source = astronvim;
-    # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/modules/home/nvim-astro/astronvim_user";
+    "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_user";
     # "astronvim/lua/user".source = ./astronvim_user;   # Enable after finishing configuring nvim
   };
   programs.neovim = {
-    package = pkgs-stable.neovim-unwrapped;
+    package = pkgs.neovim-unwrapped;
     enable = true;
     defaultEditor = true;
 

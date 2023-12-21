@@ -44,7 +44,7 @@
           set -g @thumbs-select-fg-color red
           set -g @thumbs-hint-fg-color blue
           # set -g @thumbs-command 'echo -n {} | xclip -selection clipboard'
-          set -g @thumbs-command 'echo -n {} | wl-copy clipboard'
+          set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard}/bin/wl-copy'
           set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
         '';
       }
