@@ -23,10 +23,12 @@
     playerctl
 
     bc
+
+    brightnessctl
   ];
   programs.hyprland.enable = true;
   services.xserver.enable = true;
-  programs.light.enable = true; # Brightness control
+  security.pam.services.sddm.enableKwallet = true;
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [

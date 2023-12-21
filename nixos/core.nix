@@ -130,7 +130,7 @@
   users.users.${username} = {
     isNormalUser = true;
     description = user_full_name;
-    extraGroups = ["adbusers" "networkmanager" "wheel"];
+    extraGroups = ["adbusers" "networkmanager" "wheel" "video"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
       firefox

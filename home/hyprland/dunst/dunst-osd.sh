@@ -17,12 +17,12 @@ function get_volume {
 
 # Uses regex to get mute status from wpctl
 function get_mute {
-    wpctl get-volume @DEFAULT_SINK@  | rg -qe "MUTED"
+	wpctl get-volume @DEFAULT_SINK@ | rg -oe "MUTED"
 }
 
 # Uses regex to get brightness from xbacklight
 function get_brightness {
-    light | rg -oe '(^\d{1,3})'
+	brightnessctl i | rg -oe "(\d+)%" -r '$1'
 }
 
 # Returns a mute icon, a volume-low icon, or a volume-high icon, depending on the volume
@@ -30,17 +30,26 @@ function get_volume_icon {
 	volume=$(bc <<<"($(get_volume) * 100 ) / 1")
 	mute=$(get_mute)
 	if [ "$volume" -eq 0 ] || [[ "$mute" == "MUTED" ]]; then
-		volume_icon="󰝟 "
+		volume_icon="󰝟"
 	elif [ "$volume" -lt 50 ]; then
-		volume_icon=" "
+		volume_icon=""
 	else
-		volume_icon=" "
+		volume_icon=""
 	fi
 }
 
 # Always returns the same icon - I couldn't get the brightness-low icon to work with fontawesome
 function get_brightness_icon {
-	brightness_icon=" "
+	volume=$(get_brightness)
+	if ((volume < 25)); then
+		brightness_icon=""
+	elif ((volume < 50)); then
+		brightness_icon="󰃟"
+	elif ((volume < 75)); then
+		brightness_icon="󰃝"
+	else
+		brightness_icon="󰃠"
+	fi
 }
 
 function get_album_art {
@@ -115,32 +124,31 @@ function show_brightness_notif {
 case $1 in
 volume_up)
 	# Unmutes and increases volume, then displays the notification
-
 	wpctl set-volume -l $max_volume @DEFAULT_SINK@ ${volume_step}+
 	show_volume_notif
 	;;
 
 volume_down)
 	# Raises volume and displays the notification
-	wpctl set-volume @DEFAULT_SINK@ ${volume_step}+
+	wpctl set-volume @DEFAULT_SINK@ ${volume_step}-
 	show_volume_notif
 	;;
 
 volume_mute)
 	# Toggles mute and displays the notification
-	wpctl set-mute @DEFAULT_SINK@
+	wpctl set-mute @DEFAULT_SINK@ toggle
 	show_volume_notif
 	;;
 
 brightness_up)
 	# Increases brightness and displays the notification
-	sudo light -A $brightness_step
+	brightnessctl set ${brightness_step}%+
 	show_brightness_notif
 	;;
 
 brightness_down)
 	# Decreases brightness and displays the notification
-	sudo light -U $brightness_step
+	brightnessctl set ${brightness_step}%-
 	show_brightness_notif
 	;;
 

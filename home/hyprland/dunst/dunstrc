@@ -1,0 +1,60 @@
+[global]
+
+    #offset = 12x67
+    alignment = center
+    browser="firefox -new-tab"
+    corner_radius = 15
+    follow = mouse
+    font="Fira Code Nerd Font 14"
+    format = "<span foreground='#5bb1b4'><b>%s</b></span>\n%b"
+    frame_color = "#3c4549"
+    frame_width = 1
+    horizontal_padding = 12
+    idle_threshold = 120
+    ignore_newline = false
+    indicate_hidden = yes
+    line_height = 0
+    markup = yes
+    max_icon_size = 64
+    min_icon_size = 64
+    monitor = 0
+    origin = bottom-center
+    padding = 12
+    progress_bar_corner_radius = 5
+    progress_bar_frame_width = 1
+    progress_bar_height = 10
+    progress_bar_max_width = 400
+    progress_bar_min_width = 400
+    scale = 1
+    separator_color = "#3c4549"
+    separator_height = 2
+    show_age_threshold = 60
+    sort = yes
+    sticky_history = yes
+    transparency = 0
+    vertical_alignment = center
+    width = 400
+    word_wrap = yes
+#[shortcuts]
+#    close = ctrl+space
+#    close_all = ctrl+shift+space
+#    history = ctrl+grave
+#    context = ctrl+shift+period
+
+[urgency_low]
+    background = "#131519"
+    foreground = "#ffffff"
+    highlight = "#5bb1b4"
+    timeout = 5
+
+[urgency_normal]
+    background = "#131519"
+    foreground = "#ffffff"
+    highlight = "#5bb1b4"
+    timeout = 20
+
+[urgency_critical]
+    background = "#131519"
+    foreground = "#ffffff"
+    highlight = "#5bb1b4"
+    timeout = 0

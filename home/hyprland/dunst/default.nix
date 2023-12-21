@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  config,
+  ...
+}: let
   script-name = "dunst-osd";
   dunst-osd-src = builtins.readFile ./dunst-osd.sh;
   dunst-osd = (pkgs.writeScriptBin script-name dunst-osd-src).overrideAttrs (old: {
@@ -6,10 +10,6 @@
   });
 in {
   home.packages = [dunst-osd];
-  services.dunst.settings = {
-    global = {
-      origin = "bottom-center";
-      font = "Fira Code Nerd Font";
-    };
-  };
+
+  xdg.configFile."dunst/dunstrc".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/hyprland/dunst/dunstrc";
 }

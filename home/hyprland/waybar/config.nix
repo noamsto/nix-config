@@ -81,7 +81,7 @@ in {
     };
     memory = {
       interval = 30;
-      format = " {used:0.1f}G / {total:0.1f}G";
+      format = "  {used:0.1f}G / {total:0.1f}G";
       on-click = "foot -e btop";
       tooltip = false;
     };
@@ -91,7 +91,7 @@ in {
       format-ethernet = "󰈀 {cidr}";
       tooltip-format = "{ifname} via {gwaddr}";
       format-linked = "{ifname} (No IP)";
-      format-disconnect = "󰖪";
+      format-disconnect = "󰖪 ";
       on-click = "foot -e nmtui";
     };
     pulseaudio = {
@@ -103,13 +103,13 @@ in {
       # format-source = "{volume}% ";
       # format-source-muted = "";
       format-icons = {
-        headphone = "";
-        hands-free = "󰋎";
-        headset = "󰋎";
+        headphone = " ";
+        hands-free = "󰋎 ";
+        headset = "󰋎 ";
         phone = "";
         portable = "";
-        car = "";
-        default = ["" "" ""];
+        car = " ";
+        default = [" " " " " "];
       };
       on-click = "pavucontrol";
     };
