@@ -22,6 +22,12 @@ return {
 	n = {
 
 		["<leader>dc"] = { continue, desc = "Start/Continue (F5)" },
+		["<leader>dn"] = {
+			function()
+				require("dap-python").test_method()
+			end,
+			desc = "Test Method",
+		},
 		-- second key is the lefthand side of the map
 		-- mappings seen under group name "Buffer"
 		["<leader>bn"] = { "<cmd>tabnew<cr>", desc = "New tab" },

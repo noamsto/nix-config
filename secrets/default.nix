@@ -1,18 +1,16 @@
 # import & decrypt secrets in `mysecrets` in this module
 {
-  config,
   pkgs,
-  agenix,
-  mysecrets,
   username,
+  inputs,
   ...
 }: {
   imports = [
-    agenix.nixosModules.default
+    inputs.agenix.nixosModules.default
   ];
 
   environment.systemPackages = [
-    agenix.packages."${pkgs.system}".default
+    inputs.agenix.packages."${pkgs.system}".default
   ];
 
   #   if you changed this key, you need to regenerate all encrypt files from the decrypt contents!
@@ -20,5 +18,5 @@
     "/home/${username}/.ssh/id_ed25519"
   ];
 
-  age.secrets.noams_password.file = "${mysecrets}/noams_password.age";
+  age.secrets.noams_password.file = "${inputs.mysecrets}/noams_password.age";
 }

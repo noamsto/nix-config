@@ -1,13 +1,12 @@
 {
   config,
-  pkgs,
   user_email,
   user_full_name,
-  delta,
+  inputs,
   ...
 }: {
   # basic configuration of git, please change to your own
-  xdg.configFile."delta/themes.gitconfig".source = "${delta}/themes.gitconfig";
+  xdg.configFile."delta/themes.gitconfig".source = "${inputs.delta}/themes.gitconfig";
   programs.git = {
     enable = true;
     userName = user_full_name;

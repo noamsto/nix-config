@@ -1,14 +1,13 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./sddm
   ];
   environment.systemPackages = with pkgs; [
     yakuake
     kcalc
+    plasma5Packages.polonium
+    wayland-utils
+    catppuccin-kde
   ];
   programs.kdeconnect.enable = true;
   services.xserver = {

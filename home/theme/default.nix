@@ -10,6 +10,15 @@ in rec {
   };
 
   # QT
+
+  # qt = {
+  #   enable = true;
+  #   platformTheme = "qt5ct";
+  #   style = {
+  #     package = pkgs.catppuccin-kvantum;
+  #     name = "kvantum";
+  #   };
+  # };
   qt.enable = true;
 
   qt.platformTheme = "kde";

@@ -8,6 +8,7 @@
     ./zsh
     ./starship
     ./tmux
+    ./zellij
     ./btop
     ./bat
     ./fzf

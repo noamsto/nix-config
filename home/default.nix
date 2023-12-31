@@ -5,8 +5,7 @@
 }: {
   imports = [
     ./packages.nix
-    # ./gtk
-    ./terminal/term-alacritty.nix
+    ./terminal
     ./xdg
     ./vscode
     ./git

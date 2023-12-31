@@ -1,10 +1,8 @@
 {
   config,
   pkgs,
-  inputs,
   username,
   user_full_name,
-  user_email,
   ...
 }: {
   imports = [
@@ -150,14 +148,19 @@
 
     # python
     (python311.withPackages (ps:
-      with ps; [
-        ipython
-      ]))
+      with ps;
+        [
+          ipython
+          catppuccin
+        ]
+        ++ catppuccin.optional-dependencies.pygments))
   ];
 
   environment.shells = with pkgs; [zsh];
 
   hardware.bluetooth.enable = true;
+  hardware.bluetooth.powerOnBoot = true;
+  hardware.logitech.wireless.enable = true;
 
   services = {
     dbus.packages = [pkgs.gcr];

@@ -79,6 +79,7 @@
     evince
 
     fd # find files
+    ncdu # better du
 
     insomnia
 

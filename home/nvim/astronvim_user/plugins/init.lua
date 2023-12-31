@@ -5,19 +5,19 @@ return {
 	{ import = "astrocommunity.colorscheme.catppuccin" },
 	-- Highly experimental plugin that completely replaces
 	-- the UI for messages, cmdline and the popupmenu.
-	-- {
-	-- 	import = "astrocommunity.utility.noice-nvim",
-	-- },
-	-- {
-	-- 	"folke/noice.nvim",
-	-- 	opts = {
-	-- 		lsp = {
-	-- 			hover = {
-	-- 				silent = true,
-	-- 			},
-	-- 		},
-	-- 	},
-	-- },
+	{
+		import = "astrocommunity.utility.noice-nvim",
+	},
+	{
+		"folke/noice.nvim",
+		opts = {
+			lsp = {
+				hover = {
+					silent = true,
+				},
+			},
+		},
+	},
 	-- Navigation
 	{ import = "astrocommunity.scrolling.nvim-scrollbar" },
 
@@ -78,6 +78,9 @@ return {
 				["core.defaults"] = {}, -- Loads default behaviour
 				["core.concealer"] = {}, -- Adds pretty icons to your documents
 				["core.summary"] = {},
+				["core.completion"] = {
+					engine = "nvim-cmp",
+				},
 				["core.dirman"] = { -- Manages Neorg workspaces
 					config = {
 						workspaces = {
@@ -234,12 +237,12 @@ return {
 				code_actions.statix, -- Lints and suggestions for Nix.
 
 				-- Diagnostic
-				diagnostics.actionlint, -- GitHub Actions workflow syntax checking
-				diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
-				diagnostics.hadolint, -- Dockerfile linter
-				formatting.taplo, -- TOML formatteautoindentr
-				formatting.terraform_fmt, -- Terraform formatter
-				formatting.sqlfluff.with({ -- SQL formatter
+				diagnostics.actionlint,                -- GitHub Actions workflow syntax checking
+				diagnostics.deadnix,                   -- Scan Nix files for deid code. Formatting
+				diagnostics.hadolint,                  -- Dockerfile linter
+				formatting.taplo,                      -- TOML formatteautoindentr
+				formatting.terraform_fmt,              -- Terraform formatter
+				formatting.sqlfluff.with({             -- SQL formatter
 					extra_args = { "--dialect", "postgres" }, -- change to your dialect
 				}),
 			})
@@ -261,8 +264,9 @@ return {
 		dependencies = "mfussenegger/nvim-dap",
 		ft = "python", -- NOTE: ft: lazy-load on filetype
 		config = function(_, opts)
-			path = "nvim-python3"
-			-- path = "nvim-python3"
+			local path = "nvim-python3"
+			require("dap-python").test_runner = "pytest"
+
 			require("dap-python").setup(path, opts)
 			-- table.insert(require("dap").configurations.python, {
 			-- 	type = "python",
@@ -334,7 +338,7 @@ return {
 			})
 		end,
 	},
-	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
+	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
 	{
@@ -373,5 +377,11 @@ return {
 			-- return the new table to be used
 			return opts
 		end,
+	},
+	{
+		"rcarriga/nvim-notify",
+		opts = {
+			stages = "static",
+		},
 	},
 }

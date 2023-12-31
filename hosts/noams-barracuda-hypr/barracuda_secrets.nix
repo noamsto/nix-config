@@ -1,14 +1,12 @@
 {
   config,
-  pkgs,
-  agenix,
-  mysecrets,
+  inputs,
   username,
   ...
 }: {
   age.secrets = {
-    barracuda_ssh.file = "${mysecrets}/barracuda_ssh.age";
-    barracuda_aliases.file = "${mysecrets}/barracuda_aliases.age";
+    barracuda_ssh.file = "${inputs.mysecrets}/barracuda_ssh.age";
+    barracuda_aliases.file = "${inputs.mysecrets}/barracuda_aliases.age";
   };
 
   age.identityPaths = [
@@ -16,11 +14,11 @@
   ];
 
   environment.etc = {
-    "ssh/host_ssh.conf"= {
+    "ssh/host_ssh.conf" = {
       source = config.age.secrets.barracuda_ssh.path;
       mode = "0644";
     };
-    "agenix/work_aliases.zsh"= {
+    "agenix/work_aliases.zsh" = {
       source = config.age.secrets.barracuda_aliases.path;
       mode = "0644";
     };

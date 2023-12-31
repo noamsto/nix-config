@@ -66,7 +66,10 @@
 
     # Hyprland
     hyprland.url = "github:hyprwm/Hyprland";
+    hyprland-plugins.url = "github:hyprwm/hyprland-plugins";
     nix-colors.url = "github:misterio77/nix-colors";
+    # add ags
+    ags.url = "github:Aylur/ags";
   };
 
   # All outputs for the system (configs)
@@ -95,7 +98,7 @@
         inherit system;
         config.allowUnfree = true;
       };
-      args = {inherit pkgs-stable system hostname username user_full_name user_email;} // inputs;
+      args = {inherit pkgs-stable system hostname username user_full_name user_email inputs;};
     in
       pkgs.lib.nixosSystem {
         inherit system;
@@ -125,23 +128,23 @@
                 #   inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
                 #   inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
                 # inherit (pkgs-stable) slack;
-                swayosd = prev-pkgs.swayosd.overrideAttrs (oldAttr: rec {
-                  version = "unstable-2023-12-11";
-                  src = prev-pkgs.fetchFromGitHub {
-                    owner = "ErikReider";
-                    repo = "SwayOSD";
-                    rev = "a0709bcd89d6ca19889486972bac35e69f1fa8e4";
-                    sha256 = "3NJHZv4Ed7haUUmE9JV9Yl4rRnJlPqQFv53Xuw0q+IY=";
-                  };
-                  patches = [./patches/swayosd_systemd_paths.patch];
-                  cargoDeps = oldAttr.cargoDeps.overrideAttrs {
-                    inherit src;
-                    name = "${oldAttr.pname}-${version}.tar.gz";
-                    # hash = "";
-                    outputHash = "sha256-5CyzgmufGzs5WIcMrjBIG2yX299uVosm0+iqA64G6nA=";
-                  };
-                  nativeBuildInputs = oldAttr.nativeBuildInputs ++ [prev-pkgs.sassc];
-                });
+                # swayosd = prev-pkgs.swayosd.overrideAttrs (oldAttr: rec {
+                #   version = "unstable-2023-12-11";
+                #   src = prev-pkgs.fetchFromGitHub {
+                #     owner = "ErikReider";
+                #     repo = "SwayOSD";
+                #     rev = "a0709bcd89d6ca19889486972bac35e69f1fa8e4";
+                #     sha256 = "3NJHZv4Ed7haUUmE9JV9Yl4rRnJlPqQFv53Xuw0q+IY=";
+                #   };
+                #   patches = [./patches/swayosd_systemd_paths.patch];
+                #   cargoDeps = oldAttr.cargoDeps.overrideAttrs {
+                #     inherit src;
+                #     name = "${oldAttr.pname}-${version}.tar.gz";
+                #     # hash = "";
+                #     outputHash = "sha256-5CyzgmufGzs5WIcMrjBIG2yX299uVosm0+iqA64G6nA=";
+                #   };
+                #   nativeBuildInputs = oldAttr.nativeBuildInputs ++ [prev-pkgs.sassc];
+                # });
               })
             ];
           }

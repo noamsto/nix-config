@@ -1,12 +1,11 @@
 {
-  pkgs,
-  xremap,
+  inputs,
   username,
   ...
 }
 : {
   imports = [
-    xremap.nixosModules.default
+    inputs.xremap.nixosModules.default
   ];
 
   services.xremap = {
