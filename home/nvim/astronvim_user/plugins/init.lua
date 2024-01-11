@@ -61,13 +61,13 @@ return {
 	{ import = "astrocommunity.motion.nvim-surround" },
 	{ import = "astrocommunity.motion.flash-nvim" },
 	-- Lua implementation of CamelCaseMotion, with extra consideration of punctuation.
-	-- { import = "astrocommunity.motion.nvim-spider" },
-	-- {
-	-- 	"chrisgrieser/nvim-spider",
-	-- 	opts = {
-	-- 		skipInsignificantPunctuation = false,
-	-- 	},
-	-- },
+	{ import = "astrocommunity.motion.nvim-spider" },
+	{
+		"chrisgrieser/nvim-spider",
+		opts = {
+			skipInsignificantPunctuation = false,
+		},
+	},
 	-- Note taking
 	{ import = "astrocommunity.note-taking.neorg" },
 	{
@@ -237,12 +237,12 @@ return {
 				code_actions.statix, -- Lints and suggestions for Nix.
 
 				-- Diagnostic
-				diagnostics.actionlint,                -- GitHub Actions workflow syntax checking
-				diagnostics.deadnix,                   -- Scan Nix files for deid code. Formatting
-				diagnostics.hadolint,                  -- Dockerfile linter
-				formatting.taplo,                      -- TOML formatteautoindentr
-				formatting.terraform_fmt,              -- Terraform formatter
-				formatting.sqlfluff.with({             -- SQL formatter
+				diagnostics.actionlint, -- GitHub Actions workflow syntax checking
+				diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
+				diagnostics.hadolint, -- Dockerfile linter
+				formatting.taplo, -- TOML formatteautoindentr
+				formatting.terraform_fmt, -- Terraform formatter
+				formatting.sqlfluff.with({ -- SQL formatter
 					extra_args = { "--dialect", "postgres" }, -- change to your dialect
 				}),
 			})
@@ -338,7 +338,7 @@ return {
 			})
 		end,
 	},
-	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
+	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
 	{
@@ -351,6 +351,7 @@ return {
 		dependencies = { "stevearc/dressing.nvim" },
 		event = "VeryLazy",
 	},
+	{ "Issafalcon/lsp-overloads.nvim", ft = "python" },
 	{ -- override nvim-cmp plugin
 		"hrsh7th/nvim-cmp",
 		dependencies = { "lukas-reineke/cmp-under-comparator" },
@@ -362,17 +363,24 @@ return {
 			opts.sorting = {
 				comparators = {
 					cmp.config.compare.score,
+					cmp.config.compare.recently_used,
 					cmp.config.compare.locality,
 					cmp.config.compare.offset,
 					require("cmp-under-comparator").under,
 					-- cmp.config.compare.locality,
-					-- cmp.config.compare.recently_used,
 					-- cmp.config.compare.offset,
 					-- cmp.config.compare.exact,
 					-- cmp.config.compare.scope,
 					-- cmp.config.compare.kind,
 				},
 			}
+			-- modify the sources part of the options table
+			-- opts.sources = cmp.config.sources({
+			-- 	{ name = "nvim_lsp", priority = 1000 },
+			-- 	{ name = "luasnip", priority = 750 },
+			-- 	{ name = "buffer", priority = 500 },
+			-- 	{ name = "path", priority = 250 },
+			-- })
 
 			-- return the new table to be used
 			return opts
@@ -384,4 +392,64 @@ return {
 			stages = "static",
 		},
 	},
+	{
+		"nvim-neotest/neotest",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"antoinemadec/FixCursorHold.nvim",
+			"nvim-treesitter/nvim-treesitter",
+			"nvim-neotest/neotest-python",
+			{
+				"folke/neodev.nvim",
+				opts = function(_, opts)
+					opts.library = opts.library or {}
+					if opts.library.plugins ~= true then
+						opts.library.plugins =
+							require("astronvim.utils").list_insert_unique(opts.library.plugins, "neotest")
+					end
+					opts.library.types = true
+				end,
+			},
+		},
+		ft = { "python" },
+		opts = function()
+			return {
+				-- other neotest config here.
+				adapters = {
+					require("neotest-python")({
+						dap = { justMyCode = false },
+						runner = "pytest",
+					}),
+				},
+			}
+		end,
+		config = function(_, opts)
+			-- get neotest namespace (api call creates or returns namespace)
+			local neotest_ns = vim.api.nvim_create_namespace("neotest")
+			vim.diagnostic.config({
+				virtual_text = {
+					format = function(diagnostic)
+						local message =
+							diagnostic.message:gsub("\n", " "):gsub("\t", " "):gsub("%s+", " "):gsub("^%s+", "")
+						return message
+					end,
+				},
+			}, neotest_ns)
+			require("neotest").setup(opts)
+		end,
+	},
+	{
+		"catppuccin/nvim",
+		optional = true,
+		opts = { integrations = { neotest = true } },
+	},
+	{ "lukas-reineke/indent-blankline.nvim", main = "ibl", tag = "v3.5.1" },
+	-- {
+	-- 	"kevinhwang91/nvim-ufo",
+	-- 	event = { "User AstroFile", "InsertEnter" },
+	-- 	dependencies = { "kevinhwang91/promise-async" },
+	-- 	opts = {
+	--
+	-- 	},
+	-- },
 }

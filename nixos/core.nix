@@ -19,6 +19,8 @@
     nix-ld.enable = true;
   };
 
+  # Kernel
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
   # do garbage collection weekly to keep disk usage low

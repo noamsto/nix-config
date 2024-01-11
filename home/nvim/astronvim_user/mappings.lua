@@ -22,11 +22,45 @@ return {
 	n = {
 
 		["<leader>dc"] = { continue, desc = "Start/Continue (F5)" },
-		["<leader>dn"] = {
+		["<leader>dm"] = {
 			function()
-				require("dap-python").test_method()
+				require("neotest").run.run({ strategy = "dap" })
 			end,
-			desc = "Test Method",
+			desc = "Test & Debug Method",
+		},
+
+		["<leader>df"] = {
+			function()
+				require("neotest").run.run({ vim.fn.expand("%"), strategy = "dap" })
+			end,
+			desc = "Test & Debug File",
+		},
+		["<leader>N"] = {
+			name = "󰙔 Neotest",
+		},
+		["<leader>Nm"] = {
+			function()
+				require("neotest").run.run()
+			end,
+			desc = "Test & Debug Method",
+		},
+		["<leader>Nf"] = {
+			function()
+				require("neotest").run.run({ vim.fn.expand("%") })
+			end,
+			desc = "Test & Debug File",
+		},
+		["<leader>Ns"] = {
+			function()
+				require("neotest").summary.toggle()
+			end,
+			desc = "Open/Close Neotest summary",
+		},
+		["<leader>No"] = {
+			function()
+				require("neotest").output.open({ enter = true })
+			end,
+			desc = "Open/Close Neotest summary",
 		},
 		-- second key is the lefthand side of the map
 		-- mappings seen under group name "Buffer"

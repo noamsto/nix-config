@@ -53,6 +53,7 @@
       #-- python
       nodePackages.pyright # python language server
       ruff-lsp
+      pylyzer
 
       #-- nix
       nil

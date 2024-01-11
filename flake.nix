@@ -42,7 +42,7 @@
 
     # AstroNvim is an aesthetic and feature-rich neovim config.
     astronvim = {
-      url = "github:AstroNvim/AstroNvim/v3.39.0";
+      url = "github:AstroNvim/AstroNvim/v3.40.3";
       flake = false;
     };
 
@@ -128,6 +128,7 @@
                 #   inherit (nixpkgs-old.legacyPackages.${prev.system}) azure-cli;
                 #   inherit (nixpkgs-stable.legacyPackages.${prev.system}) ferdium;
                 # inherit (pkgs-stable) slack;
+
                 # swayosd = prev-pkgs.swayosd.overrideAttrs (oldAttr: rec {
                 #   version = "unstable-2023-12-11";
                 #   src = prev-pkgs.fetchFromGitHub {

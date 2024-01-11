@@ -4,9 +4,9 @@ return {
 	options = {
 		opt = {
 			signcolumn = "auto:2", -- Show sign column when used only
-			spell = true, -- Spell checking
+			spell = true,       -- Spell checking
 			spelloptions = { "camel" },
-			swapfile = false, -- Swapfile
+			swapfile = false,   -- Swapfile
 		},
 	},
 
@@ -44,6 +44,11 @@ return {
 					},
 				},
 			},
+			on_attach = function(client, bufnr)
+				if client.name == "ruff_lsp" then
+					client.server_capabilities.hoverProvider = false
+				end
+			end,
 		},
 
 		-- enable servers that installed by home-manager instead of mason
@@ -58,10 +63,9 @@ return {
 			"pyright", -- python
 			"ruff_lsp", -- extremely fast Python linter and code transformation
 			"nil_ls", -- nix language server
-			-- "pylsp",
 			"efm",
 			---- Operation & Cloud Nativautoindente
-			"bashls", -- bash
+			"bashls",   -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
