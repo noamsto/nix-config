@@ -1,17 +1,13 @@
 # This is your system's configuration file.
 # Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
-{
-  inputs,
-  lib,
-  config,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ../../nixos/core.nix
     ../../nixos/kde.nix
     ../../nixos/docker
     ../../nixos/tailscale
     ../../nixos/xremap
+    # ../../nixos/access
     ./barracuda_secrets.nix
   ];
 

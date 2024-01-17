@@ -181,6 +181,10 @@
     # Enable CUPS to print documents.
     printing.enable = true;
     printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
+
+    # Enable flatpak
+
+    flatpak.enable = true;
   };
 
   system.activationScripts.binbash = {

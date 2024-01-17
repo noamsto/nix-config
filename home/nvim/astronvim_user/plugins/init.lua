@@ -237,12 +237,12 @@ return {
 				code_actions.statix, -- Lints and suggestions for Nix.
 
 				-- Diagnostic
-				diagnostics.actionlint, -- GitHub Actions workflow syntax checking
-				diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
-				diagnostics.hadolint, -- Dockerfile linter
-				formatting.taplo, -- TOML formatteautoindentr
-				formatting.terraform_fmt, -- Terraform formatter
-				formatting.sqlfluff.with({ -- SQL formatter
+				diagnostics.actionlint,                -- GitHub Actions workflow syntax checking
+				diagnostics.deadnix,                   -- Scan Nix files for deid code. Formatting
+				diagnostics.hadolint,                  -- Dockerfile linter
+				formatting.taplo,                      -- TOML formatteautoindentr
+				formatting.terraform_fmt,              -- Terraform formatter
+				formatting.sqlfluff.with({             -- SQL formatter
 					extra_args = { "--dialect", "postgres" }, -- change to your dialect
 				}),
 			})
@@ -338,7 +338,7 @@ return {
 			})
 		end,
 	},
-	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
+	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
 	-- Pyright type-stubs
 	{ "microsoft/python-type-stubs" },
 	{
@@ -351,7 +351,7 @@ return {
 		dependencies = { "stevearc/dressing.nvim" },
 		event = "VeryLazy",
 	},
-	{ "Issafalcon/lsp-overloads.nvim", ft = "python" },
+	{ "Issafalcon/lsp-overloads.nvim",       ft = "python" },
 	{ -- override nvim-cmp plugin
 		"hrsh7th/nvim-cmp",
 		dependencies = { "lukas-reineke/cmp-under-comparator" },
@@ -362,10 +362,11 @@ return {
 			local cmp = require("cmp")
 			opts.sorting = {
 				comparators = {
-					cmp.config.compare.score,
-					cmp.config.compare.recently_used,
 					cmp.config.compare.locality,
+					cmp.config.compare.recently_used,
+					cmp.config.compare.score,
 					cmp.config.compare.offset,
+					cmp.config.compare.order,
 					require("cmp-under-comparator").under,
 					-- cmp.config.compare.locality,
 					-- cmp.config.compare.offset,
@@ -375,12 +376,12 @@ return {
 				},
 			}
 			-- modify the sources part of the options table
-			-- opts.sources = cmp.config.sources({
-			-- 	{ name = "nvim_lsp", priority = 1000 },
-			-- 	{ name = "luasnip", priority = 750 },
-			-- 	{ name = "buffer", priority = 500 },
-			-- 	{ name = "path", priority = 250 },
-			-- })
+			opts.sources = cmp.config.sources({
+				{ name = "nvim_lsp", priority = 1000 },
+				{ name = "luasnip",  priority = 750 },
+				{ name = "buffer",   priority = 500 },
+				{ name = "path",     priority = 250 },
+			})
 
 			-- return the new table to be used
 			return opts
@@ -405,7 +406,7 @@ return {
 					opts.library = opts.library or {}
 					if opts.library.plugins ~= true then
 						opts.library.plugins =
-							require("astronvim.utils").list_insert_unique(opts.library.plugins, "neotest")
+								require("astronvim.utils").list_insert_unique(opts.library.plugins, "neotest")
 					end
 					opts.library.types = true
 				end,
@@ -430,7 +431,7 @@ return {
 				virtual_text = {
 					format = function(diagnostic)
 						local message =
-							diagnostic.message:gsub("\n", " "):gsub("\t", " "):gsub("%s+", " "):gsub("^%s+", "")
+								diagnostic.message:gsub("\n", " "):gsub("\t", " "):gsub("%s+", " "):gsub("^%s+", "")
 						return message
 					end,
 				},
