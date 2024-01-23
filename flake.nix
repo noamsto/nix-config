@@ -126,9 +126,21 @@
               users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
             nixpkgs.overlays = [
-              # Broken packages
-              (final: prev: rec {
-                prev-pkgs = nixpkgs.legacyPackages.${prev.system};
+              (final: prev: {
+                # Broken packages
+                inherit (pkgs-stable) azure-cli;
+
+                # Use tmux fork until this issue is closed: https://github.com/tmux/tmux/issues/2705
+                tmux = prev.tmux.overrideAttrs (prviousAttrs: {
+                  version = "next-3.4";
+                  patches = [];
+                  src = prev.fetchFromGitHub {
+                    owner = "tiagovla";
+                    repo = "tmux";
+                    rev = "b6be05261a4d92cf41156ccbf5f41d19ca18665f";
+                    sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
+                  };
+                });
               })
             ];
           }

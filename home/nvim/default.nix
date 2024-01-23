@@ -1,5 +1,6 @@
 {
   pkgs,
+  pkgs-stable,
   config,
   inputs,
   ...
@@ -51,7 +52,7 @@
       buf
 
       #-- python
-      nodePackages.pyright # python language server
+      pkgs-stable.nodePackages.pyright # python language server
       ruff-lsp
       pylyzer
 

@@ -4,9 +4,9 @@ return {
 	options = {
 		opt = {
 			signcolumn = "auto:2", -- Show sign column when used only
-			spell = true,       -- Spell checking
+			spell = true, -- Spell checking
 			spelloptions = { "camel" },
-			swapfile = false,   -- Swapfile
+			swapfile = false, -- Swapfile
 		},
 	},
 
@@ -65,7 +65,7 @@ return {
 			"nil_ls", -- nix language server
 			"efm",
 			---- Operation & Cloud Nativautoindente
-			"bashls",   -- bash
+			"bashls", -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
@@ -85,6 +85,10 @@ return {
 		},
 	},
 	polish = function()
+		--  for C-i to actually work:
+		-- nnoremap <C-i> <C-i>
+		vim.api.nvim_set_keymap("n", "<C-i>", "<C-i>", { noremap = true })
+
 		local autocmd = vim.api.nvim_create_autocmd
 		-- Auto resize panes when resizing nvim window
 		autocmd("VimResized", {

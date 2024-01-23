@@ -66,8 +66,8 @@
     usbutils # lsusb
 
     # social
-    # slack
-    # ferdium
+    slack
+    ferdium
 
     spotify
     joplin-desktop
