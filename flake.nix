@@ -141,6 +141,19 @@
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
                   };
                 });
+
+                # Latest floorp
+                floorp = prev.floorp.overrideAttrs (prviousAttrs: rec {
+                  version = "115.7.0";
+                  packageVersion = "11.8.2";
+                  src = prev.fetchFromGitHub {
+                    owner = "Floorp-Projects";
+                    repo = "Floorp";
+                    fetchSubmodules = true;
+                    rev = "v${packageVersion}";
+                    hash = "sha256-bEHl+0MzvQNMCxOjBuFx92gwNr0spVA+on0znBUIhz0=";
+                  };
+                });
               })
             ];
           }

@@ -71,7 +71,6 @@
 
     spotify
     joplin-desktop
-    google-chrome
     vlc
     lazygit
     solaar

@@ -23,14 +23,14 @@
     # the system-level desktop entries can be list by command:
     #   ls -l /run/current-system/sw/share/applications/
     # the user-level desktop entries can be list by command(user ryan):
-    #  ls /etc/profiles/per-user/ryan/share/applications/
+    #  ls /etc/profiles/per-user/noams/share/applications/
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["firefox.desktop"];
+        browser = ["floorp.desktop"];
       in {
         "application/json" = browser;
-        "application/pdf" = browser; # TODO: pdf viewer
+        "application/pdf" = "evince.desktop";
 
         "text/html" = browser;
         "text/xml" = browser;

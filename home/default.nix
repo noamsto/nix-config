@@ -14,7 +14,7 @@
     ./zoom
     ./ssh
     ./nvim
-    ./firefox
+    ./browsers
     ./cloud
     ./theme
   ];
