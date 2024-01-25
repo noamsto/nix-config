@@ -46,13 +46,13 @@
       flake = false;
     };
 
-    # Used for better git diffs, need this for themes
+    # Used for better git diffs
     delta = {
       url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
       flake = false;
     };
 
-    # Used for better git diffs, need this for themes
+    # sddm theme
     sddm-sugar-dark = {
       url = "github:MarianArlt/sddm-sugar-dark";
       flake = false;
@@ -60,9 +60,6 @@
 
     # Xremap for remapping keys
     xremap.url = "github:xremap/nix-flake";
-
-    # Mozilla overlay for latest version
-    # mozilla.url = "github:mozilla/nixpkgs-mozilla";
 
     # Hyprland
     hyprland.url = "github:hyprwm/Hyprland";
@@ -81,7 +78,6 @@
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
-    inherit (nixpkgs) lib;
 
     # This lets us reuse the code to "create" a system
     # Credits go to sioodmy on this one!
@@ -139,19 +135,6 @@
                     repo = "tmux";
                     rev = "b6be05261a4d92cf41156ccbf5f41d19ca18665f";
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
-                  };
-                });
-
-                # Latest floorp
-                floorp = prev.floorp.overrideAttrs (prviousAttrs: rec {
-                  version = "115.7.0";
-                  packageVersion = "11.8.2";
-                  src = prev.fetchFromGitHub {
-                    owner = "Floorp-Projects";
-                    repo = "Floorp";
-                    fetchSubmodules = true;
-                    rev = "v${packageVersion}";
-                    hash = "sha256-bEHl+0MzvQNMCxOjBuFx92gwNr0spVA+on0znBUIhz0=";
                   };
                 });
               })
