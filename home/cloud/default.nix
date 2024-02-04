@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    azure-cli
+    # azure-cli
     awscli2
     ssm-session-manager-plugin
   ];

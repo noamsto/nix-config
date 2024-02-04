@@ -74,7 +74,7 @@
     vlc
     lazygit
     solaar
-    jetbrains.pycharm-professional
+    # jetbrains.pycharm-professional
     evince
 
     fd # find files

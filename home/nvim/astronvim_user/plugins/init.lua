@@ -461,12 +461,11 @@ return {
 		end,
 		event = "VeryLazy",
 	},
-	-- {
-	-- 	"kevinhwang91/nvim-ufo",
-	-- 	event = { "User AstroFile", "InsertEnter" },
-	-- 	dependencies = { "kevinhwang91/promise-async" },
-	-- 	opts = {
-	--
-	-- 	},
-	-- },
+	{
+		event = "VeryLazy",
+		"karb94/neoscroll.nvim",
+		config = function()
+			require("neoscroll").setup({})
+		end,
+	},
 }
