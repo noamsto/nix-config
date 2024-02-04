@@ -52,7 +52,7 @@
       buf
 
       #-- python
-      pkgs-stable.nodePackages.pyright # python language server
+      nodePackages.pyright # python language server
       ruff-lsp
       pylyzer
 
