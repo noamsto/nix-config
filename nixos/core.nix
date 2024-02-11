@@ -19,6 +19,11 @@
     nix-ld.enable = true;
   };
 
+  # OBS virtual Camera
+  boot.extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
+  boot.extraModprobeConfig = ''
+    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
+  '';
   # Kernel
   # boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.loader.systemd-boot.configurationLimit = 10;
@@ -27,7 +32,7 @@
   nix.gc = {
     automatic = true;
     dates = "daily";
-    options = "--delete-older-than 3d";
+    options = "--delete-older-than +3";
   };
 
   # To protect nix-shell agains GC (development env)
@@ -146,7 +151,7 @@
     git
     curl
     alejandra
-    xclip
+    # xclip
 
     # python
     (python311.withPackages (ps:

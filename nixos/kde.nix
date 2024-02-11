@@ -19,8 +19,8 @@
     displayManager.defaultSession = "plasmawayland";
 
     # Configure keymap in X11
-    layout = "us,il";
-    xkbVariant = "";
-    xkbOptions = "compose:menu, grp:win_space_toggle";
+    xkb.layout = "us,il";
+    xkb.variant = "";
+    xkb.options = "compose:menu, grp:win_space_toggle";
   };
 }

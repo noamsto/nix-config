@@ -17,6 +17,7 @@
     ./browsers
     ./cloud
     ./theme
+    ./obs-studio
   ];
 
   home.username = username;
