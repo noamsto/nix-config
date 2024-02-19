@@ -34,14 +34,11 @@
       sqlite
       postgresql
 
-      # Graphql
-      nodePackages.graphql-language-service-cli
-
       #-- json
       nodePackages.vscode-langservers-extracted
 
       # Containers
-      # nodePackages.compose-language-service
+      nodePackages.compose-language-service
       nodePackages.dockerfile-language-server-nodejs
       terraform
       terraform-ls
