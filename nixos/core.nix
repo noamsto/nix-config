@@ -138,7 +138,7 @@
     extraGroups = ["adbusers" "networkmanager" "wheel" "video"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
     packages = with pkgs; [
-      firefox
+      floorp
     ];
   };
 

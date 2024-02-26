@@ -445,7 +445,7 @@ return {
 		optional = true,
 		opts = { integrations = { neotest = true } },
 	},
-	{ "lukas-reineke/indent-blankline.nvim", main = "ibl", tag = "v3.5.1" },
+	-- { "lukas-reineke/indent-blankline.nvim", main = "ibl", tag = "v3.5.1" },
 	{
 		"kndndrj/nvim-dbee",
 		dependencies = {

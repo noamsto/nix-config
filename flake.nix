@@ -183,7 +183,7 @@
 
     substituters = [
       # replace official cache with a mirror located in China
-      "https://mirrors.ustc.edu.cn/nix-channels/store"
+      # "https://mirrors.ustc.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
       # "https://anyrun.cachix.org"
       "https://hyprland.cachix.org"

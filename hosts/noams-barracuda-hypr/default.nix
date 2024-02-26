@@ -15,7 +15,6 @@
     ./zoom
     ./ssh
     ./nvim
-    ./firefox
     ./cloud
   ];
 

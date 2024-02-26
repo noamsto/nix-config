@@ -2,7 +2,7 @@
 
     #offset = 12x67
     alignment = center
-    browser="firefox -new-tab"
+    browser="floorp -new-tab"
     corner_radius = 15
     follow = mouse
     font="Fira Code Nerd Font 14"
