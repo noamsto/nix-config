@@ -80,10 +80,6 @@
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "none"; # NOTE: Disable because of issues with cloudgen access
-    # extraConfig = ''
-    #   dns=none
-    #   rc-manager=unmanaged
-    # '';
   };
 
   # DNS service

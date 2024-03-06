@@ -15,12 +15,6 @@ in
       autoPatchelfHook
     ];
 
-    buildInputs = with pkgs; [
-      openssl
-      iproute2
-      tpm2-tools
-    ];
-
     unpackPhase = "dpkg-deb -x $src .";
 
     installPhase = ''
