@@ -7,6 +7,7 @@
 }: {
   imports = [
     ./vim
+    ./access
   ];
 
   users.defaultUserShell = pkgs.zsh;
@@ -75,7 +76,18 @@
   };
 
   networking.firewall.enable = false;
-  networking.networkmanager.enable = true; # Easiest to use and most distros use this by default.
+  networking.nameservers = ["1.1.1.1" "8.8.8.8"];
+  networking.networkmanager = {
+    enable = true; # Easiest to use and most distros use this by default.
+    dns = "none"; # NOTE: Disable because of issues with cloudgen access
+    # extraConfig = ''
+    #   dns=none
+    #   rc-manager=unmanaged
+    # '';
+  };
+
+  # DNS service
+  # services.resolved.enable = true;  # NOTE: Disable because of issues with cloudgen access
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
   fonts = {
@@ -131,6 +143,12 @@
 
   programs.adb.enable = true;
 
+  security.tpm2 = {
+    enable = true;
+    abrmd.enable = true;
+  };
+
+  # users.groups.fyde = {};
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${username} = {
     isNormalUser = true;
@@ -179,9 +197,6 @@
 
     # For discovering zero-conf network sharing
     avahi.enable = true;
-
-    # DNS service
-    resolved.enable = true;
 
     # Enable CUPS to print documents.
     printing.enable = true;

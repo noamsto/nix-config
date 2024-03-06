@@ -1,0 +1,97 @@
+#! /bin/sh
+PKG_TYPE=deb
+PKG_STEP=postinst
+
+set -e
+
+post_install() {
+    if ! getent group fyde >/dev/null; then
+        groupadd --system fyde
+    fi
+
+    chgrp fyde /opt/access/access-tunnel
+    chmod 2755 /opt/access/access-tunnel
+    chmod 0755 /opt/access/scripts/systemctl
+
+    systemctl enable --now /opt/access/services/access-interface.service
+    cp -v /opt/access/services/access-tunnel.service /usr/lib/systemd/user
+
+    killall -9 access-tunnel > /dev/null 2>&1 || true
+}
+
+pre_remove() {
+    killall -9 access-tunnel > /dev/null 2>&1 || true
+
+    echo "Stopping CloudGen Access Tunnel Controller Service..."
+    systemctl stop access-interface.service > /dev/null || true
+
+    echo "Disabling CloudGen Access Tunnel Controller Service..."
+    systemctl disable access-interface.service > /dev/null || true
+
+    echo "Reloading systemctl..."
+    systemctl --system daemon-reload > /dev/null || true
+}
+
+post_remove() {
+    # Remove Access nameservers.
+    sed -i "/\b\(192\.0\.2\.4\|192\.0\.2\.5\)\b/d" /etc/resolv.conf
+}
+
+post_upgrade() {
+    echo "Reloading CloudGen Access Tunnel Controller..."
+    killall -9 access-tunnel > /dev/null 2>&1 || true
+    systemctl restart access-interface.service > /dev/null || true
+}
+
+_deb_do() {
+    case "$1" in
+        postinst)
+            post_install
+            ;;
+        postrm)
+            post_remove
+            ;;
+        prerm)
+            pre_remove
+            ;;
+    esac
+
+    exit 0
+}
+
+_rpm_do() {
+    case "$1" in
+        pre)
+        ;;
+        post)
+            if [ $2 -lt 2 ]; then
+                post_install
+            fi
+            ;;
+        preun)
+            if [ $2 -eq 0 ] ; then
+                pre_remove
+            fi
+            ;;
+        postun)
+            if [ $2 -eq 0 ] ; then
+                post_remove
+            else
+                post_upgrade
+            fi
+            ;;
+    esac
+
+    exit 0
+}
+
+case "$PKG_TYPE" in
+    deb)
+        _deb_do "$PKG_STEP" "$1"
+        ;;
+    rpm)
+        _rpm_do "$PKG_STEP" "$1"
+        ;;
+    *)
+        ;;
+esac
