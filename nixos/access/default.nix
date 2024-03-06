@@ -12,6 +12,6 @@ in {
   config.environment.systemPackages = [access-tunnel];
   config.systemd.packages = [access-tunnel];
   config.systemd.services = {
-    access-interface.wantedBy = ["milti-user.target"];
+    access-interface.wantedBy = ["multi-user.target"];
   };
 }
