@@ -88,7 +88,7 @@
   # For discovering zero-conf network sharing
   services.avahi = {
     enable = true;
-    # nssmdns = true; # NOTE: not required if resolved is enabled
+    nssmdns4 = true; # NOTE: not required if resolved is enabled
   };
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
