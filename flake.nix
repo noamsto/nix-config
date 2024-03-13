@@ -9,6 +9,13 @@
     nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.05";
 
+    # For RPI4
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     catppuccin-hyprland = {
       url = "github:catppuccin/hyprland";
       flake = false;
@@ -75,6 +82,7 @@
     nixpkgs,
     nixpkgs-stable,
     nixpkgs-old,
+    nixos-generators,
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
@@ -175,6 +183,20 @@
       };
     };
     formatter.x86_64-linux = pkgs-linux.alejandra;
+
+    # NasPI (Raspberrypi 4B 8G) image
+    packages.x86_64-linux = {
+      naspi = nixos-generators.nixosGenerate {
+        system = "aarch64-linux";
+        format = "sd-aarch64";
+        specialArgs = {inherit inputs;};
+        modules = [
+          ./hosts/naspi/base.nix
+          ./hosts/naspi/hardware-configuration.nix
+          ./hosts/naspi/system.nix
+        ];
+      };
+    };
   };
 
   # the nixConfig here only affects the flake itself, not the system configuration!

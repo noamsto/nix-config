@@ -76,14 +76,20 @@
   };
 
   networking.firewall.enable = false;
-  networking.nameservers = ["1.1.1.1" "8.8.8.8"];
+  networking.nameservers = ["192.168.1.1"];
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "none"; # NOTE: Disable because of issues with cloudgen access
   };
 
   # DNS service
-  # services.resolved.enable = true;  # NOTE: Disable because of issues with cloudgen access
+  # services.resolved.enable = true; # NOTE: Disable because of issues with cloudgen access
+
+  # For discovering zero-conf network sharing
+  services.avahi = {
+    enable = true;
+    # nssmdns = true; # NOTE: not required if resolved is enabled
+  };
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
   fonts = {
@@ -191,9 +197,6 @@
     power-profiles-daemon.enable = true;
     fwupd.enable = true;
 
-    # For discovering zero-conf network sharing
-    avahi.enable = true;
-
     # Enable CUPS to print documents.
     printing.enable = true;
     printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
@@ -210,5 +213,8 @@
     '';
   };
 
-  system.stateVersion = "23.05"; # Did you read the comment?
+  # For RaspberryPi 4 image generating
+  boot.binfmt.emulatedSystems = ["aarch64-linux"];
+
+  system.stateVersion = "23.05";
 }
