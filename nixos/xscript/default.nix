@@ -5,6 +5,6 @@ in {
   config.systemd.packages = [xscript];
   config.systemd.services = {
     x-c1-fan.wantedBy = ["multi-user.target"];
-    # x-c1-fan.wantedBy = ["multi-user.target"];
+    x-c1-pwr.wantedBy = ["multi-user.target"];
   };
 }

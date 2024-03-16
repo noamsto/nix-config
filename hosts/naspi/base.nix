@@ -15,21 +15,34 @@
     options = ["noatime"];
   };
 
+  fileSystems."/mnt/main-ssd" = {
+    device = "/dev/disk/by-uuid/d19f513e-ec59-4807-94ce-942f6f711a3e";
+    fsType = "ext4";
+    options = ["noatime"];
+  };
+
   boot = {
     kernelPackages = pkgs.linuxKernel.packages.linux_rpi4;
-    initrd.availableKernelModules = ["xhci_pci" "usbhid" "usb_storage"];
+
     loader = {
       grub.enable = false;
       generic-extlinux-compatible.enable = true;
     };
-    kernelParams = [
-      "zfs.zfs_arc_max=134217728"
-      "console=TTYAMA0,115200"
-      "console=tty1"
-      "8250.nr_uarts=1"
-      "iomem=relaxed"
-      "strict-devmem=0"
-    ];
+  };
+
+  environment.shellAliases = {
+    raspi-cpu = ''
+      sudo vcgencmd get_throttled && sudo vcgencmd measure_temp
+    '';
+    raspi-firmware-update = ''
+      sudo mkdir -p /mnt && \
+      sudo mount /dev/disk/by-label/FIRMWARE /mnt && \
+      BOOTFS=/mnt FIRMWARE_RELEASE_STATUS=stable sudo -E rpi-eeprom-update -d -a && \
+      sudo umount /mnt
+    '';
+    xoff = ''sudo x-c1-softsd.sh 3'';
+
+    xreboot = ''sudo x-c1-softsd.sh 1'';
   };
 
   nix.settings = {

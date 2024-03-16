@@ -11,7 +11,6 @@
 
   environment.systemPackages = with pkgs; [
     # Pi related
-    # libraspberrypi
     (import ./libraspberrypi.nix {inherit pkgs;})
     raspberrypi-eeprom
 
@@ -19,6 +18,7 @@
     ripgrep
     git
     fd
+    usbutils
 
     # python
     (python311.withPackages (
@@ -34,10 +34,9 @@
   services.openssh.enable = true;
   networking.hostName = "naspi";
   users = {
-    users.noams = {
-      # password = "admin";
+    users.${username} = {
       isNormalUser = true;
-      extraGroups = ["wheel"];
+      extraGroups = ["wheel" "gpio"];
       hashedPasswordFile = config.age.secrets.noams_password.path;
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
@@ -69,6 +68,16 @@
   age.identityPaths = [
     "/etc/ssh/ssh_host_ed25519_key"
   ];
+
+  # Create gpio group
+  users.groups.gpio = {};
+
+  # Change permissions gpio devices
+  services.udev.extraRules = ''
+    SUBSYSTEM=="bcm2835-gpiomem", KERNEL=="gpiomem", GROUP="gpio",MODE="0660"
+    SUBSYSTEM=="gpio", KERNEL=="gpiochip*", ACTION=="add", RUN+="${pkgs.bash}/bin/bash -c 'chown root:gpio /sys/class/gpio/export /sys/class/gpio/unexport ; chmod 220 /sys/class/gpio/export /sys/class/gpio/unexport'"
+    SUBSYSTEM=="gpio", KERNEL=="gpio*", ACTION=="add",RUN+="${pkgs.bash}/bin/bash -c 'chown root:gpio /sys%p/active_low /sys%p/direction /sys%p/edge /sys%p/value ; chmod 660 /sys%p/active_low /sys%p/direction /sys%p/edge /sys%p/value'"
+  '';
 
   system.stateVersion = "23.11";
 }

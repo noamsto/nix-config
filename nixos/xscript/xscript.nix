@@ -33,7 +33,8 @@ pkgs.stdenv.mkDerivation (finalAttrs: rec {
                       --replace-warn /usr/local/bin $out/bin
 
     substituteInPlace $out/bin/x-c1-pwr.sh \
-                     --replace-warn /bin/sleep sleep
+                     --replace-warn /bin/sleep sleep \
+                     --replace-warn sudo ""
 
     substituteInPlace $out/bin/x-c1-softsd.sh \
                      --replace-warn /bin/sleep sleep

@@ -785,18 +785,6 @@
         "type": "github"
       }
     },
-    "pwm-2chan-overlay": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-LmX9U6idb/AMNVqSHzE/WJgNvL+5av85RHry6E7QHMI=",
-        "type": "file",
-        "url": "https://raw.githubusercontent.com/raspberrypi/linux/rpi-6.6.y/arch/arm/boot/dts/overlays/pwm-2chan-overlay.dts"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://raw.githubusercontent.com/raspberrypi/linux/rpi-6.6.y/arch/arm/boot/dts/overlays/pwm-2chan-overlay.dts"
-      }
-    },
     "root": {
       "inputs": {
         "agenix": "agenix",
@@ -816,7 +804,6 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-old": "nixpkgs-old",
         "nixpkgs-stable": "nixpkgs-stable",
-        "pwm-2chan-overlay": "pwm-2chan-overlay",
         "sddm-sugar-dark": "sddm-sugar-dark",
         "xremap": "xremap",
         "xscript": "xscript"
