@@ -6,6 +6,7 @@
 }: {
   imports = [
     ./base.nix
+    ./samba.nix
     ../../nixos/xscript
   ];
 
@@ -36,7 +37,7 @@
   users = {
     users.${username} = {
       isNormalUser = true;
-      extraGroups = ["wheel" "gpio"];
+      extraGroups = ["wheel" "gpio" "naspi"];
       hashedPasswordFile = config.age.secrets.noams_password.path;
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
@@ -69,8 +70,11 @@
     "/etc/ssh/ssh_host_ed25519_key"
   ];
 
-  # Create gpio group
-  users.groups.gpio = {};
+  users.groups = {
+    # Create gpio group
+    gpio = {};
+    naspi = {};
+  };
 
   # Change permissions gpio devices
   services.udev.extraRules = ''
