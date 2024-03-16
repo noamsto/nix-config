@@ -3,6 +3,12 @@
   config,
   ...
 }: {
+  home.packages = with pkgs; [
+    eza
+  ];
+
+  programs.thefuck.enable = true;
+
   programs.zsh = {
     enable = true;
     enableAutosuggestions = true;

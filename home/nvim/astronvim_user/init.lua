@@ -4,7 +4,7 @@ return {
 	options = {
 		opt = {
 			-- signcolumn = "auto:2", -- Show sign column when used only
-			spell = true, -- Spell checking
+			spell = true,  -- Spell checking
 			spelloptions = { "camel" },
 			swapfile = false, -- Swapfile
 		},
@@ -32,6 +32,15 @@ return {
 				},
 			},
 			pyright = {
+				capabilities = {
+					textDocument = {
+						publishDiagnostics = {
+							tagSupport = {
+								valueSet = { 2 },
+							},
+						},
+					},
+				},
 				settings = {
 					python = {
 						analysis = {
@@ -65,7 +74,7 @@ return {
 			"nil_ls", -- nix language server
 			"efm",
 			---- Operation & Cloud Nativautoindente
-			"bashls", -- bash
+			"bashls",   -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
@@ -84,6 +93,7 @@ return {
 			},
 		},
 	},
+
 	polish = function()
 		--  for C-i to actually work:
 		-- nnoremap <C-i> <C-i>
@@ -104,6 +114,7 @@ return {
 			end,
 		})
 
+		--
 		vim.filetype.add({
 			filename = {
 				[".envrc"] = "sh",

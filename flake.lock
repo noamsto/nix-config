@@ -491,10 +491,10 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1694603154,
-        "narHash": "sha256-SGpwB4VFOZSl4LmbXDQAxifZ3TSTM46EwLiCHy4aFss=",
+        "lastModified": 1710362806,
+        "narHash": "sha256-TNI4/MY7NZzlKOZ6eXGD2KdiFkcwGUMkAJmZud/seWE=",
         "ref": "refs/heads/main",
-        "rev": "904b6915d20ccb91b44f1409149790521d8540fd",
+        "rev": "d1fc5777ce183599b0029423226ef6271febe8dd",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
@@ -785,6 +785,18 @@
         "type": "github"
       }
     },
+    "pwm-2chan-overlay": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-LmX9U6idb/AMNVqSHzE/WJgNvL+5av85RHry6E7QHMI=",
+        "type": "file",
+        "url": "https://raw.githubusercontent.com/raspberrypi/linux/rpi-6.6.y/arch/arm/boot/dts/overlays/pwm-2chan-overlay.dts"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://raw.githubusercontent.com/raspberrypi/linux/rpi-6.6.y/arch/arm/boot/dts/overlays/pwm-2chan-overlay.dts"
+      }
+    },
     "root": {
       "inputs": {
         "agenix": "agenix",
@@ -804,8 +816,10 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-old": "nixpkgs-old",
         "nixpkgs-stable": "nixpkgs-stable",
+        "pwm-2chan-overlay": "pwm-2chan-overlay",
         "sddm-sugar-dark": "sddm-sugar-dark",
-        "xremap": "xremap"
+        "xremap": "xremap",
+        "xscript": "xscript"
       }
     },
     "sddm-sugar-dark": {
@@ -1092,6 +1106,22 @@
         "owner": "k0kubun",
         "ref": "v0.8.13",
         "repo": "xremap",
+        "type": "github"
+      }
+    },
+    "xscript": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692357040,
+        "narHash": "sha256-iJLlOeRlB7AJwlhYmtsZpIVdj6vAdxzlxA+aOhgF9t0=",
+        "owner": "geekworm-com",
+        "repo": "xscript",
+        "rev": "8dddc2d2764ceab7c0960468c947a5c700a22331",
+        "type": "github"
+      },
+      "original": {
+        "owner": "geekworm-com",
+        "repo": "xscript",
         "type": "github"
       }
     }
