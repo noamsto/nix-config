@@ -491,10 +491,10 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1710362806,
-        "narHash": "sha256-TNI4/MY7NZzlKOZ6eXGD2KdiFkcwGUMkAJmZud/seWE=",
+        "lastModified": 1710792290,
+        "narHash": "sha256-qxhkPFwzMJv4i54ZoYMLQ+M8gSGWStqLx4IIFjNPxuA=",
         "ref": "refs/heads/main",
-        "rev": "d1fc5777ce183599b0029423226ef6271febe8dd",
+        "rev": "9b453508606c4e5ff51ffe7b25ea3ef808ea4036",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"

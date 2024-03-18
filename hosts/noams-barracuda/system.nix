@@ -1,6 +1,6 @@
 # This is your system's configuration file.
 # Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
-{pkgs, ...}: {
+{hostname, ...}: {
   imports = [
     ../../nixos/core.nix
     ../../nixos/kde.nix
@@ -30,7 +30,21 @@
     };
     secrets = {
       # Create /mnt/etc/secrets/initrd directory and copy keys to it
+      # Reference: https://gist.github.com/ladinu/bfebdd90a5afd45dec811296016b2a3f
       "keyfile0.bin" = "/etc/secrets/initrd/keyfile0.bin";
     };
+  };
+
+  environment.shellAliases = {
+    nix-rebuild-host = ''
+      sudo nixos-rebuild switch  --flake .#${hostname}
+    '';
+
+    nix-rebuild-host-debug = ''
+      sudo nixos-rebuild build  --flake  .#${hostname} --show-trace  --option eval-cache false
+    '';
+    naspi-rebuild-switch = ''
+      NIX_SSHOPTS="-A" nixos-rebuild --flake .#naspi --use-remote-sudo --build-host noams@naspi.local --target-host noams@naspi.local switch
+    '';
   };
 }

@@ -76,7 +76,10 @@
   };
 
   networking.firewall.enable = false;
-  networking.nameservers = ["192.168.1.1"];
+  networking.nameservers = [
+    "192.168.1.1"
+    "1.1.1.1"
+  ];
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "none"; # NOTE: Disable because of issues with cloudgen access

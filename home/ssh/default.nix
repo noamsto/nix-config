@@ -13,20 +13,23 @@
     #   IdentityFile — the location of your SSH key authentication file for the account.
     # format in details:
     #   https://www.ssh.com/academy/ssh/config
-    extraConfig =
-      ''
-        include /etc/ssh/host_ssh.conf
+    extraConfig = ''
+      include /etc/ssh/host_ssh.conf
 
-        # a private key that is used during authentication will be added to ssh-agent if it is running
-        AddKeysToAgent yes
+      # a private key that is used during authentication will be added to ssh-agent if it is running
+      AddKeysToAgent yes
 
-        Host github.com
-            # github is controlled by default key
-            IdentityFile ~/.ssh/id_ed25519
-            # Specifies that ssh should only use the identity file explicitly configured above
-            # required to prevent sending default identity files first.
-            IdentitiesOnly yes
+      Host github.com
+          # github is controlled by default key
+          IdentityFile ~/.ssh/id_ed25519
+          # Specifies that ssh should only use the identity file explicitly configured above
+          # required to prevent sending default identity files first.
+          IdentitiesOnly yes
 
-      '';
+      Host naspi.local
+          User noams
+          IdentityFile ~/.ssh/id_ed25519
+          ForwardAgent yes
+    '';
   };
 }

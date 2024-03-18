@@ -46,6 +46,7 @@
   };
 
   networking = {
+    enableIPv6 = false;
     interfaces."wlan0".useDHCP = true;
     wireless = {
       interfaces = ["wlan0"];
@@ -55,6 +56,11 @@
       };
     };
   };
+
+  # NOTE: Make sure to add key on host sshing from (ssh-add)
+  security.pam.sshAgentAuth.enable = true;
+  security.pam.services.sudo.sshAgentAuth = true;
+  programs.ssh.startAgent = true;
 
   services.avahi = {
     enable = true;
@@ -74,6 +80,13 @@
     # Create gpio group
     gpio = {};
     naspi = {};
+  };
+
+  # do garbage collection weekly to keep disk usage low
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than +3";
   };
 
   # Change permissions gpio devices

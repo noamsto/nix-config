@@ -1,6 +1,5 @@
 {
   config,
-  username,
   inputs,
   ...
 }: {
@@ -10,7 +9,7 @@
   };
 
   age.identityPaths = [
-    "/home/${username}/.ssh/barracuda_ed25519_key"
+    "/etc/ssh/ssh_host_ed25519_key"
   ];
 
   environment.etc = {
