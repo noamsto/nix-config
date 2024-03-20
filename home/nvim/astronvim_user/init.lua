@@ -4,7 +4,7 @@ return {
 	options = {
 		opt = {
 			-- signcolumn = "auto:2", -- Show sign column when used only
-			spell = true,  -- Spell checking
+			spell = true, -- Spell checking
 			spelloptions = { "camel" },
 			swapfile = false, -- Swapfile
 		},
@@ -46,7 +46,6 @@ return {
 						analysis = {
 							autoSearchPaths = true,
 							useLibraryCodeForTypes = true,
-							diagnosticMode = "openFilesOnly",
 							typeCheckingMode = "off",
 							stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs",
 						},
@@ -74,7 +73,7 @@ return {
 			"nil_ls", -- nix language server
 			"efm",
 			---- Operation & Cloud Nativautoindente
-			"bashls",   -- bash
+			"bashls", -- bash
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
