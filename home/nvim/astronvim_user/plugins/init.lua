@@ -148,8 +148,8 @@ return {
 		opts = {
 			filesystem = {
 				filtered_items = {
-					visible = true, -- visible by default
-					hide_dotfiles = false,
+					-- visible = true, -- visible by default
+					hide_dotfiles = true,
 					hide_gitignored = false,
 				},
 			},
