@@ -6,8 +6,9 @@
   ...
 }: {
   xdg.configFile = {
-    "nvim".source = inputs.astronvim;
-    "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_user";
+    # "nvim".source = inputs.astronvim;
+    # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_user";
+    "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_v4";
     # "astronvim/lua/user".source = ./astronvim_user;   # Enable after finishing configuring nvim
   };
   programs.neovim = {
@@ -23,16 +24,56 @@
     extraPython3Packages = ps: [
       ps.debugpy
     ];
-    extraPackages = with pkgs; [
-      # Lua
-      lua-language-server
 
-      # General purpose Language Server (for sevices like black, mypy and others)
-      efm-langserver
+    extraPackages = with pkgs; [
+      # Astronvim requirements
+      luarocks-nix
+
+      # git
+      libgit2.lib
 
       # DB
       sqlite
       postgresql
+
+      # lua
+      lua
+      luajit
+      stylua
+      lua-language-server
+      selene
+
+      # python
+      ruff-lsp  # Python
+      pyright # python language server
+
+      # Markdown
+      marksman # Markdown
+      icu.dev
+      glow # markdown previewer
+
+      # nix
+      nil
+      statix # Lints and suggestions for the nix programming language
+      deadnix # Find and remove unused code in .nix source files
+      alejandra # Nix Code Formatter
+
+      # formatters
+      # nodePackages.prettier # common code formatter
+      prettierd # common code formatter
+
+      # Others
+      taplo # TOML language server / formatter / validator
+      yaml-language-server
+      sqlfluff # SQL linter
+      actionlint # GitHub Actions linter
+      proselint # English prose linter
+
+
+      #-- bash
+      nodePackages.bash-language-server
+      shellcheck
+      shfmt
 
       #-- json
       vscode-langservers-extracted
@@ -44,43 +85,14 @@
       terraform-ls
       hadolint # dockerfile linter
 
-      # protobuf
-      buf-language-server
-      buf
-
-      #-- python
-      nodePackages.pyright # python language server
-      ruff-lsp
-      # pylyzer
-
-      #-- nix
-      nil
-      statix # Lints and suggestions for the nix programming language
-      deadnix # Find and remove unused code in .nix source files
-      alejandra # Nix Code Formatter
-
-      #-- lua
-      stylua
-
-      #-- bash
-      nodePackages.bash-language-server
-      shellcheck
-      shfmt
-
-      #-- Others
-      taplo # TOML language server / formatter / validator
-      yaml-language-server
-      sqlfluff # SQL linter
-      actionlint # GitHub Actions linter
-      proselint # English prose linter
+      # # protobuf
+      # buf-language-server
+      # buf
 
       #-- Misc
       tree-sitter # common language parser/highlighter
-      nodePackages.prettier # common code formatter
-      marksman # language server for markdown
-      glow # markdown previewer
 
-      #-- Optional Requirements:
+      # #-- Optional Requirements:
       gdu # disk usage analyzer, required by AstroNvim
       ripgrep # fast search tool, required by AstroNvim's '<leader>fw'(<leader> is space key)
 

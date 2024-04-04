@@ -8,6 +8,7 @@
     ./base.nix
     ./samba.nix
     ../../nixos/xscript
+    ../../nixos/file-server
   ];
 
   environment.systemPackages = with pkgs; [

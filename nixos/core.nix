@@ -76,17 +76,23 @@
   };
 
   networking.firewall.enable = false;
-  networking.nameservers = [
-    "192.168.1.1"
-    "1.1.1.1"
-  ];
+  # networking.nameservers = [
+  #   "1.1.1.1"
+  #   "192.168.1.1"
+  # ];
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
-    dns = "none"; # NOTE: Disable because of issues with cloudgen access
+    # dns = "none"; # NOTE: Disable because of issues with cloudgen access
   };
 
   # DNS service
-  # services.resolved.enable = true; # NOTE: Disable because of issues with cloudgen access
+  # NOTE: Disable because of issues with cloudgen access
+  services.resolved = {
+    enable = true;
+    extraConfig = ''
+      Cache=no-negative
+    '';
+  };
 
   # For discovering zero-conf network sharing
   services.avahi = {
