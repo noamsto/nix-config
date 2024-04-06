@@ -7,7 +7,7 @@ return {
 				mappings = {
 					n = {
 						["<Leader>y"] = { "<Cmd>Telescope yank_history<CR>", desc = "Open Yank History" },
-						["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },
+						-- ["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },  # NOTE: Not needed, conflicting
 						["p"] = { "<Plug>(YankyPutAfter)", desc = "Put yanked text after cursor" },
 						["P"] = { "<Plug>(YankyPutBefore)", desc = "Put yanked text before cursor" },
 						["gp"] = { "<Plug>(YankyGPutAfter)", desc = "Put yanked text after selection" },
@@ -38,7 +38,7 @@ return {
 						["=P"] = { "<Plug>(YankyPutBeforeFilter)", desc = "Put before applying a filter" },
 					},
 					x = {
-						["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },
+						-- ["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },  # NOTE: Not needed, conflicting
 						["p"] = { "<Plug>(YankyPutAfter)", desc = "Put yanked text after cursor" },
 						["P"] = { "<Plug>(YankyPutBefore)", desc = "Put yanked text before cursor" },
 						["gp"] = { "<Plug>(YankyGPutAfter)", desc = "Put yanked text after selection" },

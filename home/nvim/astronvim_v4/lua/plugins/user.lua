@@ -32,6 +32,12 @@ return {
 			require("dap-python").test_runner = "pytest"
 
 			require("dap-python").setup(path, opts)
+
+			local dap = require('dap')
+			dap.defaults.fallback.external_terminal = {
+				command = 'alacritty',
+				args = { '-e' },
+			}
 			-- table.insert(require("dap").configurations.python, {
 			-- 	type = "python",
 			-- 	request = "launch",
@@ -67,7 +73,6 @@ return {
 				start_in_insert = false,
 			},
 		},
-	}
-
+	},
 
 }

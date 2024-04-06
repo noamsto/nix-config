@@ -28,8 +28,9 @@
     extraPackages = with pkgs; [
       # Astronvim requirements
       luarocks-nix
+      cargo
 
-      # git
+      # git NOTE: Currently not working (fugit2)
       libgit2.lib
 
       # DB

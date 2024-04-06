@@ -128,6 +128,11 @@ return {
         },
 
         ["<Leader>r"] = { name = "󰣪 Refactor" },
+        ["<Leader>rbf"] = false,
+        ["<Leader>rB"] = {
+          function() require("refactoring").refactor "Extract Block To File" end,
+          desc = "Extract Block To File",
+        },
         ["<Leader>y"] = { name = " Yanky" },
 
         ["<Leader>i"] = { name = " Icon" },
@@ -180,6 +185,14 @@ return {
           desc = "CopilotChat - Prompt actions",
         },
 
+      },
+      v = {
+        ["<Leader>r"] = { name = "󰣪 Refactor" },
+        ["<Leader>rbf"] = false,
+        ["<Leader>rB"] = {
+          function() require("refactoring").refactor "Extract Block To File" end,
+          desc = "Extract Block To File",
+        },
       },
       t = {
         -- setting a mapping to false will disable it
