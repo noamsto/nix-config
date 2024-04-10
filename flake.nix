@@ -180,6 +180,7 @@
           inherit inputs;
           username = "noams";
           hostname = "naspi";
+          user_full_name = "Noam Stolero";
           user_email = "noamstolero@gmail.com";
         };
       };
