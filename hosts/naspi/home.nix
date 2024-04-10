@@ -14,6 +14,7 @@
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "23.11";
 
+  nixpkgs.config.allowUnfree = true;
   nix = {
     package = pkgs.nixUnstable;
     settings.experimental-features = ["nix-command" "flakes"];
