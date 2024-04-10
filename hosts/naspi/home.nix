@@ -8,6 +8,7 @@
     ../../home/terminal/minimal.nix
     ../../home/xdg
     ../../home/server-packages.nix
+    ../../home/nvim
   ];
 
   home.username = username;
