@@ -6,6 +6,7 @@
   imports = [
     ../../home/git
     ../../home/terminal/minimal.nix
+    ../../home/terminal/tmux
     ../../home/xdg
     ../../home/server-packages.nix
     ../../home/nvim
