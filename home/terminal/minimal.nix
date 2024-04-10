@@ -1,6 +1,5 @@
 {...}: {
   imports = [
-    ./alacritty
     ./zsh
     ./starship
     ./btop

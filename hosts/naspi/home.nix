@@ -7,6 +7,7 @@
     ../../home/git
     ../../home/terminal/minimal.nix
     ../../home/xdg
+    ../../home/server-packages.nix
   ];
 
   home.username = username;
@@ -16,6 +17,8 @@
   nix = {
     package = pkgs.nixUnstable;
     settings.experimental-features = ["nix-command" "flakes"];
+
+    settings.trusted-users = [username];
     # extraOptions = ''
     #   experimental-features = nix-command flakes
     # '';
