@@ -11,7 +11,20 @@ return {
 			"diff",
 			"norg",
 			"norg_meta",
-
+			"sql",
+			"regex",
+			"hcl",
+			"dockerfile",
+			"terraform",
+			"json",
+			"yaml",
+			"toml",
+			"html",
+			"css",
+			"scss",
+			"bash",
+			"xml",
+			"html",
 			-- add more arguments for adding more treesitter parsers
 		})
 	end,

@@ -54,6 +54,8 @@ return {
 			"dockerls", -- dockerfile
 			"terraformls", -- terraform hcl
 			"graphql",
+
+			"lemminx",
 			-- "bufls",
 		},
 		-- customize language server configuration options passed to `lspconfig`

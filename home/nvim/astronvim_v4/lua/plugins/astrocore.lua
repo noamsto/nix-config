@@ -135,10 +135,6 @@ return {
         },
         ["<Leader>y"] = { name = " Yanky" },
 
-        ["<Leader>i"] = { name = " Icon" },
-        ["<Leader>ip"] = { "<cmd>IconPickerNormal emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker" },
-        ["<Leader>iy"] = { "<cmd>IconPickerYank emoji nerd_font_v3 symbols<cr>", desc = "Open Icon Picker (Yank)" },
-
         ["<Leader>tt"] = {
           function()
             require("astrocore").toggle_term_cmd("btop")

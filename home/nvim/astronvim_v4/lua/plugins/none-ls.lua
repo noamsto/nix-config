@@ -34,7 +34,8 @@ return {
 			}),
 
 			formatting.prettierd, -- Terraform formatter
+			formatting.alejandra,
 		}
-		return config        -- return final config table
+		return config -- return final config table
 	end,
 }

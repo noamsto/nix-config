@@ -650,10 +650,10 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1710792290,
-        "narHash": "sha256-qxhkPFwzMJv4i54ZoYMLQ+M8gSGWStqLx4IIFjNPxuA=",
+        "lastModified": 1712587341,
+        "narHash": "sha256-7Po0iOC56rr3cg9HGhGHZtcg7jNokDgP0iM2OI+UI0E=",
         "ref": "refs/heads/main",
-        "rev": "9b453508606c4e5ff51ffe7b25ea3ef808ea4036",
+        "rev": "1a944cc8c0668c9e7276faf8e4149583d79180dd",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
@@ -1297,11 +1297,11 @@
     "xscript": {
       "flake": false,
       "locked": {
-        "lastModified": 1710758656,
-        "narHash": "sha256-NAVNWCTtGPyOUhhdL+LM4J6WMytDlGFeMfz2JhDsDuI=",
+        "lastModified": 1711353786,
+        "narHash": "sha256-o12awveMal747vsPpE7gn2e05FPoVpu2yekQBkvds44=",
         "owner": "geekworm-com",
         "repo": "xscript",
-        "rev": "06d02a8b65f7fad7adbb7d4277161e59f5719b1f",
+        "rev": "9581e802dd0ebc57c5d196e53298c8fc2f444c01",
         "type": "github"
       },
       "original": {

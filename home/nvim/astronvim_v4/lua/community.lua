@@ -33,6 +33,16 @@ return {
 		"nvim-neotest/neotest",
 
 		dependencies = {
+			{
+				"AstroNvim/astrocore",
+				opts = {
+					mappings = {
+						n = {
+							["<Leader>To"] = { function() require("neotest").output.open({ enter = true }) end, desc = "Output hover" },
+						},
+					},
+				},
+			},
 			"nvim-neotest/neotest-python",
 		},
 		opts = function()
@@ -42,6 +52,7 @@ return {
 					require("neotest-python")({
 						dap = { justMyCode = false },
 						runner = "pytest",
+						pytest_discover_instances = true,
 					}),
 				},
 			}

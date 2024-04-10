@@ -20,7 +20,7 @@
         "read only" = "no";
         "guest ok" = "yes";
         "create mask" = "0644";
-        "directory mask" = "0755";
+        "directory mask" = "0775";
         "force user" = username;
         "force group" = "naspi";
       };
@@ -30,7 +30,7 @@
         "read only" = "no";
         "guest ok" = "no";
         "create mask" = "0644";
-        "directory mask" = "0755";
+        "directory mask" = "0775";
         "force user" = username;
         "force group" = "naspi";
       };
@@ -40,6 +40,7 @@
   services.samba-wsdd = {
     enable = true;
     openFirewall = true;
+    discovery = true;
   };
 
   networking.firewall.enable = true;

@@ -6,7 +6,7 @@ return {
 			opts = {
 				mappings = {
 					n = {
-						["<Leader>y"] = { "<Cmd>Telescope yank_history<CR>", desc = "Open Yank History" },
+						["<Leader>fy"] = { "<Cmd>Telescope yank_history<CR>", desc = "Open Yank History" },
 						-- ["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },  # NOTE: Not needed, conflicting
 						["p"] = { "<Plug>(YankyPutAfter)", desc = "Put yanked text after cursor" },
 						["P"] = { "<Plug>(YankyPutBefore)", desc = "Put yanked text before cursor" },

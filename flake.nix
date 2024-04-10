@@ -87,7 +87,6 @@
     home-manager,
     nixpkgs,
     nixpkgs-stable,
-    nixpkgs-old,
     nixos-generators,
     ...
   } @ inputs: let
@@ -105,10 +104,6 @@
       user_email,
     }: let
       pkgs-stable = import nixpkgs-stable {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      pkgs-unstable = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
@@ -151,15 +146,6 @@
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
                   };
                 });
-                # Fix slack screen sharing following: https://github.com/flathub/com.slack.Slack/issues/101#issuecomment-1807073763
-                # slack = prev.slack.overrideAttrs (previousAttrs: {
-                #   installPhase =
-                #     previousAttrs.installPhase
-                #     + ''
-                #       sed -i'.backup' -e 's/,"WebRTCPipeWireCapturer"/,"LebRTCPipeWireCapturer"/' $out/lib/slack/resources/app.asar
-                #
-                #     '';
-                # });
               })
             ];
           }
@@ -214,11 +200,15 @@
       naspi_image = nixos-generators.nixosGenerate {
         system = "aarch64-linux";
         format = "sd-aarch64";
-        specialArgs = {inherit inputs;};
+        specialArgs = {
+          inherit inputs;
+          username = "noams";
+          hostname = "naspi";
+        };
         modules = [
           ./hosts/naspi/base.nix
           ./hosts/naspi/hardware-configuration.nix
-          ./hosts/naspi/system.nix
+          ./secrets/default.nix
         ];
       };
     };

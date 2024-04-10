@@ -4,7 +4,12 @@
   config,
   inputs,
   ...
-}: {
+}: let
+  dbee = import ./dbee.nix {inherit pkgs;};
+in {
+  xdg.dataFile = {
+    "nvim/dbee/bin/dbee".source = "${dbee}/bin/dbee";
+  };
   xdg.configFile = {
     # "nvim".source = inputs.astronvim;
     # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_user";
@@ -45,7 +50,7 @@
       selene
 
       # python
-      ruff-lsp  # Python
+      ruff-lsp # Python
       pyright # python language server
 
       # Markdown
@@ -62,6 +67,7 @@
       # formatters
       # nodePackages.prettier # common code formatter
       prettierd # common code formatter
+      lemminx
 
       # Others
       taplo # TOML language server / formatter / validator
@@ -69,7 +75,6 @@
       sqlfluff # SQL linter
       actionlint # GitHub Actions linter
       proselint # English prose linter
-
 
       #-- bash
       nodePackages.bash-language-server
@@ -110,6 +115,10 @@
 
       # Wayland clipboard
       wl-clipboard
+
+      curl
+      wget
+      go
     ];
 
     # For development

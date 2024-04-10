@@ -421,6 +421,7 @@ return {
 					require("neotest-python")({
 						dap = { justMyCode = false },
 						runner = "pytest",
+						pytest_discover_instances = true,
 					}),
 				},
 			}

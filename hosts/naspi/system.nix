@@ -8,7 +8,7 @@
     ./base.nix
     ./samba.nix
     ../../nixos/xscript
-    ../../nixos/file-server
+    ../../nixos/media
   ];
 
   environment.systemPackages = with pkgs; [
@@ -38,7 +38,7 @@
   users = {
     users.${username} = {
       isNormalUser = true;
-      extraGroups = ["wheel" "gpio" "naspi"];
+      extraGroups = ["wheel" "gpio" "naspi" "media"];
       hashedPasswordFile = config.age.secrets.noams_password.path;
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
@@ -48,7 +48,21 @@
 
   networking = {
     enableIPv6 = false;
-    interfaces."wlan0".useDHCP = true;
+    domain = "lan"; # NOTE: not really sure what it does
+    nameservers = ["192.168.3.1"];
+    defaultGateway = {
+      address = "192.168.3.1";
+      interface = "wlan0";
+    };
+    interfaces."wlan0" = {
+      useDHCP = false;
+      ipv4.addresses = [
+        {
+          address = "192.168.3.6";
+          prefixLength = 24;
+        }
+      ];
+    };
     wireless = {
       interfaces = ["wlan0"];
       enable = true;
