@@ -74,12 +74,6 @@
     nix-colors.url = "github:misterio77/nix-colors";
     # add ags
     ags.url = "github:Aylur/ags";
-
-    # Geekworm Xscrpit for NASPI
-    xscript = {
-      url = "github:geekworm-com/xscript";
-      flake = false;
-    };
   };
 
   # All outputs for the system (configs)
@@ -173,43 +167,21 @@
         user_full_name = "Noam Stolero";
         user_email = "nstolero@barracuda.com";
       };
-
-      naspi = mkSystem {
-        pkgs = inputs.nixpkgs;
-        system = "aarch64-linux";
-        hostname = "naspi";
-        username = "noams";
-        user_full_name = "Noam Stolero";
-        user_email = "stellern@gmail.com";
-      };
-
-      # naspi = nixpkgs.lib.nixosSystem {
-      #   system = "aarch64-linux";
-      #   specialArgs = {inherit inputs;};
-      #   modules = [
-      #     ./hosts/naspi/base.nix
-      #     ./hosts/naspi/hardware-configuration.nix
-      #     ./hosts/naspi/system.nix
-      #   ];
-      # };
     };
     formatter.x86_64-linux = pkgs-linux.alejandra;
 
-    # NasPI (Raspberrypi 4B 8G) image
-    packages.x86_64-linux = {
-      naspi_image = nixos-generators.nixosGenerate {
+    homeConfigurations = {
+      naspi-raspbian = home-manager.lib.homeManagerConfiguration {
         system = "aarch64-linux";
-        format = "sd-aarch64";
-        specialArgs = {
+        # username = "noams";
+        # homeDirectory = "/home/noams";
+
+        configuration = ./hosts/naspi/home.nix;
+        extraSpecialArgs.flake-inputs = {
           inherit inputs;
           username = "noams";
           hostname = "naspi";
         };
-        modules = [
-          ./hosts/naspi/base.nix
-          ./hosts/naspi/hardware-configuration.nix
-          ./secrets/default.nix
-        ];
       };
     };
   };

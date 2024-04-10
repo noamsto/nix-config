@@ -5,12 +5,7 @@
 }: {
   imports = [
     ../../home/git
-    ../../home/terminal/bat
-    ../../home/terminal/btop
-    ../../home/terminal/fzf
-    ../../home/terminal/zsh
-    ../../home/terminal/starship
-    ../../home/terminal/tmux
+    ../../home/terminal/minimal.nix
     ../../home/xdg
   ];
 
