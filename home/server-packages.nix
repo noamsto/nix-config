@@ -71,6 +71,6 @@
     ncdu # better du
 
     # Wayland clipboard
-    wl-clipboard
+    xclip
   ];
 }

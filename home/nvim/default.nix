@@ -113,9 +113,6 @@ in {
       gdb
       lldb
 
-      # Wayland clipboard
-      wl-clipboard
-
       curl
       wget
       go
