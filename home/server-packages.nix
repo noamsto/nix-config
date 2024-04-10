@@ -65,9 +65,6 @@
     pciutils # lspci
     usbutils # lsusb
 
-    spotify
-    joplin-desktop
-    vlc
     lazygit
 
     fd # find files
