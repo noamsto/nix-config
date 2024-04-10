@@ -172,15 +172,15 @@
 
     homeConfigurations = {
       naspi-raspbian = home-manager.lib.homeManagerConfiguration {
-        system = "aarch64-linux";
-        # username = "noams";
-        # homeDirectory = "/home/noams";
-
-        configuration = ./hosts/naspi/home.nix;
-        extraSpecialArgs.flake-inputs = {
+        pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
+        modules = [
+          ./hosts/naspi/home.nix
+        ];
+        extraSpecialArgs = {
           inherit inputs;
           username = "noams";
           hostname = "naspi";
+          user_email = "noamstolero@gmail.com";
         };
       };
     };
