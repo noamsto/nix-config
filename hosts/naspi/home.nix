@@ -14,5 +14,12 @@
 
   home.stateVersion = "23.11";
 
+  nix = {
+    package = pkgs.nixUnstable;
+    settings.experimental-features = ["nix-command" "flakes"];
+    # extraOptions = ''
+    #   experimental-features = nix-command flakes
+    # '';
+  };
   programs.home-manager.enable = true;
 }
