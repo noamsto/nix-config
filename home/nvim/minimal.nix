@@ -7,7 +7,7 @@
     "nvim-minimal".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_minimal";
   };
 
-  environment.shellAliases = {
+  home.shellAliases = {
     nvim = "NVIM_APPNAME=nvim-minimal nvim";
   };
   programs.neovim = {
