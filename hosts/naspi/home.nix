@@ -9,7 +9,7 @@
     ../../home/terminal/tmux
     ../../home/xdg
     ../../home/server-packages.nix
-    ../../home/nvim
+    ../../home/nvim/minimal.nix
   ];
 
   home.username = username;
