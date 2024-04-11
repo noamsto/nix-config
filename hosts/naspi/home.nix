@@ -16,6 +16,10 @@
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "23.11";
 
+  home.shellAliases = {
+    xoff = "alias xoff='sudo /usr/local/bin/xSoft.sh 0 27'";
+  };
+
   nixpkgs.config.allowUnfree = true;
   nix = {
     package = pkgs.nixUnstable;
