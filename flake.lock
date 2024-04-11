@@ -964,8 +964,7 @@
         "nixpkgs-old": "nixpkgs-old",
         "nixpkgs-stable": "nixpkgs-stable",
         "sddm-sugar-dark": "sddm-sugar-dark",
-        "xremap": "xremap",
-        "xscript": "xscript"
+        "xremap": "xremap"
       }
     },
     "sddm-sugar-dark": {
@@ -1291,22 +1290,6 @@
         "owner": "k0kubun",
         "ref": "v0.8.15",
         "repo": "xremap",
-        "type": "github"
-      }
-    },
-    "xscript": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1711353786,
-        "narHash": "sha256-o12awveMal747vsPpE7gn2e05FPoVpu2yekQBkvds44=",
-        "owner": "geekworm-com",
-        "repo": "xscript",
-        "rev": "9581e802dd0ebc57c5d196e53298c8fc2f444c01",
-        "type": "github"
-      },
-      "original": {
-        "owner": "geekworm-com",
-        "repo": "xscript",
         "type": "github"
       }
     }
