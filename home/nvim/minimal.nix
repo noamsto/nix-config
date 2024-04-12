@@ -5,13 +5,13 @@
 
   home.shellAliases = {
     nvim = "NVIM_APPNAME=nvim-minimal nvim";
+    vim = "nvim";
   };
   programs.neovim = {
     package = pkgs.neovim-unwrapped;
     enable = true;
     defaultEditor = true;
 
-    vimAlias = true;
     vimdiffAlias = true;
 
     withPython3 = true;

@@ -23,16 +23,8 @@ return {
 			code_actions.statix, -- Lints and suggestions for Nix.
 
 			-- Diagnostic
-			diagnostics.actionlint,                 -- GitHub Actions workflow syntax checking
-			diagnostics.mypy,                       -- GitHub Actions workflow syntax checking
-			diagnostics.deadnix,                    -- Scan Nix files for deid code. Formatting
-			diagnostics.hadolint,                   -- Dockerfile linter
-			diagnostics.selene,                     -- Dockerfile linter
-			formatting.terraform_fmt,               -- Terraform formatter
-			formatting.sqlfluff.with({              -- SQL formatter
-				extra_args = { "--dialect", "postgres" }, -- change to your dialect
-			}),
-
+			diagnostics.deadnix, -- Scan Nix files for deid code. Formatting
+			diagnostics.selene, -- Dockerfile linter
 			formatting.prettierd, -- Terraform formatter
 			formatting.alejandra,
 		}

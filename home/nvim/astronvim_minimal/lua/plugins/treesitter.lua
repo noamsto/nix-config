@@ -10,7 +10,6 @@ return {
 			"vim",
 			"diff",
 			"norg",
-			"norg_meta",
 			"sql",
 			"regex",
 			"hcl",
