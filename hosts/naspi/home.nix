@@ -18,7 +18,6 @@
 
   home.shellAliases = {
     xoff = "alias xoff='sudo /usr/local/bin/xSoft.sh 0 27'";
-    sudo = "sudo --preserve-env=PATH env";
   };
 
   nixpkgs.config.allowUnfree = true;
