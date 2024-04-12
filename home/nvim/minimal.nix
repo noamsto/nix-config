@@ -4,7 +4,7 @@
   ...
 }: {
   xdg.configFile = {
-    "nvim-minimal".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_minimal";
+    "nvim-minimal".source = "/home/noams/nix-config/home/nvim/astronvim_minimal";
   };
 
   home.shellAliases = {
