@@ -1,10 +1,6 @@
-{
-  pkgs,
-  config,
-  ...
-}: {
+{pkgs, ...}: {
   xdg.configFile = {
-    "nvim-minimal".source = "/home/noams/nix-config/home/nvim/astronvim_minimal";
+    "nvim-minimal".source = ./astronvim_minimal;
   };
 
   home.shellAliases = {
