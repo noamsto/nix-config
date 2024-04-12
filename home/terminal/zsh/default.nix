@@ -74,6 +74,9 @@
       AUTO_LS_COMMANDS=(ll)
       AUTO_LS_NEWLINE=false
     '';
+    loginExtra = ''
+      export LANG=en_US.utf8
+    '';
   };
 
   programs.fzf = {
