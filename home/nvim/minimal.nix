@@ -75,6 +75,7 @@
       llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
       gdb
       lldb
+      stdenv.cc.cc.lib
 
       curl
       wget

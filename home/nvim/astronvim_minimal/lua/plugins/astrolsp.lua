@@ -38,6 +38,12 @@ return {
 		},
 		-- enable servers that you already have installed without mason
 		servers = {
+			"marksman", -- markdown ls
+			"jsonls", -- json language server
+			"yamlls", -- yaml language server
+			"taplo", -- toml language server
+
+			"lua_ls", -- lua
 			---- Backend
 			"nil_ls", -- nix language server
 			---- Operation & Cloud Nativautoindente
