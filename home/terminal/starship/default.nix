@@ -15,6 +15,7 @@
         aws.disabled = true;
         gcloud.disabled = true;
         format = "$all"; # Remove this line to disable the default prompt format
+
         palette = "catppuccin_${flavour}";
       }
       // builtins.fromTOML (builtins.readFile

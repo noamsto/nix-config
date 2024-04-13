@@ -1,7 +1,7 @@
 {...}: {
   imports = [
     ./zsh
-    # ./starship
+    ./starship/minimal.nix
     ./btop
     ./bat
     ./fzf
