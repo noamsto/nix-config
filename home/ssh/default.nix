@@ -16,6 +16,8 @@
     extraConfig = ''
       include /etc/ssh/host_ssh.conf
 
+      SendEnv LANG LC_*
+
       # a private key that is used during authentication will be added to ssh-agent if it is running
       AddKeysToAgent yes
 
