@@ -15,22 +15,22 @@
         aws.disabled = true;
         gcloud.disabled = true;
         format = ''
-          $username
-          $memory_usage
-          $hostname
-          $directory
-          $git_branch
-          $git_commit
-          $git_state
-          $git_status
-          $package
-          $nix_shell
-          $env_var
-          $line_break
-          $cmd_duration
-          $jobs
-          $time
-          $character
+          $username\
+          $memory_usage\
+          $hostname\
+          $directory\
+          $git_branch\
+          $git_commit\
+          $git_state\
+          $git_status\
+          $package\
+          $nix_shell\
+          $env_var\
+          $line_break\
+          $cmd_duration\
+          $jobs\
+          $time\
+          $character\
         '';
 
         palette = "catppuccin_${flavour}";
