@@ -1,10 +1,10 @@
 {pkgs}: let
-  imgLink = "https://images.pexels.com/photos/640781/pexels-photo-640781.jpeg";
-
-  image = pkgs.fetchurl {
-    url = imgLink;
-    sha256 = "QMGGKlkc2nPi8AjCRfoxSo4oGM70dPCdivodKqLHCU0=";
-  };
+  # imgLink = "https://images.pexels.com/photos/640781/pexels-photo-640781.jpeg";
+  # image = pkgs.fetchurl {
+  #   url = imgLink;
+  #   sha256 = "QMGGKlkc2nPi8AjCRfoxSo4oGM70dPCdivodKqLHCU0=";
+  # };
+  image = ./deer-sddm-background.jpg;
 in
   pkgs.stdenv.mkDerivation {
     name = "sddm-theme";
