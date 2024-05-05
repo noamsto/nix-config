@@ -12,7 +12,7 @@
     ./nvim
     ./browsers
     ./cloud
-    ./theme
+    # ./theme
     ./obs-studio
   ];
 

@@ -11,19 +11,11 @@ in rec {
 
   # QT
 
-  # qt = {
-  #   enable = true;
-  #   platformTheme = "qt5ct";
-  #   style = {
-  #     package = pkgs.catppuccin-kvantum;
-  #     name = "kvantum";
-  #   };
-  # };
   qt.enable = true;
 
-  qt.platformTheme = "kde";
-  qt.style.name = "adwaita-dark";
-  qt.style.package = pkgs.adwaita-qt;
+  qt.platformTheme = "gnome";
+  qt.style.name = "breeze-dark";
+  qt.style.package = pkgs.breeze-qt;
 
   # GTK
   gtk.enable = true;
@@ -31,8 +23,8 @@ in rec {
   gtk.cursorTheme.package = pkgs.bibata-cursors;
   gtk.cursorTheme.name = "Bibata-Modern-Ice";
 
-  gtk.theme.package = pkgs.adw-gtk3;
-  gtk.theme.name = "adw-gtk3";
+  gtk.theme.package = pkgs.breeze-gtk;
+  gtk.theme.name = "breeze-dark";
 
   gtk.iconTheme.package = gruvbox-plus;
   gtk.iconTheme.name = "GruvboxPlus";
