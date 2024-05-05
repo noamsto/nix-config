@@ -1,8 +1,4 @@
-{
-  pkgs,
-  username,
-  ...
-}: {
+{username, ...}: {
   imports = [
     ./packages.nix
     ./terminal

@@ -167,6 +167,14 @@
         user_full_name = "Noam Stolero";
         user_email = "nstolero@barracuda.com";
       };
+      barracuda-p14s-ns = mkSystem {
+        pkgs = inputs.nixpkgs;
+        system = "x86_64-linux";
+        hostname = "barracuda-p14s-ns";
+        username = "noams";
+        user_full_name = "Noam Stolero";
+        user_email = "nstolero@barracuda.com";
+      };
     };
     formatter.x86_64-linux = pkgs-linux.alejandra;
 

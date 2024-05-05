@@ -26,13 +26,12 @@
     options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
   '';
   # Kernel
-  # boot.kernelPackages = pkgs.linuxPackages_latest;
-  # boot.loader.systemd-boot.configurationLimit = 10;
   boot.loader.grub.configurationLimit = 10;
+
   # do garbage collection weekly to keep disk usage low
   nix.gc = {
     automatic = true;
-    dates = "daily";
+    dates = "weekly";
     options = "--delete-older-than +3";
   };
 
@@ -76,17 +75,11 @@
   };
 
   networking.firewall.enable = false;
-  # networking.nameservers = [
-  #   "1.1.1.1"
-  #   "192.168.1.1"
-  # ];
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
-    # dns = "none"; # NOTE: Disable because of issues with cloudgen access
   };
 
   # DNS service
-  # NOTE: Disable because of issues with cloudgen access
   services.resolved = {
     enable = true;
     extraConfig = ''
@@ -159,16 +152,12 @@
     abrmd.enable = true;
   };
 
-  # users.groups.fyde = {};
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${username} = {
     isNormalUser = true;
     description = user_full_name;
     extraGroups = ["adbusers" "networkmanager" "wheel" "video"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
-    packages = with pkgs; [
-      floorp
-    ];
   };
 
   nix.settings.trusted-users = [username];
@@ -180,7 +169,7 @@
     git
     curl
     alejandra
-    # xclip
+    floorp
 
     # python
     (python311.withPackages (ps:
@@ -204,14 +193,19 @@
 
     openssh.enable = true;
     power-profiles-daemon.enable = true;
+
+    # Firmware updates
     fwupd.enable = true;
+
+    # Trim SSD
+    fstrim.enable = true;
+    fstrim.interval = "daily";
 
     # Enable CUPS to print documents.
     printing.enable = true;
     printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
 
     # Enable flatpak
-
     flatpak.enable = true;
   };
 
