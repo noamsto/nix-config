@@ -32,7 +32,9 @@ in {
 
     extraPackages = with pkgs; [
       # Astronvim requirements
+      luajit
       luarocks-nix
+      luajitPackages.lua-utils-nvim
       cargo
 
       # git NOTE: Currently not working (fugit2)
@@ -44,7 +46,6 @@ in {
 
       # lua
       lua
-      luajit
       stylua
       lua-language-server
       selene

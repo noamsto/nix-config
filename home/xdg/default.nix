@@ -49,10 +49,12 @@
         "x-scheme-handler/ftp" = browser;
         "x-scheme-handler/http" = browser;
         "x-scheme-handler/https" = browser;
-        "x-scheme-handler/slack" = "slack.desktop";
         "x-scheme-handler/unknown" = browser;
       };
 
+      associations.added = {
+        "x-scheme-handler/slack" = "slack.desktop";
+      };
       associations.removed = let
         browser = ["google-chrome.desktop"];
       in {
