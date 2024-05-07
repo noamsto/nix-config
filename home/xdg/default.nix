@@ -27,7 +27,7 @@
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["floorp.desktop"];
+        browser = ["firefox.desktop"];
       in {
         "application/json" = browser;
         "application/pdf" = "evince.desktop";
@@ -49,11 +49,12 @@
         "x-scheme-handler/ftp" = browser;
         "x-scheme-handler/http" = browser;
         "x-scheme-handler/https" = browser;
+        "x-scheme-handler/slack" = "slack.desktop";
         "x-scheme-handler/unknown" = browser;
       };
 
       associations.added = {
-        "x-scheme-handler/slack" = "slack.desktop";
+        "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
       };
       associations.removed = let
         browser = ["google-chrome.desktop"];

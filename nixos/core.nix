@@ -18,6 +18,9 @@
     dconf.enable = true;
     ssh.startAgent = true;
     nix-ld.enable = true;
+
+    # Fan and thermal control
+    coolercontrol.enable = true;
   };
 
   # OBS virtual Camera
@@ -169,7 +172,9 @@
     git
     curl
     alejandra
-    floorp
+    firefox
+    dmidecode
+    neofetch
 
     # python
     (python311.withPackages (ps:
@@ -185,7 +190,7 @@
 
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
-  hardware.logitech.wireless.enable = true;
+  hardware.logitech.wireless.enable = true; # solaar
 
   services = {
     dbus.packages = [pkgs.gcr];

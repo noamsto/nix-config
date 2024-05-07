@@ -6,7 +6,7 @@
   programs.bat = {
     enable = true;
     themes = {
-      catpuccin = {
+      catppuccin = {
         src = pkgs.fetchFromGitHub {
           owner = "catppuccin";
           repo = "bat";

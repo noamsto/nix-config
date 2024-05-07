@@ -84,5 +84,8 @@
 
     # Wayland clipboard
     wl-clipboard
+
+    # github
+    gh
   ];
 }

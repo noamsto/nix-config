@@ -26,6 +26,8 @@ return {
 	-- Git Version Control
 	{ import = "astrocommunity.git.neogit" },
 	{ import = "astrocommunity.git.diffview-nvim" },
+	{ import = "astrocommunity.git.octo-nvim" },
+
 
 	-- testing
 	{ import = "astrocommunity.test.neotest" },

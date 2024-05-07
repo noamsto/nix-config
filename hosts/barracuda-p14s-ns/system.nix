@@ -15,14 +15,6 @@
   ];
 
   boot.loader.efi.canTouchEfiVariables = true;
-  #boot.kernelPackages = pkgs.linuxPackages_6_7;
-  # boot.kernelPatches = [
-  #   {
-  #     # Fix amdgpu suspend issue: https://gitlab.freedesktop.org/drm/amd/-/issues/3132
-  #     name = "amdgpu-fix-suspend";
-  #     patch = ./0001-drm-amd-Flush-GFXOFF-requests-in-prepare-stage.patch;
-  #   }
-  # ];
 
   boot.loader.grub = {
     enable = true;

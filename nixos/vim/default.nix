@@ -1,7 +1,7 @@
 {pkgs, ...}: {
   environment.variables = {
     EDITOR = "vim";
-    BROWSER = "floorp";
+    BROWSER = "firefox";
     TERMINAL = "alacritty";
   };
 
