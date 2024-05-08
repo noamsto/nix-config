@@ -16,18 +16,78 @@
   boot.initrd.kernelModules = ["dm-snapshot" "amdgpu"];
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
+  boot.kernelParams = ["thinkpad_acpi.fan_control=1"];
+  services.xserver.videoDrivers = ["amdgpu"]; # NOTE: might not be necessary anymore
+  services.thinkfan = {
+    # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
+    enable = true;
+    sensors = [
+      # GPU
+      {
+        name = "amdgpu";
+        type = "hwmon";
+        indices = [1];
+        query = "/sys/class/hwmon";
+      }
 
-  services.xserver.videoDrivers = ["amdgpu"];
+      # CPU
+      {
+        name = "k10temp";
+        type = "hwmon";
+        indices = [1];
+        query = "/sys/class/hwmon";
+      }
+      {
+        name = "thinkpad";
+        type = "hwmon";
+        indices = [1 3 6 7];
+        query = "/sys/class/hwmon";
+        max_errors = 10;
+      }
+      # SSD
+      {
+        name = "nvme";
+        type = "hwmon";
+        indices = [1 2 3];
+        correction = [(-5) 0 0];
+        query = "/sys/class/hwmon";
+      }
+      #   # MB
+      {
+        name = "acpitz";
+        type = "hwmon";
+        indices = [1];
+        query = "/sys/class/hwmon";
+      }
+    ];
+    fans = [
+      {
+        type = "tpacpi";
+        query = "/proc/acpi/ibm/fan";
+      }
+    ];
+    levels = [
+      [0 0 55]
+      [1 53 58]
+      [2 56 61]
+      [3 59 64]
+      [4 62 67]
+      [5 65 70]
+      [6 69 74]
+      [7 72 77]
+      ["level full-speed" 75 32767]
+    ];
+  };
 
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/5a63ed5d-bf1e-40e8-837f-62c88b18f819";
     fsType = "ext4";
   };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/9B14-3528";
-      fsType = "vfat";
-    };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/9B14-3528";
+    fsType = "vfat";
+  };
 
   fileSystems."/home/${username}/Data" = {
     device = "/dev/disk/by-uuid/6b90d519-0eff-4d51-8c27-9e95b3d37d19";

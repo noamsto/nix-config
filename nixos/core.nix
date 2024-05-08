@@ -18,9 +18,6 @@
     dconf.enable = true;
     ssh.startAgent = true;
     nix-ld.enable = true;
-
-    # Fan and thermal control
-    coolercontrol.enable = true;
   };
 
   # OBS virtual Camera
