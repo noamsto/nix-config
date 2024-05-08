@@ -14,6 +14,7 @@
     ./cloud
     # ./theme
     ./obs-studio
+    ./easyeffects
   ];
 
   home.username = username;

@@ -21,6 +21,7 @@
     device = "nodev";
     efiSupport = true;
     useOSProber = true;
+    fontSize = 36;
   };
 
   boot.initrd = {

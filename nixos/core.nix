@@ -175,6 +175,7 @@
     firefox
     dmidecode
     neofetch
+    nvd
 
     # python
     (python311.withPackages (ps:
@@ -223,6 +224,12 @@
 
   # For RaspberryPi 4 image generating
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
+
+  environment.shellAliases = {
+    nix-rebuild-diff = ''
+      sudo nixos-rebuild build --flake . && ${pkgs.nvd}/bin/nvd diff /run/current-system result
+    '';
+  };
 
   system.stateVersion = "23.05";
 }
