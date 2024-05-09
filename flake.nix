@@ -74,6 +74,12 @@
     nix-colors.url = "github:misterio77/nix-colors";
     # add ags
     ags.url = "github:Aylur/ags";
+
+    plasma-manager = {
+      url = "github:pjones/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
 
   # All outputs for the system (configs)

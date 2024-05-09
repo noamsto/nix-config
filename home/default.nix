@@ -15,6 +15,7 @@
     # ./theme
     ./obs-studio
     ./easyeffects
+    ./plasma-manager
   ];
 
   home.username = username;

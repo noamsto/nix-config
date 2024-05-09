@@ -14,6 +14,7 @@ return {
 
 	-- Navigation
 	{ import = "astrocommunity.scrolling.nvim-scrollbar" },
+	{ import = "astrocommunity.scrolling.neoscroll-nvim" },
 
 	-- Editing support
 	{ import = "astrocommunity.editing-support.todo-comments-nvim" },
