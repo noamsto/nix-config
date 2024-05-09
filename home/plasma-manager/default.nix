@@ -16,12 +16,12 @@
     };
     fonts = {
       general = {
-        family = "Ubuntu";
+        family = "Ubuntu Nerd Font";
         pointSize = 14;
       };
 
       windowTitle = {
-        family = "Ubuntu";
+        family = "Ubuntu Nerd Font";
         pointSize = 12;
       };
     };
@@ -63,17 +63,20 @@
             };
           }
           "org.kde.plasma.panelspacer"
-          "org.kde.plasma.systemtray"
-          "org.kde.plasma.marginsseparator"
           {
             digitalClock = {
               calendar.firstDayOfWeek = "sunday";
-              time.format = "12h";
+              date.enable = false;
             };
           }
+          "org.kde.plasma.panelspacer"
+          "org.kde.plasma.systemtray"
         ];
       }
     ];
+    configFile = {
+      krunnerrc.General.FreeFloating = "true";
+    };
   };
 
   home.packages = with pkgs; [
