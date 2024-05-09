@@ -9,9 +9,6 @@
   programs.plasma = {
     enable = true;
 
-    #
-    # Some high-level settings:
-    #
     workspace = {
       lookAndFeel = "org.kde.breezedark.desktop";
       cursorTheme = "Bibata-Modern-Ice";
@@ -30,14 +27,11 @@
     };
 
     panels = [
-      # Windows-like panel at the bottom
       {
         location = "bottom";
         height = 72;
+        lengthMode = "fit";
         widgets = [
-          # Adding configuration to the widgets can also for example be used to
-          # pin apps to the task-manager, which this example illustrates by
-          # pinning dolphin and konsole to the task-manager by default.
           {
             name = "org.kde.plasma.icontasks";
             config = {
@@ -62,11 +56,6 @@
         location = "top";
         height = 37;
         widgets = [
-          # We can configure the widgets by adding the name and config
-          # attributes. For example to add the the kickoff widget and set the
-          # icon to "nix-snowflake-white" use the below configuration. This will
-          # add the "icon" key to the "General" group for the widget in
-          # ~/.config/plasma-org.kde.plasma.desktop-appletsrc.
           {
             name = "org.kde.plasma.kickoff";
             config = {
