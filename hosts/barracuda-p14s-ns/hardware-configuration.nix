@@ -16,7 +16,7 @@
   boot.initrd.kernelModules = ["dm-snapshot" "amdgpu"];
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
-  boot.kernelParams = ["thinkpad_acpi.fan_control=1"];
+  boot.kernelParams = ["thinkpad_acpi.fan_control=1" "systemd.gpt_auto=0"];
   services.xserver.videoDrivers = ["amdgpu"]; # NOTE: might not be necessary anymore
   services.thinkfan = {
     # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
