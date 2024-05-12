@@ -13,7 +13,6 @@
     ../../nixos/xremap
     ./barracuda_secrets.nix
   ];
-
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.loader.grub = {

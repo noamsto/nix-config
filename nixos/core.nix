@@ -7,7 +7,7 @@
 }: {
   imports = [
     ./vim
-    ./access
+    # ./access
   ];
 
   users.defaultUserShell = pkgs.zsh;
@@ -195,7 +195,8 @@
   hardware.logitech.wireless.enable = true; # solaar
 
   services = {
-    dbus.packages = [pkgs.gcr];
+    dbus.implementation = "broker";
+
     geoclue2.enable = true;
 
     openssh.enable = true;
@@ -210,7 +211,7 @@
 
     # Enable CUPS to print documents.
     printing.enable = true;
-    printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
+    # printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
 
     # Enable flatpak
     flatpak.enable = true;
