@@ -100,7 +100,7 @@ return {
           function()
             require("goto-preview").goto_preview_definition()
           end,
-          desc = "Goto Oreview Definition",
+          desc = "Goto Preview Definition",
         },
         ["gpt"] = {
           function()

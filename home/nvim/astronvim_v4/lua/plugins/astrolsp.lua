@@ -48,6 +48,7 @@ return {
 			"lua_ls", -- lua
 			"pyright", -- python
 			"ruff_lsp", -- extremely fast Python linter and code transformation
+			"pylsp",
 			"nil_ls", -- nix language server
 
 			---- Operation & Cloud Nativautoindente
@@ -62,6 +63,44 @@ return {
 		-- customize language server configuration options passed to `lspconfig`
 		---@diagnostic disable: missing-fields
 		config = {
+			pylsp = {
+				cmd = { "nvim-python3", "-m", "pylsp" },
+				settings = {
+					plugins = {
+						autopep8 = {
+							enabled = false,
+						},
+						jedi_completion = {
+							enabled = false,
+						},
+						jedi_definition = {
+							enabled = false,
+						},
+						jedi_hover = {
+							enabled = false,
+						},
+						jedi_references = {
+							enabled = false,
+						},
+						jedi_signature_help = {
+							enabled = false,
+						},
+						jedi_symbols = {
+							enabled = false,
+						},
+						mccabe = {
+							enabled = false,
+						},
+						pycodestyle = {
+							enabled = false,
+						},
+						pyflakes = {
+							enabled = false,
+						}
+					}
+
+				},
+			},
 			pyright = {
 				capabilities = {
 					textDocument = {
@@ -151,6 +190,19 @@ return {
 			if client.name == "ruff_lsp" then
 				client.server_capabilities.hoverProvider = false
 			end
+			-- if client.name == "pylsp" then
+			-- 	client.server_capabilities.hoverProvider = false
+			-- 	client.server_capabilities.definitionProvider = false
+			-- 	client.server_capabilities.referencesProvider = false
+			-- 	client.server_capabilities.completionProvider = false
+			-- 	client.server_capabilities.signatureHelpProvider = false
+			-- 	client.server_capabilities.declarationProvider = false
+			-- 	client.server_capabilities.typeDefinitionProvider = false
+			-- 	client.server_capabilities.implementationProvider = false
+			-- 	client.server_capabilities.documentHighlightProvider = false
+			-- 	client.server_capabilities.documentSymbolProvider = false
+			-- 	client.server_capabilities.codeActionProvider = false
+			-- end
 		end,
 	},
 }

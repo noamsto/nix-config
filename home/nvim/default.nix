@@ -28,6 +28,8 @@ in {
     withNodeJs = true;
     extraPython3Packages = ps: [
       ps.debugpy
+      ps.python-lsp-server
+      ps.pylsp-mypy
     ];
 
     extraPackages = with pkgs; [
