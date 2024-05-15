@@ -1,0 +1,32 @@
+return {}
+-- 	'creativenull/efmls-configs-nvim',
+-- 	version = 'v1.x.x', -- version is optional, but recommended
+-- 	dependencies = {
+-- 		'neovim/nvim-lspconfig',
+-- 		{
+-- 			"AstroNvim/astrolsp",
+--
+-- 			opts = function(_, opts)
+-- 				-- python
+-- 				local mypy = require("efmls-configs.linters.mypy") -- Works better with Django
+--
+-- 				local languages = {
+-- 					python = { mypy },
+-- 				}
+-- 				local efmls_config = {
+-- 					filetypes = vim.tbl_keys(languages),
+-- 					settings = {
+-- 						rootMarkers = { ".git/" },
+-- 						languages = languages,
+-- 					},
+-- 					init_options = {
+-- 						documentFormatting = true,
+-- 						documentRangeFormatting = true,
+-- 					},
+-- 				}
+-- 				opts.config["efm"] = efmls_config
+-- 			end
+--
+-- 		},
+-- 	},
+-- }

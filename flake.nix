@@ -80,6 +80,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
+
+    k9s-catuppuccin-skins = {
+      url = "github:catppuccin/k9s";
+      flake = false;
+    };
   };
 
   # All outputs for the system (configs)
