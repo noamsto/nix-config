@@ -18,6 +18,7 @@
 
   home.shellAliases = {
     xoff = "alias xoff='sudo /usr/local/bin/xSoft.sh 0 27'";
+    snvim = "NVIM_APPNAME=nvim-minimal sudo -E ~/.nix-profile/bin/nvim";
   };
 
   nixpkgs.config.allowUnfree = true;

@@ -24,7 +24,6 @@ return {
 
 			-- Diagnostic
 			diagnostics.actionlint,                 -- GitHub Actions workflow syntax checking
-			-- diagnostics.mypy,                       -- GitHub Actions workflow syntax checking
 			diagnostics.deadnix,                    -- Scan Nix files for deid code. Formatting
 			diagnostics.hadolint,                   -- Dockerfile linter
 			diagnostics.selene,                     -- Dockerfile linter
