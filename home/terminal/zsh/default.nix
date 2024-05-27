@@ -26,7 +26,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "thefuck" "tmux" "python" "z"];
+      plugins = ["git" "thefuck" "tmux" "python" "z" "docker" "docker-compose"];
       theme = "";
     };
 

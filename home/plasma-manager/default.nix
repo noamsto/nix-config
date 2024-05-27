@@ -8,11 +8,14 @@
   ];
   programs.plasma = {
     enable = true;
+    overrideConfig = true;
 
     workspace = {
       lookAndFeel = "org.kde.breezedark.desktop";
       cursorTheme = "Bibata-Modern-Ice";
       iconTheme = "Papirus-Dark";
+      colorScheme = "BreezeDark";
+      theme = "breeze-dark";
     };
     fonts = {
       general = {
@@ -29,8 +32,9 @@
     panels = [
       {
         location = "bottom";
-        height = 72;
+        height = 92;
         lengthMode = "fit";
+        floating = true;
         widgets = [
           {
             name = "org.kde.plasma.icontasks";

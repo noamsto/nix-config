@@ -11,6 +11,7 @@
     ../../nixos/docker
     ../../nixos/tailscale
     ../../nixos/xremap
+    ../../nixos/notes
     ./barracuda_secrets.nix
   ];
   boot.loader.efi.canTouchEfiVariables = true;

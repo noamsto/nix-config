@@ -8,6 +8,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs-noams.url = "github:noamsto/nixpkgs/update-slack";
 
     # For RPI4
     nixos-generators = {
@@ -44,12 +45,6 @@
 
     mysecrets = {
       url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
-      flake = false;
-    };
-
-    # AstroNvim is an aesthetic and feature-rich neovim config.
-    astronvim = {
-      url = "github:AstroNvim/AstroNvim/v4.1.2";
       flake = false;
     };
 
@@ -112,6 +107,10 @@
         inherit system;
         config.allowUnfree = true;
       };
+      pkgs-noams = import inputs.nixpkgs-noams {
+        inherit system;
+        config.allowUnfree = true;
+      };
       args = {inherit pkgs-stable system hostname username user_full_name user_email inputs;};
     in
       pkgs.lib.nixosSystem {
@@ -151,6 +150,7 @@
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
                   };
                 });
+                # slack = pkgs-noams.slack;
               })
             ];
           }

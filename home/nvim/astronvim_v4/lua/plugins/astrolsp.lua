@@ -43,6 +43,7 @@ return {
 			"jsonls", -- json language server
 			"yamlls", -- yaml language server
 			"taplo", -- toml language server
+			"gopls",
 
 			---- Backend
 			"lua_ls", -- lua
