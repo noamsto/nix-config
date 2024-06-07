@@ -6,6 +6,7 @@
 
 local continue = function()
   if vim.fn.filereadable(".vscode/launch.json") then
+    require('dap.ext.vscode').json_decode = require 'json5'.parse
     require("dap.ext.vscode").load_launchjs()
   end
   require("dap").continue()
@@ -38,8 +39,9 @@ return {
         spell = true,          -- sets vim.opt.spell
         signcolumn = "auto",   -- sets vim.opt.signcolumn to auto
         wrap = false,          -- sets vim.opt.wrap
+        conceallevel = 2
       },
-      g = {                    -- vim.g.<key>
+      g = { -- vim.g.<key>
         -- configure global vim variables (vim.g)
         -- NOTE: `mapLeader` and `maplocalleader` must be set in the AstroNvim opts or before `lazy.setup`
         -- This can be found in the `lua/lazy_setup.lua` file

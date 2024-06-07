@@ -5,7 +5,7 @@
 }: {
   # starship - an customizable prompt for any shell
   programs.starship = let
-    flavour = "frappe"; # One of `latte`, `frappe`, `macchiato`, or `mocha`
+    flavour = "mocha"; # One of `latte`, `frappe`, `macchiato`, or `mocha`
   in {
     enable = true;
     # custom settings

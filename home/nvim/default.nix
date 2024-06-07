@@ -1,23 +1,28 @@
 {
   pkgs,
-  pkgs-stable,
   config,
-  inputs,
+  lib,
   ...
-}: let
-  dbee = import ./dbee.nix {inherit pkgs;};
-in {
-  xdg.dataFile = {
-    "nvim/dbee/bin/dbee".source = "${dbee}/bin/dbee";
-  };
+}: {
   xdg.configFile = {
-    # "nvim".source = inputs.astronvim;
-    # "astronvim/lua/user".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_user";
     "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_v4";
-    # "astronvim/lua/user".source = ./astronvim_user;   # Enable after finishing configuring nvim
   };
   programs.neovim = {
     package = pkgs.neovim-unwrapped;
+
+    extraWrapperArgs = [
+      "--suffix"
+      "LIBRARY_PATH"
+      ":"
+      "''${lib.makeLibraryPath [pkgs.stdenv.cc.cc pkgs.zlib]}"
+      "--suffix"
+      "PKG_CONFIG_PATH"
+      ":"
+      "''${lib.makeSearchPathOutput "dev" "lib/pkgconfig" [pkgs.stdenv.cc.cc pkgs.zlib]}"
+      "--set"
+      "LIBGIT2_PATH"
+      "${pkgs.libgit2.lib}/lib/libgit2.so"
+    ];
     enable = true;
     defaultEditor = true;
 
@@ -40,7 +45,7 @@ in {
       cargo
 
       # git NOTE: Currently not working (fugit2)
-      libgit2.lib
+      # libgit2.lib
 
       # DB
       sqlite
@@ -119,6 +124,8 @@ in {
       curl
       wget
       go
+
+      yarn
     ];
 
     # For development

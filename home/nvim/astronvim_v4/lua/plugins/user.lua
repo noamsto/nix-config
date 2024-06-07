@@ -24,6 +24,33 @@ return {
 		end,
 	},
 	{
+		"leoluz/nvim-dap-go",
+		ft = "go",
+		dependencies = "mfussenegger/nvim-dap",
+		-- config = function()
+		-- 	require("dap-go").setup()
+		-- end,
+		opts = {
+			-- code
+			dap_configurations = {
+				{
+					type = "go",
+					name = "Attach remote",
+					mode = "remote",
+					request = "attach",
+					-- connect = {
+					-- 	host = "ec2-3-74-231-178.eu-central-1.compute.amazonaws.com",
+					-- 	port = "23456"
+					-- }
+				},
+			},
+			delve = {
+				port = "23456",
+				host = "ec2-3-74-231-178.eu-central-1.compute.amazonaws.com",
+			},
+		},
+	},
+	{
 		"mfussenegger/nvim-dap-python",
 		dependencies = "mfussenegger/nvim-dap",
 		ft = "python", -- NOTE: ft: lazy-load on filetype
@@ -60,6 +87,7 @@ return {
 		"rcarriga/nvim-notify",
 		opts = {
 			stages = "static",
+			top_down = false,
 		},
 	},
 
@@ -74,4 +102,17 @@ return {
 			},
 		},
 	},
+	{
+		'Joakker/lua-json5',
+		build = './install.sh',
+	},
+	{
+		"nvim-neo-tree/neo-tree.nvim",
+		opts = {
+			window = {
+				position = "right",
+			},
+		}
+	},
+	{ "ixru/nvim-markdown", ft = "markdown" },
 }
