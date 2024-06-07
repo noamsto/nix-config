@@ -4,7 +4,8 @@ import = ["/home/noams/.config/alacritty/catppuccin/catppuccin-mocha.toml"]
 TERM = "xterm-256color"
 
 [font]
-size = 11
+size = 12
+normal = { family = "FiraCode Nerd Font", style = "Regular" }
 
 [keyboard]
 bindings = [

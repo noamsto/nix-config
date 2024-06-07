@@ -24,7 +24,7 @@
     # feel free to add your own or remove some of them
     bat
 
-    neofetch
+    fastfetch
     nnn # terminal file manager
 
     # archives

@@ -53,6 +53,8 @@ return {
       -- first key is the mode
       n = {
 
+        ["<S-CR>"] = { "k" },
+
         ["<Leader>dc"] = { continue, desc = "Start/Continue (F5)" },
 
         ["<Leader>dm"] = {
@@ -68,11 +70,11 @@ return {
           end,
           desc = "Test & Debug File",
         },
-        --
+
         -- mappings seen under group name "Buffer"
         ["<Leader>bn"] = { "<cmd>tabnew<cr>", desc = "New tab" },
         -- quick save
-        ["<C-s>"] = { ":w!<cr>", desc = "Save File" }, -- change description but the same command
+        ["<C-s>"] = { ":w!<cr>", desc = "Save File" },
 
         -- Toggle terminal
         ["<Leader>tp"] = {
