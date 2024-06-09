@@ -91,11 +91,49 @@ return {
 	-- Note taking
 	{ import = "astrocommunity.note-taking.obsidian-nvim" },
 	{
+		-- dependencies = {
+		-- 	{
+		-- 		"AstroNvim/astrocore",
+		-- 		opts = {
+		-- 			mappings = {
+		-- 				n = {
+		-- 					["<Leader>on"] = { function() require("obsidian").new_note() end, desc = "New note" },
+		-- 					["<Leader>od"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" },
+		-- 				},
+		-- 			},
+		-- 		},
+		-- 	},
+		-- },
 		"epwalsh/obsidian.nvim",
 		opts = {
 			dir = vim.env.HOME .. "/Documents/obsidian-vault",
 			daily_notes = {
 				folder = "daily-notes",
+			},
+			mappings = {
+				-- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
+				["gf"] = {
+					action = function()
+						return require("obsidian").util.gf_passthrough()
+					end,
+					opts = { noremap = false, expr = true, buffer = true },
+				},
+				-- Smart action depending on context, either follow link or toggle checkbox.
+				["<cr>"] = {
+					action = function()
+						return require("obsidian").util.smart_action()
+					end,
+					opts = { buffer = true, expr = true },
+				}
+			},
+			ui = {
+				checkboxes = {
+					[" "] = { char = "󰄱", hl_group = "ObsidianTodo" },
+					["x"] = { char = "", hl_group = "ObsidianDone" },
+					[">"] = { char = "", hl_group = "ObsidianRightArrow" },
+					["~"] = { char = "", hl_group = "ObsidianTilde" },
+					["!"] = { char = "", hl_group = "ObsidianImportant" },
+				}
 			},
 			note_id_func = function(title)
 				-- Create note IDs in a Zettelkasten format with a readable date and a suffix.

@@ -175,7 +175,7 @@
     alejandra
     firefox
     dmidecode
-    neofetch
+    fastfetch
     nvd
 
     # python
