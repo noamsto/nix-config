@@ -51,7 +51,6 @@
     glow # markdown previewer in terminal
 
     iotop # io monitoring
-    iftop # network monitoring
 
     # system call monitoring
     strace # system call monitoring
@@ -70,7 +69,6 @@
     ferdium
 
     spotify
-    joplin-desktop
     vlc
     lazygit
     solaar
