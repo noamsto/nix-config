@@ -11,7 +11,7 @@
 
     workspace = {
       lookAndFeel = "org.kde.breezedark.desktop";
-      cursorTheme = "Bibata-Modern-Ice";
+      cursor.theme = "Bibata-Modern-Ice";
       iconTheme = "Papirus-Dark";
     };
     fonts = {

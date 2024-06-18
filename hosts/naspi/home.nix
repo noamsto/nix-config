@@ -25,11 +25,7 @@
   nix = {
     package = pkgs.nixUnstable;
     settings.experimental-features = ["nix-command" "flakes"];
-
     settings.trusted-users = [username];
-    # extraOptions = ''
-    #   experimental-features = nix-command flakes
-    # '';
   };
   programs.home-manager.enable = true;
 }

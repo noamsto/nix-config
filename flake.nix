@@ -8,7 +8,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.11";
-    nixpkgs-noams.url = "github:noamsto/nixpkgs/update-slack";
 
     # For RPI4
     nixos-generators = {
@@ -16,11 +15,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
-    catppuccin-hyprland = {
-      url = "github:catppuccin/hyprland";
-      flake = false;
-    };
 
     catpuccin-bottom = {
       url = "github:catppuccin/bottom";
@@ -30,9 +24,6 @@
     # home-manager, used for managing user configuration
     home-manager = {
       url = "github:nix-community/home-manager/";
-      # The `follows` keyword in inputs is used for inheritance.
-      # Here, `inputs.nixpkgs` of home-manager is kept consistent with the `inputs.nixpkgs` of the current flake,
-      # to avoid problems caused by different versions of nixpkgs dependencies.
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -54,21 +45,8 @@
       flake = false;
     };
 
-    # sddm theme
-    sddm-sugar-dark = {
-      url = "github:MarianArlt/sddm-sugar-dark";
-      flake = false;
-    };
-
     # Xremap for remapping keys
     xremap.url = "github:xremap/nix-flake";
-
-    # Hyprland
-    hyprland.url = "github:hyprwm/Hyprland";
-    hyprland-plugins.url = "github:hyprwm/hyprland-plugins";
-    nix-colors.url = "github:misterio77/nix-colors";
-    # add ags
-    ags.url = "github:Aylur/ags";
 
     plasma-manager = {
       url = "github:pjones/plasma-manager";
@@ -87,7 +65,6 @@
     home-manager,
     nixpkgs,
     nixpkgs-stable,
-    nixos-generators,
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
@@ -104,10 +81,6 @@
       user_email,
     }: let
       pkgs-stable = import nixpkgs-stable {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      pkgs-noams = import inputs.nixpkgs-noams {
         inherit system;
         config.allowUnfree = true;
       };
@@ -150,7 +123,6 @@
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
                   };
                 });
-                # slack = pkgs-noams.slack;
               })
             ];
           }
@@ -158,22 +130,12 @@
         specialArgs = args;
       };
   in {
+    formatter.x86_64-linux = pkgs-linux.alejandra;
     nixosConfigurations = {
-      # Now, defining a new system is can be done in one line
-      #                                     Architecture   Hostname
-      nixos-test = mkSystem inputs.nixpkgs "x86_64-linux" "nixos-test";
       noams-barracuda = mkSystem {
         pkgs = inputs.nixpkgs;
         system = "x86_64-linux";
         hostname = "noams-barracuda";
-        username = "noams";
-        user_full_name = "Noam Stolero";
-        user_email = "nstolero@barracuda.com";
-      };
-      noams-barracuda-hypr = mkSystem {
-        pkgs = inputs.nixpkgs;
-        system = "x86_64-linux";
-        hostname = "noams-barracuda-hypr";
         username = "noams";
         user_full_name = "Noam Stolero";
         user_email = "nstolero@barracuda.com";
@@ -187,7 +149,6 @@
         user_email = "nstolero@barracuda.com";
       };
     };
-    formatter.x86_64-linux = pkgs-linux.alejandra;
 
     homeConfigurations = {
       naspi-raspbian = home-manager.lib.homeManagerConfiguration {
@@ -214,23 +175,17 @@
       # replace official cache with a mirror located in China
       "https://mirrors.ustc.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
-      # "https://anyrun.cachix.org"
-      "https://hyprland.cachix.org"
     ];
 
     # nix community's cache server
     extra-substituters = [
       "https://nix-community.cachix.org"
       "https://devenv.cachix.org"
-      # "https://nixpkgs-wayland.cachix.org"
     ];
     extra-trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
-      # "nixpkgs-wayland.cachix.org-1:3lwxaILxMRkVhehr5StQprHdEo4IrE8sRho9R9HOLYA="
-      # "anyrun.cachix.org-1:pqBobmOjI7nKlsUMV25u9QHa9btJK65/C8vnO3p346s="
-      "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
   };
 }
