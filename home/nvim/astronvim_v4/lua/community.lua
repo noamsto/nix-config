@@ -31,7 +31,8 @@ return {
 	{ import = "astrocommunity.git.diffview-nvim" },
 	{ import = "astrocommunity.git.octo-nvim" },
 
-
+	-- debug
+	{ import = "astrocommunity.debugging.nvim-dap-virtual-text" },
 	-- testing
 	{ import = "astrocommunity.test.neotest" },
 	{
