@@ -15,6 +15,7 @@
     config = {
       keymap = [
         {
+          # Fix Logitech MX keys mini print screen key
           name = "Print screen remap";
           remap = {
             "SUPER-SHIFT-S" = "KEY_PRINT";

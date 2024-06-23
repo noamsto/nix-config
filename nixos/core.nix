@@ -5,6 +5,10 @@
   user_full_name,
   ...
 }: {
+  imports = [
+    ./networking.nix
+  ];
+
   users.defaultUserShell = pkgs.zsh;
 
   programs = {
@@ -70,25 +74,6 @@
     LC_PAPER = "en_IL";
     LC_TELEPHONE = "en_IL";
     LC_TIME = "en_IL";
-  };
-
-  networking.firewall.enable = false;
-  networking.networkmanager = {
-    enable = true; # Easiest to use and most distros use this by default.
-  };
-
-  # DNS service
-  services.resolved = {
-    enable = true;
-    extraConfig = ''
-      Cache=no-negative
-    '';
-  };
-
-  # For discovering zero-conf network sharing
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true; # NOTE: not required if resolved is enabled
   };
 
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
@@ -193,11 +178,7 @@
   services = {
     dbus.implementation = "broker";
 
-    geoclue2.enable = true;
-
-    openssh.enable = true;
     power-profiles-daemon.enable = true;
-
     # Firmware updates
     fwupd.enable = true;
 
