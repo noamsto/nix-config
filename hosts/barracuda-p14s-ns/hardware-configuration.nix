@@ -2,6 +2,7 @@
 # and may be overwritten by future invocations.  Please make changes
 # to /etc/nixos/configuration.nix instead.
 {
+  pkgs,
   config,
   lib,
   username,
@@ -19,6 +20,7 @@
   boot.kernelParams = ["thinkpad_acpi.fan_control=1" "systemd.gpt_auto=0"];
   boot.kernel.sysctl."kernel.sysrq" = 502;
   # services.xserver.videoDrivers = ["amdgpu"]; # NOTE: might not be necessary anymore
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   services.thinkfan = {
     # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
