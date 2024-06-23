@@ -12,7 +12,6 @@
     ./nvim
     ./browsers
     ./cloud
-    # ./theme
     ./obs-studio
     ./easyeffects
     ./plasma-manager

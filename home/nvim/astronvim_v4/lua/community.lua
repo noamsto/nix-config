@@ -8,6 +8,10 @@ return {
 	{ import = "astrocommunity.pack.lua" },
 	{ import = "astrocommunity.pack.just" },
 	{ import = "astrocommunity.pack.go" },
+	{
+		"ray-x/go.nvim",
+		commit = "b779debab83eb763b3b71bb1fa31526376bfbacc"
+	},
 	-- import/override with your plugins folder
 
 	{ import = "astrocommunity.colorscheme.catppuccin" },
