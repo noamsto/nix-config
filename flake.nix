@@ -123,6 +123,40 @@
                     sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
                   };
                 });
+                # zoom-us = prev.zoom-us.overrideAttrs (previousAttrs: rec {
+                #   versions.x86_64-linux = "6.0.12.5501";
+                #   srcs.x86_64-linux = pkgs.fetchurl {
+                #     url = "https://zoom.us/client/${versions.x86_64-linux}/zoom_x86_64.pkg.tar.xz";
+                #     hash = "sha256-h9gjVd7xqChaoC2BZWEhR5WdyfQrPiBjM2WHXMgp8uQ=";
+                #   };
+                # });
+                zoom-us = prev.zoom-us.overrideAttrs (previousAttrs: let
+                  version = "6.0.12.5501";
+                  src = prev.fetchurl {
+                    url = "https://zoom.us/client/${version}/zoom_x86_64.pkg.tar.xz";
+                    hash = "sha256-h9gjVd7xqChaoC2BZWEhR5WdyfQrPiBjM2WHXMgp8uQ=";
+                  };
+                in {
+                  installPhase = ''
+                    runHook preInstall
+                    ${rec {
+                        aarch64-darwin = ''
+                          mkdir -p $out/Applications
+                          cp -R zoom.us.app $out/Applications/
+                        '';
+                        # darwin steps same on both architectures
+                        x86_64-darwin = aarch64-darwin;
+                        x86_64-linux = ''
+                          mkdir $out
+                          tar -C $out -xf ${src}
+                          mv $out/usr/* $out/
+                        '';
+                      }
+                      .${system}
+                      or prev.throwSystem}
+                    runHook postInstall
+                  '';
+                });
               })
             ];
           }

@@ -114,6 +114,7 @@ return {
 			dir = vim.env.HOME .. "/Documents/obsidian-vault",
 			daily_notes = {
 				folder = "daily-notes",
+				default_tags = { "daily-notes" },
 			},
 			mappings = {
 				-- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.

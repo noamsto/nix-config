@@ -91,6 +91,10 @@
       noto-fonts-emoji
       noto-fonts-extra
 
+      # Chinese
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+
       source-sans
       source-serif
 
