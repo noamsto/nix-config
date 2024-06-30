@@ -1,64 +1,5 @@
 {
-  description = "NixOS configuration of Ryan Yin";
-
-  # ...
-
-  inputs = {
-    # Official NixOS package source, using nixos-unstable branch here
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.11";
-
-    # For RPI4
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
-    catpuccin-bottom = {
-      url = "github:catppuccin/bottom";
-      flake = false;
-    };
-
-    # home-manager, used for managing user configuration
-    home-manager = {
-      url = "github:nix-community/home-manager/";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    catpuccin-alacritty = {
-      url = "github:catppuccin/alacritty";
-      flake = false;
-    };
-
-    agenix.url = "github:ryantm/agenix";
-
-    mysecrets = {
-      url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
-      flake = false;
-    };
-
-    # Used for better git diffs
-    delta = {
-      url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
-      flake = false;
-    };
-
-    # Xremap for remapping keys
-    xremap.url = "github:xremap/nix-flake";
-
-    plasma-manager = {
-      url = "github:pjones/plasma-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
-
-    k9s-catuppuccin-skins = {
-      url = "github:catppuccin/k9s";
-      flake = false;
-    };
-  };
+  description = "NixOS configuration of Noam Stolero";
 
   # All outputs for the system (configs)
   outputs = {
@@ -107,59 +48,9 @@
               # Home manager config (configures programs like firefox, zsh, eww, etc)
               users.${username} = ./. + "/hosts/${hostname}/home.nix";
             };
-            nixpkgs.overlays = [
-              (final: prev: {
-                # Broken packages
-                inherit (pkgs-stable) azure-cli;
-
-                # Use tmux fork until this issue is closed: https://github.com/tmux/tmux/issues/2705
-                tmux = prev.tmux.overrideAttrs (prviousAttrs: {
-                  version = "next-3.4";
-                  patches = [];
-                  src = prev.fetchFromGitHub {
-                    owner = "tiagovla";
-                    repo = "tmux";
-                    rev = "b6be05261a4d92cf41156ccbf5f41d19ca18665f";
-                    sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
-                  };
-                });
-                # zoom-us = prev.zoom-us.overrideAttrs (previousAttrs: rec {
-                #   versions.x86_64-linux = "6.0.12.5501";
-                #   srcs.x86_64-linux = pkgs.fetchurl {
-                #     url = "https://zoom.us/client/${versions.x86_64-linux}/zoom_x86_64.pkg.tar.xz";
-                #     hash = "sha256-h9gjVd7xqChaoC2BZWEhR5WdyfQrPiBjM2WHXMgp8uQ=";
-                #   };
-                # });
-                zoom-us = prev.zoom-us.overrideAttrs (previousAttrs: let
-                  version = "6.0.12.5501";
-                  src = prev.fetchurl {
-                    url = "https://zoom.us/client/${version}/zoom_x86_64.pkg.tar.xz";
-                    hash = "sha256-h9gjVd7xqChaoC2BZWEhR5WdyfQrPiBjM2WHXMgp8uQ=";
-                  };
-                in {
-                  installPhase = ''
-                    runHook preInstall
-                    ${rec {
-                        aarch64-darwin = ''
-                          mkdir -p $out/Applications
-                          cp -R zoom.us.app $out/Applications/
-                        '';
-                        # darwin steps same on both architectures
-                        x86_64-darwin = aarch64-darwin;
-                        x86_64-linux = ''
-                          mkdir $out
-                          tar -C $out -xf ${src}
-                          mv $out/usr/* $out/
-                        '';
-                      }
-                      .${system}
-                      or prev.throwSystem}
-                    runHook postInstall
-                  '';
-                });
-              })
-            ];
           }
+
+          (import ./overlays)
         ];
         specialArgs = args;
       };
@@ -221,5 +112,62 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
     ];
+  };
+
+  inputs = {
+    # Official NixOS package source, using nixos-unstable branch here
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.11";
+
+    # For RPI4
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    catpuccin-bottom = {
+      url = "github:catppuccin/bottom";
+      flake = false;
+    };
+
+    # home-manager, used for managing user configuration
+    home-manager = {
+      url = "github:nix-community/home-manager/";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    catpuccin-alacritty = {
+      url = "github:catppuccin/alacritty";
+      flake = false;
+    };
+
+    agenix.url = "github:ryantm/agenix";
+
+    mysecrets = {
+      url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
+      flake = false;
+    };
+
+    # Used for better git diffs
+    delta = {
+      url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
+      flake = false;
+    };
+
+    # Xremap for remapping keys
+    xremap.url = "github:xremap/nix-flake";
+
+    plasma-manager = {
+      url = "github:pjones/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
+    k9s-catuppuccin-skins = {
+      url = "github:catppuccin/k9s";
+      flake = false;
+    };
   };
 }

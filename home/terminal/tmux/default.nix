@@ -1,4 +1,36 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: let
+  # sessinx = pkgs.mkTmuxPlugin {
+  #   pluginName = "continuum";
+  #   version = "unstable-2022-01-25";
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "tmux-plugins";
+  #     repo = "tmux-continuum";
+  #     rev = "fc2f31d79537a5b349f55b74c8ca69abaac1ddbb";
+  #     sha256 = "06i1jp83iybw76raaxciqz9a7ypgpkvbyjn6jjap8jpqfmj2wmjb";
+  #   };
+  #   meta = {
+  #     homepage = "https://github.com/tmux-plugins/tmux-continuum";
+  #     description = "continuous saving of tmux environment";
+  #     longDescription = ''
+  #       Features:
+  #       * continuous saving of tmux environment
+  #       * automatic tmux start when computer/server is turned on
+  #       * automatic restore when tmux is started
+  #
+  #       Together, these features enable uninterrupted tmux usage. No matter the
+  #       computer or server restarts, if the machine is on, tmux will be there how
+  #       you left it off the last time it was used.
+  #     '';
+  #     license = lib.licenses.mit;
+  #     platforms = lib.platforms.unix;
+  #     maintainers = with lib.maintainers; [ronanmacf];
+  #   };
+  # };
+in {
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
@@ -52,6 +84,8 @@
       set -g mouse on
       set -g base-index 1
       setw -g pane-base-index 1
+
+      set -g status-position top
 
       # Set escape-time as recomended by nvim
       set-option -sg escape-time 12
