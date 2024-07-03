@@ -55,6 +55,7 @@
       # Global menu at the top
       {
         location = "top";
+        floating = true;
         height = 37;
         widgets = [
           {

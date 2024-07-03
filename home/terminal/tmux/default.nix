@@ -85,8 +85,6 @@ in {
       set -g base-index 1
       setw -g pane-base-index 1
 
-      set -g status-position top
-
       # Set escape-time as recomended by nvim
       set-option -sg escape-time 12
 
