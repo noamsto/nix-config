@@ -39,20 +39,17 @@
 
     extraPackages = with pkgs; [
       # Astronvim requirements
+      lua5_1
       luajit
-      luarocks-nix
+      lua51Packages.luarocks
       luajitPackages.lua-utils-nvim
       cargo
-
-      # git NOTE: Currently not working (fugit2)
-      # libgit2.lib
 
       # DB
       sqlite
       postgresql
 
       # lua
-      lua
       stylua
       lua-language-server
       selene

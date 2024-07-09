@@ -50,7 +50,7 @@
           "org.kde.plasma.marginsseparator"
           "org.kde.plasma.showdesktop"
         ];
-        hiding = "autohide";
+        hiding = "dodgewindows";
       }
       # Global menu at the top
       {
