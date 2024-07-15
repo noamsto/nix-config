@@ -10,7 +10,7 @@ return {
 						-- ["y"] = { "<Plug>(YankyYank)", desc = "Yank text" },  # NOTE: Not needed, conflicting
 						["p"] = { "<Plug>(YankyPutAfter)", desc = "Put yanked text after cursor" },
 						["P"] = { "<Plug>(YankyPutBefore)", desc = "Put yanked text before cursor" },
-						["gp"] = { "<Plug>(YankyGPutAfter)", desc = "Put yanked text after selection" },
+						-- ["gp"] = { "<Plug>(YankyGPutAfter)", desc = "Put yanked text after selection" },
 						["gP"] = { "<Plug>(YankyGPutBefore)", desc = "Put yanked text before selection" },
 						["[y"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
 						["]y"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },

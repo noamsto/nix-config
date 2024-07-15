@@ -49,6 +49,7 @@ return {
     },
     -- Mappings can be configured through AstroCore as well.
     -- NOTE: keycodes follow the casing in the vimdocs. For example, `<Leader>` must be capitalized
+
     mappings = {
       -- first key is the mode
       n = {
@@ -99,7 +100,6 @@ return {
         },
 
         -- implementation/definition preview
-        ["gp"] = { name = "󱂬 Goto Preview" },
         ["gpd"] = {
           function()
             require("goto-preview").goto_preview_definition()
@@ -137,7 +137,6 @@ return {
           function() require("refactoring").refactor "Extract Block To File" end,
           desc = "Extract Block To File",
         },
-        ["<Leader>y"] = { name = " Yanky" },
 
         ["<Leader>tt"] = {
           function()

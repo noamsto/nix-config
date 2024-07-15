@@ -7,8 +7,6 @@
     eza
   ];
 
-  programs.thefuck.enable = true;
-
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -26,7 +24,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "thefuck" "tmux" "python" "z" "docker" "docker-compose"];
+      plugins = ["git" "tmux" "python" "z" "docker" "docker-compose"];
       theme = "";
     };
 

@@ -94,15 +94,6 @@ return {
 	{ "microsoft/python-type-stubs" },
 
 	{
-		"stevearc/dressing.nvim",
-		opts = {
-			input = {
-				insert_only = false,
-				start_in_insert = false,
-			},
-		},
-	},
-	{
 		'Joakker/lua-json5',
 		build = './install.sh',
 	},

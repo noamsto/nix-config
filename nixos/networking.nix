@@ -19,6 +19,10 @@
     openssh.enable = true;
 
     # Location service
-    geoclue2.enable = true;
+    geoclue2 = {
+      enable = true;
+      # geoProviderUrl = "https://beacondb.net/v1/geolocate?key=YOUR_API_KEY";
+      # submissionUrl = "https://beacondb.net/v1/geolocate?key=YOUR_API_KEY";
+    };
   };
 }

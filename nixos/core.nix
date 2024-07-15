@@ -12,7 +12,6 @@
   users.defaultUserShell = pkgs.zsh;
 
   programs = {
-    thefuck.enable = true;
     zsh.enable = true;
     dconf.enable = true;
     ssh.startAgent = true;
@@ -134,11 +133,6 @@
   };
 
   programs.adb.enable = true;
-
-  security.tpm2 = {
-    enable = true;
-    abrmd.enable = true;
-  };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${username} = {
