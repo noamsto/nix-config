@@ -28,7 +28,7 @@ return {
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
 
 	{ import = "astrocommunity.completion.copilot-lua-cmp" },
-	{ import = "astrocommunity.project.nvim-spectre" },
+	{ import = "astrocommunity.search.nvim-spectre" },
 
 	-- Git Version Control
 	{ import = "astrocommunity.git.neogit" },
