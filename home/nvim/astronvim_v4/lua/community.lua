@@ -27,7 +27,7 @@ return {
 	{ import = "astrocommunity.editing-support.telescope-undo-nvim" },
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
 
-	{ import = "astrocommunity.completion.copilot-lua-cmp" },
+	-- { import = "astrocommunity.completion.copilot-lua-cmp" },
 	{ import = "astrocommunity.search.nvim-spectre" },
 
 	-- Git Version Control

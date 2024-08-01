@@ -118,6 +118,10 @@ return {
 							autoSearchPaths = true,
 							useLibraryCodeForTypes = true,
 							typeCheckingMode = "off",
+							diagnosticSeverityOverrides = {
+								reportUnusedVariable = "none", -- or anything
+								reportUndefinedVariable = "none",
+							},
 							stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs",
 						},
 					},

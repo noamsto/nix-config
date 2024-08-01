@@ -155,35 +155,35 @@ return {
           desc = "Pick to close",
         },
 
-
-        ["<leader>a"] = { name = " Copilot Chat" },
-
-        ["<leader>aq"] = {
-          function()
-            local input = vim.fn.input("Quick Chat: ")
-            if input ~= "" then
-              require("CopilotChat").ask(input, { selection = require("CopilotChat.select").buffer })
-            end
-          end,
-          desc = "CopilotChat - Quick chat",
-        },
-        ["<leader>ah"] = {
-          function()
-            local actions = require("CopilotChat.actions")
-            require("CopilotChat.integrations.telescope").pick(actions.help_actions())
-          end,
-          desc = "CopilotChat - Help actions",
-        },
-        -- Show prompts actions with telescope
-
-        ["<leader>ap"] = {
-          function()
-            local actions = require("CopilotChat.actions")
-            require("CopilotChat.integrations.telescope").pick(actions.prompt_actions())
-          end,
-          desc = "CopilotChat - Prompt actions",
-        },
-
+        --
+        --   ["<leader>a"] = { name = " Copilot Chat" },
+        --
+        --   ["<leader>aq"] = {
+        --     function()
+        --       local input = vim.fn.input("Quick Chat: ")
+        --       if input ~= "" then
+        --         require("CopilotChat").ask(input, { selection = require("CopilotChat.select").buffer })
+        --       end
+        --     end,
+        --     desc = "CopilotChat - Quick chat",
+        --   },
+        --   ["<leader>ah"] = {
+        --     function()
+        --       local actions = require("CopilotChat.actions")
+        --       require("CopilotChat.integrations.telescope").pick(actions.help_actions())
+        --     end,
+        --     desc = "CopilotChat - Help actions",
+        --   },
+        --   -- Show prompts actions with telescope
+        --
+        --   ["<leader>ap"] = {
+        --     function()
+        --       local actions = require("CopilotChat.actions")
+        --       require("CopilotChat.integrations.telescope").pick(actions.prompt_actions())
+        --     end,
+        --     desc = "CopilotChat - Prompt actions",
+        --   },
+        --
       },
       v = {
         ["<Leader>r"] = { name = "󰣪 Refactor" },
