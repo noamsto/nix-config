@@ -1,9 +1,0 @@
-{
-  pkgs,
-  username,
-  ...
-}: {
-  imports = [
-    ../../home
-  ];
-}
