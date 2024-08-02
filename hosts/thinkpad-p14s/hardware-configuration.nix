@@ -85,21 +85,20 @@
     ];
   };
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/5a02fcb4-772b-4b16-8469-6b0afad12996";
-      fsType = "ext4";
-    };
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/5a02fcb4-772b-4b16-8469-6b0afad12996";
+    fsType = "ext4";
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/0F77-09B0";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/0F77-09B0";
+    fsType = "vfat";
+    options = ["fmask=0022" "dmask=0022"];
+  };
 
-  swapDevices =
-    [ { device = "/dev/disk/by-uuid/155fa188-ce1b-44ea-8c5f-29f084cad303"; }
-    ];
-
+  swapDevices = [
+    {device = "/dev/disk/by-uuid/155fa188-ce1b-44ea-8c5f-29f084cad303";}
+  ];
 
   fileSystems."/home/${username}/Data" = {
     device = "/dev/disk/by-uuid/e11f6aa5-9f2e-4a2b-b4cf-c3c43a7d2b48";

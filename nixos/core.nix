@@ -19,6 +19,12 @@
 
     # Fan and thermal control
     coolercontrol.enable = true;
+    nh = {
+      enable = true;
+      # clean.enable = true;
+      # clean.extraArgs = "--keep-since 4d --keep 3";
+      flake = "/home/noams/nix-config";
+    };
   };
 
   # OBS virtual Camera
