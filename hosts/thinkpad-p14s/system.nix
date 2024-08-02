@@ -10,22 +10,16 @@
     ../../nixos/notes
     # ./host_secrets.nix
   ];
+  boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
-  boot.loader.grub = {
-    enable = true;
-    device = "nodev";
-    efiSupport = true;
-    useOSProber = true;
-    fontSize = 36;
+  boot.initrd.luks.devices = {
+      root = {
+        # Use https://nixos.wiki/wiki/Full_Disk_Encryption
+        device = "/dev/disk/by-uuid/a93bff25-8164-4b2f-ae87-19311112c84c";
+        preLVM = true;
+      };
   };
 
-  boot.initrd = {
-    luks.devices.root = {
-      device = "/dev/disk/by-uuid/4982a096-bf14-47a7-8f14-1e7b7c63f2d4"; # UUID for /dev/nvme01np5
-      allowDiscards = true;
-    };
-  };
 
   environment.shellAliases = {
     nix-rebuild-host = ''
