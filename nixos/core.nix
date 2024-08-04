@@ -83,9 +83,11 @@
 
   environment.shells = with pkgs; [zsh];
 
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = true;
-  hardware.logitech.wireless.enable = true; # solaar
+  hardware = {
+    bluetooth.enable = true;
+    bluetooth.powerOnBoot = true;
+    logitech.wireless.enable = true; # solaar
+  };
 
   services = {
     dbus.implementation = "broker";

@@ -1,21 +1,30 @@
-{username, ...}: {
-  imports = [
-    ./packages.nix
-    ./terminal
-    ./xdg
-    ./vscode
-    ./git
-    ./kubernetes
-    ./direnv
-    ./zoom
-    ./ssh
-    ./nvim
-    ./browsers
-    ./cloud
-    ./obs-studio
-    ./easyeffects
-    ./plasma-manager
-  ];
+{
+  username,
+  lib,
+  osConfig,
+  ...
+}: {
+  imports =
+    [
+      ./packages.nix
+      ./terminal
+      ./xdg
+      ./vscode
+      ./git
+      ./kubernetes
+      ./direnv
+      ./zoom
+      ./ssh
+      ./nvim
+      ./browsers
+      ./cloud
+      ./obs-studio
+      ./easyeffects
+      ./plasma-manager
+    ]
+    ++ lib.optionals osConfig.services.desktopManager.plasma6.enable [
+      ./plasma-manager
+    ];
 
   home.username = username;
   home.homeDirectory = "/home/${username}";

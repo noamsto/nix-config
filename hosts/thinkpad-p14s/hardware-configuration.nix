@@ -85,6 +85,14 @@
     ];
   };
 
+  boot.initrd.luks.devices = {
+    root = {
+      # Use https://nixos.wiki/wiki/Full_Disk_Encryption
+      device = "/dev/disk/by-uuid/a93bff25-8164-4b2f-ae87-19311112c84c";
+      preLVM = true;
+    };
+  };
+
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/5a02fcb4-772b-4b16-8469-6b0afad12996";
     fsType = "ext4";

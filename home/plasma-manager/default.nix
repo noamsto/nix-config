@@ -19,6 +19,10 @@
         family = "Ubuntu Nerd Font";
         pointSize = 14;
       };
+      fixedWidth = {
+        family = "FiraCode Nerd Font";
+        pointSize = 12;
+      };
 
       windowTitle = {
         family = "Ubuntu Nerd Font";
