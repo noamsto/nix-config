@@ -59,28 +59,6 @@
     hashedPasswordFile = config.age.secrets.noams_password.path;
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    git
-    curl
-    firefox
-    dmidecode
-    fastfetch
-    nvd
-
-    # python
-    (python312.withPackages (ps:
-      with ps;
-        [
-          ipython
-          catppuccin
-        ]
-        ++ catppuccin.optional-dependencies.pygments))
-  ];
-
   environment.shells = with pkgs; [zsh];
 
   hardware = {

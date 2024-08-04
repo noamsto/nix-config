@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [./code-shell.nix];
   programs.vscode = {
     enable = true;

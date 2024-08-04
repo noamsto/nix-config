@@ -40,17 +40,9 @@
     zstd
     gnupg
 
-    # nix related
-    #
-    # it provides the command `nom` works just like `nix`
-    # with more details log output
-    nix-output-monitor
-
     # productivity
     hugo # static site generator
     glow # markdown previewer in terminal
-
-    iotop # io monitoring
 
     # system call monitoring
     strace # system call monitoring
@@ -71,9 +63,8 @@
     spotify
     vlc
     lazygit
-    solaar
-    # jetbrains.pycharm-professional
-    evince
+
+    evince # PDF Viewer
 
     fd # find files
     ncdu # better du

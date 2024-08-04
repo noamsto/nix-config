@@ -5,9 +5,8 @@
     ../../nixos/core.nix
     ../../nixos/kde.nix
     ../../nixos/docker
-    ../../nixos/tailscale
     ../../nixos/xremap
-    ../../nixos/notes
+    ../../nixos/packages.nix
     # ./host_secrets.nix
   ];
 

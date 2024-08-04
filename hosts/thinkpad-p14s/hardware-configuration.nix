@@ -18,7 +18,6 @@
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
   boot.kernelParams = [
-    "thinkpad_acpi.fan_control=1"
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
   ];
   boot.kernel.sysctl."kernel.sysrq" = 502;
