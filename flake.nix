@@ -119,11 +119,6 @@
     };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    catpuccin-bottom = {
-      url = "github:catppuccin/bottom";
-      flake = false;
-    };
-
     # home-manager, used for managing user configuration
     home-manager = {
       url = "github:nix-community/home-manager/";

@@ -37,22 +37,6 @@
         "type": "github"
       }
     },
-    "catpuccin-bottom": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1721487280,
-        "narHash": "sha256-V2HnizZOaxyQRb/7nqXS/TyrGUbWZ0dwx0wo9xHJcgc=",
-        "owner": "catppuccin",
-        "repo": "bottom",
-        "rev": "bc8183af40ab06db07824dd37ec9a9cf8bd61616",
-        "type": "github"
-      },
-      "original": {
-        "owner": "catppuccin",
-        "repo": "bottom",
-        "type": "github"
-      }
-    },
     "crane": {
       "inputs": {
         "nixpkgs": [
@@ -666,7 +650,6 @@
       "inputs": {
         "agenix": "agenix",
         "catpuccin-alacritty": "catpuccin-alacritty",
-        "catpuccin-bottom": "catpuccin-bottom",
         "delta": "delta",
         "home-manager": "home-manager_2",
         "k9s-catuppuccin-skins": "k9s-catuppuccin-skins",
