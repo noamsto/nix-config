@@ -2,11 +2,7 @@
 # Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
 {...}: {
   imports = [
-    ../../nixos/core.nix
-    ../../nixos/kde.nix
-    ../../nixos/docker
-    ../../nixos/xremap
-    ../../nixos/packages.nix
+    ../../nixos/desktop-kde.nix
     # ./host_secrets.nix
   ];
 

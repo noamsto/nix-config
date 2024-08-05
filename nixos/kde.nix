@@ -1,7 +1,4 @@
 {pkgs, ...}: {
-  imports = [
-    ./sddm
-  ];
   environment.systemPackages = with pkgs; [
     kdePackages.yakuake
     kdePackages.kcalc

@@ -50,7 +50,8 @@ return {
 			"pyright", -- python
 			"ruff_lsp", -- extremely fast Python linter and code transformation
 			"pylsp",
-			"nil_ls", -- nix language server
+			-- "nil_ls", -- nix language server
+			"nixd",
 
 			---- Operation & Cloud Nativautoindente
 			"bashls",   -- bash

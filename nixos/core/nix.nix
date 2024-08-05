@@ -1,4 +1,4 @@
-{username, ...}: {
+{...}: {
   # do garbage collection weekly to keep disk usage low
 
   # Allow unfree packages
