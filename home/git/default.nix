@@ -1,7 +1,6 @@
 {
   config,
-  user_email,
-  user_full_name,
+  osConfig,
   inputs,
   ...
 }: {
@@ -9,8 +8,8 @@
   xdg.configFile."delta/themes.gitconfig".source = "${inputs.delta}/themes.gitconfig";
   programs.git = {
     enable = true;
-    userName = user_full_name;
-    userEmail = user_email;
+    userName = osConfig.user-full-name;
+    userEmail = osConfig.email;
     delta = {
       enable = true;
       options = {

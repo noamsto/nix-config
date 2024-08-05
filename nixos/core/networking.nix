@@ -1,5 +1,6 @@
-{...}: {
+{config, ...}: {
   networking.firewall.enable = true;
+  networking.hostName = config.hostname;
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "systemd-resolved";

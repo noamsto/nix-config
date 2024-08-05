@@ -34,6 +34,6 @@ in {
     core-packages
     #TODO: Add if desktop
     ++ lib.optionals
-    config.isDesktop
+    config.desktop.enable
     desktop-packages;
 }

@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  kde.enable = true;
   environment.systemPackages = with pkgs; [
     kdePackages.yakuake
     kdePackages.kcalc

@@ -1,44 +1,16 @@
 {
-  username,
-  lib,
-  osConfig,
+  config,
+  inputs,
   ...
 }: {
-  imports =
-    [
-      ./packages.nix
-      ./terminal
-      ./xdg
-      ./vscode
-      ./git
-      ./kubernetes
-      ./direnv
-      ./zoom
-      ./ssh
-      ./nvim
-      ./browsers
-      ./cloud
-      ./obs-studio
-      ./easyeffects
-      ./plasma-manager
-    ]
-    ++ lib.optionals osConfig.services.desktopManager.plasma6.enable [
-      ./plasma-manager
-    ];
-
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
-
-  # This value determines the home Manager release that your
-  # configuration is compatible with. This helps avoid breakage
-  # when a new home Manager release introduces backwards
-  # incompatible changes.
-  #
-  # You can update home Manager without changing this value. See
-  # the home Manager release notes for a list of state version
-  # changes in each release.
-  home.stateVersion = "23.05";
-
-  # Let home Manager install and manage itself.
-  programs.home-manager.enable = true;
+  imports = [
+    inputs.home-manager.nixosModules.home-manager
+  ];
+  home-manager = {
+    useUserPackages = true;
+    useGlobalPkgs = true;
+    extraSpecialArgs = {inherit inputs;};
+    # Home manager config (configures programs like firefox, zsh, eww, etc)
+    users.${config.username} = ./. + "/${config.username}.nix";
+  };
 }

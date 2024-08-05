@@ -30,27 +30,17 @@
       pkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          {networking.hostName = hostname;}
           # General configuration (users, networking, sound, etc)
           (./. + "/hosts/${hostname}/system.nix")
           # Hardware config (bootloader, kernel modules, filesystems, etc)
           # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
           (./. + "/hosts/${hostname}/hardware-configuration.nix")
-          home-manager.nixosModules.home-manager
 
+          ./home
           # Agenix secrets-manager
           ./secrets
-          {
-            home-manager = {
-              useUserPackages = true;
-              useGlobalPkgs = true;
-              extraSpecialArgs = args;
-              # Home manager config (configures programs like firefox, zsh, eww, etc)
-              users.${username} = ./. + "/hosts/${hostname}/home.nix";
-            };
-          }
-
-          (import ./overlays)
+          ./options.nix
+          ./overlays
         ];
         specialArgs = args;
       };
@@ -68,6 +58,7 @@
     };
 
     homeConfigurations = {
+      #TODO: Add osConfig as special arg
       naspi-raspbian = home-manager.lib.homeManagerConfiguration {
         pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
         modules = [
@@ -79,6 +70,7 @@
           hostname = "naspi";
           user_full_name = "Noam Stolero";
           user_email = "noamstolero@gmail.com";
+          osConfig = import ./options.nix;
         };
       };
     };

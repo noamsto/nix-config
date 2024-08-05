@@ -1,8 +1,8 @@
 # import & decrypt secrets in `mysecrets` in this module
 {
   pkgs,
-  username,
   inputs,
+  config,
   ...
 }: {
   imports = [
@@ -16,7 +16,7 @@
 
   #   if you changed this key, you need to regenerate all encrypt files from the decrypt contents!
   age.identityPaths = [
-    "/home/${username}/.ssh/id_ed25519"
+    "/home/${config.username}/.ssh/id_ed25519"
   ];
 
   age.secrets.noams_password.file = "${inputs.mysecrets}/noams_password.age";
