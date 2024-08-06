@@ -1,5 +1,10 @@
-{pkgs, ...}: {
-  kde.enable = true;
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+lib.mkIf (config.desktop.mode == "kde") {
   environment.systemPackages = with pkgs; [
     kdePackages.yakuake
     kdePackages.kcalc

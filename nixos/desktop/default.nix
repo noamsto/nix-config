@@ -1,0 +1,3 @@
+{...}: {
+  imports = [./kde.nix ./sddm];
+}

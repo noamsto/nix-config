@@ -1,8 +1,15 @@
-{lib, ...}: {
+{
+  lib,
+  config,
+  ...
+}: {
   options = {
-    kde.enable = lib.mkEnableOption "kde";
-    desktop.enable = lib.mkEnableOption "desktop";
-    server.enable = lib.mkEnableOption "server";
+    server.enable = lib.mkEnableOption "server"; #NOTE: This might be useless
+    desktop.mode = lib.mkOption {
+      type = lib.types.enum ["none" "kde" "hyprland"];
+      default = "none";
+      description = "Desktop mode";
+    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "noams";

@@ -1,9 +1,7 @@
 {...}: {
-  desktop.enable = true;
   imports = [
     ./core
-    ./sddm
-    ./kde.nix
+    ./desktop
     ./packages.nix
     ./docker
     ./xremap

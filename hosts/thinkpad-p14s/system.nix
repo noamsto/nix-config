@@ -2,7 +2,7 @@
 # Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
 {...}: {
   imports = [
-    ../../nixos/desktop-kde.nix
+    ../../nixos
     # ./host_secrets.nix
   ];
 
@@ -10,14 +10,7 @@
   # Maybe define here The default username and hostname
   # Also, define if a desktop or Server, Laptop or not
   hostname = "thinkpad-p14s";
-
-  boot.loader = {
-    systemd-boot = {
-      enable = true;
-      configurationLimit = 12;
-    };
-    efi.canTouchEfiVariables = true;
-  };
+  desktop.mode = "kde";
 
   environment.shellAliases = {
     naspi-rebuild-switch = ''

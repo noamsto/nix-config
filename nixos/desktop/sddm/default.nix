@@ -1,4 +1,10 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
+lib.mkIf (config.desktop.mode != "none") {
   # install theme and cursor
   environment.systemPackages = with pkgs; [
     # where-is-my-sddm-theme

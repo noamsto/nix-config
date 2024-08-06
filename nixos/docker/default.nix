@@ -1,6 +1,6 @@
 {
   pkgs,
-  username,
+  config,
   ...
 }: {
   environment.systemPackages = with pkgs; [
@@ -8,5 +8,5 @@
     docker-compose
   ];
   virtualisation.docker.enable = true;
-  users.users.${username}.extraGroups = ["docker"];
+  users.users.${config.username}.extraGroups = ["docker"];
 }

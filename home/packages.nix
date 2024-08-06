@@ -15,6 +15,7 @@
     evince # PDF Viewer
     spotify
 
+    onlyoffice-bin
     vlc
   ];
 in {
@@ -87,5 +88,5 @@ in {
       # github
       gh
     ])
-    ++ lib.optionals osConfig.desktop.enable desktop-packages;
+    ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages;
 }

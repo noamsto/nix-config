@@ -9,6 +9,7 @@
     ./networking.nix
     ./nix.nix
     ./locale.nix
+    ./bootloader.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;

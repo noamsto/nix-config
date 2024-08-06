@@ -32,8 +32,7 @@
 in {
   environment.systemPackages =
     core-packages
-    #TODO: Add if desktop
     ++ lib.optionals
-    config.desktop.enable
+    (config.desktop.mode != "none")
     desktop-packages;
 }

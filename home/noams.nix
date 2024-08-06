@@ -20,7 +20,7 @@
       ./obs-studio
       ./easyeffects
     ]
-    ++ lib.optionals osConfig.kde.enable [
+    ++ lib.optionals (osConfig.desktop.mode == "kde") [
       ./plasma-manager
     ];
 
