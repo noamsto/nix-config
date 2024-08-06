@@ -1,10 +1,11 @@
-{...}: {
+{pkgs, ...}: {
   # do garbage collection weekly to keep disk usage low
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   nix = {
+    package = pkgs.nixVersions.latest;
     gc = {
       automatic = true;
       dates = "weekly";

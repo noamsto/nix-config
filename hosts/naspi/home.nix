@@ -1,6 +1,6 @@
 {
   pkgs,
-  username,
+  osConfig,
   ...
 }: {
   imports = [
@@ -8,13 +8,17 @@
     ../../home/terminal/minimal.nix
     ../../home/terminal/tmux
     ../../home/xdg
-    ../../home/server-packages.nix
+    ../../home/packages.nix
     ../../home/nvim/minimal.nix
   ];
 
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
+  home.username = osConfig.username;
+  home.homeDirectory = "/home/${osConfig.username}";
   home.stateVersion = "23.11";
+
+  home.sessionVariables = {
+    FLAKE = "/home/noams/nix-config";
+  };
 
   home.shellAliases = {
     xoff = "alias xoff='sudo /usr/local/bin/xSoft.sh 0 27'";
@@ -23,9 +27,9 @@
 
   nixpkgs.config.allowUnfree = true;
   nix = {
-    package = pkgs.nixUnstable;
+    package = pkgs.nixVersions.latest;
     settings.experimental-features = ["nix-command" "flakes"];
-    settings.trusted-users = [username];
+    settings.trusted-users = [osConfig.username];
   };
   programs.home-manager.enable = true;
 }

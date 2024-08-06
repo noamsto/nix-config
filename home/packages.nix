@@ -94,6 +94,8 @@ in {
 
       # github
       gh
+
+      nh
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile.type == "work") work-packages;

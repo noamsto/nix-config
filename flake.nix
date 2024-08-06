@@ -25,7 +25,13 @@
           hostname = "naspi";
           user_full_name = "Noam Stolero";
           user_email = "noamstolero@gmail.com";
-          osConfig = import ./options.nix;
+          osConfig = {
+            username = "noams";
+            user-full-name = "Noam Stolero";
+            email = "noamstolero@gmail.com";
+            desktop.mode = "none";
+            profile.type = "personal";
+          };
         };
       };
     };
