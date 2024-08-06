@@ -7,6 +7,7 @@
 lib.mkIf (config.desktop.mode != "none") {
   # install theme and cursor
   environment.systemPackages = with pkgs; [
+    bibata-cursors
     (where-is-my-sddm-theme.override {
       themeConfig.General = {
         background = toString ./tree.png;
@@ -31,7 +32,6 @@ lib.mkIf (config.desktop.mode != "none") {
         basicTextColor = "#ffffff";
       };
     })
-    bibata-cursors
   ];
   services.displayManager.sddm = {
     enable = true;
