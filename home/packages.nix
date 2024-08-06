@@ -6,17 +6,24 @@
 }: let
   desktop-packages = with pkgs; [
     # social
-    slack
     ferdium
     zoom-us
-
-    insomnia
 
     evince # PDF Viewer
     spotify
 
     onlyoffice-bin
     vlc
+
+    # Note taking
+    obsidian
+  ];
+  work-packages = with pkgs; [
+    slack
+    insomnia
+
+    awscli2
+    ssm-session-manager-plugin
   ];
 in {
   home.packages =
@@ -88,5 +95,6 @@ in {
       # github
       gh
     ])
-    ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages;
+    ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
+    ++ lib.optionals (osConfig.profile.type == "work") work-packages;
 }

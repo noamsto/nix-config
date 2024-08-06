@@ -25,8 +25,6 @@
         ++ catppuccin.optional-dependencies.pygments))
   ];
   desktop-packages = with pkgs; [
-    # Note taking
-    obsidian
     firefox
   ];
 in {

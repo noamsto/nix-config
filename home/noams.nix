@@ -16,7 +16,6 @@
       ./ssh
       ./nvim
       ./browsers
-      ./cloud
       ./obs-studio
       ./easyeffects
     ]

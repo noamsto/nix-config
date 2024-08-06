@@ -5,57 +5,12 @@
   outputs = {
     home-manager,
     nixpkgs,
-    nixpkgs-stable,
     ...
   } @ inputs: let
     pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
-
-    # This lets us reuse the code to "create" a system
-    # Credits go to sioodmy on this one!
-    # https://github.com/sioodmy/dotfiles/blob/main/flake.nix
-    mkSystem = {
-      pkgs,
-      system,
-      hostname,
-      username,
-      user_full_name,
-      user_email,
-    }: let
-      pkgs-stable = import nixpkgs-stable {
-        inherit system;
-        config.allowUnfree = true;
-      };
-      args = {inherit pkgs-stable system hostname username user_full_name user_email inputs;};
-    in
-      pkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          # General configuration (users, networking, sound, etc)
-          (./. + "/hosts/${hostname}/system.nix")
-          # Hardware config (bootloader, kernel modules, filesystems, etc)
-          # DO NOT USE MY HARDWARE CONFIG!! USE YOUR OWN!!
-          (./. + "/hosts/${hostname}/hardware-configuration.nix")
-
-          ./home
-          # Agenix secrets-manager
-          ./secrets
-          ./options.nix
-          ./overlays
-        ];
-        specialArgs = args;
-      };
   in {
     formatter.x86_64-linux = pkgs-linux.alejandra;
-    nixosConfigurations = {
-      thinkpad-p14s = mkSystem {
-        pkgs = inputs.nixpkgs;
-        system = "x86_64-linux";
-        hostname = "thinkpad-p14s";
-        username = "noams";
-        user_full_name = "Noam Stolero";
-        user_email = "stellern@gmail.com";
-      };
-    };
+    nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
 
     homeConfigurations = {
       #TODO: Add osConfig as special arg

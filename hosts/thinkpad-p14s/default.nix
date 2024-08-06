@@ -1,8 +1,11 @@
-# This is your system's configuration file.
-# Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
 {...}: {
   imports = [
+    ./hardware-configuration.nix
     ../../nixos
+    ../../home
+    ../../overlays
+    ../../secrets
+    ../../options.nix
     # ./host_secrets.nix
   ];
 

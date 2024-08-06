@@ -1,8 +1,6 @@
 {
   config,
   pkgs,
-  username,
-  user_full_name,
   ...
 }: {
   imports = [
@@ -53,9 +51,9 @@
   programs.adb.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.${username} = {
+  users.users.${config.username} = {
     isNormalUser = true;
-    description = user_full_name;
+    description = config.user-full-name;
     extraGroups = ["adbusers" "networkmanager" "wheel" "video"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
   };

@@ -5,7 +5,6 @@
   pkgs,
   config,
   lib,
-  username,
   modulesPath,
   ...
 }: {
@@ -107,7 +106,7 @@
     {device = "/dev/disk/by-uuid/155fa188-ce1b-44ea-8c5f-29f084cad303";}
   ];
 
-  fileSystems."/home/${username}/Data" = {
+  fileSystems."/home/${config.username}/Data" = {
     device = "/dev/disk/by-uuid/e11f6aa5-9f2e-4a2b-b4cf-c3c43a7d2b48";
     fsType = "ext4";
   };
