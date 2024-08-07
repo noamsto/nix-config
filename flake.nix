@@ -84,5 +84,7 @@
       url = "github:catppuccin/k9s";
       flake = false;
     };
+
+    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
   };
 }

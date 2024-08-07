@@ -1,0 +1,13 @@
+{
+  inputs,
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+lib.mkIf (config.desktop.mode == "hyprland") {
+  programs.hyprland = {
+    enable = true;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+  };
+}

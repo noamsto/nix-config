@@ -1,4 +1,4 @@
-{...}: {
+{lib, ...}: {
   imports = [
     ./hardware-configuration.nix
     ../../nixos
@@ -13,7 +13,7 @@
   # Maybe define here The default username and hostname
   # Also, define if a desktop or Server, Laptop or not
   hostname = "thinkpad-p14s";
-  desktop.mode = "kde";
+  desktop.mode = lib.mkDefault "kde";
   machine.type = "laptop";
 
   environment.shellAliases = {
