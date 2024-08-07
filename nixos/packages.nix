@@ -4,6 +4,7 @@
   config,
   ...
 }: let
+  isDesktop = config.desktop.mode != "none";
   core-packages = with pkgs; [
     vim
     wget
@@ -31,6 +32,6 @@ in {
   environment.systemPackages =
     core-packages
     ++ lib.optionals
-    (config.desktop.mode != "none")
+    isDesktop
     desktop-packages;
 }
