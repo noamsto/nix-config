@@ -14,7 +14,7 @@
 
   boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod"];
   boot.initrd.kernelModules = ["dm-snapshot"];
-  boot.kernelModules = ["kvm-amd"];
+  boot.kernelModules = ["kvm-amd" "amdgpu"];
   boot.extraModulePackages = [];
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
