@@ -14,6 +14,7 @@
   # Also, define if a desktop or Server, Laptop or not
   hostname = "thinkpad-p14s";
   desktop.mode = "kde";
+  machine.type = "laptop";
 
   environment.shellAliases = {
     naspi-rebuild-switch = ''

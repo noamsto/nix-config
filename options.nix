@@ -1,4 +1,4 @@
-{lib, ...}: {
+{lib, ...}: rec {
   options = {
     server.enable = lib.mkEnableOption "server"; #NOTE: This might be useless
     desktop.mode = lib.mkOption {
@@ -6,7 +6,12 @@
       default = "none";
       description = "Desktop mode";
     };
-    profile.type = lib.mkOption {
+    machine.type = lib.mkOption {
+      type = lib.types.enum ["server" "desktop" "laptop"];
+      default = "server";
+      description = "Machine type";
+    };
+    profile = lib.mkOption {
       type = lib.types.enum ["personal" "work"];
       default = "personal";
       description = "Work or Personal";

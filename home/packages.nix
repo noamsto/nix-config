@@ -98,5 +98,5 @@ in {
       nh
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
-    ++ lib.optionals (osConfig.profile.type == "work") work-packages;
+    ++ lib.optionals (osConfig.profile == "work") work-packages;
 }

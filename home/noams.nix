@@ -8,19 +8,23 @@
       ./packages.nix
       ./terminal
       ./xdg
-      ./vscode
       ./git
-      ./kubernetes
       ./direnv
-      ./zoom
       ./ssh
       ./nvim
+    ]
+    ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./browsers
       ./obs-studio
       ./easyeffects
+      ./vscode
     ]
     ++ lib.optionals (osConfig.desktop.mode == "kde") [
       ./plasma-manager
+    ]
+    ++ lib.optionals (osConfig.profile == "work") [
+      ./kubernetes
+      ./zoom
     ];
 
   home = {

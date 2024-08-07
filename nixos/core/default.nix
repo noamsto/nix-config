@@ -2,12 +2,14 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+in {
   imports = [
     ./networking.nix
     ./nix.nix
     ./locale.nix
     ./bootloader.nix
+    ./pc.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;
@@ -18,8 +20,6 @@
     ssh.startAgent = true;
     nix-ld.enable = true;
 
-    # Fan and thermal control
-    coolercontrol.enable = true;
     nh = {
       enable = true;
       # clean.enable = true;
@@ -28,27 +28,7 @@
     };
   };
 
-  # OBS virtual Camera
-  boot.extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
-  boot.extraModprobeConfig = ''
-    options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
-  '';
-
   security.polkit.enable = true;
-
-  # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
-  hardware.alsa.enablePersistence = true;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
-  };
-
-  programs.adb.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.${config.username} = {
@@ -60,29 +40,15 @@
 
   environment.shells = with pkgs; [zsh];
 
-  hardware = {
-    bluetooth.enable = true;
-    bluetooth.powerOnBoot = true;
-    logitech.wireless.enable = true; # solaar
-  };
-
   services = {
     dbus.implementation = "broker";
 
-    power-profiles-daemon.enable = true;
     # Firmware updates
     fwupd.enable = true;
 
     # Trim SSD
     fstrim.enable = true;
     fstrim.interval = "daily";
-
-    # Enable CUPS to print documents.
-    printing.enable = true;
-    # printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
-
-    # Enable flatpak
-    flatpak.enable = true;
   };
 
   system.activationScripts.binbash = {
