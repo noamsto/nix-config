@@ -4,7 +4,8 @@
   ...
 }: let
   isLaptop = config.machine.type == "laptop";
-  isPC = isLaptop || config.machine.type == "desktop";
+  isDesktop = config.machine.type == "desktop";
+  isPC = isLaptop || isDesktop;
 in {
   config = lib.mkIf isPC {
     services = {
