@@ -2,8 +2,12 @@
   imports = [
     ./sddm
     ./kde.nix
-    ./hyprland.nix
   ];
+
+  services = {
+    # Enable flatpak
+    flatpak.enable = true;
+  };
 
   services.xserver = {
     # Configure keymap in X11

@@ -22,6 +22,9 @@
     ++ lib.optionals (osConfig.desktop.mode == "kde") [
       ./plasma-manager
     ]
+    ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
+      ./hyprland
+    ]
     ++ lib.optionals (osConfig.profile == "work") [
       ./kubernetes
       ./zoom

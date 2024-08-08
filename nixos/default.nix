@@ -5,5 +5,6 @@
     ./packages.nix
     ./docker
     ./xremap
+    ./hyprland
   ];
 }

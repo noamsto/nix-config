@@ -10,4 +10,6 @@ lib.mkIf (config.desktop.mode == "hyprland") {
     enable = true;
     package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
   };
+
+  services.blueman.enable = true;
 }

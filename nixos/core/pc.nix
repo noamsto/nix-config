@@ -5,6 +5,7 @@
 }: let
   isLaptop = config.machine.type == "laptop";
   isDesktop = config.machine.type == "desktop";
+  isHyprland = config.desktop.mode == "hyprland";
   isPC = isLaptop || isDesktop;
 in {
   config = lib.mkIf isPC {
@@ -13,14 +14,13 @@ in {
       # Enable CUPS to print documents.
       printing.enable = true;
       # printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
-      # Enable flatpak
-      flatpak.enable = true;
     };
 
     hardware = {
       bluetooth.enable = true;
       logitech.wireless.enable = true; # solaar
     };
+    services.fprintd.enable = isLaptop; # TODO: Move to laptop nix file?
 
     programs = {
       # Fan and thermal control
@@ -29,7 +29,6 @@ in {
     };
 
     # Enable sound with pipewire.
-    hardware.pulseaudio.enable = false;
     hardware.alsa.enablePersistence = true;
     security.rtkit.enable = true;
     services.pipewire = {
