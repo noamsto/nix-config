@@ -1,4 +1,7 @@
-{lib, ...}: rec {
+{
+  lib,
+  ...
+}: {
   options = {
     server.enable = lib.mkEnableOption "server"; #NOTE: This might be useless
     desktop.mode = lib.mkOption {
@@ -19,7 +22,6 @@
     username = lib.mkOption {
       type = lib.types.str;
       default = "noams";
-      readOnly = true;
     };
     user-full-name = lib.mkOption {
       type = lib.types.str;

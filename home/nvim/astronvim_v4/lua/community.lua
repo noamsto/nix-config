@@ -25,7 +25,7 @@ return {
 		cmd = "Trouble",
 		dependencies = {
 			'nvim-telescope/telescope.nvim',
-			opts = function(plugin, opts)
+			opts = function(_, opts)
 				local open_with_trouble = require("trouble.sources.telescope").open
 				-- Use this to add more results without clearing the trouble list
 				-- local add_to_trouble = require("trouble.sources.telescope").add
@@ -113,19 +113,22 @@ return {
 	-- Note taking
 	{ import = "astrocommunity.note-taking.obsidian-nvim" },
 	{
-		-- dependencies = {
-		-- 	{
-		-- 		"AstroNvim/astrocore",
-		-- 		opts = {
-		-- 			mappings = {
-		-- 				n = {
-		-- 					["<Leader>on"] = { function() require("obsidian").new_note() end, desc = "New note" },
-		-- 					["<Leader>od"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" },
-		-- 				},
-		-- 			},
-		-- 		},
-		-- 	},
-		-- },
+		dependencies = {
+			{
+				"AstroNvim/astrocore",
+				opts = function(_, opts)
+					--TODO: Make sure mappings only inserted if Obsidian is loaded.
+					local maps = opts.mappings
+					local prefix = "<Leader>N"
+					maps.n[prefix] = { desc = "🪨 Obsidian" }
+					maps.n[prefix .. "n"] = { "<Cmd>ObsidianNew<CR>", desc = "New note" }
+					maps.n[prefix .. "d"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" }
+
+					-- 					["<Leader>on"] = { function() require("obsidian").new_note() end, desc = "New note" },
+					-- 					["<Leader>od"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" },
+				end
+			},
+		},
 		"epwalsh/obsidian.nvim",
 		opts = {
 			dir = vim.env.HOME .. "/Documents/obsidian-vault",

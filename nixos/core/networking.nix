@@ -22,7 +22,7 @@
     # Location service
     geoclue2 = {
       enable = true;
-      # geoProviderUrl = "https://beacondb.net/v1/geolocate?key=YOUR_API_KEY";
+      # geoProviderUrl = "https://beacondb.net/v1/geolocate";
       # submissionUrl = "https://beacondb.net/v1/geolocate?key=YOUR_API_KEY";
     };
   };

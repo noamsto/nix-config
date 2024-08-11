@@ -41,6 +41,7 @@ lib.mkIf (config.desktop.mode != "none") {
     settings = {
       Theme = {
         CursorTheme = "Bibata-Modern-Ice";
+        CursorSize = 24;
       };
     };
   };
