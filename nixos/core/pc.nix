@@ -5,7 +5,6 @@
 }: let
   isLaptop = config.machine.type == "laptop";
   isDesktop = config.machine.type == "desktop";
-  isHyprland = config.desktop.mode == "hyprland";
   isPC = isLaptop || isDesktop;
 in {
   config = lib.mkIf isPC {

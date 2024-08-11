@@ -11,7 +11,12 @@
     git
     curl
     dmidecode
+
+    # Fetchers
     fastfetch
+    cpufetch
+    ramfetch
+    onefetch
 
     # Nix/NixOS package version diff tool
     nvd
@@ -26,6 +31,8 @@
         ++ catppuccin.optional-dependencies.pygments))
   ];
   desktop-packages = with pkgs; [
+    wlr-randr
+    gpu-viewer
     firefox
   ];
 in {

@@ -12,4 +12,8 @@ lib.mkIf (config.desktop.mode == "hyprland") {
   };
 
   services.blueman.enable = true;
+
+  environment.systemPackages = with pkgs; [
+    pavucontrol
+  ];
 }

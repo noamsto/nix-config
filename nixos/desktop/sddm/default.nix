@@ -36,6 +36,7 @@ lib.mkIf (config.desktop.mode != "none") {
   services.displayManager.sddm = {
     enable = true;
     wayland.enable = true;
+    enableHidpi = true;
     theme = "where_is_my_sddm_theme";
     settings = {
       Theme = {
@@ -43,4 +44,6 @@ lib.mkIf (config.desktop.mode != "none") {
       };
     };
   };
+
+  security.pam.services.login.fprintAuth = false; # NOTE: Fingerprint login not really working
 }

@@ -18,6 +18,23 @@ return {
 
 	{ import = "astrocommunity.utility.noice-nvim" },
 
+	-- diagnostics
+	{ import = "astrocommunity.diagnostics.trouble-nvim" },
+	{
+		"folke/trouble.nvim",
+		cmd = "Trouble",
+		dependencies = {
+			'nvim-telescope/telescope.nvim',
+			opts = function(plugin, opts)
+				local open_with_trouble = require("trouble.sources.telescope").open
+				-- Use this to add more results without clearing the trouble list
+				-- local add_to_trouble = require("trouble.sources.telescope").add
+				opts.defaults.mappings["i"]["<c-t>"] = open_with_trouble
+				opts.defaults.mappings["n"]["<c-t>"] = open_with_trouble
+			end
+		}
+	},
+
 	-- Navigation
 	{ import = "astrocommunity.scrolling.nvim-scrollbar" },
 	{ import = "astrocommunity.scrolling.neoscroll-nvim" },
