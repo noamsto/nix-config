@@ -1,8 +1,4 @@
-{
-  pkgs,
-  config,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./sddm
     ./kde.nix
@@ -22,6 +18,7 @@
       desktop.mode = "hyprland";
       services.displayManager.sddm = {
         package = pkgs.kdePackages.sddm;
+        wayland.compositor = "kwin";
         extraPackages = [pkgs.kdePackages.qt5compat];
       };
     };

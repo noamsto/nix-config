@@ -38,22 +38,8 @@ in
         };
       })
     ];
-    services.xserver = {
-      enable = true;
-      upscaleDefaultCursor = true;
-      dpi = 144;
-      # displayManager.setupCommands = ''${lib.getExe pkgs.xorg.xrandr} --output DP-7 --off'';
-      xrandrHeads = [
-        {
-          output = "DP-8";
-          primary = true;
-        }
-        {
-          output = "DP-7";
-        }
-      ];
-    };
     services.displayManager.sddm = {
+      wayland.enable = true;
       enable = true;
       enableHidpi = true;
       theme = "where_is_my_sddm_theme";
