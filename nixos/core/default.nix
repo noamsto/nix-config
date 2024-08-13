@@ -10,6 +10,7 @@ in {
     ./locale.nix
     ./bootloader.nix
     ./pc.nix
+    ./users.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;
@@ -29,14 +30,6 @@ in {
   };
 
   security.polkit.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.${config.username} = {
-    isNormalUser = true;
-    description = config.user-full-name;
-    extraGroups = ["adbusers" "networkmanager" "wheel" "video"];
-    hashedPasswordFile = config.age.secrets.noams_password.path;
-  };
 
   environment.shells = with pkgs; [zsh];
 

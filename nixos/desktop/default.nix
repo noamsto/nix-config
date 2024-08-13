@@ -1,9 +1,12 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./sddm
     ./kde.nix
   ];
-
   services = {
     # Enable flatpak
     flatpak.enable = true;

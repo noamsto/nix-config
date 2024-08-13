@@ -120,9 +120,9 @@ return {
 					--TODO: Make sure mappings only inserted if Obsidian is loaded.
 					local maps = opts.mappings
 					local prefix = "<Leader>N"
-					maps.n[prefix] = { desc = "🪨 Obsidian" }
-					maps.n[prefix .. "n"] = { "<Cmd>ObsidianNew<CR>", desc = "New note" }
-					maps.n[prefix .. "d"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" }
+					-- maps.n[prefix] = { desc = "🪨 Obsidian" }
+					-- maps.n[prefix .. "n"] = { "<Cmd>ObsidianNew<CR>", desc = "New note" }
+					-- maps.n[prefix .. "d"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" }
 
 					-- 					["<Leader>on"] = { function() require("obsidian").new_note() end, desc = "New note" },
 					-- 					["<Leader>od"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" },

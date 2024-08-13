@@ -1,13 +1,13 @@
 {
   pkgs,
   config,
-  inputs,
   ...
 }: let
   # variant = "dark";
   # c = config.programs.matugen.theme.colors.colors.${variant};
   terminal = "alacritty";
   fileManager = "thunar";
+  browser = "firefox";
   pointer = config.home.pointerCursor;
   cursorName = "Bibata-Modern-Ice";
 in {
@@ -38,17 +38,19 @@ in {
       ];
 
       "$mainMod" = "SUPER";
-      bindm = [
+      bind = [
         "$mainMod, Q, exec, ${terminal}"
         "$mainMod, E, exec, ${fileManager}"
+        "$mainMod, F, exec, ${browser}"
         "$mainMod, C, killactive"
+        "$mainMod, M, exit"
       ];
     };
 
-    plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
-      hyprbars
-      hyprexpo
-    ];
+    # plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
+    #   hyprbars
+    #   hyprexpo
+    # ];
 
     systemd = {
       variables = ["--all"];

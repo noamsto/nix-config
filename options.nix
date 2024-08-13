@@ -1,7 +1,4 @@
-{
-  lib,
-  ...
-}: {
+{lib, ...}: {
   options = {
     server.enable = lib.mkEnableOption "server"; #NOTE: This might be useless
     desktop.mode = lib.mkOption {
