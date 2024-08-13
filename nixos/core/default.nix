@@ -23,8 +23,11 @@ in {
 
     nh = {
       enable = true;
-      # clean.enable = true;
-      # clean.extraArgs = "--keep-since 4d --keep 3";
+      # weekly cleanup
+      clean = {
+        enable = true;
+        extraArgs = "--keep-since 14d";
+      };
       flake = "/home/noams/nix-config";
     };
   };

@@ -5,6 +5,7 @@
   ...
 }: let
   isDesktop = config.desktop.mode != "none";
+  isHypr = config.desktop.mode == "hyprland";
 in
   lib.mkIf isDesktop {
     # install theme and cursor
@@ -50,6 +51,6 @@ in
         };
       };
     };
-
+    security.pam.services.sddm.enableGnomeKeyring = isHypr;
     security.pam.services.login.fprintAuth = false; # NOTE: Fingerprint login not really working
   }

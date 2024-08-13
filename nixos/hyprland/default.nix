@@ -4,16 +4,23 @@
   lib,
   config,
   ...
-}:
-lib.mkIf (config.desktop.mode == "hyprland") {
-  programs.hyprland = {
-    enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+}: let
+  isHypr = config.desktop.mode == "hyprland";
+in {
+  imports = [./gnome-services.nix];
+  config = lib.mkIf isHypr {
+    programs.hyprland = {
+      enable = true;
+      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    };
+
+    services.blueman.enable = true;
+
+    # smooth backlight control
+    hardware.brillo.enable = true;
+
+    environment.systemPackages = with pkgs; [
+      pavucontrol
+    ];
   };
-
-  services.blueman.enable = true;
-
-  environment.systemPackages = with pkgs; [
-    pavucontrol
-  ];
 }

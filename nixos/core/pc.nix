@@ -8,18 +8,40 @@
   isPC = isLaptop || isDesktop;
 in {
   config = lib.mkIf isPC {
-    services = {
-      power-profiles-daemon.enable = isLaptop;
-      # Enable CUPS to print documents.
-      printing.enable = true;
-      # printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
-    };
+    services =
+      {
+        # Enable CUPS to print documents.
+        printing.enable = true;
+        # printing.drivers = with pkgs; [splix samsung-unified-linux-driver];
+
+        # Sound
+        pipewire = {
+          enable = true;
+          alsa.enable = true;
+          alsa.support32Bit = true;
+          pulse.enable = true;
+          jack.enable = true;
+        };
+
+        # profile-sync-daemon
+        psd = {
+          enable = true;
+          resyncTimer = "10m";
+        };
+      }
+      // lib.optionalAttrs isLaptop {
+        power-profiles-daemon.enable = true;
+        upower.enable = true;
+        fprintd.enable = true;
+      };
 
     hardware = {
       bluetooth.enable = true;
       logitech.wireless.enable = true; # solaar
+
+      # alsa state persistence
+      alsa.enablePersistence = true;
     };
-    services.fprintd.enable = isLaptop; # TODO: Move to laptop nix file?
 
     programs = {
       # Fan and thermal control
@@ -27,16 +49,8 @@ in {
       adb.enable = true;
     };
 
-    # Enable sound with pipewire.
-    hardware.alsa.enablePersistence = true;
+    # Recommended for alsa
     security.rtkit.enable = true;
-    services.pipewire = {
-      enable = true;
-      alsa.enable = true;
-      alsa.support32Bit = true;
-      pulse.enable = true;
-      jack.enable = true;
-    };
 
     # OBS virtual Camera
     boot.extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];

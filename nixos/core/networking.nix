@@ -1,5 +1,13 @@
 {config, ...}: {
-  networking.firewall.enable = true;
+  networking.firewall = {
+    enable = true;
+
+    allowedTCPPorts = [
+      # Spotify track sync with other devices
+      57621
+    ];
+  };
+
   networking.hostName = config.hostname;
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
@@ -26,4 +34,5 @@
       # submissionUrl = "https://beacondb.net/v1/geolocate?key=YOUR_API_KEY";
     };
   };
+  location.provider = "geoclue2";
 }
