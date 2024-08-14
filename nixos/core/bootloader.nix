@@ -1,17 +1,24 @@
 {pkgs, ...}: {
-  boot.loader = {
-    systemd-boot = {
-      enable = true;
-      configurationLimit = 12;
-      consoleMode = "auto";
+  boot = {
+    consoleLogLevel = 3;
+    kernelParams = [
+      "quiet"
+      "systemd.show_status=auto"
+      "rd.udev.log_level=3"
+    ];
+    loader = {
+      systemd-boot = {
+        enable = true;
+        configurationLimit = 12;
+        consoleMode = "auto";
+      };
+      efi.canTouchEfiVariables = true;
     };
-    efi.canTouchEfiVariables = true;
-  };
-
-  boot.plymouth = {
-    enable = true;
-    font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
-    themePackages = [pkgs.catppuccin-plymouth];
-    theme = "catppuccin-macchiato";
+    plymouth = {
+      enable = true;
+      font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
+      themePackages = [pkgs.catppuccin-plymouth];
+      theme = "catppuccin-macchiato";
+    };
   };
 }

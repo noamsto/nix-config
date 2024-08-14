@@ -91,6 +91,7 @@
       inputs.hyprland.follows = "hyprland";
     };
 
-    anyrun.url = "github:fufexan/anyrun";
+    walker.url = "github:abenz1267/walker";
+    ags.url = "github:Aylur/ags";
   };
 }
