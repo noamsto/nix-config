@@ -65,9 +65,9 @@
       flake = false;
     };
 
-    # Used for better git diffs
+    # Used for better git diffs for theme
     delta = {
-      url = "github:dandavison/delta?rev=7375f7a165dabe430e12d531fedd84bb3a027c6b";
+      url = "github:dandavison/delta?ref=0.17.0";
       flake = false;
     };
 

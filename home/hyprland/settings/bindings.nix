@@ -8,15 +8,23 @@ in {
     bind = [
       "$mainMod, Q, exec, ${terminal}"
       "$mainMod, E, exec, ${fileManager}"
-      "$mainMod, F, exec, ${browser}"
+      "$mainMod, B, exec, ${browser}"
+      "$mainMod, F, fullscreen"
       "$mainMod, C, killactive"
       "$mainMod, M, exit"
+      "$mainMod, P, pseudo"
+      "$mainMod, R, togglesplit,"
+      "$mainMod, T, togglefloating,"
 
       # Move focus with SUPER+hjkl
       "$mainMod, H, movefocus, l"
+      "$mainMod, H, movecursortocorner, 2"
       "$mainMod, L, movefocus, r"
+      "$mainMod, L, movecursortocorner, 2"
       "$mainMod, K, movefocus, u"
+      "$mainMod, K, movecursortocorner, 2"
       "$mainMod, J, movefocus, d"
+      "$mainMod, J, movecursortocorner, 2"
 
       # Switch workspaces with mainMod + [0-9]
       "$mainMod, 1, workspace, 1"
@@ -29,6 +37,10 @@ in {
       "$mainMod, 8, workspace, 8"
       "$mainMod, 9, workspace, 9"
       "$mainMod, 0, workspace, 10"
+
+      # to switch between windows in a floating workspace
+      "SUPER, Tab, cyclenext," # change focus to another window
+      "SUPER, Tab, bringactivetotop," # bring it to the top
 
       # Move active window to a workspace with mainMod + SHIFT + [0-9]
       "$mainMod SHIFT, 1, movetoworkspace, 1"
@@ -52,12 +64,45 @@ in {
       "$mainMod, S, togglespecialworkspace, magic"
       "$mainMod SHIFT, S, movetoworkspace, special:magic"
 
-      "ALT_L, R, exec, walker"
+      "ALT_L, SPACE, exec, walker"
+
+      # Resize windows
+      "$mainMod CTRL, left, resizeactive, -20 0"
+      "$mainMod CTRL, right, resizeactive, 20 0"
+      "$mainMod CTRL, up, resizeactive, 0 -20"
+      "$mainMod CTRL, down, resizeactive, 0 20"
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging
       "$mainMod, mouse:272, movewindow"
       "$mainMod, mouse:273, resizewindow"
+      "$mainMod ALT, mouse:272, resizewindow"
+    ];
+
+    bindl = [
+      # media controls
+      ", XF86AudioPlay, exec, playerctl play-pause"
+      ", XF86AudioPrev, exec, playerctl previous"
+      ", XF86AudioNext, exec, playerctl next"
+
+      # volume
+      ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+      ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+    ];
+    bindle = [
+      # volume
+      ", XF86AudioRaiseVolume, exec, wpctl set-volume -l '1.0' @DEFAULT_AUDIO_SINK@ 6%+"
+      ", XF86AudioLowerVolume, exec, wpctl set-volume -l '1.0' @DEFAULT_AUDIO_SINK@ 6%-"
+
+      # backlight
+      ", XF86MonBrightnessUp, exec, brillo -q -u 300000 -A 5"
+      ", XF86MonBrightnessDown, exec, brillo -q -u 300000 -U 5"
+
+      # Resize windows
+      "$mainMod CTRL, left, resizeactive, -20 0"
+      "$mainMod CTRL, right, resizeactive, 20 0"
+      "$mainMod CTRL, up, resizeactive, 0 -20"
+      "$mainMod CTRL, down, resizeactive, 0 20"
     ];
 
     bindr = [

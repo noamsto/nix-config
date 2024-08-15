@@ -1,6 +1,11 @@
 # ./overlays/default.nix
-{...}: {
+{inputs, ...}: {
   nixpkgs.overlays = [
+    # Adds pkgs.stable == inputs.nixpkgs-stable.legacyPackages.${pkgs.system}
+    (final: _: {
+      stable = inputs.nixpkgs-stable.legacyPackages.${final.system};
+    })
+
     (final: prev: {
       # Use tmux fork until this issue is closed: https://github.com/tmux/tmux/issues/2705
       tmux = prev.tmux.overrideAttrs (prviousAttrs: {

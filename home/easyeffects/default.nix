@@ -15,6 +15,7 @@ in {
 
   services.easyeffects = {
     enable = true;
+    package = pkgs.stable.easyeffects;
     preset = "Thinkpad P14s G4";
   };
 }

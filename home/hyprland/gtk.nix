@@ -7,7 +7,7 @@
   home.pointerCursor = {
     package = pkgs.bibata-cursors;
     name = "Bibata-Modern-Ice";
-    size = 16;
+    size = 20;
     gtk.enable = true;
     x11.enable = true;
   };
@@ -27,10 +27,10 @@
       package = pkgs.adwaita-icon-theme;
     };
 
-    # theme = {
-    #   name = "adw-gtk3-dark";
-    #   package = pkgs.adw-gtk3;
-    # };
+    theme = {
+      name = "adw-gtk3-dark";
+      package = pkgs.adw-gtk3;
+    };
   };
 
   xdg.configFile."gtk-4.0/gtk.css".enable = lib.mkForce false;

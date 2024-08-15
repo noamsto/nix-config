@@ -81,10 +81,10 @@ in {
         }
       )
       {
-        gtk = {
-          theme.name = "linea-nord-color";
-          theme.package = theme;
-        };
+        # gtk = {
+        #   theme.name = "linea-nord-color";
+        #   theme.package = theme;
+        # };
       }
     ];
 }

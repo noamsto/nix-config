@@ -13,7 +13,9 @@
   in "pkill ${prog} || ${runserv} ${program}";
 in {
   # xdg.configFile."hypr/hyprland.conf".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/hyprland/hyprland.conf";
+
   imports = [
+    inputs.hyprland.homeManagerModules.default
     ./gtk.nix
     ./walker
     ./terminal
@@ -22,7 +24,7 @@ in {
     ./pywal
     ./settings
   ];
-  wal.enable = true;
+  wal.enable = false;
   wayland.windowManager.hyprland = {
     enable = true;
     plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
