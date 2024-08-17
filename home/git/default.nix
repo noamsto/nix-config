@@ -6,7 +6,7 @@
   ...
 }: {
   # basic configuration of git, please change to your own
-  # xdg.configFile."delta/themes.gitconfig".source = "${inputs.delta}/themes.gitconfig";
+  xdg.configFile."delta/themes.gitconfig".source = "${inputs.delta}/themes.gitconfig";
   programs.git = {
     enable = true;
     userName = osConfig.user-full-name;
@@ -23,9 +23,9 @@
       };
     };
     extraConfig = {
-      # include = {
-      #   path = "${config.xdg.configHome}/delta/themes.gitconfig";
-      # };
+      include = {
+        path = "${config.xdg.configHome}/delta/themes.gitconfig";
+      };
       init = {
         defaultBranch = "main";
       };

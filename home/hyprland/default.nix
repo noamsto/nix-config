@@ -16,6 +16,7 @@ in {
 
   imports = [
     inputs.hyprland.homeManagerModules.default
+
     ./gtk.nix
     ./walker
     ./terminal
@@ -23,8 +24,13 @@ in {
     ./xdg.nix
     ./pywal
     ./settings
+    ./matugen.nix
+    ./utils
   ];
+
+  # Theme related
   wal.enable = false;
+
   wayland.windowManager.hyprland = {
     enable = true;
     plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
@@ -41,11 +47,11 @@ in {
     };
   };
 
-  programs.hyprlock.enable = true;
-
   home.packages = with pkgs; [
+    playerctl
     papirus-icon-theme
     bibata-cursors
+    # (callPackage ./bibata-hyprcursor {})
     kdePackages.dolphin
     xfce.thunar
   ];

@@ -16,6 +16,8 @@ in {
       "$mainMod, R, togglesplit,"
       "$mainMod, T, togglefloating,"
 
+      "$mainMod ALT, L, exec, pgrep hyprlock || hyprlock"
+
       # Move focus with SUPER+hjkl
       "$mainMod, H, movefocus, l"
       "$mainMod, H, movecursortocorner, 2"
@@ -39,8 +41,9 @@ in {
       "$mainMod, 0, workspace, 10"
 
       # to switch between windows in a floating workspace
-      "SUPER, Tab, cyclenext," # change focus to another window
-      "SUPER, Tab, bringactivetotop," # bring it to the top
+      "$mainMod, Tab, cyclenext," # change focus to another window
+      "$mainMod SHIFT, Tab, cyclenext, prev" # change focus to previous window
+      "$mainMod SHIFT, Tab, bringactivetotop," # bring it to the top
 
       # Move active window to a workspace with mainMod + SHIFT + [0-9]
       "$mainMod SHIFT, 1, movetoworkspace, 1"

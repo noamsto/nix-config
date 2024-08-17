@@ -19,6 +19,8 @@ in {
     # smooth backlight control
     hardware.brillo.enable = true;
 
+    security.pam.services.hyprlock.text = "auth include login";
+
     environment.systemPackages = with pkgs; [
       pavucontrol
     ];

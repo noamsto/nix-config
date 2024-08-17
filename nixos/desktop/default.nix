@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./sddm
     ./kde.nix
@@ -16,11 +20,18 @@
   specialisation = {
     hypr.configuration = {
       desktop.mode = "hyprland";
-      services.displayManager.sddm = {
-        package = pkgs.kdePackages.sddm;
-        wayland.compositor = "kwin";
-        extraPackages = [pkgs.kdePackages.qt5compat];
+      services.displayManager = {
+        autoLogin.enable = true;
+        autoLogin.user = config.username;
+        sddm = {
+          package = pkgs.kdePackages.sddm;
+          wayland.compositor = "kwin";
+          extraPackages = [pkgs.kdePackages.qt5compat];
+        };
       };
     };
   };
+
+  # tell Electron/Chromium to run on Wayland
+  environment.variables.NIXOS_OZONE_WL = "1";
 }

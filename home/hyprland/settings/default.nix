@@ -1,9 +1,14 @@
-{config, ...}: let
+{
+  pkgs,
+  config,
+  ...
+}: let
   pointer = config.home.pointerCursor;
   cursorName = "Bibata-Modern-Ice";
+  # cursorPackage = pkgs.callPackage ./../bibata-hyprcursor {}; # Move to flake parts for this!
 in {
   imports = [./bindings.nix ./window_rule.nix];
-
+  # xdg.dataFile."icons/${cursorName}".source = "${cursorPackage}/share/icons/${cursorName}";
   wayland.windowManager.hyprland = {
     settings = let
       laptop-monitor = "eDP-1";
