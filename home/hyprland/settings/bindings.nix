@@ -11,10 +11,10 @@ in {
       "$mainMod, B, exec, ${browser}"
       "$mainMod, F, fullscreen"
       "$mainMod, C, killactive"
-      "$mainMod, M, exit"
       "$mainMod, P, pseudo"
       "$mainMod, R, togglesplit,"
       "$mainMod, T, togglefloating,"
+      "$mainMod, grave, hyprexpo:expo, toggle"
 
       "$mainMod ALT, L, exec, pgrep hyprlock || hyprlock"
 
@@ -42,6 +42,7 @@ in {
 
       # to switch between windows in a floating workspace
       "$mainMod, Tab, cyclenext," # change focus to another window
+      "$mainMod, Tab, bringactivetotop," # bring it to the top
       "$mainMod SHIFT, Tab, cyclenext, prev" # change focus to previous window
       "$mainMod SHIFT, Tab, bringactivetotop," # bring it to the top
 
@@ -65,15 +66,15 @@ in {
 
       # Example special workspace (scratchpad)down
       "$mainMod, S, togglespecialworkspace, magic"
-      "$mainMod SHIFT, S, movetoworkspace, special:magic"
+      "$mainMod, M, movetoworkspace, special:magic"
 
-      "ALT_L, SPACE, exec, walker"
+      "$mainMod, R, exec, walker"
 
       # Resize windows
-      "$mainMod CTRL, left, resizeactive, -20 0"
-      "$mainMod CTRL, right, resizeactive, 20 0"
-      "$mainMod CTRL, up, resizeactive, 0 -20"
-      "$mainMod CTRL, down, resizeactive, 0 20"
+      "$mainMod, left, resizeactive, -20 0"
+      "$mainMod, right, resizeactive, 20 0"
+      "$mainMod, up, resizeactive, 0 -20"
+      "$mainMod, down, resizeactive, 0 20"
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging
@@ -102,10 +103,10 @@ in {
       ", XF86MonBrightnessDown, exec, brillo -q -u 300000 -U 5"
 
       # Resize windows
-      "$mainMod CTRL, left, resizeactive, -20 0"
-      "$mainMod CTRL, right, resizeactive, 20 0"
-      "$mainMod CTRL, up, resizeactive, 0 -20"
-      "$mainMod CTRL, down, resizeactive, 0 20"
+      "$mainMod, left, resizeactive, -20 0"
+      "$mainMod, right, resizeactive, 20 0"
+      "$mainMod, up, resizeactive, 0 -20"
+      "$mainMod, down, resizeactive, 0 20"
     ];
 
     bindr = [
