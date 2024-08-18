@@ -47,7 +47,8 @@ in {
         }
         {
           timeout = timeout + 10;
-          on-timeout = suspendScript.outPath;
+          # on-timeout = suspendScript.outPath;
+          on-timeout = "${pkgs.systemd}/bin/systemctl suspend";
         }
       ];
     };
