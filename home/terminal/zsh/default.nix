@@ -24,7 +24,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "tmux" "python" "z" "docker" "docker-compose"];
+      plugins = ["git" "python" "z" "docker" "docker-compose"];
       theme = "";
     };
 
@@ -81,8 +81,6 @@
 
   programs.fzf = {
     enable = true;
-    tmux.enableShellIntegration = true;
-    tmux.shellIntegrationOptions = ["-p80%,60%"];
     defaultOptions = ["--height 40%"];
   };
 }
