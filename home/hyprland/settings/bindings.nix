@@ -1,7 +1,14 @@
-{...}: let
+{lib, ...}: let
   terminal = "alacritty";
   fileManager = "thunar";
   browser = "firefox";
+
+  toggle = program: service: let
+    prog = builtins.substring 0 14 program;
+    runserv = lib.optionalString service "run-as-service";
+  in "pkill ${prog} || ${runserv} ${program}";
+
+  runOnce = program: "pgrep ${program} || ${program}";
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
@@ -16,7 +23,12 @@ in {
       "$mainMod, T, togglefloating,"
       "$mainMod, grave, hyprexpo:expo, toggle"
 
-      "$mainMod ALT, L, exec, pgrep hyprlock || hyprlock"
+      "$mainMod, V, exec, cliphist list | walker -d | cliphist decode | wl-copy"
+
+      "$mainMod ALT, L, exec, ${runOnce "hyprlock"}"
+
+      # logout menu
+      "$mainMod, Escape, exec, ${toggle "wlogout" true} -p layer-shell"
 
       # Move focus with SUPER+hjkl
       "$mainMod, H, movefocus, l"
