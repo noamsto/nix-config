@@ -13,7 +13,6 @@
     nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
 
     homeConfigurations = {
-      #TODO: Add osConfig as special arg
       naspi-raspbian = home-manager.lib.homeManagerConfiguration {
         pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
         modules = [

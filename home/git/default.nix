@@ -12,7 +12,7 @@
     userName = osConfig.user-full-name;
     userEmail = osConfig.email;
     delta = {
-      package = pkgs.stable.delta;
+      package = pkgs.delta;
       enable = true;
       options = {
         navigate = true;

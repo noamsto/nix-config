@@ -1,4 +1,8 @@
-{lib, ...}: {
+{
+  lib,
+  inputs,
+  ...
+}: {
   imports = [
     ./hardware-configuration.nix
     ../../nixos
@@ -7,6 +11,7 @@
     ../../secrets
     ../../options.nix
     # ./host_secrets.nix
+    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen4
   ];
 
   #TODO:

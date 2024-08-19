@@ -88,7 +88,7 @@
       shfmt
 
       #-- json
-      vscode-langservers-extracted
+      stable.vscode-langservers-extracted
 
       # Containers
       docker-compose-language-service
