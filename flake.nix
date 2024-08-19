@@ -7,9 +7,7 @@
     nixpkgs,
     flake-parts,
     ...
-  } @ inputs: let
-    pkgs-linux = inputs.nixpkgs.legacyPackages.x86_64-linux;
-  in
+  } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
         "x86_64-linux"
@@ -82,28 +80,6 @@
           };
         };
       };
-      # formatter.x86_64-linux = pkgs-linux.alejandra;
-      # nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
-      #
-      # homeConfigurations = {
-      #   naspi-raspbian = home-manager.lib.homeManagerConfiguration {
-      #     pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
-      #     modules = [
-      #       ./hosts/naspi/home.nix
-      #     ];
-      #     extraSpecialArgs = {
-      #       inherit inputs;
-      #       osConfig = {
-      #         username = "noams";
-      #         user-full-name = "Noam Stolero";
-      #         email = "noamstolero@gmail.com";
-      #         hostname = "naspi";
-      #         desktop.mode = "none";
-      #         profile.type = "personal";
-      #       };
-      #     };
-      #   };
-      # };
     };
 
   inputs = {
