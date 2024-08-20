@@ -31,7 +31,10 @@
             inputs'.agenix.packages.default
             config.treefmt.build.wrapper
             pkgs.git
+            pkgs.vim
+            pkgs.nh
             pkgs.nodePackages.prettier
+            pkgs.zsh
           ];
           name = "dots";
           DIRENV_LOG_FORMAT = "";
