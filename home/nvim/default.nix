@@ -124,6 +124,10 @@
       go
 
       yarn
+
+      #typescript
+      nodePackages.eslint
+      typescript
     ];
 
     # For development

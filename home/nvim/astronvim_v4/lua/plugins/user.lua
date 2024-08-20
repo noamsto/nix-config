@@ -106,4 +106,9 @@ return {
 		}
 	},
 	{ "ixru/nvim-markdown", ft = "markdown" },
+	{
+		"pmizio/typescript-tools.nvim",
+		dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
+		opts = {},
+	}
 }
