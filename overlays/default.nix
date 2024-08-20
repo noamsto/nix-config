@@ -1,7 +1,8 @@
 # ./overlays/default.nix
 {inputs, ...}: {
   nixpkgs.overlays = [
-    # Adds pkgs.stable == inputs.nixpkgs-stable.legacyPackages.${pkgs.system}
+    inputs.hyprpanel.overlay
+
     (final: _: {
       stable = inputs.nixpkgs-stable.legacyPackages.${final.system};
     })

@@ -80,7 +80,7 @@ in {
       "$mainMod, S, togglespecialworkspace, magic"
       "$mainMod, M, movetoworkspace, special:magic"
 
-      "$mainMod, R, exec, walker"
+      "$ALT, SPACE, exec, walker"
 
       # Resize windows
       "$mainMod, left, resizeactive, -20 0"

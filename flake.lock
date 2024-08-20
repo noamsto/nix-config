@@ -665,6 +665,31 @@
         "type": "github"
       }
     },
+    "hyprpanel": {
+      "inputs": {
+        "ags": [
+          "ags"
+        ],
+        "nixpkgs": [
+          "hyprland",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1724141430,
+        "narHash": "sha256-fPujj2RrA86aErJiH9RwxZVnDaaI4YcD0uFHmW9yEZo=",
+        "owner": "noamsto",
+        "repo": "HyprPanel",
+        "rev": "c006c12e8a9b12bdab9276539ce88c920d1ff711",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noamsto",
+        "ref": "fix-flake-build",
+        "repo": "HyprPanel",
+        "type": "github"
+      }
+    },
     "hyprutils": {
       "inputs": {
         "nixpkgs": [
@@ -1159,6 +1184,7 @@
         "hyprland": "hyprland",
         "hyprland-plugins": "hyprland-plugins",
         "hyprlock": "hyprlock",
+        "hyprpanel": "hyprpanel",
         "k9s-catuppuccin-skins": "k9s-catuppuccin-skins",
         "matugen": "matugen",
         "mysecrets": "mysecrets",

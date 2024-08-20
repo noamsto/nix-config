@@ -178,8 +178,17 @@
       };
     };
 
-    walker.url = "github:abenz1267/walker";
+    # add ags
     ags.url = "github:Aylur/ags";
+    hyprpanel = {
+      url = "github:noamsto/HyprPanel?ref=fix-flake-build";
+      inputs = {
+        nixpkgs.follows = "hyprland/nixpkgs";
+        ags.follows = "ags";
+      };
+    };
+
+    walker.url = "github:abenz1267/walker";
     matugen = {
       url = "github:InioX/matugen";
       inputs = {
