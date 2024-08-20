@@ -24,7 +24,7 @@
 
   services.thinkfan = {
     # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
-    enable = true;
+    enable = false;
     sensors = [
       # GPU
       {
@@ -86,28 +86,28 @@
   boot.initrd.luks.devices = {
     root = {
       # Use https://nixos.wiki/wiki/Full_Disk_Encryption
-      device = "/dev/disk/by-uuid/a93bff25-8164-4b2f-ae87-19311112c84c";
+      device = "/dev/disk/by-uuid/7aac95c6-87d1-489e-86ca-3747b8c74c7f";
       preLVM = true;
     };
   };
 
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/5a02fcb4-772b-4b16-8469-6b0afad12996";
-    fsType = "ext4";
-  };
+  fileSystems."/" =
+    { device = "/dev/disk/by-uuid/1bf70d51-1db6-4ab7-977a-5f66ec27e705";
+      fsType = "ext4";
+    };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/0F77-09B0";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
-  };
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/08DD-70E6";
+      fsType = "vfat";
+      options = [ "fmask=0022" "dmask=0022" ];
+    };
 
-  swapDevices = [
-    {device = "/dev/disk/by-uuid/155fa188-ce1b-44ea-8c5f-29f084cad303";}
-  ];
+  swapDevices =
+    [ { device = "/dev/disk/by-uuid/eed54e9f-2bce-4224-8189-16cbc82793c7"; }
+    ];
 
   fileSystems."/home/${config.username}/Data" = {
-    device = "/dev/disk/by-uuid/e11f6aa5-9f2e-4a2b-b4cf-c3c43a7d2b48";
+    device = "/dev/disk/by-uuid/a990dfba-ad44-4c4f-91e2-149ef6653d09";
     fsType = "ext4";
   };
 

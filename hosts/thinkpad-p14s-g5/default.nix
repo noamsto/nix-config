@@ -11,7 +11,6 @@
     ../../secrets
     ../../options.nix
     # ./host_secrets.nix
-    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen4
   ];
 
   hostname = "thinkpad-p14s-g5";
