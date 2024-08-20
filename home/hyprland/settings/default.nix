@@ -14,7 +14,7 @@ in {
   wayland.windowManager.hyprland = {
     settings = let
       laptop-monitor = "eDP-1";
-      laptop-monitor-pos = "${laptop-monitor},2880x1800, 2048x1152,1.40625";
+      laptop-monitor-pos = "${laptop-monitor},2880x1800x90, 2048x1152,1.40625";
       home-ext-monitor-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
       home-ext-monitor-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
     in {
@@ -33,7 +33,7 @@ in {
       workspace = [
         "1,default:true,monitor:${home-ext-monitor-left},persistent:true"
         "2,monitor:${home-ext-monitor-right},persistent:true"
-        "3,monitor:${laptop-monitor},persistent:true"
+        # "3,monitor:${laptop-monitor},persistent:true"
       ];
 
       env = [
