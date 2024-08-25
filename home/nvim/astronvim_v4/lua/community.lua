@@ -43,6 +43,7 @@ return {
 	{ import = "astrocommunity.editing-support.todo-comments-nvim" },
 	{ import = "astrocommunity.editing-support.telescope-undo-nvim" },
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
+	{ import = "astrocommunity.editing-support.yanky-nvim" },
 
 	-- { import = "astrocommunity.completion.copilot-lua-cmp" },
 	{ import = "astrocommunity.search.nvim-spectre" },
@@ -113,69 +114,75 @@ return {
 	-- Note taking
 	{ import = "astrocommunity.note-taking.obsidian-nvim" },
 	{
-		dependencies = {
-			{
-				"AstroNvim/astrocore",
-				opts = function(_, opts)
-					--TODO: Make sure mappings only inserted if Obsidian is loaded.
-					local maps = opts.mappings
-					local prefix = "<Leader>N"
-					-- maps.n[prefix] = { desc = "🪨 Obsidian" }
-					-- maps.n[prefix .. "n"] = { "<Cmd>ObsidianNew<CR>", desc = "New note" }
-					-- maps.n[prefix .. "d"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" }
-
-					-- 					["<Leader>on"] = { function() require("obsidian").new_note() end, desc = "New note" },
-					-- 					["<Leader>od"] = { function() require("obsidian").new_daily_note() end, desc = "New daily note" },
-				end
-			},
-		},
 		"epwalsh/obsidian.nvim",
-		opts = {
-			dir = vim.env.HOME .. "/Documents/obsidian-vault",
-			daily_notes = {
-				folder = "daily-notes",
-				default_tags = { "daily-notes" },
-			},
-			mappings = {
-				-- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
-				["gf"] = {
-					action = function()
-						return require("obsidian").util.gf_passthrough()
-					end,
-					opts = { noremap = false, expr = true, buffer = true },
+		opts = function()
+			vim.api.nvim_create_autocmd("BufReadPost", {
+				desc = "Execute function when file path matches regex",
+				pattern = "*/obsidian-vault/**",
+				callback = function()
+					local wk = require("which-key")
+					wk.add({
+						{
+							"<Leader>o",
+							group = "Obsidian",
+						},
+						{
+							"<Leader>on",
+							"<cmd>ObsidianNew<cr>",
+							desc = "Obsidian new",
+						}
+					})
+				end,
+			}
+			)
+			return
+			{
+				dir = vim.env.HOME .. "/Documents/obsidian-vault",
+				daily_notes = {
+					folder = "daily-notes",
+					default_tags = { "daily-notes" },
 				},
-				-- Smart action depending on context, either follow link or toggle checkbox.
-				["<cr>"] = {
-					action = function()
-						return require("obsidian").util.smart_action()
-					end,
-					opts = { buffer = true, expr = true },
-				}
-			},
-			ui = {
-				checkboxes = {
-					[" "] = { char = "󰄱", hl_group = "ObsidianTodo" },
-					["x"] = { char = "", hl_group = "ObsidianDone" },
-					[">"] = { char = "", hl_group = "ObsidianRightArrow" },
-					["~"] = { char = "", hl_group = "ObsidianTilde" },
-					["!"] = { char = "", hl_group = "ObsidianImportant" },
-				}
-			},
-			note_id_func = function(title)
-				-- Create note IDs in a Zettelkasten format with a readable date and a suffix.
-				local suffix = ""
-				if title ~= nil then
-					-- If title is given, transform it into valid file name.
-					suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
-				else
-					-- If title is nil, just add 4 random uppercase letters to the suffix.
-					for _ = 1, 4 do
-						suffix = suffix .. string.char(math.random(65, 90))
+				mappings = {
+					-- Overrides the 'gf' mapping to work on markdown/wiki links within your vault.
+					["gf"] = {
+						action = function()
+							return require("obsidian").util.gf_passthrough()
+						end,
+						opts = { noremap = false, expr = true, buffer = true },
+					},
+					-- Smart action depending on context, either follow link or toggle checkbox.
+					["<cr>"] = {
+						action = function()
+							return require("obsidian").util.smart_action()
+						end,
+						opts = { buffer = true, expr = true },
+					}
+				},
+				ui = {
+					checkboxes = {
+						[" "] = { char = "󰄱", hl_group = "ObsidianTodo" },
+						["x"] = { char = "", hl_group = "ObsidianDone" },
+						[">"] = { char = "", hl_group = "ObsidianRightArrow" },
+						["~"] = { char = "", hl_group = "ObsidianTilde" },
+						["!"] = { char = "", hl_group = "ObsidianImportant" },
+					}
+				},
+				note_id_func = function(title)
+					-- Create note IDs in a Zettelkasten format with a readable date and a suffix.
+					local suffix = ""
+					if title ~= nil then
+						-- If title is given, transform it into valid file name.
+						suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+					else
+						-- If title is nil, just add 4 random uppercase letters to the suffix.
+						for _ = 1, 4 do
+							suffix = suffix .. string.char(math.random(65, 90))
+						end
 					end
-				end
-				return tostring(os.date("%Y-%m-%d")) .. "_" .. suffix
-			end,
-		}
+					return tostring(os.date("%Y-%m-%d")) .. "_" .. suffix
+				end,
+			}
+		end
 	},
 	{ import = "astrocommunity.markdown-and-latex.markdown-preview-nvim" },
 }

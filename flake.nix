@@ -191,7 +191,8 @@
       };
     };
 
-    walker.url = "github:abenz1267/walker";
+    # walker.url = "github:abenz1267/walker";
+    walker.url = "github:noamsto/walker?ref=dont-trim-whitespaces";
     matugen = {
       url = "github:InioX/matugen";
       inputs = {

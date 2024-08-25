@@ -3,6 +3,5 @@
     ./polkit-agent.nix
     ./ags
     ./kanshi.nix
-    ./cliphist.nix
   ];
 }

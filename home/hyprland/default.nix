@@ -21,7 +21,7 @@ in {
     ./walker
     ./terminal
     ./services
-    ./xdg.nix
+    # ./xdg.nix
     ./pywal
     ./settings
     ./matugen.nix

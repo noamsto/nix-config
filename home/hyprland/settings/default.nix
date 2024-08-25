@@ -53,6 +53,8 @@ in {
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
         "${pkgs.hyprpanel}/bin/hyprpanel"
+        "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
+        ""
       ];
 
       input = {

@@ -45,6 +45,7 @@ return {
         -- configure global vim variables (vim.g)
         -- NOTE: `mapLeader` and `maplocalleader` must be set in the AstroNvim opts or before `lazy.setup`
         -- This can be found in the `lua/lazy_setup.lua` file
+        sqlite_clib_path = os.getenv('SQLITE3_PATH'),
       },
     },
     -- Mappings can be configured through AstroCore as well.
@@ -54,6 +55,8 @@ return {
       -- first key is the mode
       n = {
 
+        ["[p"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
+        ["]p"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
         ["<S-CR>"] = { "k" },
 
         ["<Leader>dc"] = { continue, desc = "Start/Continue (F5)" },

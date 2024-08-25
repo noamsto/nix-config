@@ -23,7 +23,7 @@ in {
       "$mainMod, T, togglefloating,"
       "$mainMod, grave, hyprexpo:expo, toggle"
 
-      "$mainMod, V, exec, cliphist list | walker -d | cliphist decode | wl-copy"
+      "$mainMod, V, exec, walker -m clipboard"
 
       "$mainMod ALT, L, exec, ${runOnce "hyprlock"}"
 
@@ -87,6 +87,8 @@ in {
       "$mainMod, right, resizeactive, 20 0"
       "$mainMod, up, resizeactive, 0 -20"
       "$mainMod, down, resizeactive, 0 20"
+
+      ", XF86AudioPlay, exec, ${runOnce "spotify"}"
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging

@@ -22,6 +22,9 @@
       "--set"
       "LIBGIT2_PATH"
       "${pkgs.libgit2.lib}/lib/libgit2.so"
+      "--set"
+      "SQLITE3_PATH"
+      "${pkgs.sqlite.out}/lib/libsqlite3.so"
     ];
     enable = true;
     defaultEditor = true;
@@ -88,7 +91,7 @@
       shfmt
 
       #-- json
-      stable.vscode-langservers-extracted
+      vscode-langservers-extracted
 
       # Containers
       docker-compose-language-service

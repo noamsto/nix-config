@@ -9,24 +9,28 @@
     tmux.shellIntegrationOptions = ["-p80%,60%"];
   };
 
-  # systemd.user.services.tmux-startup = {
-  #   Unit = {
-  #     Description = "Start tmux detached on login";
-  #     Requires = ["graphical-session.target"];
-  #     After = ["graphical-session.target"];
-  #   };
-  #
-  #   Service = {
-  #     Type = "forking";
-  #     ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR";
-  #     ExecStart = "${lib.getExe pkgs.tmux} new -s \"󱥸 General\" -d || ${lib.getExe pkgs.tmux} a -t \"󱥸 General\"";
-  #   };
-  #
-  #   Install = {
-  #     WantedBy = ["graphical-session.target"];
-  #   };
-  # };
-  #
+  systemd.user.services.tmux-startup = {
+    Unit = {
+      Description = "Start tmux detached on login";
+      After = ["graphical-session.target"];
+    };
+
+    Service = let
+      tmux-bin = "${lib.getExe pkgs.tmux}";
+      session = "'󱥸 General'";
+    in {
+      Type = "forking";
+      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP";
+      ExecStart = "-${tmux-bin} new -s ${session} -d";
+      ExecStop = "-${tmux-bin} kill-session -t ${session}";
+      # Restart = "always";
+    };
+
+    Install = {
+      WantedBy = ["graphical-session.target"];
+    };
+  };
+
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
