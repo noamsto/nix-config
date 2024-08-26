@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }: let
   pointer = config.home.pointerCursor;
@@ -12,28 +13,18 @@ in {
   imports = [./bindings.nix ./window_rule.nix];
   # xdg.dataFile."icons/${cursorName}".source = "${cursorPackage}/share/icons/${cursorName}";
   wayland.windowManager.hyprland = {
-    settings = let
-      laptop-monitor = "eDP-1";
-      laptop-monitor-pos = "${laptop-monitor},2880x1800x90, 2048x1152,1.40625";
-      home-ext-monitor-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
-      home-ext-monitor-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
-    in {
+    settings = {
       monitor = [
-        "${home-ext-monitor-left},2560x1440,0x0, 1.25" # Left External Monitor
-        "${home-ext-monitor-right},2560x1440, 2048x0,1.25" # Right External Monitor Home
-        laptop-monitor-pos # Laptop Monitor
         ",preferred,auto,auto"
       ];
-      # bindl = [
-      #   # trigger when the switch is turning on
-      #   ", switch:on:Lid Switch, exec, hyprctl keyword monitor \"${laptop-monitor}, disable\""
-      #   # trigger when the switch is turning off
-      #   ", switch:off:Lid Switch, exec, hyprctl keyword monitor \"${laptop-monitor-pos}\""
-      # ];
+      bindl = [
+        # trigger when the switch is turning on
+        ", switch:on:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-close"
+        # trigger when the switch is turning off
+        ", switch:off:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-open"
+      ];
       workspace = [
-        "1,default:true,monitor:${home-ext-monitor-left},persistent:true"
-        "2,monitor:${home-ext-monitor-right},persistent:true"
-        # "3,monitor:${laptop-monitor},persistent:true"
+        # "1,default:true,monitor:${home-ext-monitor-left},persistent:true"
       ];
 
       env = [
