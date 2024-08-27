@@ -184,15 +184,15 @@
     # add ags
     ags.url = "github:Aylur/ags";
     hyprpanel = {
-      url = "github:noamsto/HyprPanel?ref=fix-flake-build";
+      url = "github:Jas-SinghFSU/HyprPanel";
       inputs = {
         nixpkgs.follows = "hyprland/nixpkgs";
         ags.follows = "ags";
       };
     };
 
-    # walker.url = "github:abenz1267/walker";
-    walker.url = "github:noamsto/walker?ref=dont-trim-whitespaces";
+    walker.url = "github:abenz1267/walker";
+    # walker.url = "github:noamsto/walker?ref=dont-trim-whitespaces";
     matugen = {
       url = "github:InioX/matugen";
       inputs = {

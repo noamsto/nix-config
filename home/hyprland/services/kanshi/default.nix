@@ -6,7 +6,9 @@
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
 in {
   home.packages = [pkgs.kanshi];
+  imports = [./change_profile_service.nix];
   services = {
+    kanshi-lid-profile.enable = true;
     kanshi = {
       enable = true;
       systemdTarget = "hyprland-session.target";
