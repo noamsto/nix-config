@@ -20,7 +20,7 @@
         "\\x1b[44;5u" = "Control+comma";
         "\\x1b[59;5u" = "Control+semicolon";
 
-        "\\x1b[13;2u" = "Shift+BackSpace";
+        "\\x1b[13;2u" = "Shift+Return";
       };
 
       mouse = {
