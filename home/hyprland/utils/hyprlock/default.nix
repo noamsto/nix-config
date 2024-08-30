@@ -9,6 +9,7 @@
 
   font_family = "Ubuntu Nerd Font";
 in {
+  # imports = [./enable-edp1-before-sleep.nix];
   programs.hyprlock = {
     enable = true;
 

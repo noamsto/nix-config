@@ -16,11 +16,11 @@
 
         "\\x1b[105;5u" = "Control+i";
 
-        "\\x1b[46;5u" = "Control+.";
-        "\\x1b[44;5u" = "Control+,";
-        "\\x1b[59;5u" = "Control+;";
+        "\\x1b[46;5u" = "Control+period";
+        "\\x1b[44;5u" = "Control+comma";
+        "\\x1b[59;5u" = "Control+semicolon";
 
-        "\\x1b[13;2u" = "Shift+Backspace";
+        "\\x1b[13;2u" = "Shift+BackSpace";
       };
 
       mouse = {

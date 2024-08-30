@@ -5,22 +5,19 @@
 }: let
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
-    "${hyprctl} keyword workspace \"1,default:true,monitor:eDP-1,persistent:true\""
-    "${hyprctl} keyword workspace \"2,monitor:eDP-1,persistent:true\""
-    "${hyprctl} keyword workspace \"3,monitor:eDP-1,persistent:true\""
-    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+    ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
+    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
-    "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
-    "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
-    "${hyprctl} keyword workspace \"3,default:true,monitor:eDP-1,persistent:true\""
-    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+    ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
+    ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
+    ${hyprctl} dispatch moveworkspacetomonitor 3 eDP-1
+    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
-    "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
-    "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
-    "${hyprctl} keyword workspace \"3,persistent:true\""
-    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+    ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
+    ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
+    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
 in {
   home.packages = [pkgs.kanshi];
@@ -62,12 +59,14 @@ in {
                 mode = "2560x1440@59.95100";
                 position = "0,0";
                 scale = 1.25;
+                status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
                 mode = "2560x1440@59.95100";
                 position = "2048,0";
                 scale = 1.25;
+                status = "enable";
               }
               {
                 criteria = "eDP-1";
@@ -89,12 +88,14 @@ in {
                 mode = "2560x1440@59.95100";
                 position = "0,0";
                 scale = 1.25;
+                status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
                 mode = "2560x1440@59.95100";
                 position = "2048,0";
                 scale = 1.25;
+                status = "enable";
               }
               {
                 criteria = "eDP-1";

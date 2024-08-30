@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }: let
   pointer = config.home.pointerCursor;
@@ -24,7 +23,9 @@ in {
         # ", switch:off:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-open"
       ];
       workspace = [
-        # "1,default:true,monitor:${home-ext-monitor-left},persistent:true"
+        "1,persistent:true"
+        "2,persistent:true"
+        "3,persistent:true"
       ];
 
       env = [

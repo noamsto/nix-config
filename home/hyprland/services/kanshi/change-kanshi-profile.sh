@@ -32,9 +32,19 @@ change_profile() {
         if [ "$current_lid_status" = "open" ]; then
             log_message "Switching to open-lid-profile"
             kanshictl switch home-docked-lid-open || kanshictl switch undocked
+            tries=$((tries + 1))
+            if ((tries >= 2)); then
+                kanshictl reload
+                tries=0
+            fi
         else
             log_message "Switching to closed-lid-profile"
             kanshictl switch home-docked-lid-close
+            tries=$((tries + 1))
+            if ((tries >= 2)); then
+                kanshictl reload
+                tries=0
+            fi
         fi
 
         previous_lid_status=$current_lid_status
@@ -43,6 +53,7 @@ change_profile() {
 
 # Initialize previous lid status
 previous_lid_status=$(get_lid_status)
+tries=0
 log_message "Initial status - Lid: $previous_lid_status"
 
 log_message "Starting lid and monitor status monitoring loop"
