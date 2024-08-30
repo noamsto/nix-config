@@ -2,6 +2,7 @@
 {inputs, ...}: {
   nixpkgs.overlays = [
     inputs.hyprpanel.overlay
+    inputs.yazi.overlays.default
 
     (final: _: {
       stable = inputs.nixpkgs-stable.legacyPackages.${final.system};

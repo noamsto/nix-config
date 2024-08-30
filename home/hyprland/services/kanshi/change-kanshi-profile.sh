@@ -13,28 +13,39 @@ get_lid_status() {
     fi
 }
 
-change_profile() {
-    current_status=$(get_lid_status)
+get_edp1_status() {
+    if hyprctl monitors | rg -q "^Monitor eDP-1"; then
+        echo "enabled"
+    else
+        echo "disabled"
+    fi
+}
 
-    if [ "$current_status" != "$previous_status" ]; then
-        log_message "Lid status changed from $previous_status to $current_status"
-        if [ "$current_status" = "open" ]; then
+change_profile() {
+    current_lid_status=$(get_lid_status)
+    current_edp1_status=$(get_edp1_status)
+
+    if { [ "$current_lid_status" = "closed" ] && [ "$current_edp1_status" = "enabled" ]; } ||
+        { [ "$current_lid_status" = "open" ] && [ "$current_edp1_status" = "disabled" ]; }; then
+        log_message "Status mismatch - Lid: $current_lid_status, eDP-1: $current_edp1_status"
+
+        if [ "$current_lid_status" = "open" ]; then
             log_message "Switching to open-lid-profile"
             kanshictl switch home-docked-lid-open || kanshictl switch undocked
         else
             log_message "Switching to closed-lid-profile"
             kanshictl switch home-docked-lid-close
         fi
-        previous_status=$current_status
+
+        previous_lid_status=$current_lid_status
     fi
 }
 
-# Initialize previous_status
-previous_status=$(get_lid_status)
-log_message "Initial lid status: $previous_status"
+# Initialize previous lid status
+previous_lid_status=$(get_lid_status)
+log_message "Initial status - Lid: $previous_lid_status"
 
-log_message "Starting lid status monitoring loop"
-
+log_message "Starting lid and monitor status monitoring loop"
 while true; do
     change_profile
     sleep 2

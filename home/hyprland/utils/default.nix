@@ -1,7 +1,7 @@
 {...}: {
   imports = [
     ./hypridle.nix
-    ./hyprlock.nix
+    ./hyprlock
     ./wlogout.nix
   ];
 }

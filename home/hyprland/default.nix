@@ -1,6 +1,5 @@
 {
   pkgs,
-  config,
   lib,
   inputs,
   ...
@@ -54,6 +53,8 @@ in {
     # (callPackage ./bibata-hyprcursor {})
     kdePackages.dolphin
     xfce.thunar
+
+    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
   ];
 
   # make stuff work on wayland

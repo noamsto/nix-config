@@ -19,9 +19,9 @@ in {
       ];
       bindl = [
         # trigger when the switch is turning on
-        ", switch:on:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-close"
+        # ", switch:on:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-close"
         # trigger when the switch is turning off
-        ", switch:off:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-open"
+        # ", switch:off:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-open"
       ];
       workspace = [
         # "1,default:true,monitor:${home-ext-monitor-left},persistent:true"

@@ -125,8 +125,28 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    catpuccin-alacritty = {
+    yazi = {
+      url = "github:sxyazi/yazi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    catppuccin-alacritty = {
       url = "github:catppuccin/alacritty";
+      flake = false;
+    };
+
+    catppuccin-yazi = {
+      url = "github:catppuccin/yazi";
+      flake = false;
+    };
+
+    catppuccin-bat = {
+      url = "github:catppuccin/bat";
+      flake = false;
+    };
+
+    catppuccin-btop = {
+      url = "github:catppuccin/btop";
       flake = false;
     };
 
@@ -179,6 +199,10 @@
         nixpkgs.follows = "hyprland/nixpkgs";
         systems.follows = "hyprland/systems";
       };
+    };
+    hyprland-contrib = {
+      url = "github:hyprwm/contrib";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # add ags

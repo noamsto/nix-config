@@ -4,6 +4,24 @@
   ...
 }: let
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
+  undocked-sh = pkgs.writeShellScript "undocked-sh" ''
+    "${hyprctl} keyword workspace \"1,default:true,monitor:eDP-1,persistent:true\""
+    "${hyprctl} keyword workspace \"2,monitor:eDP-1,persistent:true\""
+    "${hyprctl} keyword workspace \"3,monitor:eDP-1,persistent:true\""
+    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+  '';
+  home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
+    "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
+    "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
+    "${hyprctl} keyword workspace \"3,default:true,monitor:eDP-1,persistent:true\""
+    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+  '';
+  home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
+    "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
+    "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
+    "${hyprctl} keyword workspace \"3,persistent:true\""
+    "pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &"
+  '';
 in {
   home.packages = [pkgs.kanshi];
   imports = [./change_profile_service.nix];
@@ -31,9 +49,7 @@ in {
               }
             ];
             exec = [
-              "${hyprctl} keyword workspace \"1,default:true,monitor:eDP-1,persistent:true\""
-              "${hyprctl} keyword workspace \"2,monitor:eDP-1,persistent:true\""
-              "${hyprctl} keyword workspace \"3,monitor:eDP-1,persistent:true\""
+              undocked-sh.outPath
             ];
           };
         }
@@ -56,12 +72,11 @@ in {
               {
                 criteria = "eDP-1";
                 status = "enable";
+                position = "2048,1152";
               }
             ];
             exec = [
-              "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
-              "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
-              "${hyprctl} keyword workspace \"3,default:true,monitor:eDP-1,persistent:true\""
+              home-docked-lid-open-sh.outPath
             ];
           };
         }
@@ -87,9 +102,7 @@ in {
               }
             ];
             exec = [
-              "${hyprctl} keyword workspace \"1,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZM300138,persistent:true\""
-              "${hyprctl} keyword workspace \"2,default:true,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167,persistent:true\""
-              "${hyprctl} keyword workspace \"3,persistent:false\""
+              home-docked-lid-close-sh.outPath
             ];
           };
         }

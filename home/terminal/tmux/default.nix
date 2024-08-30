@@ -98,11 +98,16 @@
       set -g base-index 1
       setw -g pane-base-index 1
 
+      # Yazi inside tmux
+      set -g allow-passthrough on
+      set -ga update-environment TERM
+      set -ga update-environment TERM_PROGRAM
+
       # Set escape-time as recomended by nvim
       set-option -sg escape-time 12
 
       # Fix vim colors
-      set -ga terminal-overrides ",*256col*:Tc"
+      set -ga terminal-overrides ",foot:Tc"
 
       # Make prefix back-tick
       unbind C-b

@@ -1,5 +1,5 @@
 {lib, ...}: let
-  terminal = "alacritty";
+  terminal = "footclient";
   fileManager = "thunar";
   browser = "firefox";
 
@@ -12,6 +12,7 @@
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
+    "$screenshotarea" = ''hyprctl keyword animation "fadeOut,0,0,default"; grimblast --notify copysave area; hyprctl keyword animation "fadeOut,1,4,default"'';
     bind = [
       "$mainMod, Q, exec, ${terminal}"
       "$mainMod, E, exec, ${fileManager}"
@@ -32,13 +33,9 @@ in {
 
       # Move focus with SUPER+hjkl
       "$mainMod, H, movefocus, l"
-      "$mainMod, H, movecursortocorner, 2"
       "$mainMod, L, movefocus, r"
-      "$mainMod, L, movecursortocorner, 2"
       "$mainMod, K, movefocus, u"
-      "$mainMod, K, movecursortocorner, 2"
       "$mainMod, J, movefocus, d"
-      "$mainMod, J, movecursortocorner, 2"
 
       # Switch workspaces with mainMod + [0-9]
       "$mainMod, 1, workspace, 1"
@@ -50,7 +47,6 @@ in {
       "$mainMod, 7, workspace, 7"
       "$mainMod, 8, workspace, 8"
       "$mainMod, 9, workspace, 9"
-      "$mainMod, 0, workspace, 10"
 
       # to switch between windows in a floating workspace
       "$mainMod, Tab, cyclenext," # change focus to another window
@@ -89,6 +85,11 @@ in {
       "$mainMod, down, resizeactive, 0 20"
 
       ", XF86AudioPlay, exec, ${runOnce "spotify"}"
+
+      "$mainMod, Print, exec, grimblast --notify --cursor copysave output" # copy all active outputs
+      "$ALTSHIFT, S, exec, grimblast --notify --cursor copysave screen" # copy active screen
+      "$ALTSHIFT, R, exec, grimblast --notify --cursor copysave area" # copy selection area
+      ", Print, exec, $screenshotarea" # screenshot selection area
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging
