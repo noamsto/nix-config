@@ -18,7 +18,7 @@ return {
       opts = {
         mappings = {
           n = {
-            ["<Leader>gf"] = { name = "  Fugit2" },
+            ["<Leader>gf"] = { name = " Fugit2" },
             ["<Leader>gff"] = { "<cmd>Fugit2<cr>", desc = "Open Fugit2" },
             ["<Leader>gfd"] = { "<cmd>Fugit2Diff<cr>", desc = "Open Diff view" },
             ["<Leader>gfg"] = { "<cmd>Fugit2Graph<cr>", desc = "Open Git Graph" },
