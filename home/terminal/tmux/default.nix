@@ -3,6 +3,7 @@
   lib,
   ...
 }: {
+  imports = [./named-session.nix];
   programs.zsh.oh-my-zsh.plugins = ["tmux"];
   programs.fzf = {
     tmux.enableShellIntegration = true;

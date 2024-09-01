@@ -1,7 +1,7 @@
 import = ["/home/noams/.config/alacritty/catppuccin/catppuccin-mocha.toml"]
 
-[env]
-TERM = "xterm-256color"
+# [env]
+# TERM = "xterm-256color"
 
 [font]
 size = 12

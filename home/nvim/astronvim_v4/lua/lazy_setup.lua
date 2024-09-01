@@ -21,7 +21,7 @@ require("lazy").setup({
       "packspec",
     },
   },
-  install = { colorscheme = { "astrotheme", "habamax" } },
+  install = { colorscheme = { "astrotheme", "catppuccin-mocha" } },
   ui = { backdrop = 100 },
   performance = {
     rtp = {

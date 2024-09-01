@@ -4,8 +4,11 @@
     server.enable = true;
     settings = {
       main = {
-        font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=8";
+        font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
         dpi-aware = "yes";
+      };
+      tweak = {
+        grapheme-width-method = "wcswidth";
       };
 
       text-bindings = {

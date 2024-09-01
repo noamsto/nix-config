@@ -2,26 +2,25 @@
 
 ############################### FOLDER ICONS ###################################
 
-if nixos-version ; then
-  TMUX_TMPDIR="/run/user/$(id -u)"
-  export TMUX_TMPDIR
+if nixos-version; then
+    TMUX_TMPDIR="/run/user/$(id -u)"
+    export TMUX_TMPDIR
 fi
-
 
 folder="$(pwd)"
 
 # Construct the path for the folder icon
 FOLDER_ICON_PATH="$folder/.icon"
 DEFAULT_ICON=🖥️
-if [ -f $FOLDER_ICON_PATH ]; then
-    folder_icon="$(cat $FOLDER_ICON_PATH)"
+if [ -f "$FOLDER_ICON_PATH" ]; then
+    folder_icon="$(cat "$FOLDER_ICON_PATH")"
 else
     echo "Could not find an .icon file in $folder, using the default icon $DEFAULT_ICON"
     folder_icon=$DEFAULT_ICON
 fi
 
 # Strip the path and leave the folder name
-folder_name="$(basename $folder)"
+folder_name="$(basename "$folder")"
 
 # Construct the session name
 SESSION="$folder_icon $folder_name"
@@ -34,12 +33,11 @@ if [ -z "$TMUX" ]; then
     tmux attach-session -t "$SESSION" -d || tmux new-session -s "$SESSION"
 else
     # We're inside Tmux
-    if [ -z "$(tmux ls | grep $SESSION)" ]; then
-        # Create a new dettached session
+    if ! tmux ls | rg -q "$SESSION"; then
+        # Create a new detached session
         tmux new -s "$SESSION" -d
     fi
 
     # Switch to the session
     tmux switch-client -t "$SESSION"
-
 fi
