@@ -7,7 +7,7 @@
   cursorName = "Bibata-Modern-Ice";
   # cursorPackage = pkgs.callPackage ./../bibata-hyprcursor {}; # Move to flake parts for this!
   variant = "dark";
-  c = config.programs.matugen.theme.colors.colors.${variant};
+  c = config.programs.matugen.theme.colors.${variant};
 in {
   imports = [./bindings.nix ./window_rule.nix];
   # xdg.dataFile."icons/${cursorName}".source = "${cursorPackage}/share/icons/${cursorName}";

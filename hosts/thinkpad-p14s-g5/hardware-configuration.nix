@@ -86,29 +86,30 @@
   boot.initrd.luks.devices = {
     root = {
       # Use https://nixos.wiki/wiki/Full_Disk_Encryption
-      device = "/dev/disk/by-uuid/7aac95c6-87d1-489e-86ca-3747b8c74c7f";
+      device = "/dev/disk/by-uuid/8d260438-dcbf-414e-9f49-03b9c86cc8b9";
       preLVM = true;
     };
   };
 
-  fileSystems."/" =
-    { device = "/dev/disk/by-uuid/1bf70d51-1db6-4ab7-977a-5f66ec27e705";
-      fsType = "ext4";
-    };
+  fileSystems."/" = {
+    device = "/dev/disk/by-uuid/099f8145-315b-4129-9f2e-493675df0e5c";
+    fsType = "ext4";
+  };
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/08DD-70E6";
-      fsType = "vfat";
-      options = [ "fmask=0022" "dmask=0022" ];
-    };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/C6FF-26EE";
+    fsType = "vfat";
+    options = ["fmask=0022" "dmask=0022"];
+  };
 
-  swapDevices =
-    [ { device = "/dev/disk/by-uuid/eed54e9f-2bce-4224-8189-16cbc82793c7"; }
-    ];
+  swapDevices = [
+    {device = "/dev/disk/by-uuid/64fa1a26-1ebd-49c9-93ab-8e62a9681395";}
+  ];
 
   fileSystems."/home/${config.username}/Data" = {
-    device = "/dev/disk/by-uuid/a990dfba-ad44-4c4f-91e2-149ef6653d09";
+    device = "/dev/disk/by-uuid/f5030753-0267-4c2b-8eba-03039bcc9de5";
     fsType = "ext4";
+    options = ["nofail"];
   };
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking

@@ -129,7 +129,7 @@
       yarn
 
       #typescript
-      nodePackages.eslint
+      eslint
       typescript
     ];
 

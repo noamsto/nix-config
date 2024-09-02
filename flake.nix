@@ -153,7 +153,7 @@
     agenix.url = "github:ryantm/agenix";
 
     mysecrets = {
-      url = "git+ssh://git@github.com/noamsto/nix-secrets.git?shallow=1";
+      url = "git+ssh://git@github.com/noamsto/nix-secrets.git";
       flake = false;
     };
 
