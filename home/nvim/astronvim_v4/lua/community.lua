@@ -185,4 +185,5 @@ return {
 		end
 	},
 	{ import = "astrocommunity.markdown-and-latex.markdown-preview-nvim" },
+	{ import = "astrocommunity.markdown-and-latex.markview-nvim" },
 }

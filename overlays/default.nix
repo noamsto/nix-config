@@ -5,7 +5,10 @@
     inputs.yazi.overlays.default
 
     (final: _: {
-      stable = inputs.nixpkgs-stable.legacyPackages.${final.system};
+      stable = import inputs.nixpkgs-stable {
+        system = final.system;
+        config.allowUnfree = true;
+      };
     })
 
     (final: prev: {

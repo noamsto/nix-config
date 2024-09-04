@@ -20,7 +20,7 @@
   ];
   work-packages = with pkgs; [
     slack
-    insomnia
+    postman
 
     awscli2
     ssm-session-manager-plugin
