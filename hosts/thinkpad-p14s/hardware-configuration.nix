@@ -24,7 +24,7 @@
 
   services.thinkfan = {
     # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
-    enable = true;
+    enable = false;
     sensors = [
       # GPU
       {

@@ -1,0 +1,88 @@
+{
+  "terminal": "footclient",
+  "theme.osd.orientation": "vertical",
+  "theme.osd.location": "left",
+  "theme.osd.margins": "0px 0px 0px 5px",
+  "menus.clock.time.military": true,
+  "menus.clock.weather.location": "Tel-Aviv",
+  "menus.clock.weather.unit": "metric",
+  "menus.dashboard.shortcuts.left.shortcut1.command": "firefox",
+  "menus.dashboard.shortcuts.left.shortcut4.command": "walker",
+  "menus.dashboard.directories.left.directory3.command": "bash -c \"thunar $HOME/Projects/\"",
+  "menus.dashboard.directories.left.directory2.command": "bash -c \"thunar $HOME/Videos/\"",
+  "menus.dashboard.directories.left.directory1.command": "bash -c \"thunar $HOME/Downloads/\"",
+  "menus.dashboard.directories.right.directory3.command": "bash -c \"thunar $HOME/\"",
+  "menus.dashboard.directories.right.directory2.command": "bash -c \"thunar $HOME/Pictures/\"",
+  "menus.dashboard.directories.right.directory1.command": "bash -c \"thunar $HOME/Documents/\"",
+  "menus.dashboard.shortcuts.left.shortcut1.tooltip": "Firefox",
+  "menus.dashboard.shortcuts.left.shortcut1.icon": "󰈹",
+  "menus.dashboard.shortcuts.left.shortcut2.command": "spotify",
+  "bar.launcher.icon": "",
+  "bar.workspaces.workspaces": 9,
+  "bar.clock.format": "󰃭  %a %b %d    %I:%M %p",
+  "theme.bar.floating": true,
+  "theme.bar.buttons.radius": "0.3em",
+  "bar.workspaces.show_numbered": false,
+  "bar.workspaces.workspaceMask": false,
+  "theme.bar.scaling": 100,
+  "theme.font.size": "1.2rem",
+  "theme.font.name": "Ubuntu Nerd Font",
+  "bar.layouts": {
+    "0": {
+      "left": [
+        "dashboard",
+        "workspaces",
+        "windowtitle"
+      ],
+      "middle": [
+        "media"
+      ],
+      "right": [
+        "volume",
+        "network",
+        "bluetooth",
+        "battery",
+        "systray",
+        "clock",
+        "notifications"
+      ]
+    },
+    "1": {
+      "left": [
+        "dashboard",
+        "workspaces",
+        "windowtitle"
+      ],
+      "middle": [
+        "media"
+      ],
+      "right": [
+        "volume",
+        "clock",
+        "notifications"
+      ]
+    },
+    "2": {
+      "left": [
+        "dashboard",
+        "workspaces",
+        "windowtitle"
+      ],
+      "middle": [
+        "media"
+      ],
+      "right": [
+        "volume",
+        "network",
+        "bluetooth",
+        "battery",
+        "systray",
+        "clock",
+        "notifications"
+      ]
+    }
+  },
+  "theme.bar.outer_spacing": "1.2em",
+  "bar.workspaces.monitorSpecific": false,
+  "bar.workspaces.hideUnoccupied": false
+}
