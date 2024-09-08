@@ -38,6 +38,7 @@ in {
     hardware = {
       bluetooth.enable = true;
       logitech.wireless.enable = true; # solaar
+      logitech.wireless.enableGraphical = true;
 
       # alsa state persistence
       alsa.enablePersistence = true;

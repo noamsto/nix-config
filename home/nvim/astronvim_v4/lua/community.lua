@@ -45,7 +45,8 @@ return {
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
 	{ import = "astrocommunity.editing-support.yanky-nvim" },
 
-	-- { import = "astrocommunity.completion.copilot-lua-cmp" },
+	{ import = "astrocommunity.editing-support.copilotchat-nvim" },
+	{ import = "astrocommunity.completion.copilot-lua-cmp" },
 	{ import = "astrocommunity.search.nvim-spectre" },
 
 	-- Git Version Control
@@ -186,4 +187,22 @@ return {
 	},
 	{ import = "astrocommunity.markdown-and-latex.markdown-preview-nvim" },
 	{ import = "astrocommunity.markdown-and-latex.markview-nvim" },
+	{
+		"OXY2DEV/markview.nvim",
+		opts = {
+			modes = { "n", "no", "c" }, -- Change these modes
+			-- to what you need
+
+			hybrid_modes = { "n" }, -- Uses this feature on
+			-- normal mode
+
+			-- This is nice to have
+			callbacks = {
+				on_enable = function(_, win)
+					vim.wo[win].conceallevel = 2;
+					vim.wo[win].concealcursor = "c";
+				end
+			}
+		}
+	}
 }
