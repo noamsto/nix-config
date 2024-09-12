@@ -24,6 +24,8 @@
 
     awscli2
     ssm-session-manager-plugin
+
+    mongodb-compass
   ];
 in {
   home.packages =

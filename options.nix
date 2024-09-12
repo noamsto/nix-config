@@ -28,7 +28,6 @@
     email = lib.mkOption {
       type = lib.types.str;
       default = "noamstolero@gmail.com";
-      readOnly = true;
     };
     hostname = lib.mkOption {
       type = lib.types.str;

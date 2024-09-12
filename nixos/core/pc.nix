@@ -37,6 +37,7 @@ in {
 
     hardware = {
       bluetooth.enable = true;
+      bluetooth.powerOnBoot = true;
       logitech.wireless.enable = true; # solaar
       logitech.wireless.enableGraphical = true;
 
