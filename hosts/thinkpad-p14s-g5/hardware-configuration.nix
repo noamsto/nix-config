@@ -18,7 +18,6 @@
   boot.extraModulePackages = [];
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
-    "acpi.ec_no_wakeup=1"
   ];
   boot.kernel.sysctl."kernel.sysrq" = 502;
   boot.kernelPackages = pkgs.linuxPackages_latest;
