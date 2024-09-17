@@ -18,6 +18,7 @@
         inputs.flake-parts.flakeModules.easyOverlay
         inputs.treefmt-nix.flakeModule
         ./pre-commit-hooks.nix
+        ./packages
       ];
 
       perSystem = {
