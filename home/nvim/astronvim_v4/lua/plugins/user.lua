@@ -110,5 +110,13 @@ return {
 		"pmizio/typescript-tools.nvim",
 		dependencies = { "nvim-lua/plenary.nvim", "neovim/nvim-lspconfig" },
 		opts = {},
+	},
+	{
+		'stevearc/dressing.nvim',
+		opts = {
+			input = {
+				start_in_insert = false,
+			},
+		},
 	}
 }

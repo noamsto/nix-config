@@ -17,7 +17,7 @@ autocmd("VimResized", {
 -- disable diagnostics for .env files
 local group = vim.api.nvim_create_augroup("__env", { clear = true })
 vim.api.nvim_create_autocmd("BufEnter", {
-  pattern = ".env",
+  pattern = ".env.*",
   group = group,
   callback = function(args)
     vim.diagnostic.enable(false, { bufnr = args.buf })
@@ -32,7 +32,7 @@ vim.filetype.add {
   -- extension = {
   --   foo = "fooscript",
   -- },
-  -- pattern = {
-  --   ["~/%.config/foo/.*"] = "fooscript",
-  -- },
+  pattern = {
+    [".env.*"] = "sh",
+  },
 }
