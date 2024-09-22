@@ -5,8 +5,8 @@
   ...
 }: {
   age.secrets = {
-    thinkpad_p14s_ssh.file = "${inputs.mysecrets}/thinkpad_p14s_ssh.age";
-    thinkpad_p14s_aliases.file = "${inputs.mysecrets}/thinkpad_p14s_aliases.age";
+    tp-p15s-factify-ssh.file = "${inputs.mysecrets}/tp-p15s-factify-ssh.age";
+    # thinkpad_p15s_aliases.file = "${inputs.mysecrets}/thinkpad_p15s_aliases.age";
   };
 
   age.identityPaths = [
@@ -15,12 +15,12 @@
 
   environment.etc = {
     "ssh/host_ssh.conf" = {
-      source = config.age.secrets.thinkpad_p14s_ssh.path;
+      source = config.age.secrets.tp-p15s-factify-ssh.path;
       mode = "0644";
     };
-    "agenix/work_aliases.zsh" = {
-      source = config.age.secrets.thinkpad_aliases.path;
-      mode = "0644";
-    };
+    # "agenix/work_aliases.zsh" = {
+    #   source = config.age.secrets.thinkpad_aliases.path;
+    #   mode = "0644";
+    # };
   };
 }

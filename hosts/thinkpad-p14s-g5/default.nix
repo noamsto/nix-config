@@ -10,7 +10,7 @@
     ../../overlays
     ../../secrets
     ../../options.nix
-    # ./host_secrets.nix
+    ./host_secrets.nix
   ];
 
   hostname = "thinkpad-p14s-g5";
