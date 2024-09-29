@@ -186,6 +186,10 @@ return {
 		end
 	},
 	{ import = "astrocommunity.markdown-and-latex.markdown-preview-nvim" },
+	{
+		"iamcco/markdown-preview.nvim",
+		build = "cd app && yarn install",
+	},
 	{ import = "astrocommunity.markdown-and-latex.markview-nvim" },
 	{
 		"OXY2DEV/markview.nvim",
