@@ -1,12 +1,5 @@
-{
-  config,
-  osConfig,
-  inputs,
-  pkgs,
-  ...
-}: {
+{osConfig, ...}: {
   # basic configuration of git, please change to your own
-  xdg.configFile."delta/themes.gitconfig".source = "${inputs.delta}/themes.gitconfig";
   programs.git = {
     enable = true;
     userName = osConfig.user-full-name;

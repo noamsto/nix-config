@@ -158,12 +158,6 @@
       flake = false;
     };
 
-    # Used for better git diffs for theme
-    delta = {
-      url = "github:dandavison/delta?ref=0.17.0";
-      flake = false;
-    };
-
     # Xremap for remapping keys
     xremap.url = "github:xremap/nix-flake";
 
