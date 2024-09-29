@@ -11,29 +11,32 @@
     enable = true;
     userName = osConfig.user-full-name;
     userEmail = osConfig.email;
-    delta = {
-      package = pkgs.delta;
+    diff-so-fancy = {
       enable = true;
-      options = {
-        navigate = true;
-        light = false;
-        line-numbers = true;
-        true-color = "always";
-        features = "villsau";
-      };
     };
     extraConfig = {
-      include = {
-        path = "${config.xdg.configHome}/delta/themes.gitconfig";
-      };
       init = {
         defaultBranch = "main";
       };
       merge = {
         conflictstyle = "diff3";
       };
-      diff = {
-        colorMoved = "default";
+      color = {
+        diff-highlight = {
+          oldNormal = "red bold";
+          oldHighlight = "red bold 52";
+          newNormal = "green bold";
+          newHighlight = "green bold 22";
+        };
+        diff = {
+          meta = "11";
+          frag = "magenta bold";
+          func = "146 bold";
+          commit = "yellow bold";
+          old = "red bold";
+          new = "green bold";
+          whitespace = "red reverse";
+        };
       };
     };
     ignores = [
