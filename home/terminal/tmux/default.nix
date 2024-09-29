@@ -18,7 +18,7 @@
 
     Service = let
       tmux-bin = "${lib.getExe pkgs.tmux}";
-      session = "'󱥸 General'";
+      session = "'󱥸  General'";
     in {
       Type = "forking";
       ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP";
@@ -109,6 +109,10 @@
 
       # Fix vim colors
       set -ga terminal-overrides ",foot:Tc"
+
+      # Foot terminal
+      # set -as terminal-features 'foot*:extkeys'
+      set -g extended-keys on
 
       # Make prefix back-tick
       unbind C-b

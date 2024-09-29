@@ -14,13 +14,13 @@
     (final: prev: {
       # Use tmux fork until this issue is closed: https://github.com/tmux/tmux/issues/2705
       tmux = prev.tmux.overrideAttrs (prviousAttrs: {
-        version = "next-3.4";
+        version = "next-3.5";
         patches = [];
         src = prev.fetchFromGitHub {
-          owner = "tiagovla";
+          owner = "tmux";
           repo = "tmux";
-          rev = "b6be05261a4d92cf41156ccbf5f41d19ca18665f";
-          sha256 = "sha256-w0Z2I+b95RYGrNvFqXbUwkcTTDUvi7RawuAgz5nGsl0=";
+          rev = "3.5";
+          sha256 = "sha256-8CRZj7UyBhuB5QO27Y+tHG62S/eGxPOHWrwvh1aBqq0=";
         };
       });
     })

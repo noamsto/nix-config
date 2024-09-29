@@ -211,23 +211,6 @@
         "type": "github"
       }
     },
-    "delta": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1710599115,
-        "narHash": "sha256-r0ED9o2UP91fe6Bng5ioJra5S1bg+UEXMLeSQPkMswI=",
-        "owner": "dandavison",
-        "repo": "delta",
-        "rev": "13c8219799be3291ed592a9bd00e707577fbf6f6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "dandavison",
-        "ref": "0.17.0",
-        "repo": "delta",
-        "type": "github"
-      }
-    },
     "devshell": {
       "inputs": {
         "nixpkgs": "nixpkgs_6"
@@ -1302,7 +1285,6 @@
         "catppuccin-bat": "catppuccin-bat",
         "catppuccin-btop": "catppuccin-btop",
         "catppuccin-yazi": "catppuccin-yazi",
-        "delta": "delta",
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager_2",
