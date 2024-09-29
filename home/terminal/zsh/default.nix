@@ -26,7 +26,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws"];
+      plugins = ["git" "python" "z" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws"];
       theme = "";
     };
 
@@ -84,9 +84,5 @@
   programs.fzf = {
     enable = true;
     defaultOptions = ["--height 40%"];
-  };
-
-  programs.zoxide = {
-    enable = true;
   };
 }
