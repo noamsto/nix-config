@@ -7,6 +7,7 @@
 }: {
   home.packages = with pkgs; [
     eza
+    zoxide
   ];
 
   programs.zsh = {
@@ -26,7 +27,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "python" "z" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws"];
+      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws"];
       theme = "";
     };
 
@@ -81,8 +82,19 @@
     '';
   };
 
-  programs.fzf = {
-    enable = true;
-    defaultOptions = ["--height 40%"];
+  programs = {
+    fzf = {
+      enable = true;
+      defaultOptions = ["--height 40%"];
+    };
+    z-lua = {
+      enable = true;
+      enableAliases = true;
+      options = [
+        "enhanced"
+        "once"
+        "fzf"
+      ];
+    };
   };
 }
