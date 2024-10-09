@@ -27,7 +27,7 @@
 
   nixpkgs.config.allowUnfree = true;
   nix = {
-    package = pkgs.nixVersions.latest;
+    package = pkgs.nixdocument_versions.latest;
     settings.experimental-features = ["nix-command" "flakes"];
     settings.trusted-users = [osConfig.username];
   };

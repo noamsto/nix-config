@@ -17,6 +17,9 @@
     xkb.layout = "us,il";
     xkb.options = "compose:menu, grp:win_space_toggle";
   };
+
+  xdg.portal.enable = true;
+
   specialisation = {
     hypr.configuration = {
       desktop.mode = "hyprland";

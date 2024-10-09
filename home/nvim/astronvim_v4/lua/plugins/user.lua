@@ -118,5 +118,9 @@ return {
 				start_in_insert = false,
 			},
 		},
+	},
+	{
+		'jidn/vim-dbml',
+		ft = 'dbml',
 	}
 }
