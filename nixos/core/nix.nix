@@ -5,7 +5,7 @@
   nixpkgs.config.allowUnfree = true;
 
   nix = {
-    package = pkgs.nixdocument_versions.latest;
+    package = pkgs.nixVersions.latest;
 
     # To protect nix-shell agains GC (development env)
     settings = {
@@ -26,7 +26,7 @@
 
       substituters = [
         # replace official cache with a mirror located in China
-        "https://mirrors.ustc.edu.cn/nix-channels/store"
+        #"https://mirrors.ustc.edu.cn/nix-channels/store"
         "https://cache.nixos.org"
         "https://walker.cachix.org"
         "https://walker-git.cachix.org"
