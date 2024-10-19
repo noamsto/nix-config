@@ -6,6 +6,7 @@
   ...
 }: let
   isDesktop = config.desktop.mode != "none";
+  isLaptop = config.machine.type == "laptop";
   core-packages = with pkgs; [
     vim
     wget
@@ -37,10 +38,16 @@
     firefox
     (inputs.self.packages.${pkgs.system}.aicommit2)
   ];
+  laptop-packages = with pkgs; [
+    power-profiles-daemon
+  ];
 in {
   environment.systemPackages =
     core-packages
     ++ lib.optionals
     isDesktop
-    desktop-packages;
+    desktop-packages
+    ++ lib.optionals
+    isLaptop
+    laptop-packages;
 }

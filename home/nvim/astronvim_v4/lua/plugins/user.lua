@@ -4,10 +4,6 @@
 ---@type LazySpec
 return {
 
-	-- == Examples of Adding Plugins ==
-
-	"andweeb/presence.nvim",
-
 	-- auto toggle relative absolute number
 	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
 

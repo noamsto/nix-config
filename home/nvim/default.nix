@@ -25,6 +25,10 @@
       "--set"
       "SQLITE3_PATH"
       "${pkgs.sqlite.out}/lib/libsqlite3.so"
+      "--suffix"
+      "PATH"
+      ":"
+      (lib.makeBinPath [pkgs.nodejs])
     ];
     enable = true;
     defaultEditor = true;

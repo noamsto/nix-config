@@ -89,8 +89,7 @@
   inputs = {
     # Official NixOS package source, using nixos-unstable branch here
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-old.url = "github:nixos/nixpkgs/?rev=a2b7d875387e245300e3e4f8e6691f18cdcf9aa1";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
 
     systems.url = "github:nix-systems/default-linux";
     flake-compat.url = "github:edolstra/flake-compat";
@@ -159,7 +158,10 @@
     };
 
     # Xremap for remapping keys
-    xremap.url = "github:xremap/nix-flake";
+    xremap = {
+      url = "github:xremap/nix-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     plasma-manager = {
       url = "github:pjones/plasma-manager";
@@ -197,7 +199,7 @@
     };
     hyprland-contrib = {
       url = "github:hyprwm/contrib";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "hyprland/nixpkgs";
     };
 
     # add ags
@@ -211,11 +213,10 @@
     };
 
     walker.url = "github:abenz1267/walker";
-    # walker.url = "github:noamsto/walker?ref=dont-trim-whitespaces";
     matugen = {
       url = "github:InioX/matugen";
       inputs = {
-        nixpkgs.follows = "nixpkgs";
+        nixpkgs.follows = "hyprland/nixpkgs";
         systems.follows = "hyprland/systems";
       };
     };
