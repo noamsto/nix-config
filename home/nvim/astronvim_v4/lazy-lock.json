@@ -82,6 +82,7 @@
   "octo.nvim": { "branch": "master", "commit": "a83ca8bcee6cf4a9288bbfd1b97a51ba32068c21" },
   "persistent-breakpoints.nvim": { "branch": "main", "commit": "4b199b1dcfd136cac8b0fa9c8dbbdeb81463f7a9" },
   "plenary.nvim": { "branch": "master", "commit": "2d9b06177a975543726ce5c73fca176cedbffe9d" },
+  "precognition.nvim": { "branch": "main", "commit": "35c402c19a10e524d5378c9c0a5151ff5d847b06" },
   "promise-async": { "branch": "main", "commit": "38a4575da9497326badd3995e768b4ccf0bb153e" },
   "python-type-stubs": { "branch": "main", "commit": "70ddd7e3b6e87fb5c0f27ec38c884eeda26328bb" },
   "refactoring.nvim": { "branch": "master", "commit": "c406fc5fb4d7ba5fce7b668637075fad6e75e9f8" },
