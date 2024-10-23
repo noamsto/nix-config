@@ -10,5 +10,6 @@
         config.allowUnfree = true;
       };
     })
+    (_final: super: {utillinux = super.util-linux;})
   ];
 }
