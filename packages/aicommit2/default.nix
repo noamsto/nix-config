@@ -4,28 +4,26 @@
   fetchFromGitHub,
   nodejs,
   pnpm,
-  makeWrapper,
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "aicommit2";
-  version = "2.1.2";
+  version = "2.1.5";
 
   src = fetchFromGitHub {
     owner = "tak-bro";
     repo = "aicommit2";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-O6IqLd1GNQVZ87b2al4Oz8tEtxZUfa+LNQR8bTXga2k=";
+    hash = "sha256-/bl0Qo4y3rDdGXIKTdjC5wtbeW1NUaIMkw5uzSQ+8Dk=";
   };
 
   pnpmDeps = pnpm.fetchDeps {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-NQQmk3ZYpHUCgqc89BmBEJKbh/c/Lvv+yz+Gqa+in30=";
+    hash = "sha256-GaNNw+qxB493kUo6wfltBvaL67qKCHZw7vLPv9MjnPw=";
   };
 
   nativeBuildInputs = [
     nodejs
     pnpm.configHook
-    makeWrapper
   ];
   buildInputs = [nodejs];
 

@@ -4,14 +4,6 @@
 --       as this provides autocomplete and documentation while editing
 
 
-local continue = function()
-  if vim.fn.filereadable(".vscode/launch.json") then
-    require('dap.ext.vscode').json_decode = require 'json5'.parse
-    require("dap.ext.vscode").load_launchjs()
-  end
-  require("dap").continue()
-end
-
 ---@type LazySpec
 return {
   "AstroNvim/astrocore",
@@ -55,11 +47,10 @@ return {
       -- first key is the mode
       n = {
 
-        ["[p"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
-        ["]p"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
+        -- ["[p"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
+        -- ["]p"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
         ["<S-CR>"] = { "k" },
 
-        -- ["<Leader>dc"] = { continue, desc = "Start/Continue (F5)" },
 
         ["<Leader>dm"] = {
           function()
@@ -109,30 +100,6 @@ return {
           end,
           desc = "Goto Preview Definition",
         },
-        ["gpt"] = {
-          function()
-            require("goto-preview").goto_preview_type_definition()
-          end,
-          desc = "Goto Preview Type Definition",
-        },
-        ["gpi"] = {
-          function()
-            require("goto-preview").goto_preview_implementation()
-          end,
-          desc = "Goto Preview Implementation",
-        },
-        ["gpc"] = {
-          function()
-            require("goto-preview").close_all_win()
-          end,
-          desc = "Close All Win",
-        },
-        ["gpr"] = {
-          function()
-            require("goto-preview").goto_preview_references()
-          end,
-          desc = "Goto Preview References",
-        },
 
         ["<Leader>r"] = { name = "󰣪 Refactor" },
         ["<Leader>rbf"] = false,
@@ -157,36 +124,6 @@ return {
           end,
           desc = "Pick to close",
         },
-
-        --
-        --   ["<leader>a"] = { name = " Copilot Chat" },
-        --
-        --   ["<leader>aq"] = {
-        --     function()
-        --       local input = vim.fn.input("Quick Chat: ")
-        --       if input ~= "" then
-        --         require("CopilotChat").ask(input, { selection = require("CopilotChat.select").buffer })
-        --       end
-        --     end,
-        --     desc = "CopilotChat - Quick chat",
-        --   },
-        --   ["<leader>ah"] = {
-        --     function()
-        --       local actions = require("CopilotChat.actions")
-        --       require("CopilotChat.integrations.telescope").pick(actions.help_actions())
-        --     end,
-        --     desc = "CopilotChat - Help actions",
-        --   },
-        --   -- Show prompts actions with telescope
-        --
-        --   ["<leader>ap"] = {
-        --     function()
-        --       local actions = require("CopilotChat.actions")
-        --       require("CopilotChat.integrations.telescope").pick(actions.prompt_actions())
-        --     end,
-        --     desc = "CopilotChat - Prompt actions",
-        --   },
-        --
       },
       v = {
         ["<Leader>r"] = { name = "󰣪 Refactor" },

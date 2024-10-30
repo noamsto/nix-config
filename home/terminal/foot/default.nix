@@ -30,6 +30,9 @@
         hide-when-typing = "yes";
       };
 
+      cursor = {
+        color = "11111b f5e0dc";
+      };
       colors = {
         # Catppuccin Mocha
         foreground = "cdd6f4";
@@ -52,6 +55,8 @@
         bright5 = "f5c2e7";
         bright6 = "94e2d5";
         bright7 = "a6adc8";
+        "16" = "fab387";
+        "17" = "f5e0dc";
 
         selection-foreground = "cdd6f4";
         selection-background = "414356";

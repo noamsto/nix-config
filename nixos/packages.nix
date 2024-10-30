@@ -37,6 +37,7 @@
     gpu-viewer
     firefox
     (inputs.self.packages.${pkgs.system}.aicommit2)
+    wluma
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon

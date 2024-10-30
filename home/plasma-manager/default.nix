@@ -45,7 +45,7 @@
                   "applications:kdesystemsettings.desktop"
                   "applications:org.kde.dolphin.desktop"
                   "applications:firefox.desktop"
-                  "applications:org.codeberg.dnkl.footclient.desktop"
+                  "applications:footclient.desktop"
                 ];
                 fill = "false";
               };
