@@ -47,8 +47,8 @@ return {
       -- first key is the mode
       n = {
 
-        -- ["[p"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
-        -- ["]p"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
+        ["[p"] = { "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
+        ["]p"] = { "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
         ["<S-CR>"] = { "k" },
 
 
