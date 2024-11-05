@@ -111,5 +111,11 @@ return {
 	{
 		'jidn/vim-dbml',
 		ft = 'dbml',
+	},
+	{
+		"kevinhwang91/nvim-ufo",
+		version = "522d719d421fc42b95577d9624048d8348d326ea"
+
 	}
+
 }

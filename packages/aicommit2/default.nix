@@ -7,13 +7,13 @@
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "aicommit2";
-  version = "2.1.5";
+  version = "2.1.8";
 
   src = fetchFromGitHub {
     owner = "tak-bro";
     repo = "aicommit2";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-/bl0Qo4y3rDdGXIKTdjC5wtbeW1NUaIMkw5uzSQ+8Dk=";
+    hash = "sha256-l6xUgdDwjJ3Eo0Ub4pxXJtsB5H4dgt5z4gixTfXhdXs=";
   };
 
   pnpmDeps = pnpm.fetchDeps {

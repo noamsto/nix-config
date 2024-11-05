@@ -47,6 +47,7 @@ return {
 
 	-- { import = "astrocommunity.editing-support.copilotchat-nvim" },
 	{ import = "astrocommunity.completion.copilot-lua-cmp" },
+	{ import = "astrocommunity.completion.avante-nvim" },
 	{ import = "astrocommunity.search.nvim-spectre" },
 
 	-- Git Version Control

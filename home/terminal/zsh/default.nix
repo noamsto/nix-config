@@ -68,6 +68,14 @@
         source $work_aliases
       fi
 
+      work_env=/etc/agenix/work_env.env
+      if [ -f $work_env ]; then
+        echo "Loading Work Env"
+        set -a
+        source $work_env
+        set +a
+      fi
+
       auto-ls-ll () {
         eza -l --icons --git
       }

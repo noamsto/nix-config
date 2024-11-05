@@ -6,6 +6,7 @@
 }: {
   age.secrets = {
     tp-p15s-factify-ssh.file = "${inputs.mysecrets}/tp-p15s-factify-ssh.age";
+    tp-p15s-factify-env.file = "${inputs.mysecrets}/tp-p15s-factify-env.age";
     # thinkpad_p15s_aliases.file = "${inputs.mysecrets}/thinkpad_p15s_aliases.age";
   };
 
@@ -16,6 +17,10 @@
   environment.etc = {
     "ssh/host_ssh.conf" = {
       source = config.age.secrets.tp-p15s-factify-ssh.path;
+      mode = "0644";
+    };
+    "agenix/work_env.env" = {
+      source = config.age.secrets.tp-p15s-factify-env.path;
       mode = "0644";
     };
     # "agenix/work_aliases.zsh" = {
