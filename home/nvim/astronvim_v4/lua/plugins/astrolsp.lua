@@ -48,7 +48,7 @@ return {
 			---- Backend
 			"lua_ls", -- lua
 			"pyright", -- python
-			"ruff_lsp", -- extremely fast Python linter and code transformation
+			"ruff", -- extremely fast Python linter and code transformation
 			"pylsp",
 			"nil_ls", -- nix language server
 			-- "nixd",

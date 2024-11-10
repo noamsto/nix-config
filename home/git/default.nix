@@ -1,7 +1,7 @@
 {osConfig, ...}: let
   signKey =
     if (osConfig.profile == "work")
-    then "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd4OIEupUNYzTppiP4zy9XLpBz/zzCYmWklC0YXrHPh noam@factify.com"
+    then "~/.ssh/noam_factify_ed25519.pub"
     else "~/.ssh/id_ed25519.pub";
 in {
   xdg.configFile."git/allowed_signers".text = ''
