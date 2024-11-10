@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: let
-in {
+{pkgs, ...}: {
   imports = [
     ./networking.nix
     ./nix.nix

@@ -8,6 +8,6 @@
     ./btop
     ./bat
     ./fzf
-    # ./yazi
+    ./yazi
   ];
 }
