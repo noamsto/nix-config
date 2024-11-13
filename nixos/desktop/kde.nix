@@ -6,7 +6,6 @@
 }:
 lib.mkIf (config.desktop.mode == "kde") {
   environment.systemPackages = with pkgs; [
-    kdePackages.yakuake
     kdePackages.kcalc
     wayland-utils
   ];

@@ -125,9 +125,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    yazi = {
-      url = "github:sxyazi/yazi";
-    };
+    yazi.url = "github:sxyazi/yazi?ref=v0.3.3";
 
     catppuccin-alacritty = {
       url = "github:catppuccin/alacritty";
@@ -173,7 +171,7 @@
       flake = false;
     };
 
-    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    hyprland.url = "github:hyprwm/Hyprland?ref=v0.45.0";
     hyprland-plugins = {
       url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
@@ -202,7 +200,10 @@
     };
 
     # add ags
-    ags.url = "github:Aylur/ags";
+    ags = {
+      url = "github:Aylur/ags";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hyprpanel = {
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs = {
@@ -210,13 +211,11 @@
         ags.follows = "ags";
       };
     };
-
-    walker.url = "github:abenz1267/walker";
+    walker.url = "github:abenz1267/walker?ref=v0.8.9";
     matugen = {
-      url = "github:InioX/matugen";
+      url = "github:InioX/matugen?ref=v2.4.0";
       inputs = {
-        nixpkgs.follows = "hyprland/nixpkgs";
-        systems.follows = "hyprland/systems";
+        nixpkgs.follows = "nixpkgs";
       };
     };
   };

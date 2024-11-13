@@ -11,5 +11,8 @@
       };
     })
     (_final: super: {utillinux = super.util-linux;})
+    (final: _: {
+      matugen = inputs.matugen.packages.${final.system}.default;
+    })
   ];
 }
