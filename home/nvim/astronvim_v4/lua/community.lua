@@ -45,7 +45,7 @@ return {
 	{ import = "astrocommunity.editing-support.refactoring-nvim" },
 	{ import = "astrocommunity.editing-support.yanky-nvim" },
 
-	-- { import = "astrocommunity.editing-support.copilotchat-nvim" },
+	{ import = "astrocommunity.editing-support.copilotchat-nvim" },
 	{ import = "astrocommunity.completion.copilot-lua-cmp" },
 	{ import = "astrocommunity.search.nvim-spectre" },
 
