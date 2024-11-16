@@ -1325,6 +1325,7 @@
         "pre-commit-hooks": "pre-commit-hooks_2",
         "systems": "systems_5",
         "treefmt-nix": "treefmt-nix",
+        "ucodenix": "ucodenix",
         "walker": "walker",
         "xremap": "xremap",
         "yazi": "yazi"
@@ -1492,6 +1493,21 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "ucodenix": {
+      "locked": {
+        "lastModified": 1731771710,
+        "narHash": "sha256-Xf8yq4fM4h5lKxGIAG4vcZWnwZPLvTWhBf5+SufmrTo=",
+        "owner": "e-tho",
+        "repo": "ucodenix",
+        "rev": "8c097b356a10022772ab66b95ebfc2af2cef5601",
+        "type": "github"
+      },
+      "original": {
+        "owner": "e-tho",
+        "repo": "ucodenix",
         "type": "github"
       }
     },

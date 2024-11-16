@@ -219,4 +219,5 @@
       };
     };
   };
+  inputs.ucodenix.url = "github:e-tho/ucodenix";
 }
