@@ -211,13 +211,13 @@
         ags.follows = "ags";
       };
     };
-    walker.url = "github:abenz1267/walker?ref=v0.8.9";
     matugen = {
       url = "github:InioX/matugen?ref=v2.4.0";
       inputs = {
         nixpkgs.follows = "nixpkgs";
       };
     };
+    ucodenix.url = "github:e-tho/ucodenix";
   };
   inputs.ucodenix.url = "github:e-tho/ucodenix";
 }
