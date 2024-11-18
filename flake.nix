@@ -201,7 +201,7 @@
 
     # add ags
     ags = {
-      url = "github:Aylur/ags";
+      url = "github:Aylur/ags?ref=v1.8.2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprpanel = {
@@ -217,7 +217,7 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+    walker.url = "github:abenz1267/walker?ref=v0.8.9";
     ucodenix.url = "github:e-tho/ucodenix";
   };
-  inputs.ucodenix.url = "github:e-tho/ucodenix";
 }
