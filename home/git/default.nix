@@ -4,6 +4,9 @@
     then "~/.ssh/noam_factify_ed25519.pub"
     else "~/.ssh/id_ed25519.pub";
 in {
+  imports = [
+    ./lazygit.nix
+  ];
   xdg.configFile."git/allowed_signers".text = ''
     noam@factify.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd4OIEupUNYzTppiP4zy9XLpBz/zzCYmWklC0YXrHPh
     noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC
