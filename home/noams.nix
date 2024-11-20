@@ -12,6 +12,7 @@
       ./direnv
       ./ssh
       ./nvim
+      ./ipython
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./browsers
