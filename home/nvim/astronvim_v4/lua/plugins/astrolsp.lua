@@ -65,6 +65,9 @@ return {
 		-- customize language server configuration options passed to `lspconfig`
 		---@diagnostic disable: missing-fields
 		config = {
+			ruff = {
+				cmd = { "nvim-python3", "-m", "ruff", "server" },
+			},
 			pylsp = {
 				cmd = { "nvim-python3", "-m", "pylsp" },
 				settings = {

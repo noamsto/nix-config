@@ -42,6 +42,7 @@
       ps.debugpy
       ps.python-lsp-server
       ps.pylsp-mypy
+      ps.ruff
     ];
 
     extraPackages = with pkgs; [
@@ -62,7 +63,6 @@
       selene
 
       # python
-      ruff-lsp # Python
       pyright # python language server
 
       # Markdown
