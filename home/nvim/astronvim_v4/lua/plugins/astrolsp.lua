@@ -121,6 +121,7 @@ return {
 						analysis = {
 							autoSearchPaths = true,
 							useLibraryCodeForTypes = true,
+							diagnosticMode = "workspace",
 							typeCheckingMode = "off",
 							diagnosticSeverityOverrides = {
 								reportUnusedVariable = "none", -- or anything
@@ -196,7 +197,7 @@ return {
 		-- A custom `on_attach` function to be run after the default `on_attach` function
 		-- takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
 		on_attach = function(client, bufnr)
-			if client.name == "ruff_lsp" then
+			if client.name == "ruff" then
 				client.server_capabilities.hoverProvider = false
 			end
 			if client.name == "pylsp" then
