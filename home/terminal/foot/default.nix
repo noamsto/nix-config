@@ -1,7 +1,6 @@
 {...}: {
   programs.foot = {
     enable = true;
-    server.enable = true;
     settings = {
       main = {
         font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";

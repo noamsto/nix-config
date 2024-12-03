@@ -2,7 +2,24 @@
   pkgs,
   lib,
   ...
-}: {
+}: let
+  upstream-catppuccin = pkgs.tmuxPlugins.mkTmuxPlugin rec {
+    pluginName = "catppuccin";
+    version = "2.1.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "catppuccin";
+      repo = "tmux";
+      rev = "v${version}";
+      sha256 = "9+SpgO2Co38I0XnEbRd7TSYamWZNjcVPw6RWJIHM+4c=";
+    };
+    meta = with lib; {
+      description = "Catppuccin theme for Tmux";
+      homepage = "https://github.com/catppuccin/tmux";
+      license = licenses.mit;
+      platforms = platforms.all;
+    };
+  };
+in {
   imports = [./named-session.nix];
   programs.zsh.oh-my-zsh.plugins = ["tmux"];
   programs.fzf = {
@@ -41,27 +58,27 @@
       tmuxPlugins.better-mouse-mode
       # must be before continuum edits right status bar
       {
-        plugin = tmuxPlugins.catppuccin;
+        plugin = upstream-catppuccin;
         extraConfig = ''
-          set -g @catppuccin_flavor 'mocha'
-          set -g @catppuccin_window_left_separator ""
-          set -g @catppuccin_window_right_separator " "
-          set -g @catppuccin_window_middle_separator " █"
-          set -g @catppuccin_window_number_position "right"
+          set -g @catppuccin_flavor "mocha"
+          set -g @catppuccin_window_status_style "rounded"
 
-          set -g @catppuccin_window_default_fill "number"
-          set -g @catppuccin_window_default_text "#W"
+          set -g status-right-length 100
+          set -g status-left ""
+          set -g status-right "#{E:@catppuccin_status_application}"
+          set -agF status-right "#{E:@catppuccin_status_cpu}"
+          set -ag status-right "#{E:@catppuccin_status_session}"
+          set -ag status-right "#{E:@catppuccin_status_uptime}"
+          set -agF status-right "#{E:@catppuccin_status_battery}"
 
-          set -g @catppuccin_window_current_fill "number"
-          set -g @catppuccin_window_current_text "#W"
-
-          set -g @catppuccin_status_modules_right "application session battery date_time"
-          set -g @catppuccin_status_left_separator  " "
-          set -g @catppuccin_status_right_separator ""
-          set -g @catppuccin_status_fill "icon"
-          set -g @catppuccin_status_connect_separator "no"
+          set -g allow-rename off
+          # set -g @catppuccin_window_default_text '#w'
+          set -g @catppuccin_window_current_fill 'number'
+          # set -g @catppuccin_window_current_text '#w'
+          set -g @catppuccin_window_number_position 'right'
         '';
       }
+      tmuxPlugins.cpu
       tmuxPlugins.battery
       {
         plugin = tmuxPlugins.resurrect;

@@ -44,7 +44,7 @@ in {
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
-        "${pkgs.hyprpanel}/bin/hyprpanel"
+        # "${pkgs.hyprpanel}/bin/hyprpanel"
         "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
         ""
       ];
@@ -87,13 +87,15 @@ in {
           popups_ignorealpha = 0.2;
         };
 
-        drop_shadow = true;
-        shadow_ignore_window = true;
-        shadow_offset = "0 15";
-        shadow_range = 100;
-        shadow_render_power = 2;
-        shadow_scale = 0.97;
-        "col.shadow" = "rgba(00000055)";
+        shadow = {
+          enabled = true;
+          offset = "0 15";
+          range = 100;
+          scale = 0.97;
+          render_power = 2;
+          ignore_window = true;
+          color = "rgba(00000055)";
+        };
       };
       dwindle = {
         # keep floating dimensions while tiling

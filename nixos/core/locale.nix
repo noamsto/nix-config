@@ -43,13 +43,9 @@
       source-serif
 
       # nerdfonts
-      (nerdfonts.override {
-        fonts = [
-          "FiraCode"
-          "NerdFontsSymbolsOnly"
-          "Ubuntu"
-        ];
-      })
+      nerd-fonts.fira-code
+      nerd-fonts.symbols-only
+      nerd-fonts.ubuntu
     ];
 
     # user defined fonts

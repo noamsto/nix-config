@@ -201,7 +201,7 @@
 
     # add ags
     ags = {
-      url = "github:Aylur/ags?ref=v1.8.2";
+      url = "github:Aylur/ags?ref=v2.0.1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hyprpanel = {

@@ -6,18 +6,15 @@
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
-    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
     ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
     ${hyprctl} dispatch moveworkspacetomonitor 3 eDP-1
-    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
     ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
-    pkill ags && nohup ${pkgs.hyprpanel}/bin/hyprpanel > /dev/null 2>&1 &
   '';
 in {
   home.packages = [pkgs.kanshi];
