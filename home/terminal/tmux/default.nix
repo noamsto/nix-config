@@ -19,6 +19,16 @@
       platforms = platforms.all;
     };
   };
+  tmux-nerd-font-window-name = pkgs.tmuxPlugins.mkTmuxPlugin rec {
+    pluginName = "tmux-nerd-font-window-name";
+    version = "2.1.2";
+    src = pkgs.fetchFromGitHub {
+      owner = "joshmedeski";
+      repo = "tmux-nerd-font-window-name";
+      rev = "v${version}";
+      sha256 = "bnlOAfdBv5Rg4z1hu1jtdx5oZ6kAZE40K4zqLxmyYQE=";
+    };
+  };
 in {
   imports = [./named-session.nix];
   programs.zsh.oh-my-zsh.plugins = ["tmux"];
@@ -60,26 +70,17 @@ in {
       {
         plugin = upstream-catppuccin;
         extraConfig = ''
-          set -g @catppuccin_flavor "mocha"
-          set -g @catppuccin_window_status_style "rounded"
-
-          set -g status-right-length 100
-          set -g status-left ""
-          set -g status-right "#{E:@catppuccin_status_application}"
-          set -agF status-right "#{E:@catppuccin_status_cpu}"
-          set -ag status-right "#{E:@catppuccin_status_session}"
-          set -ag status-right "#{E:@catppuccin_status_uptime}"
-          set -agF status-right "#{E:@catppuccin_status_battery}"
-
-          set -g allow-rename off
-          # set -g @catppuccin_window_default_text '#w'
-          set -g @catppuccin_window_current_fill 'number'
-          # set -g @catppuccin_window_current_text '#w'
+          set -g @catppuccin_flavor 'mocha'
+          set -g @catppuccin_window_status_style 'rounded'
           set -g @catppuccin_window_number_position 'right'
+          set -g @catppuccin_window_status 'no'
+          set -g @catppuccin_window_flags "icon"
+          set -g @catppuccin_window_text '#W'
+          set -g @catppuccin_window_current_text '#W'
+          set -g @catppuccin_window_current_color '#{E:@thm_surface_2}'
+          set -g @catppuccin_status_module_text_bg '#{E:@thm_mantle}'
         '';
       }
-      tmuxPlugins.cpu
-      tmuxPlugins.battery
       {
         plugin = tmuxPlugins.resurrect;
         extraConfig = ''
@@ -113,8 +114,12 @@ in {
     ];
     extraConfig = ''
       set -g mouse on
+      # start index at 1
       set -g base-index 1
-      setw -g pane-base-index 1
+      set -g pane-base-index 1
+
+      # renumber when window is closed
+      set -g renumber-window on
 
       # Yazi inside tmux
       set -g allow-passthrough on
@@ -163,6 +168,31 @@ in {
       # Sync window name with terminal name
       set-option -g set-titles on
       set-option -g set-titles-string "#S / #W"
+
+
+      # Catppucin
+      set -g allow-rename off
+      set -g status-position top
+      set -g status-justify "absolute-centre"
+      set -g status-interval 5
+      set -g status-left-length 100
+      set -g status-right-length 100
+
+      setw -g pane-border-status top
+      setw -g pane-border-lines single
+      setw -g pane-border-format ""
+
+      set -g status-left ""
+      set -g status-right ""
+      set -agF status-left "#{@catppuccin_status_host}"
+      set -agF status-right "#{E:@catppuccin_status_cpu}"
+      set -agF status-right "#{E:@catppuccin_status_battery}"
+
+
+      run-shell ${pkgs.tmuxPlugins.cpu}/share/tmux-plugins/cpu/cpu.tmux
+      run-shell ${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/battery.tmux
+
+      run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';
   };
 }

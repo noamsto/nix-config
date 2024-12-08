@@ -9,36 +9,35 @@ return {
       opts = {
         mappings = {
           n = {
-            ["<LocalLeader>p"] = { name = "󰙔 Goto Preview" },
-            ["<LocalLeader>pd"] = {
+            ["gpd"] = {
               function()
                 require("goto-preview").goto_preview_definition()
               end,
-              desc = "Goto Preview definition",
+              desc = "Goto Preview Definition",
             },
-            ["<LocalLeader>pt"] = {
+            ["gpt"] = {
               function()
                 require("goto-preview").goto_preview_type_definition()
               end,
-              desc = "Goto Preview type definition",
+              desc = "Goto Preview Type Definition",
             },
-            ["<LocalLeader>pi"] = {
+            ["gpi"] = {
               function()
                 require("goto-preview").goto_preview_implementation()
               end,
-              desc = "Goto Preview implementation",
+              desc = "Goto Preview Implementation",
             },
-            ["<LocalLeader>pc"] = {
+            ["gpc"] = {
               function()
                 require("goto-preview").close_all_win()
               end,
-              desc = "Close all preview windows",
+              desc = "Close All Win",
             },
-            ["<LocalLeader>pr"] = {
+            ["gpr"] = {
               function()
                 require("goto-preview").goto_preview_references()
               end,
-              desc = "Goto Preview references",
+              desc = "Goto Preview References",
             },
           },
         },

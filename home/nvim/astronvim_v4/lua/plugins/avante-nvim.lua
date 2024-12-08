@@ -1,5 +1,4 @@
 return {}
--- return {
 --   "yetone/avante.nvim",
 --   build = ":AvanteBuild",
 --   cmd = {

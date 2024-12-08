@@ -27,7 +27,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws"];
+      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws" "localstack"];
       theme = "";
     };
 
