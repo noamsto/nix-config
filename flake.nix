@@ -125,7 +125,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    yazi.url = "github:sxyazi/yazi?ref=v0.3.3";
+    yazi.url = "github:sxyazi/yazi?ref=v0.4.0";
 
     catppuccin-alacritty = {
       url = "github:catppuccin/alacritty";

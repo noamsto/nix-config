@@ -12,6 +12,7 @@
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
     inputs.ucodenix.nixosModules.default
+    ./tlp.nix
   ];
 
   boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod"];
@@ -26,10 +27,10 @@
     "vm.overcommit_memory" = 1;
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  services.udev.extraRules = ''
-    # Set GPU power level to high on boot
-    ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="high"
-  '';
+  # services.udev.extraRules = ''
+  #   # Set GPU power level to high on boot
+  #   ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="high"
+  # '';
 
   boot.initrd.luks.devices = {
     root = {
