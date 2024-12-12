@@ -92,6 +92,13 @@ return {
 			window = {
 				position = "right",
 			},
+			filesystem = {
+				filtered_items = {
+					always_show_by_pattern = {
+						".env*",
+					},
+				}
+			}
 		}
 	},
 	{ "ixru/nvim-markdown", ft = "markdown" },

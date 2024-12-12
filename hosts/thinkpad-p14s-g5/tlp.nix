@@ -5,7 +5,7 @@
 }: {
   services = {
     tlp = {
-      enable = true;
+      enable = false;
       settings = {
         # Battery charge thresholds (Percentage)
         START_CHARGE_THRESH_BAT0 = 40; # Start charging when below 40%
@@ -29,7 +29,7 @@
 
         # PCIe ASPM power saving
         PCIE_ASPM_ON_AC = "default";
-        PCIE_ASPM_ON_BAT = "default";
+        PCIE_ASPM_ON_BAT = "powersupersave";
 
         # Affects devices like:
         # WiFi cards

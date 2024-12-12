@@ -17,6 +17,9 @@
 
     # Note taking
     obsidian
+
+    youtube-tui
+    youtube-music
   ];
   work-packages = with pkgs; [
     slack

@@ -101,7 +101,6 @@ return {
           desc = "Goto Preview Definition",
         },
 
-        ["<Leader>r"] = { name = "󰣪 Refactor" },
         ["<Leader>rbf"] = false,
         ["<Leader>rB"] = {
           function() require("refactoring").refactor "Extract Block To File" end,
