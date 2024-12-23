@@ -20,6 +20,8 @@
 
     youtube-tui
     youtube-music
+
+    zed-editor
   ];
   work-packages = with pkgs; [
     slack
@@ -29,6 +31,8 @@
     ssm-session-manager-plugin
 
     mongodb-compass
+
+    chromium
   ];
 in {
   home.packages =

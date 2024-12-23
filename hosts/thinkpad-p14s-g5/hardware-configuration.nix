@@ -21,7 +21,6 @@
   boot.extraModulePackages = [];
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
-    "amdgpu.dpm_state=performance" # Set GPU to performance mode
   ];
   boot.kernel.sysctl = {
     "kernel.sysrq" = 502;
