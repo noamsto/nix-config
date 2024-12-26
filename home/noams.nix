@@ -19,6 +19,7 @@
       ./obs-studio
       ./easyeffects
       ./vscode
+      ./gtk
     ]
     ++ lib.optionals (osConfig.desktop.mode == "kde") [
       ./plasma-manager

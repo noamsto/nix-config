@@ -57,6 +57,7 @@ return {
 	-- debug
 	{ import = "astrocommunity.debugging.nvim-dap-virtual-text" },
 	-- testing
+	{ import = "astrocommunity.test.nvim-coverage" },
 	{ import = "astrocommunity.test.neotest" },
 	{
 		"nvim-neotest/neotest",
