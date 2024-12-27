@@ -170,17 +170,15 @@
       url = "github:catppuccin/k9s";
       flake = false;
     };
-
-    hyprland.url = "github:hyprwm/Hyprland?ref=v0.45.0";
+    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins?ref=v0.45.0";
+      url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
     };
     hyprlock = {
       url = "github:hyprwm/hyprlock";
       inputs = {
         hyprlang.follows = "hyprland/hyprlang";
-        hyprutils.follows = "hyprland/hyprutils";
         nixpkgs.follows = "hyprland/nixpkgs";
         systems.follows = "hyprland/systems";
       };

@@ -12,6 +12,7 @@
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
     inputs.ucodenix.nixosModules.default
+    ./host_secrets.nix
   ];
 
   boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod"];

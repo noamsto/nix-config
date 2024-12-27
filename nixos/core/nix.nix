@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   # do garbage collection weekly to keep disk usage low
 
   # Allow unfree packages
@@ -51,5 +55,8 @@
         "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
       ];
     };
+    extraOptions = ''
+      !include ${config.age.secrets.nixAccessTokens.path}
+    '';
   };
 }
