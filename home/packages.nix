@@ -27,7 +27,7 @@
     slack
     postman
 
-    awscli2
+    stable.awscli2
     ssm-session-manager-plugin
 
     mongodb-compass
@@ -99,7 +99,7 @@ in {
       ncdu # better du
 
       # Wayland clipboard
-      wl-clipboard
+      wl-clipboard-rs
 
       # github
       gh

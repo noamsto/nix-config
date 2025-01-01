@@ -62,7 +62,6 @@ in {
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
-    sensibleOnTop = true;
     historyLimit = 100000;
     plugins = with pkgs; [
       tmuxPlugins.better-mouse-mode
@@ -98,7 +97,6 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      tmuxPlugins.yank
       {
         plugin = tmuxPlugins.tmux-thumbs;
         extraConfig = ''
@@ -106,8 +104,7 @@ in {
           set -g @thumbs-fg-color yellow
           set -g @thumbs-select-fg-color red
           set -g @thumbs-hint-fg-color blue
-          # set -g @thumbs-command 'echo -n {} | xclip -selection clipboard'
-          set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard}/bin/wl-copy'
+          set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard-rs}/bin/wl-copy'
           set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
         '';
       }
@@ -127,7 +124,7 @@ in {
       set -ga update-environment TERM_PROGRAM
 
       # Set escape-time as recomended by nvim
-      set-option -sg escape-time 12
+      set -s escape-time 0
 
       # Fix vim colors
       set -ga terminal-overrides ",foot:Tc"
@@ -135,6 +132,8 @@ in {
       # Foot terminal
       # set -as terminal-features 'foot*:extkeys'
       set -g extended-keys on
+      set -s set-clipboard on
+      set -s copy-command 'wl-copy'
 
       # Make prefix back-tick
       unbind C-b
