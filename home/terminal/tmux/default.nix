@@ -116,7 +116,7 @@ in {
       set -g pane-base-index 1
 
       # renumber when window is closed
-      set -g renumber-window on
+      set-option -g renumber-window on
 
       # Yazi inside tmux
       set -g allow-passthrough on

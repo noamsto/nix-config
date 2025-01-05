@@ -82,6 +82,9 @@
 
       AUTO_LS_COMMANDS=(ll)
       AUTO_LS_NEWLINE=false
+
+      fpath+=~/.zfunc
+      autoload -Uz compinit && compinit
     '';
     loginExtra = ''
       export LANG="en_US.UTF-8"
