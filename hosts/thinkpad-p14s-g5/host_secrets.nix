@@ -20,7 +20,7 @@
       source = config.age.secrets.tp-p14s-factify-ssh.path;
       mode = "0644";
     };
-    "agenix/work_env.env" = {
+    "agenix/host_env.env" = {
       source = config.age.secrets.tp-p14s-factify-env.path;
       mode = "0644";
     };
