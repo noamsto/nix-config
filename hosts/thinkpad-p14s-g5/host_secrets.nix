@@ -7,7 +7,7 @@
   age.secrets = {
     tp-p14s-factify-ssh.file = "${inputs.mysecrets}/tp-p14s-factify-ssh.age";
     tp-p14s-factify-env.file = "${inputs.mysecrets}/tp-p14s-factify-env.age";
-    nixAccessTokens.file = "${inputs.mysecrets}/tp-p14s-nix-factify-access-tokens.age";
+    nixAccessTokens.file = "${inputs.mysecrets}/tp-p14s-factify-nix-access-tokens.age";
     # thinkpad_p15s_aliases.file = "${inputs.mysecrets}/thinkpad_p15s_aliases.age";
   };
 
