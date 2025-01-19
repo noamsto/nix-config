@@ -7,18 +7,18 @@
 }:
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "aicommit2";
-  version = "2.1.8";
+  version = "2.2.0";
 
   src = fetchFromGitHub {
     owner = "tak-bro";
     repo = "aicommit2";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-l6xUgdDwjJ3Eo0Ub4pxXJtsB5H4dgt5z4gixTfXhdXs=";
+    hash = "sha256-1rlz0j1g276PEq+o0Fk3OsNV2UpCe+sTPsOR+8rRVhI=";
   };
 
   pnpmDeps = pnpm.fetchDeps {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-GaNNw+qxB493kUo6wfltBvaL67qKCHZw7vLPv9MjnPw=";
+    hash = "sha256-9Oh6yFFVQqAlOF/aphQ/hG5IEi3uH65ZKFiGWxzk5xk=";
   };
 
   nativeBuildInputs = [

@@ -123,6 +123,15 @@ return {
 		"kevinhwang91/nvim-ufo",
 		version = "522d719d421fc42b95577d9624048d8348d326ea"
 
+	},
+	{
+		"nvim-telescope/telescope.nvim",
+		opts = {
+			pickers = {
+				find_files = {
+					hidden = true
+				}
+			}
+		}
 	}
-
 }
