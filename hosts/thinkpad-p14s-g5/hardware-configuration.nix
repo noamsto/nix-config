@@ -73,6 +73,9 @@
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
+    extraPackages = [
+      pkgs.rocmPackages.clr.icd
+    ];
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

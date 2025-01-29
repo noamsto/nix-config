@@ -22,6 +22,7 @@
     youtube-music
 
     zed-editor
+    # ollama-rocm
   ];
   work-packages = with pkgs; [
     slack

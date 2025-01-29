@@ -41,6 +41,7 @@
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon
+    rocmPackages.rocminfo
   ];
 in {
   environment.systemPackages =
