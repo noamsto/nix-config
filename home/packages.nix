@@ -22,7 +22,6 @@
     youtube-music
 
     zed-editor
-    # ollama-rocm
   ];
   work-packages = with pkgs; [
     slack
@@ -34,9 +33,6 @@
     mongodb-compass
 
     chromium
-
-    _1password-gui
-    _1password-cli
   ];
 in {
   home.packages =

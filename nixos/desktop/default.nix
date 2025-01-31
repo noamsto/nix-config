@@ -6,6 +6,7 @@
   imports = [
     ./sddm
     ./kde.nix
+    ./1password
   ];
   services = {
     # Enable flatpak

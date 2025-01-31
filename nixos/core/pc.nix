@@ -1,4 +1,5 @@
 {
+  pkgs,
   config,
   lib,
   ...
@@ -28,6 +29,13 @@ in {
           enable = true;
           resyncTimer = "10m";
         };
+
+        ollama = {
+          enable = false;
+          acceleration = "rocm";
+          rocmOverrideGfx = "11.0.3";
+        };
+        nextjs-ollama-llm-ui.enable = true;
       }
       // lib.optionalAttrs isLaptop {
         power-profiles-daemon.enable = true;
