@@ -3,9 +3,9 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-treesitter/nvim-treesitter",
-    "hrsh7th/nvim-cmp",                                                       -- Optional: For using slash commands and variables in the chat buffer
-    "nvim-telescope/telescope.nvim",                                          -- Optional: For using slash commands
-    { "stevearc/dressing.nvim",                    opts = {} },               -- Optional: Improves `vim.ui.select`
+    "hrsh7th/nvim-cmp",                                                        -- Optional: For using slash commands and variables in the chat buffer
+    "nvim-telescope/telescope.nvim",                                           -- Optional: For using slash commands
+    { "stevearc/dressing.nvim",                    opts = {} },                -- Optional: Improves `vim.ui.select`
     { "MeanderingProgrammer/render-markdown.nvim", ft = { "codecompanion" } }, -- Optional: For prettier markdown rendering
     {
       "AstroNvim/astrocore",
@@ -33,12 +33,12 @@ return {
   opts = function()
     vim.cmd([[cab cc CodeCompanion]])
     return {
+
       adapters = {
         anthropic = function()
           return require("codecompanion.adapters").extend("anthropic", {
             env = {
-              api_key =
-              "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"
+              api_key = "ANTHROPIC_API_KEY"
             },
           })
         end,

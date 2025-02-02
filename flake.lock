@@ -1239,11 +1239,11 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1736512932,
-        "narHash": "sha256-ots4O5kueX5d19dwBpiR9+N0R3/p9a4jyKDTQLw+hRo=",
+        "lastModified": 1738350048,
+        "narHash": "sha256-wyTQeOdnPZh2fvK7cyGaSE1KvwY3z/bhFxsShTT9Ago=",
         "ref": "refs/heads/main",
-        "rev": "b112b7d5c836205d58a3d4c272e4a280f8122e83",
-        "revCount": 21,
+        "rev": "3e1d087b201d7d30ca3fee82addd4358a34d850b",
+        "revCount": 22,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
       },
@@ -1382,16 +1382,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1738178544,
-        "narHash": "sha256-UbM+zJFlze877N5j2YMLKYFX7t05VvmuNX2M0vJ7RfI=",
+        "lastModified": 1738142207,
+        "narHash": "sha256-NGqpVVxNAHwIicXpgaVqJEJWeyqzoQJ9oc8lnK9+WC4=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "975ac0ab33ee7fea64842047a96f5d679d90913c",
+        "rev": "9d3ae807ebd2981d593cddd0080856873139aa40",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable-small",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
