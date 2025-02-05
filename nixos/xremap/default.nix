@@ -31,6 +31,12 @@ in {
             "SUPER-SHIFT-P" = "KEY_PREVIOUSSONG";
           };
         }
+        {
+          name = "caps_escape_control";
+          remap = {
+            CAPSLOCK = "ESC";
+          };
+        }
       ];
     };
   };

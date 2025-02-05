@@ -27,7 +27,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws" "localstack"];
+      plugins = ["git" "python" "docker" "docker-compose" "poetry" "z"] ++ lib.optionals (osConfig.profile == "work") ["aws" "localstack"];
       theme = "";
     };
 
@@ -97,14 +97,6 @@
     fzf = {
       enable = true;
       defaultOptions = ["--height 40%"];
-    };
-    z-lua = {
-      enable = true;
-      enableAliases = true;
-      options = [
-        "enhanced"
-        "fzf"
-      ];
     };
   };
 }
