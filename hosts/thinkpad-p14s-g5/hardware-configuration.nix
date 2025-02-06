@@ -21,6 +21,7 @@
   boot.extraModulePackages = [];
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
+    "amdgpu.dcdebugmask=0x10"
   ];
   boot.kernel.sysctl = {
     "kernel.sysrq" = 502;

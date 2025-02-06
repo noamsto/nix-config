@@ -37,8 +37,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "wfxr";
           repo = "forgit";
-          rev = "24.02.0";
-          sha256 = "sha256-DoOtrnEJwSxkCZtsVek+3w9RZH7j7LTvdleBC88xyfI=";
+          rev = "25.02.0";
+          sha256 = "sha256-vVsJe/MycQrwHLJOlBFLCuKuVDwQfQSMp56Y7beEUyg=";
         };
       }
       {

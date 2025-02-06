@@ -27,7 +27,8 @@
     slack
     postman
 
-    stable.awscli2
+    awscli2
+    aws-sam-cli
     ssm-session-manager-plugin
 
     mongodb-compass
