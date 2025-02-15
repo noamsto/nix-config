@@ -217,5 +217,10 @@
     };
     walker.url = "github:abenz1267/walker?ref=v0.8.9";
     ucodenix.url = "github:e-tho/ucodenix";
+
+    lix-module = {
+      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.92.0.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

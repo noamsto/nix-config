@@ -1,4 +1,8 @@
-{osConfig, ...}: let
+{
+  osConfig,
+  lib,
+  ...
+}: let
   signKey =
     if (osConfig.profile == "work")
     then "~/.ssh/noam_factify_ed25519.pub"
@@ -24,7 +28,7 @@ in {
       init = {
         defaultBranch = "main";
       };
-      gpg.format = "ssh";
+      signing.format = "ssh";
       gpg.ssh.allowedSignersFile = "~/.config/git/allowed_signers";
       commit.gpgsign = true;
       user.signingkey = signKey;

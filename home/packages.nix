@@ -12,7 +12,6 @@
     evince # PDF Viewer
     spotify
 
-    onlyoffice-bin
     vlc
 
     # Note taking

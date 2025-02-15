@@ -1,8 +1,12 @@
 {
   pkgs,
   config,
+  inputs,
   ...
 }: {
+  imports = [
+    inputs.lix-module.nixosModules.default
+  ];
   # do garbage collection weekly to keep disk usage low
 
   # Allow unfree packages
