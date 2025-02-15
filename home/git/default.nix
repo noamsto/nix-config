@@ -24,13 +24,16 @@ in {
     diff-so-fancy = {
       enable = true;
     };
+
+    signing = {
+      format = "ssh";
+      signByDefault = true;
+    };
     extraConfig = {
       init = {
         defaultBranch = "main";
       };
-      signing.format = "ssh";
       gpg.ssh.allowedSignersFile = "~/.config/git/allowed_signers";
-      commit.gpgsign = true;
       user.signingkey = signKey;
       merge = {
         conflictstyle = "diff3";
