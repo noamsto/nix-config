@@ -4,6 +4,10 @@
   lib,
   ...
 }: {
+  imports = [
+    ./nixCats
+  ];
+
   xdg.configFile = {
     "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_v4";
   };

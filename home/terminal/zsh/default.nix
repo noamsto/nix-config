@@ -10,6 +10,11 @@
     zoxide
   ];
 
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -27,7 +32,7 @@
 
     oh-my-zsh = {
       enable = true;
-      plugins = ["git" "python" "docker" "docker-compose" "poetry" "z"] ++ lib.optionals (osConfig.profile == "work") ["aws" "localstack"];
+      plugins = ["git" "python" "docker" "docker-compose" "poetry"] ++ lib.optionals (osConfig.profile == "work") ["aws" "localstack"];
       theme = "";
     };
 

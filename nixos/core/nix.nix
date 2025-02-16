@@ -13,7 +13,7 @@
   nixpkgs.config.allowUnfree = true;
 
   nix = {
-    package = pkgs.nixVersions.latest;
+    package = pkgs.lix;
 
     # To protect nix-shell agains GC (development env)
     settings = {

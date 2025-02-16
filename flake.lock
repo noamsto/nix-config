@@ -1254,7 +1254,7 @@
         "narHash": "sha256-CCKIAE84dzkrnlxJCKFyffAxP3yfsOAbdvydUGqq24g=",
         "rev": "2837da71ec1588c1187d2e554719b15904a46c8b",
         "type": "tarball",
-        "url": "https://git.lix.systems/api/v1/repos/lix-project/lix/archive/2837da71ec1588c1187d2e554719b15904a46c8b.tar.gz"
+        "url": "https://git.lix.systems/api/v1/repos/lix-project/lix/archive/2837da71ec1588c1187d2e554719b15904a46c8b.tar.gz?rev=2837da71ec1588c1187d2e554719b15904a46c8b"
       },
       "original": {
         "type": "tarball",
@@ -1318,6 +1318,21 @@
       "original": {
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
+      }
+    },
+    "nixCats": {
+      "locked": {
+        "lastModified": 1738991100,
+        "narHash": "sha256-smTBsgrpagQrPWnOSq4wcz1Q1UJ4denBNPmBAJN2Ol4=",
+        "owner": "BirdeeHub",
+        "repo": "nixCats-nvim",
+        "rev": "54e2cc42dbefb9e152d9584794f5d8d94a20a534",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BirdeeHub",
+        "repo": "nixCats-nvim",
+        "type": "github"
       }
     },
     "nixlib": {
@@ -1676,6 +1691,7 @@
         "lix-module": "lix-module",
         "matugen": "matugen",
         "mysecrets": "mysecrets",
+        "nixCats": "nixCats",
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_3",
