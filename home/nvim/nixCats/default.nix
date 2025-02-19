@@ -68,7 +68,7 @@ in {
         # variable available to nvim runtime
         sharedLibraries = {
           general = with pkgs; [
-            # libgit2
+            libgit2
           ];
         };
         environmentVariables = {

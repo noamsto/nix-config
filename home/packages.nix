@@ -19,8 +19,6 @@
 
     youtube-tui
     youtube-music
-
-    zed-editor
   ];
   work-packages = with pkgs; [
     slack
