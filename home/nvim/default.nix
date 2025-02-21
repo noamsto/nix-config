@@ -10,7 +10,12 @@
 
   xdg.configFile = {
     "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_v4";
+    "lvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/lazyVim";
   };
+  home.shellAliases = {
+    "lvim" = "NVIM_APPNAME=lvim nvim";
+  };
+
   programs.neovim = {
     package = pkgs.neovim-unwrapped;
 

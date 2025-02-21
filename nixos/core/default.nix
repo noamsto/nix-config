@@ -14,7 +14,10 @@
     zsh.enable = true;
     dconf.enable = true;
     ssh.startAgent = true;
-    nix-ld.enable = true;
+    nix-ld = {
+      enable = true;
+      libraries = with pkgs; [libgit2 sqlite];
+    };
 
     nh = {
       enable = true;
