@@ -10,7 +10,7 @@ return {
 	{ import = "astrocommunity.pack.go" },
 	{
 		"ray-x/go.nvim",
-		commit = "b779debab83eb763b3b71bb1fa31526376bfbacc"
+		commit = "b779debab83eb763b3b71bb1fa31526376bfbacc",
 	},
 	-- import/override with your plugins folder
 
@@ -24,15 +24,15 @@ return {
 		"folke/trouble.nvim",
 		cmd = "Trouble",
 		dependencies = {
-			'nvim-telescope/telescope.nvim',
+			"nvim-telescope/telescope.nvim",
 			opts = function(_, opts)
 				local open_with_trouble = require("trouble.sources.telescope").open
 				-- Use this to add more results without clearing the trouble list
 				-- local add_to_trouble = require("trouble.sources.telescope").add
 				opts.defaults.mappings["i"]["<c-t>"] = open_with_trouble
 				opts.defaults.mappings["n"]["<c-t>"] = open_with_trouble
-			end
-		}
+			end,
+		},
 	},
 
 	-- Navigation
@@ -68,7 +68,12 @@ return {
 				opts = {
 					mappings = {
 						n = {
-							["<Leader>To"] = { function() require("neotest").output.open({ enter = true }) end, desc = "Output hover" },
+							["<Leader>To"] = {
+								function()
+									require("neotest").output.open({ enter = true })
+								end,
+								desc = "Output hover",
+							},
 						},
 					},
 				},
@@ -132,13 +137,11 @@ return {
 							"<Leader>on",
 							"<cmd>ObsidianNew<cr>",
 							desc = "Obsidian new",
-						}
+						},
 					})
 				end,
-			}
-			)
-			return
-			{
+			})
+			return {
 				dir = vim.env.HOME .. "/Documents/obsidian-vault",
 				daily_notes = {
 					folder = "daily-notes",
@@ -158,7 +161,7 @@ return {
 							return require("obsidian").util.smart_action()
 						end,
 						opts = { buffer = true, expr = true },
-					}
+					},
 				},
 				ui = {
 					checkboxes = {
@@ -167,7 +170,7 @@ return {
 						[">"] = { char = "", hl_group = "ObsidianRightArrow" },
 						["~"] = { char = "", hl_group = "ObsidianTilde" },
 						["!"] = { char = "", hl_group = "ObsidianImportant" },
-					}
+					},
 				},
 				note_id_func = function(title)
 					-- Create note IDs in a Zettelkasten format with a readable date and a suffix.
@@ -184,7 +187,7 @@ return {
 					return tostring(os.date("%Y-%m-%d")) .. "_" .. suffix
 				end,
 			}
-		end
+		end,
 	},
 	{ import = "astrocommunity.markdown-and-latex.markdown-preview-nvim" },
 	{
@@ -204,12 +207,11 @@ return {
 				-- This is nice to have
 				callbacks = {
 					on_enable = function(_, win)
-						vim.wo[win].conceallevel = 2;
-						vim.wo[win].concealcursor = "c";
-					end
-				}
-
-			}
-		}
-	}
+						vim.wo[win].conceallevel = 2
+						vim.wo[win].concealcursor = "c"
+					end,
+				},
+			},
+		},
+	},
 }

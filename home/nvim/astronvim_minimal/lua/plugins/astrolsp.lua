@@ -10,8 +10,8 @@ return {
 	opts = {
 		-- Configuration table of features provided by AstroLSP
 		features = {
-			autoformat = true,   -- enable or disable auto formatting on start
-			codelens = true,     -- enable/disable codelens refresh on start
+			autoformat = true, -- enable or disable auto formatting on start
+			codelens = true, -- enable/disable codelens refresh on start
 			inlay_hints = false, -- enable/disable inlay hints on start
 			semantic_tokens = true, -- enable/disable semantic token highlighting
 		},
@@ -51,8 +51,7 @@ return {
 		},
 		-- customize language server configuration options passed to `lspconfig`
 		---@diagnostic disable: missing-fields
-		config = {
-		},
+		config = {},
 
 		-- customize how language servers are attached
 		handlers = {
@@ -116,7 +115,6 @@ return {
 		},
 		-- A custom `on_attach` function to be run after the default `on_attach` function
 		-- takes two parameters `client` and `bufnr`  (`:h lspconfig-setup`)
-		on_attach = function(client, bufnr)
-		end,
+		on_attach = function(client, bufnr) end,
 	},
 }

@@ -20,7 +20,7 @@
 
     theme = {
       name = "Breeze";
-      package = pkgs.breeze-gtk;
+      package = pkgs.kdePackages.breeze-gtk;
     };
 
     iconTheme = {
