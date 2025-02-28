@@ -1,8 +1,4 @@
-{
-  osConfig,
-  lib,
-  ...
-}: let
+{osConfig, ...}: let
   signKey =
     if (osConfig.profile == "work")
     then "~/.ssh/noam_factify_ed25519.pub"

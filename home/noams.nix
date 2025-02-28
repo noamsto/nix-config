@@ -13,6 +13,7 @@
       ./ssh
       ./nvim
       ./ipython
+      ./catppuccin
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./browsers

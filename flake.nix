@@ -132,21 +132,6 @@
       flake = false;
     };
 
-    catppuccin-yazi = {
-      url = "github:catppuccin/yazi";
-      flake = false;
-    };
-
-    catppuccin-bat = {
-      url = "github:catppuccin/bat";
-      flake = false;
-    };
-
-    catppuccin-btop = {
-      url = "github:catppuccin/btop";
-      flake = false;
-    };
-
     agenix.url = "github:ryantm/agenix";
 
     mysecrets = {
@@ -166,10 +151,6 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    k9s-catuppuccin-skins = {
-      url = "github:catppuccin/k9s";
-      flake = false;
-    };
     hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
     hyprland-plugins = {
       url = "github:hyprwm/hyprland-plugins";
@@ -226,5 +207,7 @@
     nixCats.url = "github:BirdeeHub/nixCats-nvim";
 
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+
+    catppuccin.url = "github:catppuccin/nix";
   };
 }
