@@ -46,6 +46,8 @@
       nerd-fonts.fira-code
       nerd-fonts.symbols-only
       nerd-fonts.ubuntu
+
+      inter-nerdfont
     ];
 
     # user defined fonts

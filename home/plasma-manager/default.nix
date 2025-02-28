@@ -16,17 +16,32 @@
     };
     fonts = {
       general = {
-        family = "Ubuntu Nerd Font";
-        pointSize = 14;
+        family = "Inter Nerd Font";
+        pointSize = 12;
       };
       fixedWidth = {
         family = "FiraCode Nerd Font";
-        pointSize = 12;
+        pointSize = 10;
       };
 
       windowTitle = {
-        family = "Ubuntu Nerd Font";
-        pointSize = 12;
+        family = "Inter Nerd Font";
+        pointSize = 10;
+      };
+
+      menu = {
+        family = "Inter Nerd Font";
+        pointSize = 10;
+      };
+
+      small = {
+        family = "Inter Nerd Font";
+        pointSize = 8;
+      };
+
+      toolbar = {
+        family = "Inter Nerd Font";
+        pointSize = 8;
       };
     };
 

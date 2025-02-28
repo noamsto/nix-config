@@ -2,10 +2,11 @@ return {
   "OXY2DEV/markview.nvim",
   enabled = true,
   lazy = false,
-  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "Avante" },
+  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion" },
   opts = {
     preview = {
-      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "Avante" },
+      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion" },
+      ignore_buftypes = {},
     },
   },
   config = function(_, opts)
