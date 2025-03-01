@@ -126,12 +126,6 @@
     };
 
     yazi.url = "github:sxyazi/yazi?ref=v0.4.0";
-
-    catppuccin-alacritty = {
-      url = "github:catppuccin/alacritty";
-      flake = false;
-    };
-
     agenix.url = "github:ryantm/agenix";
 
     mysecrets = {
@@ -178,7 +172,6 @@
       inputs.nixpkgs.follows = "hyprland/nixpkgs";
     };
 
-    # add ags
     ags = {
       url = "github:Aylur/ags?ref=v2.0.1";
       inputs.nixpkgs.follows = "nixpkgs";

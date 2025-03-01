@@ -5,7 +5,7 @@
 return {
 
 	-- auto toggle relative absolute number
-	{ "sitiom/nvim-numbertoggle",   event = "VeryLazy" },
+	{ "sitiom/nvim-numbertoggle", event = "VeryLazy" },
 
 	{
 		"utilyre/sentiment.nvim",
@@ -56,10 +56,10 @@ return {
 
 			require("dap-python").setup(path, opts)
 
-			local dap = require('dap')
+			local dap = require("dap")
 			dap.defaults.fallback.external_terminal = {
-				command = 'alacritty',
-				args = { '-e' },
+				command = "foot",
+				args = { "-e" },
 			}
 			-- table.insert(require("dap").configurations.python, {
 			-- 	type = "python",
@@ -83,8 +83,8 @@ return {
 	{ "microsoft/python-type-stubs" },
 
 	{
-		'Joakker/lua-json5',
-		build = './install.sh',
+		"Joakker/lua-json5",
+		build = "./install.sh",
 	},
 	{
 		"nvim-neo-tree/neo-tree.nvim",
@@ -97,9 +97,9 @@ return {
 					always_show_by_pattern = {
 						".env*",
 					},
-				}
-			}
-		}
+				},
+			},
+		},
 	},
 	{ "ixru/nvim-markdown", ft = "markdown" },
 	{
@@ -108,7 +108,7 @@ return {
 		opts = {},
 	},
 	{
-		'stevearc/dressing.nvim',
+		"stevearc/dressing.nvim",
 		opts = {
 			input = {
 				start_in_insert = false,
@@ -116,22 +116,21 @@ return {
 		},
 	},
 	{
-		'jidn/vim-dbml',
-		ft = 'dbml',
+		"jidn/vim-dbml",
+		ft = "dbml",
 	},
 	{
 		"kevinhwang91/nvim-ufo",
-		version = "522d719d421fc42b95577d9624048d8348d326ea"
-
+		version = "522d719d421fc42b95577d9624048d8348d326ea",
 	},
 	{
 		"nvim-telescope/telescope.nvim",
 		opts = {
 			pickers = {
 				find_files = {
-					hidden = true
-				}
-			}
-		}
-	}
+					hidden = true,
+				},
+			},
+		},
+	},
 }
