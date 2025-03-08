@@ -145,7 +145,7 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+    hyprland.url = "github:hyprwm/Hyprland";
     hyprland-plugins = {
       url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
@@ -153,18 +153,23 @@
     hyprlock = {
       url = "github:hyprwm/hyprlock";
       inputs = {
-        hyprlang.follows = "hyprland/hyprlang";
         nixpkgs.follows = "hyprland/nixpkgs";
         systems.follows = "hyprland/systems";
+        hyprgraphics.follows = "hyprland/hyprgraphics";
+        hyprutils.follows = "hyprland/hyprutils";
+        hyprlang.follows = "hyprland/hyprlang";
+        hyprwayland-scanner.follows = "hyprland/hyprwayland-scanner";
       };
     };
     hypridle = {
       url = "github:hyprwm/hypridle";
       inputs = {
-        hyprlang.follows = "hyprland/hyprlang";
-        hyprutils.follows = "hyprland/hyprutils";
         nixpkgs.follows = "hyprland/nixpkgs";
         systems.follows = "hyprland/systems";
+        hyprlang.follows = "hyprland/hyprlang";
+        hyprutils.follows = "hyprland/hyprutils";
+        hyprland-protocols.follows = "hyprland/hyprland-protocols";
+        hyprwayland-scanner.follows = "hyprland/hyprwayland-scanner";
       };
     };
     hyprland-contrib = {
