@@ -5,10 +5,6 @@
   inputs,
   ...
 }: {
-  imports = [
-    ./nixCats
-  ];
-
   xdg.configFile = {
     "avim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/astronvim_v4";
     "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/lazyVim";
