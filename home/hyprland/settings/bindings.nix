@@ -1,5 +1,5 @@
 {lib, ...}: let
-  terminal = "footclient";
+  terminal = "foot";
   fileManager = "thunar";
   browser = "firefox";
 

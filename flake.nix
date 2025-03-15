@@ -15,7 +15,6 @@
       ];
 
       imports = [
-        inputs.flake-parts.flakeModules.easyOverlay
         inputs.treefmt-nix.flakeModule
         ./pre-commit-hooks.nix
         ./packages
@@ -177,15 +176,10 @@
       inputs.nixpkgs.follows = "hyprland/nixpkgs";
     };
 
-    ags = {
-      url = "github:Aylur/ags?ref=v2.0.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hyprpanel = {
       url = "github:Jas-SinghFSU/HyprPanel";
       inputs = {
         nixpkgs.follows = "hyprland/nixpkgs";
-        ags.follows = "ags";
       };
     };
     matugen = {

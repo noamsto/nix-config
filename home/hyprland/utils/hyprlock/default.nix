@@ -9,13 +9,16 @@
 
   font_family = "Ubuntu Nerd Font";
 in {
-  # imports = [./enable-edp1-before-sleep.nix];
   programs.hyprlock = {
     enable = true;
 
     package = inputs.hyprlock.packages.${pkgs.system}.hyprlock;
 
     settings = {
+
+      auth = {
+        fingerprint.enable = true;
+      };
       general = {
         disable_loading_bar = true;
       };

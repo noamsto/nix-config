@@ -21,6 +21,7 @@
     youtube-music
 
     sublime-merge
+
   ];
   work-packages = with pkgs; [
     slack

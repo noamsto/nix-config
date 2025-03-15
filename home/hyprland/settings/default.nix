@@ -44,7 +44,7 @@ in {
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
-        # "${pkgs.hyprpanel}/bin/hyprpanel"
+        "hyprpanel"
         "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
         ""
       ];

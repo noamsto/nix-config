@@ -25,6 +25,7 @@ in {
     ./settings
     ./matugen.nix
     ./utils
+    ./hyprpanel
   ];
 
   # Theme related
