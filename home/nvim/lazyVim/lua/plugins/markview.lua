@@ -7,6 +7,9 @@ return {
     preview = {
       filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion" },
       ignore_buftypes = {},
+      modes = { "n", "no", "c" },
+      hybrid_modes = { "n", "no", "c", "i" },
+      icon_provider = "mini",
     },
   },
   config = function(_, opts)

@@ -46,7 +46,7 @@
     withNodeJs = true;
 
     extraPackages = with pkgs; [
-      #Basic 
+      #Basic
       lua5_1
       luajit
       lua51Packages.luarocks
@@ -71,6 +71,7 @@
       gdb
       lldb
 
+      marksman # Markdown
     ];
   };
 }

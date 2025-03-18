@@ -56,6 +56,7 @@ in {
       "**/.direnv"
       "**/.devenv"
       "**/.venv"
+      ".icon"
     ];
   };
 }
