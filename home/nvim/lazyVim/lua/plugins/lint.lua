@@ -6,6 +6,7 @@ return {
       -- Event to trigger linters
       linters_by_ft = {
         python = { "mypy" },
+        htmldjango = { "djlint" },
       },
       -- Configure linter settings
     },

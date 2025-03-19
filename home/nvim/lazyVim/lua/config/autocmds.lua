@@ -29,3 +29,9 @@ vim.filetype.add({
     [".env.*"] = "sh",
   },
 })
+
+-- Set Jinja files to be highlighted as HTML
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
+  pattern = { "*.html.j2", "*.jinja", "*.jinja2", "*.j2" },
+  command = "setlocal filetype=htmldjango",
+})
