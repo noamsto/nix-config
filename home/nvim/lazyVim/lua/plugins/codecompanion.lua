@@ -12,7 +12,7 @@ return {
     local wk = require("which-key")
     wk.add({
       -- Create the group
-      { "<leader>a", group = "󱙷 CodeCompanion" },
+      { "<leader>a", group = "󱙷 CodeCompanion", mode = { "v", "n" } },
 
       -- Core commands - only two keys max after leader
       { "<leader>ai", "<cmd>CodeCompanion<cr>", desc = "Inline Assistant" },
@@ -22,7 +22,8 @@ return {
       { "<leader>at", "<cmd>CodeCompanionChat Toggle<cr>", desc = "Toggle Chat" },
 
       -- Visual mode commands
-      { "<leader>av", "<cmd>CodeCompanionChat Add<cr>", desc = "Add to Chat", mode = "v" },
+      { "<leader>aA", "<cmd>CodeCompanionChat Add<cr>", desc = "Add to Chat", mode = "v" },
+      { "<Leader>aa", "<cmd>CodeCompanionActions<cr>", desc = "Open the Action Palette", mode = "v" },
     })
   end,
   opts = function()
@@ -40,6 +41,28 @@ return {
       strategies = {
         chat = {
           adapter = "anthropic",
+          slash_commands = {
+            ["file"] = {
+              opts = {
+                provider = "snacks",
+              },
+            },
+            ["buffer"] = {
+              opts = {
+                provider = "snacks",
+              },
+            },
+            ["help"] = {
+              opts = {
+                provider = "snacks",
+              },
+              ["symbols"] = {
+                opts = {
+                  provider = "snacks",
+                },
+              },
+            },
+          },
         },
         inline = {
           adapter = "anthropic",
