@@ -38,7 +38,6 @@
     firefox
     (inputs.self.packages.${pkgs.system}.aicommit2)
     wluma
-    alsa-utils
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon

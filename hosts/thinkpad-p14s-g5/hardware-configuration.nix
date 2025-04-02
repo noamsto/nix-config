@@ -82,7 +82,7 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
   services.ucodenix = {
-    enable = true;
+    enable = false;
     cpuModelId = "00A70F52";
   };
 }

@@ -32,6 +32,9 @@ return {
       marksman = {
         mason = false,
       },
+      postgres_lsp = {
+        mason = false,
+      },
     },
   },
 }

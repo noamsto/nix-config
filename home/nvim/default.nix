@@ -72,6 +72,7 @@
       lldb
 
       marksman # Markdown
+      hadolint
     ];
   };
 }
