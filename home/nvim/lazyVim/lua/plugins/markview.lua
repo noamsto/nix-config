@@ -1,13 +1,17 @@
 return {
   "OXY2DEV/markview.nvim",
+  dependencies = {
+    "echasnovski/mini.icons",
+  },
   enabled = true,
+  branch = "dev",
   lazy = false,
-  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion" },
+  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
   opts = {
     preview = {
-      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion" },
+      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
       ignore_buftypes = {},
-      modes = { "n", "no", "c" },
+      modes = { "n", "no", "c", "i" },
       hybrid_modes = { "n", "no", "c", "i" },
       icon_provider = "mini",
     },

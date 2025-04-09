@@ -199,5 +199,11 @@
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
     catppuccin.url = "github:catppuccin/nix";
+
+    mcp-hub.url = "github:ravitemer/mcp-hub";
+    aicommit2 = {
+      url = "github:noamsto/aicommit2";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

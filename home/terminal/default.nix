@@ -8,5 +8,6 @@
     ./bat
     ./fzf
     ./yazi
+    ./process_compose
   ];
 }

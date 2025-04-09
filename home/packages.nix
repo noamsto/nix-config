@@ -2,6 +2,7 @@
   pkgs,
   osConfig,
   lib,
+  inputs,
   ...
 }: let
   desktop-packages = with pkgs; [
@@ -22,6 +23,7 @@
 
     sublime-merge
 
+    inputs.aicommit2.packages."${pkgs.system}".default
   ];
   work-packages = with pkgs; [
     slack
@@ -106,6 +108,8 @@ in {
       gh
 
       nh
+
+      inputs.mcp-hub.packages."${system}".default
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile == "work") work-packages;

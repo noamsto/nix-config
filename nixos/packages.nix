@@ -36,7 +36,7 @@
     wlr-randr
     gpu-viewer
     firefox
-    (inputs.self.packages.${pkgs.system}.aicommit2)
+    # (inputs.self.packages.${pkgs.system}.aicommit2)
     wluma
   ];
   laptop-packages = with pkgs; [
