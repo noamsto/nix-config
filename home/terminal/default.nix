@@ -9,5 +9,6 @@
     ./fzf
     ./yazi
     ./process_compose
+    ./ghostty
   ];
 }

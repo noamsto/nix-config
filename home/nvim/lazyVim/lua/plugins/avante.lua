@@ -15,6 +15,9 @@ return {
       provider = "snacks",
       provider_opts = {},
     },
+    behaviour = {
+      enable_claude_text_editor_tool_mode = true,
+    },
     -- system_prompt = function()
     --   local hub = require("mcphub").get_hub_instance()
     --   return hub:get_active_servers_prompt()
@@ -27,9 +30,6 @@ return {
     -- end,
   },
   -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
-  keys = {
-    { "<Leader>a", name = "Avante" },
-  },
 
   -- build = "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false" -- for windows
   dependencies = {

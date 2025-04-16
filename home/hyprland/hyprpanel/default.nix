@@ -1,13 +1,11 @@
 # *.nix
-{ inputs, ... }:
-{
-  imports = [ inputs.hyprpanel.homeManagerModules.hyprpanel ];
+{inputs, ...}: {
+  imports = [inputs.hyprpanel.homeManagerModules.hyprpanel];
 
   programs.hyprpanel = {
-
     # Enable the module.
     # Default: false
-    enable = true;
+    enable = false;
     overlay.enable = false;
 
     # Fix the overwrite issue with HyprPanel.
@@ -29,15 +27,15 @@
     # Configure bar layouts for monitors.
     # See 'https://hyprpanel.com/configuration/panel.html'.
     # Default: null
-    layout = {
-      "bar.layouts" = {
-        "0" = {
-          left = [ "dashboard" "workspaces" ];
-          middle = [ "media" ];
-          right = [ "volume" "systray" "notifications" ];
-        };
-      };
-    };
+    # layout = {
+    #   "bar.layouts" = {
+    #     "0" = {
+    #       left = ["dashboard" "workspaces"];
+    #       middle = ["media"];
+    #       right = ["volume" "systray" "notifications"];
+    #     };
+    #   };
+    # };
 
     # Configure and theme almost all options from the GUI.
     # Options that require '{}' or '[]' are not yet implemented,

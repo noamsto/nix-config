@@ -205,5 +205,6 @@
       url = "github:noamsto/aicommit2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ghostty.url = "github:ghostty-org/ghostty";
   };
 }
