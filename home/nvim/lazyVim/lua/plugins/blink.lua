@@ -3,6 +3,7 @@ return {
   dependencies = {
     "Kaiser-Yang/blink-cmp-avante",
   },
+  build = "nix run .#build-plugin",
   opts = function(_, opts)
     opts = opts or {}
     opts.sources = opts.sources or {}

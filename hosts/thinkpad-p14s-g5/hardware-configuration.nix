@@ -27,7 +27,7 @@
     "kernel.sysrq" = 502;
     "vm.overcommit_memory" = 1;
   };
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
   # services.udev.extraRules = ''
   #   # Set GPU power level to high on boot
   #   ACTION=="add", SUBSYSTEM=="drm", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="high"

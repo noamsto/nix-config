@@ -111,11 +111,6 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
-    # For RPI4
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     # home-manager, used for managing user configuration
@@ -206,5 +201,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     ghostty.url = "github:ghostty-org/ghostty";
+
+    # For RPI4
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }
