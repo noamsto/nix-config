@@ -6,6 +6,7 @@
     home-manager,
     nixpkgs,
     flake-parts,
+    self,
     ...
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -63,6 +64,12 @@
       flake = {
         nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
 
+        installerImages = let
+          nixos = self.nixosConfigurations;
+          mkImage = nixosConfig: nixosConfig.config.system.build.sdImage;
+        in {
+          naspi = mkImage nixos.naspi-installer;
+        };
         homeConfigurations = {
           naspi-raspbian = home-manager.lib.homeManagerConfiguration {
             pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";

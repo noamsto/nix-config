@@ -8,6 +8,7 @@
   isDesktop = config.desktop.mode != "none";
   isLaptop = config.machine.type == "laptop";
   core-packages = with pkgs; [
+    nix-output-monitor
     vim
     wget
     git

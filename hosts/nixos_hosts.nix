@@ -13,4 +13,16 @@
     ];
     specialArgs = {inherit inputs;};
   };
+
+  naspi-nixos = inputs.nixos-raspberrypi.lib.nixosSystem {
+    modules = [
+      ./naspi-nixos
+    ];
+    specialArgs = inputs;
+  };
+
+  naspi-installer = inputs.nixos-raspberrypi.lib.nixosInstaller {
+    modules = [./naspi-nixos];
+    specialArgs = inputs;
+  };
 }
