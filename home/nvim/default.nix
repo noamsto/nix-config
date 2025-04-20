@@ -44,7 +44,6 @@
 
     withPython3 = true;
     withNodeJs = true;
-    extraPython3Packages = pyPkgs: with pyPkgs; [uv];
 
     extraPackages = with pkgs; [
       #Basic
@@ -74,6 +73,7 @@
 
       marksman # Markdown
       hadolint
+      uv
     ];
   };
 }
