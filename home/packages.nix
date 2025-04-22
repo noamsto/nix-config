@@ -36,6 +36,7 @@
     mongodb-compass
 
     chromium
+    claude-code
   ];
 in {
   home.packages =
