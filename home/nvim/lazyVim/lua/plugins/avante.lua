@@ -1,5 +1,6 @@
 return {
   "yetone/avante.nvim",
+
   event = "VeryLazy",
   lazy = false,
   version = false,
@@ -11,13 +12,14 @@ return {
   opts = {
     build = "make",
     provider = "claude",
-    file_selector = {
+    selector = {
       provider = "snacks",
       provider_opts = {},
     },
     behaviour = {
       enable_claude_text_editor_tool_mode = true,
     },
+    -- The system_prompt type supports both a string and a function that returns a string. Using a function here allows dynamically updating the prompt with mcphub
     system_prompt = function()
       local hub = require("mcphub").get_hub_instance()
       return hub:get_active_servers_prompt()
@@ -66,5 +68,6 @@ return {
       },
       ft = { "markdown", "Avante" },
     },
+    "ravitemer/mcphub.nvim",
   },
 }

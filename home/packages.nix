@@ -24,6 +24,8 @@
     sublime-merge
 
     inputs.aicommit2.packages."${pkgs.system}".default
+
+    wpsoffice
   ];
   work-packages = with pkgs; [
     slack
