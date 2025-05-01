@@ -21,6 +21,37 @@
         ./packages
       ];
 
+      flake = {
+        nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
+
+        installerImages = let
+          nixos = self.nixosConfigurations;
+          mkImage = nixosConfig: nixosConfig.config.system.build.sdImage;
+        in {
+          naspi = mkImage nixos.naspi-installer;
+        };
+
+        homeConfigurations = {
+          naspi-raspbian = home-manager.lib.homeManagerConfiguration {
+            pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
+            modules = [
+              ./hosts/naspi/home.nix
+            ];
+            extraSpecialArgs = {
+              inherit inputs;
+              osConfig = {
+                username = "noams";
+                user-full-name = "Noam Stolero";
+                email = "noamstolero@gmail.com";
+                hostname = "naspi";
+                desktop.mode = "none";
+                profile.type = "personal";
+              };
+            };
+          };
+        };
+      };
+
       perSystem = {
         inputs',
         config,
@@ -60,35 +91,6 @@
           };
         };
         formatter = pkgs.alejandra;
-      };
-      flake = {
-        nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
-
-        installerImages = let
-          nixos = self.nixosConfigurations;
-          mkImage = nixosConfig: nixosConfig.config.system.build.sdImage;
-        in {
-          naspi = mkImage nixos.naspi-installer;
-        };
-        homeConfigurations = {
-          naspi-raspbian = home-manager.lib.homeManagerConfiguration {
-            pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
-            modules = [
-              ./hosts/naspi/home.nix
-            ];
-            extraSpecialArgs = {
-              inherit inputs;
-              osConfig = {
-                username = "noams";
-                user-full-name = "Noam Stolero";
-                email = "noamstolero@gmail.com";
-                hostname = "naspi";
-                desktop.mode = "none";
-                profile.type = "personal";
-              };
-            };
-          };
-        };
       };
     };
 
@@ -210,10 +212,16 @@
     ghostty.url = "github:ghostty-org/ghostty";
 
     # For RPI4
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+    raspberry-pi-nix = {
+      url = "github:nix-community/raspberry-pi-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    impermanence.url = "github:nix-community/impermanence";
   };
 }

@@ -14,7 +14,6 @@ return {
     provider = "claude",
     selector = {
       provider = "snacks",
-      provider_opts = {},
     },
     behaviour = {
       enable_claude_text_editor_tool_mode = true,

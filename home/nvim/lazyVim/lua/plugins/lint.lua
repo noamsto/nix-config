@@ -7,7 +7,6 @@ return {
       linters_by_ft = {
         python = { "mypy" },
         htmldjango = { "djlint" },
-        ["*"] = { "codespell" },
       },
       -- Configure linter settings
     },
