@@ -26,6 +26,8 @@
     inputs.aicommit2.packages."${pkgs.system}".default
 
     wpsoffice
+
+    dragon-drop
   ];
   work-packages = with pkgs; [
     slack

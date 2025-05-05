@@ -66,7 +66,7 @@
       }
     ];
 
-    initExtra = ''
+    initContent = ''
       unsetopt BEEP
       work_aliases=/etc/agenix/work_aliases.zsh
       if [ -f $work_aliases ]; then

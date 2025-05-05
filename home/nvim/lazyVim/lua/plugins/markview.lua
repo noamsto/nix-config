@@ -5,7 +5,7 @@ return {
   },
   enabled = true,
   branch = "dev",
-  lazy = false,
+  event = "InsertEnter",
   ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
   opts = {
     preview = {
