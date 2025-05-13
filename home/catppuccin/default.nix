@@ -10,5 +10,9 @@
     k9s.enable = true;
     bat.enable = true;
     yazi.enable = true;
+    lazygit.enable = true;
+    fzf.enable = true;
+    zsh-syntax-highlighting.enable = true;
+    ghostty.enable = true;
   };
 }
