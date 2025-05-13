@@ -107,7 +107,7 @@ in {
       ncdu # better du
 
       # Wayland clipboard
-      wl-clipboard-rs
+      wl-clipboard
 
       # github
       gh

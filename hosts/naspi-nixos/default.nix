@@ -1,27 +1,78 @@
 {
-  config,
-  nixos-raspberrypi,
+  inputs,
+  pkgs,
   ...
 }: {
-  imports = with nixos-raspberrypi.nixosModules; [
-    raspberry-pi-4.base
-    ./configtxt.nix
+  imports = [
+    ./boot-loader
+    ./disks.nix
+    ./default.nix
+    ./base.nix
   ];
 
-  networking.hostName = "naspi";
+  boot = {
+    loader = {
+      grub.enable = false;
+    };
 
-  system.nixos.tags = let
-    cfg = config.boot.loader.raspberryPi;
-  in [
-    "raspberry-pi-${cfg.variant}"
-    cfg.bootloader
-    config.boot.kernelPackages.kernel.version
-  ];
+    # consoleLogLevel = lib.mkDefault 7;
+    kernelParams = [
+      "console=tty1"
+      # https://github.com/raspberrypi/firmware/issues/1539#issuecomment-784498108
+      "console=serial0,115200n8"
+    ];
 
-  users.users.nixos.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
-  ];
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
-  ];
+    kernelPackages = pkgs.linuxPackagesFor pkgs.rpi-kernels.v6_12_17.bcm2711;
+    # kernelPackages = pkgs.linuxPackages_rpi4;
+    initrd.availableKernelModules = [
+      "pcie_brcmstb" # required for the pcie bus to work
+      "reset-raspberrypi" # required for vl805 firmware to load
+      "usb_storage"
+      "usbhid"
+      "vc4"
+    ];
+  };
+
+  environment = {
+    etc."nixos".source = "/persistent/nixos";
+
+    systemPackages = with pkgs; [
+      nnn
+      xplr
+    ];
+  };
+
+  hardware.enableRedistributableFirmware = true;
+
+  home-manager.users.pi = import ./pi.nix;
+
+  nixpkgs = {
+    hostPlatform = "aarch64-linux";
+    overlays = [inputs.raspberry-pi-nix.overlays.core];
+  };
+
+  nix.settings.flake-registry = "";
+
+  raspberry-pi = {
+    loader.enable = true;
+  };
+
+  services = {
+    sshd.enable = true;
+    openssh.settings.PermitRootLogin = "yes";
+  };
+
+  system = {
+    configFlake = inputs.self;
+    dependOnConfigFlakeInputClosure = true;
+    stateVersion = "24.05";
+  };
+
+  users.users = {
+    pi = {
+      isNormalUser = true;
+      extraGroups = ["wheel"];
+      password = "nixos";
+    };
+  };
 }

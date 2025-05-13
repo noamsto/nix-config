@@ -5,12 +5,12 @@
 }: let
   upstream-catppuccin = pkgs.tmuxPlugins.mkTmuxPlugin rec {
     pluginName = "catppuccin";
-    version = "2.1.1";
+    version = "2.1.3";
     src = pkgs.fetchFromGitHub {
       owner = "catppuccin";
       repo = "tmux";
       rev = "v${version}";
-      sha256 = "9+SpgO2Co38I0XnEbRd7TSYamWZNjcVPw6RWJIHM+4c=";
+      sha256 = "0v3vji240mykfxf573kpwjmnswil0f9j7srqlhq74ca9ar1h5k92";
     };
     meta = with lib; {
       description = "Catppuccin theme for Tmux";
@@ -21,12 +21,12 @@
   };
   tmux-nerd-font-window-name = pkgs.tmuxPlugins.mkTmuxPlugin rec {
     pluginName = "tmux-nerd-font-window-name";
-    version = "2.1.2";
+    version = "2025-03-21";
     src = pkgs.fetchFromGitHub {
       owner = "joshmedeski";
       repo = "tmux-nerd-font-window-name";
-      rev = "v${version}";
-      sha256 = "bnlOAfdBv5Rg4z1hu1jtdx5oZ6kAZE40K4zqLxmyYQE=";
+      rev = "3def0b9c57b16e2c2fe4ec55555f5698444e5cee";
+      sha256 = "13zwb7fdic4h2smb27lhvzynlalmamhnj9hfyfjcbinhzvi5zi1m";
     };
   };
 in {
@@ -98,15 +98,15 @@ in {
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
       {
-        plugin = tmuxPlugins.tmux-thumbs;
-        extraConfig = ''
-          set -g @thumbs-key f
-          set -g @thumbs-fg-color yellow
-          set -g @thumbs-select-fg-color red
-          set -g @thumbs-hint-fg-color blue
-          set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard-rs}/bin/wl-copy'
-          set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
-        '';
+        plugin = tmuxPlugins.fingers;
+        # extraConfig = ''
+        #   set -g @thumbs-key f
+        #   set -g @thumbs-fg-color yellow
+        #   set -g @thumbs-select-fg-color red
+        #   set -g @thumbs-hint-fg-color blue
+        #   set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard-rs}/bin/wl-copy'
+        #   set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
+        # '';
       }
     ];
     extraConfig = ''

@@ -18,6 +18,7 @@
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
 
     shellAliases = {
       ll = "eza -l --icons --git";
@@ -42,26 +43,8 @@
         src = pkgs.fetchFromGitHub {
           owner = "wfxr";
           repo = "forgit";
-          rev = "25.02.0";
-          sha256 = "sha256-vVsJe/MycQrwHLJOlBFLCuKuVDwQfQSMp56Y7beEUyg=";
-        };
-      }
-      {
-        name = "auto-ls";
-        src = pkgs.fetchFromGitHub {
-          owner = "desyncr";
-          repo = "auto-ls";
-          rev = "a7a7e6c16407a3c4a46319f5f111a827468a0943";
-          sha256 = "sha256-nLAdHI1y6lL95QKnNN8x5remKobLClnVY5Ia3TZXp5Y=";
-        };
-      }
-      {
-        name = "zsh-syntax-highlighting";
-        src = pkgs.fetchFromGitHub {
-          owner = "zsh-users";
-          repo = "zsh-syntax-highlighting";
-          rev = "1386f1213eb0b0589d73cd3cf7c56e6a972a9bfd";
-          sha256 = "sha256-iKx7lsQCoSAbpANYFkNVCZlTFdwOEI34rx/h1rnraSg=";
+          rev = "25.05.0";
+          sha256 = "0r50aqr4fps7d5j03prd3189cb86h66l1rgzj8znl4ngx612vqsk";
         };
       }
     ];
