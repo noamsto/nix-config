@@ -186,12 +186,7 @@
         nixpkgs.follows = "hyprland/nixpkgs";
       };
     };
-    matugen = {
-      url = "github:InioX/matugen?ref=v2.4.0";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
-    };
+    matugen.url = "github:InioX/matugen?ref=v2.4.1";
     walker.url = "github:abenz1267/walker?ref=v0.8.9";
     ucodenix.url = "github:e-tho/ucodenix";
 

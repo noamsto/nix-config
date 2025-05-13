@@ -22,9 +22,9 @@ vim.filetype.add({
   filename = {
     [".envrc"] = "sh",
   },
-  -- extension = {
-  --   foo = "fooscript",
-  -- },
+  extension = {
+    ["http"] = "http",
+  },
   pattern = {
     [".env.*"] = "sh",
   },
