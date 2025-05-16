@@ -6,12 +6,10 @@
   config,
   lib,
   modulesPath,
-  inputs,
   ...
 }: {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
-    inputs.ucodenix.nixosModules.default
     ./tlp.nix
   ];
 
@@ -77,8 +75,4 @@
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-  services.ucodenix = {
-    enable = false;
-    cpuModelId = "00A70F52";
-  };
 }

@@ -188,7 +188,6 @@
     };
     matugen.url = "github:InioX/matugen?ref=v2.4.1";
     walker.url = "github:abenz1267/walker?ref=v0.8.9";
-    ucodenix.url = "github:e-tho/ucodenix";
 
     lix-module = {
       url = "https://git.lix.systems/lix-project/nixos-module/archive/2.92.0-3.tar.gz";
@@ -204,7 +203,6 @@
       url = "github:noamsto/aicommit2";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    ghostty.url = "github:ghostty-org/ghostty";
 
     # For RPI4
     raspberry-pi-nix = {

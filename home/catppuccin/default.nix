@@ -13,6 +13,5 @@
     lazygit.enable = true;
     fzf.enable = true;
     zsh-syntax-highlighting.enable = true;
-    ghostty.enable = true;
   };
 }
