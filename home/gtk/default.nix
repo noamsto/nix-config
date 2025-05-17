@@ -8,19 +8,19 @@
     name = "Bibata-Modern-Ice";
     package = pkgs.bibata-cursors;
     size = 24;
-    x11.enable = true;
+    gtk.enable = true;
   };
+
+  home.packages = [
+    pkgs.kdePackages.breeze-gtk
+  ];
+
   gtk = {
     enable = true;
 
     font = {
-      name = "Ubuntu Nerd Font";
-      size = 14;
-    };
-
-    theme = {
-      name = "Breeze";
-      package = pkgs.kdePackages.breeze-gtk;
+      name = "Inter Nerd Font";
+      size = 12;
     };
 
     iconTheme = {
@@ -30,6 +30,7 @@
 
     gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
     gtk2.extraConfig = ''
+      gtk-theme-name="Breeze-Dark"
       gtk-button-images=1
       gtk-menu-images=1
       gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
@@ -44,12 +45,14 @@
       gtk-decoration-layout = "menu:close";
       gtk-enable-animations = true;
       gtk-overlay-scrolling = true;
+      gtk-theme-name = "Breeze";
     };
 
     gtk4.extraConfig = {
       gtk-application-prefer-dark-theme = true;
       gtk-enable-animations = true;
       gtk-overlay-scrolling = true;
+      gtk-theme-name = "Breeze";
     };
   };
 }
