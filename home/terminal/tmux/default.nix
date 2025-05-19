@@ -19,7 +19,7 @@
       platforms = platforms.all;
     };
   };
-  tmux-nerd-font-window-name = pkgs.tmuxPlugins.mkTmuxPlugin rec {
+  tmux-nerd-font-window-name = pkgs.tmuxPlugins.mkTmuxPlugin {
     pluginName = "tmux-nerd-font-window-name";
     version = "2025-03-21";
     src = pkgs.fetchFromGitHub {
@@ -48,9 +48,15 @@ in {
       session = "'󱥸  General'";
     in {
       Type = "forking";
-      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP";
+      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
       ExecStart = "-${tmux-bin} new -s ${session} -d";
       ExecStop = "-${tmux-bin} kill-session -t ${session}";
+      Environment = [
+        "COLORTERM=truecolor"
+        "TERM=foot"
+        "TERMINFO=${pkgs.foot.terminfo}/share/terminfo"
+      ];
+
       # Restart = "always";
     };
 

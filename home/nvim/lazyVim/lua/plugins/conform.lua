@@ -26,6 +26,7 @@ return {
       ["markdown"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
       ["markdown.mdx"] = { "prettierd", "markdownlint-cli2", "markdown-toc" },
       http = { "kulala-fmt" },
+      yaml = { "prettierd" },
     },
   },
 }
