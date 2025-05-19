@@ -25,19 +25,14 @@
 
     inputs.aicommit2.packages."${pkgs.system}".default
 
-    wpsoffice
-
     dragon-drop
   ];
   work-packages = with pkgs; [
     slack
-    postman
 
     awscli2
     aws-sam-cli
     ssm-session-manager-plugin
-
-    mongodb-compass
 
     chromium
     claude-code
@@ -49,7 +44,6 @@ in {
       # feel free to add your own or remove some of them
 
       fastfetch
-      nnn # terminal file manager
 
       # archives
       zip
@@ -114,7 +108,14 @@ in {
 
       nh
 
-      inputs.mcp-hub.packages."${system}".default
+      # Better system monitoring
+      btop
+
+      # Better text viewing
+      bat # cat clone with syntax highlighting
+      delta # better diff viewer
+
+      inputs.mcp-hub.packages."${pkgs.system}".default
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile == "work") work-packages;

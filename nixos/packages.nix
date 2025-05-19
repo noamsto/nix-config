@@ -2,7 +2,6 @@
   pkgs,
   lib,
   config,
-  inputs,
   ...
 }: let
   isDesktop = config.desktop.mode != "none";
@@ -37,7 +36,6 @@
     wlr-randr
     gpu-viewer
     firefox
-    # (inputs.self.packages.${pkgs.system}.aicommit2)
     wluma
   ];
   laptop-packages = with pkgs; [

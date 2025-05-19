@@ -17,7 +17,7 @@
     cacheHome = config.home.homeDirectory + "/.local/cache";
     systemDirs.data = ["${config.home.homeDirectory}/.local/share/flatpak/exports/share/" "/var/lib/flatpak/exports/share/"];
 
-    # manage $XDG_CONFIG_HOME/mimeapps.list
+    # Manage $XDG_CONFIG_HOME/mimeapps.list
     # xdg search all desktop entries from $XDG_DATA_DIRS, check it by command:
     #  echo $XDG_DATA_DIRS
     # the system-level desktop entries can be list by command:
