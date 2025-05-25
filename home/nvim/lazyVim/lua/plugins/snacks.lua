@@ -3,10 +3,10 @@ return {
   ---@type snacks.Config
   opts = {
     explorer = {
-      include = { ".env.local" },
+      include = { ".env*", "gen" },
     },
     picker = {
-      include = { ".env.local" },
+      include = { ".env*", "gen" },
     },
   },
 }

@@ -20,6 +20,9 @@ in {
     isDesktop
     desktop-packages;
 
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    extraPackages = [pkgs.openssh pkgs.git];
+  };
   users.users.${config.username}.extraGroups = ["docker"];
 }

@@ -27,6 +27,11 @@ vim.filetype.add({
   },
   pattern = {
     [".env.*"] = "sh",
+    [".*compose.yml"] = "yaml.docker-compose",
+    [".*compose.yaml"] = "yaml.docker-compose",
+    [".*dockerfile"] = "dockerfile",
+    [".*Dockerfile"] = "dockerfile",
+    [".*Dockerfile.*"] = "dockerfile",
   },
 })
 
