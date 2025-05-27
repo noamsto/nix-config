@@ -189,11 +189,6 @@
     matugen.url = "github:InioX/matugen?ref=v2.4.1";
     walker.url = "github:abenz1267/walker?ref=v0.8.9";
 
-    lix-module = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.92.0-3.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
     catppuccin.url = "github:catppuccin/nix";

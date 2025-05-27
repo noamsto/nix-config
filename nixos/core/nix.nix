@@ -1,20 +1,10 @@
-{
-  pkgs,
-  config,
-  inputs,
-  ...
-}: {
-  imports = [
-    inputs.lix-module.nixosModules.default
-  ];
+{config, ...}: {
   # do garbage collection weekly to keep disk usage low
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
   nix = {
-    package = pkgs.lix;
-
     # To protect nix-shell agains GC (development env)
     settings = {
       keep-outputs = true;
