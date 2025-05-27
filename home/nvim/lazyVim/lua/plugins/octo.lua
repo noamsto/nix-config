@@ -2,6 +2,16 @@ return {
   "pwntester/octo.nvim",
   cmd = "Octo",
   event = { { event = "BufReadCmd", pattern = "octo://*" } },
+  dependencies = {
+    {
+      "nvim-treesitter/nvim-treesitter",
+      opts = function(_, opts)
+        -- Register markdown parser for octo filetype
+        vim.treesitter.language.register("markdown", "octo")
+        return opts
+      end,
+    },
+  },
   opts = function(_, opts)
     opts.enable_builtin = true
     opts.default_to_projects_v2 = true

@@ -1,6 +1,7 @@
 {config, ...}: {
   networking.firewall = {
     enable = true;
+    trustedInterfaces = ["docker0"];
 
     allowedTCPPorts = [
       # Spotify track sync with other devices
