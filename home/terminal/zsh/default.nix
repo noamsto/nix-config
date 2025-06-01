@@ -55,8 +55,12 @@
     ];
 
     initContent = let
+      zshPreOMZ = lib.mkOrder 600 ''
+        DISABLE_MAGIC_FUNCTIONS=true
+      '';
       zshConfig = lib.mkOrder 1000 ''
         unsetopt BEEP
+
         work_aliases=/etc/agenix/work_aliases.zsh
         if [ -f $work_aliases ]; then
           echo "Loading Work Aliases"
@@ -90,7 +94,7 @@
         autoload -Uz compinit && compinit
       '';
     in
-      lib.mkMerge [zshConfig];
+      lib.mkMerge [zshPreOMZ zshConfig];
 
     loginExtra = ''
       export LANG="en_US.UTF-8"

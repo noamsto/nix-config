@@ -26,6 +26,7 @@
     inputs.aicommit2.packages."${pkgs.system}".default
 
     dragon-drop
+    aider-chat-with-playwright
   ];
   work-packages = with pkgs; [
     slack

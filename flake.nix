@@ -211,5 +211,6 @@
     };
 
     impermanence.url = "github:nix-community/impermanence";
+    nix-search-tv.url = "github:3timeslazy/nix-search-tv";
   };
 }

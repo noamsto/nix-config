@@ -9,5 +9,7 @@
     ./fzf
     ./yazi
     ./process_compose
+
+    ./tui.nix
   ];
 }
