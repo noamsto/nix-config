@@ -35,7 +35,6 @@
   desktop-packages = with pkgs; [
     wlr-randr
     gpu-viewer
-    firefox
     wluma
   ];
   laptop-packages = with pkgs; [

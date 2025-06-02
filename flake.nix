@@ -45,7 +45,7 @@
                 email = "noamstolero@gmail.com";
                 hostname = "naspi";
                 desktop.mode = "none";
-                profile.type = "personal";
+                profile = "personal";
               };
             };
           };

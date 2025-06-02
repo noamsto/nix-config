@@ -8,6 +8,7 @@
     ./kde.nix
     ./1password
   ];
+
   services = {
     # Enable flatpak
     flatpak.enable = true;

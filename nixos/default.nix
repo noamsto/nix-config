@@ -3,7 +3,7 @@
     ./core
     ./desktop
     ./packages.nix
-    ./virutalization
+    ./virtualization
     ./xremap
     ./hyprland
   ];

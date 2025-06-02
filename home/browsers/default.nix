@@ -1,7 +1,11 @@
 {pkgs, ...}: {
-  home.packages = with pkgs; [
-    firefox
-  ];
-
-  home.file.".mozilla/native-messaging-hosts/org.kde.plasma.browser_integration.json".source = "${pkgs.kdePackages.plasma-browser-integration}/lib/mozilla/native-messaging-hosts/org.kde.plasma.browser_integration.json";
+  programs.firefox = {
+    enable = true;
+    package = pkgs.firefox.override {
+      # See nixpkgs' firefox/wrapper.nix to check which options you can use
+      nativeMessagingHosts = [
+        pkgs.kdePackages.plasma-browser-integration
+      ];
+    };
+  };
 }
