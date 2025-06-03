@@ -9,6 +9,10 @@
     ./1password
   ];
 
+  programs = {
+    zoom-us.enable = true;
+  };
+
   services = {
     # Enable flatpak
     flatpak.enable = true;

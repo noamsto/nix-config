@@ -15,7 +15,6 @@ in {
     package = inputs.hyprlock.packages.${pkgs.system}.hyprlock;
 
     settings = {
-
       auth = {
         fingerprint.enable = true;
       };

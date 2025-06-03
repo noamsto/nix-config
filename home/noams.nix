@@ -13,24 +13,12 @@
       ./ssh
       ./nvim
       ./ipython
-      ./catppuccin
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
-      ./browsers
-      ./obs-studio
-      ./easyeffects
-      ./vscode
-      ./gtk
-    ]
-    ++ lib.optionals (osConfig.desktop.mode == "kde") [
-      ./plasma-manager
-    ]
-    ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
-      ./hyprland
+      ./desktop
     ]
     ++ lib.optionals (osConfig.profile == "work") [
       ./kubernetes
-      ./zoom
     ];
 
   home = {
