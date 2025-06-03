@@ -27,6 +27,7 @@
 
     dragon-drop
     aider-chat-with-playwright
+    aichat
   ];
   work-packages = with pkgs; [
     slack
