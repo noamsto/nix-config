@@ -6,9 +6,6 @@
         font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
         dpi-aware = "yes";
       };
-      # tweak = {
-      #   grapheme-width-method = "wcswidth";
-      # };
 
       text-bindings = {
         "\\x1b[72;6u" = "Control+Shift+h";

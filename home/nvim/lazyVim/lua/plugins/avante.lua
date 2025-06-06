@@ -9,8 +9,9 @@ return {
     local wk = require("which-key")
     wk.add({ "<leader>a", group = "Avante", mode = { "v", "n" }, icon = { icon = "󰧑", color = "orange" } })
   end,
+
+  build = "make",
   opts = {
-    build = "make",
     provider = "claude",
     selector = {
       provider = "snacks",

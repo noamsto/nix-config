@@ -107,6 +107,10 @@
     fzf = {
       enable = true;
       defaultOptions = ["--height 40%"];
+      fileWidgetOptions = [
+        "--preview '${pkgs.bat}/bin/bat -n --color=always {}'"
+        "--bind 'ctrl-/:change-preview-window(down|hidden|)'"
+      ];
     };
   };
 }
