@@ -38,6 +38,8 @@
 
     chromium
     claude-code
+    postman
+    ngrok
   ];
 in {
   home.packages =

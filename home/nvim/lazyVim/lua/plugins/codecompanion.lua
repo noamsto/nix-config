@@ -1,9 +1,29 @@
 return {
   -- "olimorris/codecompanion.nvim",
   -- dependencies = {
-  --   "nvim-lua/plenary.nvim",
-  --   "nvim-treesitter/nvim-treesitter",
+  --   { "nvim-lua/plenary.nvim", branch = "master" },
   --   "folke/which-key.nvim",
+  --   {
+  --     "nvim-treesitter/nvim-treesitter",
+  --     opts = {
+  --       ensure_installed = {
+  --         "markdown",
+  --         "markdown_inline",
+  --       },
+  --     },
+  --   },
+  --   {
+  --     "HakonHarnes/img-clip.nvim",
+  --     opts = {
+  --       filetypes = {
+  --         codecompanion = {
+  --           prompt_for_file_name = false,
+  --           template = "[Image]($FILE_PATH)",
+  --           use_absolute_path = true,
+  --         },
+  --       },
+  --     },
+  --   },
   -- },
   -- event = "VeryLazy",
   -- config = function(_, opts)
@@ -66,6 +86,16 @@ return {
   --       },
   --       inline = {
   --         adapter = "anthropic",
+  --       },
+  --     },
+  --     extensions = {
+  --       mcphub = {
+  --         callback = "mcphub.extensions.codecompanion",
+  --         opts = {
+  --           make_vars = true,
+  --           make_slash_commands = true,
+  --           show_result_in_chat = true,
+  --         },
   --       },
   --     },
   --   }

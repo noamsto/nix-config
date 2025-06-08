@@ -35,7 +35,7 @@ in {
         upower.enable = true;
         fprintd = {
           enable = true;
-          package = pkgs.stable.fprintd;
+          package = pkgs.fprintd;
         };
       };
 

@@ -4,6 +4,8 @@ return {
   event = "VeryLazy",
   lazy = false,
   version = false,
+
+  build = "make",
   config = function(_, opts)
     require("avante").setup(opts)
     local wk = require("which-key")
