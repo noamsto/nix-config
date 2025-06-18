@@ -15,5 +15,8 @@
     (final: _: {
       matugen = inputs.matugen.packages.${final.system}.default;
     })
+    (final: _: {
+      fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
+    })
   ];
 }

@@ -32,6 +32,7 @@ return {
       ["markdown.mdx"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
       http = { "kulala" },
       yaml = { "prettierd" },
+      go = { "goimports", "gofumpt" },
     },
   },
 }

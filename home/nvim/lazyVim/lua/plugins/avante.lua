@@ -4,15 +4,14 @@ return {
   event = "VeryLazy",
   lazy = false,
   version = false,
-
   build = "make",
+
   config = function(_, opts)
     require("avante").setup(opts)
     local wk = require("which-key")
     wk.add({ "<leader>a", group = "Avante", mode = { "v", "n" }, icon = { icon = "󰧑", color = "orange" } })
   end,
 
-  build = "make",
   opts = {
     provider = "claude",
     selector = {

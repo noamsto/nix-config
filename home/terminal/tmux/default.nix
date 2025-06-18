@@ -25,8 +25,8 @@
     src = pkgs.fetchFromGitHub {
       owner = "joshmedeski";
       repo = "tmux-nerd-font-window-name";
-      rev = "3def0b9c57b16e2c2fe4ec55555f5698444e5cee";
-      sha256 = "13zwb7fdic4h2smb27lhvzynlalmamhnj9hfyfjcbinhzvi5zi1m";
+      rev = "4c9e7a51387d0cead1465a3628244beb790a3c95";
+      sha256 = "sha256-UcfEsq7BqJMeYXtGDNMoi/E+iEnEe9iM2KVoi7ektOE=";
     };
   };
 in {

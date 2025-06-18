@@ -70,6 +70,8 @@
       marksman # Markdown
       hadolint
       uv
+
+      inotify-tools
     ];
   };
 }
