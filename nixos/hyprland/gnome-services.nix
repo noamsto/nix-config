@@ -19,5 +19,5 @@ in
       gvfs.enable = true;
     };
 
-    security.pam.services.login.enableGnomeKeyring = true;
+    security.pam.services.login.enableGnomeKeyring = true; # Enables services.gnome.gcr-ssh-agent.enable
   }

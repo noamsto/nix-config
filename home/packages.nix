@@ -24,7 +24,9 @@
     sublime-merge
 
     inputs.aicommit2.packages."${pkgs.system}".default
-
+    (stable.vectorcode.overridePythonAttrs (oldAttrs: {
+      dependencies = oldAttrs.dependencies ++ oldAttrs.optional-dependencies.mcp;
+    }))
     dragon-drop
     aider-chat-with-playwright
     aichat

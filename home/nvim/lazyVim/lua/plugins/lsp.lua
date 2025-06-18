@@ -42,6 +42,9 @@ return {
       postgres_lsp = {
         mason = false,
       },
+      protols = {
+        enabled = false,
+      },
     },
   },
 }

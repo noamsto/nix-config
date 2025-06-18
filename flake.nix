@@ -97,7 +97,7 @@
   inputs = {
     # Official NixOS package source, using nixos-unstable branch here
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs-fprintd-1_94_2.url = "github:NixOS/nixpkgs/0f56e3221392452f2c38e3ddf2eba03abda6bf47";
 
     systems.url = "github:nix-systems/default-linux";
