@@ -69,7 +69,7 @@
     enable = true;
     enable32Bit = true;
     extraPackages = [
-      pkgs.rocmPackages.clr.icd
+      pkgs.stable.rocmPackages.clr.icd
     ];
   };
 

@@ -135,13 +135,6 @@ in {
           "docker-images" = ["docker run"];
           "git-repos" = ["nvim" "code" "hx" "git clone"];
         };
-
-        keybindings = {
-          # controls which key binding should trigger tv for shell autocomplete
-          smart_autocomplete = "ctrl-t";
-          # controls which keybinding should trigger tv for command history
-          command_history = "ctrl-r";
-        };
       };
     };
   };

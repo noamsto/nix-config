@@ -24,11 +24,8 @@
     sublime-merge
 
     inputs.aicommit2.packages."${pkgs.system}".default
-    (stable.vectorcode.overridePythonAttrs (oldAttrs: {
-      dependencies = oldAttrs.dependencies ++ oldAttrs.optional-dependencies.mcp;
-    }))
     dragon-drop
-    aider-chat-with-playwright
+    stable.aider-chat-with-playwright
     aichat
   ];
   work-packages = with pkgs; [
@@ -42,6 +39,8 @@
     claude-code
     postman
     ngrok
+    devenv
+    vectorcode
   ];
 in {
   home.packages =
