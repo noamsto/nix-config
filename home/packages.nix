@@ -27,6 +27,7 @@
     dragon-drop
     stable.aider-chat-with-playwright
     aichat
+    inputs.self.packages.${pkgs.system}.atlas-pro
   ];
   work-packages = with pkgs; [
     slack
@@ -41,6 +42,7 @@
     ngrok
     devenv
     vectorcode
+    dbeaver-bin
   ];
 in {
   home.packages =

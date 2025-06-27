@@ -45,6 +45,9 @@ return {
       protols = {
         enabled = false,
       },
+      atlas = {
+        mason = false,
+      },
     },
   },
 }

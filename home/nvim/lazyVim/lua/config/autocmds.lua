@@ -21,6 +21,7 @@ vim.api.nvim_create_autocmd("BufEnter", {
 vim.filetype.add({
   filename = {
     [".envrc"] = "sh",
+    ["atlas.hcl"] = "atlas-config",
   },
   extension = {
     ["http"] = "http",
@@ -32,6 +33,14 @@ vim.filetype.add({
     [".*dockerfile"] = "dockerfile",
     [".*Dockerfile"] = "dockerfile",
     [".*Dockerfile.*"] = "dockerfile",
+    [".*/*.my.hcl"] = "atlas-schema-mysql",
+    [".*/*.pg.hcl"] = "atlas-schema-postgresql",
+    [".*/*.lt.hcl"] = "atlas-schema-sqlite",
+    [".*/*.ch.hcl"] = "atlas-schema-clickhouse",
+    [".*/*.ms.hcl"] = "atlas-schema-mssql",
+    [".*/*.rs.hcl"] = "atlas-schema-redshift",
+    [".*/*.test.hcl"] = "atlas-test",
+    [".*/*.plan.hcl"] = "atlas-plan",
   },
 })
 
