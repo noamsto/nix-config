@@ -11,6 +11,7 @@
 
   programs = {
     zoom-us.enable = true;
+    chromium.enable = true;
   };
 
   services = {

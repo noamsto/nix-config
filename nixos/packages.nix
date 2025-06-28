@@ -36,6 +36,7 @@
     wlr-randr
     gpu-viewer
     wluma
+    brave
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon

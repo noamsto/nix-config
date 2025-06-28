@@ -213,5 +213,13 @@
 
     impermanence.url = "github:nix-community/impermanence";
     nix-search-tv.url = "github:3timeslazy/nix-search-tv";
+
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs = {
+        nixpkgs.follows = "hyprland/nixpkgs";
+        systems.follows = "hyprland/systems";
+      };
+    };
   };
 }

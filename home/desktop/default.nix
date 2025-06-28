@@ -18,6 +18,10 @@
   programs = {
     obs-studio.enable = true;
 
+    brave.nativeMessagingHosts = [
+      pkgs.kdePackages.plasma-browser-integration
+    ];
+
     firefox = {
       enable = true;
       package = pkgs.firefox.override {

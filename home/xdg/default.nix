@@ -17,17 +17,17 @@
     cacheHome = config.home.homeDirectory + "/.local/cache";
     systemDirs.data = ["${config.home.homeDirectory}/.local/share/flatpak/exports/share/" "/var/lib/flatpak/exports/share/"];
 
-    # Manage $XDG_CONFIG_HOME/mimeapps.list
+    # NOTE: Manage $XDG_CONFIG_HOME/mimeapps.list
     # xdg search all desktop entries from $XDG_DATA_DIRS, check it by command:
-    #  echo $XDG_DATA_DIRS
     # the system-level desktop entries can be list by command:
+    #  echo $XDG_DATA_DIRS
     #   ls -l /run/current-system/sw/share/applications/
-    # the user-level desktop entries can be list by command(user ryan):
+    # the user-level desktop entries can be list by command(user noams):
     #  ls /etc/profiles/per-user/noams/share/applications/
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["firefox.desktop"];
+        browser = ["brave.desktop"];
       in {
         "application/json" = browser;
         "application/pdf" = "evince.desktop";
