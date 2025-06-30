@@ -33,6 +33,7 @@ vim.filetype.add({
     [".*dockerfile"] = "dockerfile",
     [".*Dockerfile"] = "dockerfile",
     [".*Dockerfile.*"] = "dockerfile",
+    [".*/%.github/workflows/.*%.ya?ml"] = "yaml.github-actions",
     [".*/*.my.hcl"] = "atlas-schema-mysql",
     [".*/*.pg.hcl"] = "atlas-schema-postgresql",
     [".*/*.lt.hcl"] = "atlas-schema-sqlite",

@@ -27,7 +27,7 @@
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["brave.desktop"];
+        browser = ["brave-browser.desktop"];
       in {
         "application/json" = browser;
         "application/pdf" = "evince.desktop";

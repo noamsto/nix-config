@@ -24,11 +24,12 @@
       flake = {
         nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
 
-        installerImages = let
+        # SD Image generation for Raspberry Pi
+        # Build with: nix build .#sdImages.naspi
+        sdImages = let
           nixos = self.nixosConfigurations;
-          mkImage = nixosConfig: nixosConfig.config.system.build.sdImage;
         in {
-          naspi = mkImage nixos.naspi-installer;
+          naspi = nixos.naspi.config.system.build.sdImage;
         };
 
         homeConfigurations = {
@@ -61,12 +62,14 @@
         devShells.default = pkgs.mkShell {
           packages = [
             inputs'.agenix.packages.default
+            inputs'.nixos-anywhere.packages.default
             config.treefmt.build.wrapper
             pkgs.git
             pkgs.vim
             pkgs.nh
             pkgs.nodePackages.prettier
             pkgs.zsh
+            pkgs.nix-output-monitor
           ];
           name = "dots";
           DIRENV_LOG_FORMAT = "";
@@ -201,8 +204,8 @@
     };
 
     # For RPI4
-    raspberry-pi-nix = {
-      url = "github:nix-community/raspberry-pi-nix";
+    nixos-raspberrypi = {
+      url = "github:nvmd/nixos-raspberrypi";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -215,11 +218,13 @@
     nix-search-tv.url = "github:3timeslazy/nix-search-tv";
 
     devenv = {
-      url = "github:cachix/devenv";
-      inputs = {
-        nixpkgs.follows = "hyprland/nixpkgs";
-        systems.follows = "hyprland/systems";
-      };
+      url = "github:cachix/devenv?ref=v1.6.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 }

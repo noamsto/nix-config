@@ -33,6 +33,7 @@ return {
       http = { "kulala" },
       yaml = { "prettierd" },
       go = { "goimports", "gofumpt" },
+      sql = { "sqlfluff" },
     },
   },
 }

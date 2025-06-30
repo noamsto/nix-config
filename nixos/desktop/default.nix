@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }: {
   imports = [
@@ -17,6 +18,14 @@
   services = {
     # Enable flatpak
     flatpak.enable = true;
+    libinput = lib.mkIf (config.machine.type == "laptop") {
+      enable = true;
+      touchpad = {
+        naturalScrolling = true;
+        tapping = true;
+        disableWhileTyping = true;
+      };
+    };
   };
 
   services.xserver = {

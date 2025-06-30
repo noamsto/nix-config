@@ -14,15 +14,14 @@
     specialArgs = {inherit inputs;};
   };
 
-  naspi-nixos = inputs.nixos-raspberrypi.lib.nixosSystem {
+  naspi = nixpkgs.lib.nixosSystem {
+    system = "aarch64-linux";
     modules = [
-      ./naspi-nixos
+      ./naspi
     ];
-    specialArgs = inputs;
+    specialArgs = {inherit inputs;};
   };
 
-  naspi-installer = inputs.nixos-raspberrypi.lib.nixosInstaller {
-    modules = [./naspi-nixos];
-    specialArgs = inputs;
-  };
+  # Note: Using standard nixos-generators for SD image creation
+  # Run: nix build .#nixosConfigurations.naspi.config.system.build.sdImage
 }
