@@ -2,65 +2,125 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## System Management Commands
+## Overview
 
-- `nh os switch` - Rebuild and switch NixOS configuration (preferred method using nix-helper)
-- `update` - Shell alias for `sudo nixos-rebuild switch`
-- `nix flake update` - Update flake inputs to latest versions
-- `treefmt` - Format all code in the repository (alejandra for Nix, black for Python, etc.)
+This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops, servers, Raspberry Pi) and desktop environments (KDE Plasma, Hyprland).
+
+## Development Commands
+
+### Core Development
+```bash
+nix develop              # Enter development shell with all tools
+nix fmt                  # Format all code using alejandra and other formatters
+nix flake check          # Validate flake configuration
+nix flake update         # Update all inputs (equivalent to updating flake.lock)
+```
+
+### System Rebuilds
+```bash
+# Local system rebuild
+sudo nixos-rebuild switch --flake .#<hostname>
+nh os switch .           # Using nh helper (preferred)
+
+# Home Manager only
+home-manager switch --flake .#<config>
+
+# Raspberry Pi deployment
+./scripts/naspi-build-image.sh        # Build SD card image
+./scripts/naspi-deploy.sh             # Deploy to existing naspi.local
+./scripts/naspi-deploy.sh naspi.local install  # Fresh install via nixos-anywhere
+```
+
+### Available Hosts
+- `thinkpad-p14s` - Main laptop configuration
+- `thinkpad-p14s-g5` - Work laptop (G5 generation)  
+- `naspi` - Raspberry Pi 4 NixOS configuration with PWM overlay
+- `naspi-raspbian` - Raspberry Pi with Home Manager only
+
+### Development Tools Available in Shell
+- `agenix` - Secret management and editing
+- `nh` - NixOS helper for easier rebuilds
+- `nixos-anywhere` - Remote NixOS deployment
+- `nom` (nix-output-monitor) - Better build output
+- `prettier` - Code formatting for non-Nix files
+- Pre-commit hooks (alejandra, prettier, shellcheck)
 
 ## Architecture Overview
 
-This is a NixOS configuration using flakes with home-manager integration. The configuration supports multiple machines and profiles:
+### Configuration System
+The repository uses a **modular architecture** with conditional imports based on configuration options:
 
-### Flake Structure
+- **`options.nix`** - Defines custom options that control what gets imported:
+  - `desktop.mode`: "none" | "kde" | "hyprland" 
+  - `machine.type`: "server" | "desktop" | "laptop"
+  - `profile`: "personal" | "work"
 
-- Uses `flake-parts` for organization across x86_64-linux and aarch64-linux
-- Outputs: `nixosConfigurations`, `homeConfigurations`, and `installerImages` for Raspberry Pi
-- Development shell includes tools like `nh`, `agenix`, `treefmt`
+- **Host-specific configurations** in `hosts/` set these options and import base modules
+- **Conditional imports** throughout the codebase based on these options
 
-### Configuration Layers
-
-- **options.nix**: Centralized options system defining `desktop.mode`, `machine.type`, `profile`, user details
-- **nixos/**: System-wide configurations (core, desktop environments, packages, virtualization)
-- **home/**: User-specific configurations conditionally loaded based on `desktop.mode` and `profile`
-- **hosts/**: Host-specific configurations that import base modules
-
-### Conditional Loading Pattern
-
-Configuration modules are conditionally imported based on system options:
-
-```nix
-++ lib.optionals (osConfig.desktop.mode != "none") [./browsers ./obs-studio]
-++ lib.optionals (osConfig.desktop.mode == "kde") [./plasma-manager]
-++ lib.optionals (osConfig.profile == "work") [./kubernetes ./zoom]
+### Directory Structure
+```
+├── flake.nix              # Main flake definition
+├── options.nix            # Custom configuration options
+├── nixos/                 # System-level NixOS modules
+│   ├── core/              # Boot, locale, networking, users
+│   ├── desktop/           # Desktop environments (KDE, SDDM)
+│   └── virtualization/    # Containers, VMs
+├── home/                  # User-level Home Manager modules  
+│   ├── desktop/           # Desktop apps, window managers, themes
+│   ├── terminal/          # Shell, terminal multiplexer
+│   ├── nvim/              # Neovim configuration
+│   └── git/               # Git and related tools
+├── hosts/                 # Per-host configurations
+├── secrets/               # Agenix encrypted secrets
+├── packages/              # Custom package definitions
+└── overlays/              # Nix package overlays
 ```
 
-### Host Configurations
+### Key Design Patterns
 
-- **thinkpad-p14s/thinkpad-p14s-g5**: KDE laptops with work profile
-- **naspi-nixos**: Raspberry Pi server with minimal setup
-- **naspi-raspbian**: Standalone home-manager for Raspbian
+1. **Conditional Module Loading**: Modules check `osConfig` options before enabling features
+2. **Profile-based Packages**: Work vs personal profile determines which packages are installed
+3. **Secret Management**: Uses agenix for encrypted secrets with separate private repository
+4. **Multi-architecture Support**: x86_64-linux and aarch64-linux (for Raspberry Pi)
 
-### Key Features
+## Important Configuration Files
 
-- Multi-desktop support (KDE/Hyprland) with specializations for switching
-- Work/personal profile separation
-- Raspberry Pi 4 support with custom SD card images
-- Catppuccin theming integration
-- Secrets management with agenix
+- **`flake.nix`** - Main configuration with all inputs and outputs
+- **`hosts/nixos_hosts.nix`** - Defines all NixOS system configurations
+- **`home/noams.nix`** - Main Home Manager configuration entry point
+- **`nixos/default.nix`** - System-level module imports and base configuration
 
-## Development Workflow
+## Working with Secrets
 
-1. Make configuration changes in the appropriate module
-2. If a new file is introduced (only new file) stage them so build won't fail
-3. Test with `nh os test` or build with `nh os build` before switching or `nh os build -S` to build without specializations
-4. Apply changes with `nh os switch`
-5. Format code with `treefmt` before committing
+```bash
+agenix -e secrets/<secret_name>.age    # Edit encrypted secret
+agenix -r                              # Rekey all secrets
+```
 
-## Important Files
+Secrets are stored in a separate private repository (`mysecrets` input) and managed via agenix.
 
-- `flake.nix` - Main flake configuration
-- `options.nix` - Global configuration options
-- `hosts/nixos_hosts.nix` - Host definitions mapping
-- `home/noams.nix` - Main user configuration with conditional imports
+## Development Environment Features
+
+- **Pre-commit hooks** automatically format code and run checks
+- **Treefmt integration** for consistent formatting across file types
+- **Development shell** includes all necessary tools for managing the configuration
+- **Multi-host support** with shared base configuration and host-specific overrides
+
+## Testing Changes
+
+1. **Stage relevant changes**: `git add <files>` (unstaged files won't be visible to nix builds!)
+2. Use `nix flake check` to validate configuration
+3. Test builds without switching: `nom build .#nixosConfigurations.<hostname>.config.system.build.toplevel`
+4. For Home Manager: `nom build .#homeConfigurations.<config>.activationPackage`
+5. Use `nh` for system builds: `nh os build .`
+
+**Important**: Nix flakes only see files tracked by git, so stage your changes before testing builds.
+
+## Common Patterns
+
+- **Check `osConfig.profile`** when adding work-specific configurations
+- **Use conditional imports** based on `desktop.mode` for desktop environment features  
+- **Add new packages** to appropriate `packages.nix` files (system vs user level)
+- **Follow existing module structure** when adding new functionality
+- **Test on multiple hosts** when making system-wide changes
