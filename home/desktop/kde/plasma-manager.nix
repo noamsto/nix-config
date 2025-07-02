@@ -59,7 +59,7 @@
                 launchers = [
                   "applications:kdesystemsettings.desktop"
                   "applications:org.kde.dolphin.desktop"
-                  "applications:firefox.desktop"
+                  "applications:brave-browser.desktop"
                   "applications:foot.desktop"
                 ];
                 fill = "false";

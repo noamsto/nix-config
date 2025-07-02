@@ -31,6 +31,8 @@ in {
   # Make xscript available in system packages
   environment.systemPackages = [
     xscript
+    pkgs.bc # Calculator for fan control script
+    pkgs.gpio-utils # GPIO utilities for power management
   ];
 
   # Systemd services for Geekworm X-series expansion boards

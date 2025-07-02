@@ -5,6 +5,7 @@
     ./hardware.nix
     ./system.nix
     ./xscript.nix
+    ../../nixos/core/nice-looking-console.nix
   ];
 
   # Configuration options

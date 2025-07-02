@@ -4,6 +4,11 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  nixpkgs.crossSystem = {
+    config = "aarch64-unknown-linux-gnu";
+    system = "aarch64-linux";
+  };
+
   nix = {
     # To protect nix-shell agains GC (development env)
     settings = {
@@ -37,13 +42,11 @@
         "walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="
       ];
 
-      # nix community's cache server
       extra-substituters = [
         "https://nixpkgs-unfree.cachix.org"
         "https://nix-community.cachix.org"
         "https://devenv.cachix.org"
         "https://yazi.cachix.org"
-        "https://nixos-raspberrypi.cachix.org"
       ];
       extra-trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="

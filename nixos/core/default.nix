@@ -12,6 +12,7 @@ in {
     ./bootloader.nix
     ./pc.nix
     ./users.nix
+    ./nice-looking-console.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;

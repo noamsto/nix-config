@@ -2,7 +2,9 @@
   inputs,
   nixpkgs,
   ...
-}: {
+}: let
+  inherit (inputs) nixos-raspberrypi;
+in {
   thinkpad-p14s = nixpkgs.lib.nixosSystem {
     modules = [./thinkpad-p14s];
     specialArgs = {inherit inputs;};
@@ -14,14 +16,16 @@
     specialArgs = {inherit inputs;};
   };
 
-  naspi = nixpkgs.lib.nixosSystem {
+  naspi = nixos-raspberrypi.lib.nixosSystem {
+    specialArgs = {
+      inherit inputs;
+      inherit nixos-raspberrypi;
+    };
     system = "aarch64-linux";
-    modules = [
+    modules = with nixos-raspberrypi.nixosModules; [
+      raspberry-pi-4.base
+      raspberry-pi-4.display-vc4
       ./naspi
     ];
-    specialArgs = {inherit inputs;};
   };
-
-  # Note: Using standard nixos-generators for SD image creation
-  # Run: nix build .#nixosConfigurations.naspi.config.system.build.sdImage
 }

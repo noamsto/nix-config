@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   # Set hostname
   networking.hostName = "naspi";
 
@@ -18,8 +22,11 @@
   # User configuration
   users.users.noams = {
     isNormalUser = true;
-    extraGroups = ["wheel"];
+    extraGroups = ["wheel" "gpio"];
     initialPassword = "nixos";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
+    ];
   };
 
   # Enable sudo without password for wheel group
@@ -30,9 +37,20 @@
     vim
     git
     htop
+    nh
+    nom
   ];
 
   # System configuration
+
+  system.nixos.tags = let
+    cfg = config.boot.loader.raspberryPi;
+  in [
+    "raspberry-pi-${cfg.variant}"
+    cfg.bootloader
+    config.boot.kernelPackages.kernel.version
+  ];
+
   system.stateVersion = "24.05";
   nixpkgs.hostPlatform = "aarch64-linux";
 }

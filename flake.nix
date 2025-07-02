@@ -65,7 +65,6 @@
             inputs'.nixos-anywhere.packages.default
             config.treefmt.build.wrapper
             pkgs.git
-            pkgs.vim
             pkgs.nh
             pkgs.nodePackages.prettier
             pkgs.zsh
@@ -204,10 +203,7 @@
     };
 
     # For RPI4
-    nixos-raspberrypi = {
-      url = "github:nvmd/nixos-raspberrypi";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
