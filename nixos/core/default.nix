@@ -61,6 +61,5 @@ in {
 
   # For RaspberryPi 4 image generating
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
-
   system.stateVersion = "23.05";
 }

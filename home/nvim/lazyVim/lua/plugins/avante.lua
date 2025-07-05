@@ -32,15 +32,15 @@ return {
       }
     end,
     disabled_tools = {
-      "list_files", -- Built-in file operations
-      "search_files",
-      "read_file",
-      "create_file",
-      "rename_file",
-      "delete_file",
-      "create_dir",
-      "rename_dir",
-      "delete_dir",
+      -- "list_files", -- Built-in file operations
+      -- "search_files",
+      -- "read_file",
+      -- "create_file",
+      -- "rename_file",
+      -- "delete_file",
+      -- "create_dir",
+      -- "rename_dir",
+      -- "delete_dir",
       "bash", -- Built-in terminal access
     },
   },

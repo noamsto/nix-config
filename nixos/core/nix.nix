@@ -4,11 +4,6 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  nixpkgs.crossSystem = {
-    config = "aarch64-unknown-linux-gnu";
-    system = "aarch64-linux";
-  };
-
   nix = {
     # To protect nix-shell agains GC (development env)
     settings = {
@@ -27,6 +22,8 @@
       allowed-users = ["@wheel"];
       trusted-users = ["@wheel"];
 
+      download-buffer-size = 64 * 1024 * 1024; # 64 MiB
+
       substituters = [
         # replace official cache with a mirror located in China
         "https://cache.nixos.org"
@@ -40,6 +37,7 @@
         "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
         "walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="
         "walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="
+        "https://nixos-raspberrypi.cachix.org"
       ];
 
       extra-substituters = [
@@ -56,8 +54,5 @@
         "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       ];
     };
-    extraOptions = ''
-      !include ${config.age.secrets.nixAccessTokens.path}
-    '';
   };
 }

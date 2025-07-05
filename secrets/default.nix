@@ -20,4 +20,10 @@
   ];
 
   age.secrets.noams_password.file = "${inputs.mysecrets}/noams_password.age";
+
+  nix = {
+    extraOptions = ''
+      !include ${config.age.secrets.nixAccessTokens.path}
+    '';
+  };
 }

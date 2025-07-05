@@ -22,9 +22,7 @@ in {
       inherit nixos-raspberrypi;
     };
     system = "aarch64-linux";
-    modules = with nixos-raspberrypi.nixosModules; [
-      raspberry-pi-4.base
-      raspberry-pi-4.display-vc4
+    modules = [
       ./naspi
     ];
   };

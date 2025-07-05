@@ -1,6 +1,9 @@
-{pkgs, ...}: {
-  imports = [
+{nixos-raspberrypi, ...}: {
+  imports = with nixos-raspberrypi.nixosModules; [
     ./configtxt.nix
+
+    raspberry-pi-4.base
+    raspberry-pi-4.display-vc4
   ];
   # # Hardware device tree configuration
   hardware.deviceTree = {
@@ -16,18 +19,24 @@
     # ];
   };
 
-  boot.loader = {
-    grub.enable = false;
-    generic-extlinux-compatible.enable = true;
-  };
-
-  boot.initrd.availableKernelModules = ["xhci_pci" "usbhid" "usb_storage"];
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_rpi4;
+  boot.initrd.availableKernelModules = ["xhci_pci" "usbhid" "usb_storage" "nvme"];
   hardware.enableRedistributableFirmware = true;
 
-  # Root filesystem
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/NIXOS_SD";
-    fsType = "ext4";
+  fileSystems = {
+    "/boot/firmware" = {
+      device = "/dev/disk/by-label/FIRMWARE";
+      fsType = "vfat";
+      options = [
+        "noatime"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=1min"
+      ];
+    };
+    "/" = {
+      device = "/dev/disk/by-label/NIXOS_SD";
+      fsType = "ext4";
+      options = ["noatime"];
+    };
   };
 }
