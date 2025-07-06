@@ -4,7 +4,7 @@
   ...
 }: {
   # Set hostname
-  networking.hostName = "naspi";
+  networking.hostName = "naspi-nix";
 
   # Network configuration
   networking.networkmanager.enable = true;
@@ -31,6 +31,14 @@
 
   # Enable sudo without password for wheel group
   security.sudo.wheelNeedsPassword = false;
+
+  # Swap configuration
+  swapDevices = [
+    {
+      device = "/var/swap";
+      size = 2048; # 2GB
+    }
+  ];
 
   # Basic packages
   environment.systemPackages = with pkgs; [

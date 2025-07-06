@@ -1,10 +1,11 @@
-{inputs, ...}: {
+{config, ...}: {
   imports = [
+    # Core configuration
     ../../options.nix
-    "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ./hardware.nix
     ./system.nix
     ./xscript.nix
+    ./disko.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
   ];
@@ -13,4 +14,7 @@
   desktop.mode = "none";
   machine.type = "server";
   profile = "personal";
+
+  # Additional nvmd pattern settings
+  boot.tmp.useTmpfs = true;
 }

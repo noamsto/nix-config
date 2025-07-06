@@ -46,18 +46,12 @@
         ./packages
       ];
 
-      flake = rec {
+      flake = {
         nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
 
-        naspi-img = nixosConfigurations.naspi.config.system.build.sdImage;
-
-        # SD Image generation for Raspberry Pi
-        # Build with: nix build .#sdImages.naspi
-        sdImages = let
-          nixos = self.nixosConfigurations;
-        in {
-          naspi = nixos.naspi.config.system.build.sdImage;
-        };
+        # RPI4 Installer configuration (following nvmd pattern)
+        # Build with: nix build .#rpi4-installer
+        rpi4-installer = self.nixosConfigurations.rpi4-installer.config.system.build.sdImage;
 
         homeConfigurations = {
           naspi-raspbian = home-manager.lib.homeManagerConfiguration {
@@ -110,7 +104,7 @@
 
           programs = {
             alejandra.enable = true;
-            black.enable = true;
+            ruff.enable = true;
             deadnix.enable = false;
             shellcheck.enable = true;
             shfmt = {
@@ -246,6 +240,11 @@
 
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    disko = {
+      url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

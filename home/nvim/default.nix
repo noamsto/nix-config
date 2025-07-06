@@ -2,7 +2,7 @@
   pkgs,
   config,
   lib,
-  inputs,
+  # inputs,
   ...
 }: {
   xdg.configFile = {
@@ -10,7 +10,7 @@
   };
 
   programs.neovim = {
-    package = inputs.neovim-nightly-overlay.packages.${pkgs.system}.default;
+    # package = inputs.neovim-nightly-overlay.packages.${pkgs.system}.default;
 
     extraWrapperArgs = [
       "--suffix"
