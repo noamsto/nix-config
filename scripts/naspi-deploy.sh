@@ -18,12 +18,17 @@ case "$MODE" in
     echo "   • Uses /dev/disk/by-label/FIRMWARE for /boot/firmware"
     echo "   • Uses /dev/disk/by-label/NIXOS_SD for /"
     echo ""
-    
+
     echo "📦 Building and installing NixOS on installer system..."
-    nix run github:nix-community/nixos-anywhere -- \
+    echo "ℹ️  Using nixos-rebuild with nom (not nixos-anywhere) since no disk partitioning needed"
+    nixos-rebuild boot \
       --flake ".#naspi-installer-target" \
-      --build-on-remote \
-      "nixos@$HOSTNAME"
+      --target-host "nixos@$HOSTNAME" \
+      --build-host "nixos@$HOSTNAME" \
+      --use-remote-sudo |& nom
+
+    echo "🔄 Configuration built and set as boot default. Reboot required to activate:"
+    echo "   ssh nixos@$HOSTNAME sudo reboot"
   else
     echo "⚠️  FRESH INSTALL MODE with DISKO - This will wipe and repartition the target system!"
     echo "🎯 Disko will create:"
@@ -36,8 +41,8 @@ case "$MODE" in
     read -r
 
     echo "📦 Building and installing NixOS with disko partitioning..."
-    nix run github:nix-community/nixos-anywhere -- \
-      --flake ".#naspi" \
+    nix run --add-root ./result-nixos-anywhere --indirect github:nix-community/nixos-anywhere -- \
+      --flake .#naspi \
       --build-on-remote \
       "noams@$HOSTNAME"
   fi
@@ -46,16 +51,15 @@ case "$MODE" in
   echo "🔄 Updating existing NixOS system..."
   echo "ℹ️  This assumes the system was already installed with disko partitioning"
 
-  # Build the configuration locally first
-  echo "📦 Building configuration locally..."
-  nom build ".#nixosConfigurations.naspi.config.system.build.toplevel" --out-link result-naspi
-
-  # Use regular nixos-rebuild for updates (no repartitioning)
-  echo "🔄 Switching configuration via SSH..."
-  nix run nixpkgs#nixos-rebuild -- switch \
+  echo "🔄 Switching configuration via SSH using nixos-rebuild with nom..."
+  nixos-rebuild boot \
     --flake ".#naspi" \
     --target-host "noams@$HOSTNAME" \
-    --build-host "noams@$HOSTNAME"
+    --build-host "noams@$HOSTNAME" \
+    --use-remote-sudo |& nom
+
+  echo "🔄 Configuration built and set as boot default. Reboot required to activate:"
+  echo "   ssh noams@$HOSTNAME sudo reboot"
   ;;
 "disko-install")
   echo "🔧 DISKO INSTALL MODE - Fresh installation using disko-install"
@@ -64,7 +68,7 @@ case "$MODE" in
   read -r
 
   echo "📦 Running disko-install..."
-  nix run github:nix-community/disko#disko-install -- \
+  nix run --add-root ./result-disko-install --indirect github:nix-community/disko#disko-install -- \
     --flake ".#naspi" \
     --disk main /dev/mmcblk0 \
     "nixos@$HOSTNAME"

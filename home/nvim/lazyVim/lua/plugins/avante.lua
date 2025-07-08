@@ -16,38 +16,32 @@ return {
     provider = "claude",
     selector = {
       provider = "snacks",
+      exclude_auto_select = { "NvimTree", "neo-tree" },
     },
-    behaviour = {
-      enable_claude_text_editor_tool_mode = true,
+    windows = {
+      width = 35, -- Wider sidebar (default is 30)
+      input = {
+        height = 12, -- Larger input section
+      },
+      sidebar_header = {
+        enabled = true,
+        align = "center",
+        rounded = true,
+      },
     },
-    -- The system_prompt type supports both a string and a function that returns a string. Using a function here allows dynamically updating the prompt with mcphub
     system_prompt = function()
       local hub = require("mcphub").get_hub_instance()
       return hub and hub:get_active_servers_prompt() or ""
     end,
-    -- The custom_tools type supports both a list and a function that returns a list. Using a function here prevents requiring mcphub before it's loaded
     custom_tools = function()
       return {
         require("mcphub.extensions.avante").mcp_tool(),
       }
     end,
-    disabled_tools = {
-      -- "list_files", -- Built-in file operations
-      -- "search_files",
-      -- "read_file",
-      -- "create_file",
-      -- "rename_file",
-      -- "delete_file",
-      -- "create_dir",
-      -- "rename_dir",
-      -- "delete_dir",
-      "bash", -- Built-in terminal access
-    },
   },
 
   dependencies = {
     "nvim-treesitter/nvim-treesitter",
-    "stevearc/dressing.nvim",
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
     --- The below dependencies are optional,

@@ -11,7 +11,7 @@
   hardware.raspberry-pi.config = {
     all = {
       dt-overlays = {
-        pwm-2chan = {
+        pwm-fan = {
           enable = true;
           params = {};
         };

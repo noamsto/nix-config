@@ -26,6 +26,7 @@ in {
     modules = [
       ./naspi
       inputs.disko.nixosModules.disko
+      ./naspi/disko.nix
     ];
   };
 

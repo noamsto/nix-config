@@ -25,7 +25,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 nh os switch .           # Using nh helper (preferred)
 
 # Home Manager only
-home-manager switch --flake .#<config>
+nix run home-manager/master -- switch --flake .#<config>
 
 # Raspberry Pi deployment
 ./scripts/build-rpi4-installer.sh              # Build minimal installer image
