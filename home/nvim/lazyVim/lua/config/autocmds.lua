@@ -42,6 +42,7 @@ vim.filetype.add({
     [".*/*.rs.hcl"] = "atlas-schema-redshift",
     [".*/*.test.hcl"] = "atlas-test",
     [".*/*.plan.hcl"] = "atlas-plan",
+    [".*/hyprland%.conf"] = "hyprlang",
   },
 })
 

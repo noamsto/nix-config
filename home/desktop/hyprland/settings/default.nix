@@ -1,16 +1,8 @@
-{
-  pkgs,
-  config,
-  ...
-}: let
+{config, ...}: let
   pointer = config.home.pointerCursor;
   cursorName = "Bibata-Modern-Ice";
-  # cursorPackage = pkgs.callPackage ./../bibata-hyprcursor {}; # Move to flake parts for this!
-  variant = "dark";
-  c = config.programs.matugen.theme.colors.${variant};
 in {
-  imports = [./bindings.nix ./window_rule.nix];
-  # xdg.dataFile."icons/${cursorName}".source = "${cursorPackage}/share/icons/${cursorName}";
+  imports = [./bindings.nix ./window_rule.nix ./animations.nix];
   wayland.windowManager.hyprland = {
     settings = {
       monitor = [
@@ -29,9 +21,14 @@ in {
       ];
 
       env = [
+        "XCURSOR_SIZE,${toString pointer.size}"
+        "HYPRCURSOR_SIZE,${toString pointer.size}"
         "QT_WAYLAND_DISABLE_WINDOWDECORATION,1"
         "HYPRCURSOR_THEME,${cursorName}"
-        "HYPRCURSOR_SIZE,${toString pointer.size}"
+        "XDG_CURRENT_DESKTOP,Hyprland"
+        "XDG_SESSION_TYPE,wayland"
+        "XDG_SESSION_DESKTOP,Hyprland"
+        "MOZ_ENABLE_WAYLAND,1"
       ];
 
       exec-once = [
@@ -46,7 +43,7 @@ in {
 
         "hyprpanel"
         "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
-        ""
+        "nm-applet &"
       ];
 
       input = {
@@ -55,7 +52,14 @@ in {
         # focus change on cursor move
         follow_mouse = 1;
         accel_profile = "flat";
-        touchpad.scroll_factor = 0.1;
+        sensitivity = 0;
+
+        touchpad = {
+          natural_scroll = true;
+          scroll_factor = 0.1;
+          disable_while_typing = true;
+          "tap-to-click" = true;
+        };
       };
 
       general = {
@@ -67,10 +71,15 @@ in {
 
         allow_tearing = true;
         resize_on_border = true;
+        no_focus_fallback = true;
+        layout = "dwindle";
       };
 
       decoration = {
         rounding = 16;
+        active_opacity = 1.0;
+        inactive_opacity = 1.0;
+
         blur = {
           enabled = true;
           brightness = 1.0;
@@ -80,8 +89,8 @@ in {
           vibrancy = 0.2;
           vibrancy_darkness = 0.5;
 
-          passes = 4;
-          size = 7;
+          passes = 3;
+          size = 6;
 
           popups = true;
           popups_ignorealpha = 0.2;
@@ -101,6 +110,11 @@ in {
         # keep floating dimensions while tiling
         pseudotile = true;
         preserve_split = true;
+        smart_split = true;
+      };
+
+      master = {
+        new_status = "slave";
       };
 
       misc = {
@@ -108,14 +122,19 @@ in {
         disable_autoreload = true;
 
         force_default_wallpaper = 0;
+        disable_hyprland_logo = false;
 
         # disable dragging animation
         animate_mouse_windowdragging = false;
 
         # enable variable refresh rate (effective depending on hardware)
         vrr = 1;
+        vfr = true;
       };
-      render.direct_scanout = true;
+      render = {
+        direct_scanout = true;
+        explicit_sync = 1;
+      };
 
       # touchpad gestures
       gestures = {
@@ -134,9 +153,9 @@ in {
           # order is right-to-left
           hyprbars-button = [
             # close
-            "rgb(${c.error}), 16, 󰖭, hyprctl dispatch killactive"
+            "rgb(ff5555), 16, 󰖭, hyprctl dispatch killactive"
             # maximize
-            "rgb(${c.primary}), 16, 󰖯, hyprctl dispatch fullscreen 1"
+            "rgb(50fa7b), 16, 󰖯, hyprctl dispatch fullscreen 1"
           ];
         };
 

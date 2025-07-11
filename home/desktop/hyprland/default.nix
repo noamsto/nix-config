@@ -2,17 +2,15 @@
   pkgs,
   lib,
   inputs,
+  config,
   ...
 }: let
   # variant = "dark";
-  # c = config.programs.matugen.theme.colors.colors.${variant};
   toggle = program: service: let
     prog = builtins.substring 0 14 program;
     runserv = lib.optionalString service "run-as-service";
   in "pkill ${prog} || ${runserv} ${program}";
 in {
-  # xdg.configFile."hypr/hyprland.conf".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/hyprland/hyprland.conf";
-
   imports = [
     inputs.hyprland.homeManagerModules.default
 
@@ -21,15 +19,9 @@ in {
     ./terminal
     ./services
     # ./xdg.nix
-    ./pywal
-    ./settings
-    ./matugen.nix
     ./utils
-    # ./hyprpanel
+    ./settings
   ];
-
-  # Theme related
-  wal.enable = false;
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -51,7 +43,6 @@ in {
     playerctl
     papirus-icon-theme
     bibata-cursors
-    # (callPackage ./bibata-hyprcursor {})
     kdePackages.dolphin
     xfce.thunar
 

@@ -223,8 +223,9 @@
         nixpkgs.follows = "hyprland/nixpkgs";
       };
     };
-    matugen.url = "github:InioX/matugen?ref=v2.4.1";
-    walker.url = "github:abenz1267/walker?ref=v0.8.9";
+    walker = {
+      url = "github:abenz1267/walker";
+    };
 
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
 
