@@ -59,6 +59,6 @@
     config.boot.kernelPackages.kernel.version
   ];
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "25.05";
   nixpkgs.hostPlatform = "aarch64-linux";
 }

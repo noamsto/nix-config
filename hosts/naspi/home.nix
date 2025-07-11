@@ -14,7 +14,7 @@
 
   home.username = osConfig.username;
   home.homeDirectory = "/home/${osConfig.username}";
-  home.stateVersion = "23.11";
+  home.stateVersion = "25.05";
 
   home.sessionVariables = {
     FLAKE = "/home/noams/nix-config";
