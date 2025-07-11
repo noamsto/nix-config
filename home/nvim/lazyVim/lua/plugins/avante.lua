@@ -14,6 +14,15 @@ return {
 
   opts = {
     provider = "claude",
+    providers = {
+      claude = {
+        endpoint = "https://api.anthropic.com",
+        model = "claude-sonnet-4-20250514",
+        extra_request_body = {
+          max_tokens = 64000,
+        },
+      },
+    },
     selector = {
       provider = "snacks",
       exclude_auto_select = { "NvimTree", "neo-tree" },

@@ -32,6 +32,10 @@ nix run home-manager/master -- switch --flake .#<config>
 ./scripts/naspi-deploy.sh naspi.local switch   # Update existing system
 ./scripts/naspi-deploy.sh naspi.local install  # Fresh install with disko (repartitions)
 ./scripts/naspi-deploy.sh rpi4-installer.local install  # Deploy to installer (no repartitioning)
+
+# Standard RPi4 image (NixOS wiki approach)
+nix build .#rpi4-standard-image                # Build standard RPi4 SD image
+sudo nixos-rebuild switch --flake .#rpi4-standard --target-host user@rpi4.local  # Deploy to existing system
 ```
 
 ### Available Hosts
@@ -41,6 +45,7 @@ nix run home-manager/master -- switch --flake .#<config>
 - `naspi` - Raspberry Pi 4 runtime configuration with disko partitioning
 - `naspi-installer-target` - Raspberry Pi 4 for deployment to installer systems
 - `rpi4-installer` - Minimal RPi4 installer image
+- `rpi4-standard` - Standard RPi4 configuration using NixOS wiki approach
 - `naspi-raspbian` - Raspberry Pi with Home Manager only
 
 ### Development Tools Available in Shell

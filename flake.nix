@@ -64,6 +64,17 @@
           format = "sd-aarch64-installer";
         };
 
+        # Standard RPI4 Image using nixos-generators (NixOS wiki approach)
+        # Build with: nix build .#rpi4-standard-image
+        rpi4-standard-image = inputs.nixos-generators.nixosGenerate {
+          system = "aarch64-linux";
+          specialArgs = {inherit inputs;};
+          modules = [
+            ./hosts/rpi4-standard
+          ];
+          format = "sd-aarch64";
+        };
+
         homeConfigurations = {
           naspi-raspbian = home-manager.lib.homeManagerConfiguration {
             pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
@@ -258,5 +269,7 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    claude-code.url = "github:sadjow/claude-code-nix";
   };
 }

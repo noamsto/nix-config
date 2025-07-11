@@ -3,6 +3,7 @@
   nixpkgs.overlays = [
     inputs.hyprpanel.overlay
     inputs.yazi.overlays.default
+    inputs.claude-code.overlays.default
 
     (final: _: {
       stable = import inputs.nixpkgs-stable {

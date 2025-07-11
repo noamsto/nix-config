@@ -65,4 +65,13 @@ in {
       ./rpi4-installer
     ];
   };
+
+  # Standard RPI4 configuration using NixOS wiki approach
+  rpi4-standard = nixpkgs.lib.nixosSystem {
+    system = "aarch64-linux";
+    specialArgs = {inherit inputs;};
+    modules = [
+      ./rpi4-standard
+    ];
+  };
 }
