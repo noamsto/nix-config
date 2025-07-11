@@ -2,7 +2,7 @@
 from pygments.styles import get_style_by_name
 from pygments.util import ClassNotFound
 
-c = get_config()  # type: ignore[name-defined]
+c = get_config()  # type: ignore[name-defined] # noqa: F821
 
 c.InteractiveShell.confirm_exit = False
 c.InteractiveShell.separate_in = ""

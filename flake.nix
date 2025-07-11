@@ -55,17 +55,6 @@
         # Build with: nix build .#rpi4-installer
         rpi4-installer = self.nixosConfigurations.rpi4-installer.config.system.build.sdImage;
 
-        # RPI4 Image configuration with PWM fan overlay
-        # Build with: nix build .#rpi4-image
-        rpi4-image = inputs.nixos-generators.nixosGenerate {
-          system = "aarch64-linux";
-          specialArgs = {inherit inputs;};
-          modules = [
-            ./hosts/rpi4-image
-          ];
-          format = "sd-aarch64-installer";
-        };
-
         # Standard RPI4 Image using nixos-generators (NixOS wiki approach)
         # Build with: nix build .#rpi4-standard-image
         rpi4-standard-image = inputs.nixos-generators.nixosGenerate {
