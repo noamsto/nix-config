@@ -1,8 +1,4 @@
-{
-  lib,
-  inputs,
-  ...
-}: {
+{inputs, ...}: {
   imports = [
     ./hardware-configuration.nix
     ./system.nix
@@ -11,7 +7,6 @@
     ../../nixos/core/locale.nix
     ../../nixos/core/networking.nix
     ../../nixos/core/nix.nix
-    ../../nixos/core/nice-looking-console.nix
     # Import nixos-hardware for RPi4 support
     inputs.nixos-hardware.nixosModules.raspberry-pi-4
   ];

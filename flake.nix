@@ -12,6 +12,7 @@
       "https://devenv.cachix.org"
       "https://yazi.cachix.org"
       "https://nixos-raspberrypi.cachix.org"
+      "https://claude-code.cachix.org"
     ];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -23,6 +24,7 @@
       "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
       "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+      "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
     ];
   };
 
@@ -70,7 +72,7 @@
           system = "aarch64-linux";
           specialArgs = {inherit inputs;};
           modules = [
-            ./hosts/rpi4-standard
+            ./hosts/rpi4-standard/image.nix
           ];
           format = "sd-aarch64";
         };

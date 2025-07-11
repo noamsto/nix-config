@@ -1,9 +1,12 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{lib, ...}: {
+  # Workaround for missing kernel modules issue on RPi4
+  # See: https://github.com/NixOS/nixpkgs/issues/154163
+  nixpkgs.overlays = [
+    (final: super: {
+      makeModulesClosure = x:
+        super.makeModulesClosure (x // {allowMissing = true;});
+    })
+  ];
   # Hardware-specific configuration for Raspberry Pi 4
   hardware = {
     raspberry-pi."4" = {
@@ -13,8 +16,6 @@
 
     deviceTree = {
       enable = true;
-      filter = lib.mkDefault "*rpi-4-*.dtb";
-
       # Enable PWM overlay for pins 18,19
       overlays = [
         {
@@ -23,9 +24,6 @@
         }
       ];
     };
-
-    # Enable redistributable firmware
-    enableRedistributableFirmware = true;
   };
 
   # Boot configuration for RPi4
@@ -38,12 +36,6 @@
       "snd_bcm2835.enable_hdmi=1"
       "snd_bcm2835.enable_headphones=1"
     ];
-
-    # Boot loader configuration for RPi4
-    loader = {
-      grub.enable = false;
-      generic-extlinux-compatible.enable = true;
-    };
   };
 
   # File systems - standard layout for RPi4
@@ -53,7 +45,7 @@
     options = ["noatime"];
   };
 
-  fileSystems."/boot" = {
+  fileSystems."/boot/firmware" = {
     device = "/dev/disk/by-label/FIRMWARE";
     fsType = "vfat";
     options = ["noatime"];
@@ -64,12 +56,6 @@
     enable = true;
     algorithm = "zstd";
     memoryPercent = 25;
-  };
-
-  # SD Image configuration
-  sdImage = {
-    firmwareSize = 64; # MB - increase from default 30MB for RPi4 firmware + dtoverlays
-    expandOnBoot = true; # Auto-expand root partition (default)
   };
 
   # Platform specification
