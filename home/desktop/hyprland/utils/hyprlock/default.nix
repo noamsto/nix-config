@@ -3,7 +3,7 @@
   pkgs,
   ...
 }: let
-  font_family = "Ubuntu Nerd Font";
+  font_family = "Inter Nerd Font";
 
   # Define sensible colors for dark theme
   colors = {

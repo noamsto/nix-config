@@ -50,6 +50,7 @@ return {
       },
       qmlls = {
         mason = false,
+        cmd = { "qmlls", "-E" },
       },
     },
   },

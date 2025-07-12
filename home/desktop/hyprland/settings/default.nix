@@ -59,7 +59,7 @@ in {
 
         touchpad = {
           natural_scroll = true;
-          scroll_factor = 0.1;
+          scroll_factor = 1.0;
           disable_while_typing = true;
           "tap-to-click" = true;
         };

@@ -15,7 +15,7 @@
   ];
 
   hostname = "thinkpad-p14s";
-  desktop.mode = lib.mkDefault "kde";
+  desktop.mode = lib.mkDefault "hyprland";
   machine.type = "laptop";
 
   environment.shellAliases = {

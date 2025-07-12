@@ -44,17 +44,8 @@
   xdg.portal.enable = true;
 
   specialisation = {
-    hypr.configuration = {
-      desktop.mode = "hyprland";
-      services.displayManager = {
-        autoLogin.enable = true;
-        autoLogin.user = config.username;
-        sddm = {
-          package = pkgs.kdePackages.sddm;
-          wayland.compositor = "kwin";
-          extraPackages = [pkgs.kdePackages.qt5compat];
-        };
-      };
+    kde.configuration = {
+      desktop.mode = "kde";
     };
   };
 

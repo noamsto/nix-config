@@ -7,7 +7,7 @@
   isDesktop = config.desktop.mode != "none";
   isHypr = config.desktop.mode == "hyprland";
 in
-  lib.mkIf isDesktop {
+  lib.mkIf (isDesktop && !isHypr) {
     # install theme and cursor
     environment.systemPackages = with pkgs; [
       xsettingsd

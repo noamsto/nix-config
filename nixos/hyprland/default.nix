@@ -16,6 +16,17 @@ in {
       portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
     };
 
+    services.greetd = {
+      enable = true;
+      settings = rec {
+        initial_session = {
+          command = "Hyprland";
+          user = config.username;
+        };
+        default_session = initial_session;
+      };
+    };
+
     services.blueman.enable = true;
 
     security.pam.services.hyprlock = {};
@@ -28,9 +39,11 @@ in {
 
       # QML Language Server for development
       kdePackages.qttools # Provides qmlls
-      #
+      kdePackages.qtdeclarative
+
       # Quickshell for QML-based desktop shell
       inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
+
       # Quickshell recommended packages for full functionality
       qt6.qtsvg # SVG image loading support
       qt6.qtimageformats # WEBP and less common image formats

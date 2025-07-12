@@ -12,9 +12,6 @@
 
   # QML development tools for QuickShell development
   home.packages = with pkgs; [
-    # Additional QML development tools
-    kdePackages.qttools # Provides qml, qmlformat, qmlimportscanner
-
     # Shell/Desktop environment
     hyprland-qtutils
   ];

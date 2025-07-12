@@ -10,7 +10,7 @@
   ];
 
   hostname = "thinkpad-p14s-g5";
-  desktop.mode = lib.mkDefault "kde";
+  desktop.mode = lib.mkDefault "hyprland";
   machine.type = "laptop";
   email = "noam@factify.com";
   profile = "work";

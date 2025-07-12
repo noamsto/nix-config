@@ -28,9 +28,6 @@
     stable.aider-chat-with-playwright
     aichat
     inputs.self.packages.${pkgs.system}.atlas-pro
-
-    # Shell/Desktop Environment
-    quickshell
   ];
   work-packages = with pkgs; [
     slack

@@ -51,9 +51,6 @@
       go
       zig
 
-      kdePackages.qtdeclarative
-      kdePackages.qttools
-
       # DB
       sqlite
 
