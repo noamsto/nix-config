@@ -10,6 +10,7 @@ in {
   imports = [./gnome-services.nix];
   config = lib.mkIf isHypr {
     programs.hyprland = {
+      withUWSM = true;
       enable = true;
       package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
@@ -17,13 +18,24 @@ in {
 
     services.blueman.enable = true;
 
+    security.pam.services.hyprlock = {};
+
     # smooth backlight control
     hardware.brillo.enable = true;
 
-    security.pam.services.hyprlock.text = "auth include login";
-
     environment.systemPackages = with pkgs; [
       pavucontrol
+
+      # QML Language Server for development
+      kdePackages.qttools # Provides qmlls
+      #
+      # Quickshell for QML-based desktop shell
+      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # Quickshell recommended packages for full functionality
+      qt6.qtsvg # SVG image loading support
+      qt6.qtimageformats # WEBP and less common image formats
+      qt6.qtmultimedia # Video/audio support
+      qt6.qt5compat # Visual effects (gaussian blur)
     ];
   };
 }

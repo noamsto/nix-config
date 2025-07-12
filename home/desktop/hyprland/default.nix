@@ -21,6 +21,7 @@ in {
     # ./xdg.nix
     ./utils
     ./settings
+    ./quickshell
   ];
 
   wayland.windowManager.hyprland = {
@@ -29,14 +30,7 @@ in {
       hyprbars
       hyprexpo
     ];
-
-    systemd = {
-      variables = ["--all"];
-      extraCommands = [
-        "systemctl --user stop graphical-session.target"
-        "systemctl --user start hyprland-session.target"
-      ];
-    };
+    systemd.enable = false;
   };
 
   home.packages = with pkgs; [

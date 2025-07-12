@@ -21,7 +21,11 @@ in {
 
     settings = {
       auth = {
-        fingerprint.enable = true;
+        fingerprint = {
+          enable = true;
+          ready_msg = "Touch the fingerprint reader";
+          present_msg = "Touch the fingerprint reader";
+        };
       };
       general = {
         disable_loading_bar = true;

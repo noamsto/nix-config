@@ -15,6 +15,13 @@
     chromium.enable = true;
   };
 
+  # Enable Qt system-wide for proper QML module resolution
+  qt = {
+    enable = true;
+    platformTheme = "gnome";
+    style = "adwaita-dark";
+  };
+
   services = {
     # Enable flatpak
     flatpak.enable = true;

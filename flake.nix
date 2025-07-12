@@ -217,14 +217,13 @@
       inputs.nixpkgs.follows = "hyprland/nixpkgs";
     };
 
-    hyprpanel = {
-      url = "github:Jas-SinghFSU/HyprPanel";
-      inputs = {
-        nixpkgs.follows = "hyprland/nixpkgs";
-      };
-    };
     walker = {
       url = "github:abenz1267/walker";
+    };
+
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
@@ -246,11 +245,6 @@
     };
 
     nix-search-tv.url = "github:3timeslazy/nix-search-tv";
-
-    devenv = {
-      url = "github:cachix/devenv?ref=v1.6.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";

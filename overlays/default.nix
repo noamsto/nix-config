@@ -1,7 +1,6 @@
 # ./overlays/default.nix
 {inputs, ...}: {
   nixpkgs.overlays = [
-    inputs.hyprpanel.overlay
     inputs.yazi.overlays.default
     inputs.claude-code.overlays.default
 
@@ -15,10 +14,6 @@
 
     (final: _: {
       fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
-    })
-
-    (final: _: {
-      devenv = inputs.devenv.packages.${final.system}.default;
     })
   ];
 }

@@ -1,7 +1,7 @@
 {lib, ...}: let
   terminal = "foot";
   fileManager = "thunar";
-  browser = "firefox";
+  browser = "brave";
 
   toggle = program: service: let
     prog = builtins.substring 0 14 program;

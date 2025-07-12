@@ -1,0 +1,8 @@
+import Quickshell
+import QtQuick
+
+ShellRoot {
+    id: root
+
+    BarWindow {}
+}

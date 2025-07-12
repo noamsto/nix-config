@@ -32,18 +32,21 @@ in {
       ];
 
       exec-once = [
+        # start hyprlock first to handle authentication properly
+        "hyprlock"
+
+        # start quickshell for shell interface (kill existing first)
+        "pkill quickshell || true; sleep 0.5; quickshell"
+
         # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
-        "hyprlock"
 
         # Tmux wayland integration
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
-        "hyprpanel"
         "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
-        "nm-applet &"
       ];
 
       input = {
@@ -109,8 +112,6 @@ in {
       dwindle = {
         # keep floating dimensions while tiling
         pseudotile = true;
-        preserve_split = true;
-        smart_split = true;
       };
 
       master = {
@@ -133,7 +134,6 @@ in {
       };
       render = {
         direct_scanout = true;
-        explicit_sync = 1;
       };
 
       # touchpad gestures

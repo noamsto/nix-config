@@ -48,6 +48,9 @@ return {
       atlas = {
         mason = false,
       },
+      qmlls = {
+        mason = false,
+      },
     },
   },
 }
