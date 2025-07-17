@@ -1,14 +1,28 @@
-{lib, ...}: let
-  terminal = "foot";
-  fileManager = "thunar";
-  browser = "brave";
+{
+  lib,
+  pkgs,
+  ...
+}: let
+  terminal = "${lib.getExe pkgs.foot}";
+  fileManager = "${lib.getExe pkgs.xfce.thunar}";
+  browser = "${lib.getExe pkgs.brave}";
+  youtube-music = "${lib.getExe pkgs.youtube-music}";
 
   toggle = program: service: let
     prog = builtins.substring 0 14 program;
     runserv = lib.optionalString service "run-as-service";
   in "pkill ${prog} || ${runserv} ${program}";
 
-  runOnce = program: "pgrep ${program} || ${program}";
+  runOnce = program: let
+    progName = builtins.baseNameOf program;
+    # Always use -f flag for reliable detection across all program types
+  in "pgrep -f ${progName} || ${program}";
+
+  # Kill and restart a program in background with disown
+  restartProgramBackground = program: let
+    progName = builtins.baseNameOf program;
+    # Always use -f flag for reliable detection across all program types
+  in "pkill -f ${progName} || true; sleep 0.5; ${program} & disown";
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
@@ -84,7 +98,7 @@ in {
       "$mainMod, up, resizeactive, 0 -20"
       "$mainMod, down, resizeactive, 0 20"
 
-      ", XF86AudioPlay, exec, ${runOnce "spotify"}"
+      ", XF86AudioPlay, exec, ${runOnce youtube-music}"
 
       "$mainMod, Print, exec, grimblast --notify --cursor copysave output" # copy all active outputs
       "$ALTSHIFT, S, exec, grimblast --notify --cursor copysave screen" # copy active screen

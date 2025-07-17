@@ -1,6 +1,16 @@
-{config, ...}: let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   pointer = config.home.pointerCursor;
   cursorName = "Bibata-Modern-Ice";
+
+  # Import utility functions
+  runOnce = program: let
+    progName = builtins.baseNameOf program;
+  in "pgrep ${progName} || ${program}";
 in {
   imports = [./bindings.nix ./window_rule.nix ./animations.nix];
   wayland.windowManager.hyprland = {
@@ -8,12 +18,12 @@ in {
       monitor = [
         ",preferred,auto,auto"
       ];
-      bindl = [
-        # trigger when the switch is turning on
-        # ", switch:on:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-close"
-        # trigger when the switch is turning off
-        # ", switch:off:Lid Switch, exec, ${lib.getExe' pkgs.kanshi "kanshictl"} switch home-docked-lid-open"
-      ];
+      # bindl = [
+      #   # Lid closes - switch to appropriate lid-close profile
+      #   ", switch:on:Lid Switch, exec, ${lib.getExe pkgs.bash} -c 'monitors=$(hyprctl monitors); if echo \"$monitors\" | grep -q \"Samsung Electric Company S27H85x\"; then kanshictl switch home-docked-lid-close; elif echo \"$monitors\" | grep -q \"Dell Inc. DELL P2723DE\"; then kanshictl switch work-docked-lid-close; else kanshictl switch undocked; fi'"
+      #   # Lid opens - switch to appropriate lid-open profile
+      #   ", switch:off:Lid Switch, exec, ${lib.getExe pkgs.bash} -c 'monitors=$(hyprctl monitors); if echo \"$monitors\" | grep -q \"Samsung Electric Company S27H85x\"; then kanshictl switch home-docked-lid-open; elif echo \"$monitors\" | grep -q \"Dell Inc. DELL P2723DE\"; then kanshictl switch work-docked-lid-open; else kanshictl switch undocked; fi'"
+      # ];
       workspace = [
         "1,persistent:true"
         "2,persistent:true"
@@ -32,11 +42,11 @@ in {
       ];
 
       exec-once = [
-        # start hyprlock first to handle authentication properly
+        # Lock screen immediately on boot (no DM)
         "hyprlock"
 
-        # start quickshell for shell interface (kill existing first)
-        "pkill quickshell || true; sleep 0.5; quickshell"
+        # start quickshell only if not already running (kanshi will manage it afterwards)
+        "${runOnce "${lib.getExe pkgs.quickshell}"}"
 
         # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
@@ -46,7 +56,7 @@ in {
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
-        "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
+        # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];
 
       input = {
@@ -112,6 +122,8 @@ in {
       dwindle = {
         # keep floating dimensions while tiling
         pseudotile = true;
+        # preserve split orientation when toggling
+        preserve_split = true;
       };
 
       master = {

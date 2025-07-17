@@ -16,15 +16,15 @@
 in {
   programs.hyprlock = {
     enable = true;
-
     package = inputs.hyprlock.packages.${pkgs.system}.hyprlock;
 
     settings = {
       auth = {
         fingerprint = {
-          enable = true;
-          ready_msg = "Touch the fingerprint reader";
-          present_msg = "Touch the fingerprint reader";
+          enabled = true;
+          ready_message = "Scan fingerprint to unlock";
+          present_message = "Scanning...";
+          retry_delay = 250; # in milliseconds
         };
       };
       general = {

@@ -38,7 +38,7 @@
 
     chromium
     claude-code
-    postman
+    stable.postman
     ngrok
     dbeaver-bin
   ];

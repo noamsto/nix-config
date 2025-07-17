@@ -13,11 +13,10 @@ in
         gcr
         gnome-settings-daemon
       ];
-
       gnome.gnome-keyring.enable = true;
 
       gvfs.enable = true;
     };
-
-    security.pam.services.login.enableGnomeKeyring = true; # Enables services.gnome.gcr-ssh-agent.enable
+    programs.seahorse.enable = true;
+    security.pam.services.greetd.enableGnomeKeyring = true;
   }

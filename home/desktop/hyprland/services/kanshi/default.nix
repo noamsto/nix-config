@@ -4,17 +4,94 @@
   ...
 }: let
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
+  quickshell = "${lib.getExe pkgs.quickshell}";
+  home-ext-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
+  home-ext-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
+  work-ext-left = "desc:Dell Inc. DELL P2723DE 4C7FH14";
+  work-ext-right = "desc:Dell Inc. DELL P2723DE CC7FH14";
+
+  # Kill and restart a program in background with disown (suppress output)
+  restartProgramBackground = program: let
+    progName = builtins.baseNameOf program;
+  in "pkill ${progName} || true; sleep 0.5; ${program} >/dev/null 2>&1 & disown";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
+    # Move quickshell to laptop screen when undocked
+    ${restartProgramBackground quickshell}
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
-    ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
-    ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
-    ${hyprctl} dispatch moveworkspacetomonitor 3 eDP-1
+    # Left monitor (DP-8): workspaces 1-4
+    ${hyprctl} dispatch moveworkspacetomonitor 1 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 2 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 3 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 4 ${home-ext-left}
+    # Right monitor (DP-7): workspaces 5-8
+    ${hyprctl} dispatch moveworkspacetomonitor 5 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
+    # Laptop screen: workspaces 9-10
+    ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
+    ${hyprctl} dispatch moveworkspacetomonitor 10 eDP-1
+    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
+    pkill quickshell || true
+    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
+    ${hyprctl} dispatch focusmonitor ${home-ext-left}
+    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
-    ${hyprctl} dispatch moveworkspacetomonitor 1 desc:Samsung Electric Company S27H85x H4ZM300138
-    ${hyprctl} dispatch moveworkspacetomonitor 2 desc:Samsung Electric Company S27H85x H4ZKB00167
+    # Left monitor (ext left): workspaces 1-4
+    ${hyprctl} dispatch moveworkspacetomonitor 1 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 2 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 3 ${home-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 4 ${home-ext-left}
+    # Right monitor (ext right): workspaces 5-8
+    ${hyprctl} dispatch moveworkspacetomonitor 5 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
+    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
+    pkill quickshell || true
+    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
+    ${hyprctl} dispatch focusmonitor ${home-ext-left}
+    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
+  '';
+  work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
+    # Left monitor (work left): workspaces 1-4
+    ${hyprctl} dispatch moveworkspacetomonitor 1 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 2 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 3 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 4 ${work-ext-left}
+    # Right monitor (work right): workspaces 5-8
+    ${hyprctl} dispatch moveworkspacetomonitor 5 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right}
+    # Laptop screen: workspaces 9-10
+    ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
+    ${hyprctl} dispatch moveworkspacetomonitor 10 eDP-1
+    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
+    pkill quickshell || true
+    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
+    ${hyprctl} dispatch focusmonitor ${work-ext-left}
+    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
+  '';
+  work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
+    # Left monitor (work left): workspaces 1-4
+    ${hyprctl} dispatch moveworkspacetomonitor 1 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 2 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 3 ${work-ext-left}
+    ${hyprctl} dispatch moveworkspacetomonitor 4 ${work-ext-left}
+    # Right monitor (work right): workspaces 5-8
+    ${hyprctl} dispatch moveworkspacetomonitor 5 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right}
+    ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right}
+    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
+    pkill quickshell || true
+    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
+    ${hyprctl} dispatch focusmonitor ${work-ext-left}
+    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
 in {
   home.packages = [pkgs.kanshi];
@@ -23,12 +100,11 @@ in {
     kanshi-lid-profile.enable = true;
     kanshi = {
       enable = true;
-      systemdTarget = "hyprland-session.target";
       settings = [
         {
           output = {
             criteria = "eDP-1";
-            mode = "2880x1800@90.0";
+            mode = "2880x1800@120.00000";
             scale = 2.0;
           };
         }
@@ -55,20 +131,20 @@ in {
                 criteria = "Samsung Electric Company S27H85x H4ZM300138";
                 mode = "2560x1440@59.95100";
                 position = "0,0";
-                scale = 1.25;
+                scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
                 mode = "2560x1440@59.95100";
-                position = "2048,0";
-                scale = 1.25;
+                position = "2560,0";
+                scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "eDP-1";
                 status = "enable";
-                position = "2048,1152";
+                position = "2560,1440";
               }
             ];
             exec = [
@@ -84,14 +160,14 @@ in {
                 criteria = "Samsung Electric Company S27H85x H4ZM300138";
                 mode = "2560x1440@59.95100";
                 position = "0,0";
-                scale = 1.25;
+                scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
                 mode = "2560x1440@59.95100";
-                position = "2048,0";
-                scale = 1.25;
+                position = "2560,0";
+                scale = 1.0;
                 status = "enable";
               }
               {
@@ -101,6 +177,63 @@ in {
             ];
             exec = [
               home-docked-lid-close-sh.outPath
+            ];
+          };
+        }
+        {
+          profile = {
+            name = "work-docked-lid-open";
+            outputs = [
+              {
+                criteria = "Dell Inc. DELL P2723DE 4C7FH14";
+                mode = "2560x1440@59.95100";
+                position = "0,0";
+                scale = 1.0;
+                status = "enable";
+              }
+              {
+                criteria = "Dell Inc. DELL P2723DE CC7FH14";
+                mode = "2560x1440@59.95100";
+                position = "2560,0";
+                scale = 1.0;
+                status = "enable";
+              }
+              {
+                criteria = "eDP-1";
+                status = "enable";
+                position = "1280,1440";
+              }
+            ];
+            exec = [
+              work-docked-lid-open-sh.outPath
+            ];
+          };
+        }
+        {
+          profile = {
+            name = "work-docked-lid-close";
+            outputs = [
+              {
+                criteria = "Dell Inc. DELL P2723DE 4C7FH14";
+                mode = "2560x1440@59.95100";
+                position = "0,0";
+                scale = 1.0;
+                status = "enable";
+              }
+              {
+                criteria = "Dell Inc. DELL P2723DE CC7FH14";
+                mode = "2560x1440@59.95100";
+                position = "2560,0";
+                scale = 1.0;
+                status = "enable";
+              }
+              {
+                criteria = "eDP-1";
+                status = "disable";
+              }
+            ];
+            exec = [
+              work-docked-lid-close-sh.outPath
             ];
           };
         }

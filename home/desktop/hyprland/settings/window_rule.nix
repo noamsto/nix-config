@@ -58,6 +58,9 @@
       "float, class:^(chromium)$,title:^(Picture-in-Picture)$"
       "pin, class:^(chromium)$,title:^(Picture-in-Picture)$"
 
+      # Move browser to current workspace if not on visible workspace
+      "movetoworkspace name:current, class:^(Brave-browser)$"
+
       # throw sharing indicators away
       "workspace special silent, title:^(Firefox — Sharing Indicator)$"
       "workspace special silent, title:^(.*is sharing (your screen|a window)\.)$"
@@ -81,9 +84,13 @@
       "float, class:^(thunar)$,title:^(File Operation Progress)$"
 
       # Communication apps
-      "workspace 8 silent, class:^(ferdium)$"
-      "workspace 8 silent, class:^(slack)$"
-      "workspace 8 silent, class:^(Slack)$"
+      "workspace 5 silent, class:^(ferdium)$"
+      "workspace 5 silent, class:^(slack)$"
+      "workspace 5 silent, class:^(Slack)$"
+      "workspace 5 silent, class:^(discord)$"
+      "workspace 5 silent, class:^(Discord)$"
+      "workspace 5 silent, class:^(telegram)$"
+      "workspace 5 silent, class:^(Telegram)$"
 
       # Productivity apps
       "workspace 3 silent, class:^(obsidian)$"

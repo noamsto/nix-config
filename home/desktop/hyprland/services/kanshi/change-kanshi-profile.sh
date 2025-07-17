@@ -31,7 +31,14 @@ change_profile() {
 
         if [ "$current_lid_status" = "open" ]; then
             log_message "Switching to open-lid-profile"
-            kanshictl switch home-docked-lid-open || kanshictl switch undocked
+            monitors=$(hyprctl monitors)
+            if echo "$monitors" | grep -q "Samsung Electric Company S27H85x"; then
+                kanshictl switch home-docked-lid-open
+            elif echo "$monitors" | grep -q "Dell Inc. DELL P2723DE"; then
+                kanshictl switch work-docked-lid-open
+            else
+                kanshictl switch undocked
+            fi
             tries=$((tries + 1))
             if ((tries >= 2)); then
                 kanshictl reload
@@ -39,7 +46,14 @@ change_profile() {
             fi
         else
             log_message "Switching to closed-lid-profile"
-            kanshictl switch home-docked-lid-close
+            monitors=$(hyprctl monitors)
+            if echo "$monitors" | grep -q "Samsung Electric Company S27H85x"; then
+                kanshictl switch home-docked-lid-close
+            elif echo "$monitors" | grep -q "Dell Inc. DELL P2723DE"; then
+                kanshictl switch work-docked-lid-close
+            else
+                kanshictl switch undocked
+            fi
             tries=$((tries + 1))
             if ((tries >= 2)); then
                 kanshictl reload

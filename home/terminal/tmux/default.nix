@@ -41,6 +41,7 @@ in {
     Unit = {
       Description = "Start tmux detached on login";
       After = ["graphical-session.target"];
+      Wants = ["graphical-session.target"];
     };
 
     Service = let
@@ -48,13 +49,14 @@ in {
       session = "'󱥸  General'";
     in {
       Type = "forking";
-      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment TMUX_TMPDIR DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
+      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO TMUX_TMPDIR";
       ExecStart = "-${tmux-bin} new -s ${session} -d";
       ExecStop = "-${tmux-bin} kill-session -t ${session}";
       Environment = [
         "COLORTERM=truecolor"
         "TERM=foot"
         "TERMINFO=${pkgs.foot.terminfo}/share/terminfo"
+        "TMUX_TMPDIR=%t"
       ];
 
       # Restart = "always";

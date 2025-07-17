@@ -15,5 +15,10 @@
     (final: _: {
       fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
     })
+
+    # Hyprland overlay for clean package reference
+    (final: _: {
+      hyprland = inputs.hyprland.packages.${final.system}.hyprland;
+    })
   ];
 }

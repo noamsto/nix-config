@@ -12,7 +12,7 @@ in {
     programs.hyprland = {
       withUWSM = true;
       enable = true;
-      package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+      package = pkgs.hyprland;
       portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
     };
 
@@ -20,7 +20,7 @@ in {
       enable = true;
       settings = rec {
         initial_session = {
-          command = "Hyprland";
+          command = "uwsm start ${pkgs.hyprland}/bin/hyprland";
           user = config.username;
         };
         default_session = initial_session;

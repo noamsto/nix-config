@@ -6,6 +6,7 @@
   imports = [inputs.walker.homeManagerModules.default];
   home.packages = with pkgs; [
     libqalculate
+    iwmenu
   ];
 
   programs.walker = {

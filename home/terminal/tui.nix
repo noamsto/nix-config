@@ -1,12 +1,17 @@
 {
   lib,
   inputs,
+  pkgs,
   ...
-}: let
-  nix-search-tv = inputs.nix-search-tv.packages.x86_64-linux.default;
-  nix-search-tv-bin = lib.getExe nix-search-tv;
-in {
-  programs.television = {
+}: {
+  home.packages = with pkgs; [
+    lazyjournal
+  ];
+
+  programs.television = let
+    nix-search-tv = inputs.nix-search-tv.packages.x86_64-linux.default;
+    nix-search-tv-bin = lib.getExe nix-search-tv;
+  in {
     enable = true;
     enableZshIntegration = true;
     channels = {

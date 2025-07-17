@@ -19,18 +19,12 @@ return {
           return #diag > 0
         end,
       },
-      kulala = {
-        command = "kulala-fmt",
-        args = { "format", "$FILENAME" },
-        stdin = false,
-      },
     },
     formatters_by_ft = {
       nix = { "alejandra" },
       htmldjango = { "djlint" },
       ["markdown"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
       ["markdown.mdx"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
-      http = { "kulala" },
       yaml = { "prettierd" },
       go = { "goimports", "gofumpt" },
       sql = { "sqlfluff" },

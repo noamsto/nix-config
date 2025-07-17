@@ -29,6 +29,7 @@ in {
       general = {
         lock_cmd = lib.getExe config.programs.hyprlock.package;
         before_sleep_cmd = "${pkgs.systemd}/bin/loginctl lock-session";
+        after_sleep_cmd = "hyprctl dispatch dpms on";
       };
 
       listener = [
@@ -47,7 +48,6 @@ in {
         }
         {
           timeout = timeout + 10;
-          # on-timeout = suspendScript.outPath;
           on-timeout = "${pkgs.systemd}/bin/systemctl suspend";
         }
       ];
