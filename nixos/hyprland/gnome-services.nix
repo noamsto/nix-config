@@ -18,5 +18,12 @@ in
       gvfs.enable = true;
     };
     programs.seahorse.enable = true;
-    security.pam.services.greetd.enableGnomeKeyring = true;
+    security.pam.services = {
+      # Enable keyring unlock during actual login process
+      login.enableGnomeKeyring = true;
+      # greetd bypass - may not work reliably for keyring unlocking
+      greetd.enableGnomeKeyring = true;
+      # Disable fingerprint for greetd to ensure keyring unlocking works
+      greetd.fprintAuth = false;
+    };
   }

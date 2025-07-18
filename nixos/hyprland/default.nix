@@ -18,12 +18,10 @@ in {
 
     services.greetd = {
       enable = true;
-      settings = rec {
-        initial_session = {
-          command = "uwsm start ${pkgs.hyprland}/bin/hyprland";
-          user = config.username;
+      settings = {
+        default_session = {
+          command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --time-format '%I:%M %p | %a • %h %d %Y' --theme border=magenta;text=cyan;prompt=cyan;time=white;action=blue;button=yellow;container=black;input=gray --asterisks --greeting 'Welcome to NixOS' --width 80 --container-padding 2 --prompt-padding 1 --remember --remember-user-session --user-menu";
         };
-        default_session = initial_session;
       };
     };
 

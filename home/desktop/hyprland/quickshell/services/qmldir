@@ -1,0 +1,8 @@
+module services
+
+singleton Network 1.0 Network.qml
+singleton Battery 1.0 Battery.qml
+singleton PowerManager 1.0 PowerManager.qml
+singleton Audio 1.0 Audio.qml
+singleton Bluetooth 1.0 Bluetooth.qml
+

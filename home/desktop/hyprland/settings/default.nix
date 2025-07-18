@@ -42,9 +42,6 @@ in {
       ];
 
       exec-once = [
-        # Lock screen immediately on boot (no DM)
-        "hyprlock"
-
         # start quickshell only if not already running (kanshi will manage it afterwards)
         "${runOnce "${lib.getExe pkgs.quickshell}"}"
 
@@ -61,7 +58,7 @@ in {
 
       input = {
         kb_layout = "us,il";
-        kb_options = "grp:win_space_toggle";
+        kb_options = "grp:win_space_toggle,caps:escape";
         # focus change on cursor move
         follow_mouse = 1;
         accel_profile = "flat";
@@ -102,8 +99,9 @@ in {
           vibrancy = 0.2;
           vibrancy_darkness = 0.5;
 
-          passes = 3;
+          passes = 2;
           size = 6;
+          new_optimizations = true;
 
           popups = true;
           popups_ignorealpha = 0.2;
@@ -143,6 +141,10 @@ in {
         # enable variable refresh rate (effective depending on hardware)
         vrr = 1;
         vfr = true;
+
+        # enable window swallowing
+        enable_swallow = true;
+        swallow_regex = "^(foot|kitty|Alacritty)$";
       };
       render = {
         direct_scanout = true;
@@ -152,6 +154,11 @@ in {
       gestures = {
         workspace_swipe = true;
         workspace_swipe_forever = true;
+        workspace_swipe_fingers = 4;
+        workspace_swipe_distance = 300;
+        workspace_swipe_invert = true;
+        workspace_swipe_min_speed_to_force = 30;
+        workspace_swipe_cancel_ratio = 0.5;
       };
 
       xwayland.force_zero_scaling = true;

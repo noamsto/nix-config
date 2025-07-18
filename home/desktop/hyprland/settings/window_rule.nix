@@ -64,6 +64,11 @@
       # throw sharing indicators away
       "workspace special silent, title:^(Firefox — Sharing Indicator)$"
       "workspace special silent, title:^(.*is sharing (your screen|a window)\.)$"
+      "workspace special silent, title:^(.*Sharing Indicator)$"
+
+      # better screen sharing window handling
+      "float,title:^(.*is sharing (your screen|a window).*)$"
+      "size 800 600,title:^(Volume Control)$"
 
       # Media players
       "float, class:^(vlc)$"
@@ -83,34 +88,13 @@
       "float, class:^(dolphin)$,title:^(Copying)$"
       "float, class:^(thunar)$,title:^(File Operation Progress)$"
 
-      # Communication apps
-      "workspace 5 silent, class:^(ferdium)$"
-      "workspace 5 silent, class:^(slack)$"
-      "workspace 5 silent, class:^(Slack)$"
-      "workspace 5 silent, class:^(discord)$"
-      "workspace 5 silent, class:^(Discord)$"
-      "workspace 5 silent, class:^(telegram)$"
-      "workspace 5 silent, class:^(Telegram)$"
-
       # Productivity apps
       "workspace 3 silent, class:^(obsidian)$"
       "workspace 3 silent, class:^(Obsidian)$"
 
-      # start spotify in ws9
-      "workspace 9 silent, title:^(Spotify( Premium)?)$"
-      "workspace 9 silent, class:^(Spotify)$"
-
-      # Development tools
-      "workspace 2 silent, class:^(sublime_merge)$"
-      "workspace 2 silent, class:^(code)$"
-      "workspace 2 silent, class:^(Code)$"
-      "workspace 2 silent, class:^(postman)$"
-      "workspace 2 silent, class:^(Postman)$"
-      "workspace 2 silent, class:^(dbeaver)$"
-
-      # OBS Studio
-      "workspace 5 silent, class:^(com.obsproject.Studio)$"
-      "workspace 5 silent, class:^(obs)$"
+      # start youtube-music in ws9
+      "workspace 9 silent, title:^(YouTube Music)$"
+      "workspace 9 silent, class:^(YouTube Music)$"
 
       # Zoom
       "float, class:^(zoom)$,title:^(Zoom Meeting)$"
@@ -118,7 +102,7 @@
 
       "dimaround, class:^(gcr-prompter)$"
       "dimaround, class:^(xdg-desktop-portal-gtk)$"
-      "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
+      "dimaround, class:^(hyprpolkitagent)$"
 
       # fix xwayland apps
       "rounding 0, xwayland:1"

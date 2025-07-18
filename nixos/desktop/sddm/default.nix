@@ -51,6 +51,5 @@ in
         };
       };
     };
-    security.pam.services.sddm.enableGnomeKeyring = isHypr;
     security.pam.services.login.fprintAuth = false; # NOTE: Fingerprint login not really working
   }

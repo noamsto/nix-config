@@ -4,6 +4,8 @@ import Quickshell.Services.SystemTray
 import Quickshell.Io
 import QtQuick
 import QtQuick.Effects
+import "./components"
+import "./services"
 
 PanelWindow {
     id: root
@@ -13,17 +15,66 @@ PanelWindow {
     property string activeWindowClass: ""
     property string activeWindowIcon: ""
 
-    anchors {
-        top: true
-        left: true
-        right: true
+    // Popout management
+    function checkPopout(y) {
+        const spacing = 8;
+
+        // Network status
+        const networkY = bottomSection.y + networkStatus.y;
+        if (y >= networkY && y <= networkY + networkStatus.height) {
+            console.log("Network popout triggered at y:", y);
+            popoutManager.setPopout("network", networkY + networkStatus.height / 2);
+            return;
+        }
+
+        // Battery status
+        const batteryY = bottomSection.y + batteryStatus.y;
+        if (y >= batteryY && y <= batteryY + batteryStatus.height) {
+            console.log("Battery popout triggered at y:", y);
+            popoutManager.setPopout("battery", batteryY + batteryStatus.height / 2);
+            return;
+        }
+
+        // Volume control
+        const volumeY = bottomSection.y + volumeControl.y;
+        if (y >= volumeY && y <= volumeY + volumeControl.height) {
+            console.log("Volume popout triggered at y:", y);
+            popoutManager.setPopout("volume", volumeY + volumeControl.height / 2);
+            return;
+        }
+
+        // Bluetooth status
+        const bluetoothY = bottomSection.y + bluetoothStatus.y;
+        if (y >= bluetoothY && y <= bluetoothY + bluetoothStatus.height) {
+            console.log("Bluetooth popout triggered at y:", y);
+            popoutManager.setPopout("bluetooth", bluetoothY + bluetoothStatus.height / 2);
+            return;
+        }
+
+        // Power control
+        const powerY = bottomSection.y + powerControl.y;
+        if (y >= powerY && y <= powerY + powerControl.height) {
+            console.log("Power popout triggered at y:", y);
+            popoutManager.setPopout("power", powerY + powerControl.height / 2);
+            return;
+        }
+
+        // No match - close popout
+        popoutManager.close();
     }
 
-    implicitHeight: 48
+    anchors {
+        left: true
+        top: true
+        bottom: true
+    }
+
+    implicitWidth: 60
     margins {
-        top: 8
         left: 8
-        right: 8
+        top: 8
+        bottom: 8
+        right: -19
     }
 
     color: "transparent"
@@ -32,12 +83,15 @@ PanelWindow {
     function getIconForClass(windowClass) {
         if (!windowClass)
             return "";
-        
+
         // Handle common problematic cases
-        if (windowClass === "brave-browser") return "image://icon/brave";
-        if (windowClass === "com.github.th_ch.youtube_music") return "image://icon/youtube-music";
-        if (windowClass.startsWith("org.")) return `image://icon/${windowClass.split('.').pop()}`;
-        
+        if (windowClass === "brave-browser")
+            return "image://icon/brave";
+        if (windowClass === "com.github.th_ch.youtube_music")
+            return "image://icon/youtube-music";
+        if (windowClass.startsWith("org."))
+            return `image://icon/${windowClass.split('.').pop()}`;
+
         // Default: use class name as-is
         return `image://icon/${windowClass.toLowerCase()}`;
     }
@@ -80,68 +134,60 @@ PanelWindow {
         border.width: 1
         opacity: 0.95
 
-        // Left section - Workspaces
-        Row {
-            id: leftSection
+        // Top section
+        Column {
+            id: topSection
             anchors {
+                top: parent.top
                 left: parent.left
-                verticalCenter: parent.verticalCenter
-                leftMargin: 16
+                right: parent.right
+                margins: 8
             }
             spacing: 12
 
-            // Workspaces with animations
-            Row {
-                spacing: 6
-                anchors.verticalCenter: parent.verticalCenter
-
+            // Workspaces (vertical)
+            Column {
+                id: workspacesSection
+                spacing: 8
+                anchors.horizontalCenter: parent.horizontalCenter
                 Repeater {
                     model: Hyprland.workspaces
-
                     Rectangle {
                         id: workspaceButton
-                        width: modelData.active ? 40 : 12
-                        height: 28
-                        radius: 14
-
+                        width: 40
+                        height: modelData.active ? 40 : 18
+                        radius: 16
+                        anchors.horizontalCenter: parent.horizontalCenter
                         property bool isActive: modelData.active
                         property bool hasWindows: modelData.active || modelData.hasFullscreen
-
                         color: isActive ? "#cba6f7" : (hasWindows ? "#45475a" : "#313244")
                         border.color: isActive ? "#b4befe" : (hasWindows ? "#6c7086" : "transparent")
                         border.width: isActive ? 2 : 1
-
-                        Behavior on width {
+                        Behavior on height {
                             NumberAnimation {
-                                duration: 250
+                                duration: 200
                                 easing.type: Easing.OutCubic
                             }
                         }
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: 200
                             }
                         }
-
                         Behavior on border.color {
                             ColorAnimation {
                                 duration: 200
                             }
                         }
-
-                        // Active indicator or window count
                         Item {
                             anchors.centerIn: parent
-
                             Rectangle {
                                 anchors.centerIn: parent
-                                width: parent.parent.isActive ? 20 : 6
-                                height: parent.parent.isActive ? 20 : 6
+                                width: parent.parent.isActive ? 22 : 8
+                                height: parent.parent.isActive ? 22 : 8
                                 radius: width / 2
                                 color: parent.parent.isActive ? "#11111b" : "#cdd6f4"
                                 opacity: parent.parent.hasWindows || parent.parent.isActive ? 1.0 : 0.4
-
                                 Behavior on width {
                                     NumberAnimation {
                                         duration: 200
@@ -154,33 +200,23 @@ PanelWindow {
                                         easing.type: Easing.OutCubic
                                     }
                                 }
-
-                                // Workspace number for active workspace
                                 Text {
                                     anchors.centerIn: parent
                                     text: modelData.id
                                     color: "#cdd6f4"
-                                    font.pixelSize: 10
+                                    font.pixelSize: 11
                                     font.weight: Font.Bold
                                     visible: parent.parent.parent.isActive
                                 }
                             }
                         }
-
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: {
-                                console.log("Switching to workspace:", modelData.id);
-                                // Try different dispatch formats
-                                // Try the correct Hyprland dispatch format
-                                Hyprland.dispatch("workspace " + modelData.id);
-                            }
-
+                            onClicked: Hyprland.dispatch("workspace " + modelData.id)
                             hoverEnabled: true
                             onEntered: parent.scale = 1.1
                             onExited: parent.scale = 1.0
                         }
-
                         Behavior on scale {
                             NumberAnimation {
                                 duration: 100
@@ -189,183 +225,35 @@ PanelWindow {
                     }
                 }
             }
-        }
 
-        // Active window title
-        Row {
-            id: activeWindowRow
-            spacing: 8
-            anchors {
-                centerIn: parent
+            // Active window display
+            WindowTitle {
+                id: activeWindow
+                windowClass: root.activeWindowClass
+                windowTitle: root.activeWindowTitle
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: root.activeWindowClass !== ""
             }
-            Rectangle {
-                width: Math.min(activeWindowContent.implicitWidth + 20, 320)
-                height: 28
-                radius: 14
-                color: "#313244"
-                border.color: "#45475a"
-                border.width: 1
-                visible: root.activeWindowTitle !== ""
-
-                Row {
-                    id: activeWindowContent
-                    anchors.centerIn: parent
-                    spacing: 8
-
-                    // Fancy icon container with background and effects
-                    Rectangle {
-                        id: iconContainer
-                        width: 24
-                        height: 24
-                        radius: 8
-                        color: "#45475a"
-                        border.color: "#6c7086"
-                        border.width: 1
-                        visible: root.activeWindowIcon !== ""
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        // Subtle gradient background
-                        gradient: Gradient {
-                            GradientStop {
-                                position: 0.0
-                                color: "#585b70"
-                            }
-                            GradientStop {
-                                position: 0.2
-                                color: "#45475a"
-                            }
-                        }
-
-                        Image {
-                            id: activeWindowIconImage
-                            width: 20
-                            height: 20
-                            source: root.activeWindowIcon
-                            anchors.centerIn: parent
-                            smooth: true
-                            opacity: 1
-
-                            // Scale animation on icon change
-                            Behavior on source {
-                                SequentialAnimation {
-                                    NumberAnimation {
-                                        target: activeWindowIconImage
-                                        property: "scale"
-                                        to: 0.8
-                                        duration: 100
-                                        easing.type: Easing.InQuad
-                                    }
-                                    NumberAnimation {
-                                        target: activeWindowIconImage
-                                        property: "scale"
-                                        to: 1.0
-                                        duration: 150
-                                        easing.type: Easing.OutBack
-                                    }
-                                }
-                            }
-                        }
-
-                        // Very subtle glow effect
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: "#6c708620"
-                            shadowBlur: 0.1
-                            shadowVerticalOffset: 0.5
-                        }
-
-                        // Hover effect
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onEntered: {
-                                parent.scale = 1.1;
-                                parent.border.color = "#b4befe";
-                            }
-                            onExited: {
-                                parent.scale = 1.0;
-                                parent.border.color = "#6c7086";
-                            }
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: 150
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-
-                        Behavior on border.color {
-                            ColorAnimation {
-                                duration: 200
-                            }
-                        }
-                    }
-
-                    Text {
-                        id: activeWindowText
-                        text: root.activeWindowTitle
-                        color: "#cdd6f4"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        elide: Text.ElideRight
-                        width: Math.min(implicitWidth, 200)
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        // Fade animation on text change
-                        Behavior on text {
-                            SequentialAnimation {
-                                NumberAnimation {
-                                    target: activeWindowText
-                                    property: "opacity"
-                                    to: 0.6
-                                    duration: 100
-                                }
-                                NumberAnimation {
-                                    target: activeWindowText
-                                    property: "opacity"
-                                    to: 1.0
-                                    duration: 150
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Right section - System info
-        Row {
-            id: rightSection
-            anchors {
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-                rightMargin: 16
-            }
-            spacing: 12
 
             // System tray
-            Row {
+            Column {
                 spacing: 8
-
+                anchors.horizontalCenter: parent.horizontalCenter
                 Repeater {
                     model: SystemTray.items
-
                     Rectangle {
-                        width: 24
-                        height: 24
-                        radius: 6
+                        width: 36
+                        height: 36
+                        radius: 8
                         color: "transparent"
-
+                        anchors.horizontalCenter: parent.horizontalCenter
                         Image {
                             anchors.centerIn: parent
-                            width: 16
-                            height: 16
+                            width: 24
+                            height: 24
                             source: modelData.icon || ""
                             smooth: true
                         }
-
                         MouseArea {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -376,12 +264,10 @@ PanelWindow {
                                     modelData.contextMenu();
                                 }
                             }
-
                             hoverEnabled: true
                             onEntered: parent.color = "#313244"
                             onExited: parent.color = "transparent"
                         }
-
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
@@ -390,81 +276,62 @@ PanelWindow {
                     }
                 }
             }
+        }
 
-            // Network indicator (placeholder)
-            Rectangle {
-                width: 36
-                height: 28
-                radius: 14
-                color: "#313244"
-                border.color: "#45475a"
-                border.width: 1
+        // Bottom section
+        Column {
+            id: bottomSection
+            anchors {
+                bottom: parent.bottom
+                left: parent.left
+                right: parent.right
+                margins: 8
+            }
+            spacing: 8
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰤨"
-                    color: "#a6e3a1"
-                    font.pixelSize: 16
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: parent.color = "#45475a"
-                    onExited: parent.color = "#313244"
-                }
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 150
-                    }
-                }
+            // Network status indicator
+            NetworkStatus {
+                id: networkStatus
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
-            // Battery indicator (placeholder)
-            Rectangle {
-                width: 36
-                height: 28
-                radius: 14
-                color: "#313244"
-                border.color: "#45475a"
-                border.width: 1
+            // Battery status indicator
+            BatteryStatus {
+                id: batteryStatus
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "󰁹"
-                    color: "#f9e2af"
-                    font.pixelSize: 16
-                }
+            // Volume control
+            VolumeControl {
+                id: volumeControl
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
 
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onEntered: parent.color = "#45475a"
-                    onExited: parent.color = "#313244"
-                }
+            // Bluetooth status
+            BluetoothStatus {
+                id: bluetoothStatus
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: 150
-                    }
-                }
+            // Power control
+            PowerControl {
+                id: powerControl
+                anchors.horizontalCenter: parent.horizontalCenter
             }
 
             // Date and time
             Rectangle {
-                width: timeColumn.implicitWidth + 16
-                height: 28
+                width: 48
+                height: 44
                 radius: 14
                 color: "#313244"
                 border.color: "#45475a"
                 border.width: 1
-
+                anchors.horizontalCenter: parent.horizontalCenter
                 Column {
                     id: timeColumn
                     anchors.centerIn: parent
                     spacing: -2
-
                     Text {
                         id: timeText
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -473,7 +340,6 @@ PanelWindow {
                         font.pixelSize: 12
                         font.weight: Font.Medium
                     }
-
                     Text {
                         id: dateText
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -482,7 +348,6 @@ PanelWindow {
                         font.pixelSize: 9
                     }
                 }
-
                 Timer {
                     interval: 1000
                     running: true
@@ -494,7 +359,6 @@ PanelWindow {
                 }
             }
         }
-
         // Subtle drop shadow effect
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -503,5 +367,9 @@ PanelWindow {
             shadowBlur: 0.6
             shadowVerticalOffset: 2
         }
+
+        // Remove the global mouse area - we'll handle hover on individual components
     }
+
+    // Popout manager removed - using individual popouts in components
 }
