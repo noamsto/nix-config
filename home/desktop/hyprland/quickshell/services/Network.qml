@@ -11,9 +11,11 @@ Singleton {
     readonly property AccessPoint active: networks.find(n => n.active) ?? null
     readonly property bool connected: active !== null
     readonly property string connectionType: {
-        if (!active) return "none"
-        if (active.ssid) return "wifi"
-        return "ethernet"
+        if (!active)
+            return "none";
+        if (active.ssid)
+            return "wifi";
+        return "ethernet";
     }
 
     reloadableId: "network"
@@ -60,17 +62,13 @@ Singleton {
                 const rNetworks = root.networks;
 
                 // Remove destroyed networks
-                const destroyed = rNetworks.filter(rn => !networks.find(n => 
-                    n.frequency === rn.frequency && n.ssid === rn.ssid && n.bssid === rn.bssid
-                ));
+                const destroyed = rNetworks.filter(rn => !networks.find(n => n.frequency === rn.frequency && n.ssid === rn.ssid && n.bssid === rn.bssid));
                 for (const network of destroyed)
                     rNetworks.splice(rNetworks.indexOf(network), 1).forEach(n => n.destroy());
 
                 // Add or update networks
                 for (const network of networks) {
-                    const match = rNetworks.find(n => 
-                        n.frequency === network.frequency && n.ssid === network.ssid && n.bssid === network.bssid
-                    );
+                    const match = rNetworks.find(n => n.frequency === network.frequency && n.ssid === network.ssid && n.bssid === network.bssid);
                     if (match) {
                         match.lastIpcObject = network;
                     } else {
@@ -107,7 +105,7 @@ Singleton {
                             bssid: device,
                             type: "ethernet"
                         };
-                        
+
                         const rNetworks = root.networks;
                         const existing = rNetworks.find(n => n.type === "ethernet" && n.bssid === device);
                         if (!existing) {
@@ -153,23 +151,29 @@ Singleton {
         if (connectionType === "ethernet") {
             return "󰈀"; // Ethernet icon
         } else if (connectionType === "wifi") {
-            if (strength >= 80) return "󰤨";
-            if (strength >= 60) return "󰤥";
-            if (strength >= 40) return "󰤢";
-            if (strength >= 20) return "󰤟";
+            if (strength >= 80)
+                return "󰤨";
+            if (strength >= 60)
+                return "󰤥";
+            if (strength >= 40)
+                return "󰤢";
+            if (strength >= 20)
+                return "󰤟";
             return "󰤯";
         }
         return "󰤭"; // No connection
     }
 
     function getNetworkColor(strength) {
-        if (connectionType === "ethernet") return "#a6e3a1";
+        if (connectionType === "ethernet")
+            return "#a6e3a1";
         if (connectionType === "wifi") {
-            if (strength >= 60) return "#a6e3a1";
-            if (strength >= 30) return "#f9e2af";
+            if (strength >= 60)
+                return "#a6e3a1";
+            if (strength >= 30)
+                return "#f9e2af";
             return "#f38ba8";
         }
         return "#585b70"; // Disconnected
     }
 }
-

@@ -69,12 +69,12 @@ PanelWindow {
         bottom: true
     }
 
-    implicitWidth: 60
+    implicitWidth: 64
     margins {
         left: 8
         top: 8
         bottom: 8
-        right: -19
+        right: 8
     }
 
     color: "transparent"
@@ -234,47 +234,88 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.activeWindowClass !== ""
             }
+        }
 
-            // System tray
-            Column {
-                spacing: 8
-                anchors.horizontalCenter: parent.horizontalCenter
-                Repeater {
-                    model: SystemTray.items
-                    Rectangle {
-                        width: 36
-                        height: 36
-                        radius: 8
-                        color: "transparent"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Image {
-                            anchors.centerIn: parent
-                            width: 24
-                            height: 24
-                            source: modelData.icon || ""
-                            smooth: true
+        // System tray -
+        // Divider between top section and system tray
+        Rectangle {
+            id: topDivider
+            width: 32
+            height: 1
+            color: "#45475a"
+            radius: 0.5
+            anchors {
+                top: topSection.bottom
+                horizontalCenter: parent.horizontalCenter
+                topMargin: 12
+            }
+        }
+
+        // System tray - positioned above bottom section
+        Column {
+            id: systemTraySection
+            spacing: 8
+            anchors {
+                bottom: bottomSection.top
+                left: parent.left
+                right: parent.right
+                margins: 8
+                bottomMargin: 12
+            }
+
+            Repeater {
+                model: SystemTray.items
+                Rectangle {
+                    width: 36
+                    height: 36
+                    radius: 8
+                    color: "transparent"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Image {
+                        anchors.centerIn: parent
+                        width: 24
+                        height: 24
+                        source: modelData.icon || ""
+                        smooth: true
+                    }
+                    MouseArea {
+                        id: sys_stem
+
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+                        onClicked: event => {
+                            if (event.button === Qt.LeftButton)
+                                modelData.activate();
+                            else if (modelData.hasMenu)
+                                menu.open();
                         }
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
-                            onClicked: function (mouse) {
-                                if (mouse.button === Qt.LeftButton) {
-                                    modelData.activate();
-                                } else if (mouse.button === Qt.RightButton) {
-                                    modelData.contextMenu();
-                                }
-                            }
-                            hoverEnabled: true
-                            onEntered: parent.color = "#313244"
-                            onExited: parent.color = "transparent"
-                        }
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
-                            }
+                        hoverEnabled: true
+                        onEntered: parent.color = "#313244"
+                        onExited: parent.color = "transparent"
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
                         }
                     }
                 }
+            }
+        }
+
+        // Bottom section
+
+        // Divider between system tray and bottom section
+        Rectangle {
+            id: bottomDivider
+            width: 32
+            height: 1
+            color: "#45475a"
+            radius: 0.5
+            anchors {
+                bottom: bottomSection.top
+                horizontalCenter: parent.horizontalCenter
+                bottomMargin: 12
             }
         }
 
