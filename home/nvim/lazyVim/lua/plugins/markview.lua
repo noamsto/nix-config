@@ -4,7 +4,6 @@ return {
     "echasnovski/mini.icons",
   },
   enabled = true,
-  branch = "dev",
   event = "InsertEnter",
   ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
   opts = {

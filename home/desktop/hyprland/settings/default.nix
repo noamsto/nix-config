@@ -42,8 +42,10 @@ in {
       ];
 
       exec-once = [
-        # start quickshell only if not already running (kanshi will manage it afterwards)
-        "${runOnce "${lib.getExe pkgs.quickshell}"}"
+        # start waybar only if not already running
+        "${runOnce "${lib.getExe pkgs.waybar}"}"
+        # quickshell disabled in favor of waybar
+        # "${runOnce "${lib.getExe pkgs.quickshell}"}"
 
         # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"

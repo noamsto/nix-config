@@ -21,7 +21,10 @@ in {
     # ./xdg.nix
     ./utils
     ./settings
-    ./quickshell
+    # ./quickshell  # Disabled in favor of waybar
+    ./waybar
+    ./dunst.nix
+    ./scripts/screenshot-utils.nix
   ];
 
   wayland.windowManager.hyprland = {
@@ -40,7 +43,10 @@ in {
     kdePackages.dolphin
     xfce.thunar
 
-    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+    # Screenshot and recording tools (grimblast already included above)
+    wl-screenrec
+    wl-clipboard
+    cliphist
   ];
 
   # make stuff work on wayland

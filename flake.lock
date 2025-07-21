@@ -1407,11 +1407,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1752750545,
-        "narHash": "sha256-h8X9l+H+vorOTIp7VF72d2ipIxyOjtU+4iWYrrR6x5Q=",
+        "lastModified": 1753029274,
+        "narHash": "sha256-WwxFTg8wphvIC7jDqDqyQBtKvn3Xr0ZRptDjwkFNx78=",
         "owner": "ravitemer",
         "repo": "mcp-hub",
-        "rev": "9ec95df7e60198419f42b999e3307d50e56035af",
+        "rev": "bdbd7e47dbde52f95bd4e21d6b4de64f918e57dd",
         "type": "github"
       },
       "original": {

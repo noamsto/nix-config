@@ -72,6 +72,8 @@
       uv
 
       inotify-tools
+
+      mermaid-cli
     ];
   };
 }
