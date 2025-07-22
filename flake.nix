@@ -231,10 +231,6 @@
     catppuccin.url = "github:catppuccin/nix";
 
     mcp-hub.url = "github:ravitemer/mcp-hub";
-    aicommit2 = {
-      url = "github:noamsto/aicommit2";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     # For RPI4
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
@@ -257,5 +253,12 @@
     };
 
     claude-code.url = "github:sadjow/claude-code-nix?rev=e6fecf11e724ecd9a41a8a829c017955f9b0f707";
+
+    Hyprspace = {
+      url = "github:KZDKM/Hyprspace";
+
+      # Hyprspace uses latest Hyprland. We declare this to keep them in sync.
+      inputs.hyprland.follows = "hyprland";
+    };
   };
 }

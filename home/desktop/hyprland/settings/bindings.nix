@@ -37,15 +37,16 @@ in {
       "$mainMod, R, togglesplit,"
       "$mainMod, T, togglefloating,"
       "$mainMod, grave, hyprexpo:expo, toggle"
+      "$mainMod, O, overview:toggle" # Hyprspace workspace overview
 
       "$mainMod, V, exec, walker -m clipboard"
 
-      "$mainMod ALT, L, exec, ${runOnce "hyprlock"}"
+      "$mainMod ALT, L, exec, hyprlock"
 
       # logout menu
       "$mainMod, Escape, exec, ${toggle "wlogout" true} -p layer-shell"
 
-      # Move focus with SUPER+hjkl
+      # Move focus with SUPER+hjkl (using SUPER+ALT+L for right to avoid conflict with lock)
       "$mainMod, H, movefocus, l"
       "$mainMod, L, movefocus, r"
       "$mainMod, K, movefocus, u"

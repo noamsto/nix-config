@@ -4,493 +4,474 @@
     systemd.enable = false; # Disabled because using UWSM instead of systemd
 
     settings = [
-      # Top Bar Config
       {
-        name = "top_bar";
+        height = 42;
         layer = "top";
-        position = "top";
-        height = 36;
-        spacing = 4;
-        modules-left = ["hyprland/workspaces" "hyprland/submap"];
-        modules-center = ["clock#simple"];
-        modules-right = ["bluetooth" "network" "group/misc" "custom/logout_menu"];
+        # Show on all monitors
+        modules-left = [
+          "custom/launcher"
+          "clock"
+          "custom/swaync"
+          "custom/audio_idle_inhibitor"
+          "idle_inhibitor"
+          "hyprland/workspaces"
+          "tray"
+          "custom/wallpaper"
+        ];
+        modules-center = [
+          "wlr/taskbar"
+        ];
+        modules-right = [
+          "custom/usb"
+          "network"
+          "hyprland/language"
+          "group/hardware"
+          "custom/hyprsunset"
+          "battery"
+          "group/audio"
+          "custom/power-menu"
+        ];
 
-        "hyprland/workspaces" = {
-          on-click = "activate";
-          format = "{icon}";
-          format-icons = {
-            "1" = "󰲠";
-            "2" = "󰲢";
-            "3" = "󰲤";
-            "4" = "󰲦";
-            "5" = "󰲨";
-            "6" = "󰲪";
-            "7" = "󰲬";
-            "8" = "󰲮";
-            "9" = "󰲰";
-            "special" = "";
-          };
-          show-special = true;
-          persistent-workspaces = {
-            "*" = [1 2 3 4 5 6 7 8 9 10];
-          };
-          sort-by-number = true;
-          all-outputs = false;
-        };
-
-        "hyprland/submap" = {
-          format = "<span color='#a6da95'>Mode:</span> {}";
+        # Separator modules
+        "custom/separator#dot" = {
+          format = "";
+          interval = "once";
           tooltip = false;
         };
 
-        "clock#simple" = {
-          format = "{:%H:%M %Y-%m-%d}";
-          tooltip-format = "<tt><small>{calendar}</small></tt>";
-          actions = {
-            on-click-right = "mode";
-          };
-          calendar = {
-            mode = "month";
-            mode-mon-col = 3;
-            weeks-pos = "right";
-            on-scroll = 1;
-            on-click-right = "mode";
-            format = {
-              months = "<span color='#f4dbd6'><b>{}</b></span>";
-              days = "<span color='#cad3f5'><b>{}</b></span>";
-              weeks = "<span color='#c6a0f6'><b>W{}</b></span>";
-              weekdays = "<span color='#a6da95'><b>{}</b></span>";
-              today = "<span color='#8bd5ca'><b><u>{}</u></b></span>";
-            };
-          };
-        };
-
-        "custom/media" = {
-          format = "{icon}󰎈";
-          restart-interval = 2;
-          return-type = "json";
-          format-icons = {
-            Playing = "";
-            Paused = "";
-          };
-          max-length = 35;
-          exec = "${pkgs.writeShellScript "fetch_music_player_data" ''            #!/bin/bash
-            playerctl -a metadata --format "{\"text\": \"{{artist}} - {{markup_escape(title)}}\", \"tooltip\": \"<i><span color='#a6da95'>{{playerName}}</span></i>: <b><span color='#f5a97f'>{{artist}}</span> - <span color='#c6a0f6'>{{markup_escape(title)}}</span></b>\", \"alt\": \"{{status}}\", \"class\": \"{{status}}\"}" -F
-          ''}";
-          on-click = "playerctl play-pause";
-          on-click-right = "playerctl next";
-          on-click-middle = "playerctl prev";
-          on-scroll-up = "playerctl volume 0.05-";
-          on-scroll-down = "playerctl volume 0.05+";
-          smooth-scrolling-threshold = "0.1";
-        };
-
-        bluetooth = {
-          format = "󰂯";
-          format-disabled = "󰂲";
-          format-connected = "󰂱 {device_alias}";
-          format-connected-battery = "󰂱 {device_alias} (󰥉 {device_battery_percentage}%)";
-          tooltip-format = "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected";
-          tooltip-format-disabled = "bluetooth off";
-          tooltip-format-connected = "{controller_alias}\t{controller_address} ({status})\n\n{num_connections} connected\n\n{device_enumerate}";
-          tooltip-format-enumerate-connected = "{device_alias}\t{device_address}";
-          tooltip-format-enumerate-connected-battery = "{device_alias}\t{device_address}\t({device_battery_percentage}%)";
-          max-length = 35;
-          on-click = "system-toggles bluetooth";
-          on-click-right = "overskride";
-        };
-
-        network = {
-          format = "󰤭 ";
-          format-wifi = "{icon} ({signalStrength}%) {essid}";
-          format-icons = ["󰤯 " "󰤟 " "󰤢 " "󰤥 " "󰤨 "];
-          format-disconnected = "󰤫  Disconnected";
-          tooltip-format = "wifi <span color='#ee99a0'>off</span>";
-          tooltip-format-wifi = "SSID: {essid}({signalStrength}%), {frequency} MHz\nInterface: {ifname}\nIP: {ipaddr}\nGW: {gwaddr}\n\n<span color='#a6da95'>{bandwidthUpBits}</span>\t<span color='#ee99a0'>{bandwidthDownBits}</span>\t<span color='#c6a0f6'>󰹹 {bandwidthTotalBits}</span>";
-          tooltip-format-disconnected = "<span color='#ed8796'>disconnected</span>";
-          max-length = 35;
-          on-click = "system-toggles wifi";
-          on-click-right = "iwgtk";
-        };
-
-        "group/misc" = {
-          orientation = "horizontal";
-          modules = [
-            "custom/webcam"
-            "privacy"
-            "custom/recording"
-            "custom/geo"
-            "custom/dunst"
-            "custom/night_mode"
-            "custom/airplane_mode"
-            "idle_inhibitor"
-          ];
-        };
-
-        "custom/webcam" = {
-          interval = 1;
-          exec = "${pkgs.writeShellScript "check_webcam" ''
-            #!/bin/bash
-            if pgrep -x "mpv" > /dev/null || lsof /dev/video0 2>/dev/null | grep -q .; then
-                echo '{"text": "󱚡 ", "tooltip": "webcam active", "class": "on"}'
-            else
-                echo '{"text": "", "tooltip": "webcam inactive", "class": "off"}'
-            fi
-          ''}";
-          return-type = "json";
-        };
-
-        privacy = {
-          icon-spacing = 1;
-          icon-size = 12;
-          transition-duration = 250;
-          modules = [
-            {
-              type = "audio-in";
-            }
-            {
-              type = "screenshare";
-            }
-          ];
-        };
-
-        "custom/recording" = {
-          interval = 1;
-          exec-if = "pgrep wl-screenrec";
-          exec = "${pkgs.writeShellScript "check_recording" ''            #!/bin/bash
-            if pgrep wl-screenrec > /dev/null; then
-                echo '{"text": "󱞧", "tooltip": "recording active", "class": "on"}'
-            else
-                echo '{"text": "", "tooltip": "not recording", "class": "off"}'
-            fi
-          ''}";
-          return-type = "json";
-        };
-
-        "custom/geo" = {
-          interval = 1;
-          exec-if = "pgrep geoclue";
-          exec = "${pkgs.writeShellScript "check_geo_module" ''            #!/bin/bash
-            if pgrep geoclue > /dev/null; then
-                echo '{"text": "󰍒", "tooltip": "location services active", "class": "on"}'
-            else
-                echo '{"text": "", "tooltip": "location services inactive", "class": "off"}'
-            fi
-          ''}";
-          return-type = "json";
-        };
-
-        "custom/airplane_mode" = {
-          return-type = "json";
-          interval = 1;
-          exec = "${pkgs.writeShellScript "check_airplane_mode" ''            #!/bin/bash
-            if [ -e ~/.cache/airplane_backup ]; then
-                echo '{"text": "󰀞 ", "tooltip": "airplane mode on", "class": "on"}'
-            else
-                echo '{"text": "󰀝 ", "tooltip": "airplane mode off", "class": "off"}'
-            fi
-          ''}";
-          on-click = "system-toggles airplane";
-        };
-
-        "custom/night_mode" = {
-          return-type = "json";
-          interval = 1;
-          exec = "${pkgs.writeShellScript "check_night_mode" ''            #!/bin/bash
-            # Check hyprsunset status via hyprctl
-            # Try to apply identity (no filter) - if it succeeds, no filter was active
-            if hyprctl hyprsunset identity >/dev/null 2>&1; then
-                echo '{"text": "󱩕 ", "tooltip": "night mode off", "class": "off"}'
-            else
-                # If identity command fails, assume a filter is active
-                echo '{"text": "󱩔 ", "tooltip": "night mode on", "class": "on"}'
-            fi
-          ''}";
-          on-click = "system-toggles night-mode";
-        };
-
-        "custom/dunst" = {
-          return-type = "json";
-          exec = "${pkgs.writeShellScript "dunst_pause" ''            #!/bin/bash
-            if dunstctl is-paused | grep -q true; then
-                echo '{"text": "󰂛 ", "tooltip": "notifications paused", "class": "off"}'
-            else
-                echo '{"text": "󰂚 ", "tooltip": "notifications active", "class": "on"}'
-            fi
-          ''}";
-          on-click = "dunstctl set-paused toggle";
-          restart-interval = 1;
-        };
-
-        idle_inhibitor = {
-          format = "{icon}";
-          format-icons = {
-            activated = "󰛐 ";
-            deactivated = "󰛑 ";
-          };
-          tooltip-format-activated = "idle-inhibitor <span color='#a6da95'>on</span>";
-          tooltip-format-deactivated = "idle-inhibitor <span color='#ee99a0'>off</span>";
-          start-activated = true;
-        };
-
-        "custom/logout_menu" = {
-          return-type = "json";
-          exec = "echo '{\"text\":\"󰐥\", \"tooltip\": \"logout menu\"}'";
+        "custom/separator#dot-line" = {
+          format = "";
           interval = "once";
-          on-click = "wlogout";
-        };
-      }
-
-      # Bottom Bar Config
-      {
-        name = "bottom_bar";
-        layer = "top";
-        position = "bottom";
-        height = 36;
-        spacing = 4;
-        modules-left = ["user"];
-        modules-center = ["hyprland/window"];
-        modules-right = ["keyboard-state" "hyprland/language"];
-
-        "hyprland/window" = {
-          format = "{title}";
-          max-length = 50;
+          tooltip = false;
         };
 
-        "hyprland/language" = {
-          format-en = "🇺🇸 ENG";
-          format-he = "🇮🇱 HEB";
-          on-click = "hyprctl switchxkblayout next";
+        "custom/separator#line" = {
+          format = "|";
+          interval = "once";
+          tooltip = false;
         };
 
-        keyboard-state = {
-          capslock = true;
-          format = "{name} {icon}";
-          format-icons = {
-            locked = "󰌾";
-            unlocked = "󰍀";
+        "custom/separator#blank" = {
+          format = "";
+          interval = "once";
+          tooltip = false;
+        };
+
+        "custom/separator#blank_2" = {
+          format = "  ";
+          interval = "once";
+          tooltip = false;
+        };
+
+        "custom/separator#blank_3" = {
+          format = "   ";
+          interval = "once";
+          tooltip = false;
+        };
+
+        # Group modules with drawer functionality
+        "group/hardware" = {
+          orientation = "inherit";
+          drawer = {
+            transition-duration = 500;
+            children-class = "not-power";
+            transition-left-to-right = true;
           };
+          modules = [
+            "cpu"
+            "memory"
+            "disk"
+          ];
         };
 
-        user = {
-          format = " <span color='#8bd5ca'>{user}</span> (up <span color='#f5bde6'>{work_d} d</span> <span color='#8aadf4'>{work_H} h</span> <span color='#eed49f'>{work_M} min</span> <span color='#a6da95'>↑</span>)";
-          icon = true;
+        "group/audio" = {
+          orientation = "inherit";
+          drawer = {
+            transition-duration = 500;
+            children-class = "not-power";
+            transition-left-to-right = false;
+          };
+          modules = [
+            "pulseaudio"
+            "pulseaudio#microphone"
+          ];
         };
-      }
 
-      # Left Bar Config
-      {
-        name = "left_bar";
-        layer = "top";
-        position = "left";
-        spacing = 4;
-        width = 64;
-        margin-top = 10;
-        margin-bottom = 10;
-        modules-left = ["wlr/taskbar"];
-        modules-center = ["cpu" "memory" "disk" "temperature" "battery" "backlight" "pulseaudio" "systemd-failed-units"];
-        modules-right = ["tray"];
-
-        "wlr/taskbar" = {
+        # Hyprland workspaces
+        "hyprland/workspaces" = {
           format = "{icon}";
-          icon-size = 20;
-          icon-theme = "Numix-Circle";
-          tooltip-format = "{title}";
           on-click = "activate";
-          on-click-right = "close";
-          on-click-middle = "fullscreen";
-        };
-
-        tray = {
-          icon-size = 20;
-          spacing = 2;
-        };
-
-        cpu = {
-          format = "󰻠 {usage}%";
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
+          format-icons = {
+            "1" = "1";
+            "2" = "2";
+            "3" = "3";
+            "4" = "4";
+            "5" = "5";
+            "6" = "6";
+            "7" = "7";
+            "8" = "8";
+            "9" = "9";
+            urgent = "";
           };
-          on-click = "foot btop";
-          on-click-right = "foot btop";
+          all-outputs = false;
+          sort-by-number = true;
+          on-scroll-down = "hyprctl dispatch workspace m+1";
+          on-scroll-up = "hyprctl dispatch workspace m-1";
+        };
+
+        # System tray
+        tray = {
+          spacing = 10;
+        };
+
+        # Clock module
+        clock = {
+          interval = 60;
+          align = 0;
+          rotate = 0;
+          tooltip-format = "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>";
+          format = "{:%d %b, %I:%M %p}";
+          format-alt = "{:%a %b %d, %G}";
+        };
+
+        # Hardware monitoring modules
+        cpu = {
+          format = "{usage}% 󰍛";
+          interval = 1;
+          format-alt-click = "click";
+          format-alt = "{icon0}{icon1}{icon2}{icon3} {usage:>2}% 󰍛";
+          format-icons = [
+            "▁"
+            "▂"
+            "▃"
+            "▄"
+            "▅"
+            "▆"
+            "▇"
+            "█"
+          ];
+          on-click-right = "${pkgs.writeShellScript "open-system-monitor" ''
+            if command -v resources >/dev/null 2>&1; then
+              resources
+            elif command -v gnome-system-monitor >/dev/null 2>&1; then
+              gnome-system-monitor
+            else
+              foot btop
+            fi
+          ''}";
         };
 
         memory = {
-          format = "󰍛 {percentage}%";
-          tooltip-format = "Main: ({used} GiB/{total} GiB)({percentage}%), available {avail} GiB\nSwap: ({swapUsed} GiB/{swapTotal} GiB)({swapPercentage}%), available {swapAvail} GiB";
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
-          };
-          on-click = "foot btop";
+          interval = 10;
+          format = "{used:0.1f}G 󰾆";
+          format-alt = "{percentage}% 󰾆";
+          format-alt-click = "click";
+          tooltip = true;
+          tooltip-format = "{used:0.1f}GB/{total:0.1f}G";
           on-click-right = "foot btop";
         };
 
         disk = {
-          format = "󰋊 {percentage_used}%";
-          tooltip-format = "({used}/{total})({percentage_used}%) in '{path}', available {free}({percentage_free}%)";
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
-          };
-          on-click = "foot btop";
-          on-click-right = "foot btop";
+          interval = 30;
+          path = "/";
+          format = "{percentage_used}% 󰋊";
+          format-alt-click = "click";
+          format-alt = "{free} free 󰋊";
+          tooltip = true;
+          tooltip-format = "{used} used out of {total} on {path} ({percentage_used}%)";
         };
 
-        temperature = {
-          tooltip = false;
-          thermal-zone = 8;
-          critical-threshold = 80;
-          format = "{icon} {temperatureC}󰔄";
-          format-critical = "🔥 {icon} {temperatureC}󰔄";
-          format-icons = ["" "" "" "" ""];
-        };
-
-        battery = {
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
-          };
-          format = "{icon} {capacity}%";
-          format-charging = "󱐋{icon} {capacity}%";
-          format-plugged = "󰚥{icon} {capacity}%";
-          format-time = "{H} h {M} min";
-          format-icons = ["󱃍" "󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂" "󰁹"];
-          tooltip-format = "{timeTo}";
-        };
-
-        backlight = {
-          format = "{icon} {percent}%";
-          format-icons = [
-            "󰌶"
-            "󱩎"
-            "󱩏"
-            "󱩐"
-            "󱩑"
-            "󱩒"
-            "󱩓"
-            "󱩔"
-            "󱩕"
-            "󱩖"
-            "󰛨"
-          ];
-          tooltip = false;
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
-          };
-          reverse-scrolling = true;
-          reverse-mouse-scrolling = true;
-        };
-
+        # Audio modules
         pulseaudio = {
-          states = {
-            high = 90;
-            upper-medium = 70;
-            medium = 50;
-            lower-medium = 30;
-            low = 10;
-          };
-          tooltip-format = "{desc}";
-          format = "{icon} {volume}%\n{format_source}";
-          format-bluetooth = "󰂱 {icon} {volume}%\n{format_source}";
-          format-bluetooth-muted = "󰂱 󰝟 {volume}%\n{format_source}";
-          format-muted = "󰝟 {volume}%\n{format_source}";
-          format-source = "󰍬 {volume}%";
-          format-source-muted = "󰍭 {volume}%";
+          format = "{icon}  {volume}%";
+          format-bluetooth = "{icon}  {volume}%";
+          format-muted = "󰝟";
           format-icons = {
             headphone = "󰋋";
-            hands-free = "";
+            hands-free = "󰋎";
             headset = "󰋎";
-            phone = "󰄜";
-            portable = "󰦧";
-            car = "󰄋";
-            speaker = "󰓃";
-            hdmi = "󰡁";
-            hifi = "󰋌";
+            phone = "";
+            portable = "";
+            car = "";
             default = [
               "󰕿"
               "󰖀"
               "󰕾"
+              "󰕾"
             ];
           };
-          reverse-scrolling = true;
-          reverse-mouse-scrolling = true;
-          on-click = "pavucontrol";
+          ignored-sinks = [
+            "Easy Effects Sink"
+          ];
+          scroll-step = 5.0;
+          on-click = "${pkgs.writeShellScript "toggle-audio" ''
+            pactl set-sink-mute @DEFAULT_SINK@ toggle
+          ''}";
+          on-click-right = "pavucontrol -t 3";
+          on-scroll-up = "${pkgs.writeShellScript "volume-up" ''
+            pactl set-sink-volume @DEFAULT_SINK@ +5%
+          ''}";
+          on-scroll-down = "${pkgs.writeShellScript "volume-down" ''
+            pactl set-sink-volume @DEFAULT_SINK@ -5%
+          ''}";
+          tooltip-format = "{icon} {desc} | {volume}%";
+          smooth-scrolling-threshold = 1;
         };
 
-        "systemd-failed-units" = {
-          format = "✗  {nr_failed}";
+        "pulseaudio#microphone" = {
+          format = "{format_source}";
+          format-source = "  {volume}%";
+          format-source-muted = "󰍭";
+          on-click = "${pkgs.writeShellScript "toggle-mic" ''
+            pactl set-source-mute @DEFAULT_SOURCE@ toggle
+          ''}";
+          on-click-right = "pavucontrol -t 4";
+          on-scroll-up = "${pkgs.writeShellScript "mic-up" ''
+            pactl set-source-volume @DEFAULT_SOURCE@ +5%
+          ''}";
+          on-scroll-down = "${pkgs.writeShellScript "mic-down" ''
+            pactl set-source-volume @DEFAULT_SOURCE@ -5%
+          ''}";
+          tooltip-format = "{source_desc} | {source_volume}%";
+          scroll-step = 5;
+        };
+
+        # Battery module
+        battery = {
+          interval = 60;
+          align = 0;
+          rotate = 0;
+          full-at = 100;
+          design-capacity = false;
+          states = {
+            good = 95;
+            warning = 30;
+            critical = 15;
+          };
+          format = "{icon}  {capacity}%";
+          format-charging = "󰂄 {capacity}%";
+          format-plugged = " {capacity}%";
+          format-full = "{icon} Full";
+          format-alt = "{icon} {time}";
+          format-icons = [
+            "󰂎"
+            "󰁺"
+            "󰁻"
+            "󰁼"
+            "󰁽"
+          ];
+          format-time = "{H}h {M}min";
+          tooltip = true;
+        };
+
+        # Taskbar
+        "wlr/taskbar" = {
+          format = "{icon}";
+          icon-size = 28;
+          all-outputs = true;
+          tooltip-format = "{title}";
+          on-click = "activate";
+          on-click-middle = "close";
+        };
+
+        # Network module
+        network = {
+          tooltip-format-ethernet = "{ifname}  {ipaddr}/{cidr}";
+          tooltip-format-wifi = "{essid} ({signalStrength}%)";
+          interval = 2;
+          on-click-right = "foot nmtui";
+          format = "{}";
+          format-alt-click = "click";
+          format-alt = "  {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}";
+          format-disconnected = "Disconnected";
+          format-wifi = " {bandwidthDownBytes}  {bandwidthUpBytes} ";
+          format-ethernet = " {bandwidthDownBytes}  {bandwidthUpBytes} 󰈁";
+        };
+
+        # Language switcher
+        "hyprland/language" = {
+          format = "{}";
+          format-en = "En";
+          format-he = "He";
+          on-click = "hyprctl switchxkblayout next";
+        };
+
+        # Idle inhibitor
+        idle_inhibitor = {
+          format = "{icon}";
+          format-icons = {
+            activated = "󰅶";
+            deactivated = "󰾪";
+          };
+        };
+
+        # Custom modules
+        "custom/power-menu" = {
+          format = " 󰐥 ";
+          on-click = "${pkgs.writeShellScript "power-menu" ''
+            if command -v wlogout >/dev/null 2>&1; then
+              wlogout
+            else
+              echo "No power menu available"
+            fi
+          ''}";
+        };
+
+        "custom/launcher" = {
+          format = "   ";
+          on-click = "${pkgs.writeShellScript "launcher" ''
+            walker
+          ''}";
+        };
+
+        # "custom/wallpaper" = {
+        #   format = " 󰸉 ";
+        #   on-click = "${pkgs.writeShellScript "wallpaper-menu" ''
+        #     if command -v rofi >/dev/null 2>&1; then
+        #       rofi -show filebrowser -filebrowser-directory ~/Pictures/wallpapers
+        #     else
+        #       echo "No wallpaper selector available"
+        #     fi
+        #   ''}";
+        # };
+
+        "custom/usb" = {
+          format = "";
+          tooltip = false;
+          on-click = "${pkgs.writeShellScript "usb-eject" ''
+            # Simple USB ejection script
+            devices=$(lsblk -rno NAME,TRAN | awk '$2=="usb" {print "/dev/" $1}')
+            if [ -n "$devices" ]; then
+              device=$(echo "$devices" | walker -d -p "Eject USB:")
+              if [ -n "$device" ]; then
+                udisksctl unmount -b "$device" && udisksctl power-off -b "$device"
+              fi
+            else
+              notify-send "No USB devices found"
+            fi
+          ''}";
+        };
+
+        "custom/audio_idle_inhibitor" = {
+          format = "{icon}";
+          exec = "${pkgs.writeShellScript "audio-idle-inhibitor" ''
+            # Check if audio is playing
+            if pactl list sink-inputs | grep -q "RUNNING"; then
+              echo '{"text": "󰐎 ", "tooltip": "Audio playing - idle inhibited", "class": "active"}'
+            else
+              echo '{"text": "󰐏 ", "tooltip": "No audio - idle not inhibited", "class": "inactive"}'
+            fi
+          ''}";
+          return-type = "json";
+          interval = 2;
+          format-icons = {
+            output = "󰐎";
+            input = "󰐏 ";
+            output-input = "󰐎 󰐏 ";
+            none = "󰐏 ";
+          };
+        };
+
+        "custom/swaync" = {
+          tooltip = true;
+          format = "{icon} {}";
+          format-icons = {
+            notification = "<span foreground='red'><sup>󰂞 </sup></span>";
+            none = "󰂚";
+            dnd-notification = "<span foreground='red'><sup>󰂠 </sup></span>";
+            dnd-none = "󰂛";
+            inhibited-notification = "<span foreground='red'><sup>󰂞 </sup></span>";
+            inhibited-none = "󰂚";
+            dnd-inhibited-notification = "<span foreground='red'><sup>󰂠 </sup></span>";
+            dnd-inhibited-none = "󰂛";
+          };
+          return-type = "json";
+          exec-if = "which swaync-client";
+          exec = "swaync-client -swb";
+          on-click = "sleep 0.1 && swaync-client -t -sw";
+          on-click-right = "swaync-client -d -sw";
+          escape = true;
+        };
+
+        "custom/hyprsunset" = {
+          format = " 󰛨 ";
+          on-click = "${pkgs.writeShellScript "toggle-blue-light" ''
+            if command -v hyprctl >/dev/null 2>&1; then
+              # Check if hyprsunset is currently active by checking the current state
+              # If identity is active, enable temperature filter, otherwise disable
+              current_state=$(hyprctl hyprsunset 2>/dev/null || echo "identity")
+              if echo "$current_state" | grep -q "identity\|disabled"; then
+                # Enable blue light filter (4000K temperature)
+                hyprctl hyprsunset temperature 4000
+                notify-send "Blue Light Filter" "Enabled (4000K)" -i display-brightness 2>/dev/null || true
+              else
+                # Disable blue light filter (reset to identity)
+                hyprctl hyprsunset identity
+                notify-send "Blue Light Filter" "Disabled" -i display-brightness 2>/dev/null || true
+              fi
+            else
+              echo "hyprctl not available"
+            fi
+          ''}";
+          tooltip = true;
+          tooltip-format = "Toggle blue light filter (hyprsunset)";
         };
       }
     ];
 
-    # Custom Catppuccin Macchiato styling (matching reference)
+    # Custom Catppuccin Macchiato styling
     style = ./style.css;
   };
 
-  # Ensure hyprsunset and related utilities are available
+  # Ensure required utilities are available
   home.packages = with pkgs; [
-    swappy # For screenshot editing (optional but useful)
-    btop # System monitor
+    # System monitoring
+    btop
+
+    # Audio utilities (if not already included)
+    pavucontrol
+    pulseaudio
+    playerctl
+
+    # Network utilities
+    networkmanagerapplet
+
+    # Screenshot utilities
+    swappy
+
+    # Notification daemon (if using swaync)
+    # swaynotificationcenter
   ];
 
-  # Create macchiato.css file for waybar theming
-  xdg.configFile."waybar/macchiato.css" = {
+  # Create mocha.css file for waybar theming
+  xdg.configFile."waybar/mocha.css" = {
     text = ''
-      /*
-      *
-      * Catppuccin Macchiato palette
-      * Maintainer: rubyowo
-      *
-      */
-
-      @define-color base   #24273a;
-      @define-color mantle #1e2030;
-      @define-color crust  #181926;
-
-      @define-color text     #cad3f5;
-      @define-color subtext0 #a5adcb;
-      @define-color subtext1 #b8c0e0;
-
-      @define-color surface0 #363a4f;
-      @define-color surface1 #494d64;
-      @define-color surface2 #5b6078;
-
-      @define-color overlay0 #6e738d;
-      @define-color overlay1 #8087a2;
-      @define-color overlay2 #939ab7;
-
-      @define-color blue      #8aadf4;
-      @define-color lavender  #b7bdf8;
-      @define-color sapphire  #7dc4e4;
-      @define-color sky       #91d7e3;
-      @define-color teal      #8bd5ca;
-      @define-color green     #a6da95;
-      @define-color yellow    #eed49f;
-      @define-color peach     #f5a97f;
-      @define-color maroon    #ee99a0;
-      @define-color red       #ed8796;
-      @define-color mauve     #c6a0f6;
-      @define-color pink      #f5bde6;
-      @define-color flamingo  #f0c6c6;
-      @define-color rosewater #f4dbd6;
+      @define-color rosewater #f5e0dc;
+      @define-color flamingo #f2cdcd;
+      @define-color pink #f5c2e7;
+      @define-color mauve #cba6f7;
+      @define-color red #f38ba8;
+      @define-color maroon #eba0ac;
+      @define-color peach #fab387;
+      @define-color yellow #f9e2af;
+      @define-color green #a6e3a1;
+      @define-color teal #94e2d5;
+      @define-color sky #89dceb;
+      @define-color sapphire #74c7ec;
+      @define-color blue #89b4fa;
+      @define-color lavender #b4befe;
+      @define-color text #cdd6f4;
+      @define-color subtext1 #bac2de;
+      @define-color subtext0 #a6adc8;
+      @define-color overlay2 #9399b2;
+      @define-color overlay1 #7f849c;
+      @define-color overlay0 #6c7086;
+      @define-color surface2 #585b70;
+      @define-color surface1 #45475a;
+      @define-color surface0 #313244;
+      @define-color base #1e1e2e;
+      @define-color mantle #181825;
+      @define-color crust #11111b;
     '';
   };
 }

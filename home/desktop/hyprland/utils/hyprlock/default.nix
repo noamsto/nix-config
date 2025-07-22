@@ -17,25 +17,10 @@ in {
   programs.hyprlock = {
     enable = true;
     package = inputs.hyprlock.packages.${pkgs.system}.hyprlock;
-
     settings = {
       auth = {
-        fingerprint = {
-          enabled = true;
-          ready_message = "Scan fingerprint to unlock";
-          present_message = "Scanning...";
-          retry_delay = 250; # in milliseconds
-        };
+        fingerprint.enabled = true;
       };
-      general = {
-        disable_loading_bar = true;
-      };
-
-      background = [
-        {
-          monitor = "";
-        }
-      ];
 
       input-field = [
         {

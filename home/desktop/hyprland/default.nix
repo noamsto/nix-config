@@ -2,15 +2,8 @@
   pkgs,
   lib,
   inputs,
-  config,
   ...
-}: let
-  # variant = "dark";
-  toggle = program: service: let
-    prog = builtins.substring 0 14 program;
-    runserv = lib.optionalString service "run-as-service";
-  in "pkill ${prog} || ${runserv} ${program}";
-in {
+}: {
   imports = [
     inputs.hyprland.homeManagerModules.default
 
@@ -32,6 +25,7 @@ in {
     plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
       hyprbars
       hyprexpo
+      inputs.Hyprspace.packages.${pkgs.system}.Hyprspace
     ];
     systemd.enable = false;
   };

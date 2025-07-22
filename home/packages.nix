@@ -23,7 +23,6 @@
 
     sublime-merge
 
-    inputs.aicommit2.packages."${pkgs.system}".default
     dragon-drop
     stable.aider-chat-with-playwright
     aichat

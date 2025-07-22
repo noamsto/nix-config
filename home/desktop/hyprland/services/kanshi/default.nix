@@ -30,9 +30,8 @@
     ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
-    # Laptop screen: workspaces 9-10
+    # Laptop screen: workspace 9
     ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
-    ${hyprctl} dispatch moveworkspacetomonitor 10 eDP-1
     # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
     pkill quickshell || true
     while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
