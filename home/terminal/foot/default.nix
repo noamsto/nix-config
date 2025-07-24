@@ -7,6 +7,10 @@
         dpi-aware = "yes";
       };
 
+      colors = {
+        alpha = "0.9";
+      };
+
       text-bindings = {
         "\\x1b[72;6u" = "Control+Shift+h";
         "\\x1b[74;6u" = "Control+Shift+j";

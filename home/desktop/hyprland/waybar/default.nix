@@ -7,7 +7,8 @@
       {
         height = 42;
         layer = "top";
-        # Show on all monitors
+        # Show on left monitors and internal monitor
+        # Exclude right monitors by using ! prefix
         modules-left = [
           "custom/launcher"
           "clock"

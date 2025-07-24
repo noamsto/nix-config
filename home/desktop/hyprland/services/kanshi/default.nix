@@ -4,20 +4,12 @@
   ...
 }: let
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
-  quickshell = "${lib.getExe pkgs.quickshell}";
   home-ext-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
   home-ext-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
   work-ext-left = "desc:Dell Inc. DELL P2723DE 4C7FH14";
   work-ext-right = "desc:Dell Inc. DELL P2723DE CC7FH14";
-
-  # Kill and restart a program in background with disown (suppress output)
-  restartProgramBackground = program: let
-    progName = builtins.baseNameOf program;
-  in "pkill ${progName} || true; sleep 0.5; ${program} >/dev/null 2>&1 & disown";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
-    # Move quickshell to laptop screen when undocked
-    ${restartProgramBackground quickshell}
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
     # Left monitor (DP-8): workspaces 1-4
@@ -32,11 +24,6 @@
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
     # Laptop screen: workspace 9
     ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
-    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
-    pkill quickshell || true
-    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
-    ${hyprctl} dispatch focusmonitor ${home-ext-left}
-    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
     # Left monitor (ext left): workspaces 1-4
@@ -49,11 +36,6 @@
     ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
-    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
-    pkill quickshell || true
-    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
-    ${hyprctl} dispatch focusmonitor ${home-ext-left}
-    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
     # Left monitor (work left): workspaces 1-4
@@ -69,11 +51,6 @@
     # Laptop screen: workspaces 9-10
     ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
     ${hyprctl} dispatch moveworkspacetomonitor 10 eDP-1
-    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
-    pkill quickshell || true
-    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
-    ${hyprctl} dispatch focusmonitor ${work-ext-left}
-    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
     # Left monitor (work left): workspaces 1-4
@@ -86,11 +63,6 @@
     ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right}
-    # Kill quickshell, wait for it to exit, focus target monitor, then launch quickshell
-    pkill quickshell || true
-    while pgrep quickshell >/dev/null 2>&1; do sleep 0.01; done
-    ${hyprctl} dispatch focusmonitor ${work-ext-left}
-    ${lib.getExe pkgs.quickshell} >/dev/null 2>&1 & disown
   '';
 in {
   home.packages = [pkgs.kanshi];
