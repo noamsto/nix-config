@@ -2023,26 +2023,6 @@
         "type": "github"
       }
     },
-    "quickshell": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1753402503,
-        "narHash": "sha256-cc1seYNwhhk9f74NpJSFRmQFjDzXInq66/dSVs2eK4Y=",
-        "ref": "refs/heads/master",
-        "rev": "4dad44757085a42423f758bf0177cebcd07b4a4a",
-        "revCount": 656,
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      }
-    },
     "root": {
       "inputs": {
         "agenix": "agenix",
@@ -2070,7 +2050,6 @@
         "nixpkgs-stable": "nixpkgs-stable",
         "plasma-manager": "plasma-manager",
         "pre-commit-hooks": "pre-commit-hooks_2",
-        "quickshell": "quickshell",
         "systems": "systems_5",
         "treefmt-nix": "treefmt-nix_3",
         "walker": "walker",

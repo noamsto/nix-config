@@ -32,19 +32,6 @@ in {
     hardware.brillo.enable = true;
     environment.systemPackages = with pkgs; [
       pavucontrol
-
-      # QML Language Server for development
-      kdePackages.qttools # Provides qmlls
-      kdePackages.qtdeclarative
-
-      # Quickshell for QML-based desktop shell
-      inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
-
-      # Quickshell recommended packages for full functionality
-      qt6.qtsvg # SVG image loading support
-      qt6.qtimageformats # WEBP and less common image formats
-      qt6.qtmultimedia # Video/audio support
-      qt6.qt5compat # Visual effects (gaussian blur)
     ];
   };
 }

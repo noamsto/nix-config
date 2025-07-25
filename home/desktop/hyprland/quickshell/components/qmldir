@@ -1,9 +1,0 @@
-module components
-
-BatteryStatus 1.0 BatteryStatus.qml
-BluetoothStatus 1.0 BluetoothStatus.qml
-NetworkStatus 1.0 NetworkStatus.qml
-PopoutManager 1.0 PopoutManager.qml
-PowerControl 1.0 PowerControl.qml
-VolumeControl 1.0 VolumeControl.qml
-WindowTitle 1.0 WindowTitle.qml
