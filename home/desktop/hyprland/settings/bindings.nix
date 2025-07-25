@@ -37,7 +37,6 @@ in {
       "$mainMod, R, togglesplit,"
       "$mainMod, T, togglefloating,"
       "$mainMod, grave, hyprexpo:expo, toggle"
-      "$mainMod, O, overview:toggle" # Hyprspace workspace overview
 
       "$mainMod, V, exec, walker -m clipboard"
 

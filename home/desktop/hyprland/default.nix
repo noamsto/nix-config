@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   inputs,
   ...
 }: {
@@ -11,10 +10,9 @@
     ./walker
     ./terminal
     ./services
-    # ./xdg.nix
+    ./media
     ./utils
     ./settings
-    # ./quickshell  # Disabled in favor of waybar
     ./waybar
     ./dunst.nix
     ./scripts/screenshot-utils.nix
@@ -25,13 +23,11 @@
     plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
       hyprbars
       hyprexpo
-      inputs.Hyprspace.packages.${pkgs.system}.Hyprspace
     ];
     systemd.enable = false;
   };
 
   home.packages = with pkgs; [
-    playerctl
     papirus-icon-theme
     bibata-cursors
     kdePackages.dolphin

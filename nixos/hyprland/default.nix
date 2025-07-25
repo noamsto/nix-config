@@ -25,13 +25,11 @@ in {
       };
     };
 
-    services.blueman.enable = true;
-
+    services.blueman.enable = true; #TODO: Chose between this and brightnesctl
     security.pam.services.hyprlock = {};
 
     # smooth backlight control
     hardware.brillo.enable = true;
-
     environment.systemPackages = with pkgs; [
       pavucontrol
 

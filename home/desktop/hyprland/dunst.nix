@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+{...}: {
   services.dunst = {
     enable = true;
 
@@ -37,7 +32,7 @@
         sort = "yes";
         idle_threshold = 120;
 
-        font = "JetBrains Mono Nerd Font 12";
+        font = "Inter Nerd Font 12";
         line_height = 0;
         markup = "full";
         format = "<b>%s</b>\\n%b";
@@ -59,8 +54,8 @@
         sticky_history = "yes";
         history_length = 20;
 
-        dmenu = "${pkgs.dmenu}/bin/dmenu -p dunst:";
-        browser = "${pkgs.firefox}/bin/firefox -new-tab";
+        dmenu = "walker -p dunst:";
+        browser = "brave -new-tab";
 
         always_run_script = true;
         title = "Dunst";
@@ -71,7 +66,7 @@
         force_xwayland = false;
         force_xinerama = false;
 
-        mouse_left_click = "close_current";
+        mouse_left_click = "do_action, close_current";
         mouse_middle_click = "do_action, close_current";
         mouse_right_click = "close_all";
       };
