@@ -7,12 +7,13 @@
       {
         height = 42;
         layer = "top";
+        exclusive = true; # This ensures waybar gets its own space
+        passthrough = false; # Waybar will capture input events
         # Show on left monitors and internal monitor
         # Exclude right monitors by using ! prefix
         modules-left = [
           "custom/launcher"
           "clock"
-          "custom/swaync"
           "custom/audio_idle_inhibitor"
           "idle_inhibitor"
           "hyprland/workspaces"
@@ -25,12 +26,15 @@
         modules-right = [
           "custom/usb"
           "network"
-          "hyprland/language"
+          "custom/keyboard-layout"
           "group/hardware"
+          "group/backlight"
           "custom/hyprsunset"
+          "power-profiles-daemon"
           "battery"
           "group/audio"
-          "custom/power-menu"
+          "custom/swaync"
+          # "custom/power-menu"
         ];
 
         # Separator modules
@@ -95,6 +99,19 @@
           modules = [
             "pulseaudio"
             "pulseaudio#microphone"
+          ];
+        };
+
+        "group/backlight" = {
+          orientation = "inherit";
+          drawer = {
+            transition-duration = 500;
+            children-class = "not-power";
+            transition-left-to-right = false;
+          };
+          modules = [
+            "backlight"
+            "backlight/slider"
           ];
         };
 
@@ -289,12 +306,14 @@
           format-ethernet = " {bandwidthDownBytes}  {bandwidthUpBytes} 󰈁";
         };
 
-        # Language switcher
-        "hyprland/language" = {
+        # Custom keyboard layout indicator with Hebrew support
+        "custom/keyboard-layout" = {
           format = "{}";
-          format-en = "En";
-          format-he = "He";
-          on-click = "hyprctl switchxkblayout next";
+          exec = "keyboard-layout";
+          return-type = "json";
+          restart-interval = 1;
+          on-click = "hyprctl switchxkblayout at-translated-set-2-keyboard next";
+          tooltip = true;
         };
 
         # Idle inhibitor
@@ -375,47 +394,89 @@
 
         "custom/swaync" = {
           tooltip = true;
-          format = "{icon} {}";
+          format = "{icon}";
           format-icons = {
-            notification = "<span foreground='red'><sup>󰂞 </sup></span>";
+            notification = "󰂚 <span foreground='red'><sup></sup></span>";
             none = "󰂚";
-            dnd-notification = "<span foreground='red'><sup>󰂠 </sup></span>";
+            dnd-notification = "󰂛 <span foreground='red'><sup></sup></span>";
             dnd-none = "󰂛";
-            inhibited-notification = "<span foreground='red'><sup>󰂞 </sup></span>";
+            inhibited-notification = "󰂚 <span foreground='red'><sup></sup></span>";
             inhibited-none = "󰂚";
-            dnd-inhibited-notification = "<span foreground='red'><sup>󰂠 </sup></span>";
+            dnd-inhibited-notification = "󰂛 <span foreground='red'><sup></sup></span>";
             dnd-inhibited-none = "󰂛";
           };
           return-type = "json";
           exec-if = "which swaync-client";
           exec = "swaync-client -swb";
-          on-click = "sleep 0.1 && swaync-client -t -sw";
+          on-click = "swaync-client -t -sw";
           on-click-right = "swaync-client -d -sw";
           escape = true;
         };
 
         "custom/hyprsunset" = {
-          format = " 󰛨 ";
-          on-click = "${pkgs.writeShellScript "toggle-blue-light" ''
-            if command -v hyprctl >/dev/null 2>&1; then
-              # Check if hyprsunset is currently active by checking the current state
-              # If identity is active, enable temperature filter, otherwise disable
-              current_state=$(hyprctl hyprsunset 2>/dev/null || echo "identity")
-              if echo "$current_state" | grep -q "identity\|disabled"; then
-                # Enable blue light filter (4000K temperature)
-                hyprctl hyprsunset temperature 4000
-                notify-send "Blue Light Filter" "Enabled (4000K)" -i display-brightness 2>/dev/null || true
-              else
-                # Disable blue light filter (reset to identity)
-                hyprctl hyprsunset identity
-                notify-send "Blue Light Filter" "Disabled" -i display-brightness 2>/dev/null || true
-              fi
+          format = "{icon}";
+          format-icons = {
+            on = "󰌵"; # Icon when blue light filter is active
+            off = "󰌶"; # Icon when blue light filter is inactive
+          };
+          return-type = "json";
+          exec = "${pkgs.writeShellScript "hyprsunset-status" ''
+            state_file="$HOME/.cache/hyprsunset_active"
+            if [ -f "$state_file" ]; then
+              echo '{"text": "󰌵", "tooltip": "Blue light filter: ON (4000K)", "class": "on"}'
             else
-              echo "hyprctl not available"
+              echo '{"text": "󰌶", "tooltip": "Blue light filter: OFF", "class": "off"}'
             fi
           ''}";
+          interval = 2;
+          on-click = "${pkgs.writeShellScript "toggle-blue-light" ''
+            # Since hyprsunset service is running, use IPC commands
+            # Keep track of state using a simple toggle file
+            state_file="$HOME/.cache/hyprsunset_active"
+
+            if [ -f "$state_file" ]; then
+              # Currently active, disable it
+              hyprctl hyprsunset identity
+              rm -f "$state_file"
+              notify-send "Blue Light Filter" "Disabled" -i display-brightness 2>/dev/null || true
+            else
+              # Currently inactive, enable it
+              hyprctl hyprsunset temperature 4000
+              touch "$state_file"
+              notify-send "Blue Light Filter" "Enabled (4000K)" -i display-brightness 2>/dev/null || true
+            fi
+          ''}";
+        };
+
+        "power-profiles-daemon" = {
+          format = "{icon}";
+          tooltip-format = "Power profile: {profile}\nDriver: {driver}";
           tooltip = true;
-          tooltip-format = "Toggle blue light filter (hyprsunset)";
+          format-icons = {
+            default = "";
+            performance = "";
+            balanced = " ";
+            power-saver = " ";
+          };
+        };
+
+        # Backlight icon module
+        backlight = {
+          format = "{icon}";
+          format-icons = ["󰃞" "󰃟" "󰃠"];
+          tooltip = true;
+          tooltip-format = "Brightness: {percent}%";
+          on-scroll-up = "brightness-control up 5";
+          on-scroll-down = "brightness-control down 5";
+          interval = 1;
+        };
+
+        # Brightness slider
+        "backlight/slider" = {
+          min = 5;
+          max = 100;
+          orientation = "horizontal";
+          device = "amdgpu_bl1";
         };
       }
     ];
@@ -441,7 +502,9 @@
     swappy
 
     # Notification daemon (if using swaync)
-    # swaynotificationcenter
+    swaynotificationcenter
+
+    # Brightness control (brightnessctl is enabled system-wide)
   ];
 
   # Create mocha.css file for waybar theming

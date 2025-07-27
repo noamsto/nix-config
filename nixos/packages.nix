@@ -37,6 +37,8 @@
     gpu-viewer
     wluma
     brave
+    brightnessctl
+    ddcutil
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon

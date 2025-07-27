@@ -16,6 +16,7 @@ in {
   wayland.windowManager.hyprland = {
     settings = {
       monitor = [
+        # Fallback for any monitor not configured by kanshi
         ",preferred,auto,auto"
       ];
       # bindl = [
@@ -75,10 +76,10 @@ in {
 
       general = {
         gaps_in = 5;
-        gaps_out = 5;
-        border_size = 1;
-        "col.active_border" = "rgba(88888888)";
-        "col.inactive_border" = "rgba(00000088)";
+        gaps_out = 10; # Increased from 5 to add more space around windows
+        border_size = 3; # Increased from 1 to make borders more visible
+        "col.active_border" = "rgba(89b4faff) rgba(cba6f7ff) 45deg"; # Blue to mauve gradient for active windows
+        "col.inactive_border" = "rgba(313244aa)"; # Subtle surface0 color with transparency
 
         allow_tearing = true;
         resize_on_border = true;
@@ -146,6 +147,9 @@ in {
         # enable window swallowing
         enable_swallow = true;
         swallow_regex = "^(foot|kitty|Alacritty)$";
+
+        # Fullscreen behavior
+        layers_hog_keyboard_focus = true; # Ensure fullscreen windows get keyboard focus
       };
       render = {
         direct_scanout = true;
@@ -156,10 +160,11 @@ in {
         workspace_swipe = true;
         workspace_swipe_forever = true;
         workspace_swipe_fingers = 4;
-        workspace_swipe_distance = 300;
+        workspace_swipe_distance = 150; # Reduced from 300 for more responsive swiping
         workspace_swipe_invert = true;
-        workspace_swipe_min_speed_to_force = 30;
+        workspace_swipe_min_speed_to_force = 20; # Reduced from 30 for easier triggering
         workspace_swipe_cancel_ratio = 0.5;
+        workspace_swipe_create_new = true; # Create new workspaces when swiping past the last one
       };
 
       xwayland.force_zero_scaling = true;

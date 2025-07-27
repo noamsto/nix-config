@@ -157,3 +157,6 @@ Secrets are stored in a separate private repository (`mysecrets` input) and mana
 - **Follow existing module structure** when adding new functionality
 - **Test on multiple hosts** when making system-wide changes
 
+## Memories
+
+- Build with `nh os switch -S`

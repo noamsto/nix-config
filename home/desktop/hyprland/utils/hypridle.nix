@@ -21,7 +21,7 @@
     ${pkgs.systemd}/bin/systemctl suspend
   '';
 
-  brillo = lib.getExe pkgs.brillo;
+  brightnessctl = lib.getExe pkgs.brightnessctl;
 
   # timeout after which DPMS kicks in
   timeout = 300;
@@ -44,9 +44,9 @@ in {
           timeout = timeout - 10;
           # save the current brightness and dim the screen over a period of
           # 1 second
-          on-timeout = "${brillo} -O; ${brillo} -u 1000000 -S 10";
-          # brighten the screen over a period of 500ms to the saved value
-          on-resume = "${brillo} -I -u 500000";
+          on-timeout = "${brightnessctl} -s set 10%";
+          # restore the saved brightness value
+          on-resume = "${brightnessctl} -r";
         }
         {
           inherit timeout;

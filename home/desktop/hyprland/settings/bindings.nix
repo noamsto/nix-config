@@ -28,14 +28,16 @@ in {
     "$mainMod" = "SUPER";
     "$screenshotarea" = ''hyprctl keyword animation "fadeOut,0,0,default"; grimblast --notify copysave area; hyprctl keyword animation "fadeOut,1,4,default"'';
     bind = [
-      "$mainMod, Q, exec, ${terminal}"
+      "$mainMod, C, exec, ${terminal}" # Changed from Q to C for console/terminal
       "$mainMod, E, exec, ${fileManager}"
       "$mainMod, B, exec, ${browser}"
-      "$mainMod, F, fullscreen"
-      "$mainMod, C, killactive"
+      "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)
+      "$mainMod SHIFT, F, fullscreen, 0" # True fullscreen (no gaps)
+      "$mainMod, Q, killactive" # Changed from C to Q for quit/close window
       "$mainMod, P, pseudo"
       "$mainMod, R, togglesplit,"
       "$mainMod, T, togglefloating,"
+      "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
       "$mainMod, grave, hyprexpo:expo, toggle"
 
       "$mainMod, V, exec, walker -m clipboard"
@@ -128,8 +130,8 @@ in {
       ", XF86AudioLowerVolume, exec, wpctl set-volume -l '1.0' @DEFAULT_AUDIO_SINK@ 6%-"
 
       # backlight
-      ", XF86MonBrightnessUp, exec, brillo -q -u 300000 -A 5"
-      ", XF86MonBrightnessDown, exec, brillo -q -u 300000 -U 5"
+      ", XF86MonBrightnessUp, exec, brightness-control up 5"
+      ", XF86MonBrightnessDown, exec, brightness-control down 5"
 
       # Resize windows
       "$mainMod, left, resizeactive, -20 0"

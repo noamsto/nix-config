@@ -17,7 +17,7 @@ if [ -n "$BROWSER_IN_CURRENT" ]; then
 else
     # Check if browser is running anywhere else
     BROWSER_RUNNING=$(hyprctl clients | grep -q "class: $BROWSER_CLASS")
-    
+
     if [ $? -eq 0 ]; then
         # Browser exists elsewhere, bring it to current workspace
         hyprctl dispatch movetoworkspace "$CURRENT_WORKSPACE,class:$BROWSER_CLASS"

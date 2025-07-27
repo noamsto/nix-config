@@ -10,7 +10,7 @@ window#waybar {
   color: @text;
   transition-property: background-color;
   transition-duration: 0.5s;
-  margin-bottom: 10px;
+  margin: 10px 10px 15px 10px; /* top right bottom left - adds spacing around waybar */
 }
 
 window#waybar.hidden {
@@ -42,13 +42,15 @@ window#waybar.hidden {
 #custom-dict,
 #custom-usb,
 #custom-power-menu,
+#power-profiles-daemon,
 #custom-wallpaper,
 #custom-launcher,
 #custom-spotify,
 #custom-swaync,
 #custom-hyprshade,
 #custom-audio_idle_inhibitor,
-#custom-hyprsunset {
+#custom-hyprsunset,
+#backlight {
   color: @text;
   padding: 0px 10px 0px 10px;
   background-color: @surface0;
@@ -57,8 +59,8 @@ window#waybar.hidden {
 }
 
 /* Middle of groups - no side margins, no border radius */
-#custom-swaync,
 #custom-audio_idle_inhibitor,
+#power-profiles-daemon,
 #workspaces,
 #cpu,
 #memory,
@@ -66,7 +68,8 @@ window#waybar.hidden {
 #custom-hyprsunset,
 #battery,
 #language,
-#pulseaudio.microphone {
+#pulseaudio.microphone,
+#backlight-slider {
   margin-right: 0;
   margin-left: 0;
   border-radius: 0;
@@ -83,7 +86,8 @@ window#waybar.hidden {
 
 /* Left side of groups - no right border radius */
 #idle_inhibitor,
-#network {
+#network,
+#backlight {
   margin-right: 0;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
@@ -92,8 +96,8 @@ window#waybar.hidden {
 /* Specific module styling */
 #custom-launcher {
   color: @blue;
-  font-size: 28px;
-  padding: 0 10px 0 10px;
+  font-size: 24px;
+  padding: 0px 4px 0px 4px;
   margin-left: 4px;
 }
 
@@ -104,6 +108,13 @@ window#waybar.hidden {
 
 #custom-swaync {
   color: @green;
+}
+
+#custom-swaync.dnd-inhibited-none,
+#custom-swaync.dnd-none,
+#custom-swaync.dnd-inhibited-notification,
+#custom-swaync.dnd-notification {
+  color: @red;
 }
 
 #custom-audio_idle_inhibitor {
@@ -248,4 +259,77 @@ tooltip label {
 
 label:focus {
   background-color: @base;
+}
+
+/* Group hover effects */
+.group:hover #backlight {
+  color: @yellow;
+}
+
+/* Backlight module styling */
+#backlight {
+  color: @yellow;
+}
+
+/* Brightness slider styling */
+#backlight-slider {
+  background-color: @surface0;
+  padding: 0px 10px;
+}
+
+#backlight-slider slider {
+  min-height: 0px;
+  min-width: 0px;
+  opacity: 0;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+#backlight-slider trough {
+  min-height: 10px;
+  min-width: 80px;
+  border-radius: 5px;
+  background-color: @surface1;
+}
+
+#backlight-slider highlight {
+  min-width: 10px;
+  border-radius: 5px;
+  background-color: @yellow;
+}
+
+/* Hyprsunset blue light filter indicator */
+#custom-hyprsunset {
+  color: @text;
+  margin: 2px;
+  padding: 0px 8px;
+}
+
+#custom-hyprsunset.on {
+  color: @peach;
+}
+
+#custom-hyprsunset.off {
+  color: @sky;
+}
+
+/* Custom keyboard layout indicator */
+#custom-keyboard-layout {
+  background-color: @surface0;
+  color: @text;
+  border-radius: 16px;
+  margin: 2px;
+  padding: 0px 12px;
+  font-weight: bold;
+}
+
+#custom-keyboard-layout.keyboard-layout-EN {
+  color: @blue;
+  background-color: alpha(@blue, 0.1);
+}
+
+#custom-keyboard-layout.keyboard-layout-עב {
+  color: @mauve;
+  background-color: alpha(@mauve, 0.1);
 }

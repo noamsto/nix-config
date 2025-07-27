@@ -247,6 +247,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    claude-code.url = "github:sadjow/claude-code-nix?rev=e6fecf11e724ecd9a41a8a829c017955f9b0f707";
+    claude-code.url = "github:sadjow/claude-code-nix";
   };
 }

@@ -14,8 +14,11 @@
     ./utils
     ./settings
     ./waybar
-    ./dunst.nix
+    ./swaync.nix
     ./scripts/screenshot-utils.nix
+    ./scripts/brightness-control.nix
+    ./scripts/keyboard-layout.nix
+    ./smart-dnd.nix
   ];
 
   wayland.windowManager.hyprland = {

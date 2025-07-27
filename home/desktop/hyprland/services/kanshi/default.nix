@@ -100,14 +100,14 @@ in {
             outputs = [
               {
                 criteria = "Samsung Electric Company S27H85x H4ZM300138";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;
                 status = "enable";
@@ -129,14 +129,14 @@ in {
             outputs = [
               {
                 criteria = "Samsung Electric Company S27H85x H4ZM300138";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Samsung Electric Company S27H85x H4ZKB00167";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;
                 status = "enable";
@@ -157,14 +157,14 @@ in {
             outputs = [
               {
                 criteria = "Dell Inc. DELL P2723DE 4C7FH14";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Dell Inc. DELL P2723DE CC7FH14";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;
                 status = "enable";
@@ -186,14 +186,14 @@ in {
             outputs = [
               {
                 criteria = "Dell Inc. DELL P2723DE 4C7FH14";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
                 criteria = "Dell Inc. DELL P2723DE CC7FH14";
-                mode = "2560x1440@59.95100";
+                mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;
                 status = "enable";

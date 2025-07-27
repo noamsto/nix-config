@@ -34,6 +34,10 @@
     windowrulev2 = [
       "suppressevent maximize, class:.*"
 
+      # General floating window rules - center and size when toggled to float
+      "center, floating:1" # Center all floating windows
+      "size 60% 70%, floating:1" # Set default size for floating windows
+
       # telegram media viewer
       "float, title:^(Media viewer)$"
 
@@ -146,6 +150,15 @@
 
       # don't render hyprbars on tiling windows
       "plugin:hyprbars:nobar, floating:0"
+
+      # Fullscreen focus mode rules
+      "noborder, fullscreen:1" # Remove borders in fullscreen
+      "noshadow, fullscreen:1" # Remove shadows in fullscreen
+      "rounding 0, fullscreen:1" # Remove rounding in fullscreen
+      "opacity 0.95, fullscreen:1" # Keep slight transparency for focus mode
+      "plugin:hyprbars:nobar, fullscreen:1" # Hide hyprbars in fullscreen
     ];
+
+    # Fullscreen-specific rules - removed invalid rule
   };
 }
