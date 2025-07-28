@@ -77,9 +77,9 @@ in {
       general = {
         gaps_in = 5;
         gaps_out = 10; # Increased from 5 to add more space around windows
-        border_size = 3; # Increased from 1 to make borders more visible
-        "col.active_border" = "rgba(89b4faff) rgba(cba6f7ff) 45deg"; # Blue to mauve gradient for active windows
-        "col.inactive_border" = "rgba(313244aa)"; # Subtle surface0 color with transparency
+        border_size = 2; # Reduced for subtlety
+        "col.active_border" = "rgba(89b4fa66) rgba(cba6f766) 45deg"; # Blue to mauve gradient with reduced opacity
+        "col.inactive_border" = "rgba(31324455)"; # Even more subtle inactive border
 
         allow_tearing = true;
         resize_on_border = true;
@@ -88,7 +88,7 @@ in {
       };
 
       decoration = {
-        rounding = 16;
+        rounding = 10;
         active_opacity = 1.0;
         inactive_opacity = 1.0;
 

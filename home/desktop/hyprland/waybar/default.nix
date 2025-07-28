@@ -311,7 +311,6 @@
           format = "{}";
           exec = "keyboard-layout";
           return-type = "json";
-          restart-interval = 1;
           on-click = "hyprctl switchxkblayout at-translated-set-2-keyboard next";
           tooltip = true;
         };

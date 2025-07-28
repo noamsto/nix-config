@@ -50,11 +50,12 @@ window#waybar.hidden {
 #custom-hyprshade,
 #custom-audio_idle_inhibitor,
 #custom-hyprsunset,
+#custom-keyboard-layout,
 #backlight {
   color: @text;
   padding: 0px 10px 0px 10px;
   background-color: @surface0;
-  border-radius: 10px;
+  border-radius: 6px;
   margin: 4px 2px 0 2px;
 }
 
@@ -177,7 +178,7 @@ window#waybar.hidden {
 #taskbar button {
   box-shadow: inset 0 -3px transparent;
   padding: 4px;
-  border-radius: 8px;
+  border-radius: 5px;
   transition: all 0.5s cubic-bezier(0.55, -0.68, 0.48, 1.68);
 }
 
@@ -204,7 +205,7 @@ window#waybar.hidden {
 #workspaces button.active {
   color: @crust;
   background: @blue;
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 2px;
   transition: all 0.5s cubic-bezier(0.55, -0.68, 0.48, 1.68);
 }
@@ -247,7 +248,7 @@ window#waybar.hidden {
 
 /* Tooltip styling */
 tooltip {
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 15px;
   background-color: @base;
   font-family: Ubuntu;
@@ -289,13 +290,13 @@ label:focus {
 #backlight-slider trough {
   min-height: 10px;
   min-width: 80px;
-  border-radius: 5px;
+  border-radius: 3px;
   background-color: @surface1;
 }
 
 #backlight-slider highlight {
   min-width: 10px;
-  border-radius: 5px;
+  border-radius: 3px;
   background-color: @yellow;
 }
 
@@ -316,20 +317,16 @@ label:focus {
 
 /* Custom keyboard layout indicator */
 #custom-keyboard-layout {
-  background-color: @surface0;
   color: @text;
-  border-radius: 16px;
-  margin: 2px;
   padding: 0px 12px;
   font-weight: bold;
+  font-size: 13px;
 }
 
 #custom-keyboard-layout.keyboard-layout-EN {
   color: @blue;
-  background-color: alpha(@blue, 0.1);
 }
 
 #custom-keyboard-layout.keyboard-layout-עב {
   color: @mauve;
-  background-color: alpha(@mauve, 0.1);
 }
