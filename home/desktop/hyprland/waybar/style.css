@@ -29,7 +29,6 @@ window#waybar.hidden {
 #disk,
 #custom-brightness,
 #custom-separator,
-#language,
 #bluetooth,
 #backlight,
 #mpris,
@@ -40,7 +39,6 @@ window#waybar.hidden {
 #battery,
 #idle_inhibitor,
 #custom-dict,
-#custom-usb,
 #custom-power-menu,
 #power-profiles-daemon,
 #custom-wallpaper,
@@ -68,7 +66,7 @@ window#waybar.hidden {
 #disk,
 #custom-hyprsunset,
 #battery,
-#language,
+#custom-keyboard-layout,
 #pulseaudio.microphone,
 #backlight-slider {
   margin-right: 0;
@@ -133,11 +131,6 @@ window#waybar.hidden {
 #taskbar {
   margin-left: 4px;
   margin-right: 4px;
-}
-
-#custom-usb {
-  color: @mauve;
-  margin-left: 4px;
 }
 
 #network {

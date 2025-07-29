@@ -24,7 +24,6 @@
           "wlr/taskbar"
         ];
         modules-right = [
-          "custom/usb"
           "network"
           "custom/keyboard-layout"
           "group/hardware"
@@ -311,7 +310,8 @@
           format = "{}";
           exec = "keyboard-layout";
           return-type = "json";
-          on-click = "hyprctl switchxkblayout at-translated-set-2-keyboard next";
+          restart-interval = 0; # Keep script running
+          on-click = "hyprctl switchxkblayout xremap next";
           tooltip = true;
         };
 
@@ -353,23 +353,6 @@
         #     fi
         #   ''}";
         # };
-
-        "custom/usb" = {
-          format = "";
-          tooltip = false;
-          on-click = "${pkgs.writeShellScript "usb-eject" ''
-            # Simple USB ejection script
-            devices=$(lsblk -rno NAME,TRAN | awk '$2=="usb" {print "/dev/" $1}')
-            if [ -n "$devices" ]; then
-              device=$(echo "$devices" | walker -d -p "Eject USB:")
-              if [ -n "$device" ]; then
-                udisksctl unmount -b "$device" && udisksctl power-off -b "$device"
-              fi
-            else
-              notify-send "No USB devices found"
-            fi
-          ''}";
-        };
 
         "custom/audio_idle_inhibitor" = {
           format = "{icon}";
