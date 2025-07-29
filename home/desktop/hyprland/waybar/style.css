@@ -41,8 +41,6 @@ window#waybar.hidden {
 #custom-dict,
 #custom-power-menu,
 #power-profiles-daemon,
-#custom-wallpaper,
-#custom-launcher,
 #custom-spotify,
 #custom-swaync,
 #custom-hyprshade,
@@ -59,46 +57,43 @@ window#waybar.hidden {
 
 /* Middle of groups - no side margins, no border radius */
 #custom-audio_idle_inhibitor,
-#power-profiles-daemon,
-#workspaces,
 #cpu,
 #memory,
 #disk,
-#custom-hyprsunset,
-#battery,
-#custom-keyboard-layout,
 #pulseaudio.microphone,
-#backlight-slider {
+#pulseaudio,
+#backlight-slider,
+#backlight,
+#battery,
+#custom-hyprsunset,
+#idle_inhibitor,
+#power-profiles-daemon,
+#custom-swaync,
+#custom-keyboard-layout {
   margin-right: 0;
   margin-left: 0;
   border-radius: 0;
 }
 
 /* Right side of groups - no left border radius */
-#custom-wallpaper,
-#pulseaudio,
-#tray {
+#workspaces,
+#backlight-slider,
+#power-profiles-daemon,
+#custom-keyboard-layout {
   margin-left: 0;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
 /* Left side of groups - no right border radius */
-#idle_inhibitor,
 #network,
-#backlight {
+#cpu {
   margin-right: 0;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 
 /* Specific module styling */
-#custom-launcher {
-  color: @blue;
-  font-size: 24px;
-  padding: 0px 4px 0px 4px;
-  margin-left: 4px;
-}
 
 #clock {
   color: @pink;
@@ -122,10 +117,15 @@ window#waybar.hidden {
 
 #idle_inhibitor {
   color: @mauve;
+  font-size: 16px;
 }
 
-#custom-wallpaper {
-  margin-right: 4px;
+#idle_inhibitor.activated {
+  color: @peach;
+}
+
+#idle_inhibitor.deactivated {
+  color: @overlay1;
 }
 
 #taskbar {
@@ -135,6 +135,8 @@ window#waybar.hidden {
 
 #network {
   color: @teal;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
 }
 
 #cpu {
@@ -260,6 +262,10 @@ label:focus {
   color: @yellow;
 }
 
+.group:hover #custom-hyprsunset {
+  color: @peach;
+}
+
 /* Backlight module styling */
 #backlight {
   color: @yellow;
@@ -293,11 +299,10 @@ label:focus {
   background-color: @yellow;
 }
 
-/* Hyprsunset blue light filter indicator */
+/* Hyprsunset blue light filter indicator - now part of backlight group */
 #custom-hyprsunset {
-  color: @text;
-  margin: 2px;
-  padding: 0px 8px;
+  color: @peach;
+  padding: 0px 10px;
 }
 
 #custom-hyprsunset.on {
@@ -305,7 +310,7 @@ label:focus {
 }
 
 #custom-hyprsunset.off {
-  color: @sky;
+  color: @overlay1;
 }
 
 /* Custom keyboard layout indicator */

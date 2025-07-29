@@ -135,7 +135,7 @@ in {
         disable_autoreload = true;
 
         force_default_wallpaper = 0;
-        disable_hyprland_logo = false;
+        disable_hyprland_logo = true;
 
         # disable dragging animation
         animate_mouse_windowdragging = false;

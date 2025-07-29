@@ -12,26 +12,21 @@
         # Show on left monitors and internal monitor
         # Exclude right monitors by using ! prefix
         modules-left = [
-          "custom/launcher"
+          "hyprland/workspaces"
           "clock"
           "custom/audio_idle_inhibitor"
-          "idle_inhibitor"
-          "hyprland/workspaces"
           "tray"
-          "custom/wallpaper"
         ];
         modules-center = [
           "wlr/taskbar"
         ];
         modules-right = [
           "network"
-          "custom/keyboard-layout"
           "group/hardware"
+          "group/power"
           "group/backlight"
-          "custom/hyprsunset"
-          "power-profiles-daemon"
-          "battery"
           "group/audio"
+          "custom/keyboard-layout"
           "custom/swaync"
           # "custom/power-menu"
         ];
@@ -101,6 +96,20 @@
           ];
         };
 
+        "group/power" = {
+          orientation = "inherit";
+          drawer = {
+            transition-duration = 500;
+            children-class = "not-power";
+            transition-left-to-right = false;
+          };
+          modules = [
+            "battery"
+            "idle_inhibitor"
+            "power-profiles-daemon"
+          ];
+        };
+
         "group/backlight" = {
           orientation = "inherit";
           drawer = {
@@ -110,6 +119,7 @@
           };
           modules = [
             "backlight"
+            "custom/hyprsunset"
             "backlight/slider"
           ];
         };
@@ -297,12 +307,18 @@
           tooltip-format-wifi = "{essid} ({signalStrength}%)";
           interval = 2;
           on-click-right = "foot nmtui";
-          format = "{}";
+          format = "{icon}";
           format-alt-click = "click";
           format-alt = "  {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}";
-          format-disconnected = "Disconnected";
-          format-wifi = " {bandwidthDownBytes}  {bandwidthUpBytes} ";
-          format-ethernet = " {bandwidthDownBytes}  {bandwidthUpBytes} 󰈁";
+          format-disconnected = "󰤭  Offline";
+          format-wifi = "󰤨  {bandwidthDownBytes}  {bandwidthUpBytes}";
+          format-ethernet = "󰈁  {bandwidthDownBytes}  {bandwidthUpBytes}";
+          max-length = 25;
+          format-icons = {
+            wifi = ["󰤯" "󰤟" "󰤢" "󰤥" "󰤨"];
+            ethernet = "󰈁";
+            disconnected = "󰤭";
+          };
         };
 
         # Custom keyboard layout indicator with Hebrew support
@@ -319,9 +335,12 @@
         idle_inhibitor = {
           format = "{icon}";
           format-icons = {
-            activated = "󰅶";
-            deactivated = "󰾪";
+            activated = "󰒳"; # No sleep/stay awake icon
+            deactivated = "󰒲"; # Sleep allowed icon
           };
+          tooltip = true;
+          tooltip-format-activated = "Screen will stay awake";
+          tooltip-format-deactivated = "Screen can go to sleep";
         };
 
         # Custom modules
@@ -335,24 +354,6 @@
             fi
           ''}";
         };
-
-        "custom/launcher" = {
-          format = "   ";
-          on-click = "${pkgs.writeShellScript "launcher" ''
-            walker
-          ''}";
-        };
-
-        # "custom/wallpaper" = {
-        #   format = " 󰸉 ";
-        #   on-click = "${pkgs.writeShellScript "wallpaper-menu" ''
-        #     if command -v rofi >/dev/null 2>&1; then
-        #       rofi -show filebrowser -filebrowser-directory ~/Pictures/wallpapers
-        #     else
-        #       echo "No wallpaper selector available"
-        #     fi
-        #   ''}";
-        # };
 
         "custom/audio_idle_inhibitor" = {
           format = "{icon}";
@@ -396,11 +397,7 @@
         };
 
         "custom/hyprsunset" = {
-          format = "{icon}";
-          format-icons = {
-            on = "󰌵"; # Icon when blue light filter is active
-            off = "󰌶"; # Icon when blue light filter is inactive
-          };
+          format = "{}";
           return-type = "json";
           exec = "${pkgs.writeShellScript "hyprsunset-status" ''
             state_file="$HOME/.cache/hyprsunset_active"
