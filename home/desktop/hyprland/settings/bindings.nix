@@ -4,7 +4,7 @@
   ...
 }: let
   terminal = "${lib.getExe pkgs.foot}";
-  fileManager = "${lib.getExe pkgs.xfce.thunar}";
+  fileManager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
 
@@ -104,8 +104,11 @@ in {
 
       "$mainMod, Print, exec, grimblast --notify --cursor copysave output" # copy all active outputs
       "$ALTSHIFT, S, exec, grimblast --notify --cursor copysave screen" # copy active screen
-      "$ALTSHIFT, R, exec, grimblast --notify --cursor copysave area" # copy selection area
       ", Print, exec, $screenshotarea" # screenshot selection area
+
+      # Screen recording (similar to grimblast)
+      "$mainMod SHIFT, R, exec, record-screen-mp4" # record selected area/window as MP4
+      "$ALTSHIFT, R, exec, record-screen-gif" # record selected area/window as GIF
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging

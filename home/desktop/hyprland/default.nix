@@ -34,12 +34,14 @@
     papirus-icon-theme
     bibata-cursors
     kdePackages.dolphin
-    xfce.thunar
 
-    # Screenshot and recording tools (grimblast already included above)
+    # Screenshot and recording tools
+    grimblast
     wl-screenrec
+    slurp # Area selection for screenshots/recording
+    ffmpeg # Video/GIF conversion
     wl-clipboard
-    cliphist
+    jq # JSON parsing for smart selection
   ];
 
   # make stuff work on wayland

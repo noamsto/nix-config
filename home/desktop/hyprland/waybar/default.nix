@@ -265,28 +265,16 @@
 
         # Battery module
         battery = {
-          interval = 60;
-          align = 0;
-          rotate = 0;
           full-at = 100;
-          design-capacity = false;
           states = {
-            good = 95;
             warning = 30;
             critical = 15;
           };
-          format = "{icon}  {capacity}%";
-          format-charging = "󰂄 {capacity}%";
-          format-plugged = " {capacity}%";
-          format-full = "{icon} Full";
-          format-alt = "{icon} {time}";
-          format-icons = [
-            "󰂎"
-            "󰁺"
-            "󰁻"
-            "󰁼"
-            "󰁽"
-          ];
+          format = "{icon} {capacity}%";
+          format-charging = "{icon} {capacity}% ";
+          format-plugged = "{icon} {capacity}% ";
+          format-full = "{icon} {capacity}% ";
+          format-icons = [" " " " " " " " " "];
           format-time = "{H}h {M}min";
           tooltip = true;
         };
@@ -295,10 +283,12 @@
         "wlr/taskbar" = {
           format = "{icon}";
           icon-size = 28;
-          all-outputs = true;
+          all-outputs = true; # Show applications from all outputs
           tooltip-format = "{title}";
           on-click = "activate";
           on-click-middle = "close";
+          markup = true;
+          max-length = 50;
         };
 
         # Network module
@@ -466,11 +456,7 @@
 
   # Ensure required utilities are available
   home.packages = with pkgs; [
-    # System monitoring
-    btop
-
-    # Audio utilities (if not already included)
-    pavucontrol
+    # Audio utilities
     pulseaudio
     playerctl
 

@@ -234,11 +234,20 @@ window#waybar.hidden {
   color: @yellow;
 }
 
-#battery.critical,
-#battery.warning,
-#battery.full,
+#battery.critical {
+  color: @red;
+}
+
+#battery.warning {
+  color: @yellow;
+}
+
+#battery.full {
+  color: @green;
+}
+
 #battery.plugged {
-  color: @peach;
+  color: @blue;
 }
 
 /* Tooltip styling */
