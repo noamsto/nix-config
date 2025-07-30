@@ -1,8 +1,6 @@
 # ./overlays/default.nix
 {inputs, ...}: {
   nixpkgs.overlays = [
-    inputs.yazi.overlays.default
-
     (final: _: {
       stable = import inputs.nixpkgs-stable {
         system = final.system;
