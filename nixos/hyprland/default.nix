@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   lib,
   config,
@@ -13,7 +12,6 @@ in {
       withUWSM = true;
       enable = true;
       package = pkgs.hyprland;
-      portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
     };
 
     services.greetd = {

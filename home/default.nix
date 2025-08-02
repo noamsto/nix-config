@@ -5,6 +5,7 @@
 }: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
+    inputs.nur.modules.nixos.default
   ];
   home-manager = {
     backupFileExtension = "bak";

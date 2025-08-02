@@ -1,8 +1,4 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: let
+{...}: let
   font_family = "Inter Nerd Font";
 
   # Define sensible colors for dark theme
@@ -16,7 +12,6 @@
 in {
   programs.hyprlock = {
     enable = true;
-    package = inputs.hyprlock.packages.${pkgs.system}.hyprlock;
     settings = {
       auth = {
         fingerprint.enabled = true;

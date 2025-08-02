@@ -37,6 +37,7 @@
 
     chromium
     claude-code
+    nur.repos.charmbracelet.crush
     stable.postman
     ngrok
     dbeaver-bin

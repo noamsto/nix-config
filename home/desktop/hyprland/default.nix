@@ -1,11 +1,5 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
-    inputs.hyprland.homeManagerModules.default
-
     ./gtk.nix
     ./walker
     ./terminal
@@ -23,7 +17,7 @@
 
   wayland.windowManager.hyprland = {
     enable = true;
-    plugins = with inputs.hyprland-plugins.packages.${pkgs.system}; [
+    plugins = with pkgs.hyprlandPlugins; [
       hyprbars
       hyprexpo
     ];

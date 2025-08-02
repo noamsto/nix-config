@@ -180,40 +180,13 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    hyprland.url = "github:hyprwm/Hyprland?ref=v0.50.1";
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
-    };
-    hyprlock = {
-      url = "github:hyprwm/hyprlock";
-      inputs = {
-        nixpkgs.follows = "hyprland/nixpkgs";
-        systems.follows = "hyprland/systems";
-        hyprgraphics.follows = "hyprland/hyprgraphics";
-        hyprutils.follows = "hyprland/hyprutils";
-        hyprlang.follows = "hyprland/hyprlang";
-        hyprwayland-scanner.follows = "hyprland/hyprwayland-scanner";
-      };
-    };
-    hypridle = {
-      url = "github:hyprwm/hypridle";
-      inputs = {
-        nixpkgs.follows = "hyprland/nixpkgs";
-        systems.follows = "hyprland/systems";
-        hyprlang.follows = "hyprland/hyprlang";
-        hyprutils.follows = "hyprland/hyprutils";
-        hyprland-protocols.follows = "hyprland/hyprland-protocols";
-        hyprwayland-scanner.follows = "hyprland/hyprwayland-scanner";
-      };
-    };
-    hyprland-contrib = {
-      url = "github:hyprwm/contrib";
-      inputs.nixpkgs.follows = "hyprland/nixpkgs";
+    walker = {
+      url = "github:abenz1267/walker?ref=v0.13.14";
     };
 
-    walker = {
-      url = "github:abenz1267/walker";
+    nur = {
+      url = "github:nix-community/NUR";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
