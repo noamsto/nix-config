@@ -13,7 +13,7 @@
     nix-search-tv-bin = lib.getExe nix-search-tv;
   in {
     enable = true;
-    enableZshIntegration = true;
+    enableFishIntegration = true;
     channels = {
       nix-channels = {
         cable_channel = [

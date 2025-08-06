@@ -13,6 +13,7 @@
     lazygit.enable = true;
     fzf.enable = true;
     zsh-syntax-highlighting.enable = true;
-    dunst.enable = false;
+    fish.enable = true;
+    brave.enable = true;
   };
 }

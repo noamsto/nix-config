@@ -7,7 +7,8 @@
 in {
   imports = [
     ./foot
-    ./zsh
+    ./fish # Migrating from zsh to fish
+    ./zsh # Keep temporarily during migration
     ./tmux
     ./process_compose
 
