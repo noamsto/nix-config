@@ -8,7 +8,7 @@
     ./utils
     ./settings
     ./waybar
-    ./swaync.nix
+    ./swaync
     ./scripts/screenshot-utils.nix
     ./scripts/brightness-control.nix
     ./scripts/keyboard-layout.nix

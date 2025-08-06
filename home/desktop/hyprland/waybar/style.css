@@ -1,4 +1,30 @@
-@import "mocha.css";
+/* Catppuccin Mocha Colors */
+@define-color rosewater #f5e0dc;
+@define-color flamingo #f2cdcd;
+@define-color pink #f5c2e7;
+@define-color mauve #cba6f7;
+@define-color red #f38ba8;
+@define-color maroon #eba0ac;
+@define-color peach #fab387;
+@define-color yellow #f9e2af;
+@define-color green #a6e3a1;
+@define-color teal #94e2d5;
+@define-color sky #89dceb;
+@define-color sapphire #74c7ec;
+@define-color blue #89b4fa;
+@define-color lavender #b4befe;
+@define-color text #cdd6f4;
+@define-color subtext1 #bac2de;
+@define-color subtext0 #a6adc8;
+@define-color overlay2 #9399b2;
+@define-color overlay1 #7f849c;
+@define-color overlay0 #6c7086;
+@define-color surface2 #585b70;
+@define-color surface1 #45475a;
+@define-color surface0 #313244;
+@define-color base #1e1e2e;
+@define-color mantle #181825;
+@define-color crust #11111b;
 
 * {
   font-family: FontAwesome;
@@ -47,6 +73,7 @@ window#waybar.hidden {
 #custom-audio_idle_inhibitor,
 #custom-hyprsunset,
 #custom-keyboard-layout,
+#custom-screen_recording,
 #backlight {
   color: @text;
   padding: 0px 10px 0px 10px;
@@ -336,4 +363,41 @@ label:focus {
 
 #custom-keyboard-layout.keyboard-layout-עב {
   color: @mauve;
+}
+
+/* Screen recording indicator */
+#custom-screen_recording.idle {
+  color: transparent;
+  background-color: transparent;
+  padding: 0;
+}
+
+#custom-screen_recording.recording {
+  color: @yellow;
+  background-color: @surface1;
+  animation-name: recording-blink;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+#custom-screen_recording.recording-gif {
+  color: @peach;
+  background-color: @surface1;
+  animation-name: recording-blink;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+#custom-screen_recording.recording-mp4 {
+  color: @red;
+  background-color: @surface1;
+  animation-name: recording-blink;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes recording-blink {
+  to {
+    opacity: 0.6;
+  }
 }

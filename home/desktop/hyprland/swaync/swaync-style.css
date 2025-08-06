@@ -26,10 +26,16 @@
 @define-color mantle #181825;
 @define-color crust #11111b;
 
+:root {
+  --notification-icon-size: 48px;
+  --mpris-album-art-icon-size: 50px;
+}
+
 * {
   all: unset;
   font-size: 14px;
   font-family: "Inter Nerd Font";
+  font-style: italic;
   transition: 200ms;
 }
 
@@ -49,14 +55,12 @@ slider {
 }
 
 .floating-notifications.background .notification-row .notification-background {
-  box-shadow:
-    0 0 8px 0 rgba(0, 0, 0, 0.8),
-    inset 0 0 0 1px @surface0;
-  border-radius: 12.6px;
-  margin: 18px;
-  background-color: @base;
+  background: @base;
   color: @text;
-  padding: 0;
+  border: 3px solid @green;
+  border-radius: 10px;
+  margin: 18px;
+  padding: 10px;
 }
 
 .floating-notifications.background
@@ -88,7 +92,9 @@ slider {
   .notification
   .notification-content
   .summary {
-  color: @text;
+  color: @green;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .floating-notifications.background
@@ -184,14 +190,12 @@ slider {
 }
 
 .control-center {
-  box-shadow:
-    0 0 8px 0 rgba(0, 0, 0, 0.8),
-    inset 0 0 0 1px @surface0;
-  border-radius: 12.6px;
-  margin: 18px;
   background-color: @base;
   color: @text;
-  padding: 14px;
+  border: 3px solid @green;
+  border-radius: 10px;
+  margin: 18px;
+  padding: 10px;
 }
 
 .control-center .control-center-list-placeholder {
@@ -232,7 +236,9 @@ slider {
   .notification
   .notification-content
   .summary {
-  color: @text;
+  color: @green;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .control-center
@@ -400,14 +406,20 @@ slider {
 .widget-mpris .widget-mpris-player {
   background: @surface0;
   padding: 7px;
+  border-radius: 12px;
 }
 
 .widget-mpris .widget-mpris-title {
   font-size: 1.2rem;
+  font-weight: bold;
+  color: @text;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .widget-mpris .widget-mpris-subtitle {
   font-size: 0.8rem;
+  color: @subtext1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .widget-menubar > box > .menu-button-bar > button > label {
@@ -487,14 +499,18 @@ slider {
 }
 
 .widget-volume {
-  background-color: @surface0;
-  padding: 4px 8px 8px 8px;
-  margin: 0px 8px 8px 8px;
+  background: @surface1;
+  color: @text;
+  font-size: x-large;
+  padding: 8px;
+  margin: 8px;
   border-radius: 12px;
 }
 
 .widget-backlight {
-  background-color: @surface0;
+  background: @surface1;
+  color: @text;
+  font-size: x-large;
   padding: 8px;
   margin: 8px;
   border-radius: 12px;
@@ -511,21 +527,37 @@ slider {
 .widget-mpris {
   color: @text;
   background-color: @surface0;
-  padding: 8px;
+  padding: 12px;
   margin: 8px;
   margin-bottom: 12px;
-  border-radius: 0px 0px 12px 12px;
+  border-radius: 12px;
 }
 
 .widget-mpris > box > button {
-  min-height: 0px;
-  min-width: 0px;
+  min-height: 35px;
+  min-width: 35px;
   padding: 8px;
+  margin: 4px;
+  border-radius: 8px;
+  background: @surface1;
+  border: 1px solid @surface2;
+}
+
+.widget-mpris > box > button:hover {
+  background: @surface2;
+  border: 1px solid @overlay0;
+}
+
+.widget-mpris > box > button:active {
+  background: @blue;
+  color: @base;
 }
 
 .widget-mpris-player {
   padding: 8px;
   margin: 8px;
+  background: @surface0;
+  border-radius: 8px;
 }
 
 .widget-mpris-player button:hover {
@@ -536,7 +568,52 @@ slider {
   background-color: @surface2;
 }
 
-/* Buttons widget styling */
+/* Buttons grid widget styling */
+button {
+  border: 0px;
+  min-width: 35px;
+  background: @surface0;
+}
+
+.widget-buttons-grid {
+  font-size: x-large;
+  background: @surface1;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+/* GTK FlowBox styling - use widget config instead of CSS for grid layout */
+
+.widget-buttons-grid > flowbox > flowboxchild > button {
+  color: @text;
+  margin: 6px;
+  padding: 12px;
+  background: @surface0;
+  border-radius: 10px;
+  min-width: 45px;
+  min-height: 45px;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+  background: @surface2;
+  border: 1px solid @overlay0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
+  background: @green;
+  border: 1px solid @teal;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
+  color: @base;
+  font-weight: bold;
+}
+
+/* Legacy buttons widget styling */
 .widget-buttons-box {
   padding: 8px;
   margin: 8px;
@@ -653,17 +730,20 @@ slider {
   padding: 4px;
 }
 
-.widget-volume {
-  margin: 0px 8px 4px 8px;
-  padding: 2px 8px 4px 8px;
-}
-
-.widget-backlight {
-  margin: 4px 8px;
-  padding: 4px;
-}
-
 .widget-buttons-box {
   margin: 4px 8px;
   padding: 4px;
+}
+
+/* Slider styling for volume and backlight */
+trough slider {
+  background: @text;
+}
+
+trough slider:hover {
+  background: @green;
+}
+
+trough highlight {
+  background: @green;
 }

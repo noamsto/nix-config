@@ -3,7 +3,7 @@
   users.users.${config.username} = {
     isNormalUser = true;
     description = config.user-full-name;
-    extraGroups = ["adbusers" "networkmanager" "wheel" "video" "input"];
+    extraGroups = ["adbusers" "networkmanager" "wheel" "video" "input" "i2c"];
     hashedPasswordFile = config.age.secrets.noams_password.path;
   };
 }

@@ -86,6 +86,7 @@ in {
           set -g @catppuccin_window_current_text '#W'
           set -g @catppuccin_window_current_color '#{E:@thm_surface_2}'
           set -g @catppuccin_status_module_text_bg '#{E:@thm_mantle}'
+          set -g @catppuccin_session_text '#S'
         '';
       }
       {
@@ -181,7 +182,7 @@ in {
       set -g allow-rename off
       set -g status-position top
       set -g status-justify "absolute-centre"
-      set -g status-interval 5
+      set -g status-interval 1
       set -g status-left-length 100
       set -g status-right-length 100
 
@@ -192,12 +193,16 @@ in {
       set -g status-left ""
       set -g status-right ""
       set -agF status-left "#{@catppuccin_status_host}"
-      set -agF status-right "#{E:@catppuccin_status_cpu}"
-      set -agF status-right "#{E:@catppuccin_status_battery}"
+      set -agF status-right "#{E:@catppuccin_status_session}"
 
-
-      run-shell ${pkgs.tmuxPlugins.cpu}/share/tmux-plugins/cpu/cpu.tmux
-      run-shell ${pkgs.tmuxPlugins.battery}/share/tmux-plugins/battery/battery.tmux
+      # Force status updates on session changes
+      set-hook -g session-window-changed 'refresh-client -S'
+      set-hook -g window-layout-changed 'refresh-client -S'
+      set-hook -g session-created 'refresh-client -S'
+      set-hook -g session-closed 'refresh-client -S'
+      set-hook -g client-session-changed 'refresh-client -S'
+      set-hook -g client-attached 'refresh-client -S'
+      set-hook -g client-detached 'refresh-client -S'
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';

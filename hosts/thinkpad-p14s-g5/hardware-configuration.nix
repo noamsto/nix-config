@@ -68,9 +68,20 @@
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
-    extraPackages = [
-      pkgs.stable.rocmPackages.clr.icd
+    extraPackages = with pkgs; [
+      stable.rocmPackages.clr.icd
+      # VAAPI drivers for AMD GPU
+      mesa
+      vaapiVdpau
+      libvdpau-va-gl
     ];
+  };
+
+  environment.variables = {
+    # VAAPI and VDPAU config for accelerated video.
+    # See https://wiki.archlinux.org/index.php/Hardware_video_acceleration
+    "VDPAU_DRIVER" = "radeonsi";
+    "LIBVA_DRIVER_NAME" = "radeonsi";
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

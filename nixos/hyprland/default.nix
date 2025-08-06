@@ -30,14 +30,10 @@ in {
     # brightnessctl is included in desktop packages
     # Ensure video group permissions for backlight control
     users.users.${config.username}.extraGroups = ["video" "i2c"];
+    hardware.i2c.enable = true;
+    services.ddccontrol.enable = true;
 
     # Enable i2c for ddcutil (external monitor control)
-    boot.kernelModules = ["i2c-dev" "ddcci_backlight"];
-    services.udev.extraRules = ''
-      # Rules for ddcutil - allow i2c access for video group
-      SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0660"
-      KERNEL=="i2c-[0-9]*", GROUP="i2c", MODE="0660"
-    '';
     environment.systemPackages = with pkgs; [
       pavucontrol
     ];
