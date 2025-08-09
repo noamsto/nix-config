@@ -46,10 +46,10 @@ in {
 
     Service = let
       tmux-bin = "${lib.getExe pkgs.tmux}";
-      session = "'󱥸  General'";
+      session = "General"; # Simplified session name without special characters
     in {
       Type = "forking";
-      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO TMUX_TMPDIR";
+      ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
       ExecStart = "-${tmux-bin} new -s ${session} -d";
       ExecStop = "-${tmux-bin} kill-session -t ${session}";
       Environment = [
@@ -58,8 +58,6 @@ in {
         "TERMINFO=${pkgs.foot.terminfo}/share/terminfo"
         "TMUX_TMPDIR=%t"
       ];
-
-      # Restart = "always";
     };
 
     Install = {
@@ -86,7 +84,7 @@ in {
           set -g @catppuccin_window_current_text '#W'
           set -g @catppuccin_window_current_color '#{E:@thm_surface_2}'
           set -g @catppuccin_status_module_text_bg '#{E:@thm_mantle}'
-          set -g @catppuccin_session_text '#S'
+          set -g @catppuccin_status_connect_separator 'yes'
         '';
       }
       {
@@ -106,23 +104,14 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      {
-        plugin = tmuxPlugins.fingers;
-        # extraConfig = ''
-        #   set -g @thumbs-key f
-        #   set -g @thumbs-fg-color yellow
-        #   set -g @thumbs-select-fg-color red
-        #   set -g @thumbs-hint-fg-color blue
-        #   set -g @thumbs-command 'echo -n {} | ${pkgs.wl-clipboard-rs}/bin/wl-copy'
-        #   set -g @thumbs-upcase-command 'tmux set-buffer -- {} && tmux paste-buffer'
-        # '';
-      }
+      tmuxPlugins.fingers
     ];
     extraConfig = ''
       set -g mouse on
       # start index at 1
       set -g base-index 1
       set -g pane-base-index 1
+      bind r source-file ~/.tmux.conf \; display "Config reloaded!"
 
       # renumber when window is closed
       set-option -g renumber-window on
@@ -192,17 +181,10 @@ in {
 
       set -g status-left ""
       set -g status-right ""
-      set -agF status-left "#{@catppuccin_status_host}"
-      set -agF status-right "#{E:@catppuccin_status_session}"
+      set -g status-left "#{E:@catppuccin_status_session}"
+      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_blue}]  #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} "
+      set -gF status-right "#{@catppuccin_status_host}"
 
-      # Force status updates on session changes
-      set-hook -g session-window-changed 'refresh-client -S'
-      set-hook -g window-layout-changed 'refresh-client -S'
-      set-hook -g session-created 'refresh-client -S'
-      set-hook -g session-closed 'refresh-client -S'
-      set-hook -g client-session-changed 'refresh-client -S'
-      set-hook -g client-attached 'refresh-client -S'
-      set-hook -g client-detached 'refresh-client -S'
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';

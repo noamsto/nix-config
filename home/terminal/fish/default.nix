@@ -61,6 +61,15 @@
         name = "autopair";
         src = autopair.src;
       }
+      {
+        name = "tmux.fish";
+        src = pkgs.fetchFromGitHub {
+          owner = "budimanjojo";
+          repo = "tmux.fish";
+          rev = "main";
+          hash = "sha256-rRibn+FN8VNTSC1HmV05DXEa6+3uOHNx03tprkcjjs8=";
+        };
+      }
     ];
 
     interactiveShellInit = ''
