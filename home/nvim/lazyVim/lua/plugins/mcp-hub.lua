@@ -16,7 +16,7 @@ return {
       global_env = {
         "DBUS_SESSION_BUS_ADDRESS", -- Array-style: uses os.getenv()
       },
-      auto_approve = false,
+      auto_approve = true,
       extensions = {
         avante = {
           enabled = true,

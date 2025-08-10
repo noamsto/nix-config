@@ -178,9 +178,9 @@
         "headphone": "󰋋",
         "hands-free": "󰋎",
         "headset": "󰋎",
-        "phone": "",
+        "phone": "",
         "portable": "",
-        "car": "",
+        "car": "",
         "default": [
           "󰕿",
           "󰖀",
@@ -194,8 +194,8 @@
       "scroll-step": 5.0,
       "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
       "on-click-right": "pavucontrol -t 3",
-      "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+",
-      "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-",
+      "on-scroll-up": "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+",
+      "on-scroll-down": "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%-",
       "tooltip-format": "{icon} {desc} | {volume}%",
       "smooth-scrolling-threshold": 1
     },
@@ -265,7 +265,7 @@
       "on-click-right": "foot nmtui",
       "format": "{icon}",
       "format-alt-click": "click",
-      "format-alt": "  {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}",
+      "format-alt": "{icon} {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}",
       "format-disconnected": "󰤭  Offline",
       "format-wifi": "󰤨  {bandwidthDownBytes}  {bandwidthUpBytes}",
       "format-ethernet": "󰈀  {bandwidthDownBytes}  {bandwidthUpBytes}",
@@ -377,10 +377,7 @@
       "min": 5,
       "max": 100,
       "orientation": "horizontal",
-      "device": "amdgpu_bl1",
-      "on-click": "brightness-control set {value}",
-      "on-scroll-up": "brightness-control up 5",
-      "on-scroll-down": "brightness-control down 5"
+      "device": "amdgpu_bl1"
     }
   }
 ]

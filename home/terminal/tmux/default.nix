@@ -71,7 +71,7 @@ in {
     historyLimit = 100000;
     plugins = with pkgs; [
       tmuxPlugins.better-mouse-mode
-      # must be before continuum edits right status bar
+      # catppuccin theme must be loaded before manual continuum loading
       {
         plugin = upstream-catppuccin;
         extraConfig = ''
@@ -93,13 +93,6 @@ in {
           set -g @resurrect-strategy-vim 'session'
           set -g @resurrect-strategy-nvim 'session'
           set -g @resurrect-capture-pane-contents 'on'
-        '';
-      }
-      {
-        plugin = tmuxPlugins.continuum;
-        extraConfig = ''
-          set -g @continuum-restore 'on'
-          set -g @continuum-save-interval '10'
         '';
       }
       tmuxPlugins.vim-tmux-navigator
@@ -185,6 +178,10 @@ in {
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_blue}]  #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} "
       set -gF status-right "#{@catppuccin_status_host}"
 
+      # Load continuum manually after status line configuration
+      set -g @continuum-restore 'on'
+      set -g @continuum-save-interval '10'
+      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';
