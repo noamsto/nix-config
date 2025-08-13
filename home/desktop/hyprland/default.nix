@@ -12,6 +12,8 @@
     ./scripts/screenshot-utils.nix
     ./scripts/brightness-control.nix
     ./scripts/keyboard-layout.nix
+    ./scripts/volume-control.nix
+    ./scripts/sounds.nix
     ./smart-dnd.nix
   ];
 
@@ -36,6 +38,13 @@
     ffmpeg # Video/GIF conversion
     wl-clipboard
     jq # JSON parsing for smart selection
+
+    # Notification support
+    libnotify # For notify-send in scripts
+
+    # Sound theme support
+    sound-theme-freedesktop # Provides standard system sounds
+    libcanberra # Sound theme support library
   ];
 
   # make stuff work on wayland

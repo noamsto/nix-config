@@ -123,18 +123,18 @@ in {
       ", XF86AudioPrev, exec, playerctl previous"
       ", XF86AudioNext, exec, playerctl next"
 
-      # volume
-      ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-      ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+      # volume with swaync notifications - updated to use new script options
+      ", XF86AudioMute, exec, volume-control --toggle"
+      ", XF86AudioMicMute, exec, volume-control --toggle-mic"
     ];
     bindle = [
-      # volume
-      ", XF86AudioRaiseVolume, exec, wpctl set-volume -l '1.0' @DEFAULT_AUDIO_SINK@ 6%+"
-      ", XF86AudioLowerVolume, exec, wpctl set-volume -l '1.0' @DEFAULT_AUDIO_SINK@ 6%-"
+      # volume with swaync notifications - updated to use new script options
+      ", XF86AudioRaiseVolume, exec, volume-control --inc"
+      ", XF86AudioLowerVolume, exec, volume-control --dec"
 
-      # backlight
-      ", XF86MonBrightnessUp, exec, brightness-control up 5"
-      ", XF86MonBrightnessDown, exec, brightness-control down 5"
+      # backlight - updated to use new script options
+      ", XF86MonBrightnessUp, exec, brightness-control --inc"
+      ", XF86MonBrightnessDown, exec, brightness-control --dec"
 
       # Resize windows
       "$mainMod, left, resizeactive, -20 0"
