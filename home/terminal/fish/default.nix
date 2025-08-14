@@ -119,7 +119,7 @@
     fzf = {
       enable = true;
       enableFishIntegration = true;
-      defaultOptions = ["--height 40%"];
+      defaultOptions = ["--height 45% --tmux='80%,60%'"];
       fileWidgetOptions = [
         "--preview '${pkgs.bat}/bin/bat -n --color=always {}'"
         "--bind 'ctrl-/:change-preview-window(down|hidden|)'"

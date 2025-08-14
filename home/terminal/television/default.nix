@@ -8,11 +8,15 @@
     lazyjournal
   ];
 
+  # Install the tv-integration.fish file to Fish's conf.d directory
+  # Fish automatically sources all .fish files in conf.d/ on shell startup
+  home.file.".config/fish/conf.d/tv-integration.fish".source = ./tv-integration.fish;
+
   programs.television = let
     nix-search-tv = inputs.nix-search-tv.packages.x86_64-linux.default;
   in {
     enable = true;
-    enableFishIntegration = true;
+    enableFishIntegration = false;
     channels = {
       nix-channels = {
         metadata = {
@@ -103,51 +107,6 @@
         "ctrl-t" = "toggle_remote_control";
         "ctrl-h" = "toggle_help";
         "ctrl-o" = "toggle_preview";
-      };
-
-      # Shell integration
-      shell_integration = {
-        # This specifies the default fallback channel if no other channel is matched.
-        fallback_channel = "files";
-
-        channel_triggers = {
-          "alias" = ["alias" "unalias"];
-          "env" = ["export" "unset"];
-          "dirs" = ["cd" "ls" "rmdir"];
-          "files" = [
-            "cat"
-            "less"
-            "head"
-            "tail"
-            "vim"
-            "nano"
-            "bat"
-            "cp"
-            "mv"
-            "rm"
-            "touch"
-            "chmod"
-            "chown"
-            "ln"
-            "tar"
-            "zip"
-            "unzip"
-            "gzip"
-            "gunzip"
-            "xz"
-          ];
-          "git-diff" = ["git add" "git restore"];
-          "git-branch" = [
-            "git checkout"
-            "git branch"
-            "git merge"
-            "git rebase"
-            "git pull"
-            "git push"
-          ];
-          "docker-images" = ["docker run"];
-          "git-repos" = ["nvim" "code" "hx" "git clone"];
-        };
       };
     };
   };

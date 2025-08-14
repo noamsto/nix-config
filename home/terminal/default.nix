@@ -12,7 +12,7 @@ in {
     ./tmux
     ./process_compose
 
-    ./tui.nix
+    ./television
   ];
   programs = {
     yazi = {

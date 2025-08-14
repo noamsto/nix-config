@@ -57,11 +57,14 @@ in {
     ];
   };
 
-  # RPI4 Installer configuration (following nvmd pattern)
+  # RPI4 Installer configuration (using nixos-raspberrypi base + custom WiFi)
   # This creates a minimal installer image using mkNixOSRPiInstaller pattern
   rpi4-installer = nixos-raspberrypi.lib.nixosInstaller {
     specialArgs = inputs // {nixos-raspberrypi = nixos-raspberrypi;};
     modules = [
+      nixos-raspberrypi.nixosModules.raspberry-pi-4.base
+      nixos-raspberrypi.nixosModules.trusted-nix-caches
+      # Add our custom networking configuration
       ./rpi4-installer
     ];
   };

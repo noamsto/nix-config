@@ -31,12 +31,6 @@
   };
 in {
   imports = [./named-session.nix];
-  programs.zsh.oh-my-zsh.plugins = ["tmux"];
-  programs.fzf = {
-    tmux.enableShellIntegration = true;
-    tmux.shellIntegrationOptions = ["-p80%,60%"];
-  };
-
   systemd.user.services.tmux-startup = {
     Unit = {
       Description = "Start tmux detached on login";
