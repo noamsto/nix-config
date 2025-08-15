@@ -18,6 +18,40 @@ in {
     yazi = {
       enable = true;
       enableZshIntegration = true;
+
+      # Custom yazi configuration
+      settings = {
+        manager = {
+          show_hidden = false;
+          show_symlink = true;
+        };
+      };
+
+      # Custom keybindings for dragon-drop integration
+      keymap = {
+        manager.prepend_keymap = [
+          {
+            on = ["<Space>" "d"];
+            run = ''shell --confirm 'dragon-drop "$@"' $$'';
+            desc = "Drag and drop selected files";
+          }
+          {
+            on = ["<Space>" "D"];
+            run = ''shell --confirm 'dragon-drop --and-exit "$@"' $$'';
+            desc = "Drag and drop (exit after)";
+          }
+          {
+            on = ["<Space>" "c"];
+            run = ''shell --confirm 'dragon-drop --copy "$@"' $$'';
+            desc = "Drag and drop (copy mode)";
+          }
+          {
+            on = ["<Space>" "t"];
+            run = ''shell --confirm 'dragon-drop --target' $$'';
+            desc = "Dragon drop target (receive files)";
+          }
+        ];
+      };
     };
     btop = {
       enable = true;

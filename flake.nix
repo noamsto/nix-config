@@ -99,11 +99,20 @@
             pkgs.nodePackages.prettier
             pkgs.zsh
             pkgs.nix-output-monitor
+            pkgs.just
           ];
           name = "dots";
           DIRENV_LOG_FORMAT = "";
           shellHook = ''
             ${config.pre-commit.installationScript}
+
+            # Add agent helper to PATH
+            export PATH="${./agents}:$PATH"
+
+            # Alias for quick agent access
+            alias nix-agent="agent-helper.sh"
+
+            echo "NixOS Configuration Agents available. Use 'nix-agent help' for usage."
           '';
         };
 

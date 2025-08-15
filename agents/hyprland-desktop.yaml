@@ -1,0 +1,124 @@
+name: hyprland-desktop
+description: Hyprland window manager and desktop environment specialist
+version: 1.0.0
+
+expertise:
+  primary:
+    - Hyprland compositor configuration
+    - Waybar status bar customization
+    - Window rules and workspace management
+    - Keybindings and input configuration
+    - Wayland protocols and compatibility
+    - Desktop notifications (swaync)
+  
+  secondary:
+    - GTK/Qt theming (Catppuccin)
+    - Screen management (kanshi)
+    - Application launchers (walker)
+    - Media controls and audio
+    - Screenshot and recording tools
+    - Lock screen and idle management
+
+file_patterns:
+  - home/desktop/hyprland/**/*.nix
+  - home/desktop/hyprland/**/*.sh
+  - home/desktop/hyprland/waybar/**
+  - home/desktop/hyprland/swaync/**
+  - home/desktop/hyprland/settings/**
+  - home/desktop/theme/**
+  - home/desktop/hyprland/scripts/**
+
+keywords:
+  - hyprland
+  - waybar
+  - wayland
+  - compositor
+  - window
+  - workspace
+  - keybind
+  - animation
+  - monitor
+  - swaync
+  - walker
+  - wlogout
+  - hyprlock
+  - hypridle
+  - kanshi
+
+commands:
+  reload:
+    description: Reload Hyprland configuration
+    template: "hyprctl reload"
+  
+  check_syntax:
+    description: Validate Hyprland config syntax
+    template: "hyprctl hyprpaper preload {path} 2>&1 | grep -E 'error|warning'"
+  
+  list_binds:
+    description: Show current keybindings
+    template: "hyprctl binds"
+  
+  debug:
+    description: Show Hyprland debug info
+    template: "hyprctl version && hyprctl monitors && hyprctl workspaces"
+
+validation:
+  pre_change:
+    - Check Hyprland syntax
+    - Validate waybar JSON config
+    - Verify script executability
+    - Check theme consistency
+    - Validate monitor configurations
+  
+  post_change:
+    - Test configuration reload
+    - Verify keybinding conflicts
+    - Check waybar module functionality
+    - Test window rules application
+    - Validate notification system
+
+context_preservation:
+  - Monitor configuration
+  - Active window rules
+  - Workspace layout
+  - Theme settings
+  - Keybinding map
+  - Animation preferences
+  - Script dependencies
+  - Audio control setup
+
+coordination:
+  provides:
+    - Desktop environment configuration
+    - Window management rules
+    - Theme settings for applications
+    - Input device configuration
+  
+  requires:
+    - GTK/Qt packages from pkg-coord
+    - Display drivers from nixos-system
+    - Audio system from nixos-system
+    - Font packages from pkg-coord
+
+current_focus:
+  recent_changes:
+    - Screenshot utility enhancements
+    - System audio control integration
+    - Waybar configuration updates
+    - Smart DND audio management
+  
+  active_development:
+    - Screenshot helper scripts
+    - Volume control improvements
+    - Notification system styling
+    - Workspace management optimization
+
+best_practices:
+  - Test window rules with hyprctl clients
+  - Keep scripts modular and reusable
+  - Use waybar custom modules for complex logic
+  - Maintain theme consistency across GTK/Qt
+  - Document keybinding rationale
+  - Profile animation performance impact
+  - Test multi-monitor configurations
+  - Keep notification styling readable

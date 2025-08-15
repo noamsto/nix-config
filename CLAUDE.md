@@ -160,3 +160,4 @@ Secrets are stored in a separate private repository (`mysecrets` input) and mana
 ## Memories
 
 - Build with `nh os switch -S`
+- use agents proactively

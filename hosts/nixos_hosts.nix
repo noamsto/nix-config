@@ -30,6 +30,20 @@ in {
     ];
   };
 
+  # Raspberry Pi 4 with Argon V2 case and external SSD boot
+  argon-rpi4 = nixos-raspberrypi.lib.nixosSystem {
+    specialArgs = {
+      inherit inputs;
+      inherit nixos-raspberrypi;
+    };
+    system = "aarch64-linux";
+    modules = [
+      ./argon-rpi4
+      inputs.disko.nixosModules.disko
+      ./argon-rpi4/disko.nix
+    ];
+  };
+
   # For deploying to systems running from installer (no repartitioning)
   naspi-installer-target = nixos-raspberrypi.lib.nixosSystem {
     specialArgs = {

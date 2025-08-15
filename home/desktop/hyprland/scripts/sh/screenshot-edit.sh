@@ -16,10 +16,13 @@ if [ -z "$latest_file" ]; then
     exit 1
 fi
 
-# Open in swappy for editing (requires swappy package)
-if command -v swappy >/dev/null 2>&1; then
-    swappy -f "$latest_file"
+# Open in satty for editing (requires satty package)
+if command -v satty >/dev/null 2>&1; then
+    satty -f "$latest_file"
+elif command -v gwenview >/dev/null 2>&1; then
+    # Fallback to gwenview image viewer
+    gwenview "$latest_file"
 else
-    # Fallback to image viewer
+    # Ultimate fallback to system default
     xdg-open "$latest_file"
 fi

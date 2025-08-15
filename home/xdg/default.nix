@@ -25,6 +25,38 @@
         "application/json" = browser;
         "application/pdf" = "evince.desktop";
 
+        # Archives - missing critical mime types
+        "application/zip" = "org.kde.ark.desktop";
+        "application/x-tar" = "org.kde.ark.desktop";
+        "application/x-compressed-tar" = "org.kde.ark.desktop";
+        "application/x-7z-compressed" = "org.kde.ark.desktop";
+        "application/x-rar" = "org.kde.ark.desktop";
+
+        # Text files - missing important ones
+        "text/plain" = "nvim.desktop";
+        "text/markdown" = "nvim.desktop";
+        "application/x-shellscript" = "nvim.desktop";
+
+        # Video files - critical missing
+        "video/mp4" = "mpv.desktop";
+        "video/x-matroska" = "mpv.desktop";
+        "video/webm" = "mpv.desktop";
+
+        # Audio files - critical missing
+        "audio/mpeg" = "mpv.desktop";
+        "audio/ogg" = "mpv.desktop";
+        "audio/flac" = "mpv.desktop";
+
+        # Image types - gwenview for viewing, gimp for editing
+        "image/jpeg" = "org.kde.gwenview.desktop";
+        "image/jpg" = "org.kde.gwenview.desktop";
+        "image/png" = "org.kde.gwenview.desktop";
+        "image/gif" = "org.kde.gwenview.desktop";
+        "image/webp" = "org.kde.gwenview.desktop";
+        "image/tiff" = "org.kde.gwenview.desktop";
+        "image/bmp" = "org.kde.gwenview.desktop";
+        "image/svg+xml" = "org.kde.gwenview.desktop";
+
         "text/html" = browser;
         "text/xml" = browser;
         "application/xml" = browser;
@@ -48,6 +80,15 @@
 
       associations.added = {
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
+
+        # Image editing - add GIMP as alternative
+        "image/jpeg" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/png" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/gif" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/webp" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/tiff" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/bmp" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/svg+xml" = "org.kde.gwenview.desktop;gimp.desktop;";
       };
       associations.removed = let
         browser = ["google-chrome.desktop"];

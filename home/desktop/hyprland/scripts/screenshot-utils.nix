@@ -1,8 +1,13 @@
 {pkgs, ...}: let
   # Unified screen recording script
   recordScreenScript = builtins.readFile ./sh/record-screen.sh;
+  # Screenshot helper script
+  screenshotHelperScript = builtins.readFile ./sh/screenshot-helper.sh;
 in {
   home.packages = [
+    # Screenshot helper script with proper scaling and satty integration
+    (pkgs.writeShellScriptBin "screenshot-helper" screenshotHelperScript)
+
     # Screenshot edit script (complementary to grimblast)
     (pkgs.writeShellScriptBin "screenshot-edit" (builtins.readFile ./sh/screenshot-edit.sh))
 

@@ -16,8 +16,8 @@
     # Network utilities
     networkmanagerapplet
 
-    # Screenshot utilities
-    swappy
+    # Resources monitoring
+    resources
 
     # Notification daemon (if using swaync)
     swaynotificationcenter

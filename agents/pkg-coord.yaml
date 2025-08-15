@@ -1,0 +1,207 @@
+name: pkg-coord
+description: Package management coordinator across system and user layers
+version: 1.0.0
+
+expertise:
+  primary:
+    - Package selection and organization
+    - Profile-based package management (work/personal)
+    - Dependency resolution
+    - Overlay management
+    - System vs user package separation
+    - Cross-architecture package compatibility
+  
+  secondary:
+    - Custom package definitions
+    - Package pinning and versioning
+    - Cachix configuration
+    - Build optimization
+    - Unfree package handling
+    - Package security auditing
+
+file_patterns:
+  - home/packages.nix
+  - nixos/packages.nix
+  - packages/**/*.nix
+  - overlays/**/*.nix
+  - "**/default.nix"
+
+keywords:
+  - packages
+  - buildInputs
+  - environment.systemPackages
+  - home.packages
+  - overlay
+  - override
+  - unfree
+  - profile
+  - personal
+  - work
+  - dependency
+
+package_categories:
+  system_essential:
+    location: nixos/packages.nix
+    description: Core system utilities and drivers
+    examples:
+      - git
+      - vim
+      - wget
+      - curl
+      - network tools
+  
+  desktop_common:
+    location: home/packages.nix
+    description: Desktop applications for all profiles
+    condition: desktop.mode != "none"
+    examples:
+      - firefox
+      - terminal emulators
+      - file managers
+      - media players
+  
+  development:
+    location: home/packages.nix
+    description: Development tools and compilers
+    profile_aware: true
+    examples:
+      - compilers
+      - build tools
+      - language servers
+      - debuggers
+  
+  personal_only:
+    location: home/packages.nix
+    description: Personal use packages
+    condition: profile == "personal"
+    examples:
+      - gaming (steam, discord)
+      - media editing
+      - personal productivity
+  
+  work_only:
+    location: home/packages.nix
+    description: Work-specific packages
+    condition: profile == "work"
+    examples:
+      - corporate tools
+      - VPN clients
+      - compliance software
+
+profile_logic:
+  detection: osConfig.profile
+  separation:
+    - Work packages excluded from personal builds
+    - Personal packages excluded from work builds
+    - Common packages shared across profiles
+  
+  switching:
+    description: Profile determines package inclusion at build time
+    implementation: lib.optionals and conditional imports
+
+commands:
+  search:
+    description: Search for packages
+    template: "nix search nixpkgs#{query}"
+  
+  why_depends:
+    description: Show why a package is included
+    template: "nix why-depends .#{config} {package}"
+  
+  list_installed:
+    description: List all installed packages
+    template: "nix profile list"
+  
+  check_unfree:
+    description: Check unfree package usage
+    template: "grep -r 'allowUnfree\\|unfree' . --include='*.nix'"
+
+validation:
+  pre_change:
+    - Check package availability
+    - Verify architecture support
+    - Validate version constraints
+    - Check license compatibility
+    - Verify profile conditions
+  
+  post_change:
+    - Test evaluation
+    - Check for conflicts
+    - Verify dependency resolution
+    - Validate overlay application
+    - Check disk space requirements
+
+overlay_management:
+  types:
+    - Version overrides
+    - Custom packages
+    - Patch applications
+    - Build flag modifications
+  
+  best_practices:
+    - Document overlay purpose
+    - Version-lock when needed
+    - Test cross-architecture
+    - Minimize overlay complexity
+
+dependency_patterns:
+  language_specific:
+    python:
+      - Use python3.withPackages
+      - Prefer nixpkgs versions
+      - Virtual environment awareness
+    
+    node:
+      - Use node packages sparingly
+      - Prefer project-local deps
+      - Consider pnpm for projects
+    
+    rust:
+      - Use rust-overlay when needed
+      - Cargo integration patterns
+      - Build cache optimization
+
+context_preservation:
+  - Active profile (work/personal)
+  - Desktop mode
+  - Architecture constraints
+  - Unfree package allowlist
+  - Overlay definitions
+  - Custom package list
+  - Version pins
+
+coordination:
+  provides:
+    - Package availability matrix
+    - Dependency resolution
+    - Profile-specific selections
+    - Version specifications
+  
+  requires:
+    - System architecture from nixos-system
+    - Desktop mode from options
+    - Profile setting from host config
+    - Feature requirements from other agents
+
+optimization:
+  build_time:
+    - Use binary cache when available
+    - Configure substituters properly
+    - Minimize evaluation time
+    - Parallel build settings
+  
+  storage:
+    - Regular garbage collection
+    - Optimize store paths
+    - Remove old generations
+    - Monitor disk usage
+
+best_practices:
+  - Keep system packages minimal
+  - Use Home Manager for user packages
+  - Document unfree package usage
+  - Test profile switching regularly
+  - Version-lock critical packages
+  - Regular security updates
+  - Monitor package closure size
+  - Use overlays sparingly

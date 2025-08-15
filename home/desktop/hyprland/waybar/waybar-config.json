@@ -131,26 +131,32 @@
       "interval": 60,
       "align": 0,
       "rotate": 0,
+      "tooltip": true,
       "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
       "format": "{:%d %b, %I:%M %p}",
-      "format-alt": "{:%a %b %d, %G}"
+      "on-click": "date --iso-8601=seconds | wl-copy && notify-send 'Clock' 'ISO time copied to clipboard' -i appointment-soon",
+      "calendar": {
+        "mode": "month",
+        "weeks-pos": "right",
+        "on-scroll": 1,
+        "actions": {
+          "on-scroll-up": "shift_up",
+          "on-scroll-down": "shift_down"
+        },
+        "format": {
+          "months": "<span color='#ffead3'><b>{}</b></span>",
+          "days": "<span color='#ecc6d9'>{}</span>",
+          "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
+          "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+          "today": "<span color='#000000' background='#00ff88'><b><u>{}</u></b></span>"
+        }
+      }
     },
     "cpu": {
-      "format": "{usage}% 󰍛",
+      "format": "{usage}% ",
       "interval": 1,
       "format-alt-click": "click",
-      "format-alt": "{icon0}{icon1}{icon2}{icon3} {usage:>2}% 󰍛",
-      "format-icons": [
-        "▁",
-        "▂",
-        "▃",
-        "▄",
-        "▅",
-        "▆",
-        "▇",
-        "█"
-      ],
-      "on-click-right": "if command -v resources >/dev/null 2>&1; then resources; elif command -v gnome-system-monitor >/dev/null 2>&1; then gnome-system-monitor; else foot btop; fi"
+      "on-click-right": "resources"
     },
     "memory": {
       "interval": 10,
@@ -218,7 +224,7 @@
       },
       "format": "{icon} {capacity}%",
       "format-charging": "{icon} {capacity}%",
-      "format-plugged": "{icon} {capacity}%",
+      "format-plugged": " {icon} {capacity}%",
       "format-full": "{icon} Full",
       "format-time": "{H}h {M}min",
       "format-icons": {

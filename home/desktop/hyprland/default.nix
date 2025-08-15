@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./gtk.nix
     ./walker
@@ -32,7 +36,9 @@
     kdePackages.dolphin
 
     # Screenshot and recording tools
-    grimblast
+    grim # High-quality Wayland screenshot tool
+    grimblast # Backup screenshot tool
+    satty # Screenshot editor (modern alternative to swappy)
     wl-screenrec
     slurp # Area selection for screenshots/recording
     ffmpeg # Video/GIF conversion
@@ -45,6 +51,10 @@
     # Sound theme support
     sound-theme-freedesktop # Provides standard system sounds
     libcanberra # Sound theme support library
+
+    # Image editing and viewing
+    gimp # Full-featured image editor
+    kdePackages.gwenview # KDE image viewer with excellent Wayland support
   ];
 
   # make stuff work on wayland
@@ -52,5 +62,18 @@
     QT_QPA_PLATFORM = "wayland";
     SDL_VIDEODRIVER = "wayland";
     XDG_SESSION_TYPE = "wayland";
+    GRIMBLAST_EDITOR = "satty";
   };
+
+  # Satty configuration for high-quality screenshot editing
+  home.file.".config/satty/config.toml".text = ''
+    [general]
+    early-exit = true
+    copy-command = "wl-copy"
+    annotation-size-factor = 2
+    output-filename = "${config.xdg.userDirs.pictures}/Screenshots/satty-%Y-%m-%d_%H-%M-%S.png"
+
+    [font]
+    family = "Roboto"
+  '';
 }

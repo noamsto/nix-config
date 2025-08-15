@@ -283,10 +283,17 @@ tooltip {
   padding: 15px;
   background-color: @base;
   font-family: Ubuntu;
+  border: 1px solid @surface1;
 }
 
 tooltip label {
   padding: 5px;
+}
+
+/* Clock tooltip specific styling */
+#clock tooltip {
+  padding: 20px;
+  font-size: 12px;
 }
 
 label:focus {

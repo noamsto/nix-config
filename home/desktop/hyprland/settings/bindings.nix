@@ -26,7 +26,7 @@
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
-    "$screenshotarea" = ''hyprctl keyword animation "fadeOut,0,0,default"; grimblast --notify copysave area; hyprctl keyword animation "fadeOut,1,4,default"'';
+    "$screenshotarea" = "screenshot-helper area";
     bind = [
       "$mainMod, C, exec, ${terminal}" # Changed from Q to C for console/terminal
       "$mainMod, E, exec, ${fileManager}"
@@ -102,9 +102,13 @@ in {
 
       ", XF86AudioPlay, exec, ${runOnce youtube-music}"
 
-      "$mainMod, Print, exec, grimblast --notify --cursor copysave output" # copy all active outputs
-      "$ALTSHIFT, S, exec, grimblast --notify --cursor copysave screen" # copy active screen
+      "$mainMod, Print, exec, screenshot-helper output" # copy all active outputs
+      "$ALTSHIFT, S, exec, screenshot-helper screen" # copy active screen
       ", Print, exec, $screenshotarea" # screenshot selection area
+      "$mainMod SHIFT, Print, exec, screenshot-helper edit-area" # screenshot area and edit with satty
+      "$mainMod CTRL, Print, exec, screenshot-helper edit-output" # screenshot full output and edit with satty
+      "$ALTSHIFT, E, exec, screenshot-edit" # edit last screenshot with satty
+      "$ALTSHIFT, P, exec, ${fileManager} ~/Pictures/Screenshots" # open screenshots folder
 
       # Screen recording (similar to grimblast)
       "$mainMod SHIFT, R, exec, record-screen-mp4" # record selected area/window as MP4

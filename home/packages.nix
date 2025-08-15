@@ -88,6 +88,10 @@ in {
       hugo # static site generator
       glow # markdown previewer in terminal
 
+      # media and archives - critical missing apps
+      mpv # video/audio player
+      kdePackages.ark # archive manager
+
       # system call monitoring
       strace # system call monitoring
       ltrace # library call monitoring
