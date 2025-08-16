@@ -164,13 +164,37 @@ rpi-install-argon HOST="rpi4-installer" BUILDERS="":
             --flake .#argon-rpi4 \
             --build-on remote \
             --option builders "{{BUILDERS}}" \
+            --option builders-use-substitutes true \
             nixos@{{HOST}}
     else
         nix run github:nix-community/nixos-anywhere -- \
             --flake .#argon-rpi4 \
-            --build-on remote \
+            --option max-jobs 1 \
+            --option cores 0 \
             nixos@{{HOST}}
     fi
+    echo "✅ Installation complete! Remove SD card and reboot to boot from target disk."
+
+# Install argon-rpi4 with mixed local+remote building (RECOMMENDED)
+rpi-install-argon-mixed HOST="rpi4-installer":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Installing argon-rpi4 with mixed building (local AMD + remote aarch64)..."
+    echo "⚠️  FRESH INSTALL with nixos-anywhere + disko"
+    echo "🎯 Will completely wipe and repartition target disk"
+    echo "🏗️  Build strategy: Local AMD (x86_64) + Remote Pi (aarch64)"
+    echo ""
+    echo "Press Enter to continue or Ctrl+C to abort..."
+    read
+    echo "📦 Installing with distributed building..."
+    # Configure mixed building: local AMD + remote aarch64
+    export NIX_CONFIG="builders = ssh://nixos@{{HOST}} aarch64-linux - 2 2 big-parallel"
+    nix run github:nix-community/nixos-anywhere -- \
+        --flake .#argon-rpi4 \
+        --option max-jobs 4 \
+        --option cores 4 \
+        --option builders-use-substitutes true \
+        nixos@{{HOST}}
     echo "✅ Installation complete! Remove SD card and reboot to boot from target disk."
 
 # Deploy configuration update to existing argon-rpi4 system  
@@ -191,6 +215,26 @@ rpi-deploy-argon HOST="argon-rpi4.local" BUILDERS="":
     --target-host "noams@{{HOST}}" \
     --build-host "noams@{{HOST}}" \
     $BUILDERS_FLAG \
+    --sudo | nom
+    echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}}"
+
+# Deploy argon-rpi4 update with mixed local+remote building (RECOMMENDED)
+rpi-deploy-argon-mixed HOST="argon-rpi4.local":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔄 Deploying update with mixed building (local AMD + remote aarch64)..."
+    echo "ℹ️  Updates existing system (no repartitioning)"
+    echo "🏗️  Build strategy: Local AMD (x86_64) + Remote Pi (aarch64)"
+    
+    # Configure mixed building: local AMD + remote aarch64
+    export NIX_CONFIG="builders = ssh://noams@{{HOST}} aarch64-linux - 2 2 big-parallel"
+    nixos-rebuild boot \
+    --flake ".#argon-rpi4" \
+    --target-host "noams@{{HOST}}" \
+    --build-host "localhost" \
+    --option max-jobs 4 \
+    --option cores 4 \
+    --option builders-use-substitutes true \
     --sudo | nom
     echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}}"
 

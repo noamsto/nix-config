@@ -1,13 +1,24 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }: {
   # Set hostname
   networking.hostName = "argon-rpi4";
 
+  # Raspberry Pi 4: 4 cores, 8GB RAM
+  nix.settings = {
+    max-jobs = 2;
+    cores = 2; # 2x2 = 4 threads total
+    max-silent-time = 14400;
+    timeout = 172800;
+  };
+
   # Network configuration
   networking.networkmanager.enable = true;
+  # Disable NetworkManager VPN plugins (pulls in GNOME/WebKit/gjs)
+  networking.networkmanager.plugins = lib.mkForce [];
   networking.firewall.allowedTCPPorts = [22];
 
   # Enable SSH for remote access

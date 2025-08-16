@@ -6,6 +6,14 @@
   # Set hostname
   networking.hostName = "naspi-nix";
 
+  # Raspberry Pi 4: 4 cores, 8GB RAM
+  nix.settings = {
+    max-jobs = 2;
+    cores = 2; # 2x2 = 4 threads total
+    max-silent-time = 14400;
+    timeout = 172800;
+  };
+
   # Network configuration
   networking.networkmanager.enable = true;
   networking.firewall.allowedTCPPorts = [22];
