@@ -94,6 +94,25 @@ in {
 
       "$ALT, SPACE, exec, walker"
 
+      # === PRODUCTIVITY SHORTCUTS ===
+      # Quick application access
+      "$mainMod, N, exec, obsidian" # Notes
+      "$mainMod, Y, exec, ${youtube-music}" # Music
+      "$mainMod SHIFT, V, exec, pavucontrol" # Volume control
+      "$mainMod SHIFT, B, exec, blueman-manager" # Bluetooth
+
+      # Quick workspace jumps to organized workflow
+      "$mainMod, W, workspace, 1" # Web (browsers)
+      "$mainMod SHIFT, W, movetoworkspace, 1" # Move to web workspace
+      "$mainMod, D, workspace, 2" # Development
+      "$mainMod SHIFT, D, movetoworkspace, 2" # Move to dev workspace
+
+      # Window management helpers
+      "$mainMod CTRL, H, movewindow, l" # Move window left
+      "$mainMod CTRL, L, movewindow, r" # Move window right
+      "$mainMod CTRL, K, movewindow, u" # Move window up
+      "$mainMod CTRL, J, movewindow, d" # Move window down
+
       # Resize windows
       "$mainMod, left, resizeactive, -20 0"
       "$mainMod, right, resizeactive, 20 0"

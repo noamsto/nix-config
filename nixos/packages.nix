@@ -23,6 +23,13 @@
     # Nix/NixOS package version diff tool
     nvd
 
+    # === ESSENTIAL CLI UTILITIES (System-wide) ===
+    ripgrep # Better grep - used by system scripts and all users
+    fd # Better find - useful for system administration
+    jq # JSON processing - essential for modern system scripts
+    bat # Better cat with syntax highlighting - useful system-wide
+    eza # Better ls - fundamental file listing for all users
+
     # python
     (python312.withPackages (ps:
       with ps;

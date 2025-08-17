@@ -71,6 +71,18 @@
       hadolint
       uv
 
+      # === ESSENTIAL LSP SERVERS (Better via Nix than Mason) ===
+      rust-analyzer # Rust
+      gopls # Go
+      nodePackages.typescript-language-server # TypeScript/JavaScript
+      yaml-language-server # YAML
+      taplo # TOML
+
+      # === KEY FORMATTERS ===
+      rustfmt # Rust formatting
+      gotools # Go imports and formatting
+      nodePackages.prettier # Web formatting
+
       inotify-tools
 
       mermaid-cli

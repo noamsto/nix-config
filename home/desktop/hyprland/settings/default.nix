@@ -82,6 +82,8 @@ in {
 
         allow_tearing = true;
         resize_on_border = true;
+        extend_border_grab_area = 15; # Extends border grab area (works on floating windows)
+        hover_icon_on_border = true; # Shows resize cursor on border hover
         no_focus_fallback = true;
         layout = "dwindle";
       };
@@ -140,7 +142,7 @@ in {
         animate_mouse_windowdragging = false;
 
         # enable variable refresh rate (effective depending on hardware)
-        vrr = 1;
+        vrr = 2; # Improved VRR mode
         vfr = true;
 
         # enable window swallowing
@@ -152,6 +154,7 @@ in {
       };
       render = {
         direct_scanout = true;
+        # explicit_sync is now default in Hyprland 0.50+, no need to configure
       };
 
       # touchpad gestures

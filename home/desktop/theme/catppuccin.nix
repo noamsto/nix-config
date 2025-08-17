@@ -21,7 +21,7 @@
     fish.enable = true;
 
     # === DEVELOPMENT TOOLS ===
-    delta.enable = true; # Git diff highlighting
+    delta.enable = true;
 
     # === BROWSERS ===
     brave.enable = true;

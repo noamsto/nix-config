@@ -45,12 +45,24 @@
       "float, class:^(org.gnome.Calculator)$"
       "size 360 490, class:^(org.gnome.Calculator)$"
 
-      # Common floating windows
+      # === ENHANCED FLOATING WINDOWS ===
       "float, class:^(pavucontrol)$"
       "float, class:^(nm-connection-editor)$"
       "float, class:^(blueman-manager)$"
       "float, class:^(file-roller)$"
+      "float, class:^(ark)$" # KDE Archive Manager
       "float, class:^(org.gnome.Nautilus)$,title:^(Properties)$"
+
+      # Application preferences/settings
+      "float, class:^(slack)$,title:^(Preferences)$"
+      "float, class:^(brave-browser)$,title:^(Settings)$"
+      "float, class:^(spotify)$,title:^(.*Settings.*)$"
+      "float, class:^(obsidian)$,title:^(Settings)$"
+
+      # Size dialogs appropriately
+      "size 800 600, class:^(pavucontrol)$"
+      "size 600 500, class:^(nm-connection-editor)$"
+      "size 500 600, class:^(blueman-manager)$"
 
       # Bluetooth pairing dialogs
       "float, class:^(blueman-agent)$"
@@ -127,13 +139,36 @@
       "float, class:^(dolphin)$,title:^(Copying)$"
       "float, class:^(thunar)$,title:^(File Operation Progress)$"
 
-      # Productivity apps
+      # === SMART WORKSPACE ASSIGNMENTS ===
+      # Web browsers - workspace 1
+      "workspace 1 silent, class:^(Brave-browser)$"
+      "workspace 1 silent, class:^(brave-browser)$"
+      "workspace 1 silent, class:^(chromium)$"
+
+      # Development - workspace 2
+      "workspace 2 silent, class:^(code|codium|code-oss|claude-code)$"
+      "workspace 2 silent, class:^(jetbrains-.*)$"
+
+      # Productivity and notes - workspace 3
       "workspace 3 silent, class:^(obsidian)$"
       "workspace 3 silent, class:^(Obsidian)$"
 
-      # start youtube-music in ws9
+      # Communication - workspace 4
+      "workspace 4 silent, class:^(slack)$"
+      "workspace 4 silent, class:^(Slack)$"
+      "workspace 4 silent, class:^(ferdium)$"
+      "workspace 4 silent, class:^(zoom)$"
+
+      # Database/API tools - workspace 5
+      "workspace 5 silent, class:^(dbeaver)$"
+      "workspace 5 silent, class:^(postman)$"
+
+      # Media - workspace 9
       "workspace 9 silent, title:^(YouTube Music)$"
       "workspace 9 silent, class:^(YouTube Music)$"
+      "workspace 9 silent, class:^(spotify)$"
+      "workspace 9 silent, class:^(vlc)$"
+      "workspace 9 silent, class:^(mpv)$"
 
       # Zoom
       "float, class:^(zoom)$,title:^(Zoom Meeting)$"

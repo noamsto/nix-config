@@ -17,7 +17,7 @@ in {
 
     userName = osConfig.user-full-name;
     userEmail = osConfig.email;
-    diff-so-fancy = {
+    delta = {
       enable = true;
     };
 
@@ -34,6 +34,38 @@ in {
       merge = {
         conflictstyle = "diff3";
       };
+
+      # Enhanced workflow configuration
+      branch = {
+        autosetupmerge = "always";
+        autosetuprebase = "always";
+      };
+
+      push = {
+        default = "current";
+        autoSetupRemote = true;
+      };
+
+      pull = {
+        rebase = true;
+      };
+
+      rebase = {
+        autoStash = true;
+        autoSquash = true;
+      };
+
+      # Better diff algorithms
+      diff = {
+        algorithm = "patience";
+        colorMoved = "default";
+      };
+
+      # Better blame
+      blame = {
+        coloring = "repeatedLines";
+      };
+
       color = {
         diff-highlight = {
           oldNormal = "red bold";

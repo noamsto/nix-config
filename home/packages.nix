@@ -24,7 +24,7 @@
     sublime-merge
 
     dragon-drop
-    stable.aider-chat-with-playwright
+    stable.aider-chat-with-playwright # Uses stable for Playwright compatibility
     aichat
     inputs.self.packages.${pkgs.system}.atlas-pro
   ];
@@ -38,7 +38,7 @@
     chromium
     claude-code
     nur.repos.charmbracelet.crush
-    stable.postman
+    stable.postman # Uses stable for API testing reliability
     ngrok
     dbeaver-bin
   ];
@@ -48,7 +48,7 @@ in {
       # here is some command line tools I use frequently
       # feel free to add your own or remove some of them
 
-      fastfetch
+      # fastfetch available system-wide
 
       # archives
       zip
@@ -56,12 +56,9 @@ in {
       unzip
       p7zip
 
-      # utils
-      ripgrep # recursively searches directories for a regex pattern
-      jq # A lightweight and flexible command-line JSON processor
-      yq-go # yaml processer https://github.com/mikefarah/yq
-      eza # A modern replacement for ‘ls’
-      fzf # A command-line fuzzy finder
+      # === CLI UTILITIES ===
+      # ripgrep, fd, jq, bat, eza available system-wide
+      yq-go
 
       # networking tools
       mtr # A network diagnostic tool
@@ -106,8 +103,12 @@ in {
 
       lazygit
 
-      fd # find files
-      ncdu # better du
+      ncdu
+      dust
+      sd
+      procs
+      tokei
+      hyperfine
 
       # Wayland clipboard
       wl-clipboard
@@ -120,9 +121,9 @@ in {
       # Better system monitoring
       btop
 
-      # Better text viewing
-      bat # cat clone with syntax highlighting
-      delta # better diff viewer
+      # === TEXT PROCESSING ===
+      # bat available system-wide
+      # delta conflicts with diff-so-fancy - using diff-so-fancy via programs.git
 
       inputs.mcp-hub.packages."${pkgs.system}".default
     ])
