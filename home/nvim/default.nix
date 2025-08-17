@@ -74,6 +74,15 @@
       inotify-tools
 
       mermaid-cli
+
+      # for images
+      imagemagick
+
+      #pdf preview
+      ghostscript
+
+      # latex render
+      tectonic
     ];
   };
 }

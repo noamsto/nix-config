@@ -7,6 +7,7 @@
 in {
   imports = [
     ./foot
+    ./ghostty
     ./fish # Migrating from zsh to fish
     ./zsh # Keep temporarily during migration
     ./tmux

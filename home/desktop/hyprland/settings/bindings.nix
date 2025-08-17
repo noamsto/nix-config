@@ -3,7 +3,7 @@
   pkgs,
   ...
 }: let
-  terminal = "${lib.getExe pkgs.foot}";
+  terminal = "ghostty --gtk-single-instance=true";
   fileManager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
