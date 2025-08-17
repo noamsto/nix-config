@@ -39,127 +39,13 @@
       ];
 
       imports = [
-        inputs.treefmt-nix.flakeModule
-        ./pre-commit-hooks.nix
+        ./flake-modules/development.nix
+        ./flake-modules/nixos-systems.nix
+        ./flake-modules/home-manager.nix
         ./packages
       ];
 
-      flake = {
-        nixosConfigurations = import ./hosts/nixos_hosts.nix {inherit inputs nixpkgs;};
-
-        # RPI4 Installer configuration (following nvmd pattern)
-        # Build with: nix build .#rpi4-installer
-        rpi4-installer = self.nixosConfigurations.rpi4-installer.config.system.build.sdImage;
-
-        # Standard RPI4 Image using nixos-generators (NixOS wiki approach)
-        # Build with: nix build .#rpi4-standard-image
-        rpi4-standard-image = inputs.nixos-generators.nixosGenerate {
-          system = "aarch64-linux";
-          specialArgs = {inherit inputs;};
-          modules = [
-            ./hosts/rpi4-standard/image.nix
-          ];
-          format = "sd-aarch64";
-        };
-
-        homeConfigurations = {
-          naspi-raspbian = home-manager.lib.homeManagerConfiguration {
-            pkgs = inputs.nixpkgs.legacyPackages."aarch64-linux";
-            modules = [
-              ./hosts/naspi/home.nix
-            ];
-            extraSpecialArgs = {
-              inherit inputs;
-              osConfig = {
-                username = "noams";
-                user-full-name = "Noam Stolero";
-                email = "noamstolero@gmail.com";
-                hostname = "naspi";
-                desktop.mode = "none";
-                profile = "personal";
-              };
-            };
-          };
-        };
-      };
-
-      perSystem = {
-        inputs',
-        config,
-        pkgs,
-        ...
-      }: {
-        devShells.default = pkgs.mkShell {
-          packages = [
-            # Core NixOS configuration tools
-            inputs'.agenix.packages.default
-            inputs'.nixos-anywhere.packages.default
-            config.treefmt.build.wrapper
-            pkgs.git
-            pkgs.nh
-            pkgs.nodePackages.prettier
-            pkgs.zsh
-            pkgs.nix-output-monitor
-            pkgs.just
-
-            # Lightweight development essentials
-            pkgs.jq # JSON processing (small and useful)
-            pkgs.typos # Spell checker for code (lightweight)
-            pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
-          ];
-          name = "dots";
-          DIRENV_LOG_FORMAT = "";
-          shellHook = ''
-            ${config.pre-commit.installationScript}
-
-            # Enhanced environment setup
-            export EDITOR=nvim
-            export DEVELOPMENT_MODE=true
-
-            # Add agent helper to PATH
-            export PATH="${./agents}:$PATH"
-
-            # Fish-compatible aliases and functions
-            if command -v fish >/dev/null 2>&1; then
-              fish -c "
-                alias nix-agent='agent-helper.sh'
-                alias nbuild='nom build'
-                function dev-stats
-                  tokei
-                  echo
-                  git log --oneline | wc -l | xargs echo 'Total commits:'
-                end
-                funcsave dev-stats
-              "
-            else
-              # Fallback for other shells
-              alias nix-agent="agent-helper.sh"
-              alias nbuild="nom build"
-            fi
-
-            echo "🚀 NixOS Development Environment Ready!"
-            echo "📁 Agents available: 'nix-agent help'"
-            echo "📊 Project stats: 'dev-stats'"
-          '';
-        };
-
-        # configure treefmt
-        treefmt = {
-          projectRootFile = "flake.nix";
-
-          programs = {
-            alejandra.enable = true;
-            ruff.enable = true;
-            deadnix.enable = false;
-            shellcheck.enable = true;
-            shfmt = {
-              enable = true;
-              indent_size = 4;
-            };
-          };
-        };
-        formatter = pkgs.alejandra;
-      };
+      # perSystem configuration is now handled in flake-modules/development.nix
     };
 
   inputs = {
