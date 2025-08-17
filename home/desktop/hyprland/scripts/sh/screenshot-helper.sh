@@ -27,18 +27,18 @@ get_primary_monitor_scale() {
 # Auto-detect scale factor if not provided
 if [ -z "${SCALE_FACTOR:-}" ]; then
     case "$TYPE" in
-        "area"|"edit-area")
-            # For area selection, we don't know which monitor, so use focused monitor's scale
-            SCALE_FACTOR=$(get_focused_monitor_scale)
-            ;;
-        "output"|"edit-output")
-            # For full output, use primary monitor scale (or could be improved to detect all scales)
-            SCALE_FACTOR=$(get_primary_monitor_scale)
-            ;;
-        "screen"|"edit-screen")
-            # For active screen, use focused monitor's scale
-            SCALE_FACTOR=$(get_focused_monitor_scale)
-            ;;
+    "area" | "edit-area")
+        # For area selection, we don't know which monitor, so use focused monitor's scale
+        SCALE_FACTOR=$(get_focused_monitor_scale)
+        ;;
+    "output" | "edit-output")
+        # For full output, use primary monitor scale (or could be improved to detect all scales)
+        SCALE_FACTOR=$(get_primary_monitor_scale)
+        ;;
+    "screen" | "edit-screen")
+        # For active screen, use focused monitor's scale
+        SCALE_FACTOR=$(get_focused_monitor_scale)
+        ;;
     esac
 fi
 
@@ -46,37 +46,37 @@ fi
 SCALE_FACTOR="${SCALE_FACTOR:-1.0}"
 
 case "$TYPE" in
-    "area")
-        # Quick area screenshot with scaling
-        hyprctl keyword animation "fadeOut,0,0,default"
-        grimblast --notify --scale "$SCALE_FACTOR" copysave area
-        hyprctl keyword animation "fadeOut,1,4,default"
-        ;;
-    "output")
-        # Full output screenshot with scaling
-        grimblast --notify --cursor --scale "$SCALE_FACTOR" copysave output
-        ;;
-    "screen")
-        # Active screen screenshot with scaling
-        grimblast --notify --cursor --scale "$SCALE_FACTOR" copysave screen
-        ;;
-    "edit-area")
-        # Screenshot area and edit with satty
-        hyprctl keyword animation "fadeOut,0,0,default"
-        GRIMBLAST_EDITOR=satty grimblast --scale "$SCALE_FACTOR" edit area
-        hyprctl keyword animation "fadeOut,1,4,default"
-        ;;
-    "edit-output")
-        # Screenshot full output and edit with satty
-        GRIMBLAST_EDITOR=satty grimblast --cursor --scale "$SCALE_FACTOR" edit output
-        ;;
-    "edit-screen")
-        # Screenshot active screen and edit with satty
-        GRIMBLAST_EDITOR=satty grimblast --cursor --scale "$SCALE_FACTOR" edit screen
-        ;;
-    *)
-        echo "Usage: $0 {area|output|screen|edit-area|edit-output|edit-screen} [scale_factor]"
-        echo "If scale_factor is not provided, it will be auto-detected from active monitor"
-        exit 1
-        ;;
+"area")
+    # Quick area screenshot with scaling
+    hyprctl keyword animation "fadeOut,0,0,default"
+    grimblast --notify --scale "$SCALE_FACTOR" copysave area
+    hyprctl keyword animation "fadeOut,1,4,default"
+    ;;
+"output")
+    # Full output screenshot with scaling
+    grimblast --notify --cursor --scale "$SCALE_FACTOR" copysave output
+    ;;
+"screen")
+    # Active screen screenshot with scaling
+    grimblast --notify --cursor --scale "$SCALE_FACTOR" copysave screen
+    ;;
+"edit-area")
+    # Screenshot area and edit with satty
+    hyprctl keyword animation "fadeOut,0,0,default"
+    GRIMBLAST_EDITOR=satty grimblast --scale "$SCALE_FACTOR" edit area
+    hyprctl keyword animation "fadeOut,1,4,default"
+    ;;
+"edit-output")
+    # Screenshot full output and edit with satty
+    GRIMBLAST_EDITOR=satty grimblast --cursor --scale "$SCALE_FACTOR" edit output
+    ;;
+"edit-screen")
+    # Screenshot active screen and edit with satty
+    GRIMBLAST_EDITOR=satty grimblast --cursor --scale "$SCALE_FACTOR" edit screen
+    ;;
+*)
+    echo "Usage: $0 {area|output|screen|edit-area|edit-output|edit-screen} [scale_factor]"
+    echo "If scale_factor is not provided, it will be auto-detected from active monitor"
+    exit 1
+    ;;
 esac

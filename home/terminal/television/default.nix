@@ -12,9 +12,7 @@
   # Fish automatically sources all .fish files in conf.d/ on shell startup
   home.file.".config/fish/conf.d/tv-integration.fish".source = ./tv-integration.fish;
 
-  programs.television = let
-    nix-search-tv = inputs.nix-search-tv.packages.x86_64-linux.default;
-  in {
+  programs.television = {
     enable = true;
     enableFishIntegration = false;
     channels = {
@@ -23,7 +21,7 @@
           name = "nixpkgs";
           description = "Search and preview Nix packages";
           requirements = [
-            nix-search-tv
+            pkgs.nix-search-tv
           ];
         };
         source.command = "nix-search-tv print";
