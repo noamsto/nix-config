@@ -21,6 +21,17 @@
   networking.networkmanager.plugins = lib.mkForce [];
   networking.firewall.allowedTCPPorts = [22];
 
+  # Enable mDNS for .local hostname resolution
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      domain = true;
+    };
+  };
+
   # Enable SSH for remote access
   services.openssh = {
     enable = true;
@@ -33,7 +44,7 @@
   # User configuration
   users.users.noams = {
     isNormalUser = true;
-    extraGroups = ["wheel" "gpio"];
+    extraGroups = ["wheel" "gpio" "i2c"];
     initialPassword = "nixos";
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
@@ -61,7 +72,11 @@
     htop
     nh
     nom
+    btop
+    fd
   ];
+
+  # Argon ONE configuration is now in argon-one-filtered.nix module
 
   # Memory optimizations for 8GB RAM system
   # More aggressive caching since we have plenty of RAM

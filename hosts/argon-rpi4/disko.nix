@@ -1,4 +1,15 @@
 {
+  config,
+  lib,
+  ...
+}: {
+  # https://nixos.wiki/wiki/Btrfs#Scrubbing
+  services.btrfs.autoScrub = {
+    enable = true;
+    interval = "monthly";
+    fileSystems = ["/"];
+  };
+
   disko.devices = {
     disk = {
       external-ssd = {
@@ -7,21 +18,43 @@
         content = {
           type = "gpt";
           partitions = {
-            firmware = {
-              size = "1G"; # Increased for better compatibility
-              type = "EF00";
+            FIRMWARE = {
+              label = "FIRMWARE";
+              priority = 1;
+              size = "1G";
+              type = "0700"; # Microsoft basic data
               content = {
                 type = "filesystem";
                 format = "vfat";
-                mountpoint = "/boot/firmware";
+                mountpoint = "/boot/firmware"; # RPi firmware
                 mountOptions = [
-                  "umask=0022" # More permissive for debugging (readable by all)
-                  "fmask=0133" # Files: readable by all, writable by owner
-                  "dmask=0022" # Directories: accessible by all
-                  "shortname=mixed" # Allow mixed case short names
+                  "noatime"
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.idle-timeout=1min"
+                  "umask=0077" # Root-only access
                 ];
               };
             };
+
+            ESP = {
+              label = "ESP";
+              size = "1G";
+              type = "EF00"; # EFI System Partition
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot"; # Linux kernel and extlinux
+                mountOptions = [
+                  "noatime"
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.idle-timeout=1min"
+                  "umask=0077" # Root-only access
+                ];
+              };
+            };
+
             root = {
               size = "100%";
               content = {
