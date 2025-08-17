@@ -136,91 +136,108 @@
     };
 
   inputs = {
-    # Official NixOS package source, using nixos-unstable branch here
+    # === CORE SYSTEM ===
+    # Use nixos-unstable for latest packages and features
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+
+    # Specific package fixes - review quarterly
     nixpkgs-fprintd-1_94_2.url = "github:NixOS/nixpkgs/0f56e3221392452f2c38e3ddf2eba03abda6bf47";
 
     systems.url = "github:nix-systems/default-linux";
-    flake-compat.url = "github:edolstra/flake-compat";
-    pre-commit-hooks = {
-      url = "github:cachix/pre-commit-hooks.nix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-compat.follows = "flake-compat";
-      };
-    };
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    # a tree-wide formatter
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
+    # === DEVELOPMENT INFRASTRUCTURE ===
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    # home-manager, used for managing user configuration
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # === USER ENVIRONMENT ===
     home-manager = {
       url = "github:nix-community/home-manager/";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    agenix.url = "github:ryantm/agenix";
+    # === DESKTOP ENVIRONMENTS ===
+    # Update monthly - stable releases
+    plasma-manager = {
+      url = "github:pjones/plasma-manager";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
+
+    xremap = {
+      url = "github:xremap/nix-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # === APPLICATION PACKAGES ===
+    # Pinned versions for stability - update quarterly
+    walker = {
+      url = "github:abenz1267/walker?ref=v0.13.14";
+    };
+
+    catppuccin = {
+      url = "github:catppuccin/nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    mcp-hub = {
+      url = "github:ravitemer/mcp-hub";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # === SPECIALIZED HARDWARE ===
+    # Monthly updates for hardware support
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # === SECURITY & SECRETS ===
+    # Security-critical - immediate updates
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
 
     mysecrets = {
       url = "git+ssh://git@github.com/noamsto/nix-secrets.git";
       flake = false;
     };
 
-    # Xremap for remapping keys
-    xremap = {
-      url = "github:xremap/nix-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    plasma-manager = {
-      url = "github:pjones/plasma-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-    };
-
-    walker = {
-      url = "github:abenz1267/walker?ref=v0.13.14";
-    };
-
+    # === UTILITIES ===
+    # Stable versions - quarterly updates
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
-
-    catppuccin.url = "github:catppuccin/nix";
-
-    mcp-hub.url = "github:ravitemer/mcp-hub";
-
-    # For RPI4
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-search-tv.url = "github:3timeslazy/nix-search-tv";
-
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    disko = {
-      url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
