@@ -24,24 +24,25 @@
       ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
 
       # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
-      gsb = "git status -sb"; # short status with branch info
-      gst = "git status"; # full status
-      gpf = "git push --force-with-lease"; # safe force push (gp! in plugin-git)
-      gpu = "git push -u origin HEAD"; # push and set upstream
-      gp = "git push"; # simple push
-      gl = "git pull"; # pull
-      gf = "git fetch"; # fetch
-      gfa = "git fetch --all --prune"; # fetch all with prune
-      gcom = "git checkout main || git checkout master"; # checkout main/master
-      gwip = "git add -A && git commit -m 'WIP'"; # work in progress commit
-      gunwip = "git reset HEAD~1"; # undo last commit (simplified)
-      gaa = "git add --all"; # add all
-      gc = "git commit -v"; # commit with verbose
-      gcm = "git commit -m"; # commit with message
-      gca = "git commit -v -a"; # commit all with verbose
-      gcan = "git commit -v -a --no-edit --amend"; # amend all without editing
-      grhh = "git reset --hard"; # hard reset
-      gup = "git pull --rebase"; # pull with rebase
+      gsb = "git status -sb";
+      gst = "git status";
+      gsw = "git switch";
+      gpf = "git push --force-with-lease";
+      gpu = "git push -u origin HEAD";
+      gp = "git push";
+      gl = "git pull";
+      gf = "git fetch";
+      gfa = "git fetch --all --prune";
+      gcom = "git checkout main || git checkout master";
+      gwip = "git add -A && git commit -m 'WIP'";
+      gunwip = "git reset HEAD~1";
+      gaa = "git add --all";
+      gc = "git commit -v";
+      gcm = "git commit -m";
+      gca = "git commit -v -a";
+      gcan = "git commit -v -a --no-edit --amend";
+      grhh = "git reset --hard";
+      gup = "git pull --rebase";
     };
 
     plugins = with pkgs.fishPlugins; [
@@ -61,20 +62,26 @@
         name = "autopair";
         src = autopair.src;
       }
-      {
-        name = "tmux.fish";
-        src = pkgs.fetchFromGitHub {
-          owner = "budimanjojo";
-          repo = "tmux.fish";
-          rev = "main";
-          hash = "sha256-rRibn+FN8VNTSC1HmV05DXEa6+3uOHNx03tprkcjjs8=";
-        };
-      }
     ];
 
     interactiveShellInit = ''
       # Disable greeting
       set fish_greeting
+
+      # Tmux function to auto-attach or create session
+      function tmux
+        if test (count $argv) -eq 0
+          # No arguments, use smart attach/create behavior
+          if command tmux has-session 2>/dev/null
+            command tmux attach-session
+          else
+            command tmux new-session
+          end
+        else
+          # Arguments provided, pass them through to tmux
+          command tmux $argv
+        end
+      end
 
       # Load work aliases if available
       if test -f /etc/agenix/work_aliases.fish

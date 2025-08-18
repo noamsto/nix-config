@@ -40,7 +40,7 @@ in {
 
     Service = let
       tmux-bin = "${lib.getExe pkgs.tmux}";
-      session = "General"; # Simplified session name without special characters
+      session = "main"; # Main session for terminal startup
     in {
       Type = "forking";
       ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
@@ -49,6 +49,7 @@ in {
       Environment = [
         "COLORTERM=truecolor"
         "TERM=ghostty"
+        "TERM_PROGRAM=ghostty"
         "TERMINFO=${pkgs.ghostty.terminfo}/share/terminfo"
         "TMUX_TMPDIR=%t"
       ];
@@ -103,8 +104,11 @@ in {
       # renumber when window is closed
       set-option -g renumber-window on
 
-      # Yazi inside tmux
+
       set -g allow-passthrough on
+      set -g visual-activity off
+
+      # Yazi inside tmux
       set -ga update-environment TERM
       set -ga update-environment TERM_PROGRAM
 

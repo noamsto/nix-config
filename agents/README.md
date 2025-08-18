@@ -9,36 +9,42 @@ These agents provide domain-specific expertise for different aspects of the NixO
 ## Available Agents
 
 ### 1. **nixos-system** - System Configuration Specialist
+
 - **Domain**: System-level NixOS configurations
 - **Expertise**: Boot, kernel, networking, services, users
 - **Key Files**: `nixos/core/`, hardware configurations
 - **Use Cases**: System updates, service management, kernel configuration
 
 ### 2. **hyprland-desktop** - Desktop Environment Specialist
+
 - **Domain**: Hyprland window manager and desktop environment
 - **Expertise**: Wayland, waybar, keybindings, theming
 - **Key Files**: `home/desktop/hyprland/`, waybar configs
 - **Use Cases**: Desktop customization, window management, theme updates
 
 ### 3. **dev-env** - Development Environment Specialist
+
 - **Domain**: Development tools and workflows
 - **Expertise**: Neovim, tmux, shells, git, LSP servers
 - **Key Files**: `home/nvim/`, `home/terminal/`, `home/git/`
 - **Use Cases**: Editor configuration, terminal setup, development workflows
 
 ### 4. **rpi-deploy** - Raspberry Pi Deployment Specialist
+
 - **Domain**: ARM architecture and Raspberry Pi deployments
 - **Expertise**: Cross-compilation, disko, remote deployment
 - **Key Files**: `hosts/naspi/`, `scripts/naspi-deploy.sh`
 - **Use Cases**: RPi4 deployments, SD card images, remote updates
 
 ### 5. **pkg-coord** - Package Management Coordinator
+
 - **Domain**: Package coordination across layers
 - **Expertise**: Profile-based packages, dependencies, overlays
 - **Key Files**: `*/packages.nix`, overlays
 - **Use Cases**: Package installation, dependency resolution, profile management
 
 ### 6. **flake-mgr** - Flake Configuration Manager
+
 - **Domain**: Flake structure and dependencies
 - **Expertise**: Input management, cachix, build configuration
 - **Key Files**: `flake.nix`, `flake.lock`
@@ -61,7 +67,7 @@ When working with Claude Code, you can request specific agents for tasks:
 Multiple agents can work simultaneously on different aspects:
 
 ```
-"Update my system packages (pkg-coord), refresh Neovim plugins (dev-env), 
+"Update my system packages (pkg-coord), refresh Neovim plugins (dev-env),
 and check for flake updates (flake-mgr) in parallel"
 ```
 
@@ -70,12 +76,52 @@ and check for flake updates (flake-mgr) in parallel"
 Agents can work together on complex tasks:
 
 ```
-"Perform a full system update" 
+"Perform a full system update"
 → flake-mgr updates inputs
-→ pkg-coord resolves packages  
+→ pkg-coord resolves packages
 → nixos-system rebuilds
 → dev-env updates tools
 → hyprland-desktop reloads
+```
+
+#### Example: Full System Update Workflow
+
+```mermaid
+graph TD
+    A[User Request: Full System Update] --> B[flake-mgr Agent]
+    B --> C[Update flake.lock]
+    B --> D[Validate inputs]
+
+    C --> E[pkg-coord Agent]
+    D --> E
+    E --> F[Resolve package dependencies]
+    E --> G[Check profile compatibility]
+
+    F --> H[nixos-system Agent]
+    G --> H
+    H --> I[Build system configuration]
+    H --> J[Apply system changes]
+
+    I --> K[dev-env Agent]
+    J --> K
+    K --> L[Update Neovim plugins]
+    K --> M[Refresh LSP servers]
+
+    L --> N[hyprland-desktop Agent]
+    M --> N
+    N --> O[Reload desktop configuration]
+    N --> P[Update waybar themes]
+
+    O --> Q[System Update Complete]
+    P --> Q
+
+    style A fill:#e1f5fe
+    style Q fill:#c8e6c9
+    style B fill:#fff3e0
+    style E fill:#fff3e0
+    style H fill:#fff3e0
+    style K fill:#fff3e0
+    style N fill:#fff3e0
 ```
 
 ## Agent Helper CLI
@@ -120,7 +166,7 @@ The `coordination.yaml` file defines how agents work together:
 ### Agent Selection Guidelines
 
 - **System changes** → nixos-system
-- **Desktop/UI changes** → hyprland-desktop  
+- **Desktop/UI changes** → hyprland-desktop
 - **Development tools** → dev-env
 - **Package management** → pkg-coord
 - **Raspberry Pi work** → rpi-deploy
@@ -159,6 +205,7 @@ To add new agents:
 ### Agent Definition Structure
 
 Each agent YAML file contains:
+
 - **Metadata**: Name, description, version
 - **Expertise**: Primary and secondary knowledge domains
 - **File Patterns**: Files the agent works with
@@ -170,6 +217,7 @@ Each agent YAML file contains:
 ### Coordination Protocol
 
 Agents communicate through:
+
 - **Request/Response**: Structured data exchange
 - **Broadcasting**: State change notifications
 - **Task Delegation**: Work distribution
@@ -183,6 +231,55 @@ Agents communicate through:
 2. **Wrong agent selected**: Review keywords and patterns
 3. **Conflicts between agents**: Follow coordination rules
 4. **Commands not working**: Verify command templates in YAML
+
+### Troubleshooting Decision Tree
+
+```mermaid
+flowchart TD
+    A[Issue Encountered] --> B{Agent responding?}
+
+    B -->|No| C[Check agent definition exists]
+    C --> D{File exists?}
+    D -->|No| E[Create or restore agent YAML]
+    D -->|Yes| F[Check YAML syntax]
+    F --> G{Valid YAML?}
+    G -->|No| H[Fix YAML syntax errors]
+    G -->|Yes| I[Check agent CLI tool]
+
+    B -->|Yes| J{Correct agent selected?}
+    J -->|No| K[Review keywords and patterns]
+    K --> L[Update agent keywords]
+    L --> M[Test agent suggestion]
+
+    J -->|Yes| N{Commands working?}
+    N -->|No| O[Verify command templates]
+    O --> P[Check file paths and permissions]
+    P --> Q[Test commands manually]
+
+    N -->|Yes| R{Agents conflicting?}
+    R -->|Yes| S[Check coordination rules]
+    S --> T[Review agent dependencies]
+    T --> U[Apply conflict resolution]
+
+    R -->|No| V[Check system state]
+    V --> W[Review logs]
+    W --> X[Issue resolved]
+
+    E --> X
+    H --> X
+    I --> X
+    M --> X
+    Q --> X
+    U --> X
+
+    style A fill:#ffcdd2
+    style X fill:#c8e6c9
+    style C fill:#fff3e0
+    style K fill:#fff3e0
+    style O fill:#fff3e0
+    style S fill:#fff3e0
+    style V fill:#fff3e0
+```
 
 ### Debug Commands
 
@@ -200,6 +297,7 @@ nix-agent workflow <workflow-name>
 ## Future Enhancements
 
 Planned improvements:
+
 - [ ] Automatic agent selection based on git diff
 - [ ] Agent performance metrics and optimization
 - [ ] Learning from successful task patterns
@@ -209,6 +307,7 @@ Planned improvements:
 ## Contributing
 
 When contributing to the agent system:
+
 1. Follow existing YAML structure patterns
 2. Document agent capabilities clearly
 3. Test agent coordination scenarios
@@ -218,3 +317,4 @@ When contributing to the agent system:
 ## License
 
 These agent definitions are part of the NixOS configuration and follow the same license as the parent repository.
+
