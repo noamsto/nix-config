@@ -33,7 +33,9 @@
   home.packages = with pkgs; [
     papirus-icon-theme
     bibata-cursors
-    kdePackages.dolphin
+    xfce.thunar
+    xfce.thunar-volman # Volume manager for thunar
+    xfce.thunar-archive-plugin # Archive support
 
     # Screenshot and recording tools
     grim # High-quality Wayland screenshot tool
@@ -54,7 +56,7 @@
 
     # Image editing and viewing
     gimp # Full-featured image editor
-    kdePackages.gwenview # KDE image viewer with excellent Wayland support
+    eog # GNOME image viewer
   ];
 
   # make stuff work on wayland

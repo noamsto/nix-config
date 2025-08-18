@@ -49,8 +49,7 @@
       "float, class:^(pavucontrol)$"
       "float, class:^(nm-connection-editor)$"
       "float, class:^(blueman-manager)$"
-      "float, class:^(file-roller)$"
-      "float, class:^(ark)$" # KDE Archive Manager
+      "float, class:^(file-roller)$" # GNOME Archive Manager
       "float, class:^(org.gnome.Nautilus)$,title:^(Properties)$"
 
       # Application preferences/settings
@@ -135,9 +134,10 @@
       "idleinhibit fullscreen, class:^(chromium)$"
 
       # File manager progress dialogs
-      "float, class:^(dolphin)$,title:^(Progress Dialog)$"
-      "float, class:^(dolphin)$,title:^(Copying)$"
+      "float, class:^(thunar)$,title:^(Progress Dialog)$"
+      "float, class:^(thunar)$,title:^(Copying)$"
       "float, class:^(thunar)$,title:^(File Operation Progress)$"
+      "float, class:^(thunar)$,title:^(Properties)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
       # Web browsers - workspace 1

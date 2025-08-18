@@ -12,7 +12,8 @@
   };
 
   home.packages = [
-    pkgs.kdePackages.breeze-gtk
+    pkgs.adwaita-qt
+    pkgs.adwaita-qt6
   ];
 
   gtk = {
@@ -30,7 +31,7 @@
 
     gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
     gtk2.extraConfig = ''
-      gtk-theme-name="Breeze-Dark"
+      gtk-theme-name="Adwaita-dark"
       gtk-button-images=1
       gtk-menu-images=1
       gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
@@ -45,14 +46,14 @@
       gtk-decoration-layout = "menu:close";
       gtk-enable-animations = true;
       gtk-overlay-scrolling = true;
-      gtk-theme-name = "Breeze";
+      gtk-theme-name = "Adwaita-dark";
     };
 
     gtk4.extraConfig = {
       gtk-application-prefer-dark-theme = true;
       gtk-enable-animations = true;
       gtk-overlay-scrolling = true;
-      gtk-theme-name = "Breeze";
+      gtk-theme-name = "Adwaita-dark";
     };
   };
 }

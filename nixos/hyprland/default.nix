@@ -26,6 +26,9 @@ in {
     services.blueman.enable = true;
     security.pam.services.hyprlock = {};
 
+    # Enable KDE Connect for device integration
+    programs.kdeconnect.enable = true;
+
     # Backlight control with brightnessctl
     # brightnessctl is included in desktop packages
     # Ensure video group permissions for backlight control

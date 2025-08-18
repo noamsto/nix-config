@@ -176,6 +176,9 @@ in {
           bar_height = 24;
           bar_precedence_over_border = true;
           bar_text_font = "FiraCode Nerd Font";
+          "col.text" = "rgb(cdd6f4)"; # Light text color for better readability
+          "bar_color" = "rgba(1e1e2ecc)"; # More opaque dark background
+          "bar_text_size" = 12;
 
           # order is right-to-left
           hyprbars-button = [

@@ -87,7 +87,7 @@ in {
 
       # media and archives - critical missing apps
       mpv # video/audio player
-      kdePackages.ark # archive manager
+      file-roller # archive manager (GNOME, lightweight)
 
       # system call monitoring
       strace # system call monitoring

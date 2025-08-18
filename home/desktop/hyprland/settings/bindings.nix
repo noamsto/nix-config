@@ -4,7 +4,7 @@
   ...
 }: let
   terminal = "ghostty --gtk-single-instance=true";
-  fileManager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"}";
+  fileManager = "${lib.getExe pkgs.xfce.thunar}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
 
@@ -26,7 +26,6 @@
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
-    "$screenshotarea" = "screenshot-helper area";
     bind = [
       "$mainMod, C, exec, ${terminal}" # Changed from Q to C for console/terminal
       "$mainMod, E, exec, ${fileManager}"
@@ -121,13 +120,9 @@ in {
 
       ", XF86AudioPlay, exec, ${runOnce youtube-music}"
 
-      "$mainMod, Print, exec, screenshot-helper output" # copy all active outputs
-      "$ALTSHIFT, S, exec, screenshot-helper screen" # copy active screen
-      ", Print, exec, $screenshotarea" # screenshot selection area
-      "$mainMod SHIFT, Print, exec, screenshot-helper edit-area" # screenshot area and edit with satty
-      "$mainMod CTRL, Print, exec, screenshot-helper edit-output" # screenshot full output and edit with satty
-      "$ALTSHIFT, E, exec, screenshot-edit" # edit last screenshot with satty
-      "$ALTSHIFT, P, exec, ${fileManager} ~/Pictures/Screenshots" # open screenshots folder
+      # Screenshot modes
+      ", Print, exec, grim -g \"$(slurp)\" - | satty -f -" # screenshot selection area and edit with satty (mapped from SUPER+SHIFT+S via xremap)
+      "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with walker
 
       # Screen recording (similar to grimblast)
       "$mainMod SHIFT, R, exec, record-screen-mp4" # record selected area/window as MP4

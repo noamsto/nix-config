@@ -25,5 +25,8 @@ in {
 
     # System toggles
     (pkgs.writeShellScriptBin "system-toggles" (builtins.readFile ./sh/system-toggles.sh))
+
+    # Screenshot menu using walker
+    (pkgs.writeShellScriptBin "screenshot-menu" (builtins.readFile ./sh/screenshot-menu.sh))
   ];
 }

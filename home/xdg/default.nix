@@ -26,11 +26,11 @@
         "application/pdf" = "evince.desktop";
 
         # Archives - missing critical mime types
-        "application/zip" = "org.kde.ark.desktop";
-        "application/x-tar" = "org.kde.ark.desktop";
-        "application/x-compressed-tar" = "org.kde.ark.desktop";
-        "application/x-7z-compressed" = "org.kde.ark.desktop";
-        "application/x-rar" = "org.kde.ark.desktop";
+        "application/zip" = "org.gnome.FileRoller.desktop";
+        "application/x-tar" = "org.gnome.FileRoller.desktop";
+        "application/x-compressed-tar" = "org.gnome.FileRoller.desktop";
+        "application/x-7z-compressed" = "org.gnome.FileRoller.desktop";
+        "application/x-rar" = "org.gnome.FileRoller.desktop";
 
         # Text files - missing important ones
         "text/plain" = "nvim.desktop";
@@ -47,15 +47,15 @@
         "audio/ogg" = "mpv.desktop";
         "audio/flac" = "mpv.desktop";
 
-        # Image types - gwenview for viewing, gimp for editing
-        "image/jpeg" = "org.kde.gwenview.desktop";
-        "image/jpg" = "org.kde.gwenview.desktop";
-        "image/png" = "org.kde.gwenview.desktop";
-        "image/gif" = "org.kde.gwenview.desktop";
-        "image/webp" = "org.kde.gwenview.desktop";
-        "image/tiff" = "org.kde.gwenview.desktop";
-        "image/bmp" = "org.kde.gwenview.desktop";
-        "image/svg+xml" = "org.kde.gwenview.desktop";
+        # Image types - eog for viewing, gimp for editing
+        "image/jpeg" = "org.gnome.eog.desktop";
+        "image/jpg" = "org.gnome.eog.desktop";
+        "image/png" = "org.gnome.eog.desktop";
+        "image/gif" = "org.gnome.eog.desktop";
+        "image/webp" = "org.gnome.eog.desktop";
+        "image/tiff" = "org.gnome.eog.desktop";
+        "image/bmp" = "org.gnome.eog.desktop";
+        "image/svg+xml" = "org.gnome.eog.desktop";
 
         "text/html" = browser;
         "text/xml" = browser;
@@ -82,13 +82,13 @@
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
 
         # Image editing - add GIMP as alternative
-        "image/jpeg" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/png" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/gif" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/webp" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/tiff" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/bmp" = "org.kde.gwenview.desktop;gimp.desktop;";
-        "image/svg+xml" = "org.kde.gwenview.desktop;gimp.desktop;";
+        "image/jpeg" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/png" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/gif" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/webp" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/tiff" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/bmp" = "org.gnome.eog.desktop;gimp.desktop;";
+        "image/svg+xml" = "org.gnome.eog.desktop;gimp.desktop;";
       };
       associations.removed = let
         browser = ["google-chrome.desktop"];
