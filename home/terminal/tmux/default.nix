@@ -115,11 +115,6 @@ in {
       # Set escape-time as recomended by nvim
       set -s escape-time 0
 
-      # Fix vim colors
-      set -ga terminal-overrides ",foot:Tc"
-
-      # Foot terminal
-      # set -as terminal-features 'foot*:extkeys'
       set -g extended-keys on
       set -s set-clipboard on
       set -s copy-command 'wl-copy'

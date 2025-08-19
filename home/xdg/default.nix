@@ -23,7 +23,7 @@
         browser = ["brave-browser.desktop"];
       in {
         "application/json" = browser;
-        "application/pdf" = "evince.desktop";
+        "application/pdf" = "org.gnome.Evince.desktop";
 
         # Archives - missing critical mime types
         "application/zip" = "org.gnome.FileRoller.desktop";
@@ -89,24 +89,6 @@
         "image/tiff" = "org.gnome.eog.desktop;gimp.desktop;";
         "image/bmp" = "org.gnome.eog.desktop;gimp.desktop;";
         "image/svg+xml" = "org.gnome.eog.desktop;gimp.desktop;";
-      };
-      associations.removed = let
-        browser = ["google-chrome.desktop"];
-      in {
-        "text/html" = browser;
-        "text/xml" = browser;
-        "application/xml" = browser;
-        "application/xhtml+xml" = browser;
-        "application/xhtml_xml" = browser;
-        "application/rdf+xml" = browser;
-        "application/rss+xml" = browser;
-        "image/gif" = browser;
-        "image/jpeg" = browser;
-        "image/png" = browser;
-        "image/webp" = browser;
-        "x-scheme-handler/http" = browser;
-        "x-scheme-handler/https" = browser;
-        "application/pdf" = browser;
       };
     };
 

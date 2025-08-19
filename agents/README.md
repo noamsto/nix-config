@@ -317,4 +317,3 @@ When contributing to the agent system:
 ## License
 
 These agent definitions are part of the NixOS configuration and follow the same license as the parent repository.
-
