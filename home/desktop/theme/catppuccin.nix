@@ -25,5 +25,8 @@
 
     # === BROWSERS ===
     brave.enable = true;
+
+    # === hyprland ===
+    hyprlock.enable = true;
   };
 }

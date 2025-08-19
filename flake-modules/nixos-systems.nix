@@ -43,33 +43,6 @@ in {
         ];
       };
 
-      # For deploying to systems running from installer (no repartitioning)
-      naspi-installer-target = nixos-raspberrypi.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          inherit nixos-raspberrypi;
-        };
-        system = "aarch64-linux";
-        modules = [
-          ../hosts/naspi
-          # No disko - use fileSystems that match installer layout
-          {
-            fileSystems = {
-              "/boot/firmware" = {
-                device = "/dev/disk/by-label/FIRMWARE";
-                fsType = "vfat";
-                options = ["noatime" "umask=0022"];
-              };
-              "/" = {
-                device = "/dev/disk/by-label/NIXOS_SD";
-                fsType = "ext4";
-                options = ["noatime" "data=writeback" "barrier=0"];
-              };
-            };
-          }
-        ];
-      };
-
       # RPI4 Installer configuration (using nixos-raspberrypi base + custom WiFi)
       # This creates a minimal installer image using mkNixOSRPiInstaller pattern
       rpi4-installer = nixos-raspberrypi.lib.nixosInstaller {

@@ -3,11 +3,10 @@ return {
   "neovim/nvim-lspconfig",
   opts = {
     servers = {
-      harper_ls = {
-        settings = {
-          ["harper-ls"] = {
-            linters = { ToDoHyphen = false },
-          },
+      typos_lsp = {
+        mason = false,
+        init_options = {
+          diagnosticSeverity = "Warning",
         },
       },
       pyright = {

@@ -68,6 +68,7 @@
       lldb
 
       marksman # Markdown
+      typos-lsp # Spell checking LSP
       hadolint
       uv
 

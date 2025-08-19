@@ -39,12 +39,22 @@ return {
       },
     },
     system_prompt = function()
-      local hub = require("mcphub").get_hub_instance()
-      return hub and hub:get_active_servers_prompt() or ""
+      local ok, mcphub = pcall(require, "mcphub")
+      if not ok then
+        return ""
+      end
+
+      local hub = mcphub.get_hub_instance and mcphub.get_hub_instance()
+      return hub and hub.get_active_servers_prompt and hub:get_active_servers_prompt() or ""
     end,
     custom_tools = function()
+      local ok, mcphub_avante = pcall(require, "mcphub.extensions.avante")
+      if not ok or not mcphub_avante.mcp_tool then
+        return {}
+      end
+
       return {
-        require("mcphub.extensions.avante").mcp_tool(),
+        mcphub_avante.mcp_tool(),
       }
     end,
   },
@@ -53,6 +63,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",
+    "ravitemer/mcphub.nvim", -- Load mcphub first
     --- The below dependencies are optional,
     "echasnovski/mini.icons",
     {
@@ -82,6 +93,5 @@ return {
       },
       ft = { "markdown", "Avante" },
     },
-    "ravitemer/mcphub.nvim",
   },
 }
