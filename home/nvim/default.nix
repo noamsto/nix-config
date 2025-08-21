@@ -68,7 +68,7 @@
       lldb
 
       marksman # Markdown
-      typos-lsp # Spell checking LSP
+      harper # Grammar checker for developers
       hadolint
       uv
 

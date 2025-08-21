@@ -3,10 +3,22 @@ return {
   "neovim/nvim-lspconfig",
   opts = {
     servers = {
-      typos_lsp = {
+      harper_ls = {
         mason = false,
-        init_options = {
-          diagnosticSeverity = "Warning",
+        settings = {
+          ["harper-ls"] = {
+            diagnostics = {
+              -- Make Harper less verbose by disabling some checks
+              ["spell"] = true,         -- Enable Harper's spell checking
+              ["word-repetition"] = false,  -- Less aggressive on repetition
+              ["sentence-length"] = false,  -- Don't enforce sentence length
+              ["unclosed-quotes"] = true,   -- Keep important checks
+              ["linking-verbs"] = false,    -- Less strict on style
+              ["passive-voice"] = false,    -- Allow passive voice
+              ["sentence-capitalization"] = true,  -- Keep basic grammar
+              ["wrong-quotes"] = true,      -- Keep punctuation checks
+            },
+          },
         },
       },
       pyright = {

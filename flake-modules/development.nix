@@ -26,7 +26,6 @@
 
         # Lightweight development essentials
         pkgs.jq # JSON processing (small and useful)
-        pkgs.typos # Spell checker for code (lightweight)
         pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
       ];
       name = "dots";
@@ -83,7 +82,6 @@
     pre-commit.settings = {
       hooks = {
         treefmt.enable = true;
-        typos.enable = true;
       };
     };
   };
