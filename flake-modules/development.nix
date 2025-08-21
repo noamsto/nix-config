@@ -38,9 +38,6 @@
         export EDITOR=nvim
         export DEVELOPMENT_MODE=true
 
-        # Add agent helper to PATH
-        export PATH="${../agents}:$PATH"
-
         # Fish-compatible aliases and functions
         if command -v fish >/dev/null 2>&1; then
           fish -c "
@@ -60,7 +57,6 @@
         fi
 
         echo "🚀 NixOS Development Environment Ready!"
-        echo "📁 Agents available: 'nix-agent help'"
         echo "📊 Project stats: 'dev-stats'"
       '';
     };

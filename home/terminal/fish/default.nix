@@ -43,6 +43,7 @@
       gcan = "git commit -v -a --no-edit --amend";
       grhh = "git reset --hard";
       gup = "git pull --rebase";
+      grbi = "git-forgit rebase -i";
     };
 
     plugins = with pkgs.fishPlugins; [

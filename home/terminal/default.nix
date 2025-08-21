@@ -1,6 +1,7 @@
 {
   lib,
   osConfig,
+  pkgs,
   ...
 }: let
   isServer = osConfig.machine.type == "server";
@@ -20,17 +21,45 @@ in {
       enable = true;
       enableZshIntegration = true;
 
+      plugins = {
+        mount = pkgs.yaziPlugins.mount;
+        git = pkgs.yaziPlugins.git;
+      };
+
       # Custom yazi configuration
       settings = {
-        manager = {
+        mgr = {
           show_hidden = false;
           show_symlink = true;
         };
+        plugin = {
+          prepend_fetchers = [
+            {
+              id = "git";
+              name = "*";
+              run = "git";
+            }
+            {
+              id = "git";
+              name = "*/";
+              run = "git";
+            }
+          ];
+        };
       };
+
+      initLua = ''
+        require("git"):setup()
+      '';
 
       # Custom keybindings for dragon-drop integration
       keymap = {
-        manager.prepend_keymap = [
+        mgr.prepend_keymap = [
+          {
+            on = ["M"];
+            run = "plugin mount";
+            desc = "Mount plugin";
+          }
           {
             on = ["<Space>" "d"];
             run = ''shell --confirm 'dragon-drop "$@"' $$'';
