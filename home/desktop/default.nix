@@ -9,9 +9,6 @@
       ./theme
       ./easyeffects
     ]
-    ++ lib.optionals (osConfig.desktop.mode == "kde") [
-      ./kde
-    ]
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
       ./hyprland
     ];

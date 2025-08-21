@@ -6,7 +6,6 @@
 }: {
   imports = [
     ./sddm
-    ./kde.nix
     ./1password
   ];
 
@@ -42,12 +41,6 @@
   };
 
   xdg.portal.enable = true;
-
-  specialisation = {
-    kde.configuration = {
-      desktop.mode = "kde";
-    };
-  };
 
   # tell Electron/Chromium to run on Wayland
   environment.variables.NIXOS_OZONE_WL = "1";

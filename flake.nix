@@ -83,13 +83,6 @@
 
     # === DESKTOP ENVIRONMENTS ===
     # Update monthly - stable releases
-    plasma-manager = {
-      url = "github:pjones/plasma-manager";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-      };
-    };
 
     xremap = {
       url = "github:xremap/nix-flake";
