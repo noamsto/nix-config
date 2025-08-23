@@ -54,6 +54,8 @@ in {
 
         "ghostty --gtk-single-instance=true --quit-after-last-window-closed=false --initial-window=false"
 
+        "launch-dock"
+
         # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];
 

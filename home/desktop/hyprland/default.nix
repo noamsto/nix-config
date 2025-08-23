@@ -13,6 +13,7 @@
     ./settings
     ./waybar
     ./swaync
+    ./nwg-dock
     ./scripts/screenshot-utils.nix
     ./scripts/brightness-control.nix
     ./scripts/keyboard-layout.nix
@@ -36,6 +37,9 @@
     xfce.thunar
     xfce.thunar-volman # Volume manager for thunar
     xfce.thunar-archive-plugin # Archive support
+
+    # Dock
+    nwg-dock-hyprland # Dock for Hyprland
 
     # Screenshot and recording tools
     grim # High-quality Wayland screenshot tool

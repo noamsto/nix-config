@@ -15,7 +15,7 @@ in {
 
       # Command to run tmux attach script - target the main session created by systemd service
       # Set TMUX_TMPDIR to match the systemd service location
-      command = "TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t main || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s main";
+      command = "TMUX_TMPDIR=/run/user/$(id -u) tmux attach || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s main";
 
       # Cursor smear shaders available for future use when ghostty is updated
       # custom-shader = "${config.xdg.configHome}/ghostty/shaders/cursor_smear.glsl";

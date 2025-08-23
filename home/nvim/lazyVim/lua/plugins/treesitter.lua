@@ -13,9 +13,9 @@ return {
 
       -- Configure custom parsers
       local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-      
+
       -- Add Authzed parser configuration
-      parser_config.authzed = {
+      parser_config.authzed2 = {
         install_info = {
           url = "https://github.com/noamsto/tree-sitter-authzed", -- your repo
           files = { "src/parser.c" }, -- note that some parsers also require src/scanner.c or src/scanner.cc
@@ -23,7 +23,7 @@ return {
           generate_requires_npm = false, -- if stand-alone parser without npm dependencies
           requires_generate_from_grammar = false, -- if folder contains pre-generated src/parser.c
         },
-        filetype = "authzed", -- if filetype does not match the parser name
+        filetype = "authzed2", -- if filetype does not match the parser name
       }
 
       return opts
@@ -35,10 +35,10 @@ return {
       -- Set up filetype detection for Authzed files
       vim.filetype.add({
         extension = {
-          authzed = "authzed",
+          authzed2 = "authzed2",
           -- Add other extensions if your files use different extensions
           -- For example, if you use .zed files:
-          -- zed = "authzed",
+          zed = "authzed2",
         },
         filename = {
           -- Add specific filenames if needed
