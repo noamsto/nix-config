@@ -10,6 +10,7 @@
   work-ext-right = "desc:Dell Inc. DELL P2723DE CC7FH14";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
+    launch-dock &
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
     # Left monitor (DP-8): workspaces 1-4
@@ -24,6 +25,7 @@
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
     # Laptop screen: workspace 9
     ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
+    launch-dock &
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
     # Left monitor (ext left): workspaces 1-4
@@ -36,6 +38,7 @@
     ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right}
+    launch-dock &
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
     # Left monitor (work left): workspaces 1-4
@@ -51,6 +54,7 @@
     # Laptop screen: workspaces 9-10
     ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1
     ${hyprctl} dispatch moveworkspacetomonitor 10 eDP-1
+    launch-dock &
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
     # Left monitor (work left): workspaces 1-4
@@ -63,6 +67,7 @@
     ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right}
     ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right}
+    launch-dock &
   '';
 in {
   home.packages = [pkgs.kanshi];

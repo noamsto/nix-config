@@ -6,13 +6,12 @@
     "passthrough": false,
     "modules-left": [
       "hyprland/workspaces",
-      "clock",
       "custom/audio_idle_inhibitor",
       "custom/screen_recording",
       "tray"
     ],
     "modules-center": [
-      "wlr/taskbar"
+      "clock"
     ],
     "modules-right": [
       "network",
@@ -254,21 +253,11 @@
       },
       "tooltip": true
     },
-    "wlr/taskbar": {
-      "format": "{icon}",
-      "icon-size": 28,
-      "all-outputs": true,
-      "tooltip-format": "{title}",
-      "on-click": "activate",
-      "on-click-middle": "close",
-      "markup": true,
-      "max-length": 50
-    },
     "network": {
       "tooltip-format-ethernet": "{ifname}  {ipaddr}/{cidr}",
       "tooltip-format-wifi": "{essid} ({signalStrength}%)",
       "interval": 2,
-      "on-click-right": "foot nmtui",
+      "on-click-right": "nm-connection-editor",
       "format": "{icon}",
       "format-alt-click": "click",
       "format-alt": "{icon} {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}",

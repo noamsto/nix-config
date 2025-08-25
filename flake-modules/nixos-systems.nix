@@ -54,30 +54,10 @@ in {
           ../hosts/rpi4-installer
         ];
       };
-
-      # Standard RPI4 configuration using NixOS wiki approach
-      rpi4-standard = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {inherit inputs;};
-        modules = [
-          ../hosts/rpi4-standard
-        ];
-      };
     };
 
     # RPI4 Installer configuration (following nvmd pattern)
     # Build with: nix build .#rpi4-installer
     rpi4-installer = inputs.self.nixosConfigurations.rpi4-installer.config.system.build.sdImage;
-
-    # Standard RPI4 Image using nixos-generators (NixOS wiki approach)
-    # Build with: nix build .#rpi4-standard-image
-    rpi4-standard-image = inputs.nixos-generators.nixosGenerate {
-      system = "aarch64-linux";
-      specialArgs = {inherit inputs;};
-      modules = [
-        ../hosts/rpi4-standard/image.nix
-      ];
-      format = "sd-aarch64";
-    };
   };
 }
