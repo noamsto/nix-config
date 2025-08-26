@@ -52,9 +52,11 @@ in {
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
-        "ghostty --gtk-single-instance=true --quit-after-last-window-closed=false --initial-window=false"
+        "kitty --single-instance --instance-group=hypr"
 
         "launch-dock"
+
+        "walker --gapplication-service"
 
         # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];
@@ -149,7 +151,7 @@ in {
 
         # enable window swallowing
         enable_swallow = true;
-        swallow_regex = "^(foot|ghostty)$";
+        swallow_regex = "^(foot|kitty)$";
 
         # Fullscreen behavior
         layers_hog_keyboard_focus = true; # Ensure fullscreen windows get keyboard focus

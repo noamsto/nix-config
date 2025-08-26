@@ -27,6 +27,7 @@
       gsb = "git status -sb";
       gst = "git status";
       gsw = "git switch";
+      gswc = "git switch --create";
       gpf = "git push --force-with-lease";
       gpu = "git push -u origin HEAD";
       gp = "git push";

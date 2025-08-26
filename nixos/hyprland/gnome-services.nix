@@ -14,6 +14,7 @@ in
         gnome-settings-daemon
       ];
       gnome.gnome-keyring.enable = true;
+      gnome.gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
       gvfs.enable = true;
     };
     programs.seahorse.enable = true;

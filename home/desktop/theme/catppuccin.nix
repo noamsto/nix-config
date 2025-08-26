@@ -11,7 +11,7 @@
     starship.enable = true;
     btop.enable = true;
     foot.enable = true;
-    ghostty.enable = true;
+    kitty.enable = true;
     k9s.enable = true;
     bat.enable = true;
     yazi.enable = true;

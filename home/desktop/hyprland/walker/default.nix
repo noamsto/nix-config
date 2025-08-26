@@ -11,7 +11,7 @@
 
   programs.walker = {
     enable = true;
-    runAsService = true;
+    runAsService = false;
 
     # All options from the config.json can be used here.
     config = {

@@ -1,10 +1,4 @@
-{
-  pkgs,
-  config,
-  ...
-}: let
-  isHypr = config.desktop.mode == "hyprland";
-in {
+{pkgs, ...}: {
   imports = [
     ./networking.nix
     ./nix.nix
@@ -20,7 +14,7 @@ in {
   programs = {
     zsh.enable = true;
     dconf.enable = true;
-    ssh.startAgent = !isHypr;
+    ssh.startAgent = false; # Explicitly disable to avoid conflicts with GCR SSH agent
     nix-ld = {
       enable = true;
       libraries = with pkgs; [libgit2 sqlite];

@@ -48,9 +48,9 @@ in {
       ExecStop = "-${tmux-bin} kill-session -t ${session}";
       Environment = [
         "COLORTERM=truecolor"
-        "TERM=ghostty"
-        "TERM_PROGRAM=ghostty"
-        "TERMINFO=${pkgs.ghostty.terminfo}/share/terminfo"
+        "TERM=kitty"
+        "TERM_PROGRAM=kitty"
+        "TERMINFO=${pkgs.kitty}/share/terminfo"
         "TMUX_TMPDIR=%t"
       ];
     };

@@ -37,7 +37,7 @@ in {
 
       # Enhanced workflow configuration
       branch = {
-        autosetupmerge = "always";
+        autosetupmerge = "true";
         autosetuprebase = "always";
       };
 

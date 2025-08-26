@@ -3,7 +3,7 @@
   pkgs,
   ...
 }: let
-  terminal = "ghostty --gtk-single-instance=true";
+  terminal = "kitty";
   fileManager = "${lib.getExe pkgs.xfce.thunar}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
@@ -27,7 +27,7 @@ in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
     bind = [
-      "$mainMod, C, exec, ${terminal}" # Changed from Q to C for console/terminal
+      "$mainMod, C, exec, ${terminal} --single-instance --instance-group=hypr" # Changed from Q to C for console/terminal
       "$mainMod, E, exec, ${fileManager}"
       "$mainMod, B, exec, ${browser}"
       "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)
