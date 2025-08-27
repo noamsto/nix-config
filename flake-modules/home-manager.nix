@@ -34,12 +34,18 @@
     };
 in {
   flake.homeConfigurations = {
-    # Raspberry Pi standalone
-    naspi-raspbian = mkArmHomeConfig hostConfigs.naspi;
+    # Default configs for nh auto-detection (username@hostname)
+    "noams@thinkpad-p14s" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s;
+    "noams@thinkpad-p14s-g5" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g5;
+    "noams@naspi" = mkArmHomeConfig hostConfigs.naspi;
 
-    # x86_64 standalone configurations
+    # Fallback configs for nh auto-detection (username only)
+    noams = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s; # Default to personal
+
+    # Legacy names for compatibility and KDE testing
     noams-hyprland = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s;
     noams-hyprland-work = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g5;
+    naspi-raspbian = mkArmHomeConfig hostConfigs.naspi;
 
     # KDE variant using personal profile host as base
     noams-kde = mkHomeConfig "x86_64-linux" (hostConfigs.thinkpad-p14s

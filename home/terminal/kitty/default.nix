@@ -1,8 +1,6 @@
 {pkgs, ...}: {
   programs.kitty = {
     enable = true;
-    theme = "Catppuccin-Mocha";
-
     settings = {
       # Background and transparency
       background_opacity = "0.92";
@@ -13,8 +11,20 @@
       cursor_trail_decay = "0.1 0.5";
 
       # Font configuration
-      font_family = "JetBrains Mono";
+      font_family = "monospace";
+
+      # Primary fallback for monospace text
+      bold_font = "auto";
+      italic_font = "auto";
+      bold_italic_font = "auto";
       font_size = 12;
+
+      # Fallback fonts for missing characters (in order of preference)
+      # Noto Sans Mono - excellent Unicode coverage, monospace
+      # DejaVu Sans Mono - reliable fallback with good symbol support
+      # Liberation Mono - good compatibility fallback
+      # Courier New - system fallback
+      font_features = "Fira +zero +ss01";
 
       # Window settings
       confirm_os_window_close = 0;

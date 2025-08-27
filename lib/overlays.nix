@@ -10,7 +10,6 @@ inputs: [
       pkgs = final;
     };
   })
-  (_final: super: {utillinux = super.util-linux;})
 
   (final: _: {
     fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;

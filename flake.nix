@@ -34,7 +34,6 @@
       "https://nix-community.cachix.org"
       "https://devenv.cachix.org"
       "https://nixos-raspberrypi.cachix.org"
-      "https://ghostty.cachix.org"
     ];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -45,7 +44,6 @@
       "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
       "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-      "ghostty.cachix.org-1:QB389yTa6gTyneehvqG58y0WnHjQOqgnA+wBnpWWxns="
     ];
   };
 
@@ -95,10 +93,6 @@
     # Pinned versions for stability - update quarterly
     walker = {
       url = "github:abenz1267/walker?ref=v0.13.14";
-    };
-
-    ghostty = {
-      url = "github:ghostty-org/ghostty";
     };
 
     catppuccin = {

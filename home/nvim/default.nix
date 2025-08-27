@@ -2,7 +2,6 @@
   pkgs,
   config,
   lib,
-  # inputs,
   ...
 }: {
   xdg.configFile = {
@@ -10,8 +9,6 @@
   };
 
   programs.neovim = {
-    # package = inputs.neovim-nightly-overlay.packages.${pkgs.system}.default;
-
     extraWrapperArgs = [
       "--suffix"
       "LIBRARY_PATH"

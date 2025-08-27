@@ -23,6 +23,9 @@
     # Nix/NixOS package version diff tool
     nvd
 
+    # Home Manager CLI for standalone configurations
+    home-manager
+
     # === ESSENTIAL CLI UTILITIES (System-wide) ===
     ripgrep # Better grep - used by system scripts and all users
     fd # Better find - useful for system administration
