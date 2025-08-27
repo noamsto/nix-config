@@ -20,12 +20,17 @@ nix flake update         # Update all inputs (equivalent to updating flake.lock)
 ### System Rebuilds
 
 ```bash
-# Local system rebuild
+# Local system rebuild (full NixOS + Home Manager)
 sudo nixos-rebuild switch --flake .#<hostname>
 nh os switch .           # Using nh helper (preferred)
+hm-full                  # Alias for nh os switch .
 
-# Home Manager only
-nix run home-manager/master -- switch --flake .#<config>
+# Home Manager only - Hybrid approach for faster development
+hm-dev                   # Fast user-only rebuild (work profile on work laptop, personal on personal)
+hm-dev-personal          # Personal profile (available on work laptop)
+hm-dev-work              # Work profile (available on personal laptop) 
+hm-kde                   # Test KDE configuration
+home-manager switch --flake .#<config>  # Manual standalone rebuild
 
 # Raspberry Pi deployment
 ./scripts/build-rpi4-installer.sh              # Build minimal installer image
@@ -40,13 +45,40 @@ sudo nixos-rebuild switch --flake .#rpi4-standard --target-host user@rpi4.local 
 
 ### Available Hosts
 
+**NixOS Systems:**
 - `thinkpad-p14s` - Main laptop configuration
 - `thinkpad-p14s-g5` - Work laptop (G5 generation)
 - `naspi` - Raspberry Pi 4 runtime configuration with disko partitioning
 - `naspi-installer-target` - Raspberry Pi 4 for deployment to installer systems
 - `rpi4-installer` - Minimal RPi4 installer image
 - `rpi4-standard` - Standard RPi4 configuration using NixOS wiki approach
+
+**Standalone Home Manager (for development):**
+- `noams-hyprland` - Personal profile with Hyprland
+- `noams-hyprland-work` - Work profile with Hyprland
+- `noams-kde` - Personal profile with KDE
 - `naspi-raspbian` - Raspberry Pi with Home Manager only
+
+### Hybrid Home Manager Approach
+
+This repository uses **both** Home Manager as a NixOS module (production) AND standalone Home Manager (development):
+
+**Production/Full Rebuilds:**
+- Uses Home Manager as NixOS module
+- Command: `hm-full` or `nh os switch .`
+- Updates both system and user configurations together
+- Takes 2-3 minutes, includes full validation
+
+**Development/Fast Rebuilds:**
+- Uses standalone Home Manager configurations
+- Commands: `hm-dev`, `hm-dev-personal`, `hm-dev-work`, `hm-kde`
+- Updates only user configuration (~30 seconds)
+- Perfect for testing dotfile changes, themes, applications
+
+**When to use each:**
+- Use `hm-dev` for quick iteration on user configurations
+- Use `hm-full` for system changes or final validation
+- Standalone configs are independent of system state
 
 ### Development Tools Available in Shell
 

@@ -7,6 +7,7 @@
     ./pc.nix
     ./users.nix
     ./nice-looking-console.nix
+    ./aliases.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;

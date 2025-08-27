@@ -2,7 +2,10 @@
   lib,
   inputs,
   ...
-}: {
+}: let
+  # Import shared host configuration
+  hostConfig = (import ../../lib/host-configs.nix).thinkpad-p14s;
+in {
   imports = [
     ./hardware-configuration.nix
     ../../nixos
@@ -14,13 +17,11 @@
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen4
   ];
 
-  hostname = "thinkpad-p14s";
-  desktop.mode = lib.mkDefault "hyprland";
-  machine.type = "laptop";
+  # Import shared configuration
+  inherit (hostConfig) hostname email profile;
+  desktop.mode = lib.mkDefault hostConfig.desktop.mode;
+  machine.type = hostConfig.machine.type;
 
-  environment.shellAliases = {
-    naspi-rebuild-switch = ''
-      NIX_SSHOPTS="-A" nixos-rebuild --flake .#naspi --use-remote-sudo --build-host noams@naspi.local --target-host noams@naspi.local switch
-    '';
-  };
+  # Host-specific overrides can go here
+  # (aliases are now in nixos/core/aliases.nix)
 }

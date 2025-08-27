@@ -27,6 +27,8 @@
         # Lightweight development essentials
         pkgs.jq # JSON processing (small and useful)
         pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
+
+        pkgs.home-manager
       ];
       name = "dots";
       DIRENV_LOG_FORMAT = "";
