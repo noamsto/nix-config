@@ -15,7 +15,7 @@ in {
         specialArgs = {inherit inputs;};
       };
 
-      # Raspberry Pi with disko (following nvmd pattern)
+      # Raspberry Pi with ZFS RAID1 on dual SSDs
       naspi = nixos-raspberrypi.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
@@ -23,9 +23,9 @@ in {
         };
         system = "aarch64-linux";
         modules = [
-          ../hosts/naspi
+          ../hosts/naspi/default-zfs.nix
           inputs.disko.nixosModules.disko
-          ../hosts/naspi/disko.nix
+          ../hosts/naspi/disko-zfs.nix
         ];
       };
 
