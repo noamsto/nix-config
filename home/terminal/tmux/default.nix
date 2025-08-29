@@ -46,6 +46,10 @@
 in {
   imports = [./named-session.nix];
 
+  home.packages = with pkgs; [
+    sesh
+  ];
+
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
 
   systemd.user.services.tmux-startup = {
@@ -119,7 +123,7 @@ in {
       # start index at 1
       set -g base-index 1
       set -g pane-base-index 1
-      bind r source-file ~/.tmux.conf \; display "Config reloaded!"
+      bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
 
       # renumber when window is closed
       set-option -g renumber-window on
@@ -167,6 +171,29 @@ in {
       # Order sessions alphabeticaly
       bind s choose-tree -Zs -O name
       bind w choose-tree -Zw -O name
+
+      bind-key "K" display-popup -E -w 40% "sesh connect \"$(
+      sesh list -i | ${lib.getExe pkgs.gum} filter --no-strip-ansi --limit 1 --no-sort --fuzzy --placeholder 'Pick a sesh' --height 50 --prompt='⚡'
+      )\""
+
+      bind-key "T" run-shell "sesh connect \"$(
+      sesh list --icons | fzf-tmux -p 80%,70% \
+        --no-sort --ansi --border-label ' sesh ' --prompt '⚡  ' \
+        --header '  ^a all ^t tmux ^g configs ^x zoxide ^d tmux kill ^f find' \
+        --bind 'tab:down,btab:up' \
+        --bind 'ctrl-a:change-prompt(⚡  )+reload(sesh list --icons)' \
+        --bind 'ctrl-t:change-prompt(🪟  )+reload(sesh list -t --icons)' \
+        --bind 'ctrl-g:change-prompt(⚙️  )+reload(sesh list -c --icons)' \
+        --bind 'ctrl-x:change-prompt(📁  )+reload(sesh list -z --icons)' \
+        --bind 'ctrl-f:change-prompt(🔎  )+reload(fd -H -d 2 -t d -E .Trash . ~)' \
+        --bind 'ctrl-d:execute(tmux kill-session -t {2..})+change-prompt(⚡  )+reload(sesh list --icons)' \
+        --preview-window 'right:55%' \
+        --preview 'sesh preview {}'
+      )\""
+
+      bind-key x kill-pane # skip "kill-pane 1? (y/n)" prompt
+      set -g detach-on-destroy off  # don't exit from tmux when closing a session
+
 
       # Sync window name with terminal name
       set-option -g set-titles on

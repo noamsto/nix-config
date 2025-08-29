@@ -8,7 +8,7 @@ set -euo pipefail
 options="📋 Select Area/Window\n🖥️ Current Output\n🖼️ All Screens\n⏰ Delay Output (3s)\n⏰ Delay All Screens (3s)"
 
 # Show walker menu and get selection
-choice=$(echo -e "$options" | walker -d)
+choice=$(echo -e "$options" | walker -d -p "Screenshot Mode")
 
 case "$choice" in
 "📋 Select Area/Window")
