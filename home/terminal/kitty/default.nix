@@ -93,9 +93,9 @@
       "ctrl+shift+w" = "close_tab";
       "ctrl+shift+right" = "next_tab";
       "ctrl+shift+left" = "previous_tab";
-      "ctrl+shift+equal" = "increase_font_size"; # Default: Ctrl+Shift+= produces +
-      "ctrl+shift+minus" = "decrease_font_size"; # Default: Ctrl+Shift+- produces -
-      "ctrl+shift+backspace" = "restore_font_size"; # Default: restore to original size
+      "ctrl+equal" = "increase_font_size";
+      "ctrl+minus" = "decrease_font_size";
+      "ctrl+shift+equal" = "restore_font_size";
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+shift+v" = "paste_from_clipboard";
     };

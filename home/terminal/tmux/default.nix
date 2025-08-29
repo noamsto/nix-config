@@ -29,8 +29,25 @@
       sha256 = "sha256-UcfEsq7BqJMeYXtGDNMoi/E+iEnEe9iM2KVoi7ektOE=";
     };
   };
+
+  yamlFormat = pkgs.formats.yaml {};
+  tmuxNerdFontConfig = {
+    config = {
+      fallback-icon = ""; # show when no definition is found
+      multi-pane-icon = ""; # show when window has multiple panes (blank by default)
+      show-name = true; # show the window name with the icon (defaults to false)
+      icon-position = "left"; # show the icon to the "left" or "right" of the window name (defaults to left)
+    };
+    icons = {
+      zsh = "";
+      claude = "🧠";
+    };
+  };
 in {
   imports = [./named-session.nix];
+
+  xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
+
   systemd.user.services.tmux-startup = {
     Unit = {
       Description = "Start tmux detached on login";
@@ -71,15 +88,18 @@ in {
         plugin = upstream-catppuccin;
         extraConfig = ''
           set -g @catppuccin_flavor 'mocha'
-          set -g @catppuccin_window_status_style 'rounded'
-          set -g @catppuccin_window_number_position 'right'
-          set -g @catppuccin_window_status 'no'
-          set -g @catppuccin_window_flags "icon"
-          set -g @catppuccin_window_text '#W'
-          set -g @catppuccin_window_current_text '#W'
-          set -g @catppuccin_window_current_color '#{E:@thm_surface_2}'
-          set -g @catppuccin_status_module_text_bg '#{E:@thm_mantle}'
-          set -g @catppuccin_status_connect_separator 'yes'
+          set -g @catppuccin_status_background 'none'
+          set -g @catppuccin_window_status_style 'none'
+          set -g @catppuccin_window_flags 'icon'
+          set -g @catppuccin_window_flags_icon_last " 󰖰"
+          set -g @catppuccin_window_flags_icon_current " 󰖯"
+          set -g @catppuccin_window_flags_icon_zoom " 󰁌"
+          set -g @catppuccin_window_flags_icon_mark " 󰃀"
+          set -g @catppuccin_window_flags_icon_silent " 󰂛"
+          set -g @catppuccin_window_flags_icon_activity " 󱅫"
+          set -g @catppuccin_window_flags_icon_bell " 󰂞"
+          set -g @catppuccin_pane_status_enabled 'off'
+          set -g @catppuccin_pane_border_status 'off'
         '';
       }
       {
@@ -160,16 +180,39 @@ in {
       set -g status-interval 1
       set -g status-left-length 100
       set -g status-right-length 100
+      set -g status-style "bg=#{@thm_bg}"
 
       setw -g pane-border-status top
-      setw -g pane-border-lines single
       setw -g pane-border-format ""
+      setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_0}"
+      setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_surface_0}"
+      setw -g pane-border-lines single
 
       set -g status-left ""
-      set -g status-right ""
-      set -g status-left "#{E:@catppuccin_status_session}"
+      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
+      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
+      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{window_name} "
+      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_blue}]  #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} "
-      set -gF status-right "#{@catppuccin_status_host}"
+
+      set -g status-right ""
+      set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│ "
+      set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #H "
+
+      # Window look and feel with nerd font icons
+      set -wg automatic-rename on
+      set -g automatic-rename-format "Window"
+
+      set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} "
+      set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
+      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_peach}"
+      set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
+      set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
+      set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
+
+      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} "
+      set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
+
 
       # Load continuum manually after status line configuration
       set -g @continuum-restore 'on'
