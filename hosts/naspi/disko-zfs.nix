@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   # ZFS services
@@ -233,11 +234,25 @@
               canmount = "on";
               compression = "zstd-3";
               "com.sun:auto-snapshot" = "true";
-              # Optional: enable encryption
-              # encryption = "aes-256-gcm";
-              # keyformat = "passphrase";
-              # keylocation = "prompt";
+              # ZFS native encryption
+              encryption = "aes-256-gcm";
+              keyformat = "raw";
+              keylocation = "file:///boot/zfs-keys/rpool";
             };
+            # Set up encryption key after dataset creation
+            postCreateHook = ''
+              # Copy the key file from deployment location
+              mkdir -p /mnt/boot/zfs-keys
+              chmod 700 /mnt/boot/zfs-keys
+              if [ -f /tmp/zfs-rpool-key ]; then
+                cp /tmp/zfs-rpool-key /mnt/boot/zfs-keys/rpool
+                chmod 600 /mnt/boot/zfs-keys/rpool
+                echo "🔑 ZFS encryption key installed to /boot/zfs-keys/rpool"
+              else
+                echo "⚠️  Warning: No ZFS key found at /tmp/zfs-rpool-key"
+                echo "    You'll need to set up encryption manually after boot"
+              fi
+            '';
           };
 
           # Media storage (if needed, with different settings)
@@ -299,7 +314,7 @@
           -o com.sun:auto-snapshot=false \
           rpool/swap
 
-        ${pkgs.util-linux}/bin/mkswap /dev/zvol/rpool/swap
+        ${lib.getExe' pkgs.util-linux "mkswap"} /dev/zvol/rpool/swap
       fi
     '';
   };

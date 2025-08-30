@@ -14,12 +14,16 @@
       "*" = {
         sendEnv = ["LANG" "LC_*"];
         addKeysToAgent = "yes";
+        hashKnownHosts = false;
+        userKnownHostsFile = "~/.ssh/known_hosts";
         extraOptions = {
           Include = "/etc/ssh/host_ssh.conf";
         };
       };
 
       "github.com" = {
+        hostname = "ssh.github.com";
+        port = 443;
         identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
       };

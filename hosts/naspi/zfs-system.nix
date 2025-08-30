@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }: {
   # Import base system configuration
@@ -16,8 +15,10 @@
     zfs = {
       forceImportRoot = false;
       forceImportAll = false;
-      # Request encryption credentials
-      requestEncryptionCredentials = true;
+      # Use key files for automatic unlock - no password prompts
+      requestEncryptionCredentials = false;
+      # Enable devNodes for proper key file handling
+      devNodes = "/dev/disk/by-id";
     };
 
     # Kernel modules for ZFS
@@ -195,10 +196,11 @@
     };
   };
 
-  # Ensure proper permissions for storage directories
+  # Ensure proper permissions for storage directories and ZFS key storage
   systemd.tmpfiles.rules = [
     "d /data 0755 root root -"
     "d /media/storage 0755 root root -"
+    "d /boot/zfs-keys 0700 root root -"
   ];
 
   # Performance tuning for ZFS
