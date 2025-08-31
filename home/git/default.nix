@@ -83,11 +83,11 @@ in {
           whitespace = "red reverse";
         };
       };
-      url = {
-        "git@github.com:" = {
-          insteadOf = "https://github.com";
-        };
-      };
+      # url = {
+      #   "git@github.com:" = {
+      #     insteadOf = "https://github.com";
+      #   };
+      # };
     };
     ignores = [
       "**/.direnv"

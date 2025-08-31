@@ -25,7 +25,7 @@
     "kernel.sysrq" = 502;
     "vm.overcommit_memory" = 1;
   };
-  # boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.initrd.luks.devices = {
     root = {

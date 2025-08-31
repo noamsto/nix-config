@@ -13,12 +13,19 @@
     matchBlocks = {
       "*" = {
         sendEnv = ["LANG" "LC_*"];
-        addKeysToAgent = "yes";
-        hashKnownHosts = false;
-        userKnownHostsFile = "~/.ssh/known_hosts";
         extraOptions = {
           Include = "/etc/ssh/host_ssh.conf";
         };
+        forwardAgent = false;
+        addKeysToAgent = "no";
+        compression = false;
+        serverAliveInterval = 0;
+        serverAliveCountMax = 3;
+        hashKnownHosts = false;
+        userKnownHostsFile = "~/.ssh/known_hosts";
+        controlMaster = "no";
+        controlPath = "~/.ssh/master-%r@%n:%p";
+        controlPersist = "no";
       };
 
       "github.com" = {

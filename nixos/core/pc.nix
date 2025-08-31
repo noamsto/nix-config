@@ -40,6 +40,7 @@ in {
       };
 
     hardware = {
+      alsa.enablePersistence = true;
       bluetooth.enable = true;
       bluetooth.powerOnBoot = true;
       logitech.wireless.enable = true; # solaar

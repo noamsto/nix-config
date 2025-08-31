@@ -49,6 +49,7 @@
     brave
     brightnessctl
     ddcutil
+    alsa-utils # provides alsamixer for audio control
   ];
   laptop-packages = with pkgs; [
     power-profiles-daemon

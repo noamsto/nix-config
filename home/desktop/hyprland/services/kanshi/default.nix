@@ -8,7 +8,7 @@
   home-ext-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
   work-ext-left-desc = "Dell Inc. DELL P2723DE CC7FH14";
   work-ext-left = "desc:${work-ext-left-desc}";
-  work-ext-right-desc = "Dell Inc. DELL P2723DE CC7FH14";
+  work-ext-right-desc = "Dell Inc. DELL P2723DE 4C7FH14";
   work-ext-right = "desc:${work-ext-right-desc}";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1

@@ -128,6 +128,9 @@ in {
       # renumber when window is closed
       set-option -g renumber-window on
 
+      # allow focus events for kitty
+      set -g focus-events on
+
 
       set -g allow-passthrough on
       set -g visual-activity off
