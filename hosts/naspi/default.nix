@@ -5,6 +5,7 @@
     ./hardware.nix
     ./system.nix
     ./xscript.nix
+    ./media-services.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
   ];

@@ -6,8 +6,10 @@
   hyprctl = "${lib.getExe' pkgs.hyprland "hyprctl"}";
   home-ext-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
   home-ext-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
-  work-ext-left = "desc:Dell Inc. DELL P2723DE 4C7FH14";
-  work-ext-right = "desc:Dell Inc. DELL P2723DE CC7FH14";
+  work-ext-left-desc = "Dell Inc. DELL P2723DE CC7FH14";
+  work-ext-left = "desc:${work-ext-left-desc}";
+  work-ext-right-desc = "Dell Inc. DELL P2723DE CC7FH14";
+  work-ext-right = "desc:${work-ext-right-desc}";
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
     launch-dock &
@@ -161,14 +163,14 @@ in {
             name = "work-docked-lid-open";
             outputs = [
               {
-                criteria = "Dell Inc. DELL P2723DE 4C7FH14";
+                criteria = work-ext-left-desc;
                 mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
-                criteria = "Dell Inc. DELL P2723DE CC7FH14";
+                criteria = work-ext-right-desc;
                 mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;
@@ -190,14 +192,14 @@ in {
             name = "work-docked-lid-close";
             outputs = [
               {
-                criteria = "Dell Inc. DELL P2723DE 4C7FH14";
+                criteria = work-ext-left-desc;
                 mode = "2560x1440@60";
                 position = "0,0";
                 scale = 1.0;
                 status = "enable";
               }
               {
-                criteria = "Dell Inc. DELL P2723DE CC7FH14";
+                criteria = work-ext-right-desc;
                 mode = "2560x1440@60";
                 position = "2560,0";
                 scale = 1.0;

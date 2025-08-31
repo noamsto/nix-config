@@ -11,9 +11,51 @@
   hardware.raspberry-pi.config = {
     all = {
       dt-overlays = {
+        # PWM 2-channel overlay for Geekworm X-C1 fan control
+        # Required for xscript to control fan via GPIO 18 PWM
         pwm-2chan = {
           enable = true;
           params = {};
+        };
+
+        # GPIO shutdown overlay for Geekworm X-C1 power button
+        # Power button connected to GPIO 4
+        gpio-shutdown = {
+          enable = true;
+          params = {
+            gpio_pin = "4"; # GPIO pin for shutdown button (X-C1 board)
+            active_low = "1"; # Active low signal
+            gpio_pull = "up"; # Pull-up resistor
+          };
+        };
+
+        # I2C overlay for expansion board communication
+        i2c1 = {
+          enable = true;
+          params = {
+            pins_2_3 = "1"; # Use pins 2,3 for I2C
+          };
+        };
+      };
+
+      # Additional base device tree parameters
+      base-dt-params = {
+        # Enable I2C interface
+        i2c_arm = {
+          enable = true;
+          value = "on";
+        };
+
+        # Set I2C baudrate
+        i2c_arm_baudrate = {
+          enable = true;
+          value = "400000"; # 400kHz for reliable communication
+        };
+
+        # Enable SPI interface (may be needed for expansion board)
+        spi = {
+          enable = true;
+          value = "on";
         };
       };
     };

@@ -92,6 +92,7 @@ in {
 
     starship = {
       enable = true;
+      enableFishIntegration = true;
       settings = lib.mkMerge [
         {
           add_newline = false;

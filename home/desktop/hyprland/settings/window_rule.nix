@@ -58,6 +58,56 @@
       "float, class:^(spotify)$,title:^(.*Settings.*)$"
       "float, class:^(obsidian)$,title:^(Settings)$"
 
+      # === 1PASSWORD FIXES ===
+      # Main 1Password window
+      "float, class:^(1Password)$"
+      "center, class:^(1Password)$"
+      "size 1000 700, class:^(1Password)$"
+      "immediate, class:^(1Password)$"
+
+      # 1Password Quick Access
+      "float, class:^(1Password)$,title:^(Quick Access)$"
+      "center, class:^(1Password)$,title:^(Quick Access)$"
+      "size 400 500, class:^(1Password)$,title:^(Quick Access)$"
+      "stayfocused, class:^(1Password)$,title:^(Quick Access)$"
+
+      # 1Password hamburger menu and dropdowns - FIX SCALING AND POSITIONING
+      "float, class:^(1Password)$,title:^$"
+      "immediate, class:^(1Password)$,title:^$"
+      "noborder, class:^(1Password)$,title:^$"
+      "noshadow, class:^(1Password)$,title:^$"
+      "pin, class:^(1Password)$,title:^$" # Keep menu on top
+      "stayfocused, class:^(1Password)$,title:^$" # Don't steal focus but stay visible
+
+      # 1Password popup menus, context menus, and zero-size windows
+      "float, class:^(1Password)$,size:(0,0)"
+      "immediate, class:^(1Password)$,size:(0,0)"
+      "noborder, class:^(1Password)$,size:(0,0)"
+      "noshadow, class:^(1Password)$,size:(0,0)"
+      "pin, class:^(1Password)$,size:(0,0)" # Keep popup on top
+      "stayfocused, class:^(1Password)$,size:(0,0)"
+
+      # Small 1Password windows (likely menus/popups)
+      "float, class:^(1Password)$,size:(1,1)"
+      "immediate, class:^(1Password)$,size:(1,1)"
+      "noborder, class:^(1Password)$,size:(1,1)"
+      "noshadow, class:^(1Password)$,size:(1,1)"
+      "pin, class:^(1Password)$,size:(1,1)"
+
+      # Alternative class names for 1Password
+      "float, class:^(1password)$"
+      "immediate, class:^(1password)$"
+      "float, class:^(com.1password.1Password)$"
+      "immediate, class:^(com.1password.1Password)$"
+
+      # Apply hamburger menu fixes to alternative class names too
+      "float, class:^(1password)$,title:^$"
+      "immediate, class:^(1password)$,title:^$"
+      "pin, class:^(1password)$,title:^$"
+      "float, class:^(com.1password.1Password)$,title:^$"
+      "immediate, class:^(com.1password.1Password)$,title:^$"
+      "pin, class:^(com.1password.1Password)$,title:^$"
+
       # Size dialogs appropriately
       "size 800 600, class:^(pavucontrol)$"
       "size 600 500, class:^(nm-connection-editor)$"
