@@ -63,29 +63,29 @@ in {
     '';
 
     # # WiFi suspend/resume fix for QCNFA765 adapter
-    # systemd.services.ath11k-suspend = lib.mkIf isLaptop {
-    #   description = "Unload ath11k_pci before suspend";
-    #   before = ["sleep.target"];
-    #   serviceConfig = {
-    #     Type = "oneshot";
-    #     ExecStart = "${pkgs.kmod}/bin/rmmod ath11k_pci";
-    #     RemainAfterExit = true;
-    #   };
-    #   wantedBy = ["sleep.target"];
-    # };
-    #
-    # systemd.services.ath11k-resume = lib.mkIf isLaptop {
-    #   description = "Reload ath11k_pci after resume";
-    #   after = ["suspend.target" "suspend-then-hibernate.target" "hibernate.target" "hybrid-sleep.target"];
-    #   serviceConfig = {
-    #     Type = "oneshot";
-    #     ExecStart = "${pkgs.kmod}/bin/modprobe ath11k_pci";
-    #     ExecStartPost = [
-    #       "${pkgs.coreutils}/bin/sleep 2"
-    #       "${pkgs.systemd}/bin/systemctl restart NetworkManager"
-    #     ];
-    #   };
-    #   wantedBy = ["suspend.target" "suspend-then-hibernate.target" "hibernate.target" "hybrid-sleep.target"];
-    # };
+    systemd.services.ath11k-suspend = lib.mkIf isLaptop {
+      description = "Unload ath11k_pci before suspend";
+      before = ["sleep.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.kmod}/bin/rmmod ath11k_pci";
+        RemainAfterExit = true;
+      };
+      wantedBy = ["sleep.target"];
+    };
+
+    systemd.services.ath11k-resume = lib.mkIf isLaptop {
+      description = "Reload ath11k_pci after resume";
+      after = ["suspend.target" "suspend-then-hibernate.target" "hibernate.target" "hybrid-sleep.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.kmod}/bin/modprobe ath11k_pci";
+        ExecStartPost = [
+          "${pkgs.coreutils}/bin/sleep 2"
+          "${pkgs.systemd}/bin/systemctl restart NetworkManager"
+        ];
+      };
+      wantedBy = ["suspend.target" "suspend-then-hibernate.target" "hibernate.target" "hybrid-sleep.target"];
+    };
   };
 }
