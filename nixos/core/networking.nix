@@ -13,28 +13,6 @@
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "systemd-resolved";
-    wifi.backend = "iwd"; # Use iwd instead of wpa_supplicant
-  };
-
-  # Configure iwd (iNet Wireless Daemon)
-  networking.wireless.iwd = {
-    enable = true;
-    settings = {
-      General = {
-        # Let NetworkManager handle IP configuration
-        EnableNetworkConfiguration = false;
-        # Improve roaming for better connectivity
-        RoamThreshold = -75;
-        RoamThreshold5G = -76;
-      };
-      Network = {
-        EnableIPv6 = true;
-        NameResolvingService = "systemd";
-      };
-      Settings = {
-        AutoConnect = true;
-      };
-    };
   };
 
   services = {

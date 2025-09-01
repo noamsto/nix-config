@@ -113,7 +113,19 @@ window#waybar.hidden {
 
 /* Left side of groups - no right border radius */
 #network,
-#cpu {
+#cpu,
+#battery,
+#backlight,
+#pulseaudio {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Right side of groups - no left margin/radius to connect with next group */
+#disk,
+#power-profiles-daemon,
+#backlight-slider {
   margin-right: 0;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;

@@ -255,15 +255,15 @@
     },
     "network": {
       "tooltip-format-ethernet": "{ifname}  {ipaddr}/{cidr}",
-      "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+      "tooltip-format-wifi": "{ifname} ({signalStrength}%) | {ipaddr}/{cidr} | {gwaddr}",
       "interval": 2,
       "on-click-right": "nm-connection-editor",
       "format": "{icon}",
       "format-alt-click": "click",
-      "format-alt": "{icon} {ifname} | {ipaddr}/{cidr} | {gwaddr} {essid}",
+      "format-alt": "{icon}  {bandwidthDownBytes}  {bandwidthUpBytes}",
       "format-disconnected": "󰤭  Offline",
-      "format-wifi": "󰤨  {bandwidthDownBytes}  {bandwidthUpBytes}",
-      "format-ethernet": "󰈀  {bandwidthDownBytes}  {bandwidthUpBytes}",
+      "format-wifi": "󰤨  {essid}",
+      "format-ethernet": "󰈀  {ifname}",
       "max-length": 25,
       "format-icons": {
         "wifi": [
@@ -294,10 +294,6 @@
       "tooltip": true,
       "tooltip-format-activated": "Screen will stay awake",
       "tooltip-format-deactivated": "Screen can go to sleep"
-    },
-    "custom/power-menu": {
-      "format": " 󰐥 ",
-      "on-click": "if command -v wlogout >/dev/null 2>&1; then wlogout; else echo 'No power menu available'; fi"
     },
     "custom/audio_idle_inhibitor": {
       "format": "{icon}",
@@ -364,15 +360,17 @@
       ],
       "tooltip": true,
       "tooltip-format": "Brightness: {percent}%",
-      "on-scroll-up": "brightness-control up 5",
-      "on-scroll-down": "brightness-control down 5",
+      "on-scroll-up": "brightness-control --inc 5",
+      "on-scroll-down": "brightness-control --dec 5",
       "interval": 1
     },
     "backlight/slider": {
       "min": 5,
       "max": 100,
       "orientation": "horizontal",
-      "device": "amdgpu_bl1"
+      "on-click": "brightness-control --set {value}",
+      "on-scroll-up": "brightness-control --inc 5",
+      "on-scroll-down": "brightness-control --dec 5"
     }
   }
 ]

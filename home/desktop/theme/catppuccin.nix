@@ -19,6 +19,7 @@
     fzf.enable = true;
     zsh-syntax-highlighting.enable = true;
     fish.enable = true;
+    wlogout.enable = true;
 
     # === DEVELOPMENT TOOLS ===
     delta.enable = true;
