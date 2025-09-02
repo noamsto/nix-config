@@ -94,10 +94,13 @@
       "ctrl+shift+right" = "next_tab";
       "ctrl+shift+left" = "previous_tab";
       "ctrl+equal" = "increase_font_size";
-      "ctrl+minus" = "decrease_font_size";
+      "ctrl+minus" = "decrease_font_size"; # Ctrl+- for zoom out
       "ctrl+shift+equal" = "restore_font_size";
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+shift+v" = "paste_from_clipboard";
+
+      # Allow Ctrl+Shift+- (Ctrl+_) to pass through to shell for undo
+      "ctrl+shift+minus" = "no_op";
     };
   };
 }
