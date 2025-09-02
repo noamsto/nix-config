@@ -114,6 +114,11 @@
       # Fix C-F to accept autosuggestions in vi insert and normal mode
       bind -M insert \cf accept-autosuggestion
       bind -M default \cf accept-autosuggestion
+
+      # Add explicit undo bindings for vi mode
+      bind -M insert \c_ undo  # Ctrl+_ in insert mode
+      bind -M default \c_ undo # Ctrl+_ in normal mode
+      bind -M insert \cz undo  # Alternative Ctrl+Z in insert mode
     '';
 
     loginShellInit = ''
