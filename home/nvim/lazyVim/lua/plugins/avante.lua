@@ -14,6 +14,10 @@ return {
 
   opts = {
     provider = "claude",
+    auto_suggestions_provider = "claude", -- Force suggestions to use Claude
+    behaviour = {
+      auto_suggestions = false, -- Disable auto suggestions if you don't want fallback behavior
+    },
     providers = {
       claude = {
         endpoint = "https://api.anthropic.com",

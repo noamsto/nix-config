@@ -6,5 +6,6 @@
     ./virtualization
     ./xremap
     ./hyprland
+    ./services
   ];
 }

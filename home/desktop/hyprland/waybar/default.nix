@@ -21,6 +21,13 @@
 
     # Notification daemon (if using swaync)
     swaynotificationcenter
+
+    # Power management for waybar integration
+    power-profiles-daemon
+
+    # Power status scripts for waybar
+    (writeScriptBin "power-status-waybar" (builtins.readFile ./scripts/power-status-waybar.sh))
+    (writeScriptBin "power-profile-toggle" (builtins.readFile ./scripts/power-profile-toggle.sh))
   ];
 
   # Override waybar config files with symlinks for easier development iteration
