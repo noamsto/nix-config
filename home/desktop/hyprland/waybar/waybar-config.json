@@ -115,8 +115,7 @@
         "6": "6",
         "7": "7",
         "8": "8",
-        "9": "9",
-        "urgent": ""
+        "9": "9"
       },
       "all-outputs": false,
       "sort-by-number": true,
@@ -127,16 +126,12 @@
       "spacing": 10
     },
     "clock": {
-      "interval": 60,
-      "align": 0,
-      "rotate": 0,
       "tooltip": true,
       "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
-      "format": "{:%d %b, %I:%M %p}",
+      "format": "   {:%H:%M}",
       "on-click": "date --iso-8601=seconds | wl-copy && notify-send 'Clock' 'ISO time copied to clipboard' -i appointment-soon",
       "calendar": {
         "mode": "month",
-        "weeks-pos": "right",
         "on-scroll": 1,
         "actions": {
           "on-scroll-up": "shift_up",
@@ -178,7 +173,7 @@
     "pulseaudio": {
       "format": "{icon}  {volume}%",
       "format-bluetooth": "{icon}  {volume}%",
-      "format-muted": "󰝟",
+      "format-muted": "󰝟  {volume}%",
       "format-icons": {
         "headphone": "󰋋",
         "hands-free": "󰋎",

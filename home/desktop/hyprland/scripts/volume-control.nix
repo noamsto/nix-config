@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{pkgs, ...}: let
   volume-control = pkgs.writeShellScriptBin "volume-control" ''
     #!/usr/bin/env bash
 
@@ -42,14 +38,14 @@
     case "$1" in
         "--get")        get_volume ;;
         "--get-icon")   get_icon ;;
-        "--inc")        wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && sounds --volume 2>/dev/null ;;
+        "--inc")        wpctl set-volume -l 1.25 @DEFAULT_AUDIO_SINK@ 5%+ && sounds --volume 2>/dev/null ;;
         "--dec")        wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && sounds --volume 2>/dev/null ;;
         "--toggle")     wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
         "--toggle-mic") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-        "--mic-inc")    wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+ ;;
+        "--mic-inc")    wpctl set-volume -l 1.25 @DEFAULT_AUDIO_SOURCE@ 5%+ ;;
         "--mic-dec")    wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%- ;;
         # Legacy support
-        "up")           wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ && sounds --volume 2>/dev/null ;;
+        "up")           wpctl set-volume -l 1.25 @DEFAULT_AUDIO_SINK@ 5%+ && sounds --volume 2>/dev/null ;;
         "down")         wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- && sounds --volume 2>/dev/null ;;
         "mute")         wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
         "mic-mute")     wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;

@@ -55,7 +55,6 @@ window#waybar.hidden {
 #custom-brightness,
 #custom-separator,
 #bluetooth,
-#backlight,
 #mpris,
 #custom-media,
 #tray,
@@ -73,6 +72,8 @@ window#waybar.hidden {
 #custom-hyprsunset,
 #custom-keyboard-layout,
 #custom-screen_recording,
+#custom-hyprsunset,
+#backlight-slider,
 #backlight {
   color: @text;
   padding: 0px 10px 0px 10px;
@@ -307,7 +308,7 @@ label:focus {
 /* Brightness slider styling */
 #backlight-slider {
   background-color: @surface0;
-  padding: 0px 10px;
+  padding: 0px 0px 0px 0px;
 }
 
 #backlight-slider slider {
@@ -335,7 +336,6 @@ label:focus {
 /* Hyprsunset blue light filter indicator - now part of backlight group */
 #custom-hyprsunset {
   color: @peach;
-  padding: 0px 10px;
 }
 
 #custom-hyprsunset.on {
@@ -349,7 +349,7 @@ label:focus {
 /* Custom keyboard layout indicator */
 #custom-keyboard-layout {
   color: @text;
-  padding: 0px 12px;
+  padding: 0px 8px;
   font-weight: bold;
   font-size: 13px;
 }
