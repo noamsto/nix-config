@@ -7,6 +7,12 @@
   pointer = config.home.pointerCursor;
   cursorName = "Bibata-Modern-Ice";
 
+  # Monitor descriptors
+  home-ext-left = "desc:Samsung Electric Company S27H85x H4ZM300138";
+  home-ext-right = "desc:Samsung Electric Company S27H85x H4ZKB00167";
+  work-ext-left = "desc:Dell Inc. DELL P2723DE CC7FH14";
+  work-ext-right = "desc:Dell Inc. DELL P2723DE 4C7FH14";
+
   # Import utility functions
   runOnce = program: let
     progName = builtins.baseNameOf program;
@@ -26,9 +32,30 @@ in {
       #   ", switch:off:Lid Switch, exec, ${lib.getExe pkgs.bash} -c 'monitors=$(hyprctl monitors); if echo \"$monitors\" | grep -q \"Samsung Electric Company S27H85x\"; then kanshictl switch home-docked-lid-open; elif echo \"$monitors\" | grep -q \"Dell Inc. DELL P2723DE\"; then kanshictl switch work-docked-lid-open; else kanshictl switch undocked; fi'"
       # ];
       workspace = [
-        "1,persistent:true"
-        "2,persistent:true"
-        "3,persistent:true"
+        # Home setup - Left monitor (ext-left) - workspaces 1-4
+        "1,monitor:${home-ext-left},persistent:true,default:true"
+        "2,monitor:${home-ext-left},persistent:true"
+        "3,monitor:${home-ext-left},persistent:true"
+        "4,monitor:${home-ext-left},persistent:true"
+        # Home setup - Right monitor (ext-right) - workspaces 5-8
+        "5,monitor:${home-ext-right},persistent:true"
+        "6,monitor:${home-ext-right},persistent:true"
+        "7,monitor:${home-ext-right},persistent:true"
+        "8,monitor:${home-ext-right},persistent:true"
+
+        # Work setup - Left monitor (ext-left) - workspaces 1-4
+        "1,monitor:${work-ext-left},persistent:true,default:true"
+        "2,monitor:${work-ext-left},persistent:true"
+        "3,monitor:${work-ext-left},persistent:true"
+        "4,monitor:${work-ext-left},persistent:true"
+        # Work setup - Right monitor (ext-right) - workspaces 5-8
+        "5,monitor:${work-ext-right},persistent:true"
+        "6,monitor:${work-ext-right},persistent:true"
+        "7,monitor:${work-ext-right},persistent:true"
+        "8,monitor:${work-ext-right},persistent:true"
+
+        # Laptop screen - workspace 9 (fallback for both setups)
+        "9,monitor:eDP-1,persistent:true"
       ];
 
       env = [

@@ -7,7 +7,6 @@ return {
         python = { "mypy" },
         htmldjango = { "djlint" },
         ["yaml.github-actions"] = { "actionlint" },
-        sql = { "sqlfluff" },
       },
     },
   },

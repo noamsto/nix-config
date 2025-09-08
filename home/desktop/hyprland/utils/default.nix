@@ -1,7 +1,7 @@
 {...}: {
   imports = [
     ./hypridle.nix
-    ./hyprlock
+    ./screen-lock.nix # Unified screen locking solution
     ./wlogout.nix
   ];
 }

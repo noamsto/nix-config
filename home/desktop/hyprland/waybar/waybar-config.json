@@ -338,7 +338,7 @@
     },
     "power-profiles-daemon": {
       "format": "{icon}",
-      "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+      "tooltip-format": "Power profile: {profile}\nDriver: {driver}\n\nAutomatic switching on AC connect/disconnect",
       "tooltip": true,
       "format-icons": {
         "performance": "",

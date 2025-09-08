@@ -45,6 +45,8 @@
       grhh = "git reset --hard";
       gup = "git pull --rebase";
       grbi = "git-forgit rebase -i";
+      grbc = "git rebase --continue";
+      grba = "git rebase --abort";
     };
 
     plugins = with pkgs.fishPlugins; [

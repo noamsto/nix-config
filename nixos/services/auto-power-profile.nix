@@ -6,25 +6,59 @@
 }: let
   isLaptop = config.machine.type == "laptop";
 
-  # Simple script to switch power profiles based on AC adapter status
+  # Simplified script that only responds to AC state changes
   powerProfileScript = pkgs.writeShellScript "auto-power-profile" ''
     #!/bin/bash
 
-    # Check if AC adapter is connected
-    if [ "$(cat /sys/class/power_supply/AC/online)" = "1" ]; then
-      # AC connected - use performance mode
-      ${pkgs.power-profiles-daemon}/bin/powerprofilesctl set performance
+    LAST_AC_STATE_FILE="/tmp/power-profile-last-ac-state"
+
+    # Function to log actions
+    log_action() {
+      echo "$(date): $1" | ${pkgs.systemd}/bin/systemd-cat -t auto-power-profile
+    }
+
+    # Get current AC state
+    current_ac_state=$(cat /sys/class/power_supply/AC/online)
+
+    # Get last handled AC state
+    if [ -f "$LAST_AC_STATE_FILE" ]; then
+      last_ac_state=$(cat "$LAST_AC_STATE_FILE")
     else
-      # On battery - check battery level for smart switching
+      last_ac_state=""
+    fi
+
+    # Only take action if AC state has changed (or this is first run)
+    if [ "$current_ac_state" != "$last_ac_state" ]; then
       battery_level=$(cat /sys/class/power_supply/BAT0/capacity 2>/dev/null || echo 100)
 
-      if [ "$battery_level" -le 20 ]; then
-        # Low battery - use power-saver
-        ${pkgs.power-profiles-daemon}/bin/powerprofilesctl set power-saver
+      # Determine target profile based on new AC state
+      if [ "$current_ac_state" = "1" ]; then
+        target_profile="performance"
+        reason="AC connected"
       else
-        # Normal battery - use balanced
-        ${pkgs.power-profiles-daemon}/bin/powerprofilesctl set balanced
+        if [ "$battery_level" -le 20 ]; then
+          target_profile="power-saver"
+          reason="AC disconnected, low battery ($battery_level%)"
+        else
+          target_profile="balanced"
+          reason="AC disconnected, battery at $battery_level%"
+        fi
       fi
+
+      # Set the profile
+      current_profile=$(${pkgs.power-profiles-daemon}/bin/powerprofilesctl get)
+      if [ "$current_profile" != "$target_profile" ]; then
+        log_action "AC state changed ($last_ac_state -> $current_ac_state): switching to $target_profile ($reason)"
+        ${pkgs.power-profiles-daemon}/bin/powerprofilesctl set "$target_profile"
+      else
+        log_action "AC state changed ($last_ac_state -> $current_ac_state): profile already set to $target_profile"
+      fi
+
+      # Update the last handled AC state
+      echo "$current_ac_state" > "$LAST_AC_STATE_FILE"
+    else
+      # AC state hasn't changed, preserve any manual changes
+      log_action "AC state unchanged ($current_ac_state), preserving current profile"
     fi
   '';
 in {

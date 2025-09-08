@@ -34,7 +34,6 @@ in {
     # Ensure video group permissions for backlight control
     users.users.${config.username}.extraGroups = ["video" "i2c"];
     hardware.i2c.enable = true;
-    services.ddccontrol.enable = true;
 
     # Enable i2c for ddcutil (external monitor control)
     environment.systemPackages = with pkgs; [
