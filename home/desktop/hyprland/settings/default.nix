@@ -55,7 +55,8 @@ in {
         "8,monitor:${work-ext-right},persistent:true"
 
         # Laptop screen - workspace 9 (fallback for both setups)
-        "9,monitor:eDP-1,persistent:true"
+        # Remove persistent:true for undocked mode - workspaces will disappear when empty
+        "9,monitor:eDP-1"
       ];
 
       env = [

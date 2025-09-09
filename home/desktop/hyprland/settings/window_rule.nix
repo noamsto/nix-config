@@ -225,7 +225,85 @@
       "idleinhibit focus, class:^(zoom)$"
 
       "dimaround, class:^(gcr-prompter)$"
+      # === SYSTEM DIALOGS - ENSURE THEY APPEAR ON TOP OF FULLSCREEN APPS ===
+      # File picker dialogs
       "dimaround, class:^(xdg-desktop-portal-gtk)$"
+      "float, class:^(xdg-desktop-portal-gtk)$"
+      "pin, class:^(xdg-desktop-portal-gtk)$"
+      "stayfocused, class:^(xdg-desktop-portal-gtk)$"
+      "immediate, class:^(xdg-desktop-portal-gtk)$"
+
+      # Other desktop portal dialogs (KDE, wlroots, etc.)
+      "dimaround, class:^(xdg-desktop-portal-kde)$"
+      "float, class:^(xdg-desktop-portal-kde)$"
+      "pin, class:^(xdg-desktop-portal-kde)$"
+      "stayfocused, class:^(xdg-desktop-portal-kde)$"
+      "immediate, class:^(xdg-desktop-portal-kde)$"
+
+      "dimaround, class:^(xdg-desktop-portal-wlr)$"
+      "float, class:^(xdg-desktop-portal-wlr)$"
+      "pin, class:^(xdg-desktop-portal-wlr)$"
+      "stayfocused, class:^(xdg-desktop-portal-wlr)$"
+      "immediate, class:^(xdg-desktop-portal-wlr)$"
+
+      # Print dialogs
+      "dimaround, title:^(Print)$"
+      "float, title:^(Print)$"
+      "pin, title:^(Print)$"
+      "stayfocused, title:^(Print)$"
+      "immediate, title:^(Print)$"
+
+      "dimaround, title:^(Print Document)$"
+      "float, title:^(Print Document)$"
+      "pin, title:^(Print Document)$"
+      "stayfocused, title:^(Print Document)$"
+      "immediate, title:^(Print Document)$"
+
+      "dimaround, class:^(gtk3-print-backends)$"
+      "float, class:^(gtk3-print-backends)$"
+      "pin, class:^(gtk3-print-backends)$"
+      "stayfocused, class:^(gtk3-print-backends)$"
+      "immediate, class:^(gtk3-print-backends)$"
+
+      # Authentication dialogs (polkit, keyring)
+      "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
+      "float, class:^(polkit-gnome-authentication-agent-1)$"
+      "pin, class:^(polkit-gnome-authentication-agent-1)$"
+      "stayfocused, class:^(polkit-gnome-authentication-agent-1)$"
+      "immediate, class:^(polkit-gnome-authentication-agent-1)$"
+
+      "dimaround, class:^(gnome-keyring-prompt)$"
+      "float, class:^(gnome-keyring-prompt)$"
+      "pin, class:^(gnome-keyring-prompt)$"
+      "stayfocused, class:^(gnome-keyring-prompt)$"
+      "immediate, class:^(gnome-keyring-prompt)$"
+
+      # Screenshot/screen capture permission dialogs
+      "dimaround, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "float, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "pin, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "stayfocused, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "immediate, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+
+      # Permission dialogs (notifications, microphone, camera, etc.)
+      "dimaround, title:^(.*Permission.*)$"
+      "float, title:^(.*Permission.*)$"
+      "pin, title:^(.*Permission.*)$"
+      "stayfocused, title:^(.*Permission.*)$"
+      "immediate, title:^(.*Permission.*)$"
+
+      # General system modal dialogs
+      "dimaround, title:^(Authentication Required)$"
+      "float, title:^(Authentication Required)$"
+      "pin, title:^(Authentication Required)$"
+      "stayfocused, title:^(Authentication Required)$"
+      "immediate, title:^(Authentication Required)$"
+
+      "dimaround, title:^(Confirm)$"
+      "float, title:^(Confirm)$"
+      "pin, title:^(Confirm)$"
+      "stayfocused, title:^(Confirm)$"
+      "immediate, title:^(Confirm)$"
       "dimaround, class:^(hyprpolkitagent)$"
 
       # fix xwayland apps

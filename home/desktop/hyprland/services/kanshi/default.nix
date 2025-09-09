@@ -10,6 +10,24 @@
   work-ext-left = "desc:${work-ext-left-desc}";
   work-ext-right-desc = "Dell Inc. DELL P2723DE 4C7FH14";
   work-ext-right = "desc:${work-ext-right-desc}";
+
+  # Helper function to move workspace ranges to monitors
+  moveWorkspacesToMonitor = wsRange: monitor: ''
+    for ws in {${wsRange}}; do
+      ${hyprctl} dispatch workspace $ws && ${hyprctl} dispatch moveworkspacetomonitor $ws ${monitor} || true
+    done
+  '';
+
+  # Helper function to set workspace persistence
+  setWorkspacePersistence = wsRange: persistent: ''
+    for ws in {${wsRange}}; do
+      ${hyprctl} keyword workspace "$ws,persistent:${
+      if persistent
+      then "true"
+      else "false"
+    }" || true
+    done
+  '';
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     # Ensure monitors are fully awake before workspace commands
     ${hyprctl} dispatch dpms on
@@ -22,9 +40,18 @@
       timeout=$((timeout - 1))
     done
 
-    # Create workspace first, then move it
+    # Disable persistence for workspaces 5-9 (only keep 1-4 for undocked)
+    ${setWorkspacePersistence "5..9" false}
+
+    # Ensure workspaces 1-4 are persistent
+    ${setWorkspacePersistence "1..4" true}
+
+    # Create and move workspaces 1-4 to laptop screen
+    ${moveWorkspacesToMonitor "1..4" "eDP-1"}
+
+    # Focus workspace 1 to ensure it's active
     ${hyprctl} dispatch workspace 1
-    ${hyprctl} dispatch moveworkspacetomonitor 1 eDP-1
+
     launch-dock &
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
@@ -45,19 +72,15 @@
     # Add small delay to ensure monitors are stable
     sleep 1
 
-    # Create workspaces first, then move them
-    # Left monitor (DP-8): workspaces 1-4
-    ${hyprctl} dispatch workspace 1 && ${hyprctl} dispatch moveworkspacetomonitor 1 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 2 && ${hyprctl} dispatch moveworkspacetomonitor 2 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 3 && ${hyprctl} dispatch moveworkspacetomonitor 3 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 4 && ${hyprctl} dispatch moveworkspacetomonitor 4 ${home-ext-left} || true
-    # Right monitor (DP-7): workspaces 5-8
-    ${hyprctl} dispatch workspace 5 && ${hyprctl} dispatch moveworkspacetomonitor 5 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 6 && ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 7 && ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 8 && ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right} || true
+    # Left monitor (ext-left): workspaces 1-4
+    ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
+
+    # Right monitor (ext-right): workspaces 5-8
+    ${moveWorkspacesToMonitor "5..8" "${home-ext-right}"}
+
     # Laptop screen: workspace 9
     ${hyprctl} dispatch workspace 9 && ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1 || true
+
     launch-dock &
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
@@ -77,17 +100,12 @@
 
     sleep 1
 
-    # Create workspaces first, then move them
     # Left monitor (ext left): workspaces 1-4
-    ${hyprctl} dispatch workspace 1 && ${hyprctl} dispatch moveworkspacetomonitor 1 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 2 && ${hyprctl} dispatch moveworkspacetomonitor 2 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 3 && ${hyprctl} dispatch moveworkspacetomonitor 3 ${home-ext-left} || true
-    ${hyprctl} dispatch workspace 4 && ${hyprctl} dispatch moveworkspacetomonitor 4 ${home-ext-left} || true
+    ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
+
     # Right monitor (ext right): workspaces 5-8
-    ${hyprctl} dispatch workspace 5 && ${hyprctl} dispatch moveworkspacetomonitor 5 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 6 && ${hyprctl} dispatch moveworkspacetomonitor 6 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 7 && ${hyprctl} dispatch moveworkspacetomonitor 7 ${home-ext-right} || true
-    ${hyprctl} dispatch workspace 8 && ${hyprctl} dispatch moveworkspacetomonitor 8 ${home-ext-right} || true
+    ${moveWorkspacesToMonitor "5..8" "${home-ext-right}"}
+
     launch-dock &
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
@@ -107,19 +125,15 @@
 
     sleep 1
 
-    # Create workspaces first, then move them
     # Left monitor (work left): workspaces 1-4
-    ${hyprctl} dispatch workspace 1 && ${hyprctl} dispatch moveworkspacetomonitor 1 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 2 && ${hyprctl} dispatch moveworkspacetomonitor 2 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 3 && ${hyprctl} dispatch moveworkspacetomonitor 3 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 4 && ${hyprctl} dispatch moveworkspacetomonitor 4 ${work-ext-left} || true
+    ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}
+
     # Right monitor (work right): workspaces 5-8
-    ${hyprctl} dispatch workspace 5 && ${hyprctl} dispatch moveworkspacetomonitor 5 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 6 && ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 7 && ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 8 && ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right} || true
+    ${moveWorkspacesToMonitor "5..8" "${work-ext-right}"}
+
     # Laptop screen: workspace 9 for entertainment
     ${hyprctl} dispatch workspace 9 && ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1 || true
+
     launch-dock &
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
@@ -139,17 +153,12 @@
 
     sleep 1
 
-    # Create workspaces first, then move them
     # Left monitor (work left): workspaces 1-4
-    ${hyprctl} dispatch workspace 1 && ${hyprctl} dispatch moveworkspacetomonitor 1 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 2 && ${hyprctl} dispatch moveworkspacetomonitor 2 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 3 && ${hyprctl} dispatch moveworkspacetomonitor 3 ${work-ext-left} || true
-    ${hyprctl} dispatch workspace 4 && ${hyprctl} dispatch moveworkspacetomonitor 4 ${work-ext-left} || true
+    ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}
+
     # Right monitor (work right): workspaces 5-8
-    ${hyprctl} dispatch workspace 5 && ${hyprctl} dispatch moveworkspacetomonitor 5 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 6 && ${hyprctl} dispatch moveworkspacetomonitor 6 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 7 && ${hyprctl} dispatch moveworkspacetomonitor 7 ${work-ext-right} || true
-    ${hyprctl} dispatch workspace 8 && ${hyprctl} dispatch moveworkspacetomonitor 8 ${work-ext-right} || true
+    ${moveWorkspacesToMonitor "5..8" "${work-ext-right}"}
+
     launch-dock &
   '';
 in {
