@@ -40,10 +40,10 @@
       timeout=$((timeout - 1))
     done
 
-    # Disable persistence for workspaces 5-9 (only keep 1-4 for undocked)
-    ${setWorkspacePersistence "5..9" false}
+    # Reset ALL workspace persistence first, then set only what we need
+    ${setWorkspacePersistence "5..10" false}
 
-    # Ensure workspaces 1-4 are persistent
+    # Set persistence for undocked workspaces (only 1-4)
     ${setWorkspacePersistence "1..4" true}
 
     # Create and move workspaces 1-4 to laptop screen

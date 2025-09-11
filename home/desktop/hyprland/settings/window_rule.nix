@@ -190,28 +190,27 @@
       "float, class:^(thunar)$,title:^(Properties)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
-      # Web browsers - workspace 1
-      "workspace 1 silent, class:^(Brave-browser)$"
-      "workspace 1 silent, class:^(brave-browser)$"
-      "workspace 1 silent, class:^(chromium)$"
+      # Development - workspace 1 (terminal + neovim)
+      "workspace 1 silent, class:^(kitty)$"
 
-      # Development - workspace 2
-      "workspace 2 silent, class:^(code|codium|code-oss|claude-code)$"
-      "workspace 2 silent, class:^(jetbrains-.*)$"
+      # Web browsers - workspace 2
+      "workspace 2 silent, class:^(Brave-browser)$"
+      "workspace 2 silent, class:^(brave-browser)$"
+      "workspace 2 silent, class:^(chromium)$"
 
       # Productivity and notes - workspace 3
       "workspace 3 silent, class:^(obsidian)$"
       "workspace 3 silent, class:^(Obsidian)$"
 
-      # Communication - workspace 4
-      "workspace 4 silent, class:^(slack)$"
-      "workspace 4 silent, class:^(Slack)$"
-      "workspace 4 silent, class:^(ferdium)$"
-      "workspace 4 silent, class:^(zoom)$"
+      # Communication - workspace 5 (with special handling for huddles)
+      "workspace 5, class:^(slack)$" # Remove silent, switch to workspace when slack opens
+      "workspace 5, class:^(Slack)$" # Remove silent, switch to workspace when slack opens
+      "workspace 5 silent, class:^(ferdium)$"
+      "workspace 5, class:^(zoom)$" # Remove silent, switch to workspace when zoom opens
 
-      # Database/API tools - workspace 5
-      "workspace 5 silent, class:^(dbeaver)$"
-      "workspace 5 silent, class:^(postman)$"
+      # Slack huddles stay on current workspace
+      "workspace name:current, class:^(slack)$,title:^(.*(Huddle|huddle).*)$"
+      "workspace name:current, class:^(Slack)$,title:^(.*(Huddle|huddle).*)$"
 
       # Media - workspace 9
       "workspace 9 silent, title:^(YouTube Music)$"
