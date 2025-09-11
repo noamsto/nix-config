@@ -13,7 +13,10 @@
   networking.networkmanager = {
     enable = true; # Easiest to use and most distros use this by default.
     dns = "systemd-resolved";
+    wifi.backend = "iwd";
   };
+
+  networking.wireless.iwd.enable = true;
 
   services = {
     # DNS service

@@ -24,7 +24,9 @@ in {
     };
 
     services.blueman.enable = true;
-    security.pam.services.hyprlock = {};
+    security.pam.services.hyprlock = {
+      enableGnomeKeyring = true;
+    };
 
     # Enable KDE Connect for device integration
     programs.kdeconnect.enable = true;

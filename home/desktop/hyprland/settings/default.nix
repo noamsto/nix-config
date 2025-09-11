@@ -107,7 +107,7 @@ in {
 
       general = {
         gaps_in = 5;
-        gaps_out = 10; # Increased from 5 to add more space around windows
+        gaps_out = 15; # Increased for more margins in fullscreen mode
         border_size = 2; # Reduced for subtlety
         "col.active_border" = "rgba(89b4fa66) rgba(cba6f766) 45deg"; # Blue to mauve gradient with reduced opacity
         "col.inactive_border" = "rgba(31324455)"; # Even more subtle inactive border

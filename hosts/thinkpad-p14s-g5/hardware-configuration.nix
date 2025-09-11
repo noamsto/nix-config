@@ -18,16 +18,12 @@
   boot.extraModulePackages = [];
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
-    "amdgpu.dcdebugmask=0x10"
-    "amdgpu.hw_i2c=0" # Disable hardware I2C, use software I2C for ddcutil compatibility
-    "drm.debug=0x04" # Enable DRM debug for I2C issues
-    "amdgpu.dc_dmub_trace_mask=0x1" # Enable DMUB trace for display issues
   ];
   boot.kernel.sysctl = {
     "kernel.sysrq" = 502;
     "vm.overcommit_memory" = 1;
   };
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages;
 
   boot.initrd.luks.devices = {
     root = {

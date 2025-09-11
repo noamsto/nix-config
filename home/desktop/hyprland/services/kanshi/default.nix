@@ -53,6 +53,13 @@
     ${hyprctl} dispatch workspace 1
 
     launch-dock &
+
+    # Check actual lid state and control fprintd accordingly
+    if grep -q "closed" /proc/acpi/button/lid/LID/state 2>/dev/null || grep -q "closed" /proc/acpi/button/lid/LID0/state 2>/dev/null; then
+      ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
+    else
+      ${pkgs.systemd}/bin/systemctl start fprintd.service || true
+    fi
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
     # Ensure all monitors are fully awake and responsive
@@ -82,6 +89,9 @@
     ${hyprctl} dispatch workspace 9 && ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1 || true
 
     launch-dock &
+
+    # Start fingerprint daemon when lid is open
+    ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
     # Ensure all monitors are fully awake and responsive
@@ -107,6 +117,9 @@
     ${moveWorkspacesToMonitor "5..8" "${home-ext-right}"}
 
     launch-dock &
+
+    # Stop fingerprint daemon when lid is closed
+    ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
     # Ensure all monitors are fully awake and responsive
@@ -135,6 +148,9 @@
     ${hyprctl} dispatch workspace 9 && ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1 || true
 
     launch-dock &
+
+    # Start fingerprint daemon when lid is open
+    ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
     # Ensure all monitors are fully awake and responsive
@@ -160,6 +176,9 @@
     ${moveWorkspacesToMonitor "5..8" "${work-ext-right}"}
 
     launch-dock &
+
+    # Stop fingerprint daemon when lid is closed
+    ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
   '';
 in {
   home.packages = [pkgs.kanshi];
