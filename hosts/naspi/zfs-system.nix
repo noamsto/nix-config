@@ -167,8 +167,7 @@
     samba
 
     # Backup tools
-    sanoid # ZFS snapshot management
-    syncoid # ZFS snapshot replication
+    sanoid # ZFS snapshot management (includes syncoid for replication)
     restic # Backup program
     rclone # Cloud storage sync
   ];

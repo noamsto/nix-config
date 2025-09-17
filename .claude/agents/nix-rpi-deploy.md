@@ -40,7 +40,7 @@ Three deployment modes:
    - Deploy to system running from installer image
    - Use existing partition labels (NIXOS_SD, FIRMWARE)
    - Configuration: naspi-installer-target
-   - Command: `./scripts/naspi-deploy.sh rpi4-installer.local install`
+   - Command: `./scripts/naspi-deploy.sh rpi4-installer install`
 
 2. **Fresh Installation** (complete disk setup):
    - Full disk partitioning with disko

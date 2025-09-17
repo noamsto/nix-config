@@ -36,7 +36,7 @@ home-manager switch --flake .#<config>  # Manual standalone rebuild
 ./scripts/build-rpi4-installer.sh              # Build minimal installer image
 ./scripts/naspi-deploy.sh naspi.local switch   # Update existing system
 ./scripts/naspi-deploy.sh naspi.local install  # Fresh install with disko (repartitions)
-./scripts/naspi-deploy.sh rpi4-installer.local install  # Deploy to installer (no repartitioning)
+./scripts/naspi-deploy.sh rpi4-installer install  # Deploy to installer (no repartitioning)
 
 # Standard RPi4 image (NixOS wiki approach)
 nix build .#rpi4-standard-image                # Build standard RPi4 SD image
@@ -103,7 +103,7 @@ The repository provides **two NixOS configurations for Raspberry Pi** to handle 
 2. **`naspi-installer-target`** - Configuration for installer-booted systems
    - Uses manual `fileSystems` configuration matching installer SD image layout
    - Deployed to systems running from the rpi4-installer without repartitioning
-   - Command: `./scripts/naspi-deploy.sh rpi4-installer.local install`
+   - Command: `./scripts/naspi-deploy.sh rpi4-installer install`
    - Filesystem labels: `/dev/disk/by-label/NIXOS_SD` (root), `/dev/disk/by-label/FIRMWARE` (boot)
 
 This dual approach solves the partitioning conflict when deploying to the same SD card you're booted from.

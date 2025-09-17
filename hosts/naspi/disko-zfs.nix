@@ -3,7 +3,41 @@
   lib,
   pkgs,
   ...
-}: {
+}: let
+  # Reusable partition templates to reduce duplication
+  firmwarePartition = {
+    priority = 1;
+    size = "512M";
+    type = "0700"; # Microsoft basic data
+    content = {
+      type = "filesystem";
+      format = "vfat";
+      mountOptions = [
+        "noatime"
+        "umask=0077"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=1min"
+      ];
+    };
+  };
+
+  bootPartition = {
+    size = "1G";
+    type = "EF00"; # EFI System Partition
+    content = {
+      type = "filesystem";
+      format = "vfat";
+      mountOptions = [
+        "noatime"
+        "umask=0077"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=1min"
+      ];
+    };
+  };
+in {
   # ZFS services
   services.zfs = {
     autoScrub = {
@@ -21,50 +55,38 @@
     trim.enable = true; # Enable TRIM for SSDs
   };
 
-  # Generate hostId for ZFS
-  networking.hostId = "8425e349"; # Generate with: head -c 8 /etc/machine-id
-
   disko.devices = {
     disk = {
       # First SSD (2TB)
       ssd1 = {
         type = "disk";
-        device = "/dev/disk/by-id/ata-YOUR_SSD1_ID"; # Replace with actual disk ID
+        device = "/dev/disk/by-id/ata-PNY_2TB_SATA_SSD_PND09252386160202099";
         content = {
           type = "gpt";
           partitions = {
             # Firmware partition for Raspberry Pi
-            firmware = {
-              label = "FIRMWARE1";
-              priority = 1;
-              size = "512M";
-              type = "0700"; # Microsoft basic data
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot/firmware";
-                mountOptions = [
-                  "noatime"
-                  "umask=0077"
-                ];
+            firmware =
+              firmwarePartition
+              // {
+                label = "FIRMWARE1";
+                content =
+                  firmwarePartition.content
+                  // {
+                    mountpoint = "/boot/firmware";
+                  };
               };
-            };
 
             # Boot partition for Linux kernel
-            boot = {
-              label = "BOOT1";
-              size = "1G";
-              type = "EF00"; # EFI System Partition
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-                mountOptions = [
-                  "noatime"
-                  "umask=0077"
-                ];
+            boot =
+              bootPartition
+              // {
+                label = "BOOT1";
+                content =
+                  bootPartition.content
+                  // {
+                    mountpoint = "/boot";
+                  };
               };
-            };
 
             # ZFS partition (remaining space)
             zfs = {
@@ -81,34 +103,33 @@
       # Second SSD (2TB)
       ssd2 = {
         type = "disk";
-        device = "/dev/disk/by-id/ata-YOUR_SSD2_ID"; # Replace with actual disk ID
+        device = "/dev/disk/by-id/ata-PNY_2TB_SATA_SSD_PND09252386160202096";
         content = {
           type = "gpt";
           partitions = {
             # Backup firmware partition (for redundancy)
-            firmware-backup = {
-              label = "FIRMWARE2";
-              priority = 1;
-              size = "512M";
-              type = "0700";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                # Not mounted by default, used for backup
+            firmware-backup =
+              firmwarePartition
+              // {
+                label = "FIRMWARE2";
+                content =
+                  firmwarePartition.content
+                  // {
+                    mountpoint = "/boot/firmware-backup";
+                  };
               };
-            };
 
             # Backup boot partition
-            boot-backup = {
-              label = "BOOT2";
-              size = "1G";
-              type = "EF00";
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                # Not mounted by default, used for backup
+            boot-backup =
+              bootPartition
+              // {
+                label = "BOOT2";
+                content =
+                  bootPartition.content
+                  // {
+                    mountpoint = "/boot/boot-backup";
+                  };
               };
-            };
 
             # ZFS partition (remaining space)
             zfs = {
@@ -153,6 +174,11 @@
           "zfsutil"
           "noatime"
         ];
+
+        # Create initial snapshot for rollback capability
+        postCreateHook = ''
+          zfs list -t snapshot -H -o name | grep -E '^rpool@blank$' || zfs snapshot rpool@blank
+        '';
 
         # Dataset layout
         datasets = {

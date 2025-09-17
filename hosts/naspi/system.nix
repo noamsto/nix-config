@@ -3,9 +3,6 @@
   config,
   ...
 }: {
-  # Set hostname
-  networking.hostName = "naspi-nix";
-
   # Raspberry Pi 4: 4 cores, 8GB RAM
   nix.settings = {
     max-jobs = 2;

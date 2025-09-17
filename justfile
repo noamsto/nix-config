@@ -76,7 +76,8 @@ rpi-build-installer:
     @echo "📋 Next steps:"
     @echo "1. Flash to SD card: just rpi-flash-installer"
     @echo "2. Boot Pi from SD card"
-    @echo "3. Install config: just rpi-install-argon"
+    @echo "3a. Install argon-rpi4: just rpi-install-argon"
+    @echo "3b. Install naspi (ZFS): just rpi-install-naspi"
 
 # Flash installer image to SD card (interactive)
 rpi-flash-installer DEVICE="":
@@ -141,6 +142,26 @@ rpi-build-standard:
 # =============================================================================
 # Raspberry Pi Deployment
 # =============================================================================
+
+# Install naspi using nixos-anywhere + disko (fresh install with ZFS RAID1)
+rpi-install-naspi HOST="rpi4-installer" BUILDERS="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{BUILDERS}}" != "" ]]; then
+        echo "🏗️  Using remote builders: {{BUILDERS}}"
+        export NIX_BUILD_HOOK=""
+    fi
+    ./scripts/naspi-deploy.sh {{HOST}} install
+
+# Deploy configuration update to existing naspi system
+rpi-deploy-naspi HOST="naspi.local" BUILDERS="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔄 Deploying naspi configuration update to {{HOST}}..."
+    echo "ℹ️  Updates existing system (no repartitioning)"
+
+    ./scripts/naspi-deploy.sh {{HOST}} switch
+    echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}} noams"
 
 # Install argon-rpi4 using nixos-anywhere + disko (fresh install with partitioning)
 rpi-install-argon HOST="rpi4-installer" BUILDERS="":
@@ -360,6 +381,10 @@ check-staged:
 install-argon: check-staged
     just rpi-install-argon
 
+# Quick install to naspi (ZFS NAS configuration)
+install-naspi: check-staged
+    just rpi-install-naspi
+
 # =============================================================================
 # Help & Documentation
 # =============================================================================
@@ -375,11 +400,13 @@ help-rpi:
     @echo "1. just rpi-build-installer     # Build installer SD image"
     @echo "2. just rpi-flash-installer     # Flash to SD card"
     @echo "3. Boot Pi from SD card"
-    @echo "4. just rpi-install-argon       # Fresh install with disko (wipes target disk)"
+    @echo "4a. just rpi-install-argon      # Fresh install with disko (wipes target disk)"
+    @echo "4b. just rpi-install-naspi      # Fresh install with ZFS RAID1 (wipes target disks)"
     @echo "5. Remove SD card and reboot    # System boots from target disk"
     @echo ""
     @echo "🔄 Configuration Updates:"
     @echo "just rpi-deploy-argon argon-rpi4.local                                 # Update existing system"
+    @echo "just rpi-deploy-naspi naspi.local                                      # Update naspi system"
     @echo "just rpi-deploy-argon argon-rpi4.local 'ssh://noams@naspi.local aarch64-linux - 4 2 big-parallel'  # With remote builder"
     @echo ""
     @echo "🏗️  Builder Examples:"
@@ -408,7 +435,8 @@ help:
     @echo ""
     @echo "🍓 Raspberry Pi:"
     @echo "just help-rpi         # Detailed Pi deployment guide"
-    @echo "just deploy-argon     # Quick deploy to argon-rpi4"
+    @echo "just install-argon    # Quick install to argon-rpi4"
+    @echo "just install-naspi    # Quick install to naspi (ZFS NAS)"
     @echo ""
     @echo "🔧 Maintenance:"
     @echo "just fmt              # Format code"

@@ -12,52 +12,48 @@ echo "🚀 Deploying NixOS configuration to $HOSTNAME using nixos-anywhere + dis
 
 case "$MODE" in
 "install")
+  echo "⚠️  FRESH INSTALL MODE with DISKO - This will wipe and repartition the target system!"
+  echo "🎯 Disko will create:"
+  echo "   • ZFS RAID1 mirror across dual SSDs"
+  echo "   • Encrypted ZFS datasets with automatic key file unlock"
+  echo "   • Optimized for NAS workloads"
+  echo ""
+
   if [[ $HOSTNAME == *"installer"* ]]; then
-    echo "🎯 INSTALLER TARGET MODE - Installing to system running from installer"
-    echo "ℹ️  Using existing installer partition layout (no repartitioning)"
-    echo "   • Uses /dev/disk/by-label/FIRMWARE for /boot/firmware"
-    echo "   • Uses /dev/disk/by-label/NIXOS_SD for /"
+    echo "🚀 INSTALLER-BASED DEPLOYMENT DETECTED"
+    echo "ℹ️  This will deploy from installer system to target disks using disko"
+    echo "   • Installer SD/SSD remains untouched"
+    echo "   • Target disks will be wiped and repartitioned"
     echo ""
-
-    echo "📦 Building and installing NixOS on installer system..."
-    echo "ℹ️  Using nixos-rebuild with nom (not nixos-anywhere) since no disk partitioning needed"
-    nixos-rebuild boot \
-      --flake ".#naspi-installer-target" \
-      --target-host "nixos@$HOSTNAME" \
-      --build-host "nixos@$HOSTNAME" \
-      --use-remote-sudo |& nom
-
-    echo "🔄 Configuration built and set as boot default. Reboot required to activate:"
-    echo "   ssh nixos@$HOSTNAME sudo reboot"
-  else
-    echo "⚠️  FRESH INSTALL MODE with DISKO - This will wipe and repartition the target system!"
-    echo "🎯 Disko will create:"
-    echo "   • ZFS RAID1 mirror across dual SSDs"
-    echo "   • Encrypted ZFS datasets with automatic key file unlock"
-    echo "   • Optimized for NAS workloads"
-    echo ""
-    echo "💡 TIP: For installer-booted systems, use hostname with 'installer' in the name"
-    echo ""
-    echo "Press Enter to continue with disko install or Ctrl+C to abort..."
-    read -r
-
-    # Generate ZFS encryption key
-    echo "🔑 Generating ZFS encryption key..."
-    ./scripts/generate-zfs-key.sh
-
-    echo "📦 Building and installing NixOS with ZFS encryption..."
-    nix run --add-root ./result-nixos-anywhere --indirect github:nix-community/nixos-anywhere -- \
-      --flake .#naspi \
-      --extra-files /tmp/zfs-rpool-key:/tmp/zfs-rpool-key \
-      --build-on-remote \
-      "noams@$HOSTNAME"
-
-    # Clean up local key file
-    echo "🧹 Cleaning up local key file..."
-    rm -f /tmp/zfs-rpool-key
-
-    echo "✅ ZFS encryption configured with automatic unlock!"
   fi
+
+  echo "Press Enter to continue with disko install or Ctrl+C to abort..."
+  read -r
+
+  # Generate ZFS encryption key
+  echo "🔑 Generating ZFS encryption key..."
+  ./scripts/generate-zfs-key.sh
+
+  echo "📦 Building and installing NixOS with ZFS encryption..."
+
+  # Determine the correct user based on hostname
+  if [[ $HOSTNAME == *"installer"* ]]; then
+    TARGET_USER="nixos"
+  else
+    TARGET_USER="noams"
+  fi
+
+  nix run github:nix-community/nixos-anywhere -- \
+    --flake .#naspi \
+    --extra-files /tmp/zfs-rpool-key:/tmp/zfs-rpool-key \
+    --build-on-remote \
+    "$TARGET_USER@$HOSTNAME"
+
+  # Clean up local key file
+  echo "🧹 Cleaning up local key file..."
+  rm -f /tmp/zfs-rpool-key
+
+  echo "✅ ZFS encryption configured with automatic unlock!"
   ;;
 "switch")
   echo "🔄 Updating existing NixOS system..."
@@ -97,7 +93,7 @@ case "$MODE" in
   echo "💡 For fresh installs, consider using the rpi4-installer method:"
   echo "   ./scripts/build-rpi4-installer.sh  # Build installer image"
   echo "   # Flash to SD card and boot, then:"
-  echo "   ./scripts/naspi-deploy.sh rpi4-installer.local install"
+  echo "   ./scripts/naspi-deploy.sh rpi4-installer install"
   exit 1
   ;;
 esac
