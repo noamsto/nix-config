@@ -71,7 +71,7 @@ return {
     "MunifTanjim/nui.nvim",
     "ravitemer/mcphub.nvim", -- Load mcphub first
     --- The below dependencies are optional,
-    "echasnovski/mini.icons",
+    "nvim-mini/mini.icons",
     {
       -- support for image pasting
       "HakonHarnes/img-clip.nvim",

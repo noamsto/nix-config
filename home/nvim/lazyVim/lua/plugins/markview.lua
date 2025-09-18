@@ -1,7 +1,7 @@
 return {
   "OXY2DEV/markview.nvim",
   dependencies = {
-    "echasnovski/mini.icons",
+    "nvim-mini/mini.icons",
   },
   enabled = true,
   event = "InsertEnter",
