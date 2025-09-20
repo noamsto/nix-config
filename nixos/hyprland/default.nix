@@ -31,11 +31,10 @@ in {
     # Enable KDE Connect for device integration
     programs.kdeconnect.enable = true;
 
-    # Backlight control with brightnessctl
-    # brightnessctl is included in desktop packages
     # Ensure video group permissions for backlight control
     users.users.${config.username}.extraGroups = ["video" "i2c"];
     hardware.i2c.enable = true;
+    boot.kernelModules = ["i2c_dev"];
 
     # Enable i2c for ddcutil (external monitor control)
     environment.systemPackages = with pkgs; [

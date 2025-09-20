@@ -86,7 +86,7 @@
       },
       "modules": [
         "battery",
-        "idle_inhibitor",
+        "custom/timed-inhibitor",
         "power-profiles-daemon"
       ]
     },
@@ -280,15 +280,13 @@
       "on-click": "hyprctl switchxkblayout xremap next",
       "tooltip": true
     },
-    "idle_inhibitor": {
-      "format": "{icon}",
-      "format-icons": {
-        "activated": "󰒳",
-        "deactivated": "󰒲"
-      },
-      "tooltip": true,
-      "tooltip-format-activated": "Screen will stay awake",
-      "tooltip-format-deactivated": "Screen can go to sleep"
+    "custom/timed-inhibitor": {
+      "format": "{}",
+      "exec": "timed-inhibitor",
+      "on-click": "timed-inhibitor toggle",
+      "return-type": "json",
+      "interval": 1,
+      "escape": true
     },
     "custom/audio_idle_inhibitor": {
       "format": "{icon}",

@@ -14,6 +14,7 @@
       ];
 
       highopacity = [
+        "vicinae"
         "walker"
         "osd"
         "logout_dialog"
@@ -60,11 +61,11 @@
       "size 400 500, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
 
       # 1Password menus and popups
-      "float, class:^(1Password|1password|com.1password.1Password)$,(title:^$|size:(0,0)|size:(1,1))"
-      "immediate, class:^(1Password|1password|com.1password.1Password)$,(title:^$|size:(0,0)|size:(1,1))"
-      "noborder, class:^(1Password|1password|com.1password.1Password)$,(title:^$|size:(0,0)|size:(1,1))"
-      "noshadow, class:^(1Password|1password|com.1password.1Password)$,(title:^$|size:(0,0)|size:(1,1))"
-      "pin, class:^(1Password|1password|com.1password.1Password)$,(title:^$|size:(0,0)|size:(1,1))"
+      "float, class:^(1Password|1password|com.1password.1Password)$,title:^$"
+      "immediate, class:^(1Password|1password|com.1password.1Password)$,title:^$"
+      "noborder, class:^(1Password|1password|com.1password.1Password)$,title:^$"
+      "noshadow, class:^(1Password|1password|com.1password.1Password)$,title:^$"
+      "pin, class:^(1Password|1password|com.1password.1Password)$,title:^$"
 
       # Size dialogs appropriately
       "size 800 600, class:^(pavucontrol)$"
@@ -72,9 +73,17 @@
       "size 500 600, class:^(blueman-manager)$"
 
       # Bluetooth pairing dialogs
-      "float, (class:^(blueman-agent)$|class:^(blueman-applet)$,title:^(Bluetooth)$|title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$)"
-      "center, (class:^(blueman-agent)$|class:^(blueman-applet)$,title:^(Bluetooth)$|title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$)"
-      "dimaround, (class:^(blueman-agent)$|class:^(blueman-applet)$,title:^(Bluetooth)$|title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$)"
+      "float, class:^(blueman-agent|blueman-applet)$"
+      "center, class:^(blueman-agent|blueman-applet)$"
+      "dimaround, class:^(blueman-agent|blueman-applet)$"
+
+      "float, title:^(Bluetooth)$"
+      "center, title:^(Bluetooth)$"
+      "dimaround, title:^(Bluetooth)$"
+
+      "float, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
+      "center, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
+      "dimaround, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
 
       # === PICTURE-IN-PICTURE RULES ===
       # Firefox PiP window
@@ -168,11 +177,15 @@
       "noborder, class:^(zoom)$,title:^$"
       "noshadow, class:^(zoom)$,title:^$"
 
-      # Zoom popup menus
-      "float, class:^(zoom)$,size:(0,0)|size:(1,1)"
-      "minsize 1 1, class:^(zoom)$,(size:(0,0)|size:(1,1))"
-      "maxsize 800 600, class:^(zoom)$,(size:(0,0)|size:(1,1))"
-      "pin, class:^(zoom)$,(size:(0,0)|size:(1,1))"
+      # Zoom popup menus - separate rules for different size conditions
+      "float, class:^(zoom)$,size:(0,0)"
+      "float, class:^(zoom)$,size:(1,1)"
+      "minsize 1 1, class:^(zoom)$,size:(0,0)"
+      "minsize 1 1, class:^(zoom)$,size:(1,1)"
+      "maxsize 800 600, class:^(zoom)$,size:(0,0)"
+      "maxsize 800 600, class:^(zoom)$,size:(1,1)"
+      "pin, class:^(zoom)$,size:(0,0)"
+      "pin, class:^(zoom)$,size:(1,1)"
 
       # Zoom popup windows and dropdowns
       "float, class:^(zoom)$,floating:0"

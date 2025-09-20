@@ -45,8 +45,7 @@ case "$MODE" in
 
   nix run github:nix-community/nixos-anywhere -- \
     --flake .#naspi \
-    --extra-files /tmp/zfs-rpool-key:/tmp/zfs-rpool-key \
-    --build-on-remote \
+    --disk-encryption-keys /tmp/zfs-rpool-key /tmp/zfs-rpool-key \
     "$TARGET_USER@$HOSTNAME"
 
   # Clean up local key file

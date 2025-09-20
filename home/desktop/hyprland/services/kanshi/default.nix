@@ -30,8 +30,7 @@
   '';
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
     # Ensure monitors are fully awake before workspace commands
-    ${hyprctl} dispatch dpms on
-    sleep 1
+    ${hyprctl} dispatch dpms on 2>/dev/null || true
 
     # Wait for Hyprland to be responsive
     timeout=10
@@ -42,9 +41,6 @@
 
     # Reset ALL workspace persistence first, then set only what we need
     ${setWorkspacePersistence "5..10" false}
-
-    # Set persistence for undocked workspaces (only 1-4)
-    ${setWorkspacePersistence "1..4" true}
 
     # Create and move workspaces 1-4 to laptop screen
     ${moveWorkspacesToMonitor "1..4" "eDP-1"}
@@ -63,8 +59,8 @@
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
     # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on
-    sleep 2
+    ${hyprctl} dispatch dpms on 2>/dev/null || true
+    sleep 0.5
 
     # Wait for Hyprland to be responsive and detect monitors
     timeout=15
@@ -75,9 +71,6 @@
       sleep 0.5
       timeout=$((timeout - 1))
     done
-
-    # Add small delay to ensure monitors are stable
-    sleep 1
 
     # Left monitor (ext-left): workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
@@ -95,8 +88,8 @@
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
     # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on
-    sleep 2
+    ${hyprctl} dispatch dpms on 2>/dev/null || true
+    sleep 0.5
 
     # Wait for monitors to be detected
     timeout=15
@@ -107,8 +100,6 @@
       sleep 0.5
       timeout=$((timeout - 1))
     done
-
-    sleep 1
 
     # Left monitor (ext left): workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
@@ -123,8 +114,8 @@
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
     # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on
-    sleep 2
+    ${hyprctl} dispatch dpms on 2>/dev/null || true
+    sleep 0.5
 
     # Wait for work monitors to be detected
     timeout=15
@@ -135,8 +126,6 @@
       sleep 0.5
       timeout=$((timeout - 1))
     done
-
-    sleep 1
 
     # Left monitor (work left): workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}
@@ -154,8 +143,8 @@
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
     # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on
-    sleep 2
+    ${hyprctl} dispatch dpms on 2>/dev/null || true
+    sleep 0.5
 
     # Wait for work monitors to be detected
     timeout=15
@@ -166,8 +155,6 @@
       sleep 0.5
       timeout=$((timeout - 1))
     done
-
-    sleep 1
 
     # Left monitor (work left): workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}

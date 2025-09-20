@@ -30,6 +30,13 @@
         "uas" # USB Attached SCSI for better SSD performance
         "sd_mod"
       ];
+      availableKernelModules = [
+        "xhci_pci"
+        "usbhid"
+        "usb_storage"
+        "nvme"
+      ];
+
     };
 
     # Kernel parameters optimized for ZFS on RPi4
@@ -41,8 +48,7 @@
       "zfs.zfs_txg_timeout=5" # Faster transaction groups for responsiveness
     ];
 
-    # Use latest kernel for better ZFS support
-    kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+    # Kernel provided by raspberry-pi-4.base module (optimized for RPi4 hardware)
   };
 
   # Network configuration for ZFS
@@ -72,6 +78,14 @@
 
   # ZFS-specific services
   services = {
+    # Ensure SSH starts after network is online
+    openssh = {
+      enable = true;
+      settings = {
+        PermitRootLogin = "yes";
+        PasswordAuthentication = true;
+      };
+    };
     # ZFS maintenance
     zfs = {
       autoScrub = {
@@ -105,9 +119,11 @@
     # Samba for Windows compatibility
     samba = {
       enable = true;
-      securityType = "user";
       openFirewall = true;
-      shares = {
+      settings = {
+        global = {
+          security = "user";
+        };
         data = {
           path = "/data";
           browseable = "yes";
@@ -201,6 +217,22 @@
     "d /media/storage 0755 root root -"
     "d /boot/zfs-keys 0700 root root -"
   ];
+
+  # Configure systemd service dependencies
+  systemd.services = {
+    # Ensure SSH starts after network is online
+    sshd = {
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+    };
+    # Ensure network-online target works properly
+    systemd-networkd-wait-online = {
+      enable = true;
+      serviceConfig = {
+        TimeoutStartSec = "60s";
+      };
+    };
+  };
 
   # Performance tuning for ZFS
   boot.kernel.sysctl = {

@@ -260,23 +260,27 @@ in {
               canmount = "on";
               compression = "zstd-3";
               "com.sun:auto-snapshot" = "true";
-              # ZFS native encryption
+              # ZFS native encryption with key file provided by nixos-anywhere
               encryption = "aes-256-gcm";
               keyformat = "raw";
-              keylocation = "file:///boot/zfs-keys/rpool";
+              keylocation = "file:///tmp/zfs-rpool-key"; # nixos-anywhere puts it here
             };
-            # Set up encryption key after dataset creation
             postCreateHook = ''
-              # Copy the key file from deployment location
+              # Create permanent key storage location
               mkdir -p /mnt/boot/zfs-keys
               chmod 700 /mnt/boot/zfs-keys
+
+              # Copy the key to permanent location
               if [ -f /tmp/zfs-rpool-key ]; then
                 cp /tmp/zfs-rpool-key /mnt/boot/zfs-keys/rpool
                 chmod 600 /mnt/boot/zfs-keys/rpool
-                echo "🔑 ZFS encryption key installed to /boot/zfs-keys/rpool"
+
+                # Update keylocation to permanent path for future boots
+                zfs set keylocation=file:///boot/zfs-keys/rpool rpool/data
+                echo "🔑 ZFS encryption key installed and keylocation updated"
               else
                 echo "⚠️  Warning: No ZFS key found at /tmp/zfs-rpool-key"
-                echo "    You'll need to set up encryption manually after boot"
+                echo "    Dataset creation may fail without encryption key"
               fi
             '';
           };

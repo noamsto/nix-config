@@ -11,9 +11,40 @@
     timeout = 172800;
   };
 
-  # Network configuration
-  networking.networkmanager.enable = true;
+  # Network configuration - minimal systemd-networkd for headless server
+  networking.useNetworkd = true;
+  networking.useDHCP = false;
   networking.firewall.allowedTCPPorts = [22];
+
+  # Configure all interfaces to use DHCP
+  systemd.network = {
+    enable = true;
+    networks = {
+      # Ethernet interface
+      "10-ethernet" = {
+        matchConfig.Name = "eth* en*";
+        networkConfig = {
+          DHCP = "yes";
+          IPv6AcceptRA = true;
+        };
+        dhcpV4Config.RouteMetric = 100;
+        dhcpV6Config.RouteMetric = 100;
+      };
+      # WiFi interface (if present)
+      "20-wireless" = {
+        matchConfig.Name = "wlan*";
+        networkConfig = {
+          DHCP = "yes";
+          IPv6AcceptRA = true;
+        };
+        dhcpV4Config.RouteMetric = 200;
+        dhcpV6Config.RouteMetric = 200;
+      };
+    };
+  };
+
+  # Enable iwd for WiFi management (lightweight, no GUI dependencies)
+  networking.wireless.iwd.enable = true;
 
   # Enable SSH for remote access
   services.openssh = {

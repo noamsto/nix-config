@@ -13,7 +13,7 @@ in {
       general = {
         lock_cmd = "pidof hyprlock || ${lib.getExe config.programs.hyprlock.package}";
         before_sleep_cmd = "${pkgs.systemd}/bin/loginctl lock-session";
-        after_sleep_cmd = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on";
+        after_sleep_cmd = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
         ignore_dbus_inhibit = false;
       };
 
@@ -32,8 +32,8 @@ in {
         # Turn off displays (conservative delay)
         {
           timeout = 360; # 1 minute after lock
-          on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch dpms off";
-          on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on";
+          on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch dpms off 2>/dev/null || true";
+          on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
         }
         # Suspend (long delay)
         {

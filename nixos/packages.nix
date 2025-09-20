@@ -49,7 +49,7 @@
     brave
     brightnessctl
     ddcutil
-    ddccontrol # Alternative DDC control tool
+    ddcui # GUI for ddcutil monitor control
     i2c-tools # I2C debugging utilities for ddcutil troubleshooting
     alsa-utils # provides alsamixer for audio control
   ];

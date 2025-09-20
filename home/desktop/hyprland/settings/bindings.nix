@@ -39,7 +39,8 @@ in {
       "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
       "$mainMod, grave, hyprexpo:expo, toggle"
 
-      "$mainMod, V, exec, walker -m clipboard"
+      "$mainMod, V, exec, vicinae vicinae://extensions/vicinae/clipboard/history"
+      "$mainMod SHIFT, V, exec, walker -m clipboard"
 
       "$mainMod ALT, L, exec, hyprlock"
 
@@ -91,7 +92,8 @@ in {
       "$mainMod, S, togglespecialworkspace, magic"
       "$mainMod, M, movetoworkspace, special:magic"
 
-      "$ALT, SPACE, exec, walker"
+      "$ALT, SPACE, exec, vicinae vicinae://toggle"
+      "$ALTSHIFT, SPACE, exec, walker"
 
       # === PRODUCTIVITY SHORTCUTS ===
       # Quick application access
@@ -122,7 +124,7 @@ in {
 
       # Screenshot modes
       ", Print, exec, grim -g \"$(slurp)\" - | satty -f -" # screenshot selection area and edit with satty (mapped from SUPER+SHIFT+S via xremap)
-      "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with walker
+      "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with vicinae
 
       # Screen recording (similar to grimblast)
       "$mainMod SHIFT, R, exec, record-screen-mp4" # record selected area/window as MP4
@@ -163,8 +165,8 @@ in {
 
     bindr = [
       # launcher
-      # "$mainMod, SUPER_L, exec, ${toggle "walker" false}"  # Fix toggle for walker
-      # "$mainMod, SUPER_L, exec, walker"
+      # "$mainMod, SUPER_L, exec, vicinae vicinae://toggle"  # Fix toggle for vicinae
+      # "$mainMod, SUPER_L, exec, vicinae"
     ];
   };
 }

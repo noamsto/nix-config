@@ -61,7 +61,7 @@ window#waybar.hidden {
 #mode,
 #workspaces,
 #battery,
-#idle_inhibitor,
+#custom-timed-inhibitor,
 #custom-dict,
 #custom-power-menu,
 #power-profiles-daemon,
@@ -93,7 +93,7 @@ window#waybar.hidden {
 #backlight,
 #battery,
 #custom-hyprsunset,
-#idle_inhibitor,
+#custom-timed-inhibitor,
 #power-profiles-daemon,
 #custom-swaync,
 #custom-keyboard-layout {
@@ -154,17 +154,45 @@ window#waybar.hidden {
   color: @yellow;
 }
 
-#idle_inhibitor {
+#custom-timed-inhibitor {
   color: @mauve;
   font-size: 16px;
+  transition: all 0.3s ease;
 }
 
-#idle_inhibitor.activated {
+#custom-timed-inhibitor.inactive {
+  color: @overlay0;
+}
+
+#custom-timed-inhibitor.active-30m {
+  color: @yellow;
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+#custom-timed-inhibitor.active-2h {
   color: @peach;
+  animation: pulse-glow 2s ease-in-out infinite alternate;
 }
 
-#idle_inhibitor.deactivated {
-  color: @overlay1;
+#custom-timed-inhibitor.active-8h {
+  color: @mauve;
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+#custom-timed-inhibitor.active-unlimited {
+  color: @red;
+  animation: pulse-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from {
+    text-shadow: 0 0 5px currentColor;
+  }
+  to {
+    text-shadow:
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
 }
 
 #network {

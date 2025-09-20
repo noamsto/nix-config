@@ -9,10 +9,13 @@ in {
         # Fallback for any monitor not configured by kanshi
         ",preferred,auto,auto"
       ];
-      # Workspace assignments are handled dynamically by kanshi profiles
-      # This allows for proper monitor-specific workspace management based on docking state
-      # kanshi profiles use moveWorkspacesToMonitor to assign workspaces when monitors are detected
-      workspace = [];
+      workspace = [
+        # Persistent workspaces - these will always exist even if empty
+        "1, persistent:true"
+        "2, persistent:true"
+        "3, persistent:true"
+        "4, persistent:true"
+      ];
 
       env = [
         "XCURSOR_SIZE,${toString pointer.size}"
@@ -38,8 +41,6 @@ in {
         "kitty --single-instance --instance-group=hypr"
 
         "launch-dock"
-
-        "walker --gapplication-service"
 
         # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];
@@ -144,17 +145,31 @@ in {
         # explicit_sync is now default in Hyprland 0.50+, no need to configure
       };
 
-      # touchpad gestures
+      # Gesture settings (Hyprland 0.51+)
       gestures = {
-        workspace_swipe = true;
-        workspace_swipe_forever = true;
-        workspace_swipe_fingers = 4;
+        # Distance settings for gesture recognition
         workspace_swipe_distance = 150; # Reduced from 300 for more responsive swiping
         workspace_swipe_invert = true;
         workspace_swipe_min_speed_to_force = 20; # Reduced from 30 for easier triggering
         workspace_swipe_cancel_ratio = 0.5;
         workspace_swipe_create_new = true; # Create new workspaces when swiping past the last one
+        workspace_swipe_forever = true;
+
+        # Touch-specific settings
+        workspace_swipe_touch = false; # Disable touchscreen workspace swiping
+        workspace_swipe_touch_invert = false;
+        workspace_swipe_direction_lock = true;
+        workspace_swipe_direction_lock_threshold = 10;
+        workspace_swipe_use_r = false;
       };
+
+      # New gesture bindings (Hyprland 0.51+)
+      gesture = [
+        "3, horizontal, workspace"
+        # Optional: Additional gestures for different actions
+        # "swipe:4:up:dispatcher:exec:launch-dock"
+        # "swipe:4:down:dispatcher:exec:killall launch-dock"
+      ];
 
       xwayland.force_zero_scaling = true;
       debug.disable_logs = false;
