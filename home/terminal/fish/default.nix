@@ -158,22 +158,12 @@
       keymap = {
         manager.prepend_keymap = [
           {
-            on = ["<Space>" "d"];
-            run = ''shell --confirm 'dragon-drop "$@"' $$'';
-            desc = "Drag and drop selected files";
-          }
-          {
-            on = ["<Space>" "D"];
+            on = ["c" "D"];
             run = ''shell --confirm 'dragon-drop --and-exit "$@"' $$'';
             desc = "Drag and drop (exit after)";
           }
           {
-            on = ["<Space>" "c"];
-            run = ''shell --confirm 'dragon-drop --copy "$@"' $$'';
-            desc = "Drag and drop (copy mode)";
-          }
-          {
-            on = ["<Space>" "t"];
+            on = ["c" "t"];
             run = ''shell --confirm 'dragon-drop --target' $$'';
             desc = "Dragon drop target (receive files)";
           }

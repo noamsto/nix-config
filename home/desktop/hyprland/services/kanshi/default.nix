@@ -29,53 +29,28 @@
     done
   '';
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
-    # Ensure monitors are fully awake before workspace commands
-    ${hyprctl} dispatch dpms on 2>/dev/null || true
-
-    # Wait for Hyprland to be responsive
-    timeout=10
-    while [ $timeout -gt 0 ] && ! ${hyprctl} monitors >/dev/null 2>&1; do
-      sleep 0.5
-      timeout=$((timeout - 1))
-    done
-
-    # Reset ALL workspace persistence first, then set only what we need
+    # Reset workspace persistence
     ${setWorkspacePersistence "5..10" false}
 
-    # Create and move workspaces 1-4 to laptop screen
+    # Move workspaces 1-4 to laptop screen
     ${moveWorkspacesToMonitor "1..4" "eDP-1"}
 
-    # Focus workspace 1 to ensure it's active
+    # Focus workspace 1
     ${hyprctl} dispatch workspace 1
 
     launch-dock &
 
-    # Check actual lid state and control fprintd accordingly
-    if grep -q "closed" /proc/acpi/button/lid/LID/state 2>/dev/null || grep -q "closed" /proc/acpi/button/lid/LID0/state 2>/dev/null; then
-      ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
-    else
-      ${pkgs.systemd}/bin/systemctl start fprintd.service || true
-    fi
+    # Start fingerprint daemon for undocked usage
+    ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
-    # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on 2>/dev/null || true
-    sleep 0.5
+    # Make workspaces 5-8 persistent for dual monitor setup
+    ${setWorkspacePersistence "5..8" true}
 
-    # Wait for Hyprland to be responsive and detect monitors
-    timeout=15
-    while [ $timeout -gt 0 ]; do
-      if ${hyprctl} monitors | grep -q "${home-ext-left}" && ${hyprctl} monitors | grep -q "${home-ext-right}"; then
-        break
-      fi
-      sleep 0.5
-      timeout=$((timeout - 1))
-    done
-
-    # Left monitor (ext-left): workspaces 1-4
+    # Left monitor: workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
 
-    # Right monitor (ext-right): workspaces 5-8
+    # Right monitor: workspaces 5-8
     ${moveWorkspacesToMonitor "5..8" "${home-ext-right}"}
 
     # Laptop screen: workspace 9
@@ -87,24 +62,13 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
-    # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on 2>/dev/null || true
-    sleep 0.5
+    # Make workspaces 5-8 persistent for dual monitor setup
+    ${setWorkspacePersistence "5..8" true}
 
-    # Wait for monitors to be detected
-    timeout=15
-    while [ $timeout -gt 0 ]; do
-      if ${hyprctl} monitors | grep -q "${home-ext-left}" && ${hyprctl} monitors | grep -q "${home-ext-right}"; then
-        break
-      fi
-      sleep 0.5
-      timeout=$((timeout - 1))
-    done
-
-    # Left monitor (ext left): workspaces 1-4
+    # Left monitor: workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${home-ext-left}"}
 
-    # Right monitor (ext right): workspaces 5-8
+    # Right monitor: workspaces 5-8
     ${moveWorkspacesToMonitor "5..8" "${home-ext-right}"}
 
     launch-dock &
@@ -113,27 +77,16 @@
     ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
-    # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on 2>/dev/null || true
-    sleep 0.5
+    # Make workspaces 5-8 persistent for dual monitor setup
+    ${setWorkspacePersistence "5..8" true}
 
-    # Wait for work monitors to be detected
-    timeout=15
-    while [ $timeout -gt 0 ]; do
-      if ${hyprctl} monitors | grep -q "${work-ext-left}" && ${hyprctl} monitors | grep -q "${work-ext-right}"; then
-        break
-      fi
-      sleep 0.5
-      timeout=$((timeout - 1))
-    done
-
-    # Left monitor (work left): workspaces 1-4
+    # Left monitor: workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}
 
-    # Right monitor (work right): workspaces 5-8
+    # Right monitor: workspaces 5-8
     ${moveWorkspacesToMonitor "5..8" "${work-ext-right}"}
 
-    # Laptop screen: workspace 9 for entertainment
+    # Laptop screen: workspace 9
     ${hyprctl} dispatch workspace 9 && ${hyprctl} dispatch moveworkspacetomonitor 9 eDP-1 || true
 
     launch-dock &
@@ -142,24 +95,13 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
-    # Ensure all monitors are fully awake and responsive
-    ${hyprctl} dispatch dpms on 2>/dev/null || true
-    sleep 0.5
+    # Make workspaces 5-8 persistent for dual monitor setup
+    ${setWorkspacePersistence "5..8" true}
 
-    # Wait for work monitors to be detected
-    timeout=15
-    while [ $timeout -gt 0 ]; do
-      if ${hyprctl} monitors | grep -q "${work-ext-left}" && ${hyprctl} monitors | grep -q "${work-ext-right}"; then
-        break
-      fi
-      sleep 0.5
-      timeout=$((timeout - 1))
-    done
-
-    # Left monitor (work left): workspaces 1-4
+    # Left monitor: workspaces 1-4
     ${moveWorkspacesToMonitor "1..4" "${work-ext-left}"}
 
-    # Right monitor (work right): workspaces 5-8
+    # Right monitor: workspaces 5-8
     ${moveWorkspacesToMonitor "5..8" "${work-ext-right}"}
 
     launch-dock &

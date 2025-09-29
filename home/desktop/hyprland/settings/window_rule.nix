@@ -34,7 +34,6 @@
     # window rules
     windowrulev2 = [
       "suppressevent maximize, class:.*"
-      "center, floating:1"
 
       # telegram media viewer
       "float, title:^(Media viewer)$"
@@ -201,8 +200,7 @@
       "dimaround, class:^(gcr-prompter)$"
 
       # === GENERAL MENU AND POPUP FIXES ===
-      "pin, floating:1,title:^$"
-      "immediate, floating:1,title:^$"
+      # Removed overly broad rules that were pinning all menus with empty titles
 
       # Fix oversized menu windows
       "maxsize 1200 900, floating:1,title:^$"

@@ -7,7 +7,7 @@
 }:
 with lib; let
   cfg = config.services.kanshi-lid-profile;
-  change-kanshi-profile-script = import ./change_kanshi_profile.nix {inherit pkgs;};
+  lid-event-handler-script = import ./lid_event_handler.nix {inherit pkgs;};
 in {
   options.services.kanshi-lid-profile = {
     enable = mkEnableOption "Kanshi lid profile service";
@@ -16,7 +16,7 @@ in {
   config = mkIf cfg.enable {
     systemd.user.services.kanshi-lid-profile = {
       Unit = {
-        Description = "Change Kanshi profile based on laptop lid status change";
+        Description = "Event-based Kanshi lid profile handler";
         After = ["kanshi.service"];
         Requires = ["kanshi.service"];
       };
@@ -25,7 +25,7 @@ in {
       };
       Service = {
         Type = "simple";
-        ExecStart = "${change-kanshi-profile-script}/bin/change-kanshi-profile";
+        ExecStart = "${lid-event-handler-script}/bin/lid-event-handler";
         Restart = "always";
         RestartSec = 5;
         StandardOutput = "journal";

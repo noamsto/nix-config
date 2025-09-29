@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{pkgs, ...}: let
   sounds = pkgs.writeShellScriptBin "sounds" ''
     #!/usr/bin/env bash
 
