@@ -12,7 +12,7 @@ pkgs.stdenv.mkDerivation rec {
     bash
     ripgrep
     kanshi
-    inotify-tools
+    glib # Provides gdbus for D-Bus monitoring
     hyprland
   ];
 

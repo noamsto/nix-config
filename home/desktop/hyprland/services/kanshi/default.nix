@@ -44,6 +44,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
+    # Enable laptop screen for lid-open setup
+    ${hyprctl} keyword monitor "eDP-1,2880x1800@120,2560x1440,2.0"
+
     # Make workspaces 5-8 persistent for dual monitor setup
     ${setWorkspacePersistence "5..8" true}
 
@@ -62,6 +65,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
+    # Disable laptop screen for lid-close setup
+    ${hyprctl} keyword monitor "eDP-1,disable"
+
     # Make workspaces 5-8 persistent for dual monitor setup
     ${setWorkspacePersistence "5..8" true}
 
@@ -77,6 +83,9 @@
     ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
+    # Enable laptop screen for lid-open setup
+    ${hyprctl} keyword monitor "eDP-1,2880x1800@120,1280x1440,2.0"
+
     # Make workspaces 5-8 persistent for dual monitor setup
     ${setWorkspacePersistence "5..8" true}
 
@@ -95,6 +104,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
+    # Disable laptop screen for lid-close setup
+    ${hyprctl} keyword monitor "eDP-1,disable"
+
     # Make workspaces 5-8 persistent for dual monitor setup
     ${setWorkspacePersistence "5..8" true}
 
@@ -111,9 +123,9 @@
   '';
 in {
   home.packages = [pkgs.kanshi];
-  imports = [./change_profile_service.nix];
+  imports = [./change_profile_service.nix]; # Re-enabled - D-Bus lid detection
   services = {
-    kanshi-lid-profile.enable = true;
+    kanshi-lid-profile.enable = true; # Re-enabled - D-Bus lid detection
     kanshi = {
       enable = true;
       settings = [

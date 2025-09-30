@@ -92,15 +92,10 @@
 
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
-    walker = {
-      url = "github:abenz1267/walker?ref=v1.0.8";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
-    vicinae = {
-      url = "github:vicinaehq/vicinae?ref=v0.13.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    walker.url = "github:abenz1267/walker";
+
+    vicinae.url = "github:vicinaehq/vicinae";
 
     catppuccin = {
       url = "github:catppuccin/nix";

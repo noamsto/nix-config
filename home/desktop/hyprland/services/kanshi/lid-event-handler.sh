@@ -32,50 +32,66 @@ detect_monitors() {
   fi
 }
 
-handle_lid_change() {
-  local lid_status
+handle_lid_event() {
+  local event="$1"
   local monitor_setup
 
-  lid_status=$(get_lid_status)
   monitor_setup=$(detect_monitors)
+  log_message "Lid $event - Monitor setup: $monitor_setup"
 
-  log_message "Lid event detected - Status: $lid_status, Monitor setup: $monitor_setup"
-
-  case "$lid_status" in
+  case "$event" in
   "open")
+    # Always enable eDP-1 when lid opens
+    hyprctl keyword monitor "eDP-1,2880x1800@120,auto,2.0" || true
+
     case "$monitor_setup" in
     "home") kanshictl switch home-docked-lid-open ;;
     "work") kanshictl switch work-docked-lid-open ;;
     "undocked") kanshictl switch undocked ;;
     esac
     ;;
-  "closed")
+  "close")
     case "$monitor_setup" in
-    "home") kanshictl switch home-docked-lid-close ;;
-    "work") kanshictl switch work-docked-lid-close ;;
-    "undocked") kanshictl switch undocked ;;
+    "home" | "work")
+      # Only disable eDP-1 if external monitors are present
+      if hyprctl monitors | grep -q 'DP-\|HDMI-'; then
+        hyprctl keyword monitor "eDP-1,disable" || true
+        if [ "$monitor_setup" = "home" ]; then
+          kanshictl switch home-docked-lid-close
+        else
+          kanshictl switch work-docked-lid-close
+        fi
+      else
+        log_message "External monitors not detected, keeping eDP-1 enabled"
+        kanshictl switch undocked
+      fi
+      ;;
+    "undocked")
+      # Never disable eDP-1 when undocked
+      log_message "Undocked - keeping eDP-1 enabled"
+      kanshictl switch undocked
+      ;;
     esac
     ;;
   esac
 }
 
-# Initial state
+# Initial state - handle current lid status
 log_message "Starting lid event monitoring"
-handle_lid_change
+initial_lid_status=$(get_lid_status)
+handle_lid_event "$initial_lid_status"
 
-# Monitor lid state file for changes using inotifywait
-# Try both common lid paths
-for lid_path in /proc/acpi/button/lid/LID/state /proc/acpi/button/lid/LID0/state; do
-  if [[ -f $lid_path ]]; then
-    log_message "Monitoring $lid_path for changes"
-    inotifywait -m -e modify "$lid_path" --format '%w%f' 2>/dev/null |
-      while read -r _; do
-        handle_lid_change
-      done
-    break
-  fi
-done
+# Monitor systemd-logind for lid switch events via D-Bus
+log_message "Starting D-Bus monitoring for lid events"
+gdbus monitor --system --dest org.freedesktop.login1 --object-path /org/freedesktop/login1 2>/dev/null |
+  while read -r line; do
+    if echo "$line" | grep -q "LidClosed.*true"; then
+      handle_lid_event "close"
+    elif echo "$line" | grep -q "LidClosed.*false"; then
+      handle_lid_event "open"
+    fi
+  done
 
-# Fallback: if no lid file found, exit
-log_message "No lid state file found, exiting"
+# Fallback: if D-Bus monitoring fails, exit
+log_message "D-Bus monitoring failed, exiting"
 exit 1
