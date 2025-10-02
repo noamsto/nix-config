@@ -34,7 +34,7 @@
     eza # Better ls - fundamental file listing for all users
 
     # python
-    (python312.withPackages (ps:
+    (python313.withPackages (ps:
       with ps;
         [
           ipython

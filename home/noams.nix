@@ -13,6 +13,7 @@
       ./ssh
       ./nvim
       ./ipython
+      ./claude-code
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop

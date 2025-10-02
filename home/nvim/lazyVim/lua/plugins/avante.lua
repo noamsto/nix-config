@@ -32,6 +32,20 @@ return {
     selector = {
       provider = "snacks",
       exclude_auto_select = { "NvimTree", "neo-tree" },
+      provider_opts = {
+        format = function(item, picker)
+          -- Override format to avoid nil opts error
+          -- This ensures compatibility with current Snacks API
+          local count = picker:count()
+          local ret = {}
+          local idx = tostring(item.idx)
+          idx = (" "):rep(#tostring(count) - #idx) .. idx
+          table.insert(ret, { idx .. ".", "SnacksPickerIdx" })
+          table.insert(ret, { " " })
+          table.insert(ret, { item.text or item.formatted or "", "Normal" })
+          return ret
+        end,
+      },
     },
     windows = {
       width = 35, -- Wider sidebar (default is 30)

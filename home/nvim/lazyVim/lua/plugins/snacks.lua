@@ -7,6 +7,11 @@ return {
     },
     picker = {
       include = { ".env*", "gen" },
+      formatters = {
+        file = {
+          filename_first = true,
+        },
+      },
     },
   },
 }

@@ -36,7 +36,6 @@
     ssm-session-manager-plugin
 
     chromium
-    claude-code
     nur.repos.charmbracelet.crush
     stable.postman # Uses stable for API testing reliability
     ngrok
