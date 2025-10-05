@@ -92,22 +92,16 @@
 
       # Brave Browser PiP
       "float, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
-      "pin, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
       "noinitialfocus, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
       "size 400 225, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
       "move 100%-420 100%-245, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
 
       # Additional PiP patterns
       "float, class:^(Brave-browser|brave-browser)$,title:^(.*Picture.in.Picture.*)$"
-      "pin, class:^(Brave-browser|brave-browser)$,title:^(.*Picture.in.Picture.*)$"
       "noinitialfocus, class:^(Brave-browser|brave-browser)$,title:^(.*Picture.in.Picture.*)$"
 
       # Google Meet specific
-      "float, class:^(Brave-browser|brave-browser)$,title:^(.*meet\\.google\\.com.*)$"
-      "pin, class:^(Brave-browser|brave-browser)$,title:^(.*meet\\.google\\.com.*)$"
-
-      # Catch-all for small floating Brave windows
-      "pin, class:^(Brave-browser|brave-browser)$,floating:1,size:(1,400)"
+      "float, class:^(Brave-browser|brave-browser)$,title:^(.*meet\.google\.com.*)$"
 
       "float, class:^(chromium)$,title:^(Picture-in-Picture)$"
       "pin, class:^(chromium)$,title:^(Picture-in-Picture)$"
@@ -139,6 +133,12 @@
       "float, class:^(thunar)$,title:^(Progress Dialog)$"
       "float, class:^(thunar)$,title:^(Copying)$"
       "float, class:^(thunar)$,title:^(File Operation Progress)$"
+
+      # Dragon drop - moves to active workspace, allows focus below
+      "float, class:^(dragon|dragon-drop)$"
+      "pin, class:^(dragon|dragon-drop)$"
+      "noinitialfocus, class:^(dragon|dragon-drop)$"
+      "size 400 300, class:^(dragon|dragon-drop)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
       # Development - workspace 1
@@ -216,7 +216,6 @@
       # File picker dialogs
       "dimaround, class:^(xdg-desktop-portal-gtk)$"
       "float, class:^(xdg-desktop-portal-gtk)$"
-      "pin, class:^(xdg-desktop-portal-gtk)$"
       "immediate, class:^(xdg-desktop-portal-gtk)$"
 
       # Other desktop portal dialogs
@@ -299,6 +298,9 @@
       "rounding 0, fullscreen:1"
       "opacity 0.95, fullscreen:1"
       "plugin:hyprbars:nobar, fullscreen:1"
+
+      # Visual indicator for pinned windows - yellow border (catppuccin mocha)
+      "bordercolor rgb(f9e2af) rgb(f1fa8c), pinned:1"
     ];
   };
 }

@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   imports = [
@@ -39,7 +40,14 @@
     xkb.options = "compose:menu, grp:win_space_toggle";
   };
 
-  xdg.portal.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = [pkgs.xdg-desktop-portal-hyprland];
+    config = {
+      common.default = "hyprland";
+      hyprland.default = ["hyprland" "gtk"];
+    };
+  };
 
   # tell Electron/Chromium to run on Wayland
   environment.variables.NIXOS_OZONE_WL = "1";

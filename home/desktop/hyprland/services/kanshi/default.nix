@@ -29,6 +29,9 @@
     done
   '';
   undocked-sh = pkgs.writeShellScript "undocked-sh" ''
+    # Load laptop XWayland HiDPI settings (2.0 scale = 192 DPI)
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge ~/.Xresources.laptop
+
     # Reset workspace persistence
     ${setWorkspacePersistence "5..10" false}
 
@@ -44,6 +47,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-open-sh = pkgs.writeShellScript "home-docked-lid-open-sh" ''
+    # Load docked XWayland HiDPI settings (1.0 scale = 96 DPI for external monitors)
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge ~/.Xresources.docked
+
     # Enable laptop screen for lid-open setup
     ${hyprctl} keyword monitor "eDP-1,2880x1800@120,2560x1440,2.0"
 
@@ -65,6 +71,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   home-docked-lid-close-sh = pkgs.writeShellScript "home-docked-lid-close-sh" ''
+    # Load docked XWayland HiDPI settings (1.0 scale = 96 DPI for external monitors)
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge ~/.Xresources.docked
+
     # Disable laptop screen for lid-close setup
     ${hyprctl} keyword monitor "eDP-1,disable"
 
@@ -83,6 +92,9 @@
     ${pkgs.systemd}/bin/systemctl stop fprintd.service || true
   '';
   work-docked-lid-open-sh = pkgs.writeShellScript "work-docked-lid-open-sh" ''
+    # Load docked XWayland HiDPI settings (1.0 scale = 96 DPI for external monitors)
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge ~/.Xresources.docked
+
     # Enable laptop screen for lid-open setup
     ${hyprctl} keyword monitor "eDP-1,2880x1800@120,1280x1440,2.0"
 
@@ -104,6 +116,9 @@
     ${pkgs.systemd}/bin/systemctl start fprintd.service || true
   '';
   work-docked-lid-close-sh = pkgs.writeShellScript "work-docked-lid-close-sh" ''
+    # Load docked XWayland HiDPI settings (1.0 scale = 96 DPI for external monitors)
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge ~/.Xresources.docked
+
     # Disable laptop screen for lid-close setup
     ${hyprctl} keyword monitor "eDP-1,disable"
 

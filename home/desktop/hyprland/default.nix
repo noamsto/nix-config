@@ -21,6 +21,7 @@
     ./scripts/volume-control.nix
     ./scripts/sounds.nix
     ./smart-dnd.nix
+    ./xresources.nix
   ];
 
   wayland.windowManager.hyprland = {
@@ -41,6 +42,9 @@
 
     # Dock
     nwg-dock-hyprland # Dock for Hyprland
+
+    # XWayland HiDPI support
+    xorg.xrdb # X resources database for XWayland scaling
 
     # Screenshot and recording tools
     grim # High-quality Wayland screenshot tool

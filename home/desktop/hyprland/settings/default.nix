@@ -33,6 +33,9 @@ in {
         # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
 
+        # Load XWayland HiDPI settings
+        "xrdb -merge ~/.Xresources"
+
         # Tmux wayland integration
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
@@ -184,10 +187,12 @@ in {
 
           # order is right-to-left
           hyprbars-button = [
-            # close
-            "rgb(ff5555), 16, 󰖭, hyprctl dispatch killactive"
-            # maximize
-            "rgb(50fa7b), 16, 󰖯, hyprctl dispatch fullscreen 1"
+            # close - red (catppuccin mocha)
+            "rgb(f38ba8), 16, 󰖭, hyprctl dispatch killactive"
+            # maximize - green (catppuccin mocha)
+            "rgb(a6e3a1), 16, 󰖯, hyprctl dispatch fullscreen 1"
+            # pin/unpin toggle - yellow (catppuccin mocha)
+            "rgb(f9e2af), 16, 󰐃, hyprctl dispatch pin active"
           ];
         };
 

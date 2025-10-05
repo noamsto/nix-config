@@ -43,11 +43,11 @@
 
       # Vi-like keybindings where they make sense
       keybinds = {
-        close = "Escape";
-        next = "ctrl j"; # Vi-like: Ctrl+j for down/next (works from input field)
-        previous = "ctrl k"; # Vi-like: Ctrl+k for up/previous (works from input field)
-        toggle_exact = "ctrl e";
-        resume_last_query = "ctrl r";
+        close = ["Escape"];
+        next = ["ctrl j" "Down"]; # Vi-like: Ctrl+j for down/next (works from input field)
+        previous = ["ctrl k" "Up"]; # Vi-like: Ctrl+k for up/previous (works from input field)
+        toggle_exact = ["ctrl e"];
+        resume_last_query = ["ctrl r"];
         quick_activate = ["alt 1" "alt 2" "alt 3" "alt 4"];
       };
 
@@ -99,84 +99,84 @@
         # Provider-specific configurations
         desktopapplications = {
           default = "start";
-          start = "Return";
-          start_keep_open = "shift Return";
-          remove_history = "ctrl BackSpace";
-          toggle_pin = "ctrl p";
+          start = ["Return"];
+          start_keep_open = ["shift Return"];
+          remove_history = ["ctrl BackSpace"];
+          toggle_pin = ["ctrl p"];
         };
 
         calc = {
           default = "copy";
-          copy = "Return";
-          save = "ctrl s";
-          delete = "ctrl d"; # Vi-like: d for delete
+          copy = ["Return"];
+          save = ["ctrl s"];
+          delete = ["ctrl d"]; # Vi-like: d for delete
         };
 
         websearch = {
           default = "search";
-          search = "Return";
-          remove_history = "ctrl BackSpace";
+          search = ["Return"];
+          remove_history = ["ctrl BackSpace"];
         };
 
         providerlist = {
           default = "activate";
-          activate = "Return";
+          activate = ["Return"];
         };
 
         clipboard = {
           time_format = "%d.%m. - %H:%M";
           default = "copy";
-          copy = "Return";
-          delete = "ctrl d"; # Vi-like: d for delete
-          edit = "ctrl o"; # Vi-like: o for open/edit
-          toggle_images_only = "ctrl i";
+          copy = ["Return"];
+          delete = ["ctrl d"]; # Vi-like: d for delete
+          edit = ["ctrl o"]; # Vi-like: o for open/edit
+          toggle_images_only = ["ctrl i"];
         };
 
         files = {
           default = "open";
-          open = "Return";
-          open_dir = "ctrl Return";
-          copy_path = "ctrl shift c";
-          copy_file = "ctrl c";
+          open = ["Return"];
+          open_dir = ["ctrl Return"];
+          copy_path = ["ctrl shift c"];
+          copy_file = ["ctrl c"];
         };
 
         todo = {
           default = "save";
-          save = "Return";
-          delete = "ctrl d"; # Vi-like: d for delete
-          mark_active = "ctrl a";
-          mark_done = "ctrl f"; # f for finished/done
-          clear = "ctrl x"; # x for clear (vi-like delete char)
+          save = ["Return"];
+          delete = ["ctrl d"]; # Vi-like: d for delete
+          mark_active = ["ctrl a"];
+          mark_done = ["ctrl f"]; # f for finished/done
+          clear = ["ctrl x"]; # x for clear (vi-like delete char)
         };
 
         runner = {
           default = "start";
-          start = "Return";
-          start_terminal = "shift Return";
-          remove_history = "ctrl BackSpace";
+          start = ["Return"];
+          start_terminal = ["shift Return"];
+          remove_history = ["ctrl BackSpace"];
         };
 
         dmenu = {
           default = "select";
-          select = "Return";
+          select = ["Return"];
         };
 
         symbols = {
           default = "copy";
-          copy = "Return";
-          remove_history = "ctrl BackSpace";
+          copy = ["Return"];
+          remove_history = ["ctrl BackSpace"];
         };
 
         unicode = {
           default = "copy";
-          copy = "Return";
-          remove_history = "ctrl BackSpace";
+          copy = ["Return"];
+          remove_history = ["ctrl BackSpace"];
         };
 
         menus = {
           default = "activate";
-          activate = "Return";
-          remove_history = "ctrl BackSpace";
+          activate = ["Return"];
+          remove_history = ["ctrl BackSpace"];
         };
       };
     };
