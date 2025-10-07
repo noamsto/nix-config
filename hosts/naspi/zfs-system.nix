@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }: {
   # Import base system configuration
@@ -13,7 +14,10 @@
     # ZFS support
     supportedFilesystems = ["zfs"];
     zfs = {
-      forceImportRoot = false;
+      # CRITICAL: Must be true for ZFS root filesystem!
+      # This ensures the ZFS pool containing root is imported during initrd (stage 1)
+      # Without this, boot will fail with emergency mode
+      forceImportRoot = true;
       forceImportAll = false;
       # Use key files for automatic unlock - no password prompts
       requestEncryptionCredentials = false;
@@ -36,7 +40,6 @@
         "usb_storage"
         "nvme"
       ];
-
     };
 
     # Kernel parameters optimized for ZFS on RPi4
@@ -220,18 +223,123 @@
 
   # Configure systemd service dependencies
   systemd.services = {
-    # Ensure SSH starts after network is online
-    sshd = {
-      after = ["network-online.target"];
-      wants = ["network-online.target"];
-    };
-    # Ensure network-online target works properly
-    systemd-networkd-wait-online = {
-      enable = true;
+    # Load ZFS encryption key for /data dataset
+    # This service triggers /boot automount and loads the encryption key
+    # ZFS/systemd will handle mounting after key is available
+    zfs-load-data-key = {
+      description = "Load ZFS encryption key for /data dataset";
+
+      # Ordering: after pool import, before ZFS attempts to mount
+      after = ["zfs-import-rpool.service"];
+      before = ["zfs-mount.service" "data.mount"];
+
+      # Start with ZFS mount service
+      wantedBy = ["zfs-mount.service"];
+
       serviceConfig = {
-        TimeoutStartSec = "60s";
+        Type = "oneshot";
+        RemainAfterExit = true;
       };
+
+      script = ''
+        set -euo pipefail
+
+        echo "Loading ZFS encryption key for rpool/data..."
+
+        # Check if key is already loaded
+        KEYSTATUS=$(${config.boot.zfs.package}/bin/zfs get -H -o value keystatus rpool/data)
+        if [ "$KEYSTATUS" = "available" ]; then
+          echo "✓ Key already loaded for rpool/data"
+          exit 0
+        fi
+
+        echo "Key status: $KEYSTATUS - loading key..."
+
+        # Load encryption key from file
+        # Note: Accessing /boot/zfs-keys/rpool will trigger /boot automount
+        if [ -f /boot/zfs-keys/rpool ]; then
+          ${config.boot.zfs.package}/bin/zfs load-key rpool/data
+          echo "✓ Encryption key loaded successfully"
+        else
+          echo "ERROR: Encryption key not found at /boot/zfs-keys/rpool"
+          echo "This should have been created during installation by disko postMountHook"
+          exit 1
+        fi
+      '';
     };
+
+    # Boot source verification and diagnostics
+    naspi-boot-verify = {
+      description = "NasPi Boot Source Verification";
+      wantedBy = ["multi-user.target"];
+      after = ["local-fs.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      path = [pkgs.util-linux];
+      script = ''
+        echo "========================================"
+        echo "NasPi Boot Verification"
+        echo "========================================"
+
+        # Check if we're booting from the correct device
+        ROOT_DEVICE=$(findmnt -n -o SOURCE /)
+        echo "Root filesystem: $ROOT_DEVICE"
+
+        if [[ "$ROOT_DEVICE" =~ "rpool" ]]; then
+          echo "✓ Booting from ZFS pool (correct)"
+        else
+          echo "⚠ WARNING: Not booting from expected ZFS pool!"
+          echo "  Expected: rpool/root"
+          echo "  Actual: $ROOT_DEVICE"
+        fi
+
+        # Check boot partition
+        BOOT_DEVICE=$(findmnt -n -o SOURCE /boot)
+        echo "Boot partition: $BOOT_DEVICE"
+
+        if [[ "$BOOT_DEVICE" =~ "BOOT1" ]] || [[ "$BOOT_DEVICE" =~ "ata-PNY" ]]; then
+          echo "✓ Booting from SSD (correct)"
+        else
+          echo "⚠ WARNING: Boot partition might be from SD card!"
+          echo "  Remove SD card from slot if present"
+        fi
+
+        # Check for emergency-ssh service (indicates wrong config)
+        if systemctl list-unit-files | grep -q "emergency-ssh"; then
+          echo ""
+          echo "❌ ERROR: emergency-ssh service detected!"
+          echo "   This indicates the system was deployed with wrong configuration"
+          echo "   Expected: naspi (ZFS RAID1 configuration)"
+          echo "   Detected: Old/different configuration"
+          echo ""
+          echo "   Fix: Redeploy with correct configuration:"
+          echo "   ./scripts/naspi-deploy.sh naspi.local install"
+          echo ""
+        else
+          echo "✓ No conflicting services detected"
+        fi
+
+        # Check ZFS pool status
+        echo ""
+        echo "ZFS Pool Status:"
+        ${config.boot.zfs.package}/bin/zpool status rpool | head -n 15
+
+        echo ""
+        echo "Boot verification complete"
+        echo "========================================"
+      '';
+    };
+  };
+
+  # Configure systemd-networkd-wait-online properly
+  # Use anyInterface so it exits when ANY interface is online (not all)
+  # This prevents timeout waiting for unconfigured wlan0
+  systemd.network.wait-online = {
+    enable = true;
+    anyInterface = true; # Exit when end0 comes up, don't wait for wlan0
+    timeout = 30; # Reduce from 120s default
   };
 
   # Performance tuning for ZFS

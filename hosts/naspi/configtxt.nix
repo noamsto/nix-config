@@ -8,6 +8,18 @@
   # * /boot/firmware/overlays/README
   # * https://github.com/raspberrypi/linux/blob/rpi-6.6.y/arch/arm/boot/dts/overlays/README
 
+  # IMPORTANT: USB/SSD Boot Configuration
+  # This system boots from USB SSD, NOT SD card. If you see boot errors about
+  # "emergency-ssh" or SD card timeouts, remove any SD card from the slot.
+  #
+  # To update EEPROM boot order (prioritize USB over SD):
+  # 1. Boot into Raspberry Pi OS (from SD card temporarily)
+  # 2. Run: sudo rpi-eeprom-config --edit
+  # 3. Set: BOOT_ORDER=0xf46  (USB, NVMe, SD fallback)
+  # 4. Save and reboot
+  #
+  # Current boot priority: USB SSD > SD card (via EEPROM)
+
   hardware.raspberry-pi.config = {
     all = {
       dt-overlays = {

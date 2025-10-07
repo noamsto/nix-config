@@ -56,25 +56,29 @@
   };
 
   # User configuration
-  users.users.noams = {
-    isNormalUser = true;
-    extraGroups = ["wheel" "gpio"];
-    initialPassword = "nixos";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
-    ];
+  users.users = {
+    # Root user - needed for emergency mode access
+    # SECURITY: Change this password after first boot!
+    root = {
+      initialPassword = "nixos";
+    };
+
+    # Normal user
+    noams = {
+      isNormalUser = true;
+      extraGroups = ["wheel" "gpio"];
+      initialPassword = "nixos";
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
+      ];
+    };
   };
 
   # Enable sudo without password for wheel group
   security.sudo.wheelNeedsPassword = false;
 
-  # Swap configuration
-  swapDevices = [
-    {
-      device = "/var/swap";
-      size = 2048; # 2GB
-    }
-  ];
+  # Swap configuration - Using ZFS zvol (configured in disko-zfs.nix)
+  # swapDevices configured in disko-zfs.nix to use /dev/zvol/rpool/swap
 
   # Basic packages
   environment.systemPackages = with pkgs; [

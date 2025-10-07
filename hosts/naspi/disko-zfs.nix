@@ -34,6 +34,7 @@
         "noauto"
         "x-systemd.automount"
         "x-systemd.idle-timeout=1min"
+        # Automount triggered by zfs-load-data-key.service accessing the key file
       ];
     };
   };
@@ -265,8 +266,10 @@ in {
               keyformat = "raw";
               keylocation = "file:///tmp/zfs-rpool-key"; # nixos-anywhere puts it here
             };
-            postCreateHook = ''
+            postMountHook = ''
               # Create permanent key storage location
+              # NOTE: Using postMountHook instead of postCreateHook because
+              # /mnt/boot must be mounted before we can copy the key to it
               mkdir -p /mnt/boot/zfs-keys
               chmod 700 /mnt/boot/zfs-keys
 
@@ -325,14 +328,15 @@ in {
   systemd.services.zfs-create-swap = {
     description = "Create ZFS swap volume";
     after = ["zfs-import-rpool.service"];
-    before = ["swap-dev-zvol-rpool-swap.swap"];
-    wantedBy = ["swap-dev-zvol-rpool-swap.swap"];
+    before = ["swap.target"];
+    wantedBy = ["multi-user.target"];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
     script = ''
       if ! ${config.boot.zfs.package}/bin/zfs list rpool/swap >/dev/null 2>&1; then
+        echo "Creating ZFS swap volume..."
         ${config.boot.zfs.package}/bin/zfs create \
           -V 4G \
           -b 4096 \
@@ -344,7 +348,13 @@ in {
           -o com.sun:auto-snapshot=false \
           rpool/swap
 
+        # Wait for device to appear
+        sleep 2
+
         ${lib.getExe' pkgs.util-linux "mkswap"} /dev/zvol/rpool/swap
+        echo "✓ ZFS swap volume created"
+      else
+        echo "✓ ZFS swap volume already exists"
       fi
     '';
   };

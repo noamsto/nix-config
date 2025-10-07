@@ -5,11 +5,7 @@
   ...
 }: let
   # Only include chromium browser, skip firefox and webkit
-  playwrightBrowsers = pkgs.playwright-driver.browsers.override {
-    withFirefox = false;
-    withWebkit = false;
-    withChromium = true;
-  };
+  executable = lib.getExe pkgs.chromium;
 in {
   programs.claude-code = {
     enable = true;
@@ -19,11 +15,10 @@ in {
       # Packaged servers from mcp-servers-nix (reproducible, offline)
       playwright = {
         command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
-        args = [];
-        env = {
-          PLAYWRIGHT_BROWSERS_PATH = "${playwrightBrowsers}";
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
-        };
+        args = [
+          "--executable-path"
+          executable
+        ];
       };
 
       context7 = {
