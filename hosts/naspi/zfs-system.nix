@@ -81,9 +81,12 @@
 
   # ZFS-specific services
   services = {
-    # Ensure SSH starts after network is online
+    # SSH with socket activation to avoid race conditions with networkd
     openssh = {
       enable = true;
+      # Socket activation: sshd starts on-demand instead of running as daemon
+      # This avoids race conditions with systemd-networkd during boot
+      startWhenNeeded = true;
       settings = {
         PermitRootLogin = "yes";
         PasswordAuthentication = true;

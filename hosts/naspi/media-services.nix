@@ -25,12 +25,12 @@
       rpc-whitelist-enabled = false;
       rpc-authentication-required = false;
 
-      # Download settings
-      download-dir = "/media/downloads/complete";
+      # Download settings - TRaSH Guides structure
+      download-dir = "/data/torrents/complete";
       incomplete-dir-enabled = true;
-      incomplete-dir = "/media/downloads/incomplete";
+      incomplete-dir = "/data/torrents/incomplete";
       watch-dir-enabled = true;
-      watch-dir = "/media/downloads/watch";
+      watch-dir = "/data/torrents/watch";
 
       # Performance settings
       peer-limit-global = 200;
@@ -38,7 +38,7 @@
       speed-limit-up-enabled = false;
       speed-limit-down-enabled = false;
 
-      # File permissions
+      # File permissions for hardlinks
       umask = "002"; # 664 for files, 775 for directories
     };
   };
@@ -59,7 +59,6 @@
   services.sonarr = {
     enable = true;
     group = "media";
-    dataDir = "/var/lib/sonarr";
     openFirewall = true;
   };
 
@@ -67,14 +66,12 @@
   services.radarr = {
     enable = true;
     group = "media";
-    dataDir = "/var/lib/radarr";
     openFirewall = true;
   };
 
   # Prowlarr - Indexer manager
   services.prowlarr = {
     enable = true;
-    dataDir = "/var/lib/prowlarr";
     openFirewall = true;
   };
 
@@ -82,27 +79,32 @@
   services.bazarr = {
     enable = true;
     group = "media";
-    dataDir = "/var/lib/bazarr";
     listenPort = 6767;
     openFirewall = true;
   };
 
-  # Create media directory structure
+  # Create TRaSH Guides compliant directory structure
+  # This follows the recommended structure for hardlinks and atomic moves
   systemd.tmpfiles.rules = [
-    # Main media directories
-    "d /media 0775 root media - -"
-    "d /media/downloads 0775 transmission media - -"
-    "d /media/downloads/complete 0775 transmission media - -"
-    "d /media/downloads/incomplete 0775 transmission media - -"
-    "d /media/downloads/watch 0775 transmission media - -"
+    # Main data directory
+    "d /data 0775 root media - -"
 
-    # Content directories
-    "d /media/tv 0775 root media - -"
-    "d /media/movies 0775 root media - -"
-    "d /media/music 0775 root media - -"
+    # Torrent directories (download client)
+    "d /data/torrents 0775 transmission media - -"
+    "d /data/torrents/complete 0775 transmission media - -"
+    "d /data/torrents/incomplete 0775 transmission media - -"
+    "d /data/torrents/watch 0775 transmission media - -"
 
-    # Temporary processing
-    "d /media/processing 0775 root media - -"
+    # Torrent category subdirectories
+    "d /data/torrents/complete/tv 0775 transmission media - -"
+    "d /data/torrents/complete/movies 0775 transmission media - -"
+    "d /data/torrents/complete/music 0775 transmission media - -"
+
+    # Media library directories (Plex/Jellyfin/Emby)
+    "d /data/media 0775 root media - -"
+    "d /data/media/tv 0775 root media - -"
+    "d /data/media/movies 0775 root media - -"
+    "d /data/media/music 0775 root media - -"
   ];
 
   # Network configuration for services

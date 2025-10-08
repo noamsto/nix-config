@@ -5,6 +5,8 @@
     ./hardware.nix
     ./zfs-system.nix
     ./xscript.nix
+    ./media-services.nix
+    ./monitoring.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
   ];
@@ -29,5 +31,11 @@
       userServices = true;
       workstation = true;
     };
+  };
+
+  # Ensure Avahi starts after network is online to avoid race conditions
+  systemd.services.avahi-daemon = {
+    after = ["network-online.target"];
+    wants = ["network-online.target"];
   };
 }

@@ -109,6 +109,47 @@ cd /path/to/nix-config
 sudo nixos-rebuild switch --flake .#naspi
 ```
 
+## SSH Troubleshooting
+
+### Socket Activation
+
+SSH uses socket activation (`startWhenNeeded = true`) to avoid race conditions with systemd-networkd during boot.
+
+**How it works:**
+- `sshd.socket` listens on port 22
+- When connection arrives, systemd starts `sshd@.service` instance
+- No race condition with network coming up
+
+**Check status:**
+```bash
+# Check socket (should be active/listening)
+systemctl status sshd.socket
+
+# Check if any SSH connections are active
+systemctl status 'sshd@*.service'
+
+# Restart socket if needed
+sudo systemctl restart sshd.socket
+```
+
+**If SSH is not accessible:**
+1. Check socket is listening:
+   ```bash
+   sudo systemctl status sshd.socket
+   sudo ss -tlnp | grep :22
+   ```
+
+2. Check firewall:
+   ```bash
+   sudo nft list ruleset | grep 22
+   ```
+
+3. Check network is up:
+   ```bash
+   ip addr show
+   systemctl status systemd-networkd
+   ```
+
 ## Boot Troubleshooting
 
 ### Symptoms of SD Card Interference
@@ -433,13 +474,121 @@ zfs_mount_at() failed: mountpoint or dataset is busy
 
 ## Services
 
-### Enabled Services
+### Media Automation Stack (*arr + Transmission)
+
+**Configuration**: TRaSH Guides compliant setup for hardlinks and atomic moves
+
+#### Directory Structure
+```
+/data/
+├── torrents/
+│   ├── complete/
+│   │   ├── tv/      # Sonarr downloads
+│   │   ├── movies/  # Radarr downloads
+│   │   └── music/   # Future: Lidarr
+│   ├── incomplete/  # Active downloads
+│   └── watch/       # Drop .torrent files here
+└── media/
+    ├── tv/          # Final TV library (hardlinked from torrents/complete/tv)
+    ├── movies/      # Final movie library (hardlinked from torrents/complete/movies)
+    └── music/       # Future: Music library
+```
+
+#### Services and Ports
+
+- **Flood** (Port 3000): Modern web UI for Transmission
+  - URL: `http://naspi.local:3000`
+  - No authentication (local network only)
+
+- **Transmission** (Port 9091): BitTorrent client
+  - URL: `http://naspi.local:9091`
+  - Downloads to: `/data/torrents/complete`
+
+- **Sonarr** (Port 8989): TV show automation
+  - URL: `http://naspi.local:8989`
+  - Library: `/data/media/tv`
+  - Uses category `tv` in Transmission
+
+- **Radarr** (Port 7878): Movie automation
+  - URL: `http://naspi.local:7878`
+  - Library: `/data/media/movies`
+  - Uses category `movies` in Transmission
+
+- **Prowlarr** (Port 9696): Indexer manager
+  - URL: `http://naspi.local:9696`
+  - Syncs indexers to Sonarr/Radarr automatically
+
+- **Bazarr** (Port 6767): Subtitle automation
+  - URL: `http://naspi.local:6767`
+  - Connects to Sonarr/Radarr for subtitle management
+
+#### Post-Deploy Setup
+
+After first deployment, configure the services in this order:
+
+1. **Prowlarr** → Add torrent indexers → Connect to Sonarr/Radarr
+2. **Sonarr** → Add root folder `/data/media/tv` → Add Transmission client
+3. **Radarr** → Add root folder `/data/media/movies` → Add Transmission client
+4. **Bazarr** → Connect to Sonarr/Radarr → Add subtitle providers
+
+See the [Media Services Setup Guide](#media-services-setup) section below for detailed configuration.
+
+### Monitoring Stack (Prometheus + Grafana)
+
+#### Services and Ports
+
+- **Grafana** (Port 3001): Monitoring dashboards
+  - URL: `http://naspi.local:3001`
+  - Default login: `admin/admin` (**change immediately!**)
+  - Pre-configured Prometheus datasource
+
+- **Prometheus** (Port 9090): Metrics collection
+  - URL: `http://naspi.local:9090`
+  - Retention: 30 days
+  - Scrapes every 15 seconds
+
+- **Node Exporter** (Port 9100): System metrics
+  - CPU, RAM, disk I/O, network
+  - **Raspberry Pi CPU temperature** (thermal_zone collector)
+  - Systemd services status
+
+- **Smartctl Exporter** (Port 9633): SSD health monitoring
+  - SMART data for both SSDs
+  - Temperature, wear leveling, errors
+  - Auto-discovers all disks
+
+- **ZFS Exporter** (Port 9134): ZFS pool metrics
+  - Pool status and capacity
+  - Scrub status and errors
+  - ARC statistics
+  - Dataset usage
+
+#### Recommended Grafana Dashboards
+
+After first login, import these community dashboards:
+
+1. **Node Exporter Full** (ID: 1860)
+   - Comprehensive system overview
+   - **Includes RPi CPU temperature graphs**
+
+2. **ZFS** (ID: 15362)
+   - Pool health and capacity
+   - ARC cache statistics
+
+3. **Smartctl Exporter** (search community)
+   - SSD health and SMART attributes
+
+### Network Services
 
 - **SSH**: Port 22 (password + key authentication)
+  - **Socket activation enabled** - Starts on-demand, avoids networkd race conditions
+  - Service: `sshd.socket` (not `sshd.service`)
 - **NFS**: Port 2049 (exports /data and /media/storage)
 - **Samba**: Ports 445, 137, 138 (Windows file sharing)
 - **Avahi**: mDNS for `naspi.local` hostname
-- **Prometheus**: Node exporter + ZFS exporter
+
+### Hardware Services
+
 - **SMART**: SSD health monitoring
 - **X-C1 Fan**: PWM-based temperature control
 - **X-C1 Power**: Safe shutdown via power button
@@ -455,6 +604,98 @@ sudo mount -t nfs naspi.local:/data /mnt/naspi
 
 # Samba (from Windows)
 \\naspi.local\data
+
+# Media services
+firefox http://naspi.local:3000  # Flood (Transmission UI)
+firefox http://naspi.local:8989  # Sonarr
+firefox http://naspi.local:7878  # Radarr
+firefox http://naspi.local:9696  # Prowlarr
+firefox http://naspi.local:6767  # Bazarr
+
+# Monitoring
+firefox http://naspi.local:3001  # Grafana
+firefox http://naspi.local:9090  # Prometheus
+```
+
+## Media Services Setup
+
+### 1. Prowlarr Configuration
+
+First, set up indexers in Prowlarr:
+
+1. Navigate to `http://naspi.local:9696`
+2. Go to **Settings** → **General** → Copy the API key
+3. Go to **Indexers** → Click **+** to add indexers
+4. Add your preferred torrent indexers
+5. Go to **Settings** → **Apps** → Click **+** to connect Sonarr:
+   - **Sync Level**: Full Sync
+   - **Prowlarr Server**: `http://127.0.0.1:9696`
+   - **Sonarr Server**: `http://127.0.0.1:8989`
+   - **API Key**: (get from Sonarr Settings → General)
+6. Repeat for Radarr with `http://127.0.0.1:7878`
+
+### 2. Sonarr Configuration
+
+1. Navigate to `http://naspi.local:8989`
+2. Go to **Settings** → **Media Management**:
+   - Enable "Rename Episodes"
+   - Enable "Unmonitor Deleted Episodes"
+3. Go to **Settings** → **Download Clients** → Click **+** → Select **Transmission**:
+   - **Name**: Transmission
+   - **Host**: `127.0.0.1`
+   - **Port**: `9091`
+   - **Category**: `tv` (important for auto-sorting!)
+   - Click **Test** → **Save**
+4. Go to **Series** → **Add New** → Set root folder to `/data/media/tv`
+5. Prowlarr will automatically add indexers
+
+**Why category matters**: When Sonarr sends a download to Transmission with category `tv`, Transmission automatically saves it to `/data/torrents/complete/tv`. When the download completes, Sonarr creates a hardlink from `/data/torrents/complete/tv/Show.Name.S01E01.mkv` to `/data/media/tv/Show Name/Season 01/Show.Name.S01E01.mkv`. This is instant (atomic move on same filesystem) and uses no extra disk space!
+
+### 3. Radarr Configuration
+
+1. Navigate to `http://naspi.local:7878`
+2. Go to **Settings** → **Media Management**:
+   - Enable "Rename Movies"
+   - Enable "Unmonitor Deleted Movies"
+3. Go to **Settings** → **Download Clients** → Click **+** → Select **Transmission**:
+   - **Name**: Transmission
+   - **Host**: `127.0.0.1`
+   - **Port**: `9091`
+   - **Category**: `movies` (important for auto-sorting!)
+   - Click **Test** → **Save**
+4. Go to **Movies** → **Add New** → Set root folder to `/data/media/movies`
+5. Prowlarr will automatically add indexers
+
+### 4. Bazarr Configuration
+
+1. Navigate to `http://naspi.local:6767`
+2. Go to **Settings** → **Sonarr**:
+   - **Address**: `127.0.0.1`
+   - **Port**: `8989`
+   - **API Key**: (get from Sonarr)
+   - **Test** → **Save**
+3. Go to **Settings** → **Radarr**:
+   - **Address**: `127.0.0.1`
+   - **Port**: `7878`
+   - **API Key**: (get from Radarr)
+   - **Test** → **Save**
+4. Go to **Settings** → **Providers** → Add your preferred subtitle providers
+
+### Verifying Hardlinks
+
+After your first download completes, verify hardlinks are working:
+
+```bash
+# SSH into naspi
+ssh noams@naspi.local
+
+# Find a completed download and its library copy
+ls -li /data/torrents/complete/tv/
+ls -li /data/media/tv/
+
+# Compare inode numbers (first column)
+# If they match, hardlinks are working correctly!
+# The file exists in two locations but uses disk space only once
 ```
 
 ## Hardware Management
@@ -521,6 +762,8 @@ hosts/naspi/
 ├── default-zfs.nix        # Main ZFS configuration entry point
 ├── disko-zfs.nix          # Disk partitioning and ZFS pool setup
 ├── hardware.nix           # Hardware-specific imports
+├── media-services.nix     # *arr stack + Transmission (TRaSH Guides compliant)
+├── monitoring.nix         # Prometheus + Grafana + exporters
 ├── system.nix             # Base system configuration
 ├── zfs-system.nix         # ZFS services and optimization
 └── xscript.nix            # Geekworm X-C1 fan and power management

@@ -264,6 +264,13 @@
       "pin, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
       "immediate, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
 
+      # Screen sharing picker dialog
+      "dimaround, title:^(Select what to share)$"
+      "float, title:^(Select what to share)$"
+      "pin, title:^(Select what to share)$"
+      "stayfocused, title:^(Select what to share)$"
+      "immediate, title:^(Select what to share)$"
+
       # Permission dialogs
       "dimaround, title:^(.*Permission.*)$"
       "float, title:^(.*Permission.*)$"
