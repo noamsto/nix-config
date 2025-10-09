@@ -106,9 +106,9 @@ in {
           offset = "0 15";
           range = 100;
           scale = 0.97;
-          render_power = 2;
+          render_power = 3; # Increased from 2 for stronger shadow effect
           ignore_window = true;
-          color = "rgba(00000055)";
+          color = "rgba(00000099)"; # Increased opacity from 55 to 99 for darker shadow
         };
       };
       dwindle = {

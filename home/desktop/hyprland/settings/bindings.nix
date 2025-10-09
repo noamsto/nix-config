@@ -33,9 +33,17 @@ in {
       "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)
       "$mainMod SHIFT, F, fullscreen, 0" # True fullscreen (no gaps)
       "$mainMod, Q, killactive" # Changed from C to Q for quit/close window
+
+      # Toggle pseudo (no auto-resize - pseudo maintains floating dimensions)
       "$mainMod, P, pseudo"
+
       "$mainMod, R, togglesplit,"
-      "$mainMod, T, togglefloating,"
+
+      # Toggle floating with auto-resize to 80% and center
+      "$mainMod, T, togglefloating"
+      "$mainMod, T, resizeactive, exact 80% 80%"
+      "$mainMod, T, centerwindow"
+
       "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
       "$mainMod, grave, hyprexpo:expo, toggle"
 
@@ -119,6 +127,10 @@ in {
       "$mainMod, right, resizeactive, 20 0"
       "$mainMod, up, resizeactive, 0 -20"
       "$mainMod, down, resizeactive, 0 20"
+
+      # Quick resize shortcuts (smart: works for both floating and tiled/pseudo)
+      "$mainMod, equal, exec, window-resize grow"
+      "$mainMod, minus, exec, window-resize shrink"
 
       ", XF86AudioPlay, exec, ${runOnce youtube-music}"
 

@@ -20,6 +20,7 @@
     ./scripts/keyboard-layout.nix
     ./scripts/volume-control.nix
     ./scripts/sounds.nix
+    ./scripts/window-resize.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];

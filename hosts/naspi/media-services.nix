@@ -17,6 +17,8 @@
     user = "transmission";
     group = "media";
     home = "/var/lib/transmission";
+    # Use Flood as the web interface
+    webHome = pkgs.flood-for-transmission;
     settings = {
       # Web interface settings
       rpc-enabled = true;
@@ -41,18 +43,6 @@
       # File permissions for hardlinks
       umask = "002"; # 664 for files, 775 for directories
     };
-  };
-
-  # Flood - Modern web UI for Transmission
-  services.flood = {
-    enable = true;
-    host = "0.0.0.0";
-    port = 3000;
-    openFirewall = true;
-    extraArgs = [
-      "--auth=none"
-      "--trurl=http://localhost:9091/transmission/rpc"
-    ];
   };
 
   # Sonarr - TV show automation
@@ -86,10 +76,7 @@
   # Create TRaSH Guides compliant directory structure
   # This follows the recommended structure for hardlinks and atomic moves
   systemd.tmpfiles.rules = [
-    # Main data directory
-    "d /data 0775 root media - -"
-
-    # Torrent directories (download client)
+    # Torrent directories (download client) - on rpool/data
     "d /data/torrents 0775 transmission media - -"
     "d /data/torrents/complete 0775 transmission media - -"
     "d /data/torrents/incomplete 0775 transmission media - -"
@@ -100,20 +87,18 @@
     "d /data/torrents/complete/movies 0775 transmission media - -"
     "d /data/torrents/complete/music 0775 transmission media - -"
 
-    # Media library directories (Plex/Jellyfin/Emby)
-    "d /data/media 0775 root media - -"
-    "d /data/media/tv 0775 root media - -"
-    "d /data/media/movies 0775 root media - -"
-    "d /data/media/music 0775 root media - -"
+    # Media library directories (Plex/Jellyfin/Emby) - on rpool/media
+    "d /media/storage/tv 0775 root media - -"
+    "d /media/storage/movies 0775 root media - -"
+    "d /media/storage/music 0775 root media - -"
   ];
 
   # Network configuration for services
   networking.firewall.allowedTCPPorts = [
-    3000 # Flood
     6767 # Bazarr
     7878 # Radarr
     8989 # Sonarr
-    9091 # Transmission
+    9091 # Transmission (with Flood UI)
     9696 # Prowlarr
   ];
 
@@ -133,6 +118,5 @@
     radarr.after = ["local-fs.target"];
     prowlarr.after = ["local-fs.target"];
     bazarr.after = ["local-fs.target"];
-    flood.after = ["transmission.service"];
   };
 }
