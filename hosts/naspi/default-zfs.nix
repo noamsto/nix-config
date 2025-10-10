@@ -7,6 +7,7 @@
     ./xscript.nix
     ./media-services.nix
     ./monitoring.nix
+    ./tailscale.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
   ];
@@ -30,6 +31,33 @@
       hinfo = true;
       userServices = true;
       workstation = true;
+    };
+
+    # Announce NFS and Samba shares for auto-discovery
+    extraServiceFiles = {
+      nfs = ''
+        <?xml version="1.0" standalone='no'?>
+        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+        <service-group>
+          <name replace-wildcards="yes">%h NFS</name>
+          <service>
+            <type>_nfs._tcp</type>
+            <port>2049</port>
+          </service>
+        </service-group>
+      '';
+
+      smb = ''
+        <?xml version="1.0" standalone='no'?>
+        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+        <service-group>
+          <name replace-wildcards="yes">%h SMB</name>
+          <service>
+            <type>_smb._tcp</type>
+            <port>445</port>
+          </service>
+        </service-group>
+      '';
     };
   };
 

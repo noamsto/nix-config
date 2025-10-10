@@ -91,13 +91,16 @@
       url = "github:xremap/nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
-
-    walker.url = "github:abenz1267/walker";
-
-    vicinae.url = "github:vicinaehq/vicinae";
+    walker = {
+      url = "github:abenz1267/walker";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    vicinae = {
+      url = "github:vicinaehq/vicinae";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     catppuccin = {
       url = "github:catppuccin/nix";

@@ -6,6 +6,7 @@
     ./system.nix
     ./xscript.nix
     ./media-services.nix
+    ./network-resilience.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
   ];

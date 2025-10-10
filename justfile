@@ -153,15 +153,32 @@ rpi-install-naspi HOST="rpi4-installer" BUILDERS="":
     fi
     ./scripts/naspi-deploy.sh {{HOST}} install
 
-# Deploy configuration update to existing naspi system
-rpi-deploy-naspi HOST="naspi.local" BUILDERS="":
+# Deploy configuration update to existing naspi system (requires reboot)
+rpi-deploy-naspi HOST="naspi.local":
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🔄 Deploying naspi configuration update to {{HOST}}..."
-    echo "ℹ️  Updates existing system (no repartitioning)"
-
+    echo "ℹ️  Updates boot configuration (requires reboot to activate)"
     ./scripts/naspi-deploy.sh {{HOST}} switch
-    echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}} noams"
+    echo "🔄 Configuration staged. Reboot to activate: just rpi-reboot {{HOST}} noams"
+
+# Deploy and immediately apply changes to naspi (no reboot needed)
+naspi-switch HOST="naspi.local":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔄 Deploying and activating naspi configuration..."
+    echo "ℹ️  Changes apply immediately (no reboot needed)"
+    nixos-rebuild switch \
+        --flake ".#naspi" \
+        --target-host "noams@{{HOST}}" \
+        --build-host "noams@{{HOST}}" \
+        --use-remote-sudo |& nom
+    echo "✅ Configuration activated!"
+
+# Deploy to naspi using nh (fastest, recommended)
+naspi:
+    @echo "🔄 Deploying to naspi via SSH using nh..."
+    ssh noams@naspi.local "cd ~/nix-config && git pull && nh os switch ."
 
 # Install argon-rpi4 using nixos-anywhere + disko (fresh install with partitioning)
 rpi-install-argon HOST="rpi4-installer" BUILDERS="":

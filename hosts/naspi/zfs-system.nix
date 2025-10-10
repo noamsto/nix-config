@@ -151,6 +151,12 @@
       };
     };
 
+    # Web Services Discovery for Windows Network
+    samba-wsdd = {
+      enable = true;
+      openFirewall = true;
+    };
+
     # Enable SMART monitoring for SSDs
     smartd = {
       enable = true;

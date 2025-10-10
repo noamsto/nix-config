@@ -11,6 +11,8 @@
       sha256 = "sha256-27eotcVbaggJMfP1OwBz47Xp5tHpWJKCZDLKtEKLNNc=";
     };
 
+    nativeBuildInputs = [pkgs.makeWrapper];
+
     installPhase = ''
       mkdir -p $out/bin
       # Only install service scripts, not install/uninstall scripts
@@ -18,6 +20,21 @@
       cp xPWR.sh $out/bin/
       cp xSoft.sh $out/bin/
       chmod +x $out/bin/*.sh
+
+      # Wrap scripts with required dependencies in PATH
+      for script in $out/bin/*.sh; do
+        wrapProgram $script \
+          --prefix PATH : ${pkgs.lib.makeBinPath [
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.gnugrep
+        pkgs.gnused
+        pkgs.gawk
+        pkgs.bc
+        pkgs.libgpiod # Provides gpioget, gpioset commands
+        pkgs.systemd # Provides systemctl
+      ]}
+      done
     '';
 
     meta = with pkgs.lib; {
@@ -31,8 +48,7 @@ in {
   # Make xscript available in system packages
   environment.systemPackages = [
     xscript
-    pkgs.bc # Calculator for fan control script
-    pkgs.gpio-utils # GPIO utilities for power management
+    pkgs.libgpiod # GPIO utilities (gpioget, gpioset) for manual testing
   ];
 
   # Systemd services for Geekworm X-series expansion boards
@@ -58,26 +74,28 @@ in {
     };
 
     # Hardware power management service
-    x-c1-pwr = {
-      description = "Hardware Power Management & Safe Shutdown daemon";
-      wantedBy = ["multi-user.target"];
-      after = ["local-fs.target"];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${xscript}/bin/xPWR.sh 0 4 17";
-        Restart = "always";
-        RestartSec = "5s";
-        User = "root";
-        Group = "root";
-        # Ensure GPIO access
-        SupplementaryGroups = ["gpio"];
-        # Power management needs full system access
-        AmbientCapabilities = ["CAP_SYS_ADMIN"];
-        # Kill timeout for safe shutdown
-        TimeoutStopSec = "60s";
-        KillSignal = "SIGTERM";
-      };
-    };
+    # DISABLED: Causes high CPU load due to GPIO access issues with modern libgpiod
+    # Power button functionality not critical - use `sudo shutdown now` manually if needed
+    # x-c1-pwr = {
+    #   description = "Hardware Power Management & Safe Shutdown daemon";
+    #   wantedBy = ["multi-user.target"];
+    #   after = ["local-fs.target"];
+    #   serviceConfig = {
+    #     Type = "simple";
+    #     ExecStart = "${xscript}/bin/xPWR.sh 0 4 17";
+    #     Restart = "always";
+    #     RestartSec = "5s";
+    #     User = "root";
+    #     Group = "root";
+    #     # Ensure GPIO access
+    #     SupplementaryGroups = ["gpio"];
+    #     # Power management needs full system access
+    #     AmbientCapabilities = ["CAP_SYS_ADMIN"];
+    #     # Kill timeout for safe shutdown
+    #     TimeoutStopSec = "60s";
+    #     KillSignal = "SIGTERM";
+    #   };
+    # };
   };
 
   # Ensure GPIO group exists and has proper permissions

@@ -2,7 +2,14 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  # Arr services configuration script
+  arr-setup-script = pkgs.writeShellApplication {
+    name = "arr-setup";
+    runtimeInputs = with pkgs; [curl jq gnugrep coreutils];
+    text = builtins.readFile ./arr-setup.sh;
+  };
+in {
   # Create media group for shared access
   users.groups.media = {
     gid = 995;
@@ -72,6 +79,12 @@
     listenPort = 6767;
     openFirewall = true;
   };
+  # Note: Bazarr requires manual configuration via web UI:
+  # 1. Navigate to http://naspi:6767
+  # 2. Settings > Languages > Add Hebrew (he) as subtitle language
+  # 3. Settings > Sonarr > Add connection (http://localhost:8989)
+  # 4. Settings > Radarr > Add connection (http://localhost:7878)
+  # 5. Settings > Providers > Add subtitle providers (OpenSubtitles, etc.)
 
   # Create TRaSH Guides compliant directory structure
   # This follows the recommended structure for hardlinks and atomic moves
@@ -91,15 +104,14 @@
     "d /media/storage/tv 0775 root media - -"
     "d /media/storage/movies 0775 root media - -"
     "d /media/storage/music 0775 root media - -"
+
+    # Recyclarr config symlink
+    "L+ /var/lib/recyclarr/recyclarr.yml - - - - /etc/recyclarr/recyclarr.yml"
   ];
 
   # Network configuration for services
   networking.firewall.allowedTCPPorts = [
-    6767 # Bazarr
-    7878 # Radarr
-    8989 # Sonarr
     9091 # Transmission (with Flood UI)
-    9696 # Prowlarr
   ];
 
   # Additional packages for media management
@@ -109,7 +121,190 @@
     ffmpeg # Media processing
     unrar # RAR extraction
     p7zip # Archive extraction
+    recyclarr # TRaSH Guides sync tool
   ];
+
+  # Recyclarr - TRaSH Guides automation
+  services.recyclarr = {
+    enable = true;
+    group = "media";
+    schedule = "daily";
+
+    configuration = {
+      radarr.movies-4k = {
+        base_url = "http://localhost:7878";
+        api_key._secret = "/var/lib/recyclarr/.env-radarr-api-key";
+
+        quality_definition.type = "movie";
+
+        quality_profiles = [
+          {
+            name = "4K Remux + WEB";
+            reset_unmatched_scores.enabled = true;
+            upgrade = {
+              allowed = true;
+              until_quality = "Remux-2160p";
+              until_score = 10000;
+            };
+            min_format_score = 0;
+            quality_sort = "top";
+            qualities = [
+              {name = "Remux-2160p";}
+              {
+                name = "WEB 2160p";
+                qualities = ["WEBDL-2160p" "WEBRip-2160p"];
+              }
+              {name = "Bluray-2160p";}
+            ];
+          }
+        ];
+
+        custom_formats = [
+          # Dolby Atmos
+          {
+            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = 8000;
+              }
+            ];
+          }
+          # TrueHD Atmos
+          {
+            trash_ids = ["1af239278386be2919e1bcee0bde047e"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = 7500;
+              }
+            ];
+          }
+          # DTS X
+          {
+            trash_ids = ["3cafb66171b47f226146a0770576870f"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = 7000;
+              }
+            ];
+          }
+          # TrueHD + DTS-HD MA
+          {
+            trash_ids = ["496f355514737f7d83bf7aa4d24f8169" "2f22d89048b01681dde8afe203bf2e95"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = 6000;
+              }
+            ];
+          }
+          # HDR Formats
+          {
+            trash_ids = ["e23edd2482476e595fb990b12e7c609c" "b974a6cd08c1066250f1f177d7aa1225" "dfb86d5941bc9075d6af23b09c2aeecd"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = 5000;
+              }
+            ];
+          }
+          # Unwanted
+          {
+            trash_ids = ["ed38b889b31be83fda192888e2286d83" "90a6f9a284dff5103f6346090e6280c8" "b8cd450cbfa689c0259a01d9e29ba3d6"];
+            quality_profiles = [
+              {
+                name = "4K Remux + WEB";
+                score = -10000;
+              }
+            ];
+          }
+        ];
+      };
+
+      sonarr.tv-4k = {
+        base_url = "http://localhost:8989";
+        api_key._secret = "/var/lib/recyclarr/.env-sonarr-api-key";
+
+        quality_definition.type = "series";
+
+        quality_profiles = [
+          {
+            name = "4K WEB";
+            reset_unmatched_scores.enabled = true;
+            upgrade = {
+              allowed = true;
+              until_quality = "WEB 2160p";
+              until_score = 10000;
+            };
+            min_format_score = 0;
+            quality_sort = "top";
+            qualities = [
+              {
+                name = "WEB 2160p";
+                qualities = ["WEBDL-2160p" "WEBRip-2160p"];
+              }
+              {name = "Bluray-2160p";}
+            ];
+          }
+        ];
+
+        custom_formats = [
+          # Atmos
+          {
+            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
+            quality_profiles = [
+              {
+                name = "4K WEB";
+                score = 8000;
+              }
+            ];
+          }
+          # DD+ Atmos
+          {
+            trash_ids = ["1af239278386be2919e1bcee0bde047e"];
+            quality_profiles = [
+              {
+                name = "4K WEB";
+                score = 7500;
+              }
+            ];
+          }
+          # TrueHD + DTS-HD MA
+          {
+            trash_ids = ["496f355514737f7d83bf7aa4d24f8169" "2f22d89048b01681dde8afe203bf2e95"];
+            quality_profiles = [
+              {
+                name = "4K WEB";
+                score = 6000;
+              }
+            ];
+          }
+          # HDR Formats
+          {
+            trash_ids = ["e23edd2482476e595fb990b12e7c609c" "b974a6cd08c1066250f1f177d7aa1225" "dfb86d5941bc9075d6af23b09c2aeecd"];
+            quality_profiles = [
+              {
+                name = "4K WEB";
+                score = 5000;
+              }
+            ];
+          }
+          # Unwanted
+          {
+            trash_ids = ["ed38b889b31be83fda192888e2286d83" "90a6f9a284dff5103f6346090e6280c8"];
+            quality_profiles = [
+              {
+                name = "4K WEB";
+                score = -10000;
+              }
+            ];
+          }
+        ];
+      };
+    };
+  };
 
   # Ensure services start after filesystem is ready
   systemd.services = {
@@ -118,5 +313,23 @@
     radarr.after = ["local-fs.target"];
     prowlarr.after = ["local-fs.target"];
     bazarr.after = ["local-fs.target"];
+
+    # Arr services initial configuration via API
+    arr-setup = {
+      description = "Configure Radarr and Sonarr via API";
+      after = ["network-online.target" "radarr.service" "sonarr.service" "transmission.service"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${arr-setup-script}/bin/arr-setup";
+        RemainAfterExit = true;
+        User = "root";
+      };
+    };
+
+    # Recyclarr should run after arr-setup
+    recyclarr.after = ["arr-setup.service"];
   };
+  # Note: Network dependencies and restart policies are configured in network-resilience.nix
 }

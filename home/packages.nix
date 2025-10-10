@@ -27,6 +27,9 @@
     stable.aider-chat-with-playwright # Uses stable for Playwright compatibility
     aichat
     inputs.self.packages.${pkgs.system}.atlas-pro
+
+    # Network file system support for Thunar/file managers
+    gvfs # Virtual filesystem with NFS/SMB support
   ];
   work-packages = with pkgs; [
     slack

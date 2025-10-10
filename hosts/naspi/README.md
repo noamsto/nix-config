@@ -524,12 +524,19 @@ zfs_mount_at() failed: mountpoint or dataset is busy
 
 #### Post-Deploy Setup
 
-After first deployment, configure the services in this order:
+**Automatic Configuration** (via systemd services):
 
-1. **Prowlarr** → Add torrent indexers → Connect to Sonarr/Radarr
-2. **Sonarr** → Add root folder `/data/media/tv` → Add Transmission client
-3. **Radarr** → Add root folder `/data/media/movies` → Add Transmission client
-4. **Bazarr** → Connect to Sonarr/Radarr → Add subtitle providers
+The following are configured automatically on first boot:
+- ✅ **Root folders**: `/media/storage/movies` (Radarr), `/media/storage/tv` (Sonarr)
+- ✅ **Download clients**: Transmission with proper categories (`movies`, `tv`)
+- ✅ **Quality profiles**: 4K with Dolby Atmos via Recyclarr (synced from TRaSH Guides)
+
+**Manual Configuration Required**:
+
+After first deployment, complete these steps:
+
+1. **Prowlarr** (http://naspi:9696) → Add torrent indexers → Connect to Sonarr/Radarr
+2. **Bazarr** (http://naspi:6767) → Add Hebrew subtitles → Connect to Sonarr/Radarr → Add subtitle providers
 
 See the [Media Services Setup Guide](#media-services-setup) section below for detailed configuration.
 
@@ -619,9 +626,46 @@ firefox http://naspi.local:9090  # Prometheus
 
 ## Media Services Setup
 
-### 1. Prowlarr Configuration
+### Automatic Configuration (Already Done!)
 
-First, set up indexers in Prowlarr:
+The following are configured automatically via systemd services on first boot:
+
+✅ **Root Folders**:
+- Radarr: `/media/storage/movies`
+- Sonarr: `/media/storage/tv`
+
+✅ **Download Clients**:
+- Transmission configured in both Radarr and Sonarr
+- Proper categories: `movies` (Radarr), `tv` (Sonarr)
+- Remove completed downloads enabled
+
+✅ **Quality Profiles** (via Recyclarr):
+- **Radarr**: "4K Remux + WEB" profile
+  - 2160p (4K) quality
+  - Dolby Atmos audio prioritized (8000 points)
+  - TrueHD Atmos, DTS-X support
+  - HDR, HDR10+, Dolby Vision
+- **Sonarr**: "4K WEB" profile
+  - 2160p (4K) quality
+  - Dolby Atmos audio prioritized (8000 points)
+  - HDR formats supported
+- Quality profiles sync daily via `recyclarr-sync.timer`
+
+**Verification**:
+```bash
+# Check automatic configuration status
+sudo systemctl status arr-setup.service
+
+# Check recyclarr sync status
+sudo systemctl status recyclarr-sync.service
+
+# Manually trigger recyclarr sync
+sudo systemctl start recyclarr-sync.service
+```
+
+### 1. Prowlarr Configuration (Manual)
+
+Set up indexers in Prowlarr:
 
 1. Navigate to `http://naspi.local:9696`
 2. Go to **Settings** → **General** → Copy the API key
@@ -634,52 +678,84 @@ First, set up indexers in Prowlarr:
    - **API Key**: (get from Sonarr Settings → General)
 6. Repeat for Radarr with `http://127.0.0.1:7878`
 
-### 2. Sonarr Configuration
+### 2. Sonarr Verification
+
+Verify automatic configuration:
 
 1. Navigate to `http://naspi.local:8989`
 2. Go to **Settings** → **Media Management**:
-   - Enable "Rename Episodes"
-   - Enable "Unmonitor Deleted Episodes"
-3. Go to **Settings** → **Download Clients** → Click **+** → Select **Transmission**:
-   - **Name**: Transmission
-   - **Host**: `127.0.0.1`
-   - **Port**: `9091`
-   - **Category**: `tv` (important for auto-sorting!)
-   - Click **Test** → **Save**
-4. Go to **Series** → **Add New** → Set root folder to `/data/media/tv`
-5. Prowlarr will automatically add indexers
+   - ✅ Root folder should exist: `/media/storage/tv`
+3. Go to **Settings** → **Download Clients**:
+   - ✅ Transmission should be configured with category `tv`
+4. Go to **Settings** → **Quality Profiles**:
+   - ✅ "4K WEB" profile should exist with Dolby Atmos custom formats
+5. Optional: Enable "Rename Episodes" and "Unmonitor Deleted Episodes"
 
-**Why category matters**: When Sonarr sends a download to Transmission with category `tv`, Transmission automatically saves it to `/data/torrents/complete/tv`. When the download completes, Sonarr creates a hardlink from `/data/torrents/complete/tv/Show.Name.S01E01.mkv` to `/data/media/tv/Show Name/Season 01/Show.Name.S01E01.mkv`. This is instant (atomic move on same filesystem) and uses no extra disk space!
+**Why categories matter**: When Sonarr sends a download to Transmission with category `tv`, Transmission automatically saves it to `/data/torrents/complete/tv`. When the download completes, Sonarr creates a hardlink from `/data/torrents/complete/tv/Show.Name.S01E01.mkv` to `/media/storage/tv/Show Name/Season 01/Show.Name.S01E01.mkv`. This is instant (atomic move on same filesystem) and uses no extra disk space!
 
-### 3. Radarr Configuration
+### 3. Radarr Verification
+
+Verify automatic configuration:
 
 1. Navigate to `http://naspi.local:7878`
 2. Go to **Settings** → **Media Management**:
-   - Enable "Rename Movies"
-   - Enable "Unmonitor Deleted Movies"
-3. Go to **Settings** → **Download Clients** → Click **+** → Select **Transmission**:
-   - **Name**: Transmission
-   - **Host**: `127.0.0.1`
-   - **Port**: `9091`
-   - **Category**: `movies` (important for auto-sorting!)
-   - Click **Test** → **Save**
-4. Go to **Movies** → **Add New** → Set root folder to `/data/media/movies`
-5. Prowlarr will automatically add indexers
+   - ✅ Root folder should exist: `/media/storage/movies`
+3. Go to **Settings** → **Download Clients**:
+   - ✅ Transmission should be configured with category `movies`
+4. Go to **Settings** → **Quality Profiles**:
+   - ✅ "4K Remux + WEB" profile should exist with Dolby Atmos custom formats
+5. Optional: Enable "Rename Movies" and "Unmonitor Deleted Movies"
 
-### 4. Bazarr Configuration
+### 4. Bazarr Configuration (Manual - Hebrew Subtitles)
+
+Configure Bazarr for Hebrew subtitles:
 
 1. Navigate to `http://naspi.local:6767`
-2. Go to **Settings** → **Sonarr**:
+2. Go to **Settings** → **Languages**:
+   - **Languages Filter**: Add **Hebrew** (`he`)
+   - **Default Enabled**: Check Hebrew
+   - Click **Save**
+3. Go to **Settings** → **Sonarr**:
    - **Address**: `127.0.0.1`
    - **Port**: `8989`
-   - **API Key**: (get from Sonarr)
-   - **Test** → **Save**
-3. Go to **Settings** → **Radarr**:
+   - **API Key**: (get from Sonarr Settings → General)
+   - Click **Test** → **Save**
+4. Go to **Settings** → **Radarr**:
    - **Address**: `127.0.0.1`
    - **Port**: `7878`
-   - **API Key**: (get from Radarr)
-   - **Test** → **Save**
-4. Go to **Settings** → **Providers** → Add your preferred subtitle providers
+   - **API Key**: (get from Radarr Settings → General)
+   - Click **Test** → **Save**
+5. Go to **Settings** → **Providers** → Add subtitle providers:
+   - **OpenSubtitles** (requires account)
+   - **Subscene**
+   - Other Hebrew subtitle sources
+6. Go to **Settings** → **Subtitles**:
+   - **Subtitle Languages**: Verify Hebrew is selected
+   - **Upgrade Previously Downloaded Subtitles**: Enable for quality improvements
+
+### 5. Recyclarr Management
+
+Recyclarr automatically syncs TRaSH Guides quality profiles daily. Manual operations:
+
+```bash
+# Check recyclarr configuration
+cat /etc/recyclarr/recyclarr.yml
+
+# View recyclarr logs
+sudo journalctl -u recyclarr-sync.service
+
+# Manually sync quality profiles
+sudo systemctl start recyclarr-sync.service
+
+# Check next scheduled sync
+systemctl status recyclarr-sync.timer
+```
+
+**What Recyclarr configures**:
+- Quality definitions (file size ranges)
+- Quality profiles (4K with Dolby Atmos prioritization)
+- Custom formats (audio/video quality scoring)
+- Does NOT configure: root folders, download clients, indexers (these are handled by arr-setup.service)
 
 ### Verifying Hardlinks
 
