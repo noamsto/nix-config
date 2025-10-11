@@ -57,6 +57,12 @@ in {
     enable = true;
     group = "media";
     openFirewall = true;
+    settings = {
+      update = {
+        mechanism = "external"; # Updates managed by NixOS
+        automatically = false; # Disable built-in auto-update
+      };
+    };
   };
 
   # Radarr - Movie automation
@@ -64,6 +70,12 @@ in {
     enable = true;
     group = "media";
     openFirewall = true;
+    settings = {
+      update = {
+        mechanism = "external"; # Updates managed by NixOS
+        automatically = false; # Disable built-in auto-update
+      };
+    };
   };
 
   # Prowlarr - Indexer manager
@@ -139,7 +151,7 @@ in {
 
         quality_profiles = [
           {
-            name = "4K Remux + WEB";
+            name = "4K + HD Fallback";
             reset_unmatched_scores.enabled = true;
             upgrade = {
               allowed = true;
@@ -149,54 +161,82 @@ in {
             min_format_score = 0;
             quality_sort = "top";
             qualities = [
+              # 4K qualities (preferred)
               {name = "Remux-2160p";}
               {
                 name = "WEB 2160p";
                 qualities = ["WEBDL-2160p" "WEBRip-2160p"];
               }
               {name = "Bluray-2160p";}
+              # 1080p qualities (fallback)
+              {name = "Remux-1080p";}
+              {
+                name = "WEB 1080p";
+                qualities = ["WEBDL-1080p" "WEBRip-1080p"];
+              }
+              {name = "Bluray-1080p";}
             ];
           }
         ];
 
         custom_formats = [
-          # Dolby Atmos
-          {
-            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
-            quality_profiles = [
-              {
-                name = "4K Remux + WEB";
-                score = 8000;
-              }
-            ];
-          }
-          # TrueHD Atmos
+          # TrueHD Atmos (lossless)
           {
             trash_ids = ["1af239278386be2919e1bcee0bde047e"];
             quality_profiles = [
               {
-                name = "4K Remux + WEB";
-                score = 7500;
+                name = "4K + HD Fallback";
+                score = 9000;
               }
             ];
           }
-          # DTS X
+          # DD+ Atmos (streaming, compatible with Q800D)
+          {
+            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 8500;
+              }
+            ];
+          }
+          # DTS:X
           {
             trash_ids = ["3cafb66171b47f226146a0770576870f"];
             quality_profiles = [
               {
-                name = "4K Remux + WEB";
+                name = "4K + HD Fallback";
+                score = 8000;
+              }
+            ];
+          }
+          # TrueHD (lossless 5.1/7.1)
+          {
+            trash_ids = ["496f355514737f7d83bf7aa4d24f8169"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
                 score = 7000;
               }
             ];
           }
-          # TrueHD + DTS-HD MA
+          # DTS-HD MA (lossless 5.1/7.1)
           {
-            trash_ids = ["496f355514737f7d83bf7aa4d24f8169" "2f22d89048b01681dde8afe203bf2e95"];
+            trash_ids = ["2f22d89048b01681dde8afe203bf2e95"];
             quality_profiles = [
               {
-                name = "4K Remux + WEB";
-                score = 6000;
+                name = "4K + HD Fallback";
+                score = 6500;
+              }
+            ];
+          }
+          # DD+ 5.1 / DTS 5.1 (standard fallback)
+          {
+            trash_ids = ["185f1dd7264c4562b9022d963ac37424" "1c1a4c5e823891c75bc50380a6866f73"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 500;
               }
             ];
           }
@@ -205,7 +245,7 @@ in {
             trash_ids = ["e23edd2482476e595fb990b12e7c609c" "b974a6cd08c1066250f1f177d7aa1225" "dfb86d5941bc9075d6af23b09c2aeecd"];
             quality_profiles = [
               {
-                name = "4K Remux + WEB";
+                name = "4K + HD Fallback";
                 score = 5000;
               }
             ];
@@ -215,7 +255,7 @@ in {
             trash_ids = ["ed38b889b31be83fda192888e2286d83" "90a6f9a284dff5103f6346090e6280c8" "b8cd450cbfa689c0259a01d9e29ba3d6"];
             quality_profiles = [
               {
-                name = "4K Remux + WEB";
+                name = "4K + HD Fallback";
                 score = -10000;
               }
             ];
@@ -231,7 +271,7 @@ in {
 
         quality_profiles = [
           {
-            name = "4K WEB";
+            name = "4K + HD Fallback";
             reset_unmatched_scores.enabled = true;
             upgrade = {
               allowed = true;
@@ -241,43 +281,80 @@ in {
             min_format_score = 0;
             quality_sort = "top";
             qualities = [
+              # 4K qualities (preferred)
               {
                 name = "WEB 2160p";
                 qualities = ["WEBDL-2160p" "WEBRip-2160p"];
               }
               {name = "Bluray-2160p";}
+              # 1080p qualities (fallback)
+              {
+                name = "WEB 1080p";
+                qualities = ["WEBDL-1080p" "WEBRip-1080p"];
+              }
+              {name = "Bluray-1080p";}
             ];
           }
         ];
 
         custom_formats = [
-          # Atmos
-          {
-            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
-            quality_profiles = [
-              {
-                name = "4K WEB";
-                score = 8000;
-              }
-            ];
-          }
-          # DD+ Atmos
+          # TrueHD Atmos (lossless)
           {
             trash_ids = ["1af239278386be2919e1bcee0bde047e"];
             quality_profiles = [
               {
-                name = "4K WEB";
-                score = 7500;
+                name = "4K + HD Fallback";
+                score = 9000;
               }
             ];
           }
-          # TrueHD + DTS-HD MA
+          # DD+ Atmos (streaming, compatible with Q800D)
           {
-            trash_ids = ["496f355514737f7d83bf7aa4d24f8169" "2f22d89048b01681dde8afe203bf2e95"];
+            trash_ids = ["417804f7f2c4308c1f4c5d380d4c4475"];
             quality_profiles = [
               {
-                name = "4K WEB";
-                score = 6000;
+                name = "4K + HD Fallback";
+                score = 8500;
+              }
+            ];
+          }
+          # DTS:X
+          {
+            trash_ids = ["3cafb66171b47f226146a0770576870f"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 8000;
+              }
+            ];
+          }
+          # TrueHD (lossless 5.1/7.1)
+          {
+            trash_ids = ["496f355514737f7d83bf7aa4d24f8169"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 7000;
+              }
+            ];
+          }
+          # DTS-HD MA (lossless 5.1/7.1)
+          {
+            trash_ids = ["2f22d89048b01681dde8afe203bf2e95"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 6500;
+              }
+            ];
+          }
+          # DD+ 5.1 / DTS 5.1 (standard fallback)
+          {
+            trash_ids = ["185f1dd7264c4562b9022d963ac37424" "1c1a4c5e823891c75bc50380a6866f73"];
+            quality_profiles = [
+              {
+                name = "4K + HD Fallback";
+                score = 500;
               }
             ];
           }
@@ -286,7 +363,7 @@ in {
             trash_ids = ["e23edd2482476e595fb990b12e7c609c" "b974a6cd08c1066250f1f177d7aa1225" "dfb86d5941bc9075d6af23b09c2aeecd"];
             quality_profiles = [
               {
-                name = "4K WEB";
+                name = "4K + HD Fallback";
                 score = 5000;
               }
             ];
@@ -296,7 +373,7 @@ in {
             trash_ids = ["ed38b889b31be83fda192888e2286d83" "90a6f9a284dff5103f6346090e6280c8"];
             quality_profiles = [
               {
-                name = "4K WEB";
+                name = "4K + HD Fallback";
                 score = -10000;
               }
             ];
