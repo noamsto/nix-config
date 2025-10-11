@@ -49,8 +49,8 @@ in {
       speed-limit-up-enabled = false;
       speed-limit-down-enabled = false;
 
-      # File permissions for hardlinks
-      umask = "002"; # 664 for files, 775 for directories
+      # File permissions for hardlinks (must be integer, not string)
+      umask = 2; # Creates files as 664 (rw-rw-r--), directories as 775
     };
   };
 
