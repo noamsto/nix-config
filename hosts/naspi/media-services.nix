@@ -18,14 +18,12 @@ in {
   # Add noams user to media group
   users.users.noams.extraGroups = ["media"];
 
-  # Transmission BitTorrent daemon with Flood UI
+  # Transmission BitTorrent daemon
   services.transmission = {
     enable = true;
     user = "transmission";
     group = "media";
     home = "/var/lib/transmission";
-    # Use Flood as the web interface
-    webHome = pkgs.flood-for-transmission;
     settings = {
       # Web interface settings
       rpc-enabled = true;
@@ -98,6 +96,14 @@ in {
   # 4. Settings > Radarr > Add connection (http://localhost:7878)
   # 5. Settings > Providers > Add subtitle providers (OpenSubtitles, etc.)
 
+  # Flood - Modern Web UI for Transmission
+  services.flood = {
+    enable = true;
+    host = "0.0.0.0";
+    port = 3000;
+    openFirewall = true;
+  };
+
   # Create TRaSH Guides compliant directory structure
   # This follows the recommended structure for hardlinks and atomic moves
   systemd.tmpfiles.rules = [
@@ -123,7 +129,8 @@ in {
 
   # Network configuration for services
   networking.firewall.allowedTCPPorts = [
-    9091 # Transmission (with Flood UI)
+    9091 # Transmission RPC
+    # 3000 - Flood (opened by services.flood.openFirewall)
   ];
 
   # Additional packages for media management
