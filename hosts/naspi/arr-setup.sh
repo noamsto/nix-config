@@ -96,8 +96,8 @@ check_download_client() {
   echo "$response" | jq -e ".[] | select(.name == \"$name\")" &>/dev/null
 }
 
-# Add Transmission download client
-add_transmission_client() {
+# Add Transmission download client for Sonarr
+add_transmission_client_sonarr() {
   local url=$1
   local api_key=$2
   local name=$3
@@ -108,9 +108,9 @@ add_transmission_client() {
     return 0
   fi
 
-  log "Adding Transmission download client: $name"
+  log "Adding Transmission download client for Sonarr: $name"
 
-  # Transmission client configuration
+  # Transmission client configuration for Sonarr
   local client_config
   client_config=$(
     cat <<EOF
@@ -155,6 +155,65 @@ EOF
   fi
 }
 
+# Add Transmission download client for Radarr
+add_transmission_client_radarr() {
+  local url=$1
+  local api_key=$2
+  local name=$3
+  local category=$4
+
+  if check_download_client "$url" "$api_key" "$name"; then
+    log "Download client already exists: $name"
+    return 0
+  fi
+
+  log "Adding Transmission download client for Radarr: $name"
+
+  # Transmission client configuration for Radarr
+  local client_config
+  client_config=$(
+    cat <<EOF
+{
+  "enable": true,
+  "protocol": "torrent",
+  "priority": 1,
+  "removeCompletedDownloads": true,
+  "removeFailedDownloads": true,
+  "name": "$name",
+  "fields": [
+    {"name": "host", "value": "$TRANSMISSION_HOST"},
+    {"name": "port", "value": $TRANSMISSION_PORT},
+    {"name": "useSsl", "value": false},
+    {"name": "urlBase", "value": "/transmission/"},
+    {"name": "username", "value": ""},
+    {"name": "password", "value": ""},
+    {"name": "movieCategory", "value": "$category"},
+    {"name": "movieImportedCategory", "value": ""},
+    {"name": "movieDirectory", "value": ""},
+    {"name": "recentMoviePriority", "value": 0},
+    {"name": "olderMoviePriority", "value": 0},
+    {"name": "addPaused", "value": false}
+  ],
+  "implementationName": "Transmission",
+  "implementation": "Transmission",
+  "configContract": "TransmissionSettings",
+  "infoLink": "https://wiki.servarr.com/radarr/supported#transmission",
+  "tags": []
+}
+EOF
+  )
+
+  if curl -s -X POST "$url/api/v3/downloadclient" \
+    -H "Content-Type: application/json" \
+    -H "X-Api-Key: $api_key" \
+    -d "$client_config" >/dev/null; then
+    log "Successfully added download client: $name"
+  else
+    log "ERROR: Failed to add download client: $name"
+    return 1
+  fi
+}
+
 # Main configuration
 main() {
   log "Starting Radarr and Sonarr configuration..."
@@ -183,12 +242,12 @@ main() {
   # Configure Radarr
   log "Configuring Radarr..."
   add_root_folder "$RADARR_URL" "$RADARR_API_KEY" "/media/storage/movies" "Movies"
-  add_transmission_client "$RADARR_URL" "$RADARR_API_KEY" "Transmission" "movies"
+  add_transmission_client_radarr "$RADARR_URL" "$RADARR_API_KEY" "Transmission" "movies"
 
   # Configure Sonarr
   log "Configuring Sonarr..."
   add_root_folder "$SONARR_URL" "$SONARR_API_KEY" "/media/storage/tv" "TV Shows"
-  add_transmission_client "$SONARR_URL" "$SONARR_API_KEY" "Transmission" "tv"
+  add_transmission_client_sonarr "$SONARR_URL" "$SONARR_API_KEY" "Transmission" "tv"
 
   # Export API keys for recyclarr (separate files for secret substitution)
   echo -n "$RADARR_API_KEY" >/var/lib/recyclarr/.env-radarr-api-key
