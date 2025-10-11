@@ -30,7 +30,10 @@ in {
       rpc-bind-address = "0.0.0.0";
       rpc-port = 9091;
       rpc-whitelist-enabled = false;
-      rpc-authentication-required = false;
+      # Basic auth for RPC (Flood, Sonarr, Radarr)
+      rpc-authentication-required = true;
+      rpc-username = "transmission";
+      rpc-password = "{69e72f006d6a4381e2bb5a366e898424f5eb4283TlbJrA4V"; # "transmission"
 
       # Download settings - TRaSH Guides structure
       download-dir = "/data/torrents/complete";
