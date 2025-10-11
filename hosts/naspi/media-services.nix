@@ -31,9 +31,10 @@ in {
       rpc-port = 9091;
       rpc-whitelist-enabled = false;
       # Basic auth for RPC (Flood, Sonarr, Radarr)
+      # Password will be automatically hashed by Transmission on first start
       rpc-authentication-required = true;
       rpc-username = "transmission";
-      rpc-password = "{69e72f006d6a4381e2bb5a366e898424f5eb4283TlbJrA4V"; # "transmission"
+      rpc-password = "transmission";
 
       # Download settings - TRaSH Guides structure
       download-dir = "/data/torrents/complete";
