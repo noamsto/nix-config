@@ -12,7 +12,7 @@
 in {
   # Create media group for shared access
   users.groups.media = {
-    gid = 995;
+    gid = 985; # Avoid conflict with nscd (995)
   };
 
   # Add noams user to media group
