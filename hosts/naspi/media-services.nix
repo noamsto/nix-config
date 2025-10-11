@@ -37,11 +37,12 @@ in {
       rpc-password = "transmission";
 
       # Download settings - TRaSH Guides structure
-      download-dir = "/data/torrents/complete";
+      # On same filesystem as /media/storage for hardlink support
+      download-dir = "/media/torrents/complete";
       incomplete-dir-enabled = true;
-      incomplete-dir = "/data/torrents/incomplete";
+      incomplete-dir = "/media/torrents/incomplete";
       watch-dir-enabled = true;
-      watch-dir = "/data/torrents/watch";
+      watch-dir = "/media/torrents/watch";
 
       # Performance settings
       peer-limit-global = 200;
@@ -109,18 +110,18 @@ in {
   };
 
   # Create TRaSH Guides compliant directory structure
-  # This follows the recommended structure for hardlinks and atomic moves
+  # All on rpool/media for hardlink support (same filesystem)
   systemd.tmpfiles.rules = [
-    # Torrent directories (download client) - on rpool/data
-    "d /data/torrents 0775 transmission media - -"
-    "d /data/torrents/complete 0775 transmission media - -"
-    "d /data/torrents/incomplete 0775 transmission media - -"
-    "d /data/torrents/watch 0775 transmission media - -"
+    # Torrent directories (download client) - managed by ZFS dataset rpool/media/torrents
+    "d /media/torrents 0775 transmission media - -"
+    "d /media/torrents/complete 0775 transmission media - -"
+    "d /media/torrents/incomplete 0775 transmission media - -"
+    "d /media/torrents/watch 0775 transmission media - -"
 
     # Torrent category subdirectories
-    "d /data/torrents/complete/tv 0775 transmission media - -"
-    "d /data/torrents/complete/movies 0775 transmission media - -"
-    "d /data/torrents/complete/music 0775 transmission media - -"
+    "d /media/torrents/complete/tv 0775 transmission media - -"
+    "d /media/torrents/complete/movies 0775 transmission media - -"
+    "d /media/torrents/complete/music 0775 transmission media - -"
 
     # Media library directories (Plex/Jellyfin/Emby) - on rpool/media
     "d /media/storage/tv 0775 root media - -"
