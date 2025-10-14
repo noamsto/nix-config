@@ -7,7 +7,6 @@
     inputs.vicinae.homeManagerModules.default # enable Home Manager
   ];
   home.packages = with pkgs; [
-    inputs.vicinae.packages.${pkgs.system}.default
     libqalculate
   ];
   services.vicinae = {

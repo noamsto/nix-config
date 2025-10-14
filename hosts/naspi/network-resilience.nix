@@ -39,6 +39,7 @@
         RestartSec = "30s";
         StartLimitBurst = 100;
         StartLimitIntervalSec = 3600;
+        UMask = "0002"; # Create directories with 775 permissions
       };
     };
 
@@ -50,6 +51,7 @@
         RestartSec = "30s";
         StartLimitBurst = 100;
         StartLimitIntervalSec = 3600;
+        UMask = "0002"; # Create directories with 775 permissions
       };
     };
 
