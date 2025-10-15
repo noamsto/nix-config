@@ -14,9 +14,10 @@
   # Network configuration - minimal systemd-networkd for headless server
   networking.useNetworkd = true;
   networking.useDHCP = false;
+  networking.enableIPv6 = false; # Disable IPv6 to avoid connectivity issues
   networking.firewall.allowedTCPPorts = [22];
 
-  # Configure all interfaces to use DHCP
+  # Configure all interfaces to use DHCP (IPv4 only, IPv6 disabled)
   systemd.network = {
     enable = true;
     networks = {
@@ -24,21 +25,19 @@
       "10-ethernet" = {
         matchConfig.Name = "eth* en*";
         networkConfig = {
-          DHCP = "yes";
-          IPv6AcceptRA = true;
+          DHCP = "ipv4";
+          IPv6AcceptRA = false;
         };
         dhcpV4Config.RouteMetric = 100;
-        dhcpV6Config.RouteMetric = 100;
       };
       # WiFi interface (if present)
       "20-wireless" = {
         matchConfig.Name = "wlan*";
         networkConfig = {
-          DHCP = "yes";
-          IPv6AcceptRA = true;
+          DHCP = "ipv4";
+          IPv6AcceptRA = false;
         };
         dhcpV4Config.RouteMetric = 200;
-        dhcpV6Config.RouteMetric = 200;
       };
     };
   };

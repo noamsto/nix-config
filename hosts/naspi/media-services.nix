@@ -44,11 +44,35 @@ in {
       watch-dir-enabled = true;
       watch-dir = "/media/storage/torrents/watch";
 
+      # Network settings
+      peer-port = 51414; # Port for incoming peer connections (must match router port forwarding)
+      port-forwarding-enabled = true; # Enable UPnP/NAT-PMP
+
       # Performance settings
       peer-limit-global = 200;
       peer-limit-per-torrent = 50;
-      speed-limit-up-enabled = false;
+
+      # Speed limits with scheduling for 1Gb/100Mb connection
+      # Peak hours (7 AM - 11:59 PM Israel time): Conservative limits to leave bandwidth for others
+      # Off-peak (11:59 PM - 7 AM): Full speed
+      speed-limit-up-enabled = false; # Disabled when not in alt-speed mode
       speed-limit-down-enabled = false;
+
+      alt-speed-enabled = false; # Controlled by schedule
+      alt-speed-up = 3000; # 3 MB/s (~24 Mbps) upload during peak - leaves ~76 Mbps for others
+      alt-speed-down = 50000; # 50 MB/s (~400 Mbps) download during peak - leaves ~600 Mbps for others
+
+      alt-speed-time-enabled = true;
+      alt-speed-time-day = 127; # All days (bitmask: Sun=1, Mon=2, ..., Sat=64, total=127)
+      alt-speed-time-begin = 420; # 7:00 AM (7*60 = 420 minutes)
+      alt-speed-time-end = 1439; # 11:59 PM (23*60 + 59 = 1439 minutes)
+      # Note: Uses system timezone (Asia/Jerusalem) configured in nixos/core/locale.nix
+
+      # Seeding limits - stop torrents after reasonable sharing
+      ratio-limit-enabled = true;
+      ratio-limit = 2.0; # Stop after uploading 2x what was downloaded
+      idle-seeding-limit-enabled = true;
+      idle-seeding-limit = 30; # Stop after 30 minutes of no activity
 
       # File permissions for hardlinks (must be integer, not string)
       umask = 2; # Creates files as 664 (rw-rw-r--), directories as 775
@@ -133,14 +157,19 @@ in {
   ];
 
   # Network configuration for services
-  networking.firewall.allowedTCPPorts = [
-    9091 # Transmission RPC
-    # 3000 - Flood (opened by services.flood.openFirewall)
-  ];
+  networking.firewall = {
+    allowedTCPPorts = [
+      9091 # Transmission RPC
+      51414 # Transmission peer connections
+      # 3000 - Flood (opened by services.flood.openFirewall)
+    ];
+    allowedUDPPorts = [
+      51414 # Transmission peer connections (DHT, uTP)
+    ];
+  };
 
   # Additional packages for media management
   environment.systemPackages = with pkgs; [
-    transmission-remote-gtk # GUI client
     mediainfo # Media file information
     ffmpeg # Media processing
     unrar # RAR extraction
@@ -402,6 +431,9 @@ in {
     radarr.after = ["local-fs.target"];
     prowlarr.after = ["local-fs.target"];
     bazarr.after = ["local-fs.target"];
+
+    # Add mediainfo to Flood's PATH
+    flood.path = with pkgs; [mediainfo ffmpeg];
 
     # Arr services initial configuration via API
     arr-setup = {

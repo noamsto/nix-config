@@ -1,4 +1,9 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   # Set your time zone.
   time.timeZone = "Asia/Jerusalem";
 
@@ -20,8 +25,9 @@
     LC_TIME = "en_IL";
   };
 
+  # Only install fonts on desktop/laptop machines (not servers)
   # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
-  fonts = {
+  fonts = lib.mkIf (config.machine.type != "server") {
     # use fonts specified by user rather than default ones
     enableDefaultPackages = false;
     fontDir.enable = true;
