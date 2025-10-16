@@ -65,7 +65,7 @@ in {
       alt-speed-time-enabled = true;
       alt-speed-time-day = 127; # All days (bitmask: Sun=1, Mon=2, ..., Sat=64, total=127)
       alt-speed-time-begin = 420; # 7:00 AM (7*60 = 420 minutes)
-      alt-speed-time-end = 1439; # 11:59 PM (23*60 + 59 = 1439 minutes)
+      alt-speed-time-end = 1425; # 11:45 PM (23*60 + 45 = 1425 minutes)
       # Note: Uses system timezone (Asia/Jerusalem) configured in nixos/core/locale.nix
 
       # Seeding limits - stop torrents after reasonable sharing

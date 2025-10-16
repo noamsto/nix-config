@@ -51,13 +51,17 @@
       # 1Password
       "float, class:^(1Password|1password|com.1password.1Password)$"
       "center, class:^(1Password|1password|com.1password.1Password)$"
-      "size 1000 700, class:^(1Password|1password|com.1password.1Password)$"
       "immediate, class:^(1Password|1password|com.1password.1Password)$"
 
       # 1Password Quick Access
       "float, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
       "center, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
       "size 400 500, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
+
+      # 1Password unlock/authentication window
+      "float, class:^(1Password|1password|com.1password.1Password)$,title:^(1Password)$"
+      "center, class:^(1Password|1password|com.1password.1Password)$,title:^(1Password)$"
+      "size 600 400, class:^(1Password|1password|com.1password.1Password)$,title:^(1Password)$"
 
       # 1Password menus and popups
       "float, class:^(1Password|1password|com.1password.1Password)$,title:^$"
