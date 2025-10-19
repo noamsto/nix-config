@@ -1,116 +1,116 @@
 return {
-  "yetone/avante.nvim",
-
-  event = "VeryLazy",
-  lazy = false,
-  version = false,
-  build = "make",
-
-  config = function(_, opts)
-    require("avante").setup(opts)
-    local wk = require("which-key")
-    wk.add({ "<leader>a", group = "Avante", mode = { "v", "n" }, icon = { icon = "󰧑", color = "orange" } })
-  end,
-
-  opts = {
-    provider = "claude",
-    auto_suggestions_provider = "claude", -- Force suggestions to use Claude
-    behaviour = {
-      auto_suggestions = false, -- Disable auto suggestions if you don't want fallback behavior
-    },
-    providers = {
-      claude = {
-        endpoint = "https://api.anthropic.com",
-        model = "claude-sonnet-4-5-20250929",
-        timeout = 30000, -- Timeout in milliseconds
-        extra_request_body = {
-          max_tokens = 20480,
-        },
-      },
-    },
-    selector = {
-      provider = "snacks",
-      exclude_auto_select = { "NvimTree", "neo-tree" },
-      provider_opts = {
-        format = function(item, picker)
-          -- Override format to avoid nil opts error
-          -- This ensures compatibility with current Snacks API
-          local count = picker:count()
-          local ret = {}
-          local idx = tostring(item.idx)
-          idx = (" "):rep(#tostring(count) - #idx) .. idx
-          table.insert(ret, { idx .. ".", "SnacksPickerIdx" })
-          table.insert(ret, { " " })
-          table.insert(ret, { item.text or item.formatted or "", "Normal" })
-          return ret
-        end,
-      },
-    },
-    windows = {
-      width = 35, -- Wider sidebar (default is 30)
-      input = {
-        height = 12, -- Larger input section
-      },
-      sidebar_header = {
-        enabled = true,
-        align = "center",
-        rounded = true,
-      },
-    },
-    system_prompt = function()
-      local ok, mcphub = pcall(require, "mcphub")
-      if not ok then
-        return ""
-      end
-
-      local hub = mcphub.get_hub_instance and mcphub.get_hub_instance()
-      return hub and hub.get_active_servers_prompt and hub:get_active_servers_prompt() or ""
-    end,
-    custom_tools = function()
-      local ok, mcphub_avante = pcall(require, "mcphub.extensions.avante")
-      if not ok or not mcphub_avante.mcp_tool then
-        return {}
-      end
-
-      return {
-        mcphub_avante.mcp_tool(),
-      }
-    end,
-  },
-
-  dependencies = {
-    "nvim-treesitter/nvim-treesitter",
-    "nvim-lua/plenary.nvim",
-    "MunifTanjim/nui.nvim",
-    "ravitemer/mcphub.nvim", -- Load mcphub first
-    --- The below dependencies are optional,
-    "nvim-mini/mini.icons",
-    {
-      -- support for image pasting
-      "HakonHarnes/img-clip.nvim",
-      event = "VeryLazy",
-      opts = {
-        -- recommended settings
-        default = {
-          embed_image_as_base64 = false,
-          prompt_for_file_name = false,
-          drag_and_drop = {
-            insert_mode = true,
-          },
-        },
-      },
-    },
-    {
-      -- Make sure to set this up properly if you have lazy=true
-      "OXY2DEV/markview.nvim",
-      opts = {
-        preview = {
-          filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "Avante" },
-          ignore_buftypes = {},
-        },
-        max_length = 99999,
-      },
-      ft = { "markdown", "Avante" },
-    },
-  },
+  -- "yetone/avante.nvim",
+  --
+  -- event = "VeryLazy",
+  -- lazy = false,
+  -- version = false,
+  -- build = "make",
+  --
+  -- config = function(_, opts)
+  --   require("avante").setup(opts)
+  --   local wk = require("which-key")
+  --   wk.add({ "<leader>a", group = "Avante", mode = { "v", "n" }, icon = { icon = "󰧑", color = "orange" } })
+  -- end,
+  --
+  -- opts = {
+  --   provider = "claude",
+  --   auto_suggestions_provider = "claude", -- Force suggestions to use Claude
+  --   behaviour = {
+  --     auto_suggestions = false, -- Disable auto suggestions if you don't want fallback behavior
+  --   },
+  --   providers = {
+  --     claude = {
+  --       endpoint = "https://api.anthropic.com",
+  --       model = "claude-sonnet-4-5-20250929",
+  --       timeout = 30000, -- Timeout in milliseconds
+  --       extra_request_body = {
+  --         max_tokens = 20480,
+  --       },
+  --     },
+  --   },
+  --   selector = {
+  --     provider = "snacks",
+  --     exclude_auto_select = { "NvimTree", "neo-tree" },
+  --     provider_opts = {
+  --       format = function(item, picker)
+  --         -- Override format to avoid nil opts error
+  --         -- This ensures compatibility with current Snacks API
+  --         local count = picker:count()
+  --         local ret = {}
+  --         local idx = tostring(item.idx)
+  --         idx = (" "):rep(#tostring(count) - #idx) .. idx
+  --         table.insert(ret, { idx .. ".", "SnacksPickerIdx" })
+  --         table.insert(ret, { " " })
+  --         table.insert(ret, { item.text or item.formatted or "", "Normal" })
+  --         return ret
+  --       end,
+  --     },
+  --   },
+  --   windows = {
+  --     width = 35, -- Wider sidebar (default is 30)
+  --     input = {
+  --       height = 12, -- Larger input section
+  --     },
+  --     sidebar_header = {
+  --       enabled = true,
+  --       align = "center",
+  --       rounded = true,
+  --     },
+  --   },
+  --   system_prompt = function()
+  --     local ok, mcphub = pcall(require, "mcphub")
+  --     if not ok then
+  --       return ""
+  --     end
+  --
+  --     local hub = mcphub.get_hub_instance and mcphub.get_hub_instance()
+  --     return hub and hub.get_active_servers_prompt and hub:get_active_servers_prompt() or ""
+  --   end,
+  --   custom_tools = function()
+  --     local ok, mcphub_avante = pcall(require, "mcphub.extensions.avante")
+  --     if not ok or not mcphub_avante.mcp_tool then
+  --       return {}
+  --     end
+  --
+  --     return {
+  --       mcphub_avante.mcp_tool(),
+  --     }
+  --   end,
+  -- },
+  --
+  -- dependencies = {
+  --   "nvim-treesitter/nvim-treesitter",
+  --   "nvim-lua/plenary.nvim",
+  --   "MunifTanjim/nui.nvim",
+  --   "ravitemer/mcphub.nvim", -- Load mcphub first
+  --   --- The below dependencies are optional,
+  --   "nvim-mini/mini.icons",
+  --   {
+  --     -- support for image pasting
+  --     "HakonHarnes/img-clip.nvim",
+  --     event = "VeryLazy",
+  --     opts = {
+  --       -- recommended settings
+  --       default = {
+  --         embed_image_as_base64 = false,
+  --         prompt_for_file_name = false,
+  --         drag_and_drop = {
+  --           insert_mode = true,
+  --         },
+  --       },
+  --     },
+  --   },
+  --   {
+  --     -- Make sure to set this up properly if you have lazy=true
+  --     "OXY2DEV/markview.nvim",
+  --     opts = {
+  --       preview = {
+  --         filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "Avante" },
+  --         ignore_buftypes = {},
+  --       },
+  --       max_length = 99999,
+  --     },
+  --     ft = { "markdown", "Avante" },
+  --   },
+  -- },
 }

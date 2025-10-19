@@ -6,11 +6,13 @@
     ./zfs-system.nix
     ./xscript.nix
     ./media-services.nix
+    ./paperless.nix
     ./monitoring.nix
     ./tailscale.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
     ../../nixos/core/locale.nix
+    ../../secrets
   ];
 
   # Configuration options

@@ -11,9 +11,9 @@ inputs: [
     };
   })
 
-  (final: _: {
-    fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
-  })
+  # (final: _: {
+  #   fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
+  # })
 
   # Override nix-search-tv with flake version
   (final: _: {

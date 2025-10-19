@@ -177,9 +177,13 @@ else
   # Get active window geometry as default
   active_geometry=$(hyprctl -j activewindow | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' 2>/dev/null)
 
+  # Get monitor geometries
+  active_monitor_geometry=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | "\(.x),\(.y) \(.width)x\(.height)"')
+  all_monitors_geometry=$(hyprctl monitors -j 2>/dev/null | jq -r 'map({x: .x, y: .y, w: .width, h: .height}) | (map(.x) | min) as $min_x | (map(.y) | min) as $min_y | (map(.x + .w) | max) as $max_x | (map(.y + .h) | max) as $max_y | "\($min_x),\($min_y) \($max_x - $min_x)x\($max_y - $min_y)"')
+
   # Show selection menu
   if [ -n "$active_geometry" ] && [ "$active_geometry" != "null,null 0x0" ]; then
-    selection=$(printf "Active Window\nSelect Area" | walker --dmenu -p "Record ${record_type^^}")
+    selection=$(printf "Active Window\nSelect Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
 
     # Wait for walker to fully close before proceeding
     sleep 0.5
@@ -191,13 +195,37 @@ else
     "Select Area")
       geometry=$(slurp 2>/dev/null)
       ;;
+    "Active Monitor")
+      geometry="$active_monitor_geometry"
+      ;;
+    "All Monitors")
+      geometry="$all_monitors_geometry"
+      ;;
     *)
       exit 0
       ;;
     esac
   else
-    # No active window, go straight to area selection
-    geometry=$(slurp 2>/dev/null)
+    # No active window, show all options except Active Window
+    selection=$(printf "Select Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
+
+    # Wait for walker to fully close before proceeding
+    sleep 0.5
+
+    case "$selection" in
+    "Select Area")
+      geometry=$(slurp 2>/dev/null)
+      ;;
+    "Active Monitor")
+      geometry="$active_monitor_geometry"
+      ;;
+    "All Monitors")
+      geometry="$all_monitors_geometry"
+      ;;
+    *)
+      exit 0
+      ;;
+    esac
   fi
 
   if [ -n "$geometry" ]; then
