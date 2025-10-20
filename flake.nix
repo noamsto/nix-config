@@ -95,7 +95,6 @@
     # Pinned versions for stability - update quarterly
 
     walker.url = "github:abenz1267/walker";
-
     vicinae.url = "github:vicinaehq/vicinae";
 
     catppuccin = {

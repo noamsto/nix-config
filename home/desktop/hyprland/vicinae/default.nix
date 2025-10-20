@@ -18,11 +18,11 @@
       popToRootOnClose = false;
       closeOnFocusLost = true;
       rootSearch.searchFiles = false;
-      theme.name = "catppuccin-mocha";
+      # theme.name = "catppuccin-mocha";
       window = {
         csd = true;
-        opacity = 0.90;
-        rounding = 8;
+        opacity = 0.95;
+        rounding = 10;
       };
     };
   };

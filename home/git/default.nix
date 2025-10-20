@@ -15,22 +15,20 @@ in {
   programs.git = {
     enable = true;
 
-    userName = osConfig.user-full-name;
-    userEmail = osConfig.email;
-    delta = {
-      enable = true;
-    };
-
     signing = {
       format = "ssh";
       signByDefault = true;
     };
     extraConfig = {
+      user = {
+        name = osConfig.user-full-name;
+        email = osConfig.email;
+        signingkey = signKey;
+      };
       init = {
         defaultBranch = "main";
       };
       gpg.ssh.allowedSignersFile = "~/.config/git/allowed_signers";
-      user.signingkey = signKey;
       merge = {
         conflictstyle = "diff3";
       };
@@ -95,5 +93,10 @@ in {
       "**/.venv"
       ".icon"
     ];
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
   };
 }

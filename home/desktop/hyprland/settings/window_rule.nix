@@ -27,8 +27,10 @@
     in [
       "blur, ${toRegex blurred}"
       "xray 1, ${toRegex ["bar"]}"
+      "ignorealpha 0, vicinae" # Vicinae-specific: more aggressive alpha ignore (per docs)
       "ignorealpha 0.5, ${toRegex (highopacity ++ ["music"])}"
       "ignorealpha 0.2, ${toRegex lowopacity}"
+      "noanim, vicinae" # Vicinae-specific: disable fade animations for snappier feel (per docs)
     ];
 
     # window rules
