@@ -84,32 +84,32 @@ in {
     enable = true;
     group = "media";
     openFirewall = true;
-    settings = {
-      update = {
-        mechanism = "external"; # Updates managed by NixOS
-        automatically = false; # Disable built-in auto-update
-      };
-    };
   };
+  # Note: Sonarr URL Base must be configured via web UI or config.xml:
+  # 1. Navigate to http://naspi/sonarr (or http://naspi:8989)
+  # 2. Settings > General > URL Base: set to "/sonarr" (without quotes)
+  # 3. Restart Sonarr service after changing
 
   # Radarr - Movie automation
   services.radarr = {
     enable = true;
     group = "media";
     openFirewall = true;
-    settings = {
-      update = {
-        mechanism = "external"; # Updates managed by NixOS
-        automatically = false; # Disable built-in auto-update
-      };
-    };
   };
+  # Note: Radarr URL Base must be configured via web UI or config.xml:
+  # 1. Navigate to http://naspi/radarr (or http://naspi:7878)
+  # 2. Settings > General > URL Base: set to "/radarr" (without quotes)
+  # 3. Restart Radarr service after changing
 
   # Prowlarr - Indexer manager
   services.prowlarr = {
     enable = true;
     openFirewall = true;
   };
+  # Note: Prowlarr URL Base must be configured via web UI:
+  # 1. Navigate to http://naspi/prowlarr (or http://naspi:9696)
+  # 2. Settings > General > URL Base: set to "/prowlarr" (without quotes)
+  # 3. Restart Prowlarr service after changing
 
   # Bazarr - Subtitle manager
   services.bazarr = {
@@ -119,11 +119,12 @@ in {
     openFirewall = true;
   };
   # Note: Bazarr requires manual configuration via web UI:
-  # 1. Navigate to http://naspi:6767
-  # 2. Settings > Languages > Add Hebrew (he) as subtitle language
-  # 3. Settings > Sonarr > Add connection (http://localhost:8989)
-  # 4. Settings > Radarr > Add connection (http://localhost:7878)
-  # 5. Settings > Providers > Add subtitle providers (OpenSubtitles, etc.)
+  # 1. Navigate to http://naspi/bazarr (or http://naspi:6767)
+  # 2. Settings > General > URL Base: set to "/bazarr" (without quotes)
+  # 3. Settings > Languages > Add Hebrew (he) as subtitle language
+  # 4. Settings > Sonarr > Add connection (http://localhost:8989/sonarr)
+  # 5. Settings > Radarr > Add connection (http://localhost:7878/radarr)
+  # 6. Settings > Providers > Add subtitle providers (OpenSubtitles, etc.)
 
   # Flood - Modern Web UI for Transmission
   services.flood = {

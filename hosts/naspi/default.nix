@@ -6,9 +6,15 @@
     ./system.nix
     ./xscript.nix
     ./media-services.nix
+    ./paperless.nix
+    ./monitoring.nix
+    ./tailscale.nix
     ./network-resilience.nix
+    ./reverse-proxy.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
+    ../../nixos/core/locale.nix
+    ../../secrets
   ];
 
   # Configuration options
@@ -16,6 +22,47 @@
   machine.type = "server";
   profile = "personal";
 
-  # Additional nvmd pattern settings
+  # Additional settings for ZFS system
   boot.tmp.useTmpfs = true;
+
+  # Enable needed services for NAS functionality
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      domain = true;
+      hinfo = true;
+      userServices = true;
+      workstation = true;
+    };
+
+    # Announce NFS and Samba shares for auto-discovery
+    extraServiceFiles = {
+      nfs = ''
+        <?xml version="1.0" standalone='no'?>
+        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+        <service-group>
+          <name replace-wildcards="yes">%h NFS</name>
+          <service>
+            <type>_nfs._tcp</type>
+            <port>2049</port>
+          </service>
+        </service-group>
+      '';
+
+      smb = ''
+        <?xml version="1.0" standalone='no'?>
+        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+        <service-group>
+          <name replace-wildcards="yes">%h SMB</name>
+          <service>
+            <type>_smb._tcp</type>
+            <port>445</port>
+          </service>
+        </service-group>
+      '';
+    };
+  };
 }

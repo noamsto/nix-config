@@ -57,22 +57,21 @@
         http_addr = "0.0.0.0";
         http_port = 3001;
         domain = "naspi.local";
+        # Enable subfolder access via /grafana
+        root_url = "http://naspi.local/grafana/";
+        serve_from_sub_path = true;
       };
 
       # Security settings
       security = {
         admin_user = "admin";
         admin_password = "admin"; # CHANGE THIS after first login!
+        allow_embedding = true;
       };
 
       # Anonymous access disabled for security
       "auth.anonymous" = {
         enabled = false;
-      };
-
-      # Allow embedding
-      security = {
-        allow_embedding = true;
       };
     };
 

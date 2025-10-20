@@ -23,9 +23,9 @@ in {
         };
         system = "aarch64-linux";
         modules = [
-          ../hosts/naspi/default-zfs.nix
+          ../hosts/naspi
           inputs.disko.nixosModules.disko
-          ../hosts/naspi/disko-zfs.nix
+          ../hosts/naspi/disko.nix
         ];
       };
 

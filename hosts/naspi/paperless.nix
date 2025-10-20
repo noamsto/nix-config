@@ -31,7 +31,11 @@
 
       # Network configuration
       PAPERLESS_ALLOWED_HOSTS = "naspi.local,naspi,localhost,127.0.0.1,192.168.3.6";
-      PAPERLESS_URL = "http://naspi.local:28981";
+      PAPERLESS_URL = "http://naspi.local/paperless";
+
+      # Enable subfolder access via /paperless
+      PAPERLESS_FORCE_SCRIPT_NAME = "/paperless";
+      PAPERLESS_STATIC_URL = "/paperless/static/";
 
       # OCR optimization settings
       PAPERLESS_OCR_USER_ARGS = {
