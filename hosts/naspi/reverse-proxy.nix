@@ -13,8 +13,8 @@
       locations = {
         # Root redirect to a simple status page
         "/" = {
-          return = "200 'NasPi Services: /radarr /sonarr /prowlarr /bazarr /flood /transmission /grafana /paperless'";
           extraConfig = ''
+            return 200 'NasPi Services: /radarr /sonarr /prowlarr /bazarr /flood /transmission /grafana /paperless';
             add_header Content-Type text/plain;
           '';
         };
@@ -75,8 +75,8 @@
           '';
         };
 
-        # Flood - Torrent Web UI
-        "/flood" = {
+        # Flood - Torrent Web UI (using baseuri /flood)
+        "/flood/" = {
           proxyPass = "http://127.0.0.1:3000";
           extraConfig = ''
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -86,6 +86,10 @@
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $http_connection;
+            # Required for Flood event-streams
+            chunked_transfer_encoding off;
+            proxy_buffering off;
+            proxy_cache off;
           '';
         };
 
@@ -105,15 +109,9 @@
 
         # Grafana - Monitoring Dashboard
         "/grafana/" = {
-          proxyPass = "http://127.0.0.1:3001/";
-          extraConfig = ''
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_redirect off;
-          '';
+          proxyPass = "http://127.0.0.1:3001";
+          proxyWebsockets = true;
+          recommendedProxySettings = true;
         };
 
         # Paperless-ngx - Document Management

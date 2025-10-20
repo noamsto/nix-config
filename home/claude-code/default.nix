@@ -49,6 +49,20 @@ in {
           # TAVILY_API_KEY = "your-api-key-here";  # TODO: integrate with agenix
         };
       };
+
+      posthog = {
+        command = "${pkgs.nodejs}/bin/npx";
+        args = [
+          "-y"
+          "mcp-remote@latest"
+          "https://mcp.posthog.com/sse"
+          "--header"
+          "Authorization: Bearer \${POSTHOG_PERSONAL_API_KEY}"
+        ];
+        env = {
+          PATH = "${pkgs.lib.makeBinPath [pkgs.nodejs pkgs.bash pkgs.coreutils]}";
+        };
+      };
     };
   };
 }

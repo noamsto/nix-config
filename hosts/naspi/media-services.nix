@@ -132,6 +132,8 @@ in {
     host = "0.0.0.0";
     port = 3000;
     openFirewall = true;
+    # Enable subfolder access via /flood
+    extraArgs = ["--baseuri" "/flood"];
   };
 
   # Create TRaSH Guides compliant directory structure

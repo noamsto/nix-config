@@ -57,7 +57,7 @@
         http_addr = "0.0.0.0";
         http_port = 3001;
         domain = "naspi.local";
-        # Enable subfolder access via /grafana
+        # Enable subfolder access via /grafana (accessed via nginx on port 80)
         root_url = "http://naspi.local/grafana/";
         serve_from_sub_path = true;
       };
