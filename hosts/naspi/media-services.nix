@@ -48,6 +48,11 @@ in {
       peer-port = 51414; # Port for incoming peer connections (must match router port forwarding)
       port-forwarding-enabled = true; # Enable UPnP/NAT-PMP
 
+      # DHT/PEX/LPD - Essential for magnet links
+      dht-enabled = true; # Distributed Hash Table for trackerless torrents
+      pex-enabled = true; # Peer Exchange for finding peers from other peers
+      lpd-enabled = true; # Local Peer Discovery for LAN peers
+
       # Performance settings
       peer-limit-global = 200;
       peer-limit-per-torrent = 50;

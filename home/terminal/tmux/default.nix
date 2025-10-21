@@ -135,14 +135,17 @@ in {
       set -g allow-passthrough on
       set -g visual-activity off
 
-      # Yazi inside tmux
+      # Preserve terminal environment variables for proper detection
       set -ga update-environment TERM
       set -ga update-environment TERM_PROGRAM
+      set -ga update-environment COLORTERM
 
       # Set escape-time as recomended by nvim
       set -s escape-time 0
 
+      # Enable extended keyboard protocol support
       set -g extended-keys on
+      set -as terminal-features 'xterm-kitty*:extkeys'
       set -s set-clipboard on
       set -s copy-command 'wl-copy'
 

@@ -26,6 +26,13 @@
     username = osConfig.username;
     homeDirectory = "/home/${osConfig.username}";
     stateVersion = "23.05";
+
+    # Fix for AMD Radeon 780M canvas rendering artifacts in Chromium-based browsers
+    # Affects: Chromium, Brave, Chrome, Edge, Vivaldi
+    # Upstream bug: https://issues.chromium.org/40184451
+    sessionVariables = {
+      CHROMIUM_USER_FLAGS = "--disable-accelerated-2d-canvas";
+    };
   };
 
   # Let home Manager install and manage itself.
