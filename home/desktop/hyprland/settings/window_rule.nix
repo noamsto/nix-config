@@ -151,8 +151,8 @@
       "workspace 1 silent, class:^(kitty)$"
 
       # Web browsers - workspace 2
-      "workspace 2 silent, class:^(Brave-browser)$"
-      "workspace 2 silent, class:^(brave-browser)$"
+      # Initial placement only - windows can be moved freely after opening
+      "workspace 2 silent, class:^(brave-browser)$, initialTitle:.*"
       "workspace 2 silent, class:^(chromium)$"
 
       # Productivity and notes - workspace 3

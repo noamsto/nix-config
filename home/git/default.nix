@@ -19,7 +19,7 @@ in {
       format = "ssh";
       signByDefault = true;
     };
-    extraConfig = {
+    settings = {
       user = {
         name = osConfig.user-full-name;
         email = osConfig.email;
