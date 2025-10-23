@@ -22,6 +22,7 @@
       tree = "eza --tree --icons";
       update = "sudo nixos-rebuild switch";
       ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
+      hdm = "hyprdynamicmonitors";
 
       # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
       gsb = "git status -sb";

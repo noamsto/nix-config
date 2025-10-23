@@ -32,4 +32,18 @@ inputs: [
   (final: _: {
     tavily-mcp = inputs.self.packages.${final.system}.tavily-mcp;
   })
+
+  # Brave with Wayland fixes
+  (final: prev: {
+    brave = prev.brave.overrideAttrs (oldAttrs: {
+      buildInputs = (oldAttrs.buildInputs or []) ++ [final.makeWrapper];
+      postFixup =
+        (oldAttrs.postFixup or "")
+        + ''
+          wrapProgram $out/bin/brave \
+            --add-flags "--disable-accelerated-2d-canvas" \
+            --add-flags "--disable-features=WaylandWpColorManagerV1"
+        '';
+    });
+  })
 ]

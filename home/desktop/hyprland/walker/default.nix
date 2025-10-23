@@ -16,7 +16,7 @@
 
     config = {
       # General settings
-      force_keyboard_focus = false;
+      force_keyboard_focus = true;
       close_when_open = true;
       selection_wrap = false;
       global_argument_delimiter = "#";

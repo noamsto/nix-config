@@ -5,8 +5,11 @@ in {
   imports = [./bindings.nix ./window_rule.nix ./animations.nix];
   wayland.windowManager.hyprland = {
     settings = {
+      # Source hyprdynamicmonitors generated config
+      source = ["~/.config/hypr/monitors.conf"];
+
       monitor = [
-        # Fallback for any monitor not configured by kanshi
+        # Fallback for any monitor not configured by hyprdynamicmonitors
         ",preferred,auto,auto"
       ];
       workspace = [
@@ -26,6 +29,16 @@ in {
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
+
+        # Chromium-based browser fixes:
+        # 1. --disable-accelerated-2d-canvas: Fix AMD Radeon 780M PDF rendering artifacts
+        #    Upstream bug: https://issues.chromium.org/40184451
+        # 2. --disable-features=WaylandWpColorManagerV1: Fix crashes when moving between monitors
+        #    Upstream bug: Chrome 141 Wayland regression (fixed in main, Oct 2025)
+        #    Issue: https://github.com/brave/brave-browser/issues/49921
+        "BRAVE_USER_FLAGS,--disable-accelerated-2d-canvas --disable-features=WaylandWpColorManagerV1"
+        "CHROMIUM_USER_FLAGS,--disable-accelerated-2d-canvas --disable-features=WaylandWpColorManagerV1"
+
         "WLR_NO_HARDWARE_CURSORS,1"
       ];
 

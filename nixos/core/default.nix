@@ -57,6 +57,13 @@
     # Trim SSD
     fstrim.enable = true;
     fstrim.interval = "daily";
+
+    # Disable logind lid handling - let hyprdynamicmonitors manage it
+    logind.settings.Login = {
+      HandleLidSwitch = "ignore";
+      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitchDocked = "ignore";
+    };
   };
 
   system.activationScripts.binbash = {

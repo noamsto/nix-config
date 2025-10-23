@@ -15,6 +15,9 @@
 
     vlc
 
+    # 3D modeling and animation
+    blender
+
     # Note taking
     obsidian
 
@@ -38,7 +41,7 @@
     aws-sam-cli
     ssm-session-manager-plugin
 
-    chromium
+    # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
     nur.repos.charmbracelet.crush
     stable.postman # Uses stable for API testing reliability
     ngrok
@@ -119,6 +122,9 @@ in {
       gh
 
       nh
+
+      # Hyprland dynamic monitor management
+      inputs.hyprdynamicmonitors.packages.${pkgs.system}.default
 
       # Better system monitoring
       btop

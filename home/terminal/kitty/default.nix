@@ -102,13 +102,5 @@
       # Allow Ctrl+Shift+- (Ctrl+_) to pass through to shell for undo
       "ctrl+shift+minus" = "no_op";
     };
-
-    # Extra configuration for conditional mappings
-    extraConfig = ''
-      # Multi-line input support for Claude Code
-      # Uses wildcard title matching for tmux compatibility
-      # After rebuild, run Claude Code and execute /terminal-setup
-      map --when-focus-on title:*claude* shift+enter send_text normal,application \\\n
-    '';
   };
 }

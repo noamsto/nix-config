@@ -1,0 +1,5 @@
+{...}: {
+  programs.wleave = {
+    enable = true;
+  };
+}

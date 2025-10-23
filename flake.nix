@@ -91,6 +91,9 @@
       url = "github:xremap/nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
 

@@ -19,7 +19,7 @@
     fzf.enable = true;
     zsh-syntax-highlighting.enable = true;
     fish.enable = true;
-    wlogout.enable = true;
+    # wleave doesn't have catppuccin theme support yet - using custom CSS in wleave.nix
 
     # === DEVELOPMENT TOOLS ===
     delta.enable = true;

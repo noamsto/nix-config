@@ -53,7 +53,7 @@ in {
       "$mainMod ALT, L, exec, hyprlock"
 
       # logout menu
-      "$mainMod, Escape, exec, ${toggle "wlogout" true} -p layer-shell"
+      "$mainMod, Escape, exec, ${toggle "wleave" false} -p layer-shell --no-version-info --show-keybinds=true"
 
       # Move focus with SUPER+hjkl (using SUPER+ALT+L for right to avoid conflict with lock)
       "$mainMod, H, movefocus, l"
@@ -150,6 +150,11 @@ in {
     ];
 
     bindl = [
+      # Lid switch events - unified monitor manager handles all state
+      # Checks actual ACPI state to filter spurious keyboard events
+      ", switch:on:Lid Switch, exec, monitor-manager"
+      ", switch:off:Lid Switch, exec, monitor-manager"
+
       # media controls
       ", XF86AudioPlay, exec, playerctl play-pause"
       ", XF86AudioPrev, exec, playerctl previous"

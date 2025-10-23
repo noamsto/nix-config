@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   imports = [
-    ./kanshi
+    # ./kanshi  # Replaced by hyprdynamicmonitors
+    ./hyprdynamicmonitors
   ];
 
   # Hyprland polkit authentication agent
