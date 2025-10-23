@@ -34,7 +34,7 @@
       initial_window_height = "30c";
 
       # Mouse behavior
-      mouse_hide_while_typing = true;
+      mouse_hide_wait = -1; # Hide cursor immediately when typing
 
       # Shell integration
       shell_integration = "enabled";
@@ -55,7 +55,7 @@
 
       # Wayland-specific scrolling optimizations
       wheel_scroll_multiplier = "3.0";
-      touchpad_scroll_multiplier = "1.5";
+      touch_scroll_multiplier = "1.5";
 
       # Clipboard optimizations for Wayland
       clipboard_control = "write-clipboard write-primary read-clipboard-ask read-primary-ask";
@@ -101,6 +101,9 @@
 
       # Allow Ctrl+Shift+- (Ctrl+_) to pass through to shell for undo
       "ctrl+shift+minus" = "no_op";
+
+      # Claude Code: Map Shift+Enter to Alt+Enter for newlines
+      "shift+enter" = "send_text all \\x1b\\r";
     };
   };
 }

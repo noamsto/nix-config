@@ -76,6 +76,7 @@
       yaml-language-server # YAML
       taplo # TOML
       bash-language-server
+      statix
 
       # === KEY FORMATTERS ===
       rustfmt # Rust formatting

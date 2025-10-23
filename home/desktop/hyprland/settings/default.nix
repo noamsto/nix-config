@@ -71,9 +71,10 @@ in {
 
         touchpad = {
           natural_scroll = true;
-          scroll_factor = 1.0;
+          scroll_factor = 0.6; # Reduced for finer control in 3D viewports
           disable_while_typing = true;
-          "tap-to-click" = true;
+          tap-to-click = true;
+          # Note: clickfinger and drag_lock are configured at system level in nixos/desktop/default.nix
         };
       };
 
@@ -161,30 +162,20 @@ in {
         # explicit_sync is now default in Hyprland 0.50+, no need to configure
       };
 
-      # Gesture settings (Hyprland 0.51+)
-      gestures = {
-        # Distance settings for gesture recognition
-        workspace_swipe_distance = 150; # Reduced from 300 for more responsive swiping
-        workspace_swipe_invert = true;
-        workspace_swipe_min_speed_to_force = 20; # Reduced from 30 for easier triggering
-        workspace_swipe_cancel_ratio = 0.5;
-        workspace_swipe_create_new = true; # Create new workspaces when swiping past the last one
-        workspace_swipe_forever = true;
-
-        # Touch-specific settings
-        workspace_swipe_touch = false; # Disable touchscreen workspace swiping
-        workspace_swipe_touch_invert = false;
-        workspace_swipe_direction_lock = true;
-        workspace_swipe_direction_lock_threshold = 10;
-        workspace_swipe_use_r = false;
-      };
-
-      # New gesture bindings (Hyprland 0.51+)
+      # Gesture bindings (Hyprland 0.51+ new syntax)
+      # Format: fingers, direction, action
+      # Note: Only workspace action is confirmed to work reliably in Hyprland 0.51
       gesture = [
+        # === 3-FINGER GESTURES (Primary Workflow Navigation) ===
+        # Horizontal swipe: Switch workspaces
         "3, horizontal, workspace"
-        # Optional: Additional gestures for different actions
-        # "swipe:4:up:dispatcher:exec:launch-dock"
-        # "swipe:4:down:dispatcher:exec:killall launch-dock"
+
+        # === PINCH GESTURES ===
+        # 2-finger pinch: Passed through to applications (Blender, Bambu Studio, browsers)
+        # This allows native app zoom/rotate functionality
+
+        # Note: Additional gestures can be added using libinput-gestures
+        # See home/desktop/hyprland/services/libinput-gestures.nix
       ];
 
       xwayland.force_zero_scaling = true;
@@ -215,7 +206,7 @@ in {
           bg_col = "rgb(000000)";
 
           enable_gesture = true;
-          gesture_distance = 300;
+          gesture_distance = 250; # More responsive overview activation
           gesture_positive = false;
         };
       };

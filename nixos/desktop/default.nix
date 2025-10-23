@@ -30,6 +30,9 @@
         naturalScrolling = true;
         tapping = true;
         disableWhileTyping = true;
+        # clickMethod: buttonAreas (default) or clickfinger
+        # clickfinger enables: 2-finger = right-click, 3-finger = middle-click
+        clickMethod = "clickfinger";
       };
     };
   };

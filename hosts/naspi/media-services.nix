@@ -160,6 +160,11 @@ in {
     "d /media/storage/movies 0775 root media - -"
     "d /media/storage/music 0775 root media - -"
 
+    # Fix permissions on all media subdirectories recursively
+    # Z+ applies permissions recursively and only if different from specified
+    "Z+ /media/storage/movies - - media 0775 0664"
+    "Z+ /media/storage/tv - - media 0775 0664"
+
     # Recyclarr config symlink
     "L+ /var/lib/recyclarr/recyclarr.yml - - - - /etc/recyclarr/recyclarr.yml"
   ];

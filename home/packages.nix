@@ -38,7 +38,7 @@
     slack
 
     awscli2
-    aws-sam-cli
+    stable.aws-sam-cli
     ssm-session-manager-plugin
 
     # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
@@ -125,6 +125,9 @@ in {
 
       # Hyprland dynamic monitor management
       inputs.hyprdynamicmonitors.packages.${pkgs.system}.default
+
+      # Advanced touchpad gesture support
+      libinput-gestures
 
       # Better system monitoring
       btop

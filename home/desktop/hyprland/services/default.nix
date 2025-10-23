@@ -2,6 +2,7 @@
   imports = [
     # ./kanshi  # Replaced by hyprdynamicmonitors
     ./hyprdynamicmonitors
+    ./libinput-gestures.nix
   ];
 
   # Hyprland polkit authentication agent

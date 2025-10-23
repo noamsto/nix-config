@@ -97,7 +97,11 @@
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
 
-    walker.url = "github:abenz1267/walker";
+    elephant.url = "github:abenz1267/elephant";
+    walker = {
+      url = "github:abenz1267/walker";
+      inputs.elephant.follows = "elephant";
+    };
     vicinae.url = "github:vicinaehq/vicinae";
 
     catppuccin = {
