@@ -178,6 +178,9 @@ in {
       bind s choose-tree -Zs -O name
       bind w choose-tree -Zw -O name
 
+      # Create new session with name prompt
+      bind S command-prompt -p "New session name:" "new-session -s '%%'"
+
       bind-key "K" display-popup -E -w 40% "sesh connect \"$(
       sesh list -i | ${lib.getExe pkgs.gum} filter --no-strip-ansi --limit 1 --no-sort --fuzzy --placeholder 'Pick a sesh' --height 50 --prompt='⚡'
       )\""

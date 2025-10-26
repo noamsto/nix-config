@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Work docked - dual Dell monitors with lid-aware configuration
 
+# Reload Hyprland to apply new monitor configuration
+hyprctl reload
+
 # Check lid state
 LID_STATE=$(cat /proc/acpi/button/lid/LID/state | awk '{print $2}')
 
