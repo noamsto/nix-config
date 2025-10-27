@@ -21,8 +21,8 @@ in {
 
   # Configure hyprdynamicmonitors with systemd integration
   home.hyprdynamicmonitors = {
+    inherit configFile;
     enable = true;
-    configFile = configFile;
     extraFlags = ["--enable-lid-events"];
   };
 

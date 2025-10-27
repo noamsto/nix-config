@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Home docked with lid closed - dual Samsung monitors, laptop screen disabled
 
+# Reload Hyprland to apply new monitor configuration
+hyprctl reload
+
 # Load docked XWayland HiDPI settings (1.0 scale = 96 DPI for external monitors)
 xrdb -merge ~/.Xresources.docked
 

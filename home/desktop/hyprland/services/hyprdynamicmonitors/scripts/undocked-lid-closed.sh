@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Undocked with lid closed - configure then suspend
 
+# Reload Hyprland to apply new monitor configuration
+hyprctl reload
+
 # Load laptop XWayland HiDPI settings (2.0 scale = 192 DPI)
 xrdb -merge ~/.Xresources.laptop
 
