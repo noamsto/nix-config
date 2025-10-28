@@ -17,8 +17,7 @@
   # Enable Qt system-wide for proper QML module resolution
   qt = {
     enable = true;
-    platformTheme = "gnome";
-    style = "adwaita-dark";
+    platformTheme = "kde";
   };
 
   services = {
