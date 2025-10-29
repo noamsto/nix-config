@@ -1,26 +1,28 @@
 {
-  config,
   pkgs,
   lib,
   ...
 }: let
-  # Only include chromium browser, skip firefox and webkit
-  executable = lib.getExe pkgs.chromium;
+  # Statusline script package
+  claude-statusline = pkgs.callPackage ./statusline.nix {};
 in {
+  # Import MCP profiles module (generates conditional MCP configs and aliases)
+  imports = [./mcp-profiles.nix];
   programs.claude-code = {
     enable = true;
     package = pkgs.claude-code;
 
-    mcpServers = {
-      # Packaged servers from mcp-servers-nix (reproducible, offline)
-      playwright = {
-        command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
-        args = [
-          "--executable-path"
-          executable
-        ];
+    # Configure statusline with comprehensive metrics
+    settings = {
+      includeCoAuthoredBy = false;
+      statusLine = {
+        type = "command";
+        command = "${claude-statusline}/bin/claude-statusline";
       };
+    };
 
+    # Base MCPs - always loaded (heavy MCPs loaded via --mcp-config aliases)
+    mcpServers = {
       context7 = {
         command = "${pkgs.context7-mcp}/bin/context7-mcp";
         args = [];
@@ -50,19 +52,10 @@ in {
         };
       };
 
-      posthog = {
-        command = "${pkgs.nodejs}/bin/npx";
-        args = [
-          "-y"
-          "mcp-remote@latest"
-          "https://mcp.posthog.com/sse"
-          "--header"
-          "Authorization: Bearer \${POSTHOG_PERSONAL_API_KEY}"
-        ];
-        env = {
-          PATH = "${pkgs.lib.makeBinPath [pkgs.nodejs pkgs.bash pkgs.coreutils]}";
-        };
-      };
+      # NOTE: Playwright and PostHog MCPs loaded conditionally via aliases:
+      #   claude-frontend - adds Playwright MCP
+      #   claude-analytics - adds PostHog MCP
+      # See mcp-profiles.nix for configuration
     };
   };
 }

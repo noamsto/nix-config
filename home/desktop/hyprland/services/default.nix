@@ -1,6 +1,5 @@
 {pkgs, ...}: {
   imports = [
-    # ./kanshi  # Replaced by hyprdynamicmonitors
     ./hyprdynamicmonitors
     ./libinput-gestures.nix
   ];

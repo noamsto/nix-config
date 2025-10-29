@@ -23,6 +23,7 @@
         pkgs.zsh
         pkgs.nix-output-monitor
         pkgs.just
+        pkgs.statix
 
         # Lightweight development essentials
         pkgs.jq # JSON processing (small and useful)
