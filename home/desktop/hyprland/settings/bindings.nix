@@ -4,7 +4,7 @@
   ...
 }: let
   terminal = "kitty";
-  fileManager = "${lib.getExe pkgs.kdePackages.dolphin}";
+  fileManager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
 
@@ -150,11 +150,6 @@ in {
     ];
 
     bindl = [
-      # Lid switch events - unified monitor manager handles all state
-      # Checks actual ACPI state to filter spurious keyboard events
-      ", switch:on:Lid Switch, exec, monitor-manager"
-      ", switch:off:Lid Switch, exec, monitor-manager"
-
       # media controls
       ", XF86AudioPlay, exec, playerctl play-pause"
       ", XF86AudioPrev, exec, playerctl previous"
