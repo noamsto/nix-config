@@ -19,12 +19,24 @@ get_lid_state() {
 
 # Get enabled monitors (excluding laptop screen if disabled in config)
 get_monitors() {
-  hyprctl monitors -j | jq -r '.[] | select(.name != "eDP-1") | .name + "|" + (.x | tostring) + "|" + .description'
+  local monitors_json
+  monitors_json=$(hyprctl monitors -j 2>/dev/null) || return 0
+  # Validate JSON before passing to jq
+  if ! echo "$monitors_json" | jq empty 2>/dev/null; then
+    return 0
+  fi
+  echo "$monitors_json" | jq -r '.[] | select(.name != "eDP-1") | .name + "|" + (.x | tostring) + "|" + .description' 2>/dev/null || true
 }
 
 # Get laptop monitor status
 get_laptop_monitor() {
-  hyprctl monitors -j | jq -r '.[] | select(.name == "eDP-1") | .name'
+  local monitors_json
+  monitors_json=$(hyprctl monitors -j 2>/dev/null) || return 0
+  # Validate JSON before passing to jq
+  if ! echo "$monitors_json" | jq empty 2>/dev/null; then
+    return 0
+  fi
+  echo "$monitors_json" | jq -r '.[] | select(.name == "eDP-1") | .name' 2>/dev/null || true
 }
 
 # Apply monitor configuration
