@@ -31,7 +31,7 @@
     aichat
     inputs.self.packages.${pkgs.system}.atlas-pro
 
-    # Network file system support for Thunar/file managers
+    # Network file system support for Dolphin/file managers
     gvfs # Virtual filesystem with NFS/SMB support
   ];
   work-packages = with pkgs; [

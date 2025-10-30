@@ -38,9 +38,8 @@
   home.packages = with pkgs; [
     papirus-icon-theme
     bibata-cursors
-    xfce.thunar
-    xfce.thunar-volman # Volume manager for thunar
-    xfce.thunar-archive-plugin # Archive support
+    kdePackages.dolphin
+    kdePackages.ark # Archive support for dolphin
 
     # Dock
     nwg-dock-hyprland # Dock for Hyprland

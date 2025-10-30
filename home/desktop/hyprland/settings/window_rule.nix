@@ -136,9 +136,9 @@
       "idleinhibit fullscreen, class:^(chromium)$"
 
       # File manager progress dialogs
-      "float, class:^(thunar)$,title:^(Progress Dialog)$"
-      "float, class:^(thunar)$,title:^(Copying)$"
-      "float, class:^(thunar)$,title:^(File Operation Progress)$"
+      "float, class:^(dolphin|org.kde.dolphin)$,title:^(Progress Dialog)$"
+      "float, class:^(dolphin|org.kde.dolphin)$,title:^(Copying)$"
+      "float, class:^(dolphin|org.kde.dolphin)$,title:^(File Operation Progress)$"
 
       # Dragon drop - moves to active workspace, allows focus below
       "float, class:^(dragon|dragon-drop)$"

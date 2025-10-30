@@ -12,9 +12,46 @@
   };
 
   home.packages = [
-    pkgs.adwaita-qt
-    pkgs.adwaita-qt6
+    pkgs.kdePackages.breeze # Breeze theme for KDE apps (includes dark mode)
   ];
+
+  # Qt theming - use KDE platform with Breeze for proper dark theme
+  qt = {
+    enable = true;
+    platformTheme.name = "kde";
+    style = {
+      name = "breeze";
+      package = pkgs.kdePackages.breeze;
+    };
+  };
+
+  # Link official Breeze Dark color scheme file
+  xdg.dataFile."color-schemes/BreezeDark.colors".source = "${pkgs.kdePackages.breeze}/share/color-schemes/BreezeDark.colors";
+
+  # KDE configuration - use complete Breeze Dark color scheme with custom fonts/icons
+  xdg.configFile."kdeglobals" = {
+    force = true;
+    text = let
+      # Read complete official BreezeDark color scheme (all 8 [Colors:*] sections)
+      breezeColors = builtins.readFile "${pkgs.kdePackages.breeze}/share/color-schemes/BreezeDark.colors";
+
+      # Custom fonts and icon theme
+      customSettings = ''
+
+        [General]
+        fixed=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+        font=Inter Nerd Font,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+
+        [Icons]
+        Theme=Papirus-Dark
+
+        [KDE]
+        LookAndFeelPackage=org.kde.breezedark.desktop
+        widgetStyle=Breeze
+      '';
+    in
+      breezeColors + customSettings;
+  };
 
   gtk = {
     enable = true;
