@@ -70,7 +70,7 @@
       stable.rocmPackages.clr.icd
       # VAAPI drivers for AMD GPU
       mesa
-      vaapiVdpau
+      libva-vdpau-driver
       libvdpau-va-gl
     ];
   };

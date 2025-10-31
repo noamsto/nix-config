@@ -48,7 +48,7 @@ in {
         command = "${pkgs.tavily-mcp}/bin/tavily-mcp";
         args = [];
         env = {
-          # TAVILY_API_KEY = "your-api-key-here";  # TODO: integrate with agenix
+          # TAVILY_API_KEY = "your-api-key-here";  # Env variable available via agenix
         };
       };
 

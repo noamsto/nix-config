@@ -38,8 +38,7 @@
       font-awesome
 
       noto-fonts
-      noto-fonts-emoji
-      noto-fonts-extra
+      noto-fonts-color-emoji
 
       # Chinese
       noto-fonts-cjk-sans
