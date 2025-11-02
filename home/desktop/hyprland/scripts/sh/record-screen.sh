@@ -185,7 +185,7 @@ else
   if [ -n "$active_geometry" ] && [ "$active_geometry" != "null,null 0x0" ]; then
     selection=$(printf "Active Window\nSelect Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
 
-    # Wait for walker to fully close before proceeding
+    # Wait for vicinae to fully close before proceeding
     sleep 0.5
 
     case "$selection" in
@@ -209,7 +209,7 @@ else
     # No active window, show all options except Active Window
     selection=$(printf "Select Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
 
-    # Wait for walker to fully close before proceeding
+    # Wait for vicinae to fully close before proceeding
     sleep 0.5
 
     case "$selection" in

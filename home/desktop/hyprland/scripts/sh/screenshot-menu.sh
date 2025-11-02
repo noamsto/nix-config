@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Screenshot menu using walker with grimblast
+# Screenshot menu using vicinae with grimblast
 # Provides different screenshot modes with satty integration
 
 # Define screenshot options with icons
 options="📋 Select Area/Window\n🖥️ Current Output\n🖼️ All Screens\n⏰ Delay Output (3s)\n⏰ Delay All Screens (3s)"
 
-# Show walker menu and get selection
-choice=$(echo -e "$options" | walker -d -p "Screenshot Mode")
+# Show vicinae menu and get selection
+choice=$(echo -e "$options" | vicinae dmenu -p "Screenshot Mode")
 
 case "$choice" in
 "📋 Select Area/Window")

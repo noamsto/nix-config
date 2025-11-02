@@ -14,11 +14,17 @@
     autoStart = true;
     settings = {
       faviconService = "twenty"; # twenty | google | none
-      font.size = 12;
+      font = {
+        name = "Inter Nerd Font";
+        size = 12;
+      };
       popToRootOnClose = false;
       closeOnFocusLost = true;
       rootSearch.searchFiles = false;
-      theme.name = "catppuccin-mocha";
+      theme = {
+        name = "catppuccin-mocha";
+        iconTheme = "Papirus-Dark";
+      };
       window = {
         csd = true; # Enable client-side decorations for rounded corners
         opacity = 0.95;
