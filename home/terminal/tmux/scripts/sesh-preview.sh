@@ -1,11 +1,29 @@
 #!/usr/bin/env bash
-# Enhanced sesh preview with windows, session info, git status, and pane layout
+# Enhanced sesh preview with windows, session info, git status
 # Usage: sesh-preview <session-name-or-path>
 
 set -euo pipefail
 
-# Session name is passed directly from sesh list (no icons from sesh)
-target="$1"
+# Extract session name from input (may include icon from sesh list --icons)
+# Example: "󰒜 nix-config" -> "nix-config"
+input="$1"
+
+# Strip ANSI codes
+strip_ansi() {
+  sed 's/\x1b\[[0-9;]*m//g'
+}
+
+clean_input=$(echo "$input" | strip_ansi)
+
+# Remove icon (first field if present) to get clean session name
+# Check if first character is non-ASCII (emoji/icon)
+if [[ ! ${clean_input:0:1} =~ ^[a-zA-Z0-9/._-]$ ]]; then
+  # Has icon - remove first field
+  target=$(echo "$clean_input" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}' | xargs)
+else
+  # No icon - use as-is
+  target="$clean_input"
+fi
 
 # Color codes for output
 BOLD="\033[1m"
