@@ -5,4 +5,5 @@
   sesh-icon = pkgs.writeShellScriptBin "sesh-icon" (builtins.readFile ./scripts/sesh-icon.sh);
   sesh-preview = pkgs.writeShellScriptBin "sesh-preview" (builtins.readFile ./scripts/sesh-preview.sh);
   sesh-extract-name = pkgs.writeShellScriptBin "sesh-extract-name" (builtins.readFile ./scripts/sesh-extract-name.sh);
+  worktree-session-hook = pkgs.writeShellScriptBin "worktree-session-hook" (builtins.readFile ./scripts/worktree-session-hook.sh);
 }

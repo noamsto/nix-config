@@ -71,6 +71,7 @@ in {
     seshUtils.sesh-icon
     seshUtils.sesh-preview
     seshUtils.sesh-extract-name
+    seshUtils.worktree-session-hook
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
