@@ -63,6 +63,7 @@ in {
 
       # === CLI UTILITIES ===
       # ripgrep, fd, jq, bat, eza available system-wide
+      ast-grep # Structural search tool using AST
       yq-go
 
       # networking tools

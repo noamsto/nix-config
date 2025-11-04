@@ -27,7 +27,6 @@ return {
       ["markdown.mdx"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
       yaml = { "prettierd" },
       go = { "goimports", "gofumpt" },
-      sql = { "sqruff" },
     },
   },
 }

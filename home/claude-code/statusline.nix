@@ -198,22 +198,19 @@ pkgs.writeShellApplication {
       "$session_cost" "$request_cost" "$daily_total" 2>/dev/null || echo "💰 \$0.00 (req: \$0.0000) (today: \$0.00)")
 
     # Token info with color coding
-    # Format token counts: use "M" for millions (1M+), "k" for thousands
+    # Format token counts: use "k" for better readability even with 1M contexts
     if [[ "$TOKEN_LIMIT" -ge 1000000 ]]; then
-      # Format as millions (M)
-      token_count_display=$(echo "scale=1; $token_count / 1000000" | bc 2>/dev/null || echo "0")
-      token_limit_display=$(echo "scale=0; $TOKEN_LIMIT / 1000000" | bc 2>/dev/null || echo "1")
-      token_remaining_display=$(echo "scale=0; $token_remaining / 1000000" | bc 2>/dev/null || echo "0")
+      # For 1M contexts: show as "200k/1M (20%, 800k left)" for clarity
+      token_count_k=$((token_count / 1000))
+      token_limit_m=$(echo "scale=0; $TOKEN_LIMIT / 1000000" | bc 2>/dev/null || echo "1")
+      token_remaining_k=$((token_remaining / 1000))
 
-      # Remove trailing .0 for whole numbers
-      token_count_display="''${token_count_display%.0}"
-
-      token_display=$(printf "%b📊 %sM/%sM (%s%%, %sM left)%b" \
+      token_display=$(printf "%b📊 %dk/%sM (%s%%, %dk left)%b" \
         "$token_color" \
-        "$token_count_display" \
-        "$token_limit_display" \
+        "$token_count_k" \
+        "$token_limit_m" \
         "$token_percent" \
-        "$token_remaining_display" \
+        "$token_remaining_k" \
         "$reset")
     else
       # Format as thousands (k)

@@ -5,21 +5,36 @@
 }: let
   # Statusline script package
   claude-statusline = pkgs.callPackage ./statusline.nix {};
-in {
-  # Import MCP profiles module (generates conditional MCP configs and aliases)
-  imports = [./mcp-profiles.nix];
-  programs.claude-code = {
-    enable = true;
-    package = pkgs.claude-code;
 
-    # Configure statusline with comprehensive metrics
-    settings = {
+  # Create nix-managed settings file (merged via --settings flag)
+  # This allows Claude Code to maintain its own settings.json for plugins
+  nix-settings-json = pkgs.writeTextFile {
+    name = "claude-nix-settings.json";
+    text = builtins.toJSON {
       includeCoAuthoredBy = false;
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
     };
+  };
+
+  # Create wrapper script that merges nix settings
+  claude-wrapper = pkgs.writeShellScriptBin "claude" ''
+    exec ${pkgs.claude-code}/bin/claude --settings ${nix-settings-json} "$@"
+  '';
+in {
+  # Import MCP profiles module (generates conditional MCP configs and aliases)
+  imports = [./mcp-profiles.nix];
+
+  programs.claude-code = {
+    enable = true;
+    # Use our wrapper instead of the direct package
+    package = claude-wrapper;
+
+    # Don't generate settings.json - let Claude Code manage it
+    # (the wrapper handles --settings for HM-managed config)
+    settings = {};
 
     # Base MCPs - always loaded (heavy MCPs loaded via --mcp-config aliases)
     mcpServers = {
