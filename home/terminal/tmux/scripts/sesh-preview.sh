@@ -40,7 +40,7 @@ if tmux has-session -t "$target" 2>/dev/null; then
 
   # Window list
   echo -e "${BOLD}${CYAN}Windows:${RESET}"
-  tmux list-windows -t "$session_name" -F "  #{?window_active,${GREEN}● ,${DIM}○ }${RESET}#{window_index}: #{window_name} ${DIM}(#{window_panes} panes)${RESET}" 2>/dev/null || echo "  No windows"
+  tmux list-windows -t "$session_name" -F "  #{?window_active,● ,○ }#{window_index}: #{window_name} (#{window_panes} panes)" 2>/dev/null || echo "  No windows"
   echo ""
 
   # Git status if in a repo

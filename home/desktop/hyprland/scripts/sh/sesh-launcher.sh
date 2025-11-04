@@ -4,7 +4,12 @@
 
 set -euo pipefail
 
-# Get sessions with grouping and icons
+# Helper to strip ANSI codes
+strip_ansi() {
+  sed 's/\x1b\[[0-9;]*m//g'
+}
+
+# Get sessions with sesh's built-in icons
 sessions=$(sesh-list-grouped 2>/dev/null)
 
 if [[ -z $sessions ]]; then
@@ -24,26 +29,16 @@ if [[ -z $choice ]]; then
   exit 0
 fi
 
-# Extract session name from format: [icon] session-name (type) or session-name (type)
-# Example: "❄️  nix-config (tmux)" -> "nix-config" or "nix-config (tmux)" -> "nix-config"
-without_type="${choice%% (*}"
+# Strip ANSI codes and extract session name (sesh format: "icon session-name")
+clean_choice=$(strip_ansi <<<"$choice")
 
-# Check if first field is an emoji/icon (non-ASCII) or regular text
-first_field=$(echo "$without_type" | awk '{print $1}')
-if [[ ! $first_field =~ ^[a-zA-Z0-9._-]+$ ]]; then
-  # Has icon - remove first field
-  session_name=$(echo "$without_type" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}')
-else
-  # No icon - use as-is
-  session_name="$without_type"
-fi
-session_name=$(echo "$session_name" | xargs) # Trim whitespace
+# Remove icon (first field) to get session name
+session_name=$(echo "$clean_choice" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}' | xargs)
 
-# Determine if it's a tmux session or directory
-if [[ $choice == *"(tmux)"* ]]; then
-  # It's an existing tmux session - attach to it
-  kitty --detach sh -c "tmux attach -t '$session_name'"
-else
-  # It's a directory - create new session
-  kitty --detach sh -c "sesh connect '$session_name'"
+# If extraction failed, use the whole thing
+if [[ -z $session_name ]]; then
+  session_name=$(echo "$clean_choice" | xargs)
 fi
+
+# Open terminal and let sesh handle connection
+kitty --detach sh -c "sesh connect '$session_name'"
