@@ -25,8 +25,10 @@ if [[ -z $choice ]]; then
 fi
 
 # Extract session name from format: [icon] session-name (type)
-# Remove everything after and including the opening parenthesis
-session_name=$(echo "$choice" | sed 's/ *(.*$//' | awk '{print $NF}')
+# Remove the type indicator first, then remove the icon
+# Example: "❄️  nix-config (tmux)" -> "nix-config"
+without_type="${choice%% (*}"
+session_name=$(echo "$without_type" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}')
 
 # Determine if it's a tmux session or directory
 if [[ $choice == *"(tmux)"* ]]; then

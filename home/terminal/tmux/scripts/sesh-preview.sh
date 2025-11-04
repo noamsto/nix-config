@@ -4,20 +4,8 @@
 
 set -euo pipefail
 
-# Extract session name from potentially formatted input
-# Input could be: "icon session-name" or just "session-name"
-# We want just the session name without icons
-input="$1"
-
-# Strip ANSI codes
-strip_ansi() {
-  sed 's/\x1b\[[0-9;]*m//g'
-}
-
-clean_input=$(echo "$input" | strip_ansi)
-
-# Get the last field as session name (handles icons)
-target=$(echo "$clean_input" | awk '{print $NF}')
+# Session name is passed directly from sesh list (no icons from sesh)
+target="$1"
 
 # Color codes for output
 BOLD="\033[1m"
