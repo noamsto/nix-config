@@ -43,11 +43,32 @@
       claude = "🧠";
     };
   };
+
+  seshUtils = import ./sesh-utils.nix {inherit pkgs;};
 in {
   imports = [./named-session.nix];
 
+  # Enable sesh with Home Manager module
+  programs.sesh = {
+    enable = true;
+    enableTmuxIntegration = false; # Use custom keybindings below (K and T) instead
+    icons = true;
+    settings = {
+      # Default session configuration
+      default_session = {
+        startup_command = "fish";
+      };
+      # Session directories to scan
+      session_configs = [];
+    };
+  };
+
   home.packages = with pkgs; [
-    sesh
+    # Custom sesh enhancement scripts
+    seshUtils.sesh-new
+    seshUtils.sesh-kill
+    seshUtils.sesh-list-grouped
+    seshUtils.sesh-icon
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;

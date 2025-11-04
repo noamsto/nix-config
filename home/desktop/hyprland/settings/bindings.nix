@@ -105,6 +105,7 @@ in {
 
       # === PRODUCTIVITY SHORTCUTS ===
       # Quick application access
+      "$mainMod, A, exec, sesh-launcher" # Tmux session launcher
       "$mainMod, N, exec, obsidian" # Notes
       "$mainMod, Y, exec, ${youtube-music}" # Music
       "$mainMod SHIFT, V, exec, pavucontrol" # Volume control

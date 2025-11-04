@@ -21,6 +21,7 @@
     ./scripts/volume-control.nix
     ./scripts/sounds.nix
     ./scripts/window-resize.nix
+    ./scripts/sesh-launcher.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];
