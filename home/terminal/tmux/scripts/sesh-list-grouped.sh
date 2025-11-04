@@ -18,8 +18,9 @@ sesh list -t -z -c 2>/dev/null | while IFS= read -r line; do
   # Strip any ANSI codes
   clean_line=$(echo "$line" | strip_ansi)
 
-  # Parse sesh output: first field is session name, rest is path/info
-  session_name=$(echo "$clean_line" | awk '{print $1}')
+  # Parse sesh output: session name is the last field (handles icons if present)
+  # Example: "icon session-name" or just "session-name"
+  session_name=$(echo "$clean_line" | awk '{print $NF}')
 
   # Determine if it's a tmux session or directory
   repo_icon=""
