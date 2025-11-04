@@ -122,6 +122,9 @@ in {
       # github
       gh
 
+      # AI coding tools
+      inputs.self.packages.${pkgs.system}.claude-squad
+
       nh
 
       # Hyprland dynamic monitor management
