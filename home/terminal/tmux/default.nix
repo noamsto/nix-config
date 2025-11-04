@@ -69,6 +69,7 @@ in {
     seshUtils.sesh-kill
     seshUtils.sesh-list-grouped
     seshUtils.sesh-icon
+    seshUtils.sesh-preview
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -206,19 +207,20 @@ in {
       sesh list -i | ${lib.getExe pkgs.gum} filter --no-strip-ansi --limit 1 --no-sort --fuzzy --placeholder 'Pick a sesh' --height 50 --prompt='⚡'
       )\""
 
-      bind-key "T" run-shell "sesh connect \"$(
-      sesh list --icons | fzf-tmux -p 80%,70% \
-        --no-sort --ansi --border-label ' sesh ' --prompt '⚡  ' \
-        --header '  ^a all ^t tmux ^g configs ^x zoxide ^d tmux kill ^f find' \
+      # Main session picker: Prefix+S with comprehensive preview
+      bind-key "S" run-shell "sesh connect \"$(
+      sesh list --icons | fzf-tmux -p 90%,85% \
+        --no-sort --ansi --border-label '  Sessions ' --prompt '⚡  ' \
+        --header '  ^a all ^t tmux ^g configs ^x zoxide ^d kill ^f find' \
         --bind 'tab:down,btab:up' \
         --bind 'ctrl-a:change-prompt(⚡  )+reload(sesh list --icons)' \
         --bind 'ctrl-t:change-prompt(🪟  )+reload(sesh list -t --icons)' \
         --bind 'ctrl-g:change-prompt(⚙️  )+reload(sesh list -c --icons)' \
         --bind 'ctrl-x:change-prompt(📁  )+reload(sesh list -z --icons)' \
         --bind 'ctrl-f:change-prompt(🔎  )+reload(fd -H -d 2 -t d -E .Trash . ~)' \
-        --bind 'ctrl-d:execute(tmux kill-session -t {2..})+change-prompt(⚡  )+reload(sesh list --icons)' \
-        --preview-window 'right:55%' \
-        --preview 'sesh preview {}'
+        --bind 'ctrl-d:execute(tmux kill-session -t {})+change-prompt(⚡  )+reload(sesh list --icons)' \
+        --preview-window 'right:60%:wrap' \
+        --preview 'sesh-preview {}'
       )\""
 
       bind-key x kill-pane # skip "kill-pane 1? (y/n)" prompt

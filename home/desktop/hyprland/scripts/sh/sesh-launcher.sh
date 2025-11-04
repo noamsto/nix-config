@@ -24,10 +24,15 @@ if [[ -z $choice ]]; then
   exit 0
 fi
 
-# Extract session name (last field after icons/formatting)
-# Session name is typically the last word in the line
-session_name=$(echo "$choice" | awk '{print $NF}')
+# Extract session name from format: [icon] session-name (type)
+# Remove everything after and including the opening parenthesis
+session_name=$(echo "$choice" | sed 's/ *(.*$//' | awk '{print $NF}')
 
-# Open terminal with tmux session
-# Using kitty as the terminal (adjust if using different terminal)
-kitty --detach sh -c "tmux attach -t '$session_name' 2>/dev/null || sesh connect '$session_name'"
+# Determine if it's a tmux session or directory
+if [[ $choice == *"(tmux)"* ]]; then
+  # It's an existing tmux session - attach to it
+  kitty --detach sh -c "tmux attach -t '$session_name'"
+else
+  # It's a directory - create new session
+  kitty --detach sh -c "sesh connect '$session_name'"
+fi

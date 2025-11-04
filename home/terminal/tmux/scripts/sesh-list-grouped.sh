@@ -1,44 +1,55 @@
 #!/usr/bin/env bash
 # List sessions with repository grouping and icons
 # Reads .icon files from project roots and prepends to session names
+# Output format: [repo-icon] [session-name] [type] [path]
 
 set -euo pipefail
 
-# Get all sessions (tmux + zoxide + config) with icons
-sesh list -t -z -c --icons 2>/dev/null | while IFS= read -r line; do
+# Helper to strip ANSI color codes
+strip_ansi() {
+  sed 's/\x1b\[[0-9;]*m//g'
+}
+
+# Get all sessions without icons first for clean parsing
+sesh list -t -z -c 2>/dev/null | while IFS= read -r line; do
   # Skip empty lines
   [[ -z $line ]] && continue
 
-  # Try to extract a directory path from the line
-  # Sesh output format varies, but typically: [icon] [name] [path]
-  # For tmux sessions, the name is the session name
-  # For zoxide, the name is the directory path
+  # Strip any ANSI codes
+  clean_line=$(echo "$line" | strip_ansi)
 
-  # Extract last field as potential path
-  last_field=$(echo "$line" | awk '{print $NF}')
+  # Parse sesh output: first field is session name, rest is path/info
+  session_name=$(echo "$clean_line" | awk '{print $1}')
 
-  # Try to find git root and check for .icon file
-  icon=""
-  if [[ -d $last_field ]]; then
-    # It's a directory (zoxide entry)
-    git_root=$(git -C "$last_field" rev-parse --show-toplevel 2>/dev/null || echo "")
-  elif tmux has-session -t "$last_field" 2>/dev/null; then
+  # Determine if it's a tmux session or directory
+  repo_icon=""
+  session_type="dir"
+
+  if tmux has-session -t "$session_name" 2>/dev/null; then
     # It's a tmux session - get its working directory
-    session_path=$(tmux display-message -p -t "$last_field" -F "#{pane_current_path}" 2>/dev/null || echo "")
-    git_root=$(git -C "$session_path" rev-parse --show-toplevel 2>/dev/null || echo "")
+    session_type="tmux"
+    session_path=$(tmux display-message -p -t "$session_name" -F "#{pane_current_path}" 2>/dev/null || echo "")
+    if [[ -n $session_path ]] && [[ -d $session_path ]]; then
+      git_root=$(git -C "$session_path" rev-parse --show-toplevel 2>/dev/null || echo "")
+      if [[ -n $git_root ]] && [[ -f "$git_root/.icon" ]]; then
+        repo_icon=$(cat "$git_root/.icon" | head -n1 | tr -d '\n')
+      fi
+    fi
   else
-    git_root=""
+    # It's a directory path
+    session_type="zoxide"
+    if [[ -d $session_name ]]; then
+      git_root=$(git -C "$session_name" rev-parse --show-toplevel 2>/dev/null || echo "")
+      if [[ -n $git_root ]] && [[ -f "$git_root/.icon" ]]; then
+        repo_icon=$(cat "$git_root/.icon" | head -n1 | tr -d '\n')
+      fi
+    fi
   fi
 
-  # If we found a git root, check for .icon file
-  if [[ -n $git_root ]] && [[ -f "$git_root/.icon" ]]; then
-    icon=$(cat "$git_root/.icon" | head -n1 | tr -d '\n')
-  fi
-
-  # Output with icon prepended if found
-  if [[ -n $icon ]]; then
-    echo "$icon $line"
+  # Output format: [repo-icon] [session-name] ([type])
+  if [[ -n $repo_icon ]]; then
+    echo "$repo_icon  $session_name ($session_type)"
   else
-    echo "$line"
+    echo "$session_name ($session_type)"
   fi
 done
