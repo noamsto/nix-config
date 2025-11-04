@@ -13,6 +13,22 @@ strip_ansi() {
 # Track seen sessions to avoid duplicates
 declare -A seen_sessions
 
+# Cache git roots to avoid repeated lookups
+declare -A git_root_cache
+
+# Helper to get git root with caching
+get_git_root() {
+  local path="$1"
+  if [[ -n ${git_root_cache[$path]:-} ]]; then
+    echo "${git_root_cache[$path]}"
+    return
+  fi
+  local root
+  root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null || echo "")
+  git_root_cache[$path]="$root"
+  echo "$root"
+}
+
 # Get all sessions without icons first for clean parsing
 # Priority: tmux sessions > zoxide directories > config
 # This ensures active sessions are shown, not just directories
@@ -42,7 +58,7 @@ sesh list -t -z -c 2>/dev/null | while IFS= read -r line; do
     session_type="tmux"
     session_path=$(tmux display-message -p -t "$session_name" -F "#{pane_current_path}" 2>/dev/null || echo "")
     if [[ -n $session_path ]] && [[ -d $session_path ]]; then
-      git_root=$(git -C "$session_path" rev-parse --show-toplevel 2>/dev/null || echo "")
+      git_root=$(get_git_root "$session_path")
       if [[ -n $git_root ]] && [[ -f "$git_root/.icon" ]]; then
         repo_icon=$(cat "$git_root/.icon" | head -n1 | tr -d '\n')
       fi
@@ -51,7 +67,7 @@ sesh list -t -z -c 2>/dev/null | while IFS= read -r line; do
     # It's a directory path
     session_type="zoxide"
     if [[ -d $session_name ]]; then
-      git_root=$(git -C "$session_name" rev-parse --show-toplevel 2>/dev/null || echo "")
+      git_root=$(get_git_root "$session_name")
       if [[ -n $git_root ]] && [[ -f "$git_root/.icon" ]]; then
         repo_icon=$(cat "$git_root/.icon" | head -n1 | tr -d '\n')
       fi
@@ -64,4 +80,4 @@ sesh list -t -z -c 2>/dev/null | while IFS= read -r line; do
   else
     echo "$session_name ($session_type)"
   fi
-done
+done | LC_ALL=C sort # Sort alphabetically (groups same repos together due to icon)
