@@ -27,6 +27,6 @@ sesh list -t -z -c --icons 2>/dev/null | while IFS= read -r line; do
   fi
   seen_sessions[$session_name]=1
 
-  # Output line as-is with sesh's icons
-  echo "$line"
+  # Output line without ANSI codes (vicinae dmenu doesn't support them)
+  echo "$line" | strip_ansi
 done | LC_ALL=C sort
