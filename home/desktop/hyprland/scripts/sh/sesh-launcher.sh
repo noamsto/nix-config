@@ -24,11 +24,20 @@ if [[ -z $choice ]]; then
   exit 0
 fi
 
-# Extract session name from format: [icon] session-name (type)
-# Remove the type indicator first, then remove the icon
-# Example: "❄️  nix-config (tmux)" -> "nix-config"
+# Extract session name from format: [icon] session-name (type) or session-name (type)
+# Example: "❄️  nix-config (tmux)" -> "nix-config" or "nix-config (tmux)" -> "nix-config"
 without_type="${choice%% (*}"
-session_name=$(echo "$without_type" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}')
+
+# Check if first field is an emoji/icon (non-ASCII) or regular text
+first_field=$(echo "$without_type" | awk '{print $1}')
+if [[ ! $first_field =~ ^[a-zA-Z0-9._-]+$ ]]; then
+  # Has icon - remove first field
+  session_name=$(echo "$without_type" | awk '{for(i=2;i<=NF;i++) printf "%s%s", $i, (i<NF?" ":""); print ""}')
+else
+  # No icon - use as-is
+  session_name="$without_type"
+fi
+session_name=$(echo "$session_name" | xargs) # Trim whitespace
 
 # Determine if it's a tmux session or directory
 if [[ $choice == *"(tmux)"* ]]; then

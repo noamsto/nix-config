@@ -38,15 +38,35 @@ if tmux has-session -t "$target" 2>/dev/null; then
   echo -e "  ${DIM}Path:${RESET}     $session_path"
   echo ""
 
-  # Window list
+  # Window list with tree-style formatting (like tmux choose-tree)
   echo -e "${BOLD}${CYAN}Windows:${RESET}"
-  tmux list-windows -t "$session_name" -F "  #{?window_active,${GREEN}● ,${DIM}○ }${RESET}#{window_index}: #{window_name} ${DIM}(#{window_panes} panes)${RESET}" 2>/dev/null || echo "  No windows"
+  tmux list-windows -t "$session_name" 2>/dev/null | while IFS= read -r line; do
+    # Parse window line: "0: window-name* (2 panes) [282x67]"
+    win_index=$(echo "$line" | awk -F: '{print $1}')
+    win_info=$(echo "$line" | cut -d: -f2-)
+
+    # Check if active (contains *)
+    if [[ $win_info == *"*"* ]]; then
+      echo -e "  ${GREEN}● $win_index:${RESET}$win_info"
+    else
+      echo -e "  ${DIM}○ $win_index:${RESET}$win_info"
+    fi
+  done
   echo ""
 
-  # Pane layout of active window
-  echo -e "${BOLD}${CYAN}Active Window Layout:${RESET}"
+  # Visual pane layout using tmux's display-panes format
+  echo -e "${BOLD}${CYAN}Layout:${RESET}"
   active_window=$(tmux display-message -p -t "$session_name" -F "#{window_index}")
-  tmux list-panes -t "$session_name:$active_window" -F "  Pane #{pane_index}: #{pane_width}x#{pane_height} ${DIM}#{pane_current_command}${RESET}" 2>/dev/null || echo "  No panes"
+  layout=$(tmux list-windows -t "$session_name:$active_window" -F "#{window_layout}" 2>/dev/null)
+  pane_count=$(tmux list-panes -t "$session_name:$active_window" 2>/dev/null | wc -l)
+
+  if [[ $pane_count -eq 1 ]]; then
+    echo -e "  ${DIM}Single pane${RESET}"
+  else
+    echo -e "  ${DIM}$pane_count panes - Layout: $layout${RESET}"
+    # Show pane tree
+    tmux list-panes -t "$session_name:$active_window" -F "  ├─ Pane #{pane_index}: #{pane_current_command} [#{pane_width}x#{pane_height}]" 2>/dev/null
+  fi
   echo ""
 
   # Git status if in a repo
