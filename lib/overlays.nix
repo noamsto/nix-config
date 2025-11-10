@@ -2,7 +2,7 @@
 inputs: [
   (final: _: {
     stable = import inputs.nixpkgs-stable {
-      system = final.system;
+      system = final.stdenv.hostPlatform.system;
       config.allowUnfree = true;
     };
     nur = import inputs.nur {
@@ -12,17 +12,17 @@ inputs: [
   })
 
   (final: _: {
-    fprintd = inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.system}.fprintd;
+    inherit (inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.stdenv.hostPlatform.system}) fprintd;
   })
 
   # Override nix-search-tv with flake version
   (final: _: {
-    nix-search-tv = inputs.nix-search-tv.packages.${final.system}.default;
+    nix-search-tv = inputs.nix-search-tv.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
   # Add claude-code from flake
   (final: _: {
-    claude-code = inputs.claude-code.packages.${final.system}.default;
+    claude-code = inputs.claude-code.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
   # Add mcp-servers-nix overlay
@@ -30,7 +30,7 @@ inputs: [
 
   # Add custom packages from this flake
   (final: _: {
-    tavily-mcp = inputs.self.packages.${final.system}.tavily-mcp;
+    inherit (inputs.self.packages.${final.stdenv.hostPlatform.system}) tavily-mcp;
   })
 
   # Brave with Wayland fixes

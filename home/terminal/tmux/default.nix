@@ -229,6 +229,13 @@ in {
       bind-key x kill-pane # skip "kill-pane 1? (y/n)" prompt
       set -g detach-on-destroy off  # don't exit from tmux when closing a session
 
+      # Simple fix: Disable navigation when zoomed to prevent un-zooming
+      # vim-tmux-navigator handles vim/tmux navigation, but respects zoom state
+      bind-key -n C-h if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -L"
+      bind-key -n C-j if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -D"
+      bind-key -n C-k if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -U"
+      bind-key -n C-l if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -R"
+
 
       # Sync window name with terminal name
       set-option -g set-titles on

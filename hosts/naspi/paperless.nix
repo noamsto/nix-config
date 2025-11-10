@@ -1,12 +1,12 @@
 {
   config,
   pkgs,
-  inputs,
   ...
 }: {
   # Paperless-ngx document management system
   services.paperless = {
     enable = true;
+    package = pkgs.stable.paperless-ngx;
 
     # Use agenix-encrypted password file
     passwordFile = config.age.secrets.paperless-naspi-password.path;
@@ -55,24 +55,26 @@
       PAPERLESS_THREADS_PER_WORKER = 1;
     };
   };
-
-  # Create directory structure on encrypted ZFS dataset
-  systemd.tmpfiles.rules = [
-    "d /data/paperless 0755 paperless paperless - -"
-    "d /data/paperless/data 0755 paperless paperless - -"
-    "d /data/paperless/media 0755 paperless paperless - -"
-    "d /data/paperless/consume 0755 paperless paperless - -"
-    "d /data/paperless/export 0755 paperless paperless - -"
-  ];
+  systemd = {
+    # Create directory structure on encrypted ZFS dataset
+    tmpfiles.rules = [
+      "d /data/paperless 0755 paperless paperless - -"
+      "d /data/paperless/data 0755 paperless paperless - -"
+      "d /data/paperless/media 0755 paperless paperless - -"
+      "d /data/paperless/consume 0755 paperless paperless - -"
+      "d /data/paperless/export 0755 paperless paperless - -"
+    ];
+    services = {
+      # Ensure Paperless starts after ZFS datasets are mounted
+      paperless-scheduler.after = ["local-fs.target" "zfs-mount.service"];
+      paperless-consumer.after = ["local-fs.target" "zfs-mount.service"];
+      paperless-web.after = ["local-fs.target" "zfs-mount.service"];
+      paperless-task-queue.after = ["local-fs.target" "zfs-mount.service"];
+    };
+  };
 
   # Open firewall port for Paperless web interface
   networking.firewall.allowedTCPPorts = [
     28981 # Paperless web UI
   ];
-
-  # Ensure Paperless starts after ZFS datasets are mounted
-  systemd.services.paperless-scheduler.after = ["local-fs.target" "zfs-mount.service"];
-  systemd.services.paperless-consumer.after = ["local-fs.target" "zfs-mount.service"];
-  systemd.services.paperless-web.after = ["local-fs.target" "zfs-mount.service"];
-  systemd.services.paperless-task-queue.after = ["local-fs.target" "zfs-mount.service"];
 }

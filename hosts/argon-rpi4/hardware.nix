@@ -5,7 +5,7 @@
   ...
 }: let
   self = config.services.argonone;
-  arg1pk = nixos-raspberrypi.packages.${pkgs.system}.argononed;
+  arg1pk = nixos-raspberrypi.packages.${pkgs.stdenv.hostPlatform.system}.argononed;
 in {
   imports = with nixos-raspberrypi.nixosModules; [
     raspberry-pi-4.base

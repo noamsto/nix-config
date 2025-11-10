@@ -10,8 +10,8 @@
   ];
 
   environment.systemPackages = [
-    # (inputs.agenix.packages."${pkgs.system}".default.override {ageBin = "${pkgs.rage}/bin/rage";})
-    inputs.agenix.packages."${pkgs.system}".default
+    # (inputs.agenix.packages."${pkgs.stdenv.hostPlatform.system}".default.override {ageBin = "${pkgs.rage}/bin/rage";})
+    inputs.agenix.packages."${pkgs.stdenv.hostPlatform.system}".default
   ];
 
   #   if you changed this key, you need to regenerate all encrypt files from the decrypt contents!

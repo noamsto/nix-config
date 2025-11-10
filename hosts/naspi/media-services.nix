@@ -198,7 +198,7 @@ in {
 
     configuration = {
       radarr.movies-4k = {
-        base_url = "http://localhost:7878";
+        base_url = "http://localhost:7878/radarr";
         api_key._secret = "/var/lib/recyclarr/.env-radarr-api-key";
 
         quality_definition.type = "movie";
@@ -318,7 +318,7 @@ in {
       };
 
       sonarr.tv-4k = {
-        base_url = "http://localhost:8989";
+        base_url = "http://localhost:8989/sonarr";
         api_key._secret = "/var/lib/recyclarr/.env-sonarr-api-key";
 
         quality_definition.type = "series";

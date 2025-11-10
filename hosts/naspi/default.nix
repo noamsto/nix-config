@@ -2,6 +2,7 @@
   imports = [
     # Core configuration
     ../../options.nix
+    ../../overlays
     ./hardware.nix
     ./system.nix
     ./xscript.nix

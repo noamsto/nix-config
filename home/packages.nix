@@ -29,7 +29,7 @@
     dragon-drop
     stable.aider-chat-with-playwright # Uses stable for Playwright compatibility
     aichat
-    inputs.self.packages.${pkgs.system}.atlas-pro
+    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 
     # Network file system support for Dolphin/file managers
     gvfs # Virtual filesystem with NFS/SMB support
@@ -123,12 +123,12 @@ in {
       gh
 
       # AI coding tools
-      inputs.self.packages.${pkgs.system}.claude-squad
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.claude-squad
 
       nh
 
       # Hyprland dynamic monitor management
-      inputs.hyprdynamicmonitors.packages.${pkgs.system}.default
+      inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # Advanced touchpad gesture support
       libinput-gestures
@@ -140,7 +140,7 @@ in {
       # bat available system-wide
       # delta conflicts with diff-so-fancy - using diff-so-fancy via programs.git
 
-      inputs.mcp-hub.packages."${pkgs.system}".default
+      inputs.mcp-hub.packages."${pkgs.stdenv.hostPlatform.system}".default
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile == "work") work-packages;
