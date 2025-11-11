@@ -7,7 +7,8 @@ PID_FILE="/tmp/inhibitor-pid"
 # Function to cleanup inhibitor
 cleanup_inhibitor() {
   if [[ -f $PID_FILE ]]; then
-    local pid=$(cat "$PID_FILE")
+    local pid
+    pid=$(cat "$PID_FILE")
     if kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null
     fi

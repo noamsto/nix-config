@@ -1,4 +1,8 @@
-{nixos-raspberrypi, ...}: {
+{
+  nixos-raspberrypi,
+  pkgs,
+  ...
+}: {
   imports = with nixos-raspberrypi.nixosModules; [
     ./configtxt.nix
 
@@ -18,6 +22,9 @@
     #   }
     # ];
   };
+
+  # Kernel managed by nixos-raspberrypi modules (raspberry-pi-4.base)
+  # Don't override to preserve cache hits from nixos-raspberrypi.cachix.org
 
   boot.initrd.availableKernelModules = ["xhci_pci" "usbhid" "usb_storage" "nvme"];
   hardware.enableRedistributableFirmware = true;

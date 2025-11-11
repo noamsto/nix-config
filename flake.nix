@@ -102,7 +102,7 @@
       url = "github:abenz1267/walker";
       inputs.elephant.follows = "elephant";
     };
-    vicinae.url = "github:vicinaehq/vicinae";
+    vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
     catppuccin = {
       url = "github:catppuccin/nix";
@@ -116,7 +116,8 @@
 
     # === SPECIALIZED HARDWARE ===
     # Monthly updates for hardware support
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+    # Pinned to c3eb2dd (Oct 14) - MUST match deployed version to avoid hours-long kernel rebuilds
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/c3eb2dd67394cbce32c704f6e3326a6032a60974";
 
     disko = {
       url = "github:nix-community/disko";

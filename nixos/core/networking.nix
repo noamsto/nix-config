@@ -19,13 +19,18 @@
   networking.wireless.iwd.enable = true;
 
   services = {
-    # DNS service
-    resolved.enable = true;
+    # DNS service - disable mDNS to avoid conflict with Avahi
+    resolved = {
+      enable = true;
+      extraConfig = ''
+        MulticastDNS=no
+        LLMNR=no
+      '';
+    };
 
     # For discovering zero-conf network sharing
     avahi = {
       enable = true;
-      # For discovering zero-conf network sharing (avahi)
       nssmdns4 = true;
     };
 

@@ -37,6 +37,10 @@
     windowrulev2 = [
       "suppressevent maximize, class:.*"
 
+      # === VICINAE ===
+      "pin, title:^(Vicinae Launcher)$"
+      "plugin:hyprbars:nobar, title:^(Vicinae Launcher)$"
+
       # telegram media viewer
       "float, title:^(Media viewer)$"
 
@@ -64,6 +68,9 @@
       "float, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
       "center, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
       "size 900 600, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
+
+      # 1Password main window with generic title
+      "size 500 600, class:^(1Password|1password|com.1password.1Password)$,title:^(1Password)$"
 
       # 1Password menus and popups
       "float, class:^(1Password|1password|com.1password.1Password)$,title:^$"
@@ -181,19 +188,10 @@
       "pin, class:^(zoom)$,title:^$"
       "noborder, class:^(zoom)$,title:^$"
       "noshadow, class:^(zoom)$,title:^$"
+      "minsize 1 1, class:^(zoom)$,title:^$"
+      "maxsize 800 600, class:^(zoom)$,title:^$"
 
-      # Zoom popup menus - separate rules for different size conditions
-      "float, class:^(zoom)$,size:(0,0)"
-      "float, class:^(zoom)$,size:(1,1)"
-      "minsize 1 1, class:^(zoom)$,size:(0,0)"
-      "minsize 1 1, class:^(zoom)$,size:(1,1)"
-      "maxsize 800 600, class:^(zoom)$,size:(0,0)"
-      "maxsize 800 600, class:^(zoom)$,size:(1,1)"
-      "pin, class:^(zoom)$,size:(0,0)"
-      "pin, class:^(zoom)$,size:(1,1)"
-
-      # Zoom popup windows and dropdowns
-      "float, class:^(zoom)$,floating:0"
+      # Zoom general window handling
       "immediate, class:^(zoom)$"
 
       # Alternative Zoom class names
@@ -210,7 +208,7 @@
 
       # Fix oversized menu windows
       "maxsize 1200 900, floating:1,title:^$"
-      "minsize 1 1, floating:1,size:(0,0)"
+      "minsize 1 1, floating:1,title:^$"
 
       # Common menu patterns
       "stayfocused, title:^(Menu)$"
@@ -314,6 +312,9 @@
 
       # Visual indicator for pinned windows - yellow border (catppuccin mocha)
       "bordercolor rgb(f9e2af) rgb(f1fa8c), pinned:1"
+
+      # Override vicinae border to normal blue (must come after pinned rule)
+      "bordercolor rgb(89b4fa) rgb(74c7ec), title:^(Vicinae Launcher)$"
     ];
   };
 }

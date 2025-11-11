@@ -12,18 +12,16 @@ CURRENT_WORKSPACE=$(hyprctl activewindow | grep workspace | awk '{print $2}')
 BROWSER_IN_CURRENT=$(hyprctl clients | grep -A10 "class: $BROWSER_CLASS" | grep "workspace: $CURRENT_WORKSPACE")
 
 if [ -n "$BROWSER_IN_CURRENT" ]; then
-    # Focus existing browser in current workspace
-    hyprctl dispatch focuswindow "class:$BROWSER_CLASS"
+  # Focus existing browser in current workspace
+  hyprctl dispatch focuswindow "class:$BROWSER_CLASS"
 else
-    # Check if browser is running anywhere else
-    BROWSER_RUNNING=$(hyprctl clients | grep -q "class: $BROWSER_CLASS")
-
-    if [ $? -eq 0 ]; then
-        # Browser exists elsewhere, bring it to current workspace
-        hyprctl dispatch movetoworkspace "$CURRENT_WORKSPACE,class:$BROWSER_CLASS"
-        hyprctl dispatch focuswindow "class:$BROWSER_CLASS"
-    else
-        # No browser running, start new one
-        $BROWSER "$@" &
-    fi
+  # Check if browser is running anywhere else
+  if hyprctl clients | grep -q "class: $BROWSER_CLASS"; then
+    # Browser exists elsewhere, bring it to current workspace
+    hyprctl dispatch movetoworkspace "$CURRENT_WORKSPACE,class:$BROWSER_CLASS"
+    hyprctl dispatch focuswindow "class:$BROWSER_CLASS"
+  else
+    # No browser running, start new one
+    $BROWSER "$@" &
+  fi
 fi

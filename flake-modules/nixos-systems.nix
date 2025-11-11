@@ -1,7 +1,7 @@
 # NixOS system configurations
 {inputs, ...}: let
   inherit (inputs) nixos-raspberrypi;
-  nixpkgs = inputs.nixpkgs;
+  inherit (inputs) nixpkgs;
 in {
   flake = {
     nixosConfigurations = {
@@ -52,6 +52,7 @@ in {
           nixos-raspberrypi.nixosModules.trusted-nix-caches
           # Add our custom networking configuration
           ../hosts/rpi4-installer
+          ../overlays
         ];
       };
     };

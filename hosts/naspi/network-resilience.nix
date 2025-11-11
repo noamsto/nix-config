@@ -6,6 +6,11 @@
     anyInterface = true; # Don't wait for all interfaces, just any working one
   };
 
+  # Fix avahi socket ordering to prevent root-owned directory creation
+  systemd.sockets.avahi-daemon = {
+    after = ["systemd-tmpfiles-setup.service"];
+  };
+
   # Configure restart policies and network dependencies for all services
   systemd.services = {
     # Avahi - Critical for .local mDNS resolution
@@ -13,9 +18,9 @@
       after = ["network-online.target"];
       wants = ["network-online.target"];
       serviceConfig = {
-        Restart = "always";
+        Restart = lib.mkForce "always";
         RestartSec = "10s";
-        StartLimitIntervalSec = 0; # Never stop trying
+        StartLimitIntervalSec = lib.mkForce 0; # Never stop trying
       };
     };
 

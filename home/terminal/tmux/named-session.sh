@@ -3,8 +3,8 @@
 ############################### FOLDER ICONS ###################################
 
 if nixos-version; then
-    TMUX_TMPDIR="/run/user/$(id -u)"
-    export TMUX_TMPDIR
+  TMUX_TMPDIR="/run/user/$(id -u)"
+  export TMUX_TMPDIR
 fi
 
 folder="$(pwd)"
@@ -13,10 +13,10 @@ folder="$(pwd)"
 FOLDER_ICON_PATH="$folder/.icon"
 DEFAULT_ICON=🖥️
 if [ -f "$FOLDER_ICON_PATH" ]; then
-    folder_icon="$(cat "$FOLDER_ICON_PATH")"
+  folder_icon="$(cat "$FOLDER_ICON_PATH")"
 else
-    echo "Could not find an .icon file in $folder, using the default icon $DEFAULT_ICON"
-    folder_icon=$DEFAULT_ICON
+  echo "Could not find an .icon file in $folder, using the default icon $DEFAULT_ICON"
+  folder_icon=$DEFAULT_ICON
 fi
 
 # Strip the path and leave the folder name
@@ -28,16 +28,16 @@ SESSION="$folder_icon $folder_name"
 # Attach to Tmux
 
 if [ -z "$TMUX" ]; then
-    # We're not inside Tmux
-    echo "Attaching to $SESSION"
-    tmux attach-session -t "$SESSION" -d || tmux new-session -s "$SESSION"
+  # We're not inside Tmux
+  echo "Attaching to $SESSION"
+  tmux attach-session -t "$SESSION" -d || tmux new-session -s "$SESSION"
 else
-    # We're inside Tmux
-    if ! tmux ls | rg -q "$SESSION"; then
-        # Create a new detached session
-        tmux new -s "$SESSION" -d
-    fi
+  # We're inside Tmux
+  if ! tmux ls | rg -q "$SESSION"; then
+    # Create a new detached session
+    tmux new -s "$SESSION" -d
+  fi
 
-    # Switch to the session
-    tmux switch-client -t "$SESSION"
+  # Switch to the session
+  tmux switch-client -t "$SESSION"
 fi

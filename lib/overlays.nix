@@ -1,8 +1,15 @@
 # Reusable overlays for both NixOS and standalone Home Manager
 inputs: [
+  # Expose multiple nixpkgs versions for selective package usage
   (final: _: {
+    # Main unstable nixpkgs (useful for naspi to get newer packages)
+    unstable = import inputs.nixpkgs {
+      inherit (final.stdenv.hostPlatform) system;
+      config.allowUnfree = true;
+    };
+    # Stable channel packages
     stable = import inputs.nixpkgs-stable {
-      system = final.stdenv.hostPlatform.system;
+      inherit (final.stdenv.hostPlatform) system;
       config.allowUnfree = true;
     };
     nur = import inputs.nur {
@@ -11,8 +18,10 @@ inputs: [
     };
   })
 
-  (final: _: {
-    inherit (inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${final.stdenv.hostPlatform.system}) fprintd;
+  (final: _: let
+    inherit (final.stdenv.hostPlatform) system;
+  in {
+    inherit (inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${system}) fprintd;
   })
 
   # Override nix-search-tv with flake version
