@@ -53,7 +53,6 @@
     # === CORE SYSTEM ===
     # Use nixos-unstable for latest packages and features
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
 
     # Specific package fixes - review quarterly
@@ -116,8 +115,8 @@
 
     # === SPECIALIZED HARDWARE ===
     # Monthly updates for hardware support
-    # Pinned to c3eb2dd (Oct 14) - MUST match deployed version to avoid hours-long kernel rebuilds
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/c3eb2dd67394cbce32c704f6e3326a6032a60974";
+    # Use latest - kernel version locked in host config instead
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     disko = {
       url = "github:nix-community/disko";

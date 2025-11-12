@@ -7,9 +7,8 @@
   services.paperless = {
     enable = true;
 
-    # Use paperless-ngx 2.19.3 from main unstable nixpkgs
-    # (module also from unstable to ensure compatibility)
-    package = pkgs.unstable.paperless-ngx;
+    # Use paperless-ngx from nixos-raspberrypi to match module version
+    # package = pkgs.paperless-ngx;  # Use default from nixos-raspberrypi
 
     # Use agenix-encrypted password file
     passwordFile = config.age.secrets.paperless-naspi-password.path;
@@ -67,14 +66,6 @@
       "d /data/paperless/consume 0755 paperless paperless - -"
       "d /data/paperless/export 0755 paperless paperless - -"
     ];
-
-    # Create postgresql.target - missing in older nixos-raspberrypi
-    # The unstable paperless module expects this target to exist
-    targets.postgresql = {
-      description = "PostgreSQL";
-      wantedBy = ["multi-user.target"];
-      requires = ["postgresql.service"];
-    };
 
     services = {
       # Ensure Paperless starts after ZFS datasets are mounted

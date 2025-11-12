@@ -18,7 +18,7 @@
       # General settings
       force_keyboard_focus = true;
       close_when_open = true;
-      selection_wrap = false;
+      selection_wrap = true; # Enable vim-like wrapping from bottom to top
       global_argument_delimiter = "#";
       keep_open_modifier = "shift";
       exact_search_prefix = "'";
@@ -44,8 +44,8 @@
       # Vi-like keybindings where they make sense
       keybinds = {
         close = ["Escape"];
-        next = ["ctrl j" "Down"]; # Vi-like: Ctrl+j for down/next (works from input field)
-        previous = ["ctrl k" "Up"]; # Vi-like: Ctrl+k for up/previous (works from input field)
+        next = ["ctrl j" "ctrl n" "Down"]; # Vi-like: Ctrl+j/n for down/next (works from input field)
+        previous = ["ctrl k" "ctrl p" "Up"]; # Vi-like: Ctrl+k/p for up/previous (works from input field)
         toggle_exact = ["ctrl e"];
         resume_last_query = ["ctrl r"];
         quick_activate = ["alt 1" "alt 2" "alt 3" "alt 4"];
@@ -54,6 +54,7 @@
       providers = {
         # Default providers list
         default = [
+          "windows"
           "desktopapplications"
           "calc"
           "runner"
@@ -94,10 +95,23 @@
             provider = "clipboard";
             prefix = ":";
           }
+          {
+            provider = "windows";
+            prefix = "w";
+          }
         ];
 
         # Provider-specific configurations
         desktopapplications = {
+          min_score = 20; # Require better match to show apps (higher = more selective)
+          window_integration = true; # Focus existing windows instead of launching new instances
+          window_integration_ignore_actions = true; # Ignore window integration for app actions
+          score_open_windows = true; # Deprioritize apps that are already open
+          history = false; # Disable history so apps don't outrank their windows
+          history_when_empty = false; # Don't use history even when query is empty
+          show_actions = true; # Show app actions (New Window, Private Window, etc.)
+          action_min_score = 20; # Same threshold as main apps
+          show_generic = true; # Include generic app info with actions
           default = "focus";
           focus = ["Return"];
           start_keep_open = ["shift Return"];
@@ -177,6 +191,15 @@
           default = "activate";
           activate = ["Return"];
           remove_history = ["ctrl BackSpace"];
+        };
+
+        windows = {
+          min_score = -100; # Very low = always show windows even with weak matches
+          delay = 50; # Faster focus switching (default is 100ms)
+          default = "focus";
+          focus = ["Return"];
+          close = ["ctrl d"];
+          fullscreen = ["ctrl f"];
         };
       };
     };

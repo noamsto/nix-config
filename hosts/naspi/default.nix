@@ -3,9 +3,6 @@
   inputs,
   ...
 }: {
-  # Disable paperless module from nixos-raspberrypi to use unstable version
-  disabledModules = ["services/misc/paperless.nix"];
-
   imports = [
     # Core configuration
     ../../options.nix
@@ -14,8 +11,6 @@
     ./system.nix
     ./xscript.nix
     ./media-services.nix
-    # Use paperless module from unstable for newer version (2.19.3)
-    "${inputs.nixpkgs}/nixos/modules/services/misc/paperless.nix"
     ./paperless.nix
     ./monitoring.nix
     ./tailscale.nix

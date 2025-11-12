@@ -52,7 +52,7 @@ in {
           nixos-raspberrypi.nixosModules.trusted-nix-caches
           # Add our custom networking configuration
           ../hosts/rpi4-installer
-          ../overlays
+          # Don't import overlays - minimal installer doesn't need them
         ];
       };
     };

@@ -2,8 +2,14 @@
   pkgs,
   config,
   lib,
+  nixos-raspberrypi,
   ...
 }: {
+  # Import nixos-raspberrypi kernel overlays to access versioned kernels
+  nixpkgs.overlays = [
+    nixos-raspberrypi.overlays.kernels
+  ];
+
   # Raspberry Pi 4: 4 cores, 8GB RAM
   nix.settings = {
     max-jobs = 2;
@@ -11,6 +17,12 @@
     max-silent-time = 14400;
     timeout = 172800;
   };
+
+  # KERNEL VERSION LOCK
+  # Lock to 6.12.34 - known working version from generation 56
+  # Prevents automatic kernel changes when updating nixos-raspberrypi
+  # See: https://github.com/nvmd/nixos-raspberrypi/blob/develop/overlays/kernels.nix
+  boot.kernelPackages = pkgs.linuxPackages_rpi4_6_12_34;
 
   # ZFS-specific boot configuration
   boot = {
@@ -136,6 +148,13 @@
     enable = true;
     # Socket activation: sshd starts on-demand instead of running as daemon
     startWhenNeeded = true;
+    # Listen on IPv4 only (IPv6 is disabled)
+    listenAddresses = [
+      {
+        addr = "0.0.0.0";
+        port = 22;
+      }
+    ];
     settings = {
       PermitRootLogin = "yes";
       PasswordAuthentication = true;
