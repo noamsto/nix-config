@@ -41,23 +41,29 @@ xrdb -merge ~/.Xresources.docked 2>/dev/null &
   done
 
   # Left monitor (Samsung H4ZM300138): workspaces 1-4
-  log "Assigning workspaces 1-4 to left Samsung"
+  log "Configuring workspaces 1-4 for left Samsung"
   for ws in {1..4}; do
-    hyprctl dispatch workspace "$ws" 2>/dev/null || log "Failed to switch to workspace $ws"
-    hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZM300138" 2>/dev/null || log "Failed to move workspace $ws to left Samsung"
+    # Set default monitor for this workspace
+    hyprctl keyword workspace "$ws,monitor:desc:Samsung Electric Company S27H85x H4ZM300138" 2>/dev/null || log "Failed to set workspace $ws rule"
+    # Move existing workspace if it exists
+    hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZM300138" 2>/dev/null || true
   done
 
   # Right monitor (Samsung H4ZKB00167): workspaces 5-8
-  log "Assigning workspaces 5-8 to right Samsung"
+  log "Configuring workspaces 5-8 for right Samsung"
   for ws in {5..8}; do
-    hyprctl dispatch workspace "$ws" 2>/dev/null || log "Failed to switch to workspace $ws"
-    hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZKB00167" 2>/dev/null || log "Failed to move workspace $ws to right Samsung"
+    # Set default monitor for this workspace
+    hyprctl keyword workspace "$ws,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167" 2>/dev/null || log "Failed to set workspace $ws rule"
+    # Move existing workspace if it exists
+    hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZKB00167" 2>/dev/null || true
   done
 
   # Laptop screen: workspace 9
-  log "Assigning workspace 9 to laptop screen"
-  hyprctl dispatch workspace 9 2>/dev/null || log "Failed to switch to workspace 9"
-  hyprctl dispatch moveworkspacetomonitor 9 eDP-1 2>/dev/null || log "Failed to move workspace 9 to eDP-1"
+  log "Configuring workspace 9 for laptop screen"
+  # Set default monitor for workspace 9
+  hyprctl keyword workspace "9,monitor:eDP-1" 2>/dev/null || log "Failed to set workspace 9 rule"
+  # Move existing workspace if it exists
+  hyprctl dispatch moveworkspacetomonitor 9 eDP-1 2>/dev/null || true
 
   # Return to workspace 1 on left monitor
   log "Focusing workspace 1"
