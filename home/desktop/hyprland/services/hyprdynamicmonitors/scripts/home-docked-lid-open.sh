@@ -65,6 +65,12 @@ xrdb -merge ~/.Xresources.docked 2>/dev/null &
   # Move existing workspace if it exists
   hyprctl dispatch moveworkspacetomonitor 9 eDP-1 2>/dev/null || true
 
+  # Clean up extra workspaces (10+)
+  log "Cleaning up extra workspaces"
+  for ws in {10..20}; do
+    hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
+  done
+
   # Return to workspace 1 on left monitor
   log "Focusing workspace 1"
   hyprctl dispatch workspace 1 2>/dev/null || log "Failed to focus workspace 1"

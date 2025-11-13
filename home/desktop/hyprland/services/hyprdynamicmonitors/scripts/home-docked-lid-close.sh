@@ -43,19 +43,25 @@ xrdb -merge ~/.Xresources.docked 2>/dev/null &
     hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZM300138" 2>/dev/null || true
   done
 
-  # Right monitor (Samsung H4ZKB00167): workspaces 5-8
-  log "Configuring workspaces 5-8 for right Samsung"
-  for ws in {5..8}; do
+  # Right monitor (Samsung H4ZKB00167): workspaces 5-9 (lid closed)
+  log "Configuring workspaces 5-9 for right Samsung"
+  for ws in {5..9}; do
     # Set default monitor for this workspace
     hyprctl keyword workspace "$ws,monitor:desc:Samsung Electric Company S27H85x H4ZKB00167" 2>/dev/null || log "Failed to set workspace $ws rule"
     # Move existing workspace if it exists
     hyprctl dispatch moveworkspacetomonitor "$ws" "desc:Samsung Electric Company S27H85x H4ZKB00167" 2>/dev/null || true
   done
 
-  # Make workspaces 5-8 persistent for dual monitor setup
-  log "Making workspaces 5-8 persistent"
-  for ws in {5..8}; do
+  # Make workspaces 5-9 persistent for dual monitor setup
+  log "Making workspaces 5-9 persistent"
+  for ws in {5..9}; do
     hyprctl keyword workspace "$ws,persistent:true" 2>/dev/null || log "Failed to make workspace $ws persistent"
+  done
+
+  # Clean up extra workspaces (10+)
+  log "Cleaning up extra workspaces"
+  for ws in {10..20}; do
+    hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
   done
 
   # Return to workspace 1 on left monitor
@@ -65,8 +71,9 @@ xrdb -merge ~/.Xresources.docked 2>/dev/null &
   log "Home docked configuration complete (lid closed)"
 ) &
 
+# Stop fingerprint daemon when lid is closed (before backgrounding other tasks)
+log "Stopping fingerprint daemon"
+systemctl stop fprintd.service 2>/dev/null || log "Failed to stop fprintd"
+
 # Launch dock in background
 launch-dock &
-
-# Stop fingerprint daemon when lid is closed (in background)
-systemctl stop fprintd.service 2>/dev/null &
