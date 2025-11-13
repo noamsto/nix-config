@@ -180,6 +180,33 @@ naspi:
     @echo "🔄 Deploying to naspi via SSH using nh..."
     ssh noams@naspi.local "cd ~/nix-config && git pull && nh os switch ."
 
+# Build and deploy on naspi itself (unattended, avoids cross-compilation heat)
+naspi-build-remote HOST="naspi":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Starting unattended build on {{HOST}}..."
+    echo "ℹ️  Build runs natively on RPi4 (slow but no laptop heat)"
+
+    # Copy git-tracked files to naspi
+    echo "📦 Copying configuration..."
+    git add -A
+    git archive HEAD | ssh {{HOST}} "cd /tmp && rm -rf nix-config && mkdir nix-config && cd nix-config && tar xf -"
+
+    # Start unattended rebuild on naspi
+    echo "🏗️  Starting rebuild on {{HOST}}..."
+    ssh {{HOST}} "nohup bash -c 'cd /tmp/nix-config && sudo nixos-rebuild switch --flake .#naspi > /tmp/naspi-rebuild.log 2>&1; echo \"Exit code: \$?\" >> /tmp/naspi-rebuild.log' > /dev/null 2>&1 &"
+
+    echo "✅ Build started on {{HOST}}"
+    echo "📊 Monitor progress:"
+    echo "   ssh {{HOST}} 'tail -f /tmp/naspi-rebuild.log'"
+    echo "   ssh {{HOST}} 'ps aux | grep nixos-rebuild'"
+    echo ""
+    echo "⏱️  Expected time: 1-3 hours (kernel compilation on RPi4)"
+    echo ""
+    echo "✅ Check completion:"
+    echo "   ssh {{HOST}} 'grep \"Exit code\" /tmp/naspi-rebuild.log'"
+    echo "   ssh noams@192.168.3.6  # Test local SSH after success"
+
 # Install argon-rpi4 using nixos-anywhere + disko (fresh install with partitioning)
 rpi-install-argon HOST="rpi4-installer" BUILDERS="":
     #!/usr/bin/env bash

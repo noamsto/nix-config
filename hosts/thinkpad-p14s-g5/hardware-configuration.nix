@@ -26,46 +26,49 @@
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Enable thinkpad_acpi fan control for thinkfan
+  boot.extraModprobeConfig = ''
+    options thinkpad_acpi fan_control=1
+  '';
+
   services.thinkfan = {
-    # Reference: https://github.com/kikislater/thinkpad-p14s-g5-linux/blob/master/thinkfan.conf
+    # Simplified configuration using direct hwmon paths
     enable = true;
     sensors = [
-      # GPU
+      # GPU (hwmon10)
       {
-        name = "amdgpu";
         type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
+        query = "/sys/class/hwmon/hwmon10/temp1_input";
       }
 
-      # CPU
+      # CPU (hwmon1 - k10temp)
       {
-        name = "k10temp";
         type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
+        query = "/sys/class/hwmon/hwmon1/temp1_input";
+      }
+
+      # ThinkPad EC sensors (hwmon8)
+      {
+        type = "hwmon";
+        query = "/sys/class/hwmon/hwmon8/temp1_input";
       }
       {
-        name = "thinkpad";
         type = "hwmon";
-        indices = [1 3 6 7];
-        query = "/sys/class/hwmon";
-        max_errors = 10;
+        query = "/sys/class/hwmon/hwmon8/temp3_input";
       }
-      # SSD
       {
-        name = "nvme";
         type = "hwmon";
-        indices = [1 2 3];
-        correction = [(-5) 0 0];
-        query = "/sys/class/hwmon";
+        query = "/sys/class/hwmon/hwmon8/temp6_input";
       }
-      # MB
       {
-        name = "acpitz";
         type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
+        query = "/sys/class/hwmon/hwmon8/temp7_input";
+      }
+
+      # ACPI thermal zone (hwmon4)
+      {
+        type = "hwmon";
+        query = "/sys/class/hwmon/hwmon4/temp1_input";
       }
     ];
     fans = [
