@@ -28,7 +28,7 @@
 
   services.thinkfan = {
     # Reference: https://github.com/kikislater/thinkpad-p14s-g5-linux/blob/master/thinkfan.conf
-    enable = false;
+    enable = true;
     sensors = [
       # GPU
       {

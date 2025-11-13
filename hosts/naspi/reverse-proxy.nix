@@ -14,7 +14,7 @@
         # Root redirect to a simple status page
         "/" = {
           extraConfig = ''
-            return 200 'NasPi Services: /radarr /sonarr /prowlarr /bazarr /flood /transmission /grafana /paperless';
+            return 200 'NasPi Services: /radarr /sonarr /prowlarr /bazarr /flood /transmission /grafana';
             add_header Content-Type text/plain;
           '';
         };
@@ -112,21 +112,6 @@
           proxyPass = "http://127.0.0.1:3001";
           proxyWebsockets = true;
           recommendedProxySettings = true;
-        };
-
-        # Paperless-ngx - Document Management
-        "/paperless" = {
-          proxyPass = "http://127.0.0.1:28981";
-          extraConfig = ''
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_redirect off;
-            proxy_http_version 1.1;
-            proxy_buffering off;
-            client_max_body_size 100M;
-          '';
         };
       };
     };

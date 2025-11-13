@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Undocked with lid closed - configure, consolidate workspaces, then suspend
+# Undocked with lid closed - configure workspaces, then suspend
 #
 # This script handles the critical case of closing the laptop lid while undocked.
 # It must:
 # 1. Verify the lid is actually closed (prevent bounce)
-# 2. Consolidate workspaces 5-10 into 1-4 for mobile workflow
-# 3. Move all workspaces to laptop screen
-# 4. Suspend reliably without race conditions
+# 2. Move all workspaces (1-9) to laptop screen
+# 3. Suspend reliably without race conditions
 
 set -euo pipefail
 
@@ -60,33 +59,9 @@ log "Lid confirmed closed, proceeding with workspace consolidation and suspend"
 # Create suspend lock to prevent duplicate attempts
 touch "$SUSPEND_LOCK_FILE"
 
-# Consolidate workspaces 5-10 into 1-4 (move windows, not just workspaces)
-log "Consolidating workspaces 5-10 into 1-4"
-for src_ws in {5..10}; do
-  # Get list of windows on source workspace
-  windows=$(hyprctl clients -j 2>/dev/null | jq -r ".[] | select(.workspace.id == $src_ws) | .address" 2>/dev/null || echo "")
-
-  if [ -n "$windows" ]; then
-    # Calculate target workspace (5→1, 6→2, 7→3, 8→4, 9→1, 10→2)
-    target_ws=$((((src_ws - 5) % 4) + 1))
-    log "Moving windows from workspace $src_ws to workspace $target_ws"
-
-    # Move each window individually
-    while IFS= read -r window; do
-      if [ -n "$window" ]; then
-        hyprctl dispatch movetoworkspacesilent "$target_ws,address:$window" 2>/dev/null || log "Failed to move window $window"
-      fi
-    done <<<"$windows"
-  fi
-
-  # Make workspace non-persistent
-  hyprctl keyword workspace "$src_ws,persistent:false" 2>/dev/null || true
-done
-
-# Move workspaces 1-4 to laptop screen
-log "Moving workspaces 1-4 to laptop screen"
-for ws in {1..4}; do
-  hyprctl dispatch workspace "$ws" 2>/dev/null || log "Failed to switch to workspace $ws"
+# Move all workspaces 1-9 to laptop screen
+log "Moving workspaces 1-9 to laptop screen"
+for ws in {1..9}; do
   hyprctl dispatch moveworkspacetomonitor "$ws" eDP-1 2>/dev/null || log "Failed to move workspace $ws to eDP-1"
 done
 

@@ -208,8 +208,13 @@ services.openssh.listenAddresses = [
 
 2. **Added kernel version lock** (`hosts/naspi/system.nix`)
    ```nix
+   # Import vendor-kernel overlay for versioned kernels
+   nixpkgs.overlays = [
+     nixos-raspberrypi.overlays.vendor-kernel
+   ];
+
    # Lock to 6.12.34 - known working version from generation 56
-   boot.kernelPackages = nixos-raspberrypi.packages.${pkgs.system}.linuxPackages_rpi4_6_12_34;
+   boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux_rpi4_v6_12_34;
    ```
 
 3. **Kept SSH IPv4 fix** (`hosts/naspi/system.nix`)
@@ -240,11 +245,11 @@ services.openssh.listenAddresses = [
 **📋 Future kernel upgrades:**
 When ready to upgrade kernel:
 ```bash
-# Check available versions
-nix eval github:nvmd/nixos-raspberrypi#packages.aarch64-linux.linuxPackages_rpi4_6_12_44.kernel.version
+# Check available versions in vendor-kernel overlay
+nix eval github:nvmd/nixos-raspberrypi#overlays.vendor-kernel --apply 'overlay: builtins.attrNames (overlay {} {})'
 
-# Update lock in hosts/naspi/system.nix
-boot.kernelPackages = nixos-raspberrypi.packages.${pkgs.system}.linuxPackages_rpi4_6_12_44;
+# Update lock in hosts/naspi/system.nix to newer version (e.g., 6.12.44)
+boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux_rpi4_v6_12_44;
 ```
 
 ### Post-Rollback Deployment Steps

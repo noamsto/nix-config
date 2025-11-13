@@ -18,6 +18,11 @@ in {
         "2, persistent:true"
         "3, persistent:true"
         "4, persistent:true"
+        "5, persistent:true"
+        "6, persistent:true"
+        "7, persistent:true"
+        "8, persistent:true"
+        "9, persistent:true"
       ];
 
       env = [
@@ -204,6 +209,7 @@ in {
           columns = 3;
           gap_size = 4;
           bg_col = "rgb(000000)";
+          workspace_method = "first 1"; # Always show workspaces starting from WS 1
 
           enable_gesture = true;
           gesture_distance = 250; # More responsive overview activation

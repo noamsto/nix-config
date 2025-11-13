@@ -115,7 +115,7 @@
 
     # === SPECIALIZED HARDWARE ===
     # Monthly updates for hardware support
-    # Use latest - kernel version locked in host config instead
+    # Use latest - pinning breaks authentication
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
 
     disko = {

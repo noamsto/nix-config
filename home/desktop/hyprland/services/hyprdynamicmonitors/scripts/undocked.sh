@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Undocked - laptop screen only (lid open)
 #
-# This script handles undocking with the lid open. It consolidates workspaces
-# from external monitors (5-10) into the mobile workspace layout (1-4).
+# This script handles undocking with the lid open. It moves all workspaces
+# (1-9) to the laptop monitor without consolidation.
 
 set -euo pipefail
 
@@ -30,33 +30,9 @@ xrdb -merge ~/.Xresources.laptop 2>/dev/null &
 (
   sleep 1
 
-  # Consolidate workspaces 5-10 into 1-4 (move windows, not just workspaces)
-  log "Consolidating workspaces 5-10 into 1-4"
-  for src_ws in {5..10}; do
-    # Get list of windows on source workspace
-    windows=$(hyprctl clients -j 2>/dev/null | jq -r ".[] | select(.workspace.id == $src_ws) | .address" 2>/dev/null || echo "")
-
-    if [ -n "$windows" ]; then
-      # Calculate target workspace (5→1, 6→2, 7→3, 8→4, 9→1, 10→2)
-      target_ws=$((((src_ws - 5) % 4) + 1))
-      log "Moving windows from workspace $src_ws to workspace $target_ws"
-
-      # Move each window individually
-      while IFS= read -r window; do
-        if [ -n "$window" ]; then
-          hyprctl dispatch movetoworkspacesilent "$target_ws,address:$window" 2>/dev/null || log "Failed to move window $window"
-        fi
-      done <<<"$windows"
-    fi
-
-    # Make workspace non-persistent
-    hyprctl keyword workspace "$src_ws,persistent:false" 2>/dev/null || true
-  done
-
-  # Move workspaces 1-4 to laptop screen
-  log "Moving workspaces 1-4 to laptop screen"
-  for ws in {1..4}; do
-    hyprctl dispatch workspace "$ws" 2>/dev/null || log "Failed to switch to workspace $ws"
+  # Move all workspaces 1-9 to laptop screen
+  log "Moving workspaces 1-9 to laptop screen"
+  for ws in {1..9}; do
     hyprctl dispatch moveworkspacetomonitor "$ws" eDP-1 2>/dev/null || log "Failed to move workspace $ws to eDP-1"
   done
 

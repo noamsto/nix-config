@@ -1,17 +1,13 @@
-{
-  config,
-  inputs,
-  ...
-}: {
+{config, ...}: {
   imports = [
     # Core configuration
     ../../options.nix
-    ../../overlays # Apply nixpkgs overlays (includes pkgs.unstable, pkgs.stable)
+    ../../overlays
     ./hardware.nix
     ./system.nix
     ./xscript.nix
     ./media-services.nix
-    ./paperless.nix
+    # ./paperless.nix  # Disabled - will run on separate RPi4
     ./monitoring.nix
     ./tailscale.nix
     ./network-resilience.nix
