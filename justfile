@@ -154,26 +154,59 @@ rpi-install-naspi HOST="rpi4-installer" BUILDERS="":
     ./scripts/naspi-deploy.sh {{HOST}} install
 
 # Deploy configuration update to existing naspi system (requires reboot)
-rpi-deploy-naspi HOST="naspi.local":
+rpi-deploy-naspi HOST="naspi.local" BUILD_HOST="remote":
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🔄 Deploying naspi configuration update to {{HOST}}..."
     echo "ℹ️  Updates boot configuration (requires reboot to activate)"
-    ./scripts/naspi-deploy.sh {{HOST}} switch
+    ./scripts/naspi-deploy.sh {{HOST}} switch {{BUILD_HOST}}
     echo "🔄 Configuration staged. Reboot to activate: just rpi-reboot {{HOST}} noams"
 
-# Deploy and immediately apply changes to naspi (no reboot needed)
-naspi-switch HOST="naspi.local":
+# Deploy and immediately apply changes to naspi (configurable build location)
+naspi-switch HOST="naspi.local" BUILD_HOST="":
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "🔄 Deploying and activating naspi configuration..."
+
+    # Determine build host
+    if [[ "{{BUILD_HOST}}" == "local" ]] || [[ "{{BUILD_HOST}}" == "localhost" ]]; then
+        BUILD_LOC="localhost"
+        echo "🔄 Deploying naspi configuration with LOCAL build..."
+        echo "💾 Uses your local cache (fast if already built)"
+    elif [[ "{{BUILD_HOST}}" == "remote" ]] || [[ "{{BUILD_HOST}}" == "" ]]; then
+        BUILD_LOC="noams@{{HOST}}"
+        echo "🔄 Deploying naspi configuration with REMOTE build..."
+        echo "🏗️  Builds natively on naspi (slower, but no cross-compile)"
+    else
+        BUILD_LOC="{{BUILD_HOST}}"
+        echo "🔄 Deploying naspi configuration with custom build host: {{BUILD_HOST}}"
+    fi
+
     echo "ℹ️  Changes apply immediately (no reboot needed)"
-    nixos-rebuild switch \
-        --flake ".#naspi" \
-        --target-host "noams@{{HOST}}" \
-        --build-host "noams@{{HOST}}" \
-        --use-remote-sudo |& nom
+
+    # Build locally: omit --build-host (defaults to local build without SSH)
+    # Build remotely: use --build-host with explicit host
+    if [[ "$BUILD_LOC" == "localhost" ]]; then
+        # No nom for local builds - avoids buffering during remote activation
+        nixos-rebuild switch \
+            --flake ".#naspi" \
+            --target-host "noams@{{HOST}}" \
+            --use-remote-sudo
+    else
+        nixos-rebuild switch \
+            --flake ".#naspi" \
+            --target-host "noams@{{HOST}}" \
+            --build-host "$BUILD_LOC" \
+            --use-remote-sudo |& nom
+    fi
     echo "✅ Configuration activated!"
+
+# Deploy to naspi building LOCALLY (uses your local cache)
+naspi-local HOST="naspi.local":
+    @just naspi-switch {{HOST}} local
+
+# Deploy to naspi building REMOTELY (builds on naspi)
+naspi-remote HOST="naspi.local":
+    @just naspi-switch {{HOST}} remote
 
 # Deploy to naspi using nh (fastest, recommended)
 naspi:

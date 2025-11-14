@@ -153,7 +153,7 @@
     noams = {
       isNormalUser = true;
       extraGroups = ["wheel" "gpio"];
-      initialPassword = "nixos";
+      # initialPassword removed - using hashedPassword from password-fix.nix
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
       ];

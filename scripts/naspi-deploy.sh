@@ -2,11 +2,13 @@
 set -euo pipefail
 
 # Deploy NixOS configuration to Raspberry Pi remotely using nixos-anywhere + disko
-# Usage: ./scripts/naspi-deploy.sh [hostname] [mode]
+# Usage: ./scripts/naspi-deploy.sh [hostname] [mode] [build-host]
 # Modes: install (fresh install with disko), switch (update existing)
+# Build-host: local (use local cache), remote (build on naspi), or custom ssh host
 
 HOSTNAME="${1:-naspi-nix.local}"
 MODE="${2:-switch}"
+BUILD_HOST="${3:-remote}"
 
 echo "🚀 Deploying NixOS configuration to $HOSTNAME using nixos-anywhere + disko..."
 
@@ -58,12 +60,31 @@ case "$MODE" in
   echo "🔄 Updating existing NixOS system..."
   echo "ℹ️  This assumes the system was already installed with disko partitioning"
 
-  echo "🔄 Switching configuration via SSH using nixos-rebuild with nom..."
-  nixos-rebuild boot \
-    --flake ".#naspi" \
-    --target-host "noams@$HOSTNAME" \
-    --build-host "noams@$HOSTNAME" \
-    --use-remote-sudo |& nom
+  # Determine build host
+  if [[ $BUILD_HOST == "local" ]] || [[ $BUILD_HOST == "localhost" ]]; then
+    echo "💾 Building LOCALLY (uses your local cache)"
+    echo "🔄 Switching configuration via SSH using nixos-rebuild..."
+    nixos-rebuild boot \
+      --flake ".#naspi" \
+      --target-host "noams@$HOSTNAME" \
+      --use-remote-sudo
+  elif [[ $BUILD_HOST == "remote" ]]; then
+    echo "🏗️  Building REMOTELY on naspi (native build)"
+    echo "🔄 Switching configuration via SSH using nixos-rebuild with nom..."
+    nixos-rebuild boot \
+      --flake ".#naspi" \
+      --target-host "noams@$HOSTNAME" \
+      --build-host "noams@$HOSTNAME" \
+      --use-remote-sudo |& nom
+  else
+    echo "🏗️  Building on custom host: $BUILD_HOST"
+    echo "🔄 Switching configuration via SSH using nixos-rebuild with nom..."
+    nixos-rebuild boot \
+      --flake ".#naspi" \
+      --target-host "noams@$HOSTNAME" \
+      --build-host "$BUILD_HOST" \
+      --use-remote-sudo |& nom
+  fi
 
   echo "🔄 Configuration built and set as boot default. Reboot required to activate:"
   echo "   ssh noams@$HOSTNAME sudo reboot"

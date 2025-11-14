@@ -16,6 +16,7 @@
     ../../nixos/core/nix.nix
     ../../nixos/core/locale.nix
     ../../secrets
+    # ./password-fix.nix  # Removed - systemd cycles fixed, agenix works now
   ];
 
   # Configuration options
@@ -24,7 +25,8 @@
   profile = "personal";
 
   # Additional settings for ZFS system
-  boot.tmp.useTmpfs = true;
+  # Disabled - SSD boot doesn't need tmpfs protection, kernel builds need >4GB tmp space
+  # boot.tmp.useTmpfs = true;
 
   # Enable needed services for NAS functionality
   services.avahi = {
@@ -64,6 +66,18 @@
           </service>
         </service-group>
       '';
+    };
+  };
+
+  # Fix avahi-daemon.socket ordering cycle
+  # The socket was requiring sysinit.target which created a cycle with sockets.target
+  systemd.sockets.avahi-daemon = {
+    unitConfig = {
+      DefaultDependencies = "no";
+    };
+    socketConfig = {
+      # Keep only essential dependencies
+      After = "-.mount";
     };
   };
 }

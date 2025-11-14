@@ -25,6 +25,18 @@ in {
     timeout = 172800;
   };
 
+  # Allow access to hardware monitoring and power interfaces for btop
+  services.udev.extraRules = ''
+    # Allow all users to read hardware monitoring (not sensitive data)
+    SUBSYSTEM=="hwmon", KERNEL=="hwmon*", MODE="0644"
+
+    # Allow access to power supply info (TDP, battery, etc)
+    SUBSYSTEM=="power_supply", MODE="0644"
+
+    # Allow access to RAPL (Running Average Power Limit) for power monitoring
+    SUBSYSTEM=="powercap", MODE="0644"
+  '';
+
   # Host-specific overrides can go here
   # (aliases are now in nixos/core/aliases.nix)
 }

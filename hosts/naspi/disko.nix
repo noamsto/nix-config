@@ -17,7 +17,7 @@
         "umask=0077"
         "noauto"
         "x-systemd.automount"
-        "x-systemd.idle-timeout=1min"
+        "x-systemd.idle-timeout=15min"
       ];
     };
   };
@@ -33,7 +33,7 @@
         "umask=0077"
         "noauto"
         "x-systemd.automount"
-        "x-systemd.idle-timeout=1min"
+        "x-systemd.idle-timeout=15min"
         # Automount triggered by zfs-load-data-key.service accessing the key file
       ];
     };
@@ -329,7 +329,9 @@ in {
     description = "Create ZFS swap volume";
     after = ["zfs-import-rpool.service"];
     before = ["swap.target"];
-    wantedBy = ["multi-user.target"];
+    wantedBy = ["swap.target"];
+    # Disable default dependencies to prevent cycle with sysinit.target
+    unitConfig.DefaultDependencies = "no";
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;

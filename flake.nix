@@ -115,8 +115,8 @@
 
     # === SPECIALIZED HARDWARE ===
     # Monthly updates for hardware support
-    # Use latest - pinning breaks authentication
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi";
+    # Pinned to d0e2a7a (Nov 1) - Last known working with cached kernel & auth
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/d0e2a7a36b08e2049e3024bc23ab391ca9de454c";
 
     disko = {
       url = "github:nix-community/disko";

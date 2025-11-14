@@ -26,46 +26,55 @@
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # Enable thinkpad_acpi fan control for thinkfan
+  # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
   boot.extraModprobeConfig = ''
-    options thinkpad_acpi fan_control=1
+    options thinkpad_acpi fan_control=1 charge_start_thresh=75 charge_stop_thresh=85
   '';
 
   services.thinkfan = {
-    # Simplified configuration using direct hwmon paths
+    # Using direct paths due to thinkfan 2.0.0 issues with name-based lookup
+    # TODO: Switch to name-based when thinkfan fixes sensor discovery
+    # Reference: https://github.com/kikislater/thinkpad-p14s-g5-linux/blob/master/thinkfan.conf
     enable = true;
     sensors = [
-      # GPU (hwmon10)
+      # GPU (amdgpu - hwmon10)
       {
         type = "hwmon";
         query = "/sys/class/hwmon/hwmon10/temp1_input";
       }
 
-      # CPU (hwmon1 - k10temp)
+      # CPU (k10temp - hwmon2)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon1/temp1_input";
+        query = "/sys/class/hwmon/hwmon2/temp1_input";
       }
 
-      # ThinkPad EC sensors (hwmon8)
+      # ThinkPad EC sensors (hwmon9)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon8/temp1_input";
+        query = "/sys/class/hwmon/hwmon9/temp1_input";
       }
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon8/temp3_input";
+        query = "/sys/class/hwmon/hwmon9/temp3_input";
       }
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon8/temp6_input";
+        query = "/sys/class/hwmon/hwmon9/temp6_input";
       }
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon8/temp7_input";
+        query = "/sys/class/hwmon/hwmon9/temp7_input";
       }
 
-      # ACPI thermal zone (hwmon4)
+      # SSD (nvme - hwmon0) - temperature readings with -5°C correction
+      {
+        type = "hwmon";
+        query = "/sys/class/hwmon/hwmon0/temp1_input";
+        correction = [(-5)];
+      }
+
+      # Motherboard (acpitz - hwmon4)
       {
         type = "hwmon";
         query = "/sys/class/hwmon/hwmon4/temp1_input";
@@ -77,16 +86,17 @@
         query = "/proc/acpi/ibm/fan";
       }
     ];
+    # Aggressive fan curve from reference repo (starts at 60°C, full-speed at 79°C)
     levels = [
-      [0 0 55]
-      [1 53 58]
-      [2 56 61]
-      [3 59 64]
-      [4 62 67]
-      [5 65 70]
-      [6 69 74]
-      [7 72 77]
-      ["level full-speed" 75 32767]
+      [0 0 60]
+      [1 58 63]
+      [2 61 66]
+      [3 64 69]
+      [4 67 72]
+      [5 70 75]
+      [6 73 78]
+      [7 76 81]
+      ["level full-speed" 79 32767]
     ];
   };
 

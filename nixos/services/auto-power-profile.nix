@@ -97,10 +97,7 @@ in {
       };
     };
 
-    # Optional: Set battery charge thresholds via kernel parameters (ThinkPad specific)
-    # This is a cleaner way to handle battery care without TLP
-    boot.extraModprobeConfig = ''
-      options thinkpad_acpi charge_start_thresh=75 charge_stop_thresh=85
-    '';
+    # Note: Battery charge thresholds moved to hardware-configuration.nix
+    # to be combined with fan_control parameter in a single extraModprobeConfig
   };
 }
