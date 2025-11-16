@@ -43,10 +43,10 @@
         query = "/sys/class/hwmon/hwmon10/temp1_input";
       }
 
-      # CPU (k10temp - hwmon2)
+      # CPU (k10temp - hwmon1)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon2/temp1_input";
+        query = "/sys/class/hwmon/hwmon1/temp1_input";
       }
 
       # ThinkPad EC sensors (hwmon9)

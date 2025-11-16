@@ -112,8 +112,25 @@
           end
         end
 
+        # Bash-style history shortcuts
+        abbr -a !! --position anywhere --function last_history_item
+        abbr -a '!$' --position anywhere --function last_command_arg
+
+        function last_history_item
+          echo $history[1]
+        end
+
+        function last_command_arg
+          echo $history[1] | read -lat args
+          echo $args[-1]
+        end
+
         # Vi mode (built-in)
         fish_vi_key_bindings
+
+        # Override Ctrl+V to use simple paste (disable fish_clipboard_paste which conflicts with Vicinae)
+        bind -M insert \cv 'commandline -i -- (wl-paste)'
+        bind -M default \cv 'commandline -i -- (wl-paste)'
 
         # Fix C-P and C-N for history navigation (restore after FZF)
         bind \cp up-or-search
