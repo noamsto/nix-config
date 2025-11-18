@@ -2,20 +2,20 @@
   inputs,
   config,
   pkgs,
+  lib,
   ...
 }: let
-  # Get the absolute path to the scripts directory
-  scriptsPath = "${config.xdg.configHome}/hyprdynamicmonitors/scripts";
-
-  # Generate config.toml with substituted script paths
-  configFile = pkgs.substitute {
-    src = ./config.toml;
-    substitutions = [
-      "--replace"
-      "@SCRIPTS_PATH@"
-      scriptsPath
+  # Create workspace-manager script with proper dependencies
+  workspaceManager = pkgs.writeShellApplication {
+    name = "workspace-manager";
+    runtimeInputs = with pkgs; [
+      glib # provides gdbus for lid state checking
     ];
+    text = builtins.readFile ./scripts/workspace-manager.sh;
   };
+
+  # Use config.toml directly (workspace-manager is in PATH, no substitutions needed)
+  configFile = ./config.toml;
 in {
   imports = [inputs.hyprdynamicmonitors.homeManagerModules.default];
 
@@ -26,9 +26,27 @@ in {
     extraFlags = ["--enable-lid-events"];
   };
 
-  # Deploy profiles and scripts using xdg.configFile
+  # Deploy profiles
   xdg.configFile = {
     "hyprdynamicmonitors/profiles".source = ./profiles;
-    "hyprdynamicmonitors/scripts".source = ./scripts;
+  };
+
+  # Add workspace-manager to PATH
+  home.packages = [workspaceManager];
+
+  # Add systemd service to restart HDM after system resume
+  # This fixes the undock-while-asleep issue by re-detecting hardware state
+  systemd.user.services.hyprdynamicmonitors-resume = {
+    Unit = {
+      Description = "Restart hyprdynamicmonitors after system resume";
+      After = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.systemd}/bin/systemctl --user restart hyprdynamicmonitors.service";
+    };
+    Install = {
+      WantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
+    };
   };
 }
