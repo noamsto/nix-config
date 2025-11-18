@@ -128,9 +128,8 @@
         # Vi mode (built-in)
         fish_vi_key_bindings
 
-        # Override Ctrl+V to use simple paste (disable fish_clipboard_paste which conflicts with Vicinae)
-        bind -M insert \cv 'commandline -i -- (wl-paste)'
-        bind -M default \cv 'commandline -i -- (wl-paste)'
+        # Configure fzf.fish to use Ctrl+E for variables instead of Ctrl+V (conflicts with paste)
+        fzf_configure_bindings --variables=\ce
 
         # Fix C-P and C-N for history navigation (restore after FZF)
         bind \cp up-or-search
@@ -147,14 +146,14 @@
         bind -M default \c_ undo # Ctrl+_ in normal mode
         bind -M insert \cz undo  # Alternative Ctrl+Z in insert mode
 
-        # fzf history optimizations (applied after fzf-fish plugin loads)
-        set -gx fzf_history_opts --no-sort                          # Chronological order
-        set -gx fzf_history_opts $fzf_history_opts --nth=4..        # Search command text, not timestamps
-        set -gx fzf_history_opts $fzf_history_opts --tiebreak=index # Recent commands first for ties
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-y:execute-silent(echo -n {4..} | wl-copy)+abort'  # Copy to clipboard
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'   # Toggle preview
-        set -gx fzf_history_opts $fzf_history_opts --preview 'echo {4..}'           # Preview full command
-        set -gx fzf_history_opts $fzf_history_opts --preview-window 'down:3:wrap'  # Compact preview
+        # fzf history configuration
+        set -gx fzf_history_opts --tmux 80%,70%                      # Popup: 80% width, 70% height
+        set -gx fzf_history_opts $fzf_history_opts --preview-window 'down,50%,wrap'  # Bigger preview (50% of popup)
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'    # Toggle preview with Ctrl+/
+        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-j:preview-down'       # Scroll preview down
+        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'         # Scroll preview up
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down' # Page down in preview
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'   # Page up in preview
 
         # Function to clean old or duplicate history
         function history-clean
