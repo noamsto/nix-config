@@ -66,19 +66,19 @@ configure_docked() {
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
     hyprctl keyword workspace "$ws,monitor:$left" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws" "$left" 2>/dev/null || true
+    hyprctl dispatch moveworkspacetomonitor "$ws $left" 2>/dev/null || true
   done
 
   # Right monitor: workspaces 5-8
   for ws in {5..8}; do
     hyprctl keyword workspace "$ws,monitor:$right" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws" "$right" 2>/dev/null || true
+    hyprctl dispatch moveworkspacetomonitor "$ws $right" 2>/dev/null || true
   done
 
   # Laptop screen: workspace 9 (if lid open)
   if ! is_lid_closed; then
     hyprctl keyword workspace "9,monitor:$LAPTOP_MONITOR" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor 9 "$LAPTOP_MONITOR" 2>/dev/null || true
+    hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR" 2>/dev/null || true
   fi
 
   # Cleanup workspaces 10+
@@ -96,7 +96,7 @@ configure_undocked() {
   # Move all workspaces to laptop
   for ws in {1..9}; do
     hyprctl keyword workspace "$ws,monitor:$LAPTOP_MONITOR" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws" "$LAPTOP_MONITOR" 2>/dev/null || true
+    hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR" 2>/dev/null || true
   done
 
   # Cleanup
