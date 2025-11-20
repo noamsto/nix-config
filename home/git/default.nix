@@ -22,7 +22,7 @@ in {
     settings = {
       user = {
         name = osConfig.user-full-name;
-        email = osConfig.email;
+        inherit (osConfig) email;
         signingkey = signKey;
       };
       init = {

@@ -5,10 +5,8 @@
 set -euo pipefail
 
 # Constants
-readonly LOCK_FILE="/tmp/hyprdynamicmonitors-workspace.lock"
 readonly SUSPEND_LOCK_FILE="/tmp/hyprdynamicmonitors-suspend.lock"
 readonly LOG_FILE="/tmp/workspace-manager.log"
-readonly LOCK_TIMEOUT=10
 
 # Arguments
 readonly PROFILE="${1:-}"
@@ -19,27 +17,6 @@ readonly LAPTOP_MONITOR="${4:-eDP-1}"
 # Logging
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$PROFILE] $*" >>"$LOG_FILE"
-}
-
-# Cleanup
-cleanup() {
-  rm -f "$LOCK_FILE"
-}
-
-# Acquire lock
-acquire_lock() {
-  local waited=0
-  while [ -f "$LOCK_FILE" ]; do
-    if [ $waited -ge $LOCK_TIMEOUT ]; then
-      log "WARN: Lock timeout, removing stale lock"
-      rm -f "$LOCK_FILE"
-      break
-    fi
-    sleep 0.5
-    waited=$((waited + 1))
-  done
-  echo $$ >"$LOCK_FILE"
-  trap cleanup EXIT
 }
 
 # Check if lid is closed
@@ -137,14 +114,12 @@ main() {
   fi
 
   log "=== Starting: $PROFILE ==="
-  acquire_lock
-  sleep 0.5
 
-  # Load XWayland settings
+  # Load XWayland settings in background
   if [ "$PROFILE" = "docked" ]; then
-    xrdb -merge ~/.Xresources.docked 2>/dev/null || true
+    xrdb -merge ~/.Xresources.docked 2>/dev/null &
   else
-    xrdb -merge ~/.Xresources.laptop 2>/dev/null || true
+    xrdb -merge ~/.Xresources.laptop 2>/dev/null &
   fi
 
   # Configure workspaces

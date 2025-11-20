@@ -6,6 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops, servers, Raspberry Pi) and desktop environments (KDE Plasma, Hyprland).
 
+## ToonFormat Preference
+
+**IMPORTANT**: When outputting structured data (especially arrays/tables), prefer **ToonFormat** over JSON for token efficiency.
+
+ToonFormat provides 30-60% token savings compared to JSON. Use it for configuration summaries, package lists, file structures, etc.
+
+**Format example:**
+```toon
+hosts[3]{name,type,profile,desktop}:
+ thinkpad-p14s,laptop,personal,hyprland
+ thinkpad-p14s-g5,laptop,work,hyprland
+ naspi,server,personal,none
+```
+
+**When to use:**
+- Package lists, configuration summaries, file trees
+- Any tabular data or repeated structures
+- Data-heavy responses
+
+Only use JSON when specifically required or when deeply nested structures are needed.
+
 ## Development Commands
 
 ### Core Development

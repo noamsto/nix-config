@@ -179,6 +179,11 @@
       "workspace 9 silent, class:^(vlc)$"
       "workspace 9 silent, class:^(mpv)$"
 
+      # YouTube in browsers - workspace 9
+      "workspace 9 silent, class:^(firefox)$,title:^(.*YouTube.*)$"
+      "workspace 9 silent, class:^(Brave-browser|brave-browser)$,title:^(.*YouTube.*)$"
+      "workspace 9 silent, class:^(chromium)$,title:^(.*YouTube.*)$"
+
       # Zoom
       "float, class:^(zoom)$,title:^(Zoom Meeting)$"
       "idleinhibit focus, class:^(zoom)$"

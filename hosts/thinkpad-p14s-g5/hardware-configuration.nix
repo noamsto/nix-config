@@ -11,25 +11,36 @@
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
+  boot = {
+    initrd = {
+      availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod"];
+      kernelModules = ["dm-snapshot"];
 
-  boot.initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod"];
-  boot.initrd.kernelModules = ["dm-snapshot"];
-  boot.kernelModules = ["kvm-amd" "amdgpu"];
-  boot.extraModulePackages = [];
-  boot.kernelParams = [
-    "systemd.gpt_auto=0" # Solve annoying dmesg warning
-    "amdgpu.dcdebugmask=0x10" # Fix GPU flickering and lag (P14s Gen 5)
-  ];
-  boot.kernel.sysctl = {
-    "kernel.sysrq" = 502;
-    "vm.overcommit_memory" = 1;
+      luks.devices = {
+        root = {
+          # Use https://nixos.wiki/wiki/Full_Disk_Encryption
+          device = "/dev/disk/by-uuid/8d260438-dcbf-414e-9f49-03b9c86cc8b9";
+          preLVM = true;
+        };
+      };
+    };
+    kernelModules = ["kvm-amd" "amdgpu"];
+    extraModulePackages = [];
+    kernelParams = [
+      "systemd.gpt_auto=0" # Solve annoying dmesg warning
+      "amdgpu.dcdebugmask=0x10" # Fix GPU flickering and lag (P14s Gen 5)
+    ];
+    kernel.sysctl = {
+      "kernel.sysrq" = 502;
+      "vm.overcommit_memory" = 1;
+    };
+    kernelPackages = pkgs.linuxPackages;
+
+    # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
+    extraModprobeConfig = ''
+      options thinkpad_acpi fan_control=1 charge_start_thresh=75 charge_stop_thresh=85
+    '';
   };
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
-  boot.extraModprobeConfig = ''
-    options thinkpad_acpi fan_control=1 charge_start_thresh=75 charge_stop_thresh=85
-  '';
 
   services.thinkfan = {
     # Using direct paths due to thinkfan 2.0.0 issues with name-based lookup
@@ -98,14 +109,6 @@
       [7 76 81]
       ["level full-speed" 79 32767]
     ];
-  };
-
-  boot.initrd.luks.devices = {
-    root = {
-      # Use https://nixos.wiki/wiki/Full_Disk_Encryption
-      device = "/dev/disk/by-uuid/8d260438-dcbf-414e-9f49-03b9c86cc8b9";
-      preLVM = true;
-    };
   };
 
   fileSystems."/" = {

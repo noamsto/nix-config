@@ -14,6 +14,9 @@
     fish = {
       enable = true;
 
+      # Prefer abbreviations over aliases (shows full command, enables completions)
+      preferAbbrs = true;
+
       # Fish uses its own history format, no need to configure path
       # History is automatically stored in ~/.local/share/fish/fish_history
 
@@ -25,29 +28,47 @@
         hdm = "hyprdynamicmonitors";
 
         # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
+        # Status & info
         gsb = "git status -sb";
         gst = "git status";
+
+        # Branching & switching
         gsw = "git switch";
         gswc = "git switch --create";
+        gcom = "git checkout main || git checkout master";
+
+        # Worktree management
+        gwa = "git worktree add";
+        gwl = "git worktree list";
+        gwr = "git worktree remove";
+        gwp = "git worktree prune";
+        gwm = "git worktree move";
+
+        # Remote operations
         gpf = "git push --force-with-lease";
         gpu = "git push -u origin HEAD";
         gp = "git push";
         gl = "git pull";
         gf = "git fetch";
         gfa = "git fetch --all --prune";
-        gcom = "git checkout main || git checkout master";
-        gwip = "git add -A && git commit -m 'WIP'";
-        gunwip = "git reset HEAD~1";
+        gup = "git pull --rebase";
+
+        # Staging & committing
         gaa = "git add --all";
         gc = "git commit -v";
         gcm = "git commit -m";
         gca = "git commit -v -a";
         gcan = "git commit -v -a --no-edit --amend";
-        grhh = "git reset --hard";
-        gup = "git pull --rebase";
+        gwip = "git add -A && git commit -m 'WIP'";
+        gunwip = "git reset HEAD~1";
+
+        # Rebasing
         grbi = "git-forgit rebase -i";
         grbc = "git rebase --continue";
         grba = "git rebase --abort";
+
+        # Reset
+        grhh = "git reset --hard";
       };
 
       plugins = with pkgs.fishPlugins; [
