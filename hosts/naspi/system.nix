@@ -221,6 +221,15 @@
           "directory mask" = "0755";
           comment = "Media Storage";
         };
+        temp = {
+          path = "/data/temp";
+          browseable = "yes";
+          "read only" = "no";
+          "guest ok" = "yes";
+          "create mask" = "0666";
+          "directory mask" = "0777";
+          comment = "Temporary File Share";
+        };
       };
     };
 
@@ -276,6 +285,7 @@
   # Ensure proper permissions for storage directories and ZFS key storage
   systemd.tmpfiles.rules = [
     "d /data 0755 root root -"
+    "d /data/temp 0777 root root -"
     "d /media/storage 0755 root root -"
     "d /boot/zfs-keys 0700 root root -"
   ];

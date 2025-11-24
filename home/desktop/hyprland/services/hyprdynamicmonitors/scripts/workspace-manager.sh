@@ -37,19 +37,14 @@ configure_docked() {
 
   # Make workspaces 5-8 persistent
   for ws in {5..8}; do
-    hyprctl keyword workspace "$ws,persistent:true" 2>/dev/null || true
+    hyprctl keyword workspace "$ws,persistent:true,monitor:$right" 2>/dev/null || true
+    hyprctl dispatch moveworkspacetomonitor "$ws $right" 2>/dev/null || true
   done
 
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
     hyprctl keyword workspace "$ws,monitor:$left" 2>/dev/null || true
     hyprctl dispatch moveworkspacetomonitor "$ws $left" 2>/dev/null || true
-  done
-
-  # Right monitor: workspaces 5-8
-  for ws in {5..8}; do
-    hyprctl keyword workspace "$ws,monitor:$right" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws $right" 2>/dev/null || true
   done
 
   # Laptop screen: workspace 9 (if lid open)

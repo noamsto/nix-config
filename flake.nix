@@ -35,7 +35,10 @@
       "https://nixos-raspberrypi.cachix.org"
       "https://claude-code.cachix.org"
     ];
-    extra-substituters = ["https://vicinae.cachix.org"];
+    extra-substituters = [
+      "https://vicinae.cachix.org"
+      "https://numtide.cachix.org"
+    ];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
@@ -46,7 +49,10 @@
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
     ];
-    extra-trusted-public-keys = ["vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="];
+    extra-trusted-public-keys = [
+      "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
+      "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+    ];
   };
 
   inputs = {
@@ -160,10 +166,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    claude-code = {
-      url = "github:sadjow/claude-code-nix";
+    opencode = {
+      url = "github:sst/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-ai-tools.url = "github:numtide/nix-ai-tools";
 
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";

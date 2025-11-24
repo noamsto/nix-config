@@ -50,7 +50,7 @@ in {
 
   services.easyeffects = {
     enable = true;
-    package = pkgs.easyeffects;
+    package = pkgs.stable.easyeffects;
     preset = presetConfig.defaultPreset;
   };
 }

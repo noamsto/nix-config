@@ -6,6 +6,8 @@
   ...
 }: let
   desktop-packages = with pkgs; [
+    bottles
+
     # social
     ferdium
     zoom-us
@@ -37,7 +39,7 @@
   work-packages = with pkgs; [
     slack
 
-    awscli2
+    stable.awscli2
     stable.aws-sam-cli
     ssm-session-manager-plugin
 

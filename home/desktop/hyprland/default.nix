@@ -40,6 +40,7 @@
     bibata-cursors
     kdePackages.dolphin
     kdePackages.ark # Archive support for dolphin
+    kdePackages.kde-cli-tools # Provides kioclient6 for opening files from Dolphin
 
     # Dock
     nwg-dock-hyprland # Dock for Hyprland
