@@ -15,9 +15,12 @@ is_lid_closed() {
 
 # Main
 if is_lid_closed; then
-  # Lid closed - stop fingerprint daemon (can't use fingerprint reader when lid closed)
-  systemctl --user stop fprintd.service 2>/dev/null || true
+  # Lid closed - mask and stop fingerprint daemon
+  # Mask prevents D-Bus activation from restarting it
+  systemctl mask fprintd.service 2>/dev/null || true
+  systemctl stop fprintd.service 2>/dev/null || true
 else
-  # Lid open - ensure fingerprint daemon is running
-  systemctl --user start fprintd.service 2>/dev/null || true
+  # Lid open - unmask and start for immediate availability
+  systemctl unmask fprintd.service 2>/dev/null || true
+  systemctl start fprintd.service 2>/dev/null || true
 fi

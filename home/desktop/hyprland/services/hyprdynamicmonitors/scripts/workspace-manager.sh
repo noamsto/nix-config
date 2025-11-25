@@ -55,50 +55,35 @@ configure_docked() {
 
   log "Configuring docked: left=$left, right=$right"
 
-  # Make workspaces 5-8 persistent on right monitor
-  for ws in {5..8}; do
-    if ! hyprctl keyword workspace "$ws,persistent:true,monitor:$right"; then
-      log "WARNING: Failed to set workspace $ws persistent on $right"
-    fi
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $right"; then
-      log "WARNING: Failed to move workspace $ws to $right"
-    fi
-  done
-
-  # Left monitor: workspaces 1-4
-  for ws in {1..4}; do
-    if ! hyprctl keyword workspace "$ws,monitor:$left"; then
-      log "WARNING: Failed to set workspace $ws on $left"
-    fi
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $left"; then
-      log "WARNING: Failed to move workspace $ws to $left"
-    fi
-  done
-
-  # Laptop screen: workspace 9 (if lid open)
-  if ! is_lid_closed; then
-    if ! hyprctl keyword workspace "9,monitor:$LAPTOP_MONITOR"; then
-      log "WARNING: Failed to set workspace 9 on $LAPTOP_MONITOR"
-    fi
-    if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
-      log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
-    fi
-  fi
-
-  # Cleanup workspaces 10+
-  for ws in {10..20}; do
-    hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
-  done
-
-  # Reload Hyprland to apply monitor configuration
+  # Reload Hyprland first to apply profile's monitor + workspace rules
   log "Reloading Hyprland configuration..."
   if ! hyprctl reload; then
     log "WARNING: Failed to reload Hyprland configuration"
   fi
 
-  # Switch to workspace 1
-  if ! hyprctl dispatch workspace 1; then
-    log "WARNING: Failed to switch to workspace 1"
+  # Small delay to let Hyprland process the reload
+  sleep 0.3
+
+  # Move existing workspaces to match profile rules
+  # Left monitor: workspaces 1-4
+  for ws in {1..4}; do
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $left"; then
+      log "WARNING: Failed to move workspace $ws to $left"
+    fi
+  done
+
+  # Right monitor: workspaces 5-8
+  for ws in {5..8}; do
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $right"; then
+      log "WARNING: Failed to move workspace $ws to $right"
+    fi
+  done
+
+  # Laptop screen: workspace 9 (if lid open)
+  if ! is_lid_closed; then
+    if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
+      log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
+    fi
   fi
 }
 
@@ -106,31 +91,21 @@ configure_docked() {
 configure_undocked() {
   log "Configuring undocked"
 
-  # Move all workspaces to laptop
-  for ws in {1..9}; do
-    if ! hyprctl keyword workspace "$ws,monitor:$LAPTOP_MONITOR"; then
-      log "WARNING: Failed to set workspace $ws on $LAPTOP_MONITOR"
-    fi
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
-      log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
-    fi
-  done
-
-  # Cleanup
-  for ws in {10..20}; do
-    hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
-  done
-
-  # Reload Hyprland to apply monitor configuration
+  # Reload Hyprland first to apply profile's monitor + workspace rules
   log "Reloading Hyprland configuration..."
   if ! hyprctl reload; then
     log "WARNING: Failed to reload Hyprland configuration"
   fi
 
-  # Switch to workspace 1
-  if ! hyprctl dispatch workspace 1; then
-    log "WARNING: Failed to switch to workspace 1"
-  fi
+  # Small delay to let Hyprland process the reload
+  sleep 0.3
+
+  # Move all workspaces to laptop
+  for ws in {1..9}; do
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
+      log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
+    fi
+  done
 
   # Handle lid-closed suspend
   if is_lid_closed; then

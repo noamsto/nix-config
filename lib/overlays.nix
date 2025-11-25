@@ -52,7 +52,6 @@ inputs: [
         (oldAttrs.postFixup or "")
         + ''
           wrapProgram $out/bin/brave \
-            --add-flags "--disable-accelerated-2d-canvas" \
             --add-flags "--disable-features=WaylandWpColorManagerV1"
         '';
     });

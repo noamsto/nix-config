@@ -12,18 +12,9 @@ in {
         # Fallback for any monitor not configured by hyprdynamicmonitors
         ",preferred,auto,auto"
       ];
-      workspace = [
-        # Persistent workspaces - these will always exist even if empty
-        "1, persistent:true"
-        "2, persistent:true"
-        "3, persistent:true"
-        "4, persistent:true"
-        "5, persistent:true"
-        "6, persistent:true"
-        "7, persistent:true"
-        "8, persistent:true"
-        "9, persistent:true"
-      ];
+      # Workspace rules are defined in hyprdynamicmonitors profile configs
+      # (profiles/docked-home.conf, profiles/undocked.conf, etc.)
+      # This ensures workspace-to-monitor bindings are applied correctly on reload
 
       env = [
         "XCURSOR_SIZE,${toString pointer.size}"

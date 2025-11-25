@@ -26,7 +26,6 @@
     chromium = {
       enable = lib.mkIf (osConfig.profile == "work") true;
       commandLineArgs = [
-        "--disable-accelerated-2d-canvas"
         "--disable-features=WaylandWpColorManagerV1"
       ];
     };
