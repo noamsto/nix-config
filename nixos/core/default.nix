@@ -32,19 +32,7 @@
     };
   };
 
-  security.polkit = {
-    enable = true;
-    extraConfig = ''
-      // Allow users to control fprintd service without password
-      polkit.addRule(function(action, subject) {
-        if (action.id == "org.freedesktop.systemd1.manage-units" &&
-            action.lookup("unit") == "fprintd.service" &&
-            subject.isInGroup("wheel")) {
-          return polkit.Result.YES;
-        }
-      });
-    '';
-  };
+  security.polkit.enable = true;
 
   environment.shells = with pkgs; [zsh];
 

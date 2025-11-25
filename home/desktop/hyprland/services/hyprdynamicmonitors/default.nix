@@ -14,15 +14,6 @@
     text = builtins.readFile ./scripts/workspace-manager.sh;
   };
 
-  # Create fprintd-control script for pre-hook execution
-  fprintdControl = pkgs.writeShellApplication {
-    name = "fprintd-control";
-    runtimeInputs = with pkgs; [
-      glib # provides gdbus for lid state checking
-    ];
-    text = builtins.readFile ./scripts/fprintd-control.sh;
-  };
-
   # Use config.toml directly (workspace-manager is in PATH, no substitutions needed)
   configFile = ./config.toml;
 in {
@@ -41,7 +32,7 @@ in {
   };
 
   # Add scripts to PATH
-  home.packages = [workspaceManager fprintdControl];
+  home.packages = [workspaceManager];
 
   # Add systemd service to restart HDM after system resume
   # This fixes the undock-while-asleep issue by re-detecting hardware state
