@@ -38,9 +38,9 @@
   home.packages = with pkgs; [
     papirus-icon-theme
     bibata-cursors
-    kdePackages.dolphin
-    kdePackages.ark # Archive support for dolphin
-    kdePackages.kde-cli-tools # Provides kioclient6 for opening files from Dolphin
+    xfce.thunar
+    xfce.thunar-volman # Volume manager for thunar
+    xfce.thunar-archive-plugin # Archive support
 
     # Dock
     nwg-dock-hyprland # Dock for Hyprland

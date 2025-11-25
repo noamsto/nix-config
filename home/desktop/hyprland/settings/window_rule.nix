@@ -40,6 +40,7 @@
       # === VICINAE ===
       "pin, title:^(Vicinae Launcher)$"
       "plugin:hyprbars:nobar, title:^(Vicinae Launcher)$"
+      "size 900 700, title:^(Vicinae Launcher)$"
 
       # telegram media viewer
       "float, title:^(Media viewer)$"
@@ -143,9 +144,9 @@
       "idleinhibit fullscreen, class:^(chromium)$"
 
       # File manager progress dialogs
-      "float, class:^(dolphin|org.kde.dolphin)$,title:^(Progress Dialog)$"
-      "float, class:^(dolphin|org.kde.dolphin)$,title:^(Copying)$"
-      "float, class:^(dolphin|org.kde.dolphin)$,title:^(File Operation Progress)$"
+      "float, class:^(thunar|Thunar)$,title:^(Progress Dialog)$"
+      "float, class:^(thunar|Thunar)$,title:^(Copying)$"
+      "float, class:^(thunar|Thunar)$,title:^(File Operation Progress)$"
 
       # Dragon drop - moves to active workspace, allows focus below
       "float, class:^(dragon|dragon-drop)$"

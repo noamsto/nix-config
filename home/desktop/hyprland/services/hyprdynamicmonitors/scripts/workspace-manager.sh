@@ -19,6 +19,26 @@ log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$PROFILE] $*" >>"$LOG_FILE"
 }
 
+# Wait for Hyprland IPC to be ready
+wait_for_hyprland() {
+  local timeout=10
+  local elapsed=0
+
+  log "Waiting for Hyprland IPC to be ready..."
+
+  while [ $elapsed -lt $timeout ]; do
+    if hyprctl monitors &>/dev/null; then
+      log "Hyprland IPC ready after ${elapsed}s"
+      return 0
+    fi
+    sleep 0.5
+    elapsed=$((elapsed + 1))
+  done
+
+  log "ERROR: Hyprland IPC not ready after ${timeout}s"
+  return 1
+}
+
 # Check if lid is closed
 is_lid_closed() {
   gdbus call --system \
@@ -35,22 +55,34 @@ configure_docked() {
 
   log "Configuring docked: left=$left, right=$right"
 
-  # Make workspaces 5-8 persistent
+  # Make workspaces 5-8 persistent on right monitor
   for ws in {5..8}; do
-    hyprctl keyword workspace "$ws,persistent:true,monitor:$right" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws $right" 2>/dev/null || true
+    if ! hyprctl keyword workspace "$ws,persistent:true,monitor:$right"; then
+      log "WARNING: Failed to set workspace $ws persistent on $right"
+    fi
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $right"; then
+      log "WARNING: Failed to move workspace $ws to $right"
+    fi
   done
 
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
-    hyprctl keyword workspace "$ws,monitor:$left" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws $left" 2>/dev/null || true
+    if ! hyprctl keyword workspace "$ws,monitor:$left"; then
+      log "WARNING: Failed to set workspace $ws on $left"
+    fi
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $left"; then
+      log "WARNING: Failed to move workspace $ws to $left"
+    fi
   done
 
   # Laptop screen: workspace 9 (if lid open)
   if ! is_lid_closed; then
-    hyprctl keyword workspace "9,monitor:$LAPTOP_MONITOR" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR" 2>/dev/null || true
+    if ! hyprctl keyword workspace "9,monitor:$LAPTOP_MONITOR"; then
+      log "WARNING: Failed to set workspace 9 on $LAPTOP_MONITOR"
+    fi
+    if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
+      log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
+    fi
   fi
 
   # Cleanup workspaces 10+
@@ -58,7 +90,16 @@ configure_docked() {
     hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
   done
 
-  hyprctl dispatch workspace 1 2>/dev/null || true
+  # Reload Hyprland to apply monitor configuration
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
+  fi
+
+  # Switch to workspace 1
+  if ! hyprctl dispatch workspace 1; then
+    log "WARNING: Failed to switch to workspace 1"
+  fi
 }
 
 # Configure undocked (laptop only)
@@ -67,8 +108,12 @@ configure_undocked() {
 
   # Move all workspaces to laptop
   for ws in {1..9}; do
-    hyprctl keyword workspace "$ws,monitor:$LAPTOP_MONITOR" 2>/dev/null || true
-    hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR" 2>/dev/null || true
+    if ! hyprctl keyword workspace "$ws,monitor:$LAPTOP_MONITOR"; then
+      log "WARNING: Failed to set workspace $ws on $LAPTOP_MONITOR"
+    fi
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
+      log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
+    fi
   done
 
   # Cleanup
@@ -76,7 +121,16 @@ configure_undocked() {
     hyprctl keyword workspace "$ws,persistent:false" 2>/dev/null || true
   done
 
-  hyprctl dispatch workspace 1 2>/dev/null || true
+  # Reload Hyprland to apply monitor configuration
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
+  fi
+
+  # Switch to workspace 1
+  if ! hyprctl dispatch workspace 1; then
+    log "WARNING: Failed to switch to workspace 1"
+  fi
 
   # Handle lid-closed suspend
   if is_lid_closed; then
@@ -110,6 +164,12 @@ main() {
 
   log "=== Starting: $PROFILE ==="
 
+  # Wait for Hyprland IPC to be ready
+  if ! wait_for_hyprland; then
+    log "ERROR: Cannot proceed - Hyprland IPC not ready"
+    exit 1
+  fi
+
   # Load XWayland settings in background
   if [ "$PROFILE" = "docked" ]; then
     xrdb -merge ~/.Xresources.docked 2>/dev/null &
@@ -138,13 +198,6 @@ main() {
   # Launch dock (unless undocked with lid closed or about to suspend)
   if [ "$PROFILE" = "docked" ] || ! is_lid_closed; then
     launch-dock &
-  fi
-
-  # Manage fingerprint daemon
-  if is_lid_closed; then
-    systemctl stop fprintd.service 2>/dev/null &
-  else
-    systemctl start fprintd.service 2>/dev/null &
   fi
 
   log "=== Completed successfully ==="

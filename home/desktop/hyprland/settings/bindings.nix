@@ -4,7 +4,7 @@
   ...
 }: let
   terminal = "kitty";
-  fileManager = "${lib.getExe' pkgs.kdePackages.dolphin "dolphin"}";
+  fileManager = "${lib.getExe pkgs.xfce.thunar}";
   browser = "${lib.getExe pkgs.brave}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
 

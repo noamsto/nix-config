@@ -24,6 +24,12 @@ in {
       plugins = {
         mount = pkgs.yaziPlugins.mount;
         git = pkgs.yaziPlugins.git;
+        gvfs = pkgs.fetchFromGitHub {
+          owner = "boydaihungst";
+          repo = "gvfs.yazi";
+          rev = "master";
+          sha256 = "sha256-6VNra6WUjDfBdGjCw/6VOAaAgZLF78/4Gj47BOh1Q/0=";
+        };
       };
 
       # Custom yazi configuration
@@ -50,6 +56,7 @@ in {
 
       initLua = ''
         require("git"):setup()
+        require("gvfs"):setup()
       '';
 
       # Custom keybindings for dragon-drop integration
