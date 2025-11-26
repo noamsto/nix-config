@@ -229,12 +229,12 @@ in {
       bind-key x kill-pane # skip "kill-pane 1? (y/n)" prompt
       set -g detach-on-destroy off  # don't exit from tmux when closing a session
 
-      # Simple fix: Disable navigation when zoomed to prevent un-zooming
-      # vim-tmux-navigator handles vim/tmux navigation, but respects zoom state
-      bind-key -n C-h if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -L"
-      bind-key -n C-j if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -D"
-      bind-key -n C-k if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -U"
-      bind-key -n C-l if-shell "[ #{window_zoomed_flag} -eq 0 ]" "select-pane -R"
+      # Navigation: pass to vim if in vim, otherwise navigate tmux (but not if zoomed)
+      is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|l?n?vim?x?|fzf)(diff)?$'"
+      bind-key -n C-h if-shell "$is_vim" "send-keys C-h" "if-shell '[ #{window_zoomed_flag} -eq 0 ]' 'select-pane -L'"
+      bind-key -n C-j if-shell "$is_vim" "send-keys C-j" "if-shell '[ #{window_zoomed_flag} -eq 0 ]' 'select-pane -D'"
+      bind-key -n C-k if-shell "$is_vim" "send-keys C-k" "if-shell '[ #{window_zoomed_flag} -eq 0 ]' 'select-pane -U'"
+      bind-key -n C-l if-shell "$is_vim" "send-keys C-l" "if-shell '[ #{window_zoomed_flag} -eq 0 ]' 'select-pane -R'"
 
 
       # Sync window name with terminal name

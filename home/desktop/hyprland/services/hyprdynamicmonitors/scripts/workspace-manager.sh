@@ -111,8 +111,23 @@ configure_undocked() {
   if is_lid_closed; then
     log "Lid closed while undocked - triggering suspend"
 
-    [ -f "$SUSPEND_LOCK_FILE" ] && return
+    # Check for stale lock (older than 30 seconds = way past the 2s debounce)
+    if [ -f "$SUSPEND_LOCK_FILE" ]; then
+      local lock_age
+      lock_age=$(($(date +%s) - $(stat -c %Y "$SUSPEND_LOCK_FILE" 2>/dev/null || echo 0)))
+      if [ "$lock_age" -gt 30 ]; then
+        log "Removing stale lock file (age: ${lock_age}s)"
+        rm -f "$SUSPEND_LOCK_FILE"
+      else
+        log "Suspend already in progress (lock age: ${lock_age}s), skipping"
+        return
+      fi
+    fi
+
     touch "$SUSPEND_LOCK_FILE"
+
+    # Ensure lock is cleaned up on exit (trap handles SIGTERM, errors, etc.)
+    trap 'rm -f "$SUSPEND_LOCK_FILE"' EXIT
 
     # Confirm lid still closed after 2s
     for _ in {1..4}; do
@@ -120,12 +135,15 @@ configure_undocked() {
       if ! is_lid_closed; then
         log "Lid opened, canceling suspend"
         rm -f "$SUSPEND_LOCK_FILE"
+        trap - EXIT
         return
       fi
     done
 
-    systemctl suspend
+    log "Initiating suspend"
     rm -f "$SUSPEND_LOCK_FILE"
+    trap - EXIT
+    systemctl suspend
   fi
 }
 

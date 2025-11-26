@@ -67,6 +67,13 @@ in {
         };
       };
 
+      # Linear MCP - HTTP transport (recommended over SSE)
+      # Run `/mcp` in Claude Code session to authenticate
+      linear = {
+        type = "http";
+        url = "https://mcp.linear.app/mcp";
+      };
+
       # NOTE: Playwright and PostHog MCPs loaded conditionally via aliases:
       #   claude-frontend - adds Playwright MCP
       #   claude-analytics - adds PostHog MCP

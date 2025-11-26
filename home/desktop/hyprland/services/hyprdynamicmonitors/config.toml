@@ -25,7 +25,7 @@ object_path = "/org/freedesktop/UPower/devices/line_power_AC"
 
 # Undocked with lid closed - triggers suspend after 2s delay
 [profiles.undocked_lid_closed]
-config_file = "profiles/undocked-lid-closed.conf"
+config_file = "profiles/undocked.conf"
 config_file_type = "template"
 post_apply_exec = "workspace-manager undocked-lid-closed"
 
