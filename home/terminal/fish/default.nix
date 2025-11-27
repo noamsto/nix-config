@@ -13,6 +13,7 @@
 
     fish = {
       enable = true;
+      generateCompletions = false; # TODO: issue https://github.com/NixOS/nixpkgs/issues/462025
 
       # Prefer abbreviations over aliases (shows full command, enables completions)
       preferAbbrs = true;
