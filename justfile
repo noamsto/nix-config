@@ -64,332 +64,59 @@ home-build CONFIG="noams@$(hostname)":
 # =============================================================================
 # Raspberry Pi Management
 # =============================================================================
+# All RPi operations now use the unified CLI: scripts/rpi/rpi
+# Run './scripts/rpi/rpi help' for detailed usage information
+
+# List all available Raspberry Pi configurations
+rpi-list:
+    ./scripts/rpi/rpi list
 
 # Build Raspberry Pi installer image
 rpi-build-installer:
     @echo "🏗️  Building RPI4 installer SD card image..."
-    @echo "ℹ️   This creates a minimal installer image for deployment"
-    nom build ".#rpi4-installer" --out-link result-rpi4-installer
-    @echo "✅ Installer image built successfully!"
-    @echo "📁 Image location: $(readlink -f result-rpi4-installer)"
-    @echo ""
-    @echo "📋 Next steps:"
-    @echo "1. Flash to SD card: just rpi-flash-installer"
-    @echo "2. Boot Pi from SD card"
-    @echo "3a. Install argon-rpi4: just rpi-install-argon"
-    @echo "3b. Install naspi (ZFS): just rpi-install-naspi"
+    ./scripts/rpi/rpi rpi4-installer build
 
-# Flash installer image to SD card (interactive)
-rpi-flash-installer DEVICE="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [[ ! -e result-rpi4-installer ]]; then
-        echo "❌ No installer image found. Run 'just rpi-build-installer' first."
-        exit 1
-    fi
-    
-    IMAGE_PATH=$(readlink -f result-rpi4-installer)
-    IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img*" -o -name "*.raw" | head -1)
-    
-    if [[ -z "$IMAGE_FILE" ]]; then
-        echo "❌ Could not find image file in $IMAGE_PATH"
-        exit 1
-    fi
-    
-    if [[ "{{DEVICE}}" == "" ]]; then
-        echo "📡 Available block devices:"
-        lsblk -d -n -o NAME,SIZE,MODEL | grep -E "(sd[a-z]|mmcblk)" || echo "   No removable devices found"
-        echo ""
-        echo -n "Enter device (e.g., /dev/sdb): "
-        read -r DEVICE
-    else
-        DEVICE="{{DEVICE}}"
-    fi
-    
-    if [[ ! -e "$DEVICE" ]]; then
-        echo "❌ Device $DEVICE does not exist"
-        exit 1
-    fi
-    
-    echo "⚠️  WARNING: This will overwrite all data on $DEVICE"
-    echo "📁 Source image: $IMAGE_FILE"
-    echo "🎯 Target device: $DEVICE"
-    echo ""
-    echo -n "Continue? [y/N]: "
-    read -r confirm
-    
-    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-        echo "Aborted."
-        exit 1
-    fi
-    
-    echo "🔄 Flashing image..."
-    if [[ "$IMAGE_FILE" == *.zst ]]; then
-        sudo zstd -dc "$IMAGE_FILE" | sudo dd of="$DEVICE" bs=4M status=progress
-    else
-        sudo dd if="$IMAGE_FILE" of="$DEVICE" bs=4M status=progress
-    fi
-    
-    echo "🔄 Syncing..."
-    sudo sync
-    echo "✅ Image flashed successfully to $DEVICE"
+# Deploy configuration update to naspi
+naspi-deploy STRATEGY="auto":
+    @echo "🔄 Deploying configuration update to naspi..."
+    ./scripts/rpi/rpi naspi deploy {{STRATEGY}}
 
-# Build standard RPi4 image
-rpi-build-standard:
-    @echo "🏗️  Building standard RPI4 SD image..."
-    nom build ".#rpi4-standard-image" --out-link result-rpi4-standard
-
-# =============================================================================
-# Raspberry Pi Deployment
-# =============================================================================
-
-# Install naspi using nixos-anywhere + disko (fresh install with ZFS RAID1)
-rpi-install-naspi HOST="rpi4-installer" BUILDERS="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [[ "{{BUILDERS}}" != "" ]]; then
-        echo "🏗️  Using remote builders: {{BUILDERS}}"
-        export NIX_BUILD_HOOK=""
-    fi
-    ./scripts/naspi-deploy.sh {{HOST}} install
-
-# Deploy configuration update to existing naspi system (requires reboot)
-rpi-deploy-naspi HOST="naspi.local" BUILD_HOST="remote":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🔄 Deploying naspi configuration update to {{HOST}}..."
-    echo "ℹ️  Updates boot configuration (requires reboot to activate)"
-    ./scripts/naspi-deploy.sh {{HOST}} switch {{BUILD_HOST}}
-    echo "🔄 Configuration staged. Reboot to activate: just rpi-reboot {{HOST}} noams"
-
-# Deploy and immediately apply changes to naspi (configurable build location)
-naspi-switch HOST="naspi.local" BUILD_HOST="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    # Determine build host
-    if [[ "{{BUILD_HOST}}" == "local" ]] || [[ "{{BUILD_HOST}}" == "localhost" ]]; then
-        BUILD_LOC="localhost"
-        echo "🔄 Deploying naspi configuration with LOCAL build..."
-        echo "💾 Uses your local cache (fast if already built)"
-    elif [[ "{{BUILD_HOST}}" == "remote" ]] || [[ "{{BUILD_HOST}}" == "" ]]; then
-        BUILD_LOC="noams@{{HOST}}"
-        echo "🔄 Deploying naspi configuration with REMOTE build..."
-        echo "🏗️  Builds natively on naspi (slower, but no cross-compile)"
-    else
-        BUILD_LOC="{{BUILD_HOST}}"
-        echo "🔄 Deploying naspi configuration with custom build host: {{BUILD_HOST}}"
-    fi
-
-    echo "ℹ️  Changes apply immediately (no reboot needed)"
-
-    # Build locally: omit --build-host (defaults to local build without SSH)
-    # Build remotely: use --build-host with explicit host
-    if [[ "$BUILD_LOC" == "localhost" ]]; then
-        # No nom for local builds - avoids buffering during remote activation
-        nixos-rebuild switch \
-            --flake ".#naspi" \
-            --target-host "noams@{{HOST}}" \
-            --use-remote-sudo
-    else
-        nixos-rebuild switch \
-            --flake ".#naspi" \
-            --target-host "noams@{{HOST}}" \
-            --build-host "$BUILD_LOC" \
-            --use-remote-sudo |& nom
-    fi
-    echo "✅ Configuration activated!"
-
-# Deploy to naspi building LOCALLY (uses your local cache)
-naspi-local HOST="naspi.local":
-    @just naspi-switch {{HOST}} local
-
-# Deploy to naspi building REMOTELY (builds on naspi)
-naspi-remote HOST="naspi.local":
-    @just naspi-switch {{HOST}} remote
-
-# Deploy to naspi using nh (fastest, recommended)
+# Quick naspi deploy (alias)
 naspi:
-    @echo "🔄 Deploying to naspi via SSH using nh..."
-    ssh noams@naspi.local "cd ~/nix-config && git pull && nh os switch ."
+    @just naspi-deploy
 
-# Build and deploy on naspi itself (unattended, avoids cross-compilation heat)
-naspi-build-remote HOST="naspi":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🚀 Starting unattended build on {{HOST}}..."
-    echo "ℹ️  Build runs natively on RPi4 (slow but no laptop heat)"
+# Fresh installation of naspi (DESTRUCTIVE!)
+naspi-install:
+    @echo "⚠️  This will WIPE and REPARTITION naspi!"
+    @echo "⚠️  Fresh installation with ZFS RAID1 on dual SSDs"
+    @echo ""
+    ./scripts/rpi/rpi naspi install
 
-    # Copy git-tracked files to naspi
-    echo "📦 Copying configuration..."
-    git add -A
-    git archive HEAD | ssh {{HOST}} "cd /tmp && rm -rf nix-config && mkdir nix-config && cd nix-config && tar xf -"
+# Deploy configuration update to argon-rpi4
+argon-deploy STRATEGY="auto":
+    @echo "🔄 Deploying configuration update to argon-rpi4..."
+    ./scripts/rpi/rpi argon-rpi4 deploy {{STRATEGY}}
 
-    # Start unattended rebuild on naspi
-    echo "🏗️  Starting rebuild on {{HOST}}..."
-    ssh {{HOST}} "nohup bash -c 'cd /tmp/nix-config && sudo nixos-rebuild switch --flake .#naspi > /tmp/naspi-rebuild.log 2>&1; echo \"Exit code: \$?\" >> /tmp/naspi-rebuild.log' > /dev/null 2>&1 &"
+# Fresh installation of argon-rpi4 (DESTRUCTIVE!)
+argon-install:
+    @echo "⚠️  This will WIPE and REPARTITION argon-rpi4!"
+    @echo "⚠️  Fresh installation with Btrfs on external SSD"
+    @echo ""
+    ./scripts/rpi/rpi argon-rpi4 install
 
-    echo "✅ Build started on {{HOST}}"
-    echo "📊 Monitor progress:"
-    echo "   ssh {{HOST}} 'tail -f /tmp/naspi-rebuild.log'"
-    echo "   ssh {{HOST}} 'ps aux | grep nixos-rebuild'"
-    echo ""
-    echo "⏱️  Expected time: 1-3 hours (kernel compilation on RPi4)"
-    echo ""
-    echo "✅ Check completion:"
-    echo "   ssh {{HOST}} 'grep \"Exit code\" /tmp/naspi-rebuild.log'"
-    echo "   ssh noams@192.168.3.6  # Test local SSH after success"
+# SSH into any Raspberry Pi
+rpi-ssh HOST USER="noams":
+    ssh {{USER}}@{{HOST}}.local
 
-# Install argon-rpi4 using nixos-anywhere + disko (fresh install with partitioning)
-rpi-install-argon HOST="rpi4-installer" BUILDERS="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🚀 Installing argon-rpi4 configuration to {{HOST}}..."
-    echo "⚠️  FRESH INSTALL with nixos-anywhere + disko"
-    echo "🎯 Will completely wipe and repartition target disk:"
-    echo "   • 1GB vfat firmware partition (/boot/firmware)"
-    echo "   • Btrfs root with subvolumes (@, @home, @nix, @var, @snapshots, @swap)"
-    echo "   • Optimized for SSD in Argon ONE v2 case"
-    echo ""
-    echo "Press Enter to continue or Ctrl+C to abort..."
-    read
-    echo "📦 Installing with nixos-anywhere..."
-    if [[ "{{BUILDERS}}" != "" ]]; then
-        echo "🏗️  Using remote builders: {{BUILDERS}}"
-        export NIX_BUILD_HOOK=""
-        # Configure builders via nix option
-        nix run github:nix-community/nixos-anywhere -- \
-            --flake .#argon-rpi4 \
-            --build-on remote \
-            --option builders "{{BUILDERS}}" \
-            --option builders-use-substitutes true \
-            nixos@{{HOST}}
-    else
-        nix run github:nix-community/nixos-anywhere -- \
-            --flake .#argon-rpi4 \
-            --option max-jobs 1 \
-            --option cores 0 \
-            nixos@{{HOST}}
-    fi
-    echo "✅ Installation complete! Remove SD card and reboot to boot from target disk."
-
-# Install argon-rpi4 with mixed local+remote building (RECOMMENDED)
-rpi-install-argon-mixed HOST="rpi4-installer":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🚀 Installing argon-rpi4 with mixed building (local AMD + remote aarch64)..."
-    echo "⚠️  FRESH INSTALL with nixos-anywhere + disko"
-    echo "🎯 Will completely wipe and repartition target disk"
-    echo "🏗️  Build strategy: Local AMD (x86_64) + Remote Pi (aarch64)"
-    echo ""
-    echo "Press Enter to continue or Ctrl+C to abort..."
-    read
-    echo "📦 Installing with distributed building..."
-    # Configure mixed building: local AMD + remote aarch64
-    export NIX_CONFIG="builders = ssh://nixos@{{HOST}} aarch64-linux - 2 2 big-parallel"
-    nix run github:nix-community/nixos-anywhere -- \
-        --flake .#argon-rpi4 \
-        --option max-jobs 4 \
-        --option cores 4 \
-        --option builders-use-substitutes true \
-        nixos@{{HOST}}
-    echo "✅ Installation complete! Remove SD card and reboot to boot from target disk."
-
-# Deploy configuration update to existing argon-rpi4 system  
-rpi-deploy-argon HOST="argon-rpi4" BUILDERS="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🔄 Deploying configuration update to {{HOST}}..."
-    echo "ℹ️  Updates existing system (no repartitioning)"
-    
-    BUILDERS_FLAG=""
-    if [[ "{{BUILDERS}}" != "" ]]; then
-        echo "🏗️  Using remote builders: {{BUILDERS}}"
-        BUILDERS_FLAG="--builders {{BUILDERS}}"
-    fi
-    
-    nixos-rebuild boot \
-    --flake ".#argon-rpi4" \
-    --target-host "noams@{{HOST}}" \
-    --build-host "noams@{{HOST}}" \
-    --use-remote-sudo
-    $BUILDERS_FLAG
-    echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}}"
-
-# Deploy argon-rpi4 update with mixed local+remote building (RECOMMENDED)
-rpi-deploy-argon-mixed HOST="argon-rpi4":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🔄 Deploying update with mixed building (local AMD + remote aarch64)..."
-    echo "ℹ️  Updates existing system (no repartitioning)"
-    echo "🏗️  Build strategy: Local AMD (x86_64) + Remote Pi (aarch64)"
-    
-    # Configure mixed building: local AMD + remote aarch64
-    export NIX_CONFIG="builders = ssh://noams@{{HOST}} aarch64-linux - 2 2 big-parallel"
-    nixos-rebuild switch \
-    --flake ".#argon-rpi4" \
-    --target-host "noams@{{HOST}}" \
-    --build-host "localhost" \
-    --option max-jobs 4 \
-    --option cores 4 \
-    --option builders-use-substitutes true \
-    --use-remote-sudo
-    echo "🔄 Configuration updated. Reboot to activate: just rpi-reboot {{HOST}}"
-
-# =============================================================================
-# Generic RPi Management
-# =============================================================================
-
-# Install any Pi configuration using nixos-anywhere + disko
-rpi-install CONFIG HOST BUILDERS="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🚀 Installing {{CONFIG}} to {{HOST}} using nixos-anywhere + disko..."
-    echo "⚠️  Will completely wipe and repartition target disk!"
-    echo "Press Enter to continue or Ctrl+C to abort..."
-    read
-    BUILDERS_FLAG=""
-    if [[ "{{BUILDERS}}" != "" ]]; then
-        echo "🏗️  Using remote builders: {{BUILDERS}}"
-        BUILDERS_FLAG="--builders {{BUILDERS}}"
-    fi
-    nix run github:nix-community/nixos-anywhere -- \
-        --flake ".#{{CONFIG}}" \
-        --build-on remote \
-        $BUILDERS_FLAG \
-        nixos@{{HOST}}
-
-# Deploy configuration update to existing Pi system
-rpi-deploy CONFIG HOST BUILDERS="":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🔄 Deploying {{CONFIG}} update to {{HOST}}..."
-    
-    BUILDERS_FLAG=""
-    if [[ "{{BUILDERS}}" != "" ]]; then
-        echo "🏗️  Using remote builders: {{BUILDERS}}"
-        BUILDERS_FLAG="--builders {{BUILDERS}}"
-    fi
-    
-    nixos-rebuild boot \
-    --flake ".#{{CONFIG}}" \
-    --target-host "noams@{{HOST}}" \
-    --build-host "noams@{{HOST}}" \
-    $BUILDERS_FLAG
-
-# Reboot Raspberry Pi
-rpi-reboot HOST USER="nixos":
+# Reboot any Raspberry Pi
+rpi-reboot HOST USER="noams":
     @echo "🔄 Rebooting {{HOST}}..."
-    ssh {{USER}}@{{HOST}} sudo reboot || echo "✅ Reboot initiated"
+    ssh {{USER}}@{{HOST}}.local sudo reboot || echo "✅ Reboot initiated"
 
 # Check Raspberry Pi status
-rpi-status HOST USER="nixos":
+rpi-status HOST USER="noams":
     @echo "📊 Status of {{HOST}}:"
-    ssh {{USER}}@{{HOST}} "echo '🖥️  Hostname:' \$(hostname) && echo '⚡ Uptime:' \$(uptime -p) && echo '💾 Memory:' && free -h | head -2 && echo '💿 Disk:' && df -h | head -2"
-
-# SSH into Raspberry Pi
-rpi-ssh HOST USER="nixos":
-    ssh {{USER}}@{{HOST}}
+    ssh {{USER}}@{{HOST}}.local "echo '🖥️  Hostname:' \$(hostname) && echo '⚡ Uptime:' \$(uptime -p) && echo '💾 Memory:' && free -h | head -2 && echo '💿 Disk:' && df -h | head -2"
 
 # =============================================================================
 # Secret Management
@@ -454,14 +181,6 @@ check-staged:
         echo "💡 Tip: Use 'git add <files>' to stage changes before building"
     fi
 
-# Quick install to argon-rpi4 (most common use case)
-install-argon: check-staged
-    just rpi-install-argon
-
-# Quick install to naspi (ZFS NAS configuration)
-install-naspi: check-staged
-    just rpi-install-naspi
-
 # =============================================================================
 # Help & Documentation
 # =============================================================================
@@ -471,34 +190,37 @@ help-rpi:
     @echo "🍓 Raspberry Pi Deployment Guide"
     @echo "=================================="
     @echo ""
-    @echo "📋 Workflow: SD Installer → Install (nixos-anywhere + disko) → Deploy (config updates)"
+    @echo "📋 Workflow: SD Installer → Install → Deploy (config updates)"
     @echo ""
     @echo "🏗️  Initial Installation:"
     @echo "1. just rpi-build-installer     # Build installer SD image"
-    @echo "2. just rpi-flash-installer     # Flash to SD card"
+    @echo "2. Flash to SD card (use Raspberry Pi Imager or dd)"
     @echo "3. Boot Pi from SD card"
-    @echo "4a. just rpi-install-argon      # Fresh install with disko (wipes target disk)"
-    @echo "4b. just rpi-install-naspi      # Fresh install with ZFS RAID1 (wipes target disks)"
+    @echo "4a. just naspi-install          # Fresh install with ZFS RAID1"
+    @echo "4b. just argon-install          # Fresh install with Btrfs on SSD"
     @echo "5. Remove SD card and reboot    # System boots from target disk"
     @echo ""
     @echo "🔄 Configuration Updates:"
-    @echo "just rpi-deploy-argon argon-rpi4.local                                 # Update existing system"
-    @echo "just rpi-deploy-naspi naspi.local                                      # Update naspi system"
-    @echo "just rpi-deploy-argon argon-rpi4.local 'ssh://noams@naspi.local aarch64-linux - 4 2 big-parallel'  # With remote builder"
-    @echo ""
-    @echo "🏗️  Builder Examples:"
-    @echo "Single:   BUILDERS='ssh://noams@naspi.local aarch64-linux - 4 2 big-parallel'"
-    @echo "Multiple: BUILDERS='ssh://noams@naspi.local aarch64-linux - 4 2 big-parallel ssh://noams@argon-rpi4.local aarch64-linux - 4 2 big-parallel'"
+    @echo "just naspi-deploy               # Update naspi (auto build strategy)"
+    @echo "just naspi-deploy local         # Update naspi (build locally)"
+    @echo "just naspi-deploy remote        # Update naspi (build on target)"
+    @echo "just argon-deploy               # Update argon-rpi4"
     @echo ""
     @echo "🛠️  Management:"
-    @echo "just rpi-status HOST [USER]     # Check system status"
-    @echo "just rpi-ssh HOST [USER]        # SSH into system"
-    @echo "just rpi-reboot HOST [USER]     # Reboot system"
+    @echo "just rpi-list                   # List all configurations"
+    @echo "just rpi-status naspi           # Check system status"
+    @echo "just rpi-ssh naspi              # SSH into system"
+    @echo "just rpi-reboot naspi           # Reboot system"
+    @echo ""
+    @echo "🔧 Direct CLI Usage:"
+    @echo "./scripts/rpi/rpi help          # Show full CLI help"
+    @echo "./scripts/rpi/rpi list          # List configurations"
+    @echo "./scripts/rpi/rpi naspi deploy  # Deploy to naspi"
     @echo ""
     @echo "📝 Key concepts:"
     @echo "• install = nixos-anywhere + disko (wipes disk, creates partitions)"
     @echo "• deploy  = nixos-rebuild (updates existing configuration)"
-    @echo "• SD card is only used for installation, system boots from target disk"
+    @echo "• Build strategies: auto (use host default), local, remote"
 
 # Show general help
 help:
@@ -512,8 +234,9 @@ help:
     @echo ""
     @echo "🍓 Raspberry Pi:"
     @echo "just help-rpi         # Detailed Pi deployment guide"
-    @echo "just install-argon    # Quick install to argon-rpi4"
-    @echo "just install-naspi    # Quick install to naspi (ZFS NAS)"
+    @echo "just rpi-list         # List all Pi configurations"
+    @echo "just naspi-deploy     # Deploy to naspi"
+    @echo "just argon-deploy     # Deploy to argon-rpi4"
     @echo ""
     @echo "🔧 Maintenance:"
     @echo "just fmt              # Format code"

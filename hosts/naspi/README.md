@@ -89,24 +89,70 @@ vcgencmd bootloader_config | grep BOOT_ORDER
 
 ## Deployment
 
-### Fresh Installation
+All Raspberry Pi deployments now use the unified CLI: `./scripts/rpi/rpi`
+
+### Quick Commands (via justfile)
 
 ```bash
 # From development machine:
 cd /path/to/nix-config
 
-# Build and deploy (will repartition!)
-./scripts/naspi-deploy.sh naspi.local install
+# Deploy configuration update (most common)
+just naspi-deploy               # Auto build strategy (recommended)
+just naspi-deploy local         # Build locally (faster if in cache)
+just naspi-deploy remote        # Build on Pi (no cross-compile)
+
+# Fresh installation (DESTRUCTIVE - repartitions disks!)
+just naspi-install              # Full installation with disko
 ```
 
-### Updating Existing System
+### Direct CLI Usage
 
 ```bash
-# From development machine:
-./scripts/naspi-deploy.sh naspi.local switch
+# List available configurations
+./scripts/rpi/rpi list
 
-# Or from the Pi itself:
+# Deploy to existing system
+./scripts/rpi/rpi naspi deploy           # Auto strategy
+./scripts/rpi/rpi naspi deploy local     # Local build
+./scripts/rpi/rpi naspi deploy remote    # Remote build
+
+# Fresh installation (WARNING: Wipes and repartitions!)
+./scripts/rpi/rpi naspi install
+
+# Build installer image
+./scripts/rpi/rpi rpi4-installer build
+
+# Help
+./scripts/rpi/rpi help          # Show detailed usage
+just help-rpi                   # Show deployment guide
+```
+
+### Build Strategies
+
+- **auto** (default): Uses host's default strategy (remote for naspi)
+- **local**: Build on development machine
+  - Faster if already in cache
+  - Uses cross-compilation (x86_64 → aarch64)
+  - Can cause laptop overheating on large builds
+- **remote**: Build on target Pi
+  - Slower but native aarch64 compilation
+  - No laptop overheating
+  - Requires SSH access to target
+
+### On-Device Rebuild
+
+```bash
+# SSH into naspi first
+ssh noams@naspi.local
+
+# Rebuild from Pi itself
+cd ~/nix-config
+git pull
 sudo nixos-rebuild switch --flake .#naspi
+
+# Or using nh helper
+nh os switch .
 ```
 
 ## SSH Troubleshooting

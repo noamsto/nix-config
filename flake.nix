@@ -22,6 +22,12 @@
       ];
 
       # perSystem configuration is now handled in flake-modules/development.nix
+
+      flake = {
+        # Raspberry Pi host configurations metadata
+        # Used by deployment scripts for metadata-driven operations
+        rpiHosts = import ./lib/rpi-hosts.nix;
+      };
     };
 
   nixConfig = {

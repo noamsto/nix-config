@@ -29,6 +29,27 @@ Only use JSON when specifically required or when deeply nested structures are ne
 
 ## Development Commands
 
+### Quick Reference with Just
+
+This repository includes a comprehensive `justfile` with convenient command wrappers. Use `just --list` to see all available commands.
+
+**Most common commands:**
+```bash
+just --list           # Show all available commands
+just switch           # Apply NixOS configuration
+just check            # Validate flake
+just fmt              # Format all code
+just update           # Update flake inputs
+just clean            # Clean build artifacts
+
+# Raspberry Pi commands
+just help-rpi         # Detailed Pi deployment guide
+just rpi-list         # List all Pi configurations
+just naspi-deploy     # Deploy to naspi
+just naspi-install    # Fresh install to naspi (DESTRUCTIVE!)
+just argon-deploy     # Deploy to argon-rpi4
+```
+
 ### Core Development
 
 ```bash
@@ -51,14 +72,29 @@ nh home switch .         # Fast user-only rebuild (auto-detects username@hostnam
 home-manager switch --flake .#<config>  # Manual standalone rebuild with specific config
 
 # Raspberry Pi deployment
-./scripts/build-rpi4-installer.sh              # Build minimal installer image
-./scripts/naspi-deploy.sh naspi.local switch   # Update existing system
-./scripts/naspi-deploy.sh naspi.local install  # Fresh install with disko (repartitions)
-./scripts/naspi-deploy.sh rpi4-installer install  # Deploy to installer (no repartitioning)
+# All RPi operations use unified CLI: ./scripts/rpi/rpi
+./scripts/rpi/rpi list                    # List all available configurations
+./scripts/rpi/rpi help                    # Show detailed usage help
 
-# Standard RPi4 image (NixOS wiki approach)
-nix build .#rpi4-standard-image                # Build standard RPi4 SD image
-sudo nixos-rebuild switch --flake .#rpi4-standard --target-host user@rpi4.local  # Deploy to existing system
+# Quick commands via justfile (recommended)
+just naspi                                # Deploy to naspi (fastest)
+just naspi-deploy                         # Deploy with auto build strategy
+just naspi-deploy local                   # Deploy with local build
+just naspi-deploy remote                  # Deploy with remote build
+just rpi-build-installer                  # Build minimal installer image
+
+# Direct CLI usage
+./scripts/rpi/rpi naspi deploy            # Update existing system (auto strategy)
+./scripts/rpi/rpi naspi deploy local      # Deploy with local build
+./scripts/rpi/rpi naspi deploy remote     # Deploy with remote build
+./scripts/rpi/rpi naspi install           # Fresh install with disko (DESTRUCTIVE!)
+./scripts/rpi/rpi rpi4-installer build    # Build installer image
+./scripts/rpi/rpi argon-rpi4 deploy       # Deploy to argon-rpi4
+
+# Build strategies:
+# - auto: Use host's default strategy (recommended)
+# - local: Build on development machine (uses local cache, cross-compile)
+# - remote: Build on target Pi (slower, but native aarch64, no overheating)
 ```
 
 ### Available Hosts
@@ -106,12 +142,36 @@ This repository uses **both** Home Manager as a NixOS module (production) AND st
 
 ### Development Tools Available in Shell
 
+When you run `nix develop`, you get:
+
 - `agenix` - Secret management and editing
 - `nh` - NixOS helper for easier rebuilds
 - `nixos-anywhere` - Remote NixOS deployment
 - `nom` (nix-output-monitor) - Better build output
+- `just` - Command runner (see `just --list`)
 - `prettier` - Code formatting for non-Nix files
+- `statix` - Nix linter
+- `jq` - JSON processing
+- `tokei` - Code statistics
 - Pre-commit hooks (alejandra, prettier, shellcheck)
+
+**Shell aliases** (when using fish):
+- `nix-agent` - Helper for agent-related operations
+- `nbuild` - Alias for `nom build`
+- `dev-stats` - Show project statistics (uses tokei and git)
+
+### Binary Caches
+
+The flake is pre-configured with multiple binary caches for faster builds:
+- `cache.nixos.org` - Official NixOS cache
+- `hyprland.cachix.org` - Hyprland compositor
+- `walker.cachix.org` - Walker application launcher
+- `nixpkgs-unfree.cachix.org` - Unfree packages
+- `nix-community.cachix.org` - Community packages
+- `nixos-raspberrypi.cachix.org` - Raspberry Pi builds
+- `claude-code.cachix.org` - Claude Code packages
+
+These are automatically used and significantly speed up builds. No manual configuration needed.
 
 ## Architecture Overview
 
@@ -128,7 +188,8 @@ flake.nix                          # Entry point - imports flake-modules
 ├── lib/
 │   ├── host-configs.nix           # Shared host settings (used by both NixOS and HM)
 │   └── overlays.nix               # Package overlays
-└── packages/                      # Custom package definitions
+├── packages/                      # Custom package definitions
+└── justfile                       # Command runner recipes
 ```
 
 **Key benefits:**
@@ -144,18 +205,18 @@ The repository provides **multiple NixOS configurations for Raspberry Pi**:
 1. **`naspi`** - Production NAS with ZFS RAID1
    - Dual SSD setup with ZFS mirroring
    - Uses disko for automatic partitioning
-   - Command: `./scripts/naspi-deploy.sh naspi.local install`
-   - **IMPORTANT**: Boots from USB SSD, not SD card
-   - Remove SD card from slot to avoid boot interference
+   - Command: `just install-naspi` or `./scripts/naspi-deploy.sh naspi.local install`
+   - **IMPORTANT**: Boots from USB SSD, not SD card - Remove SD card from slot to avoid boot interference
 
 2. **`argon-rpi4`** - Raspberry Pi with Argon V2 case
    - External SSD boot configuration
    - Uses disko for disk management
    - Optimized for Argon case features (fan control, power button)
+   - Command: `just install-argon` or `just rpi-install-argon`
 
 3. **`rpi4-installer`** - Minimal installer image
    - Lightweight bootable SD image for initial deployment
-   - Build: `./scripts/build-rpi4-installer.sh`
+   - Build: `just rpi-build-installer` or `./scripts/build-rpi4-installer.sh`
    - Deploy: `./scripts/naspi-deploy.sh rpi4-installer install`
 
 ### NasPi Boot Troubleshooting
@@ -173,7 +234,7 @@ If naspi fails to boot or shows these errors:
 2. Update EEPROM boot order: `sudo rpi-eeprom-config --edit` → Set `BOOT_ORDER=0x4f6` (USB priority)
 3. Check boot verification: `sudo journalctl -u naspi-boot-verify.service`
 
-See `hosts/naspi/README.md` for detailed troubleshooting steps.
+See `hosts/naspi/README.md` for comprehensive troubleshooting, ZFS management, and service configuration.
 
 ### Configuration System
 
@@ -212,6 +273,7 @@ The repository uses a **modular architecture** with conditional imports based on
 
 ```
 ├── flake.nix              # Main flake definition
+├── justfile               # Command runner recipes
 ├── options.nix            # Custom configuration options
 ├── nixos/                 # System-level NixOS modules
 │   ├── core/              # Boot, locale, networking, users
@@ -223,6 +285,9 @@ The repository uses a **modular architecture** with conditional imports based on
 │   ├── nvim/              # Neovim configuration
 │   └── git/               # Git and related tools
 ├── hosts/                 # Per-host configurations
+│   └── naspi/             # NasPi configuration
+│       └── README.md      # Detailed NasPi documentation
+├── scripts/               # Deployment and management scripts
 ├── secrets/               # Agenix encrypted secrets
 ├── packages/              # Custom package definitions
 └── overlays/              # Nix package overlays
@@ -245,7 +310,7 @@ The repository uses a **modular architecture** with conditional imports based on
 
 4. **Secret Management**: Uses agenix for encrypted secrets with separate private repository
    - Secrets stored in `mysecrets` flake input (private GitHub repo)
-   - Edit with: `agenix -e secrets/<secret_name>.age`
+   - Edit with: `agenix -e secrets/<secret_name>.age` or `just secret-edit <secret_name>`
 
 5. **Multi-architecture Support**: x86_64-linux and aarch64-linux (for Raspberry Pi)
    - Different nixpkgs instances for each architecture
@@ -254,6 +319,7 @@ The repository uses a **modular architecture** with conditional imports based on
 ## Important Configuration Files
 
 - **`flake.nix`** - Entry point, imports flake-modules
+- **`justfile`** - Command runner with convenient wrappers
 - **`flake-modules/nixos-systems.nix`** - Defines all NixOS system configurations
 - **`flake-modules/home-manager.nix`** - Standalone Home Manager configurations with auto-detection
 - **`lib/host-configs.nix`** - Shared host settings (source of truth)
@@ -267,16 +333,14 @@ The repository uses a **modular architecture** with conditional imports based on
 ```bash
 agenix -e secrets/<secret_name>.age    # Edit encrypted secret
 agenix -r                              # Rekey all secrets
+
+# Or use just commands:
+just secret-edit <secret_name>         # Edit encrypted secret
+just secret-rekey                      # Rekey all secrets
+just secret-list                       # List available secrets
 ```
 
 Secrets are stored in a separate private repository (`mysecrets` input) and managed via agenix.
-
-## Development Environment Features
-
-- **Pre-commit hooks** automatically format code and run checks
-- **Treefmt integration** for consistent formatting across file types
-- **Development shell** includes all necessary tools for managing the configuration
-- **Multi-host support** with shared base configuration and host-specific overrides
 
 ## Testing Changes
 
@@ -286,8 +350,11 @@ Secrets are stored in a separate private repository (`mysecrets` input) and mana
 # 1. Stage your changes first (unstaged files are invisible to nix!)
 git add <files>
 
+# Or check if you have staged changes:
+just check-staged
+
 # 2. Validate flake structure
-nix flake check
+nix flake check              # Or: just check
 
 # 3. Test builds without switching
 nh os build .                    # Test NixOS build
@@ -296,7 +363,7 @@ nom build .#nixosConfigurations.<hostname>.config.system.build.toplevel
 nom build .#homeConfigurations.<config>.activationPackage
 
 # 4. Apply changes
-nh os switch .                   # Full system rebuild
+nh os switch .                   # Full system rebuild (or: just switch)
 nh home switch .                 # Home Manager only (faster)
 ```
 
@@ -326,3 +393,9 @@ When adding new features, follow these patterns:
 
 - **Test on multiple hosts** when making system-wide changes
   - Test with both `nh os switch` and `nh home switch` to catch issues
+
+## Additional Resources
+
+- Run `just help` or `just help-rpi` for detailed command usage
+- See `hosts/naspi/README.md` for comprehensive NasPi documentation
+- Use `just --list` to discover all available commands

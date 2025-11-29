@@ -158,8 +158,10 @@
       # Development - workspace 1
       "workspace 1 silent, class:^(kitty)$"
 
-      # Web browsers - workspace 2
-      # Initial placement only - windows can be moved freely after opening
+      # Web browsers - workspace 2 (Firefox primary, Brave fallback)
+      # Firefox without silent - clicking links switches to browser workspace
+      # Brave/Chromium with silent - only initial placement, no auto-switch
+      "workspace 2, class:^(firefox)$"
       "workspace 2 silent, class:^(brave-browser)$, initialTitle:.*"
       "workspace 2 silent, class:^(chromium)$"
 

@@ -89,4 +89,17 @@
     [font]
     family = "Roboto"
   '';
+
+  # Custom desktop entry for browser URL handler with workspace switching
+  xdg.dataFile."applications/firefox-workspace-switch.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Firefox (Workspace Switcher)
+    Exec=${pkgs.bash}/bin/bash ${./scripts/open-browser.sh} %u
+    Icon=firefox
+    Terminal=false
+    MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
+    Categories=Network;WebBrowser;
+    StartupNotify=true
+  '';
 }

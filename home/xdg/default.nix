@@ -20,7 +20,7 @@
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["brave-browser.desktop"];
+        browser = ["firefox-workspace-switch.desktop"];
       in {
         "application/json" = browser;
         "application/pdf" = "org.gnome.Evince.desktop";
@@ -80,6 +80,12 @@
 
       associations.added = {
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
+
+        # Browsers - Firefox with workspace switcher primary, plain Firefox and Brave as fallbacks
+        "text/html" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
+        "x-scheme-handler/http" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
+        "x-scheme-handler/https" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
+        "application/xhtml+xml" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
 
         # Image editing - add GIMP as alternative
         "image/jpeg" = "org.gnome.eog.desktop;gimp.desktop;";

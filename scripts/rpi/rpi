@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# Unified Raspberry Pi deployment CLI
+# Single entry point for all RPi operations
+#
+# Usage: rpi <host> <action> [options]
+#   rpi naspi deploy [local|remote|auto]
+#   rpi naspi install [auto]
+#   rpi rpi4-installer build
+#   rpi list
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../../lib/rpi-common.sh"
+
+# =============================================================================
+# Help Text
+# =============================================================================
+
+show_help() {
+  cat <<'EOF'
+Raspberry Pi Deployment CLI
+
+USAGE:
+  rpi <host> <action> [build-strategy]
+  rpi list
+  rpi help
+
+HOSTS:
+  naspi           - Raspberry Pi 4 NAS with ZFS RAID1
+  argon-rpi4      - Raspberry Pi 4 with Argon V2 case
+  rpi4-installer  - Minimal installer image
+  rpi4-standard   - Standard RPi4 configuration
+
+ACTIONS:
+  deploy    - Update configuration on existing system
+              Runs nixos-rebuild switch on target host
+              Example: rpi naspi deploy [local|remote|auto]
+
+  install   - Fresh installation (DESTRUCTIVE!)
+              Uses nixos-anywhere to partition and install NixOS
+              Example: rpi naspi install
+
+  build     - Build SD card installer image
+              Creates bootable image for flashing
+              Example: rpi rpi4-installer build
+
+BUILD STRATEGIES (for deploy):
+  local     - Build on your machine, deploy to target
+  remote    - Build on target machine (slower but works on any machine)
+  auto      - Use host's default strategy (recommended)
+  <custom>  - Custom build host (e.g., "user@builder.local")
+
+EXAMPLES:
+  # List all available hosts
+  rpi list
+
+  # Deploy configuration update (using host's default build strategy)
+  rpi naspi deploy
+
+  # Deploy with local build
+  rpi naspi deploy local
+
+  # Fresh installation (WARNING: destructive!)
+  rpi naspi install
+
+  # Build installer image
+  rpi rpi4-installer build
+
+COMMON WORKFLOWS:
+
+  Initial Setup:
+    1. rpi rpi4-installer build         # Build installer SD image
+    2. Flash image to SD card
+    3. Boot Raspberry Pi from SD card
+    4. rpi naspi install                # Deploy full system
+
+  Configuration Updates:
+    rpi naspi deploy                    # Quick update
+
+  Testing Changes:
+    rpi naspi deploy local              # Build on your machine
+
+For detailed host information, see:
+  hosts/<hostname>/README.md
+
+For metadata and options, see:
+  lib/rpi-hosts.nix
+
+EOF
+}
+
+# =============================================================================
+# Argument Parsing
+# =============================================================================
+
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 0
+fi
+
+# Handle special commands
+case "${1:-}" in
+  help|-h|--help)
+    show_help
+    exit 0
+    ;;
+  list|-l|--list)
+    list_hosts
+    exit 0
+    ;;
+esac
+
+# Parse host and action
+if [[ $# -lt 2 ]]; then
+  print_error "Missing required arguments"
+  echo ""
+  echo "Usage: rpi <host> <action> [options]"
+  echo "       rpi list"
+  echo "       rpi help"
+  exit 1
+fi
+
+HOST=$1
+ACTION=$2
+shift 2
+
+# Remaining arguments are passed to operation scripts
+EXTRA_ARGS=("$@")
+
+# =============================================================================
+# Validate Host
+# =============================================================================
+
+validate_host_exists "$HOST"
+
+# =============================================================================
+# Dispatch to Operation
+# =============================================================================
+
+case "$ACTION" in
+  deploy)
+    exec "$SCRIPT_DIR/operations/deploy.sh" "$HOST" "${EXTRA_ARGS[@]:-auto}"
+    ;;
+
+  install)
+    print_warn "This will perform a FRESH INSTALLATION"
+    echo ""
+    exec "$SCRIPT_DIR/operations/install.sh" "$HOST" "${EXTRA_ARGS[@]:-auto}"
+    ;;
+
+  build)
+    exec "$SCRIPT_DIR/operations/build-image.sh" "$HOST"
+    ;;
+
+  *)
+    print_error "Unknown action: $ACTION"
+    echo ""
+    print_info "Available actions:"
+    echo "  deploy    - Update configuration on existing system"
+    echo "  install   - Fresh installation (destructive!)"
+    echo "  build     - Build SD card installer image"
+    echo ""
+    echo "Run 'rpi help' for detailed usage information"
+    exit 1
+    ;;
+esac

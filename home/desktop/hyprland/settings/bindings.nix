@@ -5,7 +5,7 @@
 }: let
   terminal = "kitty";
   fileManager = "${lib.getExe pkgs.xfce.thunar}";
-  browser = "${lib.getExe pkgs.brave}";
+  browser = "${lib.getExe pkgs.firefox}";
   youtube-music = "${lib.getExe pkgs.youtube-music}";
 
   toggle = program: service: let
