@@ -14,9 +14,6 @@ FILEPATH="$SCREENSHOT_DIR/$FILENAME"
 # Read image data from stdin and save to file
 cat >"$FILEPATH"
 
-# Copy the file path to clipboard (instead of image data)
+# Copy ONLY the file path to clipboard as text
+# This allows pasting the path directly into terminals/editors
 echo -n "$FILEPATH" | wl-copy
-
-# Also copy the image data for apps that expect it (like browsers, image editors)
-# This puts both the path (as text/plain) and image data (as image/png) in clipboard
-wl-copy <"$FILEPATH" --type image/png &

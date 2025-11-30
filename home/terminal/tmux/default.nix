@@ -269,7 +269,7 @@ in {
       set -g status-style "bg=#{@thm_bg}"
 
       setw -g pane-border-status top
-      setw -g pane-border-format ""
+      setw -g pane-border-format "#{?pane_active,#[fg=#{@thm_mauve}]●,}"
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
