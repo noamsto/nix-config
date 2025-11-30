@@ -57,6 +57,7 @@
     ffmpeg # Video/GIF conversion
     wl-clipboard
     jq # JSON parsing for smart selection
+    hyprpicker # Required for grimblast --freeze functionality
 
     # Notification support
     libnotify # For notify-send in scripts
@@ -82,9 +83,10 @@
   home.file.".config/satty/config.toml".text = ''
     [general]
     early-exit = true
-    copy-command = "wl-copy"
+    copy-command = "satty-copy-path"
     annotation-size-factor = 2
     output-filename = "${config.xdg.userDirs.pictures}/Screenshots/satty-%Y-%m-%d_%H-%M-%S.png"
+    disable-notifications = true
 
     [font]
     family = "Roboto"

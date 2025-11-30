@@ -3,6 +3,8 @@
   recordScreenScript = builtins.readFile ./sh/record-screen.sh;
   # Screenshot helper script
   screenshotHelperScript = builtins.readFile ./sh/screenshot-helper.sh;
+  # Satty copy wrapper - saves image and copies path
+  sattyCopyPathScript = builtins.readFile ./sh/satty-copy-path.sh;
 in {
   home.packages = [
     # Screenshot helper script with proper scaling and satty integration
@@ -10,6 +12,9 @@ in {
 
     # Screenshot edit script (complementary to grimblast)
     (pkgs.writeShellScriptBin "screenshot-edit" (builtins.readFile ./sh/screenshot-edit.sh))
+
+    # Satty copy wrapper - copies file path instead of image data
+    (pkgs.writeShellScriptBin "satty-copy-path" sattyCopyPathScript)
 
     # Unified screen recording script
     (pkgs.writeShellScriptBin "record-screen" recordScreenScript)
