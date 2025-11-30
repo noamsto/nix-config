@@ -143,10 +143,10 @@ in {
       {
         plugin = tmuxPlugins.fingers;
         extraConfig = ''
-          # tmux-fingers Catppuccin Mocha - hints pop out
-          set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"       # Base on Mauve (bright!)
-          set -g @fingers-highlight-style "fg=colour216,bg=colour236"       # Peach on Surface0
-          set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold" # Base on Green (bright!)
+          # tmux-fingers Catppuccin Mocha colors (using colour codes)
+          set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"           # Crust on Mauve (bright!)
+          set -g @fingers-highlight-style "fg=colour216,bg=colour236"           # Peach on Surface0
+          set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold"  # Crust on Green (bright!)
           set -g @fingers-selected-highlight-style "fg=colour116,bg=colour236"  # Teal on Surface0
         '';
       }
@@ -268,8 +268,9 @@ in {
       set -g status-right-length 100
       set -g status-style "bg=#{@thm_bg}"
 
+      # Pane border always at top, dot indicator only when multiple panes and not zoomed
       setw -g pane-border-status top
-      setw -g pane-border-format "#{?pane_active,#[fg=#{@thm_mauve}]●,}"
+      setw -g pane-border-format "#{?#{&&:#{pane_active},#{&&:#{>:#{window_panes},1},#{==:#{window_zoomed_flag},0}}},#[fg=colour183]━━ #[fg=green]●#[fg=colour183] ━━,#[bg=#1e1e2e,fg=colour243]━━━━━}"
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
