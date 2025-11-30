@@ -91,23 +91,8 @@ configure_docked() {
 configure_undocked() {
   log "Configuring undocked"
 
-  # Reload Hyprland first to apply profile's monitor + workspace rules
-  log "Reloading Hyprland configuration..."
-  if ! hyprctl reload; then
-    log "WARNING: Failed to reload Hyprland configuration"
-  fi
-
-  # Small delay to let Hyprland process the reload
-  sleep 0.3
-
-  # Move all workspaces to laptop
-  for ws in {1..9}; do
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
-      log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
-    fi
-  done
-
-  # Handle lid-closed suspend
+  # Check lid state FIRST - suspend immediately if closed
+  # This must happen before hyprctl reload to avoid race with HDM killing the script
   if is_lid_closed; then
     log "Lid closed while undocked - triggering suspend"
 
@@ -144,7 +129,27 @@ configure_undocked() {
     rm -f "$SUSPEND_LOCK_FILE"
     trap - EXIT
     systemctl suspend
+
+    # After resume, exit and let HDM reconfigure
+    log "Resumed from suspend, exiting to allow HDM reconfiguration"
+    return
   fi
+
+  # Lid is open - proceed with normal undocked configuration
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
+  fi
+
+  # Small delay to let Hyprland process the reload
+  sleep 0.3
+
+  # Move all workspaces to laptop
+  for ws in {1..9}; do
+    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
+      log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
+    fi
+  done
 }
 
 # Main

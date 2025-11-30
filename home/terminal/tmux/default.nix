@@ -140,7 +140,16 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      tmuxPlugins.fingers
+      {
+        plugin = tmuxPlugins.fingers;
+        extraConfig = ''
+          # tmux-fingers Catppuccin Mocha - hints pop out
+          set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"       # Base on Mauve (bright!)
+          set -g @fingers-highlight-style "fg=colour216,bg=colour236"       # Peach on Surface0
+          set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold" # Base on Green (bright!)
+          set -g @fingers-selected-highlight-style "fg=colour116,bg=colour236"  # Teal on Surface0
+        '';
+      }
     ];
     extraConfig = ''
       set -g mouse on
@@ -167,6 +176,10 @@ in {
       # Set escape-time as recomended by nvim
       set -s escape-time 0
 
+      # Faster repeat times (tmux 3.6+)
+      set -g repeat-time 300
+      set -g initial-repeat-time 600
+
       # Enable extended keyboard protocol support
       set -g extended-keys on
       set -as terminal-features 'xterm-kitty*:extkeys'
@@ -184,6 +197,10 @@ in {
       bind-key -T copy-mode-vi v send -X begin-selection
       bind-key -T copy-mode-vi C-v send -X rectangle-toggle
       bind-key -T copy-mode-vi 'y' send -X copy-selection
+
+      # Copy mode styling (tmux 3.6+)
+      set -g copy-mode-position-style "bg=#{@thm_surface_0},fg=#{@thm_mauve}"
+      set -g copy-mode-selection-style "bg=#{@thm_mauve},fg=#{@thm_bg}"
 
       # restore clear screen to <prefix> C-L
       bind -n M-l send-keys 'C-l'
@@ -205,7 +222,7 @@ in {
       # Create new session with name prompt
       bind S command-prompt -p "New session name:" "new-session -s '%%'"
 
-      bind-key "K" display-popup -E -w 40% "sesh connect \"$(
+      bind-key "K" display-popup -E -w 40% -k "sesh connect \"$(
       sesh list -i | ${lib.getExe pkgs.gum} filter --no-strip-ansi --limit 1 --no-sort --fuzzy --placeholder 'Pick a sesh' --height 50 --prompt='⚡'
       )\""
 
@@ -256,6 +273,15 @@ in {
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
+
+      # Pane scrollbars (tmux 3.6+)
+      set -g pane-scrollbars on
+      set -g pane-scrollbars-position right
+      set -g pane-scrollbars-style "bg=#{@thm_surface_0},fg=#{@thm_mauve}"
+
+      # Prompt cursor styling (tmux 3.6+)
+      set -g prompt-cursor-style "blinking-bar"
+      set -g prompt-cursor-colour "colour183"  # Catppuccin mauve (#cba6f7)
 
       set -g status-left ""
       set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
