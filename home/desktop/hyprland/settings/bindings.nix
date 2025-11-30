@@ -135,7 +135,7 @@ in {
       ", XF86AudioPlay, exec, ${runOnce youtube-music}"
 
       # Screenshot modes
-      ", Print, exec, GRIMBLAST_EDITOR=satty-wrapper grimblast --freeze edit area" # screenshot with frozen screen and satty editor (mapped from SUPER+SHIFT+S via xremap)
+      ", Print, exec, grimblast-satty" # screenshot with frozen screen and satty editor (mapped from SUPER+SHIFT+S via xremap)
       "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with vicinae
 
       # Screen recording (similar to grimblast)
