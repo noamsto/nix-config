@@ -7,7 +7,11 @@
     # thinkpad_p14s_ssh.file = "${inputs.mysecrets}/thinkpad_p14s_ssh.age";
     # thinkpad_p14s_aliases.file = "${inputs.mysecrets}/thinkpad_p14s_aliases.age";
     tp-p14s-env.file = "${inputs.mysecrets}/tp-p14s-env.age";
-    nixAccessTokens.file = "${inputs.mysecrets}/tp-p14s-nix-access-tokens.age";
+    nixAccessTokens = {
+      file = "${inputs.mysecrets}/tp-p14s-nix-access-tokens.age";
+      mode = "0440";
+      group = "wheel";
+    };
   };
 
   age.identityPaths = [

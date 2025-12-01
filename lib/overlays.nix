@@ -17,7 +17,7 @@ inputs: [
       pkgs = final;
     };
 
-    opencode = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default;
+    # opencode = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
   (final: _: let
