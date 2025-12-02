@@ -85,12 +85,12 @@ if pgrep -x "$target_process" >/dev/null; then
 
         # Convert to GIF with optimization (capture errors)
         if ffmpeg -i "$latest_mp4" \
-          -vf "fps=15,scale=1024:-1:flags=lanczos,palettegen" \
+          -vf "fps=24,palettegen" \
           -y "/tmp/palette.png" \
           -v quiet 2>/dev/null; then
 
           if ffmpeg -i "$latest_mp4" -i "/tmp/palette.png" \
-            -filter_complex "fps=15,scale=1024:-1:flags=lanczos[x];[x][1:v]paletteuse" \
+            -filter_complex "fps=24[x];[x][1:v]paletteuse" \
             -y "$gif_file" \
             -v quiet 2>/dev/null; then
 
