@@ -76,21 +76,21 @@ in {
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
 
+  # Start tmux server on login
   systemd.user.services.tmux-startup = {
     Unit = {
-      Description = "Start tmux detached on login";
+      Description = "Start tmux server on login";
       After = ["graphical-session.target"];
       Wants = ["graphical-session.target"];
     };
 
     Service = let
       tmux-bin = "${lib.getExe pkgs.tmux}";
-      session = "main"; # Main session for terminal startup
     in {
       Type = "forking";
       ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
-      ExecStart = "-${tmux-bin} new -s ${session} -d";
-      ExecStop = "-${tmux-bin} kill-session -t ${session}";
+      ExecStart = "-${tmux-bin} new -s main -d";
+      ExecStop = "-${tmux-bin} kill-session -t main";
       Environment = [
         "COLORTERM=truecolor"
         "TERM=kitty"
@@ -285,7 +285,7 @@ in {
       set -g prompt-cursor-colour "colour183"  # Catppuccin mauve (#cba6f7)
 
       set -g status-left ""
-      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
+      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{window_name} "
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
@@ -310,10 +310,8 @@ in {
       set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
 
 
-      # Load continuum manually after status line configuration
-      set -g @continuum-restore 'on'
-      set -g @continuum-save-interval '10'
-      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
+      # Resurrect: manual save/restore only (prefix + Ctrl-s / Ctrl-r)
+      # No continuum - causes hangs with multiple clients
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';

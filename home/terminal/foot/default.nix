@@ -1,15 +1,10 @@
-{pkgs, ...}: let
-  tmux-wrapper = pkgs.writeShellScript "tmux-wrapper" ''
-    TMUX_TMPDIR=/run/user/$(id -u) tmux attach || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s main
-  '';
-in {
+{...}: {
   programs.foot = {
     enable = true;
     settings = {
       main = {
         font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
         dpi-aware = "yes";
-        shell = "${tmux-wrapper}";
       };
 
       colors = {
