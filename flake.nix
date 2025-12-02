@@ -183,5 +183,7 @@
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    wrappers.url = "github:Lassulus/wrappers";
   };
 }

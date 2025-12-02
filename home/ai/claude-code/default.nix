@@ -1,8 +1,12 @@
 {
   pkgs,
   lib,
+  inputs,
   ...
 }: let
+  # Shared MCP server definitions
+  mcpServers = import ../mcp-servers.nix {inherit pkgs;};
+
   # Statusline script package
   claude-statusline = pkgs.callPackage ./statusline.nix {};
 
@@ -19,9 +23,18 @@
     };
   };
 
-  # Create wrapper script that merges nix settings
+  # Wrap claude-code with npx/uvx access and settings
+  # Uses wrappers lib for clean PATH injection
+  claude-wrapped = inputs.wrappers.lib.wrapPackage {
+    inherit pkgs;
+    package = pkgs.claude-code;
+    # Make npx (nodejs) and uvx (uv) available for MCP servers and tools
+    runtimeInputs = [pkgs.nodejs pkgs.uv];
+  };
+
+  # Final wrapper that adds settings flag
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
-    exec ${pkgs.claude-code}/bin/claude --settings ${nix-settings-json} "$@"
+    exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';
 in {
   # Import MCP profiles module (generates conditional MCP configs and aliases)
@@ -36,48 +49,12 @@ in {
     # (the wrapper handles --settings for HM-managed config)
     settings = {};
 
-    # Base MCPs - always loaded (heavy MCPs loaded via --mcp-config aliases)
-    mcpServers = {
-      context7 = {
-        command = "${pkgs.context7-mcp}/bin/context7-mcp";
-        args = [];
-        env = {};
-      };
-
-      sequential-thinking = {
-        command = "${pkgs.mcp-server-sequential-thinking}/bin/mcp-server-sequential-thinking";
-        args = [];
-        env = {};
-      };
-
-      # Packaged tavily-mcp from custom package (packages/tavily-mcp.nix)
-      # NOTE: Alternative npx approach (works but not reproducible):
-      #   command = "${pkgs.nodejs}/bin/npx";
-      #   args = ["-y" "tavily-mcp@latest"];
-      #   env = {
-      #     PATH = "${pkgs.lib.makeBinPath [pkgs.nodejs pkgs.bash pkgs.coreutils]}";
-      #     # Need bash and coreutils for npm to spawn sh processes
-      #     # TAVILY_API_KEY = "your-api-key";
-      #   };
-      tavily = {
-        command = "${pkgs.tavily-mcp}/bin/tavily-mcp";
-        args = [];
-        env = {
-          # TAVILY_API_KEY = "your-api-key-here";  # Env variable available via agenix
-        };
-      };
-
-      # Linear MCP - HTTP transport (recommended over SSE)
-      # Run `/mcp` in Claude Code session to authenticate
-      linear = {
-        type = "http";
-        url = "https://mcp.linear.app/mcp";
-      };
-
-      # NOTE: Playwright and PostHog MCPs loaded conditionally via aliases:
-      #   claude-frontend - adds Playwright MCP
-      #   claude-analytics - adds PostHog MCP
-      # See mcp-profiles.nix for configuration
-    };
+    # Use shared base MCPs (heavy MCPs loaded via --mcp-config aliases)
+    # See ../mcp-servers.nix for definitions
+    # NOTE: Playwright and PostHog MCPs loaded conditionally via aliases:
+    #   claude-frontend - adds Playwright MCP
+    #   claude-analytics - adds PostHog MCP
+    # See mcp-profiles.nix for configuration
+    mcpServers = mcpServers.base;
   };
 }

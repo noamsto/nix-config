@@ -1,6 +1,7 @@
 {...}: {
   imports = [
     ./claude-code
+    ./cursor
     ./mcp.nix
     ./opencode
   ];
