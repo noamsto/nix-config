@@ -39,7 +39,6 @@
       icon-position = "left"; # show the icon to the "left" or "right" of the window name (defaults to left)
     };
     icons = {
-      zsh = "";
       claude = "🧠";
     };
   };
@@ -63,7 +62,7 @@ in {
     };
   };
 
-  home.packages = with pkgs; [
+  home.packages = [
     # Custom sesh enhancement scripts
     seshUtils.sesh-new
     seshUtils.sesh-kill
@@ -153,6 +152,10 @@ in {
     ];
     extraConfig = ''
       set -g mouse on
+      # Multi-client: use smallest client size so all see the same content
+      set -g window-size smallest
+      set -g aggressive-resize on
+
       # start index at 1
       set -g base-index 1
       set -g pane-base-index 1
@@ -268,17 +271,18 @@ in {
       set -g status-right-length 100
       set -g status-style "bg=#{@thm_bg}"
 
-      # Pane border always at top, dot indicator only when multiple panes and not zoomed
+      # Pane border: disabled to prevent copy-mode resize issues
+      # Previously showed dot indicator when multiple panes and not zoomed
       setw -g pane-border-status top
       setw -g pane-border-format "#{?#{&&:#{pane_active},#{&&:#{>:#{window_panes},1},#{==:#{window_zoomed_flag},0}}},#[fg=colour183]━━ #[fg=green]●#[fg=colour183] ━━,#[bg=#1e1e2e,fg=colour243]━━━━━}"
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
 
-      # Pane scrollbars (tmux 3.6+)
-      set -g pane-scrollbars on
-      set -g pane-scrollbars-position right
-      set -g pane-scrollbars-style "bg=#{@thm_surface_0},fg=#{@thm_mauve}"
+      # Pane scrollbars (tmux 3.6+) - disabled to prevent resize issues
+      set -g pane-scrollbars off
+      # set -g pane-scrollbars-position right
+      # set -g pane-scrollbars-style "bg=#{@thm_surface_0},fg=#{@thm_mauve}"
 
       # Prompt cursor styling (tmux 3.6+)
       set -g prompt-cursor-style "blinking-bar"
@@ -310,8 +314,10 @@ in {
       set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
 
 
-      # Resurrect: manual save/restore only (prefix + Ctrl-s / Ctrl-r)
-      # No continuum - causes hangs with multiple clients
+      # Load continuum manually after status line configuration
+      set -g @continuum-restore 'on'
+      set -g @continuum-save-interval '10'
+      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
     '';

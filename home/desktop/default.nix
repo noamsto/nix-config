@@ -3,7 +3,80 @@
   lib,
   pkgs,
   ...
-}: {
+}: let
+  # Firefox settings - injected as user.js into existing profile
+  # This avoids conflicts with Firefox managing its own profiles.ini
+  firefoxSettings = {
+    # === Vertical Tabs (Firefox 133+) ===
+    "sidebar.verticalTabs" = true;
+    "sidebar.revamp" = true;
+    "sidebar.visibility" = "expand-on-hover";
+
+    # === Tab Groups (Firefox 131+) ===
+    "browser.tabs.groups.enabled" = true;
+
+    # === UI Improvements ===
+    "browser.compactmode.show" = true;
+    "browser.uidensity" = 1; # 0=normal, 1=compact, 2=touch
+    "browser.tabs.tabmanager.enabled" = true;
+
+    # === Privacy & Security ===
+    "dom.security.https_only_mode" = true;
+    "dom.security.https_only_mode.upgrade_local" = false; # Allow local HTTP (naspi)
+    "network.trr.mode" = 2; # DNS-over-HTTPS (2=preferred)
+    "privacy.trackingprotection.enabled" = true;
+    "privacy.trackingprotection.socialtracking.enabled" = true;
+    "privacy.trackingprotection.cryptomining.enabled" = true;
+    "privacy.trackingprotection.fingerprinting.enabled" = true;
+
+    # === Container Tabs ===
+    "privacy.userContext.enabled" = true;
+    "privacy.userContext.ui.enabled" = true;
+
+    # === Performance ===
+    "browser.tabs.unloadOnLowMemory" = true;
+    "dom.webgpu.enabled" = true;
+    "media.av1.enabled" = true;
+    "gfx.webrender.all" = true;
+    "media.ffmpeg.vaapi.enabled" = true;
+    "media.hardware-video-decoding.force-enabled" = true;
+
+    # === Quality of Life ===
+    "browser.urlbar.suggest.calculator" = true;
+    "browser.urlbar.unitConversion.enabled" = true;
+    "browser.urlbar.trimHttps" = true;
+    "browser.tabs.hoverPreview.enabled" = true;
+    "findbar.highlightAll" = true;
+    "reader.parse-on-load.enabled" = true;
+
+    # === Wayland & Display ===
+    "widget.wayland.fractional-scale.enabled" = true;
+    "widget.use-xdg-desktop-portal.file-picker" = 1;
+    "widget.use-xdg-desktop-portal.mime-handler" = 1;
+    "layout.frame_rate" = 120;
+
+    # === Scrolling ===
+    "general.smoothScroll" = true;
+    "general.smoothScroll.msdPhysics.enabled" = true;
+    "apz.gtk.pangesture.page_delta_mode_multiplier" = 0.4;
+    "apz.gtk.touchpad_hold.enabled" = true;
+
+    # === Media ===
+    "media.videocontrols.picture-in-picture.video-toggle.enabled" = true;
+
+    # === Disable Annoyances ===
+    "browser.shell.checkDefaultBrowser" = false;
+    "browser.shell.didSkipDefaultBrowserCheckOnFirstRun" = true;
+    "browser.aboutConfig.showWarning" = false;
+  };
+
+  # Convert settings attrset to user.js format
+  mkUserJs = settings:
+    lib.concatStringsSep "\n" (lib.mapAttrsToList (
+        name: value: "user_pref(${builtins.toJSON name}, ${builtins.toJSON value});"
+      )
+      settings);
+in {
   imports =
     [
       ./theme
@@ -12,6 +85,11 @@
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
       ./hyprland
     ];
+
+  # Inject user.js directly into Firefox profile (avoids profiles.ini conflicts)
+  home.file.".mozilla/firefox/mp41xmce.default/user.js" = {
+    text = mkUserJs firefoxSettings;
+  };
 
   programs = {
     obs-studio.enable = true;
@@ -30,60 +108,8 @@
       nativeMessagingHosts = [
         pkgs.kdePackages.plasma-browser-integration
       ];
-
-      # Existing profiles - Home Manager manages profiles.ini
-      profiles.default = {
-        id = 0;
-        path = "mtmhnnfc.default";
-        isDefault = false;
-      };
-
-      profiles.Factify = {
-        id = 1;
-        path = "ag39huod.Factify";
-        isDefault = true;
-
-        settings = {
-          # Wayland scaling - fix for multi-monitor with different scales
-          "widget.wayland.fractional-scale.enabled" = true;
-
-          # Wayland portal integration (native file pickers, screen sharing)
-          "widget.use-xdg-desktop-portal.file-picker" = 1;
-          "widget.use-xdg-desktop-portal.mime-handler" = 1;
-
-          # Hardware acceleration (VA-API)
-          "gfx.webrender.all" = true;
-          "media.ffmpeg.vaapi.enabled" = true;
-          "media.hardware-video-decoding.force-enabled" = true;
-
-          # Match frame rate to 120Hz display
-          "layout.frame_rate" = 120;
-
-          # Smooth scrolling with physics-based momentum
-          "general.smoothScroll" = true;
-          "general.smoothScroll.msdPhysics.enabled" = true;
-
-          # Touchpad scrolling - reduce sensitivity (default too fast on Wayland)
-          "apz.gtk.pangesture.page_delta_mode_multiplier" = 0.4;
-
-          # Touchpad hold gesture (Firefox 134+)
-          "apz.gtk.touchpad_hold.enabled" = true;
-
-          # Picture-in-Picture
-          "media.videocontrols.picture-in-picture.video-toggle.enabled" = true;
-
-          # Privacy: Block cryptominers and fingerprinters
-          "privacy.trackingprotection.cryptomining.enabled" = true;
-          "privacy.trackingprotection.fingerprinting.enabled" = true;
-
-          # Stop asking to be default browser
-          "browser.shell.checkDefaultBrowser" = false;
-          "browser.shell.didSkipDefaultBrowserCheckOnFirstRun" = true;
-
-          # Disable annoyances
-          "browser.aboutConfig.showWarning" = false;
-        };
-      };
+      # Don't manage profiles.ini - let Firefox handle it
+      # Settings are injected via home.file above
     };
 
     chromium = {
