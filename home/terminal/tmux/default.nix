@@ -92,7 +92,7 @@ in {
       ExecStop = "-${tmux-bin} kill-session -t main";
       Environment = [
         "COLORTERM=truecolor"
-        "TERM=kitty"
+        "TERM=xterm-kitty"
         "TERM_PROGRAM=kitty"
         "TERMINFO=${pkgs.kitty}/share/terminfo"
         "TMUX_TMPDIR=%t"
@@ -139,16 +139,6 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
-      {
-        plugin = tmuxPlugins.fingers;
-        extraConfig = ''
-          # tmux-fingers Catppuccin Mocha colors (using colour codes)
-          set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"           # Crust on Mauve (bright!)
-          set -g @fingers-highlight-style "fg=colour216,bg=colour236"           # Peach on Surface0
-          set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold"  # Crust on Green (bright!)
-          set -g @fingers-selected-highlight-style "fg=colour116,bg=colour236"  # Teal on Surface0
-        '';
-      }
     ];
     extraConfig = ''
       set -g mouse on
@@ -320,6 +310,19 @@ in {
       run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
 
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
+
+      # Load tmux-fingers LAST to ensure all settings are ready
+      # Catppuccin Mocha colors
+      set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"           # Crust on Mauve
+      set -g @fingers-highlight-style "fg=colour216,bg=colour236"           # Peach on Surface0
+      set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold"  # Crust on Green
+      set -g @fingers-selected-highlight-style "fg=colour116,bg=colour236"  # Teal on Surface0
+
+      run-shell ${pkgs.tmuxPlugins.fingers}/share/tmux-plugins/tmux-fingers/tmux-fingers.tmux
+
+      # WORKAROUND: tmux-fingers colors don't work on initial server start
+      # Re-run load-config when first client attaches (server is then fully initialized)
+      set-hook -g client-attached[99] 'run-shell "${pkgs.tmuxPlugins.fingers}/share/tmux-plugins/tmux-fingers/tmux-fingers.tmux"'
     '';
   };
 }

@@ -125,9 +125,13 @@ configure_undocked() {
       fi
     done
 
-    log "Initiating suspend"
+    log "Initiating lock + suspend"
     rm -f "$SUSPEND_LOCK_FILE"
     trap - EXIT
+    # Lock session before suspend to ensure security on resume
+    # This is the targeted fix for undock-with-lid-closed scenario
+    loginctl lock-session
+    sleep 0.3
     systemctl suspend
 
     # After resume, exit and let HDM reconfigure
