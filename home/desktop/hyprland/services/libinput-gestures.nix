@@ -36,9 +36,9 @@
     # Show all windows (hyprexpo overview)
     gesture swipe down 4 hyprctl dispatch hyprexpo:expo toggle
 
-    # Move window to adjacent workspace
-    gesture swipe left 4 hyprctl dispatch movetoworkspace e-1
-    gesture swipe right 4 hyprctl dispatch movetoworkspace e+1
+    # Move window to adjacent non-empty workspace (r = relative, skips empty)
+    gesture swipe left 4 hyprctl dispatch movetoworkspace r-1
+    gesture swipe right 4 hyprctl dispatch movetoworkspace r+1
 
     # === PINCH GESTURES ===
     # Optional: Window opacity control with pinch

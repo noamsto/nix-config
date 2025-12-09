@@ -89,11 +89,11 @@ in {
       "$mainMod SHIFT, 8, movetoworkspace, 8"
       "$mainMod SHIFT, 9, movetoworkspace, 9"
 
-      # Scroll through existing workspaces with mainMod + scroll
-      "$mainMod SHIFT, L, workspace, e+1"
-      "$mainMod SHIFT, H, workspace, e-1"
-      "$mainMod, mouse_down, workspace, e+1"
-      "$mainMod, mouse_up, workspace, e-1"
+      # Scroll through non-empty workspaces on current monitor (m = monitor, skips empty)
+      "$mainMod SHIFT, L, workspace, m+1"
+      "$mainMod SHIFT, H, workspace, m-1"
+      "$mainMod, mouse_down, workspace, m+1"
+      "$mainMod, mouse_up, workspace, m-1"
 
       # Example special workspace (scratchpad)down
       "$mainMod, S, togglespecialworkspace, magic"
@@ -111,10 +111,11 @@ in {
       "$mainMod SHIFT, B, exec, blueman-manager" # Bluetooth
 
       # Quick workspace jumps to organized workflow
-      "$mainMod, W, workspace, 1" # Web (browsers)
-      "$mainMod SHIFT, W, movetoworkspace, 1" # Move to web workspace
-      "$mainMod, D, workspace, 2" # Development
-      "$mainMod SHIFT, D, movetoworkspace, 2" # Move to dev workspace
+      # Note: Use IDs not names - named workspaces create dynamic WS with negative IDs
+      "$mainMod, D, workspace, 1" # Development (kitty) - same as Super+1
+      "$mainMod SHIFT, D, movetoworkspace, 1" # Move to dev workspace
+      "$mainMod, W, workspace, 2" # Web (browsers) - same as Super+2
+      "$mainMod SHIFT, W, movetoworkspace, 2" # Move to web workspace
 
       # Window management helpers
       "$mainMod CTRL, H, movewindow, l" # Move window left

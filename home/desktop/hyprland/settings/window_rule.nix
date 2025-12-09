@@ -155,37 +155,32 @@
       "size 400 300, class:^(dragon|dragon-drop)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
-      # Development - workspace 1
+      # Note: Use workspace IDs, not names. Named workspaces create dynamic WS with negative IDs.
+      # The HDM profiles define names for display only (waybar shows them).
+
+      # Development - workspace 1 (named "dev" in HDM profiles)
       "workspace 1 silent, class:^(kitty)$"
 
-      # Web browsers - workspace 2 (Firefox primary, Brave fallback)
+      # Web browsers - workspace 2 (named "web" in HDM profiles)
       # Firefox without silent - clicking links switches to browser workspace
       # Brave/Chromium with silent - only initial placement, no auto-switch
       "workspace 2, class:^(firefox)$"
       "workspace 2 silent, class:^(brave-browser)$, initialTitle:.*"
       "workspace 2 silent, class:^(chromium)$"
 
-      # Productivity and notes - workspace 3
-      "workspace 3 silent, class:^(obsidian)$"
-      "workspace 3 silent, class:^(Obsidian)$"
-
-      # Communication - workspace 5
+      # Communication - workspace 5 (named "comms" in HDM profiles)
       "workspace 5, class:^(slack)$"
       "workspace 5, class:^(Slack)$"
       "workspace 5 silent, class:^(ferdium)$"
       "workspace 5, class:^(zoom)$"
 
-      # Media - workspace 9
-      "workspace 9 silent, title:^(YouTube Music)$"
-      "workspace 9 silent, class:^(YouTube Music)$"
+      # Media - workspace 9 (named "media" in HDM profiles)
+      "workspace 9 silent, class:^(com.github.th_ch.youtube_music)$"
       "workspace 9 silent, class:^(spotify)$"
-      "workspace 9 silent, class:^(vlc)$"
-      "workspace 9 silent, class:^(mpv)$"
 
-      # YouTube in browsers - workspace 9
-      "workspace 9 silent, class:^(firefox)$,title:^(.*YouTube.*)$"
-      "workspace 9 silent, class:^(Brave-browser|brave-browser)$,title:^(.*YouTube.*)$"
-      "workspace 9 silent, class:^(chromium)$,title:^(.*YouTube.*)$"
+      # vlc/mpv - floating (not assigned to media workspace)
+      "float, class:^(vlc)$"
+      "float, class:^(mpv)$"
 
       # Zoom
       "float, class:^(zoom)$,title:^(Zoom Meeting)$"

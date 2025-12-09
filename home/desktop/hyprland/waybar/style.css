@@ -257,6 +257,16 @@ window#waybar.hidden {
   animation: urgent-blink 1s infinite;
 }
 
+/* Empty workspaces - dimmed */
+#workspaces button.empty {
+  color: @overlay0;
+}
+
+/* Non-empty workspaces (has windows) */
+#workspaces button:not(.empty):not(.active) {
+  color: @text;
+}
+
 @keyframes blink {
   to {
     background-color: rgba(30, 34, 42, 0.5);

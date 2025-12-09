@@ -62,7 +62,7 @@ in {
         kb_options = "grp:win_space_toggle,caps:escape";
         # focus change on cursor move
         follow_mouse = 1;
-        accel_profile = "flat";
+        accel_profile = "adaptive";
         sensitivity = 0;
 
         touchpad = {
