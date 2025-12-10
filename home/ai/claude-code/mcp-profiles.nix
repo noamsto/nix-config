@@ -35,16 +35,28 @@ in {
         };
       };
     };
+
+    # Notion MCP for documentation/knowledge base work
+    "claude-code/mcp-notion.json".text = builtins.toJSON {
+      mcpServers = {
+        Notion = {
+          type = "http";
+          url = "https://mcp.notion.com/mcp";
+        };
+      };
+    };
   };
 
   # Shell aliases (adds to base, allows project .mcp.json)
   programs.fish.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
+    claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
   };
 
   programs.bash.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
+    claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
   };
 }

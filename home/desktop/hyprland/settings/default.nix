@@ -62,7 +62,7 @@ in {
         kb_options = "grp:win_space_toggle,caps:escape";
         # focus change on cursor move
         follow_mouse = 1;
-        accel_profile = "adaptive";
+        accel_profile = "adaptive"; # Default for trackpad
         sensitivity = 0;
 
         touchpad = {
@@ -73,6 +73,19 @@ in {
           # Note: clickfinger and drag_lock are configured at system level in nixos/desktop/default.nix
         };
       };
+
+      # External mice - flat acceleration for consistent 1:1 movement
+      # Glob pattern catches MX Master 3, MX Master 3S, MX Anywhere, etc.
+      device = [
+        {
+          name = "logitech-wireless-mouse-*";
+          accel_profile = "flat";
+        }
+        {
+          name = "logitech-usb-receiver-mouse";
+          accel_profile = "flat";
+        }
+      ];
 
       general = {
         gaps_in = 5;

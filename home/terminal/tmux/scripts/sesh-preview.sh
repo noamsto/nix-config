@@ -61,6 +61,15 @@ if tmux has-session -t "$target" 2>/dev/null; then
   tmux list-windows -t "$session_name" -F "  #{?window_active,● ,○ }#{window_index}: #{window_name} (#{window_panes} panes)" 2>/dev/null || echo "  No windows"
   echo ""
 
+  # Claude status (if any Claude sessions in this tmux session)
+  claude_status=$(claude-session-status "$session_name" --format long 2>/dev/null || true)
+  if [[ -n $claude_status ]]; then
+    PURPLE="\033[35m"
+    echo -e "${BOLD}${PURPLE}Claude Status:${RESET}"
+    echo -e "  $claude_status"
+    echo ""
+  fi
+
   # Git status if in a repo
   if [[ -d $session_path ]]; then
     if git -C "$session_path" rev-parse --git-dir >/dev/null 2>&1; then

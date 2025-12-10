@@ -10,6 +10,9 @@
   # Statusline script package
   claude-statusline = pkgs.callPackage ./statusline.nix {};
 
+  # Import tmux/sesh utilities for Claude status integration
+  seshUtils = import ../../terminal/tmux/sesh-utils.nix {inherit pkgs;};
+
   # Create nix-managed settings file (merged via --settings flag)
   # This allows Claude Code to maintain its own settings.json for plugins
   nix-settings-json = pkgs.writeTextFile {
@@ -19,6 +22,50 @@
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
+      };
+      # Hooks for tmux status integration
+      hooks = {
+        PreToolUse = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        Notification = [
+          {
+            matcher = "permission_prompt";
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update waiting";
+              }
+            ];
+          }
+        ];
+        Stop = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update done";
+              }
+            ];
+          }
+        ];
+        SessionEnd = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update clear";
+              }
+            ];
+          }
+        ];
       };
     };
   };

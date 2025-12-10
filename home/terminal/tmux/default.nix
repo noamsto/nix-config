@@ -71,6 +71,11 @@ in {
     seshUtils.sesh-preview
     seshUtils.sesh-extract-name
     seshUtils.worktree-session-hook
+
+    # Claude status integration for tmux
+    seshUtils.claude-status-update
+    seshUtils.claude-tmux-indicator
+    seshUtils.claude-session-status
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -293,14 +298,17 @@ in {
       set -wg automatic-rename on
       set -g automatic-rename-format "Window"
 
-      set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} "
+      # Window status with Claude indicator
+      # #() runs shell command, claude-tmux-indicator checks for Claude status in window's panes
+      # Use --no-color for current window (peach bg makes colored text invisible)
+      set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
       set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
       set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_peach}"
       set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
       set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
       set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
 
-      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} "
+      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}' --no-color) "
       set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
 
 
