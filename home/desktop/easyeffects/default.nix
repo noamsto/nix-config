@@ -35,7 +35,9 @@
         "easyeffects/output/ThinkPad P14s G5 - Voice.json".source = "${thinkpad-p14s-g5-linux}/easyeffects/ThinkPad P14s G5 - Voice.json";
         "easyeffects/output/ThinkPad P14s G5 - Legacy.json".source = "${thinkpad-p14s-g5-linux}/easyeffects/ThinkPad P14s G5 - Legacy.json";
       };
-      defaultPreset = "ThinkPad P14s G5 - Music";
+      # Voice IRS is symmetric (no phase issues on laptop speakers)
+      # Music/Dynamic/Game/Movie have asymmetric stereo that causes buzzing
+      defaultPreset = "ThinkPad P14s G5 - Voice";
     }
     else {
       configFiles = {

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Get Claude status summary for a session (used by sesh picker)
-# Usage: claude-session-status <session-name> [--format short|long|icon]
+# Usage: claude-session-status <session-name> [--format short|long|icon|icon-color]
 #
 # Output formats:
 #   short: "⠙2" (icon + count)
 #   long:  "2 processing, 1 waiting"
-#   icon:  Just the icon with color
+#   icon:  Just the icon (no color)
+#   icon-color: Icon with tmux color codes
 
 set -euo pipefail
 
@@ -46,23 +47,6 @@ for pane_file in "$PANES_DIR"/*; do
   [[ $pane_session == "$session_name" ]] || continue
 
   pane_state=$(grep "^state=" "$pane_file" 2>/dev/null | cut -d= -f2)
-  timestamp=$(grep "^timestamp=" "$pane_file" 2>/dev/null | cut -d= -f2)
-
-  now=$(date +%s)
-  age=$((now - timestamp))
-
-  # Skip stale states based on type
-  case "$pane_state" in
-  processing)
-    [[ $age -le 30 ]] || continue
-    ;;
-  done)
-    [[ $age -le 60 ]] || continue
-    ;;
-  waiting)
-    [[ $age -le 300 ]] || continue
-    ;;
-  esac
 
   case "$pane_state" in
   processing) ((count_processing++)) || true ;;
@@ -77,13 +61,13 @@ total=$((count_processing + count_waiting + count_done))
 # Output based on format
 case "$format_value" in
 short)
-  # Priority icon + total count
+  # Priority icon + total count (using Nerd Font icons)
   if [[ $count_waiting -gt 0 ]]; then
-    echo "⏳$total"
+    echo "󰔟$total" # nf-md-timer-sand
   elif [[ $count_processing -gt 0 ]]; then
     echo "$(get_spinner_frame)$total"
   elif [[ $count_done -gt 0 ]]; then
-    echo "✓$total"
+    echo "$total" # nf-fa-check
   fi
   ;;
 
@@ -99,13 +83,32 @@ long)
   ;;
 
 icon)
-  # Just the icon (for inline use)
+  # Priority icon with count if multiple (for inline use, Nerd Font)
+  # Shows: icon (if 1 claude) or icon + count (if multiple)
+  count_suffix=""
+  [[ $total -gt 1 ]] && count_suffix=" $total"
+
   if [[ $count_waiting -gt 0 ]]; then
-    echo "⏳"
+    echo "󰔟$count_suffix" # nf-md-timer-sand
   elif [[ $count_processing -gt 0 ]]; then
-    get_spinner_frame
+    echo "$(get_spinner_frame)$count_suffix"
   elif [[ $count_done -gt 0 ]]; then
-    echo "✓"
+    echo "$count_suffix" # nf-fa-check (U+F00C)
+  fi
+  ;;
+
+icon-color)
+  # Priority icon with tmux colors and count if multiple
+  # Colors: mauve=processing, peach=waiting, green=done
+  count_suffix=""
+  [[ $total -gt 1 ]] && count_suffix=" $total"
+
+  if [[ $count_waiting -gt 0 ]]; then
+    echo "#[fg=colour216]󰔟$count_suffix#[fg=default]" # Peach
+  elif [[ $count_processing -gt 0 ]]; then
+    echo "#[fg=colour183]$(get_spinner_frame)$count_suffix#[fg=default]" # Mauve
+  elif [[ $count_done -gt 0 ]]; then
+    echo "#[fg=colour151]$count_suffix#[fg=default]" # Green (U+F00C)
   fi
   ;;
 
@@ -116,7 +119,7 @@ gum)
   elif [[ $count_processing -gt 0 ]]; then
     gum style --foreground 183 "$(get_spinner_frame) $count_processing working" 2>/dev/null || echo "$(get_spinner_frame) $count_processing working"
   elif [[ $count_done -gt 0 ]]; then
-    gum style --foreground 151 "✓ $count_done done" 2>/dev/null || echo "✓ $count_done done"
+    gum style --foreground 151 " $count_done done" 2>/dev/null || echo " $count_done done"
   fi
   ;;
 esac

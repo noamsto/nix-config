@@ -25,6 +25,18 @@
       };
       # Hooks for tmux status integration
       hooks = {
+        # User submitted prompt -> processing
+        UserPromptSubmit = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        # Tool use -> still processing
         PreToolUse = [
           {
             hooks = [
@@ -35,6 +47,7 @@
             ];
           }
         ];
+        # Permission prompt -> waiting for user
         Notification = [
           {
             matcher = "permission_prompt";
@@ -46,6 +59,7 @@
             ];
           }
         ];
+        # Claude finished responding -> done
         Stop = [
           {
             hooks = [
@@ -56,6 +70,7 @@
             ];
           }
         ];
+        # Session ended -> clear status
         SessionEnd = [
           {
             hooks = [

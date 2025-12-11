@@ -20,7 +20,7 @@ ICON_WAITING="󰔟" # nf-md-timer-sand
 ICON_DONE=""    # nf-fa-check
 
 # Colors (tmux style)
-COLOR_PROCESSING="#[fg=colour183]" # Mauve
+COLOR_PROCESSING="#[fg=colour116]" # Teal
 COLOR_WAITING="#[fg=colour216]"    # Peach
 COLOR_DONE="#[fg=colour151]"       # Green
 COLOR_RESET="#[fg=default]"
@@ -73,38 +73,8 @@ read_pane_state() {
 
   [[ -f $state_file ]] || return 1
 
-  local state timestamp
+  local state
   state=$(grep "^state=" "$state_file" 2>/dev/null | cut -d= -f2)
-  timestamp=$(grep "^timestamp=" "$state_file" 2>/dev/null | cut -d= -f2)
-
-  local now
-  now=$(date +%s)
-  local age=$((now - timestamp))
-
-  # Staleness checks:
-  # - "processing": stale after 30s (Claude probably finished, Stop hook may have failed)
-  # - "done": clear after 60s (no need to show done forever)
-  # - "waiting": stale after 5min (permission dialog probably dismissed)
-  case "$state" in
-  processing)
-    if [[ $age -gt 30 ]]; then
-      rm -f "$state_file"
-      return 1
-    fi
-    ;;
-  done)
-    if [[ $age -gt 60 ]]; then
-      rm -f "$state_file"
-      return 1
-    fi
-    ;;
-  waiting)
-    if [[ $age -gt 300 ]]; then
-      rm -f "$state_file"
-      return 1
-    fi
-    ;;
-  esac
 
   echo "$state"
 }

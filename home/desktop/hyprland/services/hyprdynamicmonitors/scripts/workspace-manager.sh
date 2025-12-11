@@ -55,18 +55,12 @@ configure_docked() {
 
   log "Configuring docked: left=$left, right=$right"
 
-  # Reload Hyprland first to apply profile's monitor + workspace rules
-  log "Reloading Hyprland configuration..."
-  if ! hyprctl reload; then
-    log "WARNING: Failed to reload Hyprland configuration"
-  fi
+  # Move existing workspaces to match profile rules BEFORE reload
+  # This ensures workspaces are positioned correctly even if reload triggers HDM re-evaluation
 
-  # Small delay to let Hyprland process the reload
-  sleep 0.3
-
-  # Move existing workspaces to match profile rules
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
+    log "Moving workspace $ws to left monitor"
     if ! hyprctl dispatch moveworkspacetomonitor "$ws $left"; then
       log "WARNING: Failed to move workspace $ws to $left"
     fi
@@ -74,6 +68,7 @@ configure_docked() {
 
   # Right monitor: workspaces 5-8
   for ws in {5..8}; do
+    log "Moving workspace $ws to right monitor"
     if ! hyprctl dispatch moveworkspacetomonitor "$ws $right"; then
       log "WARNING: Failed to move workspace $ws to $right"
     fi
@@ -81,9 +76,16 @@ configure_docked() {
 
   # Laptop screen: workspace 9 (if lid open)
   if ! is_lid_closed; then
+    log "Moving workspace 9 to laptop monitor"
     if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
       log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
     fi
+  fi
+
+  # Reload Hyprland to apply profile's monitor + workspace rules from config
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
   fi
 }
 
@@ -201,6 +203,10 @@ main() {
   if [ "$PROFILE" = "docked" ] || ! is_lid_closed; then
     launch-dock &
   fi
+
+  # Restart waybar to fix layout after monitor changes
+  log "Restarting waybar service..."
+  systemctl --user restart waybar.service || true
 
   log "=== Completed successfully ==="
 }

@@ -213,12 +213,14 @@ in {
       bind -n M-H previous-window
       bind -n M-L next-window
 
-      # Order sessions alphabeticaly
-      bind s choose-tree -Zs -O name
+      # Order sessions alphabetically with Claude status indicator
+      # Use conditional: session rows get session status, window rows get window-specific status
+      # Colors: mauve=processing, peach=waiting, green=done
+      bind s choose-tree -Zs -O name -F '#{?window_id,#{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}"),#{session_name} #(claude-session-status "#{session_name}" --format icon-color)}'
       bind w choose-tree -Zw -O name
 
-      # Create new session with name prompt
-      bind S command-prompt -p "New session name:" "new-session -s '%%'"
+      # Create new session with name prompt (Prefix+N)
+      bind N command-prompt -p "New session name:" "new-session -s '%%'"
 
       bind-key "K" display-popup -E -w 40% -k "sesh connect \"$(
       sesh list -i | ${lib.getExe pkgs.gum} filter --no-strip-ansi --limit 1 --no-sort --fuzzy --placeholder 'Pick a sesh' --height 50 --prompt='⚡'
@@ -235,8 +237,7 @@ in {
         --bind 'ctrl-g:change-prompt(⚙️  )+reload(sesh list -c --icons)' \
         --bind 'ctrl-x:change-prompt(📁  )+reload(sesh list -z --icons)' \
         --bind 'ctrl-f:change-prompt(🔎  )+reload(fd -H -d 2 -t d -E .Trash . ~)' \
-        --bind 'ctrl-d:execute(tmux kill-session -t \"$(sesh-extract-name {})\")' \
-        --bind 'ctrl-r:change-prompt(⚡  )+reload(sesh list --icons)' \
+        --bind 'ctrl-d:execute(tmux kill-session -t {})' \
         --preview-window 'right:60%:wrap' \
         --preview 'sesh-preview {}'
       )\""
@@ -299,17 +300,15 @@ in {
       set -g automatic-rename-format "Window"
 
       # Window status with Claude indicator
-      # #() runs shell command, claude-tmux-indicator checks for Claude status in window's panes
-      # Use --no-color for current window (peach bg makes colored text invisible)
       set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
       set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
-      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_peach}"
+      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_lavender}"
       set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
       set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
       set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
 
-      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}' --no-color) "
-      set -g window-status-current-style "bg=#{@thm_peach},fg=#{@thm_bg},bold"
+      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
+      set -g window-status-current-style "bg=#{@thm_bg},fg=#{@thm_mauve},bold"
 
 
       # Load continuum manually after status line configuration

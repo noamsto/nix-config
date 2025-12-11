@@ -399,3 +399,4 @@ When adding new features, follow these patterns:
 - Run `just help` or `just help-rpi` for detailed command usage
 - See `hosts/naspi/README.md` for comprehensive NasPi documentation
 - Use `just --list` to discover all available commands
+- always run shellcheck on sh scripts after edits
