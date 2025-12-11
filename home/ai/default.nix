@@ -13,9 +13,5 @@
         preferredEditor = "vim";
       };
     };
-
-    codex = {
-      enable = true;
-    };
   };
 }

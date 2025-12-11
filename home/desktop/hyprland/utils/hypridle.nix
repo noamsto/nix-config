@@ -24,6 +24,12 @@ in {
           on-timeout = "${brightnessctl} -s set 10%";
           on-resume = "${brightnessctl} -r";
         }
+        # Dim keyboard backlight
+        {
+          timeout = 285;
+          on-timeout = "${brightnessctl} -sd tpacpi::kbd_backlight set 0";
+          on-resume = "${brightnessctl} -rd tpacpi::kbd_backlight";
+        }
         # Lock screen
         {
           timeout = 300;

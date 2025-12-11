@@ -36,56 +36,33 @@ pkgs.writeShellApplication {
     fi
 
     # ========================================
-    # Extract basic info from stdin
+    # Extract basic info from stdin (Claude Code 2.0.65+)
     # ========================================
     model=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
-    model_id=$(echo "$input" | jq -r '.model.id // ""')
-    transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
-    session_id=$(echo "$input" | jq -r '.session_id // ""')
     conversation_duration_ms=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 
-    # Detect context window size based on model
-    TOKEN_LIMIT=200000  # Default for standard models
-    if [[ "$model" == *"[1m]"* ]] || [[ "$model" == *"[1M]"* ]] || [[ "$model_id" == *"1m"* ]]; then
-      TOKEN_LIMIT=1000000  # 1M context window
-    elif [[ "$model_id" == *"opus"* ]]; then
-      TOKEN_LIMIT=200000   # Opus has 200k
-    elif [[ "$model_id" == *"haiku"* ]]; then
-      TOKEN_LIMIT=200000   # Haiku has 200k
+    # Context window info (new in 2.0.65)
+    input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
+    output_tokens=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
+    context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
+
+    # Calculate total tokens used
+    token_count=$((input_tokens + output_tokens))
+
+    # Use context_window_size from Claude Code, fallback to 200k if not provided
+    if [[ "$context_window_size" -gt 0 ]]; then
+      TOKEN_LIMIT=$context_window_size
+    else
+      TOKEN_LIMIT=200000
     fi
 
-    # ========================================
-    # Extract token and message counts from transcript
-    # ========================================
-    token_count=0
+    # Get message count from transcript if available
+    transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
+    session_id=$(echo "$input" | jq -r '.session_id // ""')
     message_count=0
 
     if [[ -f "$transcript_path" && -r "$transcript_path" && -n "$session_id" ]]; then
-      # Count message entries for current session only
       message_count=$(jq -s --arg sid "$session_id" '[.[] | select(.sessionId == $sid)] | length' "$transcript_path" 2>/dev/null || echo "0")
-
-      # Get LAST assistant message's token usage (represents current active context window)
-      token_count=$(jq -s --arg sid "$session_id" '
-        [.[] |
-          select(.sessionId == $sid and .type == "assistant" and .message.usage)] |
-        if length > 0 then
-          .[-1].message.usage |
-          ((.cache_creation_input_tokens // 0) +
-           (.cache_read_input_tokens // 0) +
-           (.input_tokens // 0) +
-           (.output_tokens // 0))
-        else
-          0
-        end
-      ' "$transcript_path" 2>/dev/null || echo "0")
-
-      # Fallback: estimate from content length if no usage data
-      token_count=''${token_count:-0}
-      if [[ "$token_count" -eq 0 && -n "$session_id" ]]; then
-        total_chars=$(jq -s --arg sid "$session_id" '[.[] | select(.sessionId == $sid and .message.content) | (.message.content | if type == "array" then map(select(.type == "text") | .text) | join("") else . end | tostring | length)] | add // 0' "$transcript_path" 2>/dev/null || echo "0")
-        total_chars=''${total_chars:-0}
-        token_count=$(echo "$total_chars / 4" | bc 2>/dev/null || echo "0")
-      fi
     fi
 
     # Safe defaults

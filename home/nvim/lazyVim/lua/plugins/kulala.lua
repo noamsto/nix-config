@@ -86,7 +86,8 @@ return {
       },
 
       -- Variable info display
-      show_variable_info_text = "float",
+      -- TODO: disabled due to upstream bug - https://github.com/mistweaverco/kulala.nvim tbl_extend nil error
+      show_variable_info_text = false,
 
       -- Icons configuration
       show_icons = "on_request",
