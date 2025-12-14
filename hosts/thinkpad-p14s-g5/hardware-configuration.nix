@@ -29,7 +29,8 @@
     kernelParams = [
       "systemd.gpt_auto=0" # Solve annoying dmesg warning
       "amdgpu.dcdebugmask=0x10" # Fix GPU flickering and lag (P14s Gen 5)
-      "acpi.ec_no_wakeup=1" # Prevent wake on AC plug/unplug (no S3 on modern AMD)
+      # Note: acpi.ec_no_wakeup=1 was removed to allow dock wake from suspend
+      # Spurious AC-plug wakes are handled by suppress-ac-wake systemd service
     ];
     kernel.sysctl = {
       "kernel.sysrq" = 502;

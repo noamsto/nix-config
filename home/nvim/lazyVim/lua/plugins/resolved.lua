@@ -1,7 +1,7 @@
 return {
-  "noamsto/resolved.nvim",
-  -- dir = "~/Data/git/resolved.nvim",
-  dependencies = { "nvim-lua/plenary.nvim" },
+  -- "noamsto/resolved.nvim",
+  dir = "~/Data/git/resolved.nvim",
+  -- dependencies = { "nvim-lua/plenary.nvim" },
   opts = {},
   config = function(_, opts)
     require("resolved").setup(opts)

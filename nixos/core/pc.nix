@@ -90,6 +90,50 @@ in {
       options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
     '';
 
+    # Suppress spurious wakes from AC plug/unplug events
+    # With acpi.ec_no_wakeup removed (to allow dock wake), AC events can wake the laptop
+    # This service detects if wake was from docking (external monitors) or just AC
+    # If no dock detected and lid is closed, immediately re-suspend
+    systemd.services.suppress-ac-wake = lib.mkIf isLaptop {
+      description = "Re-suspend if woken by AC plug event (not dock)";
+      after = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = pkgs.writeShellScript "suppress-ac-wake" ''
+          # Wait for hardware to stabilize after wake
+          sleep 3
+
+          # Check if any external DisplayPort monitors are connected (indicates dock)
+          for status_file in /sys/class/drm/card*-DP-*/status /sys/class/drm/card*-HDMI-*/status; do
+            if [ -f "$status_file" ] && [ "$(cat "$status_file" 2>/dev/null)" = "connected" ]; then
+              # External monitor connected - dock is attached, stay awake
+              ${pkgs.systemd}/bin/logger -t suppress-ac-wake "External monitor detected - staying awake"
+              exit 0
+            fi
+          done
+
+          # Check USB4/Thunderbolt for connected devices (dock attached but monitors not yet detected)
+          if ${pkgs.coreutils}/bin/ls /sys/bus/thunderbolt/devices/*/device 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q .; then
+            ${pkgs.systemd}/bin/logger -t suppress-ac-wake "Thunderbolt device detected - staying awake"
+            exit 0
+          fi
+
+          # No dock detected - check if this is a spurious wake (lid closed = user not active)
+          if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
+            ${pkgs.systemd}/bin/logger -t suppress-ac-wake "Spurious wake (no dock, lid closed) - re-suspending in 2s"
+            sleep 2
+            # Double-check lid is still closed before suspending
+            if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
+              ${pkgs.systemd}/bin/systemctl suspend
+            fi
+          else
+            ${pkgs.systemd}/bin/logger -t suppress-ac-wake "Lid is open - staying awake"
+          fi
+        '';
+      };
+      wantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
+    };
+
     # Restart hyprdynamicmonitors after resume to fix phantom monitor detection
     # When laptop is undocked while asleep, Hyprland keeps phantom monitors
     # Restarting HDM forces fresh monitor detection
