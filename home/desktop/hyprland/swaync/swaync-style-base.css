@@ -1,0 +1,723 @@
+/* Base styles - color definitions are prepended by theme-toggle */
+
+:root {
+  --notification-icon-size: 48px;
+  --mpris-album-art-icon-size: 50px;
+}
+
+* {
+  all: unset;
+  font-size: 14px;
+  font-family: "Inter Nerd Font";
+  font-style: italic;
+  transition: 200ms;
+}
+
+trough highlight {
+  background: @text;
+}
+
+scale trough {
+  margin: 0rem 1rem;
+  background-color: @surface0;
+  min-height: 8px;
+  min-width: 70px;
+}
+
+slider {
+  background-color: @blue;
+}
+
+.floating-notifications.background .notification-row .notification-background {
+  background: @base;
+  color: @text;
+  border: 3px solid @green;
+  border-radius: 10px;
+  margin: 18px;
+  padding: 10px;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification {
+  padding: 7px;
+  border-radius: 12.6px;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification.critical {
+  box-shadow: inset 0 0 7px 0 @red;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content {
+  margin: 7px;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .summary {
+  color: @green;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .time {
+  color: @subtext0;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .body {
+  color: @text;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > * {
+  min-height: 3.4em;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action {
+  border-radius: 7px;
+  color: @text;
+  background-color: @surface0;
+  box-shadow: inset 0 0 0 1px @surface1;
+  margin: 7px;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action:hover {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @surface0;
+  color: @text;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action:active {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @sapphire;
+  color: @text;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .close-button {
+  margin: 7px;
+  padding: 2px;
+  border-radius: 6.3px;
+  color: @base;
+  background-color: @red;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .close-button:hover {
+  background-color: @maroon;
+  color: @base;
+}
+
+.floating-notifications.background
+  .notification-row
+  .notification-background
+  .close-button:active {
+  background-color: @red;
+  color: @base;
+}
+
+.control-center {
+  background-color: @base;
+  color: @text;
+  border: 3px solid @green;
+  border-radius: 10px;
+  margin: 18px;
+  padding: 10px;
+}
+
+.control-center .control-center-list-placeholder {
+  opacity: 0.5;
+}
+
+.control-center .notification-row .notification-background {
+  border-radius: 7px;
+  color: @text;
+  background-color: @surface0;
+  box-shadow: inset 0 0 0 1px @surface1;
+  margin-top: 14px;
+}
+
+.control-center .notification-row .notification-background .notification {
+  padding: 7px;
+  border-radius: 7px;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification.critical {
+  box-shadow: inset 0 0 7px 0 @red;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content {
+  margin: 7px;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .summary {
+  color: @green;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .time {
+  color: @subtext0;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  .notification-content
+  .body {
+  color: @text;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > * {
+  min-height: 3.4em;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action {
+  border-radius: 7px;
+  color: @text;
+  background-color: @base;
+  box-shadow: inset 0 0 0 1px @surface1;
+  margin: 7px;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action:hover {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @surface0;
+  color: @text;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .notification
+  > *:last-child
+  > *
+  .notification-action:active {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @sapphire;
+  color: @text;
+}
+
+.control-center .notification-row .notification-background .close-button {
+  margin: 7px;
+  padding: 2px;
+  border-radius: 6.3px;
+  color: @base;
+  background-color: @maroon;
+}
+
+.control-center .notification-row .notification-background .close-button:hover {
+  background-color: @red;
+  color: @base;
+}
+
+.control-center
+  .notification-row
+  .notification-background
+  .close-button:active {
+  background-color: @maroon;
+  color: @base;
+}
+
+.control-center .notification-row .notification-background:hover {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @overlay0;
+  color: @text;
+}
+
+.control-center .notification-row .notification-background:active {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @sapphire;
+  color: @text;
+}
+
+.notification.critical progress,
+.notification.low progress,
+.notification.normal progress {
+  background-color: @blue;
+}
+
+/* Enhanced DND widget styling */
+.control-center-dnd {
+  margin-top: 5px;
+  border-radius: 8px;
+  background: @surface0;
+  border: 1px solid @surface1;
+  box-shadow: none;
+}
+
+.control-center-dnd:checked {
+  background: @red;
+  border: 1px solid @maroon;
+}
+
+.control-center-dnd slider {
+  background: @surface2;
+  border-radius: 8px;
+}
+
+.control-center-dnd:checked slider {
+  background: @text;
+}
+
+.widget-dnd {
+  margin: 0px;
+  font-size: 1.1rem;
+}
+
+.widget-dnd > switch {
+  font-size: initial;
+  border-radius: 8px;
+  background: @surface0;
+  border: 1px solid @surface1;
+  box-shadow: none;
+}
+
+.widget-dnd > switch:checked {
+  background: @red;
+  border: 1px solid @maroon;
+}
+
+.widget-dnd > switch slider {
+  background: @surface2;
+  border-radius: 8px;
+  border: 1px solid @overlay0;
+}
+
+.widget-dnd > switch:checked slider {
+  background: @text;
+  border: 1px solid @text;
+}
+
+/* Make DND label change color when active */
+.widget-dnd > switch:checked ~ label {
+  color: @red;
+  font-weight: bold;
+}
+
+.widget-mpris .widget-mpris-player {
+  background: @surface0;
+  padding: 7px;
+  border-radius: 12px;
+}
+
+.widget-mpris .widget-mpris-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: @text;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.widget-mpris .widget-mpris-subtitle {
+  font-size: 0.8rem;
+  color: @subtext1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.widget-menubar > box > .menu-button-bar > button > label {
+  font-size: 3rem;
+  padding: 0.4rem;
+}
+
+.widget-menubar > box > .menu-button-bar > button:hover {
+  background-color: @surface0;
+}
+
+.notification-group-collapse-button,
+.notification-group-expand-button {
+  min-height: 1rem;
+}
+
+.notification-group > box {
+  margin-top: 0.3rem;
+}
+
+.notification-group.collapsed > box > .notification-row .notification {
+  padding: 2px;
+}
+
+.notification-group.collapsed > box > .notification-row {
+  padding: 0px;
+}
+
+.notification-group.collapsed:hover > box {
+  background: @surface0;
+}
+
+.widget-inhibitors {
+  margin: 8px;
+  font-size: 1.5rem;
+}
+
+.widget-inhibitors > button {
+  font-size: initial;
+  color: @text;
+  text-shadow: none;
+  background: @surface0;
+  border: 1px solid @surface1;
+  box-shadow: none;
+  border-radius: 12px;
+  min-width: 0px;
+  min-height: 0px;
+  padding: 8px;
+}
+
+.widget-inhibitors > button:hover {
+  background: @surface1;
+}
+
+.widget-title {
+  margin: 8px;
+  font-size: 1.5rem;
+}
+
+.widget-title > label {
+  margin: 8px;
+}
+
+.widget-title > button {
+  margin: 8px;
+  border-radius: 7px;
+  color: @text;
+  background-color: @surface0;
+  box-shadow: inset 0 0 0 1px @surface1;
+  padding: 8px;
+}
+
+.widget-title > button:hover {
+  box-shadow: inset 0 0 0 1px @surface1;
+  background-color: @surface1;
+  color: @text;
+}
+
+.widget-volume {
+  background: @surface1;
+  color: @text;
+  font-size: x-large;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+.widget-backlight {
+  background: @surface1;
+  color: @text;
+  font-size: x-large;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+.widget-label {
+  margin: 8px;
+}
+
+.widget-label > label {
+  font-size: 1rem;
+}
+
+.widget-mpris {
+  color: @text;
+  background-color: @surface0;
+  padding: 12px;
+  margin: 8px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+
+.widget-mpris > box > button {
+  min-height: 35px;
+  min-width: 35px;
+  padding: 8px;
+  margin: 4px;
+  border-radius: 8px;
+  background: @surface1;
+  border: 1px solid @surface2;
+}
+
+.widget-mpris > box > button:hover {
+  background: @surface2;
+  border: 1px solid @overlay0;
+}
+
+.widget-mpris > box > button:active {
+  background: @blue;
+  color: @base;
+}
+
+.widget-mpris-player {
+  padding: 8px;
+  margin: 8px;
+  background: @surface0;
+  border-radius: 8px;
+}
+
+.widget-mpris-player button:hover {
+  background-color: @surface1;
+}
+
+.widget-mpris-player button:active {
+  background-color: @surface2;
+}
+
+/* Buttons grid widget styling */
+button {
+  border: 0px;
+  min-width: 35px;
+  background: @surface0;
+}
+
+.widget-buttons-grid {
+  font-size: x-large;
+  background: @surface1;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 12px;
+}
+
+/* GTK FlowBox styling - use widget config instead of CSS for grid layout */
+
+.widget-buttons-grid > flowbox > flowboxchild > button {
+  color: @text;
+  margin: 6px;
+  padding: 12px;
+  background: @surface0;
+  border-radius: 10px;
+  min-width: 45px;
+  min-height: 45px;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+  background: @surface2;
+  border: 1px solid @overlay0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
+  background: @green;
+  border: 1px solid @teal;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked label {
+  color: @base;
+  font-weight: bold;
+}
+
+/* Legacy buttons widget styling */
+.widget-buttons-box {
+  padding: 8px;
+  margin: 8px;
+  border-radius: 12px;
+  background-color: @surface0;
+}
+
+.widget-buttons-box > button {
+  background: transparent;
+  border: none;
+}
+
+.widget-buttons-box > button:hover {
+  background-color: @surface1;
+}
+
+.widget-menubar > box > .menu-button-bar > button {
+  border: none;
+  background: transparent;
+}
+
+.power-buttons button:hover,
+.powermode-buttons button:hover,
+.screenshot-buttons button:hover {
+  background-color: @surface1;
+}
+
+.control-center .widget-label > label {
+  color: @text;
+  font-weight: bold;
+}
+
+.widget-label {
+  font-weight: normal;
+}
+
+.widget-mpris > box > button > label {
+  font-size: 1.2rem;
+}
+
+.widget-inhibitors {
+  margin: 8px;
+}
+
+/* Volume widget bar color */
+.widget-volume > box > button {
+  min-height: 0px;
+  min-width: 0px;
+  padding: 8px;
+}
+
+.widget-volume:first-child > scale trough highlight {
+  background: @blue;
+}
+
+/* Dynamic control center height */
+.control-center {
+  min-height: 150px;
+}
+
+.control-center .control-center-list {
+  min-height: 50px;
+  background-color: transparent;
+}
+
+/* Scrollable notification list */
+.control-center .control-center-list scrolledwindow {
+  min-height: 50px;
+}
+
+.control-center .control-center-list scrolledwindow > viewport > box {
+  padding: 0px;
+}
+
+.control-center .control-center-list-placeholder {
+  font-size: 1.2rem;
+  color: @overlay0;
+}
+
+/* Smaller notification items */
+.notification {
+  min-height: 0px;
+}
+
+.notification .notification-content {
+  padding: 4px;
+}
+
+.notification .notification-content .summary {
+  font-size: 0.9rem;
+}
+
+.notification .notification-content .body {
+  font-size: 0.8rem;
+}
+
+/* Compact widget spacing */
+.widget-title {
+  margin: 4px 8px;
+  font-size: 1.2rem;
+}
+
+.widget-inhibitors {
+  margin: 4px 8px;
+  font-size: 1.2rem;
+}
+
+.widget-dnd {
+  margin: 4px 8px;
+}
+
+.widget-mpris {
+  margin: 4px 8px 8px 8px;
+  padding: 4px;
+}
+
+.widget-buttons-box {
+  margin: 4px 8px;
+  padding: 4px;
+}
+
+/* Slider styling for volume and backlight */
+trough slider {
+  background: @text;
+}
+
+trough slider:hover {
+  background: @green;
+}
+
+trough highlight {
+  background: @green;
+}

@@ -45,52 +45,44 @@
   };
 
   services.thinkfan = {
-    # Using direct paths due to thinkfan 2.0.0 issues with name-based lookup
-    # TODO: Switch to name-based when thinkfan fixes sensor discovery
+    # Using name-based lookup for stable sensor paths across reboots
     # Reference: https://github.com/kikislater/thinkpad-p14s-g5-linux/blob/master/thinkfan.conf
     enable = true;
     sensors = [
-      # GPU (amdgpu - hwmon10)
+      # GPU (amdgpu)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon10/temp1_input";
+        query = "/sys/devices/pci0000:00/0000:00:08.1/0000:c4:00.0/hwmon";
+        indices = [1];
       }
 
-      # CPU (k10temp - hwmon1)
+      # CPU (k10temp)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon1/temp1_input";
+        query = "/sys/devices/pci0000:00/0000:00:18.3/hwmon";
+        indices = [1];
       }
 
-      # ThinkPad EC sensors (hwmon9)
+      # ThinkPad EC sensors (thinkpad_hwmon)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon9/temp1_input";
-      }
-      {
-        type = "hwmon";
-        query = "/sys/class/hwmon/hwmon9/temp3_input";
-      }
-      {
-        type = "hwmon";
-        query = "/sys/class/hwmon/hwmon9/temp6_input";
-      }
-      {
-        type = "hwmon";
-        query = "/sys/class/hwmon/hwmon9/temp7_input";
+        query = "/sys/devices/platform/thinkpad_hwmon/hwmon";
+        indices = [1 3 6 7];
       }
 
-      # SSD (nvme - hwmon0) - temperature readings with -5°C correction
+      # SSD (nvme) - temperature readings with -5°C correction
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon0/temp1_input";
+        query = "/sys/devices/pci0000:00/0000:00:02.4/0000:03:00.0/nvme/nvme0";
+        indices = [1];
         correction = [(-5)];
       }
 
-      # Motherboard (acpitz - hwmon4)
+      # Motherboard (acpitz)
       {
         type = "hwmon";
-        query = "/sys/class/hwmon/hwmon4/temp1_input";
+        query = "/sys/devices/virtual/thermal/thermal_zone0";
+        indices = [1];
       }
     ];
     fans = [

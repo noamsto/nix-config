@@ -41,6 +41,10 @@
     "waybar/style.css" = lib.mkForce {
       source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/style.css";
     };
+    # colors.css is swapped by theme-toggle for dark/light theme switching
+    "waybar/colors.css" = lib.mkForce {
+      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/colors.css";
+    };
   };
 
   # Keep the old inline config commented for reference

@@ -28,17 +28,16 @@ in {
       enableGnomeKeyring = true;
     };
 
-    # Enable KDE Connect for device integration
-    programs.kdeconnect.enable = true;
-
     # Ensure video group permissions for backlight control
     users.users.${config.username}.extraGroups = ["video" "i2c"];
     hardware.i2c.enable = true;
     boot.kernelModules = ["i2c_dev"];
 
-    # Enable i2c for ddcutil (external monitor control)
     environment.systemPackages = with pkgs; [
       pavucontrol
+      # Valent - lightweight KDE Connect protocol implementation (GTK-based)
+      # Replaced KDE Connect which pulled heavy KDE dependencies
+      valent
     ];
   };
 }

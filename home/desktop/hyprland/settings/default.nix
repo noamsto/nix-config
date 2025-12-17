@@ -42,6 +42,9 @@ in {
         # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
 
+        # Restore theme preference (dark/light mode)
+        "theme-toggle restore"
+
         # Load XWayland HiDPI settings
         "xrdb -merge ~/.Xresources"
 
@@ -53,6 +56,9 @@ in {
         "kitty --single-instance --instance-group=hypr"
 
         "launch-dock"
+
+        # Valent - KDE Connect protocol for phone integration
+        "valent --gapplication-service"
 
         # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];

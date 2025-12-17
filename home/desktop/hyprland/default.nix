@@ -22,6 +22,7 @@
     ./scripts/sounds.nix
     ./scripts/window-resize.nix
     ./scripts/sesh-launcher.nix
+    ./scripts/theme-toggle.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];
@@ -41,6 +42,7 @@
     xfce.thunar
     xfce.thunar-volman # Volume manager for thunar
     xfce.thunar-archive-plugin # Archive support
+    xfce.tumbler # Thumbnail service for image previews
 
     # Dock
     nwg-dock-hyprland # Dock for Hyprland
@@ -103,5 +105,16 @@
     MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
     Categories=Network;WebBrowser;
     StartupNotify=true
+  '';
+
+  # Thunar settings - xfconf requires xfconfd running, so use config file
+  # These are set when Thunar first runs. User can change in preferences.
+  xdg.configFile."Thunar/thunarrc".text = ''
+    [Configuration]
+    LastView=ThunarDetailsView
+    MiscThumbnailMode=THUNAR_THUMBNAIL_MODE_ALWAYS
+    MiscShowHidden=FALSE
+    MiscFoldersFirst=TRUE
+    MiscDateStyle=THUNAR_DATE_STYLE_SHORT
   '';
 }

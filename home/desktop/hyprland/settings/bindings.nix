@@ -51,6 +51,7 @@ in {
       "$mainMod SHIFT, V, exec, walker -m clipboard"
 
       "$mainMod ALT, L, exec, hyprlock"
+      "$mainMod ALT, T, exec, theme-toggle" # Toggle dark/light theme
 
       # logout menu
       "$mainMod, Escape, exec, ${toggle "wleave" false} -p layer-shell --no-version-info --show-keybinds=true"

@@ -11,4 +11,5 @@
   claude-status-update = pkgs.writeShellScriptBin "claude-status-update" (builtins.readFile ./scripts/claude-status-update.sh);
   claude-tmux-indicator = pkgs.writeShellScriptBin "claude-tmux-indicator" (builtins.readFile ./scripts/claude-tmux-indicator.sh);
   claude-session-status = pkgs.writeShellScriptBin "claude-session-status" (builtins.readFile ./scripts/claude-session-status.sh);
+  claude-priority-window = pkgs.writeShellScriptBin "claude-priority-window" (builtins.readFile ./scripts/claude-priority-window.sh);
 }

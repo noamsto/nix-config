@@ -25,6 +25,7 @@
 @define-color base #1e1e2e;
 @define-color mantle #181825;
 @define-color crust #11111b;
+/* Base styles - color definitions are prepended by theme-toggle */
 
 :root {
   --notification-icon-size: 48px;

@@ -18,6 +18,7 @@
       "group/hardware",
       "group/power",
       "group/backlight",
+      "custom/theme-toggle",
       "group/audio",
       "custom/keyboard-layout",
       "custom/swaync"
@@ -318,6 +319,15 @@
       "exec": "state_file=\"$HOME/.cache/hyprsunset_active\"; if [ -f \"$state_file\" ]; then echo '{\"text\": \"󰌵\", \"tooltip\": \"Blue light filter: ON (4000K)\", \"class\": \"on\"}'; else echo '{\"text\": \"󰌶\", \"tooltip\": \"Blue light filter: OFF\", \"class\": \"off\"}'; fi",
       "interval": 2,
       "on-click": "state_file=\"$HOME/.cache/hyprsunset_active\"; if [ -f \"$state_file\" ]; then hyprctl hyprsunset identity; rm -f \"$state_file\"; notify-send \"Blue Light Filter\" \"Disabled\" -i display-brightness 2>/dev/null || true; else hyprctl hyprsunset temperature 4000; touch \"$state_file\"; notify-send \"Blue Light Filter\" \"Enabled (4000K)\" -i display-brightness 2>/dev/null || true; fi"
+    },
+    "custom/theme-toggle": {
+      "format": "{}",
+      "return-type": "json",
+      "exec": "theme-toggle query",
+      "on-click": "theme-toggle",
+      "interval": "once",
+      "signal": 8,
+      "tooltip": true
     },
     "custom/screen_recording": {
       "format": "{}",

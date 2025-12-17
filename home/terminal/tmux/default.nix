@@ -76,6 +76,7 @@ in {
     seshUtils.claude-status-update
     seshUtils.claude-tmux-indicator
     seshUtils.claude-session-status
+    seshUtils.claude-priority-window
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -119,7 +120,8 @@ in {
       {
         plugin = upstream-catppuccin;
         extraConfig = ''
-          set -g @catppuccin_flavor 'mocha'
+          # Flavor is set dynamically by theme-toggle script, default to mocha
+          if-shell '[ -z "#{@catppuccin_flavor}" ]' 'set -g @catppuccin_flavor mocha'
           set -g @catppuccin_status_background 'none'
           set -g @catppuccin_window_status_style 'none'
           set -g @catppuccin_window_flags 'icon'
@@ -170,6 +172,8 @@ in {
       set -ga update-environment TERM
       set -ga update-environment TERM_PROGRAM
       set -ga update-environment COLORTERM
+      set -ga update-environment TERMINFO
+      set -ga update-environment TERMINFO_DIRS
 
       # Set escape-time as recomended by nvim
       set -s escape-time 0
@@ -213,10 +217,13 @@ in {
       bind -n M-H previous-window
       bind -n M-L next-window
 
-      # Order sessions alphabetically with Claude status indicator
-      # Use conditional: session rows get session status, window rows get window-specific status
-      # Colors: mauve=processing, peach=waiting, green=done
-      bind s choose-tree -Zs -O name -F '#{?window_id,#{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}"),#{session_name} #(claude-session-status "#{session_name}" --format icon-color)}'
+      # Session picker with Claude priority window
+      # - Shows session name + priority window (Claude window if exists, else active)
+      # - Selecting a session navigates directly to the priority window
+      # Format: session rows show "session │ priority_window", window rows show window with indicator
+      bind s choose-tree -Zs -O name \
+        -F '#{?window_id,#{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}"),#{session_name} │ #(claude-priority-window "#{session_name}" --display)}' \
+        'run-shell "tmux switch-client -t \"$(claude-priority-window \"%1\" --target)\""'
       bind w choose-tree -Zw -O name
 
       # Create new session with name prompt (Prefix+N)
@@ -328,8 +335,8 @@ in {
       run-shell ${pkgs.tmuxPlugins.fingers}/share/tmux-plugins/tmux-fingers/tmux-fingers.tmux
 
       # WORKAROUND: tmux-fingers colors don't work on initial server start
-      # Re-run load-config when first client attaches (server is then fully initialized)
-      set-hook -g client-attached[99] 'run-shell "${pkgs.tmuxPlugins.fingers}/share/tmux-plugins/tmux-fingers/tmux-fingers.tmux"'
+      # Reload entire config on first client attach to ensure styles are applied
+      set-hook -g client-attached[99] 'source-file ~/.config/tmux/tmux.conf'
     '';
   };
 }

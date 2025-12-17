@@ -85,6 +85,11 @@
       "size 600 500, class:^(nm-connection-editor)$"
       "size 500 600, class:^(blueman-manager)$"
 
+      # Valent (KDE Connect alternative)
+      "float, class:^(ca.andyholmes.Valent)$"
+      "center, class:^(ca.andyholmes.Valent)$"
+      "size 800 600, class:^(ca.andyholmes.Valent)$"
+
       # Bluetooth pairing dialogs
       "float, class:^(blueman-agent|blueman-applet)$"
       "center, class:^(blueman-agent|blueman-applet)$"

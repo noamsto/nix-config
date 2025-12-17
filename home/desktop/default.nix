@@ -27,7 +27,8 @@
     "privacy.trackingprotection.enabled" = true;
     "privacy.trackingprotection.socialtracking.enabled" = true;
     "privacy.trackingprotection.cryptomining.enabled" = true;
-    "privacy.trackingprotection.fingerprinting.enabled" = true;
+    # Fingerprinting protection disabled - breaks Cloudflare human verification
+    "privacy.trackingprotection.fingerprinting.enabled" = false;
 
     # === Container Tabs ===
     "privacy.userContext.enabled" = true;
@@ -35,11 +36,14 @@
 
     # === Performance ===
     "browser.tabs.unloadOnLowMemory" = true;
-    "dom.webgpu.enabled" = true;
+    # WebGPU disabled - can cause freezes on some sites
+    "dom.webgpu.enabled" = false;
     "media.av1.enabled" = true;
-    "gfx.webrender.all" = true;
-    "media.ffmpeg.vaapi.enabled" = true;
-    "media.hardware-video-decoding.force-enabled" = true;
+    # Hardware acceleration disabled - can cause complete freezes
+    "gfx.webrender.all" = false;
+    "layers.acceleration.disabled" = true;
+    "media.ffmpeg.vaapi.enabled" = false;
+    "media.hardware-video-decoding.force-enabled" = false;
 
     # === Quality of Life ===
     "browser.urlbar.suggest.calculator" = true;

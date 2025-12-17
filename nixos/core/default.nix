@@ -8,6 +8,8 @@
     ./users.nix
     ./nice-looking-console.nix
     ./aliases.nix
+    ./auto-upgrade.nix
+    ./clamav.nix
   ];
 
   users.defaultUserShell = pkgs.zsh;

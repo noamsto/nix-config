@@ -41,13 +41,8 @@ pkgs.writeShellApplication {
     model=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
     conversation_duration_ms=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 
-    # Context window info (new in 2.0.65)
-    input_tokens=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
-    output_tokens=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
+    # Context window size from API (this field is accurate)
     context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
-
-    # Calculate total tokens used
-    token_count=$((input_tokens + output_tokens))
 
     # Use context_window_size from Claude Code, fallback to 200k if not provided
     if [[ "$context_window_size" -gt 0 ]]; then
@@ -56,13 +51,32 @@ pkgs.writeShellApplication {
       TOKEN_LIMIT=200000
     fi
 
-    # Get message count from transcript if available
+    # Get transcript info for token calculation
     transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
     session_id=$(echo "$input" | jq -r '.session_id // ""')
     message_count=0
+    token_count=0
 
+    # NOTE: context_window.total_input_tokens and total_output_tokens are CUMULATIVE
+    # session totals, NOT current context usage. They don't update when context is
+    # auto-compacted. We must parse the transcript to get actual current usage.
     if [[ -f "$transcript_path" && -r "$transcript_path" && -n "$session_id" ]]; then
       message_count=$(jq -s --arg sid "$session_id" '[.[] | select(.sessionId == $sid)] | length' "$transcript_path" 2>/dev/null || echo "0")
+
+      # Get LAST assistant message's token usage (represents current active context)
+      # Context window = input_tokens + cache_read_input_tokens
+      # NOTE: cache_creation_input_tokens is a subset of input (what was newly cached)
+      # NOTE: output_tokens are the response, not part of context window limit
+      token_count=$(jq -s --arg sid "$session_id" '
+        [.[] |
+          select(.sessionId == $sid and .type == "assistant" and .message.usage)] |
+        if length > 0 then
+          .[-1].message.usage |
+          ((.cache_read_input_tokens // 0) + (.input_tokens // 0))
+        else
+          0
+        end
+      ' "$transcript_path" 2>/dev/null || echo "0")
     fi
 
     # Safe defaults

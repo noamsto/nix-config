@@ -57,7 +57,7 @@
     ];
     extra-trusted-public-keys = [
       "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
-      "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
   };
 
@@ -177,7 +177,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-ai-tools.url = "github:numtide/nix-ai-tools";
+    llm-agents.url = "github:numtide/llm-agents.nix";
 
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";

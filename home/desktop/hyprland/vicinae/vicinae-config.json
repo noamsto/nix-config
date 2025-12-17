@@ -1,0 +1,21 @@
+{
+  "closeOnFocusLost": true,
+  "faviconService": "twenty",
+  "font": {
+    "name": "Inter Nerd Font",
+    "size": 12
+  },
+  "popToRootOnClose": false,
+  "rootSearch": {
+    "searchFiles": false
+  },
+  "theme": {
+    "iconTheme": "Papirus-Dark",
+    "name": "catppuccin-mocha"
+  },
+  "window": {
+    "csd": true,
+    "opacity": 0.95,
+    "rounding": 10
+  }
+}

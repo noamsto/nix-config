@@ -3,6 +3,20 @@
     enable = true;
     trustedInterfaces = ["docker0"];
 
+    # Valent/KDE Connect ports for device communication
+    allowedTCPPortRanges = [
+      {
+        from = 1714;
+        to = 1764;
+      }
+    ];
+    allowedUDPPortRanges = [
+      {
+        from = 1714;
+        to = 1764;
+      }
+    ];
+
     allowedTCPPorts = [
       # Spotify track sync with other devices
       57621
