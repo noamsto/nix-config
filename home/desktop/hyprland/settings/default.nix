@@ -25,6 +25,8 @@ in {
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
+        # GTK theme - Adwaita:dark for dark variant (theme-toggle updates this at runtime)
+        "GTK_THEME,Adwaita:dark"
 
         # Chromium-based browser fixes:
         # 1. --disable-accelerated-2d-canvas: Fix AMD Radeon 780M PDF rendering artifacts

@@ -48,18 +48,10 @@
       gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
     '';
 
-    # Use Adwaita (not Adwaita-dark) - it respects color-scheme preference
-    # Theme toggle script sets color-scheme via dconf for runtime switching
-    gtk3.extraConfig = {
-      gtk-button-images = 1;
-      gtk-menu-images = 1;
-      gtk-toolbar-style = "GTK_TOOLBAR_BOTH_HORIZ";
-      gtk-primary-button-warps-slider = 0;
-      gtk-decoration-layout = "menu:close";
-      gtk-enable-animations = true;
-      gtk-overlay-scrolling = true;
-      gtk-theme-name = "Adwaita";
-    };
+    # GTK3/4 settings are in Nix store, but gtk-application-prefer-dark-theme
+    # needs to be dynamic for theme switching. The theme-toggle script handles
+    # this via dconf and GTK_THEME env var. Electron apps read color-scheme
+    # from the portal which is updated dynamically.
 
     gtk4.extraConfig = {
       gtk-enable-animations = true;

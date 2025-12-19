@@ -1,21 +1,24 @@
 {
-  "closeOnFocusLost": true,
-  "faviconService": "twenty",
-  "font": {
-    "name": "Inter Nerd Font",
-    "size": 12
-  },
-  "popToRootOnClose": false,
-  "rootSearch": {
-    "searchFiles": false
-  },
-  "theme": {
-    "iconTheme": "Papirus-Dark",
-    "name": "catppuccin-mocha"
-  },
-  "window": {
-    "csd": true,
-    "opacity": 0.95,
-    "rounding": 10
-  }
+    "closeOnFocusLoss": false,
+    "considerPreedit": false,
+    "faviconService": "twenty",
+    "font": {
+        "size": 12
+    },
+    "keybinding": "default",
+    "keybinds": {
+    },
+    "popToRootOnClose": false,
+    "rootSearch": {
+        "searchFiles": false
+    },
+    "theme": {
+        "iconTheme": "Papirus-Dark",
+        "name": "vicinae-dark"
+    },
+    "window": {
+        "csd": true,
+        "opacity": 0.95,
+        "rounding": 10
+    }
 }

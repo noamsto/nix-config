@@ -11,12 +11,12 @@
       cursor_trail_decay = "0.1 0.5";
 
       # Font configuration
-      font_family = "monospace";
+      font_family = "FiraCode Nerd Font Medium";
 
       # Primary fallback for monospace text
-      bold_font = "auto";
-      italic_font = "auto";
-      bold_italic_font = "auto";
+      bold_font = "FiraCode Nerd Font Bold";
+      italic_font = "FiraCode Nerd Font Medium Italic";
+      bold_italic_font = "FiraCode Nerd Font Bold Italic";
       font_size = 12;
 
       # Fallback fonts for missing characters (in order of preference)

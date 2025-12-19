@@ -23,12 +23,21 @@
     # === Privacy & Security ===
     "dom.security.https_only_mode" = true;
     "dom.security.https_only_mode.upgrade_local" = false; # Allow local HTTP (naspi)
-    "network.trr.mode" = 2; # DNS-over-HTTPS (2=preferred)
-    "privacy.trackingprotection.enabled" = true;
-    "privacy.trackingprotection.socialtracking.enabled" = true;
-    "privacy.trackingprotection.cryptomining.enabled" = true;
-    # Fingerprinting protection disabled - breaks Cloudflare human verification
+    # DNS-over-HTTPS disabled - can interfere with Cloudflare verification
+    "network.trr.mode" = 0; # 0=off, 2=preferred, 3=only
+    # Use Standard Enhanced Tracking Protection (compatible with Cloudflare)
+    "browser.contentblocking.category" = "standard";
+    # Standard includes: tracking content in Private Windows, social trackers, cryptominers, fingerprinters
+    # Fingerprinting protection disabled specifically - breaks Cloudflare human verification
     "privacy.trackingprotection.fingerprinting.enabled" = false;
+
+    # === Cloudflare Compatibility ===
+    # Ensure resource timing is enabled (required by Cloudflare)
+    "dom.enable_resource_timing" = true;
+    # Enable service workers (Cloudflare uses them for verification)
+    "dom.serviceWorkers.enabled" = true;
+    # Accept third-party cookies (Cloudflare verification needs them)
+    "network.cookie.cookieBehavior" = 0; # 0=accept all, 1=reject 3rd party, 4=reject trackers
 
     # === Container Tabs ===
     "privacy.userContext.enabled" = true;

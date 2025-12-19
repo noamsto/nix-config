@@ -15,11 +15,11 @@
   };
 
   # Enable Qt system-wide for proper QML module resolution
-  # qtct works with Kvantum on non-KDE desktops (Hyprland)
-  # Kvantum handles style (widget colors), qtct handles platform integration
+  # qt5ct works with Kvantum on non-KDE desktops (Hyprland)
+  # Kvantum handles style (widget colors), qt5ct handles platform integration
   qt = {
     enable = true;
-    platformTheme = "qtct";
+    platformTheme = "qt5ct";
     style = "kvantum";
   };
 

@@ -41,14 +41,27 @@ get_current_theme() {
 # Update dconf for GTK apps (immediate effect via portal)
 update_gtk_theme() {
   local theme="$1"
+  local gtk_theme_variant
   # Use dconf directly as gsettings may fail to find schemas in wrapped scripts
   if [[ $theme == "light" ]]; then
     dconf write /org/gnome/desktop/interface/color-scheme "'prefer-light'"
+    dconf write /org/gnome/desktop/interface/gtk-theme "'Adwaita'"
     dconf write /org/gnome/desktop/interface/icon-theme "'Papirus-Light'"
+    gtk_theme_variant="Adwaita"
   else
     dconf write /org/gnome/desktop/interface/color-scheme "'prefer-dark'"
+    dconf write /org/gnome/desktop/interface/gtk-theme "'Adwaita-dark'"
     dconf write /org/gnome/desktop/interface/icon-theme "'Papirus-Dark'"
+    gtk_theme_variant="Adwaita:dark"
   fi
+
+  # Update environment for new processes (Hyprland + systemd user)
+  hyprctl keyword env GTK_THEME,"$gtk_theme_variant" >/dev/null
+  systemctl --user set-environment GTK_THEME="$gtk_theme_variant"
+
+  # Note: Thunar doesn't dynamically respond to theme changes
+  # User needs to close and reopen Thunar for theme to take effect
+  # New Thunar windows will use correct GTK_THEME from environment
 }
 
 # Update Hyprland border colors
@@ -63,7 +76,7 @@ update_hyprland_borders() {
   fi
 }
 
-# Update kitty terminal theme (all running instances)
+# Update kitty terminal theme (all running instances and config for new instances)
 update_kitty() {
   local theme="$1"
   local kitty_theme
@@ -72,13 +85,114 @@ update_kitty() {
   else
     kitty_theme="Catppuccin-Mocha"
   fi
-  # Theme path is set by Nix wrapper via KITTY_THEMES_PATH
-  local theme_file="${KITTY_THEMES_PATH}/${kitty_theme}.conf"
-  if [[ -f $theme_file ]]; then
-    # Update all kitty instances via their sockets (socket has PID suffix)
-    for sock in /tmp/kitty-*; do
-      [[ -S $sock ]] && kitty @ --to "unix:$sock" set-colors --all "$theme_file" 2>/dev/null || true
-    done
+
+  local kitty_config="${XDG_CONFIG_HOME:-$HOME/.config}/kitty/kitty.conf"
+
+  # Extract theme path from kitty.conf (themes are in nix store)
+  if [[ -f $kitty_config ]]; then
+    # Get the current theme include line and extract the directory path
+    local theme_line
+    theme_line=$(grep "^include.*Catppuccin.*\.conf" "$kitty_config" 2>/dev/null || true)
+
+    if [[ -n $theme_line ]]; then
+      # Extract the directory path (everything before the theme filename)
+      # Example: "include /path/to/themes/Catppuccin-Mocha.conf" -> "/path/to/themes"
+      local theme_path="${theme_line#include }" # Remove "include " prefix
+      local theme_dir="${theme_path%/*}"        # Remove filename (everything after last /)
+      local theme_file="${theme_dir}/${kitty_theme}.conf"
+
+      # Update all running kitty instances via their sockets
+      for sock in /tmp/kitty-*; do
+        if [[ -S $sock ]]; then
+          kitty @ --to "unix:$sock" set-colors --all --configured "$theme_file" 2>/dev/null || true
+        fi
+      done
+
+      # Update kitty.conf include line for new instances (atomically)
+      local tmp_config="${kitty_config}.tmp"
+      sed "s|^include.*/Catppuccin-[^/]*\.conf|include ${theme_file}|" "$kitty_config" >"$tmp_config"
+      mv "$tmp_config" "$kitty_config"
+    fi
+  fi
+}
+
+# Update fish shell theme
+update_fish() {
+  local theme="$1"
+
+  # Call __reload_theme to set universal variables
+  # Universal variables automatically propagate to all running fish instances
+  if command -v fish &>/dev/null; then
+    fish -c "__reload_theme" 2>/dev/null || true
+  fi
+}
+
+# Update starship prompt theme
+update_starship() {
+  local theme="$1"
+  local starship_palette
+  if [[ $theme == "light" ]]; then
+    starship_palette="catppuccin_latte"
+  else
+    starship_palette="catppuccin_mocha"
+  fi
+
+  local starship_config="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
+  if [[ -f $starship_config ]]; then
+    # Atomically update the palette line in starship.toml
+    local tmp_config="${starship_config}.tmp"
+    sed "s/^palette = .*/palette = \"$starship_palette\"/" "$starship_config" >"$tmp_config"
+    mv "$tmp_config" "$starship_config"
+  fi
+}
+
+# Update k9s theme
+update_k9s() {
+  local theme="$1"
+  local k9s_skin
+  if [[ $theme == "light" ]]; then
+    k9s_skin="catppuccin-latte"
+  else
+    k9s_skin="catppuccin-mocha"
+  fi
+
+  local k9s_config="${XDG_CONFIG_HOME:-$HOME/.config}/k9s/config.yaml"
+  if [[ -f $k9s_config ]]; then
+    # Atomically update the skin line in k9s config
+    local tmp_config="${k9s_config}.tmp"
+    sed "s/skin: catppuccin-.*/skin: $k9s_skin/" "$k9s_config" >"$tmp_config"
+    mv "$tmp_config" "$k9s_config"
+  fi
+}
+
+# Update lazygit theme
+update_lazygit() {
+  local theme="$1"
+  local lazygit_flavor
+  if [[ $theme == "light" ]]; then
+    lazygit_flavor="latte"
+  else
+    lazygit_flavor="mocha"
+  fi
+
+  # Find the catppuccin-lazygit package in nix store
+  local theme_dir
+  theme_dir=$(find /nix/store -maxdepth 1 -name "*catppuccin-lazygit-0" -type d 2>/dev/null | head -1)
+
+  if [[ -n $theme_dir && -d ${theme_dir}/${lazygit_flavor} ]]; then
+    local lazygit_config="${XDG_CONFIG_HOME:-$HOME/.config}/lazygit/config.yml"
+    local config_dir
+    config_dir=$(dirname "$lazygit_config")
+    mkdir -p "$config_dir"
+
+    # Use blue accent by default (can be customized)
+    local theme_file="${theme_dir}/${lazygit_flavor}/blue.yml"
+    if [[ -f $theme_file ]]; then
+      # Atomically copy theme file
+      local tmp_config="${lazygit_config}.tmp"
+      cp "$theme_file" "$tmp_config"
+      mv "$tmp_config" "$lazygit_config"
+    fi
   fi
 }
 
@@ -91,13 +205,35 @@ update_tmux() {
   else
     tmux_flavor="mocha"
   fi
-  # Check if tmux is running
-  if tmux list-sessions &>/dev/null; then
+  # Check if tmux is running (need to find socket when run from keybinding)
+  # Try default socket location first, then fall back to auto-detection
+  local tmux_cmd="tmux"
+  if [[ -S "/run/user/$(id -u)/tmux-$(id -u)/default" ]]; then
+    tmux_cmd="tmux -S /run/user/$(id -u)/tmux-$(id -u)/default"
+  fi
+
+  if $tmux_cmd list-sessions &>/dev/null; then
+    # Unset all @thm_* variables first - catppuccin uses "set -ogq" which
+    # only sets if not exists, so we must clear them for theme switch to work
+    # Use awk to extract just variable names from lines like: @thm_bg "#1e1e2e"
+    for var in $($tmux_cmd show-options -g | awk '$1 ~ /^@thm_/ {print $1}' | sort -u); do
+      $tmux_cmd set -gu "$var" 2>/dev/null || true
+    done
     # Update the catppuccin flavor
-    tmux set -g @catppuccin_flavor "$tmux_flavor" 2>/dev/null || true
+    $tmux_cmd set -g @catppuccin_flavor "$tmux_flavor" 2>/dev/null || true
     # Re-source the full config to pick up new @thm_* variables
-    # The catppuccin plugin sets variables, but status line formats need re-parsing
-    tmux source-file ~/.config/tmux/tmux.conf 2>/dev/null || true
+    $tmux_cmd source-file ~/.config/tmux/tmux.conf 2>/dev/null || true
+
+    # Update pane-border-format with expanded color values
+    # (nested #{@thm_*} inside #[] style tags don't expand at render time)
+    local thm_mauve thm_green thm_bg thm_overlay_1
+    thm_mauve=$($tmux_cmd show-options -gv @thm_mauve 2>/dev/null | tr -d '"')
+    thm_green=$($tmux_cmd show-options -gv @thm_green 2>/dev/null | tr -d '"')
+    thm_bg=$($tmux_cmd show-options -gv @thm_bg 2>/dev/null | tr -d '"')
+    thm_overlay_1=$($tmux_cmd show-options -gv @thm_overlay_1 2>/dev/null | tr -d '"')
+    # Format: dot on active split pane, clean line when zoomed/inactive
+    $tmux_cmd setw -g pane-border-format \
+      "#{?#{&&:#{pane_active},#{&&:#{>:#{window_panes},1},#{==:#{window_zoomed_flag},0}}},#[fg=${thm_mauve}]━━ #[fg=${thm_green}]●#[fg=${thm_mauve}] ━━,#[bg=${thm_bg},fg=${thm_overlay_1}]━━━━━}"
   fi
 }
 
@@ -110,13 +246,15 @@ update_kvantum() {
   else
     kvantum_theme="catppuccin-mocha-blue"
   fi
-  # Write directly to Kvantum config (kvantummanager is GUI only)
+  # Write atomically to Kvantum config (kvantummanager is GUI only)
   local kvantum_config="${XDG_CONFIG_HOME:-$HOME/.config}/Kvantum/kvantum.kvconfig"
   mkdir -p "$(dirname "$kvantum_config")"
-  cat >"$kvantum_config" <<EOF
+  local tmp_config="${kvantum_config}.tmp"
+  cat >"$tmp_config" <<EOF
 [General]
 theme=$kvantum_theme
 EOF
+  mv "$tmp_config" "$kvantum_config"
 }
 
 # Update waybar colors
@@ -136,29 +274,20 @@ update_waybar() {
   fi
 }
 
-# Update Vicinae theme (modify config + restart server)
+# Update Vicinae theme using native theme command
 update_vicinae() {
   local theme="$1"
-  local vicinae_theme icon_theme
-  local config_file="${HOME}/nix-config/home/desktop/hyprland/vicinae/vicinae-config.json"
+  local vicinae_theme
 
   if [[ $theme == "light" ]]; then
-    vicinae_theme="catppuccin-latte"
-    icon_theme="Papirus-Light"
+    vicinae_theme="vicinae-light"
   else
-    vicinae_theme="catppuccin-mocha"
-    icon_theme="Papirus-Dark"
+    vicinae_theme="vicinae-dark"
   fi
 
-  # Update config file using jq
-  if [[ -f $config_file ]] && command -v jq &>/dev/null; then
-    local tmp_file="${config_file}.tmp"
-    jq --arg theme "$vicinae_theme" --arg icons "$icon_theme" \
-      '.theme.name = $theme | .theme.iconTheme = $icons' \
-      "$config_file" >"$tmp_file" && mv "$tmp_file" "$config_file"
-
-    # Restart vicinae server to pick up new config
-    vicinae server 2>/dev/null || true
+  # Use vicinae's native theme set command (automatically updates config and reloads)
+  if command -v vicinae &>/dev/null; then
+    vicinae theme set "$vicinae_theme" 2>/dev/null || true
   fi
 }
 
@@ -182,15 +311,34 @@ update_swaync() {
   fi
 }
 
+# Update process-compose theme
+update_process_compose() {
+  local theme="$1"
+  local pc_dir="${HOME}/nix-config/home/terminal/process_compose"
+  local theme_file
+
+  if [[ $theme == "light" ]]; then
+    theme_file="${pc_dir}/catppuccin-latte.yaml"
+  else
+    theme_file="${pc_dir}/catppuccin-mocha.yaml"
+  fi
+
+  # Copy the appropriate theme to theme.yaml (symlinked by Home Manager)
+  if [[ -f $theme_file ]]; then
+    cp "$theme_file" "${pc_dir}/theme.yaml"
+  fi
+}
+
 # Update KDE color scheme for KDE apps (KDE Connect, etc.)
 # Apps need restart to pick up changes
 update_kde_colorscheme() {
   local theme="$1"
   local kdeglobals="${XDG_CONFIG_HOME:-$HOME/.config}/kdeglobals"
+  local tmp_kdeglobals="${kdeglobals}.tmp"
 
   if [[ $theme == "light" ]]; then
     # Catppuccin Latte colors
-    cat >"$kdeglobals" <<'EOF'
+    cat >"$tmp_kdeglobals" <<'EOF'
 [General]
 ColorScheme=CatppuccinLatteBlue
 
@@ -215,7 +363,7 @@ LookAndFeelPackage=org.kde.breeze.desktop
 EOF
   else
     # Catppuccin Mocha colors
-    cat >"$kdeglobals" <<'EOF'
+    cat >"$tmp_kdeglobals" <<'EOF'
 [General]
 ColorScheme=CatppuccinMochaBlue
 
@@ -239,24 +387,27 @@ ForegroundNormal=30,30,46
 LookAndFeelPackage=org.kde.breezedark.desktop
 EOF
   fi
+  # Atomically move temp file to actual config
+  mv "$tmp_kdeglobals" "$kdeglobals"
 }
 
 # Signal apps to reload their themes
 signal_apps() {
-  # Swaync - reload CSS
-  swaync-client --reload-css 2>/dev/null || true
+  # Swaync - full restart needed for theme changes (CSS reload alone doesn't work)
+  # Note: NixOS wraps the binary as .swaync-wrapped, so use -f for pattern match
+  if pgrep -f "swaync$" >/dev/null; then
+    pkill -f "swaync$" || true
+    # Wait for process to actually die (max 2 seconds)
+    for _ in {1..20}; do
+      pgrep -f "swaync$" >/dev/null || break
+      sleep 0.1
+    done
+    nohup swaync >/dev/null 2>&1 &
+  fi
 
-  # Restart tray applets so they pick up new icon theme
-  # nm-applet
-  if pgrep -x nm-applet >/dev/null; then
-    pkill -x nm-applet
-    nohup nm-applet --indicator >/dev/null 2>&1 &
-  fi
-  # blueman-applet
-  if pgrep -x blueman-applet >/dev/null; then
-    pkill -x blueman-applet
-    nohup blueman-applet >/dev/null 2>&1 &
-  fi
+  # Tray applets (nm-applet, blueman) pick up icon theme from dconf automatically
+  # Electron apps (youtube-music, ferdium, slack) need manual restart for titlebar
+  # theme change - this is a known GTK/Wayland limitation
 }
 
 # Main toggle function
@@ -271,17 +422,24 @@ toggle_theme() {
     new_theme="dark"
   fi
 
-  # Save new state first (so waybar can read it)
-  echo "$new_theme" >"$STATE_FILE"
+  # Save new state atomically (so waybar can read it safely)
+  local tmp_state="${STATE_FILE}.tmp"
+  echo "$new_theme" >"$tmp_state"
+  mv "$tmp_state" "$STATE_FILE"
 
   # Update dynamic components
   update_gtk_theme "$new_theme"
   update_hyprland_borders "$new_theme"
   update_kitty "$new_theme"
+  update_fish "$new_theme"
+  update_starship "$new_theme"
+  update_k9s "$new_theme"
+  update_lazygit "$new_theme"
   update_tmux "$new_theme"
   update_kvantum "$new_theme"
   update_waybar "$new_theme"
   update_swaync "$new_theme"
+  update_process_compose "$new_theme"
   update_vicinae "$new_theme"
   update_kde_colorscheme "$new_theme"
   signal_apps
@@ -305,10 +463,15 @@ restore_theme() {
   update_gtk_theme "$current"
   update_hyprland_borders "$current"
   update_kitty "$current"
+  update_fish "$current"
+  update_starship "$current"
+  update_k9s "$current"
+  update_lazygit "$current"
   update_tmux "$current"
   update_kvantum "$current"
   update_waybar "$current"
   update_swaync "$current"
+  update_process_compose "$current"
   update_vicinae "$current"
   update_kde_colorscheme "$current"
   signal_apps

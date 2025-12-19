@@ -274,10 +274,10 @@ in {
       set -g status-right-length 100
       set -g status-style "bg=#{@thm_bg}"
 
-      # Pane border: disabled to prevent copy-mode resize issues
-      # Previously showed dot indicator when multiple panes and not zoomed
+      # Pane border - dot on active split, clean line when zoomed/inactive
+      # Full themed format is set by theme-toggle script after reading @thm_* values
       setw -g pane-border-status top
-      setw -g pane-border-format "#{?#{&&:#{pane_active},#{&&:#{>:#{window_panes},1},#{==:#{window_zoomed_flag},0}}},#[fg=colour183]━━ #[fg=green]●#[fg=colour183] ━━,#[bg=#1e1e2e,fg=colour243]━━━━━}"
+      setw -g pane-border-format "━━━━━"
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
@@ -307,9 +307,10 @@ in {
       set -g automatic-rename-format "Window"
 
       # Window status with Claude indicator
+      # Use subtext colors for better contrast in light theme (rosewater is too light)
       set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
-      set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_rosewater}"
-      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_lavender}"
+      set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_subtext_0}"
+      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_subtext_1}"
       set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
       set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
       set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
