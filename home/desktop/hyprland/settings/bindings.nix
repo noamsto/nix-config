@@ -54,7 +54,7 @@ in {
       "$mainMod ALT, T, exec, theme-toggle" # Toggle dark/light theme
 
       # logout menu
-      "$mainMod, Escape, exec, ${toggle "wleave" false} -p layer-shell --no-version-info --show-keybinds=true"
+      "$mainMod, Escape, exec, ${toggle "wleave" false} -p layer-shell --no-version-info --show-keybinds=true -C ~/.config/wleave/style.css"
 
       # Move focus with SUPER+hjkl (using SUPER+ALT+L for right to avoid conflict with lock)
       "$mainMod, H, movefocus, l"

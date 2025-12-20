@@ -7,79 +7,99 @@
   # Firefox settings - injected as user.js into existing profile
   # This avoids conflicts with Firefox managing its own profiles.ini
   firefoxSettings = {
-    # === Vertical Tabs (Firefox 133+) ===
+    # =========================================================================
+    # PERFORMANCE & HARDWARE ACCELERATION (The "Fix")
+    # =========================================================================
+    # Enable the modern GPU-based rendering engine (WebRender)
+    "gfx.webrender.all" = true;
+
+    # Enable Hardware Video Acceleration (VA-API)
+    # Reduces CPU usage significantly during video playback
+    "media.ffmpeg.vaapi.enabled" = true;
+
+    # Enable WebGPU (Required for some modern sites & Cloudflare challenges)
+    "dom.webgpu.enabled" = true;
+
+    # Ensure layers acceleration is NOT disabled
+    "layers.acceleration.disabled" = false;
+
+    # Unload tabs to save RAM, but keep enough for the challenges to run
+    "browser.tabs.unloadOnLowMemory" = true;
+
+    # =========================================================================
+    # CLOUDFLARE COMPATIBILITY & PRIVACY BALANCE
+    # =========================================================================
+    # CRITICAL: Disable "Resist Fingerprinting"
+    # When true, this fakes your timezone to UTC and window size, causing immediate Cloudflare loops.
+    "privacy.resistFingerprinting" = false;
+
+    # Standard tracking protection (Blocks trackers, but allows Cloudflare scripts)
+    "browser.contentblocking.category" = "standard";
+
+    # Disable specific fingerprinting blocking that breaks verification
+    "privacy.trackingprotection.fingerprinting.enabled" = false;
+
+    # Allow service workers (Cloudflare uses these for background tokens)
+    "dom.serviceWorkers.enabled" = true;
+
+    # Enable Resource Timing (Required for bot detection analysis)
+    "dom.enable_resource_timing" = true;
+
+    # =========================================================================
+    # UI & VERTICAL TABS (Firefox 133+)
+    # =========================================================================
     "sidebar.verticalTabs" = true;
     "sidebar.revamp" = true;
     "sidebar.visibility" = "expand-on-hover";
+    "browser.compactmode.show" = true;
+    "browser.uidensity" = 1; # Compact mode
 
-    # === Tab Groups (Firefox 131+) ===
+    # Tab Groups (Firefox 131+)
     "browser.tabs.groups.enabled" = true;
 
-    # === UI Improvements ===
-    "browser.compactmode.show" = true;
-    "browser.uidensity" = 1; # 0=normal, 1=compact, 2=touch
-    "browser.tabs.tabmanager.enabled" = true;
+    # =========================================================================
+    # WAYLAND & DISPLAY
+    # =========================================================================
+    # Better scaling on high-DPI screens under Hyprland
+    "widget.wayland.fractional-scale.enabled" = true;
 
-    # === Privacy & Security ===
+    # Use native file pickers (looks better in KDE/Hyprland)
+    "widget.use-xdg-desktop-portal.file-picker" = 1;
+    "widget.use-xdg-desktop-portal.mime-handler" = 1;
+
+    # Let Firefox auto-detect refresh rate from Hyprland rather than forcing 120Hz
+    # (Prevents timing mismatches that trigger bot detection)
+    # "layout.frame_rate" = 120;
+
+    # =========================================================================
+    # SCROLLING & INPUT
+    # =========================================================================
+    "general.smoothScroll" = true;
+    "general.smoothScroll.msdPhysics.enabled" = true;
+    "apz.gtk.touchpad_hold.enabled" = true; # Better touchpad gestures
+
+    # =========================================================================
+    # SECURITY & NETWORK
+    # =========================================================================
     "dom.security.https_only_mode" = true;
-    "dom.security.https_only_mode.upgrade_local" = false; # Allow local HTTP (naspi)
-    # DNS-over-HTTPS disabled - can interfere with Cloudflare verification
-    "network.trr.mode" = 0; # 0=off, 2=preferred, 3=only
-    # Use Standard Enhanced Tracking Protection (compatible with Cloudflare)
-    "browser.contentblocking.category" = "standard";
-    # Standard includes: tracking content in Private Windows, social trackers, cryptominers, fingerprinters
-    # Fingerprinting protection disabled specifically - breaks Cloudflare human verification
-    "privacy.trackingprotection.fingerprinting.enabled" = false;
+    "dom.security.https_only_mode.upgrade_local" = false; # Helpful for local NAS/Home Assistant
 
-    # === Cloudflare Compatibility ===
-    # Ensure resource timing is enabled (required by Cloudflare)
-    "dom.enable_resource_timing" = true;
-    # Enable service workers (Cloudflare uses them for verification)
-    "dom.serviceWorkers.enabled" = true;
-    # Accept third-party cookies (Cloudflare verification needs them)
-    "network.cookie.cookieBehavior" = 0; # 0=accept all, 1=reject 3rd party, 4=reject trackers
+    # Use system DNS (0). If loops persist, try changing to 2 (DNS over HTTPS)
+    "network.trr.mode" = 0;
 
-    # === Container Tabs ===
-    "privacy.userContext.enabled" = true;
-    "privacy.userContext.ui.enabled" = true;
+    # Accept cookies (Balanced approach for compatibility)
+    "network.cookie.cookieBehavior" = 0;
 
-    # === Performance ===
-    "browser.tabs.unloadOnLowMemory" = true;
-    # WebGPU disabled - can cause freezes on some sites
-    "dom.webgpu.enabled" = false;
-    "media.av1.enabled" = true;
-    # Hardware acceleration disabled - can cause complete freezes
-    "gfx.webrender.all" = false;
-    "layers.acceleration.disabled" = true;
-    "media.ffmpeg.vaapi.enabled" = false;
-    "media.hardware-video-decoding.force-enabled" = false;
-
-    # === Quality of Life ===
+    # =========================================================================
+    # QUALITY OF LIFE
+    # =========================================================================
     "browser.urlbar.suggest.calculator" = true;
     "browser.urlbar.unitConversion.enabled" = true;
     "browser.urlbar.trimHttps" = true;
-    "browser.tabs.hoverPreview.enabled" = true;
-    "findbar.highlightAll" = true;
-    "reader.parse-on-load.enabled" = true;
-
-    # === Wayland & Display ===
-    "widget.wayland.fractional-scale.enabled" = true;
-    "widget.use-xdg-desktop-portal.file-picker" = 1;
-    "widget.use-xdg-desktop-portal.mime-handler" = 1;
-    "layout.frame_rate" = 120;
-
-    # === Scrolling ===
-    "general.smoothScroll" = true;
-    "general.smoothScroll.msdPhysics.enabled" = true;
-    "apz.gtk.pangesture.page_delta_mode_multiplier" = 0.4;
-    "apz.gtk.touchpad_hold.enabled" = true;
-
-    # === Media ===
     "media.videocontrols.picture-in-picture.video-toggle.enabled" = true;
 
-    # === Disable Annoyances ===
+    # Disable "Default Browser" checks and warnings
     "browser.shell.checkDefaultBrowser" = false;
-    "browser.shell.didSkipDefaultBrowserCheckOnFirstRun" = true;
     "browser.aboutConfig.showWarning" = false;
   };
 

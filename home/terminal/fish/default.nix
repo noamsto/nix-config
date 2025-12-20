@@ -5,6 +5,133 @@
     grc
     nix-search-tv
   ];
+
+  # === DYNAMIC THEME SUPPORT ===
+  # Fish themes for light/dark mode switching
+  # catppuccin.fish is disabled to avoid `fish_config theme choose` conflicting
+  # with dynamic theme switching. Both themes are defined here manually.
+  xdg.configFile = {
+    # Catppuccin Latte theme (light mode)
+    # Official colors from https://github.com/catppuccin/fish
+    "fish/themes/Catppuccin Latte.theme".text = ''
+      # name: 'Catppuccin Latte'
+      # url: 'https://github.com/catppuccin/fish'
+      # preferred_background: eff1f5
+
+      fish_color_normal 4c4f69
+      fish_color_command 1e66f5
+      fish_color_param dd7878
+      fish_color_keyword 8839ef
+      fish_color_quote 40a02b
+      fish_color_redirection ea76cb
+      fish_color_end fe640b
+      fish_color_comment 8c8fa1
+      fish_color_error d20f39
+      fish_color_gray 9ca0b0
+      fish_color_selection --background=ccd0da
+      fish_color_search_match --background=ccd0da
+      fish_color_option 40a02b
+      fish_color_operator ea76cb
+      fish_color_escape e64553
+      fish_color_autosuggestion 9ca0b0
+      fish_color_cancel d20f39
+      fish_color_cwd df8e1d
+      fish_color_user 179299
+      fish_color_host 1e66f5
+      fish_color_host_remote 40a02b
+      fish_color_status d20f39
+      fish_color_valid_path --underline
+      fish_pager_color_progress 9ca0b0
+      fish_pager_color_prefix ea76cb
+      fish_pager_color_completion 4c4f69
+      fish_pager_color_description 8c8fa1
+      fish_pager_color_selected_background --background=ccd0da
+    '';
+
+    # Catppuccin Mocha theme (dark mode)
+    # Official colors from https://github.com/catppuccin/fish
+    "fish/themes/Catppuccin Mocha.theme".text = ''
+      # name: 'Catppuccin Mocha'
+      # url: 'https://github.com/catppuccin/fish'
+      # preferred_background: 1e1e2e
+
+      fish_color_normal cdd6f4
+      fish_color_command 89b4fa
+      fish_color_param f2cdcd
+      fish_color_keyword f38ba8
+      fish_color_quote a6e3a1
+      fish_color_redirection f5c2e7
+      fish_color_end fab387
+      fish_color_comment 7f849c
+      fish_color_error f38ba8
+      fish_color_gray 6c7086
+      fish_color_selection --background=313244
+      fish_color_search_match --background=313244
+      fish_color_option a6e3a1
+      fish_color_operator f5c2e7
+      fish_color_escape eba0ac
+      fish_color_autosuggestion 6c7086
+      fish_color_cancel f38ba8
+      fish_color_cwd f9e2af
+      fish_color_user 94e2d5
+      fish_color_host 89b4fa
+      fish_color_host_remote a6e3a1
+      fish_color_status f38ba8
+      fish_pager_color_progress 6c7086
+      fish_pager_color_prefix f5c2e7
+      fish_pager_color_completion cdd6f4
+      fish_pager_color_description 6c7086
+    '';
+
+    # __reload_theme function for dynamic theme switching
+    "fish/functions/__reload_theme.fish".text = ''
+      function __reload_theme
+          # Reload theme based on current theme-mode state file
+          set -l theme_state_file "$HOME/.local/state/theme-mode"
+
+          if test -f $theme_state_file
+              set -l current_theme (cat $theme_state_file)
+              set -l theme_file "$HOME/.config/fish/themes/Catppuccin Mocha.theme"
+
+              if test "$current_theme" = "light"
+                  set theme_file "$HOME/.config/fish/themes/Catppuccin Latte.theme"
+              end
+
+              # Load colors from theme file
+              if test -f "$theme_file"
+                  while read -l line
+                      # Skip comments and empty lines
+                      if string match -qr '^\s*#|^\s*$' -- $line
+                          continue
+                      end
+                      # Extract variable name (first word)
+                      set -l var_name (string split ' ' -- $line)[1]
+                      # Erase global variable first (it shadows universal)
+                      set -eg $var_name 2>/dev/null
+                      # Set universal variable (propagates to all fish instances)
+                      if string match -qr '^fish_(color|pager)' -- $line
+                          eval "set -U $line" 2>/dev/null
+                      end
+                  end < "$theme_file"
+              end
+          end
+      end
+    '';
+
+    # Dynamic theme initialization (runs on shell startup)
+    # Named zzz- to run after other conf.d scripts
+    "fish/conf.d/zzz-dynamic-theme.fish".text = ''
+      # Dynamic theme loading based on current theme mode
+      # This overrides the hardcoded theme in config.fish
+
+      # Only run in interactive shells
+      status is-interactive; or exit
+
+      # Reload theme colors based on state file
+      __reload_theme
+    '';
+  };
+
   programs = {
     zoxide = {
       enable = true;

@@ -9,11 +9,14 @@
 # - Waybar via colors.css swap + reload
 # - Swaync via CSS concatenation + reload
 # - Vicinae via config JSON + server restart
+# - wleave via CSS swap (logout menu)
+# - lazygit via config.yml swap (requires restart)
+# - btop via btop.conf theme setting (requires restart)
 #
 # Requires app restart:
 # - Qt/Kvantum apps (Dolphin, etc.)
 # - KDE apps (KDE Connect) via kdeglobals
-# - btop, yazi, lazygit, k9s (pick up theme on next start)
+# - yazi (picks up theme on next start)
 
 set -euo pipefail
 
@@ -105,12 +108,34 @@ update_kitty() {
       for sock in /tmp/kitty-*; do
         if [[ -S $sock ]]; then
           kitty @ --to "unix:$sock" set-colors --all --configured "$theme_file" 2>/dev/null || true
+          # Fix Catppuccin Latte contrast issue: color7/color15 are too light on light bg
+          # Override with darker Latte palette colors (subtext0/subtext1)
+          if [[ $theme == "light" ]]; then
+            kitty @ --to "unix:$sock" set-colors color7="#5c5f77" color15="#6c6f85" 2>/dev/null || true
+          fi
         fi
       done
 
-      # Update kitty.conf include line for new instances (atomically)
+      # Update kitty.conf for new instances (atomically)
+      # 1. Update include line to point to correct theme
+      # 2. Add/remove color overrides for light mode contrast fix
       local tmp_config="${kitty_config}.tmp"
-      sed "s|^include.*/Catppuccin-[^/]*\.conf|include ${theme_file}|" "$kitty_config" >"$tmp_config"
+
+      # Remove any existing theme-toggle color overrides (marked with comments)
+      grep -v "^# theme-toggle:" "$kitty_config" |
+        grep -v "^color7 " |
+        grep -v "^color15 " |
+        sed "s|^include.*/Catppuccin-[^/]*\.conf|include ${theme_file}|" >"$tmp_config"
+
+      # Add color overrides for light mode (new terminals need these in config)
+      if [[ $theme == "light" ]]; then
+        {
+          echo "# theme-toggle: light mode color overrides"
+          echo "color7 #5c5f77"
+          echo "color15 #6c6f85"
+        } >>"$tmp_config"
+      fi
+
       mv "$tmp_config" "$kitty_config"
     fi
   fi
@@ -168,30 +193,81 @@ update_k9s() {
 # Update lazygit theme
 update_lazygit() {
   local theme="$1"
-  local lazygit_flavor
+  local lazygit_config="${XDG_CONFIG_HOME:-$HOME/.config}/lazygit/config.yml"
+  local config_dir
+  config_dir=$(dirname "$lazygit_config")
+  mkdir -p "$config_dir"
+
+  # Remove existing file (may be read-only from HM)
+  rm -f "$lazygit_config"
+
   if [[ $theme == "light" ]]; then
-    lazygit_flavor="latte"
+    # Custom Catppuccin Latte theme with proper contrast
+    # Using darker text colors that are visible on light backgrounds
+    cat >"$lazygit_config" <<'EOF'
+gui:
+  lightTheme: true
+  nerdFontsVersion: "3"
+  theme:
+    activeBorderColor:
+      - '#1e66f5'
+      - bold
+    inactiveBorderColor:
+      - '#8c8fa1'
+    optionsTextColor:
+      - '#1e66f5'
+    selectedLineBgColor:
+      - '#ccd0da'
+    cherryPickedCommitBgColor:
+      - '#bcc0cc'
+    cherryPickedCommitFgColor:
+      - '#1e66f5'
+    unstagedChangesColor:
+      - '#d20f39'
+    defaultFgColor:
+      - '#4c4f69'
+    searchingActiveBorderColor:
+      - '#df8e1d'
+  authorColors:
+    '*': '#5c5f77'
+  branchColors:
+    '*': '#5c5f77'
+EOF
   else
-    lazygit_flavor="mocha"
+    # Find the catppuccin-lazygit package in nix store for mocha
+    local theme_dir
+    theme_dir=$(find /nix/store -maxdepth 1 -name "*catppuccin-lazygit-0" -type d 2>/dev/null | head -1)
+    if [[ -n $theme_dir && -f ${theme_dir}/mocha/blue.yml ]]; then
+      cp "${theme_dir}/mocha/blue.yml" "$lazygit_config"
+    fi
   fi
 
-  # Find the catppuccin-lazygit package in nix store
-  local theme_dir
-  theme_dir=$(find /nix/store -maxdepth 1 -name "*catppuccin-lazygit-0" -type d 2>/dev/null | head -1)
+  chmod 644 "$lazygit_config"
+}
 
-  if [[ -n $theme_dir && -d ${theme_dir}/${lazygit_flavor} ]]; then
-    local lazygit_config="${XDG_CONFIG_HOME:-$HOME/.config}/lazygit/config.yml"
-    local config_dir
-    config_dir=$(dirname "$lazygit_config")
-    mkdir -p "$config_dir"
+# Update btop theme
+update_btop() {
+  local theme="$1"
+  local btop_theme
+  if [[ $theme == "light" ]]; then
+    btop_theme="catppuccin_latte"
+  else
+    btop_theme="catppuccin_mocha"
+  fi
 
-    # Use blue accent by default (can be customized)
-    local theme_file="${theme_dir}/${lazygit_flavor}/blue.yml"
-    if [[ -f $theme_file ]]; then
-      # Atomically copy theme file
-      local tmp_config="${lazygit_config}.tmp"
-      cp "$theme_file" "$tmp_config"
-      mv "$tmp_config" "$lazygit_config"
+  local btop_config="${XDG_CONFIG_HOME:-$HOME/.config}/btop/btop.conf"
+
+  if [[ -f $btop_config ]]; then
+    # Update color_theme setting in btop.conf
+    # Remove read-only attribute if needed
+    if [[ ! -w $btop_config ]]; then
+      rm -f "$btop_config"
+      # Recreate with just the theme setting (btop will add defaults on next run)
+      echo "color_theme = \"${btop_theme}.theme\"" >"$btop_config"
+      chmod 644 "$btop_config"
+    else
+      # File is writable, update in place
+      sed -i "s/^color_theme = .*/color_theme = \"${btop_theme}.theme\"/" "$btop_config"
     fi
   fi
 }
@@ -269,8 +345,8 @@ update_waybar() {
   # Copy the appropriate colors file (path set by Nix wrapper)
   if [[ -n ${WAYBAR_COLORS_DIR:-} && -f "${WAYBAR_COLORS_DIR}/${colors_file}" ]]; then
     cp "${WAYBAR_COLORS_DIR}/${colors_file}" "${WAYBAR_COLORS_DIR}/colors.css"
-    # Signal waybar to reload its styles
-    pkill -SIGUSR2 waybar 2>/dev/null || true
+    # Restart waybar to apply new colors (SIGUSR2 signal can cause hangs)
+    systemctl restart --user waybar.service 2>/dev/null || true
   fi
 }
 
@@ -326,6 +402,29 @@ update_process_compose() {
   # Copy the appropriate theme to theme.yaml (symlinked by Home Manager)
   if [[ -f $theme_file ]]; then
     cp "$theme_file" "${pc_dir}/theme.yaml"
+  fi
+}
+
+# Update wleave logout menu theme
+update_wleave() {
+  local theme="$1"
+  local wleave_dir="${XDG_CONFIG_HOME:-$HOME/.config}/wleave"
+  local style_file target_file
+
+  if [[ $theme == "light" ]]; then
+    style_file="${wleave_dir}/style-latte.css"
+  else
+    style_file="${wleave_dir}/style-mocha.css"
+  fi
+
+  target_file="${wleave_dir}/style.css"
+
+  # Copy the appropriate theme to style.css
+  # Remove existing file first (may be read-only from previous cp)
+  if [[ -f $style_file ]]; then
+    rm -f "$target_file"
+    cp "$style_file" "$target_file"
+    chmod 644 "$target_file"
   fi
 }
 
@@ -435,6 +534,7 @@ toggle_theme() {
   update_starship "$new_theme"
   update_k9s "$new_theme"
   update_lazygit "$new_theme"
+  update_btop "$new_theme"
   update_tmux "$new_theme"
   update_kvantum "$new_theme"
   update_waybar "$new_theme"
@@ -442,6 +542,7 @@ toggle_theme() {
   update_process_compose "$new_theme"
   update_vicinae "$new_theme"
   update_kde_colorscheme "$new_theme"
+  update_wleave "$new_theme"
   signal_apps
 
   # Notify user
@@ -467,6 +568,7 @@ restore_theme() {
   update_starship "$current"
   update_k9s "$current"
   update_lazygit "$current"
+  update_btop "$current"
   update_tmux "$current"
   update_kvantum "$current"
   update_waybar "$current"
@@ -474,6 +576,7 @@ restore_theme() {
   update_process_compose "$current"
   update_vicinae "$current"
   update_kde_colorscheme "$current"
+  update_wleave "$current"
   signal_apps
 }
 
