@@ -129,18 +129,12 @@ in {
 
     brave = {
       enable = true;
-      nativeMessagingHosts = [
-        pkgs.kdePackages.plasma-browser-integration
-      ];
       # NOTE: Command-line flags are applied via overlay in lib/overlays.nix
       # Also set via BRAVE_USER_FLAGS env var in Hyprland as a fallback
     };
 
     firefox = {
       enable = true;
-      nativeMessagingHosts = [
-        pkgs.kdePackages.plasma-browser-integration
-      ];
       # Don't manage profiles.ini - let Firefox handle it
       # Settings are injected via home.file above
     };

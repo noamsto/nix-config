@@ -77,6 +77,13 @@ in {
     seshUtils.claude-tmux-indicator
     seshUtils.claude-session-status
     seshUtils.claude-priority-window
+
+    # Session sidebar
+    seshUtils.tmux-sidebar
+    seshUtils.tmux-sidebar-tui
+
+    # Pane border styling
+    seshUtils.tmux-set-pane-border
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -217,6 +224,9 @@ in {
       bind -n M-H previous-window
       bind -n M-L next-window
 
+      # Session sidebar toggle
+      bind -n M-b run-shell "tmux-sidebar"
+
       # Session picker with Claude priority window
       # - Shows session name + priority window (Claude window if exists, else active)
       # - Selecting a session navigates directly to the priority window
@@ -338,6 +348,10 @@ in {
       # WORKAROUND: tmux-fingers colors don't work on initial server start
       # Reload entire config on first client attach to ensure styles are applied
       set-hook -g client-attached[99] 'source-file ~/.config/tmux/tmux.conf'
+
+      # Set pane-border-format with expanded @thm_* color values
+      # Must run after catppuccin theme loads (which sets @thm_* variables)
+      run-shell "tmux-set-pane-border"
     '';
   };
 }

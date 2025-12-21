@@ -130,6 +130,247 @@
       # Reload theme colors based on state file
       __reload_theme
     '';
+
+    # Git worktree + tmux session manager
+    "fish/functions/wt.fish".text = ''
+      function wt --description 'Git worktree + tmux session manager'
+          set -l subcommand $argv[1]
+
+          switch "$subcommand"
+              case new
+                  __wt_new $argv[2..-1]
+              case list ls
+                  __wt_list
+              case remove rm
+                  __wt_remove $argv[2..-1]
+              case goto go
+                  __wt_goto $argv[2..-1]
+              case help -h --help ""
+                  __wt_help
+              case "*"
+                  echo "Unknown command: $subcommand"
+                  __wt_help
+                  return 1
+          end
+      end
+
+      function __wt_help
+          echo "Git Worktree + Tmux Session Manager"
+          echo ""
+          echo "Usage:"
+          echo "  wt new <branch>     Create worktree + tmux session"
+          echo "  wt list             List all worktrees"
+          echo "  wt remove <branch>  Remove worktree + kill session"
+          echo "  wt goto <branch>    Switch to worktree session"
+          echo "  wt help             Show this help"
+          echo ""
+          echo "Session names follow format: repo-name/branch-name"
+          echo "Worktrees are created in: .worktrees/<branch-name>"
+      end
+
+      function __wt_new
+          set -l branch $argv[1]
+
+          if test -z "$branch"
+              echo "Error: Branch name required"
+              echo "Usage: wt new <branch-name>"
+              return 1
+          end
+
+          # Check if we're in a git repository
+          if not git rev-parse --git-dir >/dev/null 2>&1
+              echo "Error: Not in a git repository"
+              return 1
+          end
+
+          # Get repository root and name
+          set -l repo_root (git rev-parse --show-toplevel)
+          set -l repo_name (basename $repo_root)
+          set -l worktree_path "$repo_root/.worktrees/$branch"
+
+          # Check if worktree already exists
+          if test -d "$worktree_path"
+              echo "Error: Worktree already exists at $worktree_path"
+              return 1
+          end
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🌿 Creating git worktree + tmux session"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+
+          # Create worktree
+          echo "Creating worktree..."
+          if not git worktree add -b "$branch" "$worktree_path"
+              echo ""
+              echo "❌ Failed to create worktree"
+              return 1
+          end
+
+          echo "✓ Worktree created: $worktree_path"
+          echo ""
+
+          # Call the session hook to create tmux session
+          set -l session_name "$repo_name/$branch"
+          echo "Creating tmux session: $session_name"
+
+          if test -n "$TMUX"
+              # Inside tmux - create detached session
+              if tmux new-session -d -s "$session_name" -c "$worktree_path" 2>/dev/null
+                  echo "✓ Session created successfully"
+                  echo ""
+                  echo "Switching to session..."
+                  tmux switch-client -t "$session_name"
+              else
+                  echo "⚠ Session '$session_name' already exists"
+                  echo "Switching to it..."
+                  tmux switch-client -t "$session_name"
+              end
+          else
+              # Outside tmux - create new session using sesh
+              echo "✓ Session created successfully"
+              echo ""
+              echo "Connecting to session..."
+              sesh connect "$session_name" --root "$worktree_path"
+          end
+      end
+
+      function __wt_list
+          if not git rev-parse --git-dir >/dev/null 2>&1
+              echo "Error: Not in a git repository"
+              return 1
+          end
+
+          git worktree list
+      end
+
+      function __wt_remove
+          set -l branch $argv[1]
+
+          if test -z "$branch"
+              echo "Error: Branch name required"
+              echo "Usage: wt remove <branch-name>"
+              return 1
+          end
+
+          if not git rev-parse --git-dir >/dev/null 2>&1
+              echo "Error: Not in a git repository"
+              return 1
+          end
+
+          set -l repo_root (git rev-parse --show-toplevel)
+          set -l repo_name (basename $repo_root)
+          set -l worktree_path "$repo_root/.worktrees/$branch"
+          set -l session_name "$repo_name/$branch"
+
+          # Check if worktree exists
+          if not test -d "$worktree_path"
+              echo "Error: Worktree not found at $worktree_path"
+              return 1
+          end
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🗑️  Removing worktree + tmux session"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+
+          # Kill tmux session if it exists
+          if tmux has-session -t "$session_name" 2>/dev/null
+              echo "Killing tmux session: $session_name"
+              tmux kill-session -t "$session_name"
+              echo "✓ Session killed"
+          else
+              echo "No tmux session found: $session_name"
+          end
+
+          echo ""
+          echo "Removing worktree: $worktree_path"
+          if git worktree remove "$worktree_path"
+              echo "✓ Worktree removed"
+              echo ""
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "✓ Complete"
+          else
+              echo "❌ Failed to remove worktree"
+              return 1
+          end
+      end
+
+      function __wt_goto
+          set -l branch $argv[1]
+
+          if test -z "$branch"
+              echo "Error: Branch name required"
+              echo "Usage: wt goto <branch-name>"
+              return 1
+          end
+
+          if not git rev-parse --git-dir >/dev/null 2>&1
+              echo "Error: Not in a git repository"
+              return 1
+          end
+
+          set -l repo_root (git rev-parse --show-toplevel)
+          set -l repo_name (basename $repo_root)
+          set -l worktree_path "$repo_root/.worktrees/$branch"
+          set -l session_name "$repo_name/$branch"
+
+          # Check if worktree exists
+          if not test -d "$worktree_path"
+              echo "Error: Worktree not found at $worktree_path"
+              echo ""
+              echo "Available worktrees:"
+              __wt_list
+              return 1
+          end
+
+          # Check if session exists, create if not
+          if not tmux has-session -t "$session_name" 2>/dev/null
+              echo "Session doesn't exist, creating..."
+              if test -n "$TMUX"
+                  tmux new-session -d -s "$session_name" -c "$worktree_path"
+              else
+                  sesh connect "$session_name" --root "$worktree_path"
+                  return 0
+              end
+          end
+
+          # Switch to session
+          if test -n "$TMUX"
+              tmux switch-client -t "$session_name"
+          else
+              sesh connect "$session_name"
+          end
+      end
+    '';
+
+    # Fish completions for wt command
+    "fish/completions/wt.fish".text = ''
+      # Completions for wt (worktree manager)
+
+      # Complete subcommands
+      complete -c wt -f -n '__fish_use_subcommand' -a 'new' -d 'Create worktree + session'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'list' -d 'List worktrees'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'ls' -d 'List worktrees (alias)'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'remove' -d 'Remove worktree + session'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'rm' -d 'Remove worktree + session (alias)'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'goto' -d 'Switch to worktree session'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'go' -d 'Switch to worktree session (alias)'
+      complete -c wt -f -n '__fish_use_subcommand' -a 'help' -d 'Show help'
+
+      # Complete branch names for remove and goto
+      function __wt_list_branches
+          if git rev-parse --git-dir >/dev/null 2>&1
+              set -l repo_root (git rev-parse --show-toplevel)
+              set -l worktrees_dir "$repo_root/.worktrees"
+              if test -d "$worktrees_dir"
+                  ls -1 "$worktrees_dir" 2>/dev/null
+              end
+          end
+      end
+
+      complete -c wt -f -n '__fish_seen_subcommand_from remove rm goto go' -a '(__wt_list_branches)'
+    '';
   };
 
   programs = {

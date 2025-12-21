@@ -12,4 +12,11 @@
   claude-tmux-indicator = pkgs.writeShellScriptBin "claude-tmux-indicator" (builtins.readFile ./scripts/claude-tmux-indicator.sh);
   claude-session-status = pkgs.writeShellScriptBin "claude-session-status" (builtins.readFile ./scripts/claude-session-status.sh);
   claude-priority-window = pkgs.writeShellScriptBin "claude-priority-window" (builtins.readFile ./scripts/claude-priority-window.sh);
+
+  # Session sidebar
+  tmux-sidebar = pkgs.writeShellScriptBin "tmux-sidebar" (builtins.readFile ./scripts/tmux-sidebar.sh);
+  tmux-sidebar-tui = pkgs.writeShellScriptBin "tmux-sidebar-tui" (builtins.readFile ./scripts/tmux-sidebar-tui.sh);
+
+  # Pane border styling
+  tmux-set-pane-border = pkgs.writeShellScriptBin "tmux-set-pane-border" (builtins.readFile ./scripts/tmux-set-pane-border.sh);
 }
