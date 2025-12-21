@@ -26,6 +26,7 @@ in {
       enable = true;
       pkiBundle = "/etc/secureboot";
       autoGenerateKeys.enable = true;
+      autoEnrollKeys.enable = true;
     };
   };
 
