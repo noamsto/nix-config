@@ -25,7 +25,8 @@ in {
       "$HOME/.config/btop/btop.conf" \
       "$HOME/.config/starship.toml" \
       "$HOME/.config/k9s/config.yaml" \
-      "$HOME/.config/lazygit/config.yml"
+      "$HOME/.config/lazygit/config.yml" \
+      "$HOME/.config/foot/foot.ini"
     do
       if [ -f "$f" ] && [ ! -L "$f" ]; then
         $VERBOSE_ECHO "Removing theme-managed file: $f"

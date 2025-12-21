@@ -34,16 +34,13 @@
   ];
 
   # Override waybar config files with symlinks for easier development iteration
+  # NOTE: colors.css is NOT symlinked - it's generated directly by theme-toggle
   xdg.configFile = {
     "waybar/config" = lib.mkForce {
       source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/waybar-config.json";
     };
     "waybar/style.css" = lib.mkForce {
       source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/style.css";
-    };
-    # colors.css is swapped by theme-toggle for dark/light theme switching
-    "waybar/colors.css" = lib.mkForce {
-      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/colors.css";
     };
   };
 

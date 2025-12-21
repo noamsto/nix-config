@@ -324,7 +324,7 @@
       "format": "{}",
       "return-type": "json",
       "exec": "theme-toggle query",
-      "on-click": "theme-toggle",
+      "on-click": "theme-toggle toggle",
       "interval": "once",
       "signal": 8,
       "tooltip": true

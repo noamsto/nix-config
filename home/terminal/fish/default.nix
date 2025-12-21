@@ -86,34 +86,52 @@
     # __reload_theme function for dynamic theme switching
     "fish/functions/__reload_theme.fish".text = ''
       function __reload_theme
-          # Reload theme based on current theme-mode state file
-          set -l theme_state_file "$HOME/.local/state/theme-mode"
+          # Accept theme as argument, or read from state file
+          set -l current_theme $argv[1]
 
-          if test -f $theme_state_file
-              set -l current_theme (cat $theme_state_file)
-              set -l theme_file "$HOME/.config/fish/themes/Catppuccin Mocha.theme"
+          if test -z "$current_theme"
+              # No argument - read from state file
+              set -l theme_state_file "$HOME/.local/state/theme-state.json"
+              set -l legacy_state_file "$HOME/.local/state/theme-mode"
 
-              if test "$current_theme" = "light"
-                  set theme_file "$HOME/.config/fish/themes/Catppuccin Latte.theme"
+              set current_theme "dark"
+              if test -f $theme_state_file
+                  set current_theme (command jq -r '.theme // "dark"' $theme_state_file 2>/dev/null)
+              else if test -f $legacy_state_file
+                  set current_theme (cat $legacy_state_file)
               end
+          end
 
-              # Load colors from theme file
-              if test -f "$theme_file"
-                  while read -l line
-                      # Skip comments and empty lines
-                      if string match -qr '^\s*#|^\s*$' -- $line
-                          continue
-                      end
-                      # Extract variable name (first word)
-                      set -l var_name (string split ' ' -- $line)[1]
-                      # Erase global variable first (it shadows universal)
-                      set -eg $var_name 2>/dev/null
-                      # Set universal variable (propagates to all fish instances)
-                      if string match -qr '^fish_(color|pager)' -- $line
-                          eval "set -U $line" 2>/dev/null
-                      end
-                  end < "$theme_file"
-              end
+          # Select theme file
+          set -l theme_file "$HOME/.config/fish/themes/Catppuccin Mocha.theme"
+          if test "$current_theme" = "light"
+              set theme_file "$HOME/.config/fish/themes/Catppuccin Latte.theme"
+          end
+
+          # Load colors from theme file
+          if test -f "$theme_file"
+              while read -l line
+                  # Skip comments and empty lines
+                  if string match -qr '^\s*#|^\s*$' -- $line
+                      continue
+                  end
+                  # Extract variable name (first word)
+                  set -l var_name (string split ' ' -- $line)[1]
+                  # Erase global variable first (it shadows universal)
+                  set -eg $var_name 2>/dev/null
+                  # Set universal variable (propagates to all fish instances)
+                  if string match -qr '^fish_(color|pager)' -- $line
+                      eval "set -U $line" 2>/dev/null
+                  end
+              end < "$theme_file"
+          end
+
+          # Update FZF colors for this session
+          # The universal variable fzf_theme_colors is set by theme-toggle
+          if set -q fzf_theme_colors
+              # Get base FZF_DEFAULT_OPTS without any --color option we added
+              set -l base_opts (string replace -r -- '--color=[^ ]+$' "" $FZF_DEFAULT_OPTS; or true)
+              set -gx FZF_DEFAULT_OPTS $base_opts $fzf_theme_colors
           end
       end
     '';
@@ -126,6 +144,16 @@
 
       # Only run in interactive shells
       status is-interactive; or exit
+
+      # Watch for fzf_theme_colors changes (set by theme-toggle)
+      # This updates FZF_DEFAULT_OPTS automatically in all running fish sessions
+      function __on_fzf_theme_change --on-variable fzf_theme_colors
+          if set -q fzf_theme_colors
+              # Get base opts without our theme colors
+              set -l base_opts (string replace -r -- '--color=[^ ]+$' "" $FZF_DEFAULT_OPTS; or true)
+              set -gx FZF_DEFAULT_OPTS $base_opts $fzf_theme_colors
+          end
+      end
 
       # Reload theme colors based on state file
       __reload_theme
@@ -544,6 +572,12 @@
         set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'         # Scroll preview up
         set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down' # Page down in preview
         set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'   # Page up in preview
+
+        # Apply fzf theme colors from universal variable (set by theme-toggle)
+        # This overrides catppuccin's build-time colors for runtime theme switching
+        if set -q fzf_theme_colors
+          set -gx FZF_DEFAULT_OPTS $FZF_DEFAULT_OPTS $fzf_theme_colors
+        end
 
         # Function to clean old or duplicate history
         function history-clean

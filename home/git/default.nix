@@ -7,6 +7,11 @@ in {
   imports = [
     ./lazygit.nix
   ];
+
+  # NOTE: ~/.config/git/theme-override is managed by theme-toggle script at runtime
+  # It's NOT managed by Home Manager since we need to write to it dynamically
+  # The include.path directive in git settings below references this mutable file
+
   xdg.configFile."git/allowed_signers".text = ''
     noam@factify.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd4OIEupUNYzTppiP4zy9XLpBz/zzCYmWklC0YXrHPh
     noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC
@@ -27,6 +32,11 @@ in {
       };
       init = {
         defaultBranch = "main";
+      };
+      # Include mutable theme override file AFTER catppuccin sets defaults
+      # This allows theme-toggle to override delta theme at runtime
+      include = {
+        path = "~/.config/git/theme-override";
       };
       gpg.ssh.allowedSignersFile = "~/.config/git/allowed_signers";
       merge = {
