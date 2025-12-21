@@ -15,6 +15,34 @@ SESSIONS_DIR="$STATE_DIR/sessions"
 # Ensure directories exist
 mkdir -p "$PANES_DIR" "$SESSIONS_DIR"
 
+# Function to clean up stale pane entries (panes that no longer exist in tmux)
+cleanup_stale_panes() {
+  [[ -d $PANES_DIR ]] || return 0
+  command -v tmux &>/dev/null || return 0
+
+  # Get list of all active tmux pane IDs
+  local active_panes
+  active_panes=$(tmux list-panes -a -F '#{pane_id}' 2>/dev/null | sed 's/^%//' || true)
+
+  # Check each pane file
+  for pf in "$PANES_DIR"/*; do
+    [[ -f $pf ]] || continue
+    local pane_file
+    pane_file=$(basename "$pf")
+
+    # If pane doesn't exist in tmux, remove the file
+    if ! echo "$active_panes" | grep -q "^${pane_file}$"; then
+      local pane_session
+      pane_session=$(grep "^session=" "$pf" 2>/dev/null | cut -d= -f2)
+      rm -f "$pf"
+      # Update session aggregate if we know the session
+      if [[ -n $pane_session ]]; then
+        update_session_aggregate "$pane_session"
+      fi
+    fi
+  done
+}
+
 # Function to update session aggregate state
 update_session_aggregate() {
   local sess="$1"
@@ -88,12 +116,22 @@ done
 
 # Validate state
 case "$state" in
-processing | waiting | done | idle | clear) ;;
+processing | waiting | done | idle | clear | cleanup) ;;
 *)
-  echo "Error: Invalid state '$state'. Use: processing, waiting, done, idle, clear" >&2
+  echo "Error: Invalid state '$state'. Use: processing, waiting, done, idle, clear, cleanup" >&2
   exit 1
   ;;
 esac
+
+# Handle cleanup command (removes stale pane entries)
+if [[ $state == "cleanup" ]]; then
+  cleanup_stale_panes
+  # Force immediate tmux refresh
+  if [[ -n ${TMUX:-} ]]; then
+    tmux refresh-client -S 2>/dev/null || true
+  fi
+  exit 0
+fi
 
 # If no pane_id, try to detect from environment
 if [[ -z $pane_id ]]; then

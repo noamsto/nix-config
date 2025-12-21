@@ -25,6 +25,17 @@
       };
       # Hooks for tmux status integration
       hooks = {
+        # Session started -> cleanup stale entries from dead panes
+        SessionStart = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+              }
+            ];
+          }
+        ];
         # User submitted prompt -> processing
         UserPromptSubmit = [
           {
@@ -38,6 +49,17 @@
         ];
         # Tool use -> still processing
         PreToolUse = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        # Tool completed -> back to processing (covers permission granted)
+        PostToolUse = [
           {
             hooks = [
               {
