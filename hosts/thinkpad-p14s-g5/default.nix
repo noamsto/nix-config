@@ -1,4 +1,9 @@
-{lib, ...}: let
+{
+  lib,
+  pkgs,
+  inputs,
+  ...
+}: let
   # Import shared host configuration
   hostConfig = (import ../../lib/host-configs.nix).thinkpad-p14s-g5;
 in {
@@ -10,6 +15,23 @@ in {
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
+    inputs.lanzaboote.nixosModules.lanzaboote
+  ];
+
+  # Secure Boot with Lanzaboote
+  boot = {
+    initrd.systemd.enable = true; # Required for TPM unlock
+    loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote replaces systemd-boot
+    lanzaboote = {
+      enable = true;
+      pkiBundle = "/etc/secureboot";
+      autoGenerateKeys.enable = true;
+    };
+  };
+
+  environment.systemPackages = with pkgs; [
+    sbctl # Secure boot key management
+    tpm2-tools # TPM utilities
   ];
 
   # Import shared configuration

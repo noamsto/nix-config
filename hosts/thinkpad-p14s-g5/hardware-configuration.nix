@@ -21,6 +21,7 @@
           # Use https://nixos.wiki/wiki/Full_Disk_Encryption
           device = "/dev/disk/by-uuid/8d260438-dcbf-414e-9f49-03b9c86cc8b9";
           preLVM = true;
+          crypttabExtraOpts = ["tpm2-device=auto"]; # TPM auto-unlock (enroll key first)
         };
       };
     };
