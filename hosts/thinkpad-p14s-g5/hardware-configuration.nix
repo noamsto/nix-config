@@ -34,7 +34,6 @@
       # Spurious AC-plug wakes are handled by suppress-ac-wake systemd service
     ];
     kernel.sysctl = {
-      "kernel.sysrq" = 502;
       "vm.overcommit_memory" = 1;
     };
     kernelPackages = pkgs.linuxPackages;

@@ -12,10 +12,6 @@ inputs: [
       inherit (final.stdenv.hostPlatform) system;
       config.allowUnfree = true;
     };
-    nur = import inputs.nur {
-      nurpkgs = final;
-      pkgs = final;
-    };
   })
 
   (final: _: let

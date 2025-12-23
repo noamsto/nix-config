@@ -20,7 +20,6 @@
   boot.kernelParams = [
     "systemd.gpt_auto=0" # Solve annoying dmesg warning
   ];
-  boot.kernel.sysctl."kernel.sysrq" = 502;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.initrd.luks.devices = {
