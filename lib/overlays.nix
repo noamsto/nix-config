@@ -31,7 +31,7 @@ inputs: [
 
   # Add claude-code from flake
   (final: _: {
-    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush;
+    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush happy-coder;
   })
 
   # Add mcp-servers-nix overlay
