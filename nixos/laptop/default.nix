@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./suspend-handling.nix
+  ];
+}
