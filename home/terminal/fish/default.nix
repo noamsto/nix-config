@@ -552,8 +552,9 @@
         # Vi mode (built-in)
         fish_vi_key_bindings
 
-        # Configure fzf.fish to use Ctrl+E for variables instead of Ctrl+V (conflicts with paste)
-        fzf_configure_bindings --variables=\ce
+        # Configure fzf.fish to use Alt+X for variables instead of Ctrl+V (conflicts with paste)
+        # Changed from Ctrl+E (conflicts with end-of-line) and Alt+V (conflicts with vi editor)
+        fzf_configure_bindings --variables=\ex
 
         # Fix C-P and C-N for history navigation (restore after FZF)
         bind \cp up-or-search

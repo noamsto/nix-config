@@ -13,6 +13,7 @@ This is a **NixOS Configuration Repository** using Nix flakes that manages both 
 ToonFormat provides 30-60% token savings compared to JSON. Use it for configuration summaries, package lists, file structures, etc.
 
 **Format example:**
+
 ```toon
 hosts[3]{name,type,profile,desktop}:
  thinkpad-p14s,laptop,personal,hyprland
@@ -21,6 +22,7 @@ hosts[3]{name,type,profile,desktop}:
 ```
 
 **When to use:**
+
 - Package lists, configuration summaries, file trees
 - Any tabular data or repeated structures
 - Data-heavy responses
@@ -34,6 +36,7 @@ Only use JSON when specifically required or when deeply nested structures are ne
 This repository includes a comprehensive `justfile` with convenient command wrappers. Use `just --list` to see all available commands.
 
 **Most common commands:**
+
 ```bash
 just --list           # Show all available commands
 just switch           # Apply NixOS configuration
@@ -100,6 +103,7 @@ just rpi-build-installer                  # Build minimal installer image
 ### Available Hosts
 
 **NixOS Systems:**
+
 - `thinkpad-p14s` - Main laptop (personal, Hyprland)
 - `thinkpad-p14s-g5` - Work laptop (work profile, Hyprland)
 - `naspi` - Raspberry Pi 4 with ZFS RAID1 on dual SSDs
@@ -108,6 +112,7 @@ just rpi-build-installer                  # Build minimal installer image
 - `rpi4-standard` - Standard RPi4 configuration using NixOS wiki approach
 
 **Standalone Home Manager (for development):**
+
 - `noams@thinkpad-p14s` - Auto-detected by nh (personal)
 - `noams@thinkpad-p14s-g5` - Auto-detected by nh (work)
 - `noams@naspi` - Raspberry Pi Home Manager
@@ -120,23 +125,27 @@ just rpi-build-installer                  # Build minimal installer image
 This repository uses **both** Home Manager as a NixOS module (production) AND standalone Home Manager (development):
 
 **Production/Full Rebuilds:**
+
 - Uses Home Manager as NixOS module (imported in each host's configuration)
 - Command: `nh os switch .` or `nh os switch -S` (with --show-trace)
 - Updates both system and user configurations together
 - Takes 2-3 minutes, includes full validation
 
 **Development/Fast Rebuilds:**
+
 - Uses standalone Home Manager configurations defined in `flake-modules/home-manager.nix`
 - Command: `nh home switch .` (auto-detects username@hostname)
 - Updates only user configuration (~30 seconds)
 - Perfect for testing dotfile changes, themes, applications
 
 **How it works:**
+
 - Standalone configs use `lib/host-configs.nix` to share the same options (profile, desktop.mode, etc.)
 - `nh home switch` auto-selects config based on `username@hostname` pattern
 - Both approaches use the same modules from `home/`, ensuring consistency
 
 **When to use each:**
+
 - Use `nh home switch .` for quick iteration on user configurations
 - Use `nh os switch .` for system changes or final validation before commits
 
@@ -156,6 +165,7 @@ When you run `nix develop`, you get:
 - Pre-commit hooks (alejandra, prettier, shellcheck)
 
 **Shell aliases** (when using fish):
+
 - `nix-agent` - Helper for agent-related operations
 - `nbuild` - Alias for `nom build`
 - `dev-stats` - Show project statistics (uses tokei and git)
@@ -163,6 +173,7 @@ When you run `nix develop`, you get:
 ### Binary Caches
 
 The flake is pre-configured with multiple binary caches for faster builds:
+
 - `cache.nixos.org` - Official NixOS cache
 - `hyprland.cachix.org` - Hyprland compositor
 - `walker.cachix.org` - Walker application launcher
@@ -193,6 +204,7 @@ flake.nix                          # Entry point - imports flake-modules
 ```
 
 **Key benefits:**
+
 - Each flake module is self-contained and focused
 - Outputs are defined close to their implementation
 - Easy to add new systems or outputs without modifying flake.nix
@@ -222,6 +234,7 @@ The repository provides **multiple NixOS configurations for Raspberry Pi**:
 ### NasPi Boot Troubleshooting
 
 If naspi fails to boot or shows these errors:
+
 - "Card did not respond to voltage select! : -110"
 - "Timeout waiting for cmd & data inhibit"
 - "mmc1 busy timeout"
@@ -230,6 +243,7 @@ If naspi fails to boot or shows these errors:
 **Root Cause**: SD card in slot interfering with USB/SSD boot
 
 **Solution**:
+
 1. Remove SD card from Raspberry Pi slot
 2. Update EEPROM boot order: `sudo rpi-eeprom-config --edit` → Set `BOOT_ORDER=0x4f6` (USB priority)
 3. Check boot verification: `sudo journalctl -u naspi-boot-verify.service`
@@ -241,10 +255,12 @@ See `hosts/naspi/README.md` for comprehensive troubleshooting, ZFS management, a
 The repository has specialized support for ThinkPad P14s laptops (Gen 4 and Gen 5):
 
 **Hardware Modules** (`nixos/hardware/`):
+
 - `thinkpad-common.nix` - Shared boot settings, kernel modules, AMD microcode
 - `thinkfan.nix` - Generation-aware fan control with custom options
 
 **Thinkfan Configuration:**
+
 ```nix
 # In hosts/<hostname>/default.nix
 hardware.thinkpad.thinkfan = {
@@ -254,6 +270,7 @@ hardware.thinkpad.thinkfan = {
 ```
 
 **Laptop Features** (`nixos/laptop/`):
+
 - `pam-lid-check.nix` - Skips fingerprint auth when lid is closed (clamshell mode)
 - `suspend-handling.nix` - Suppresses spurious AC wakes, clears phantom monitors
 
@@ -262,6 +279,7 @@ hardware.thinkpad.thinkfan = {
 The Gen 5 ThinkPad uses **Lanzaboote** for Secure Boot and **TPM2** for LUKS auto-unlock:
 
 **Current Configuration:**
+
 ```nix
 # Secure Boot with Lanzaboote (auto key generation/enrollment)
 boot.lanzaboote = {
@@ -276,6 +294,7 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 ```
 
 **Initial Setup (one-time):**
+
 1. First boot enrolls Secure Boot keys automatically
 2. After successful boot, enroll TPM for LUKS:
    ```bash
@@ -284,12 +303,14 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 3. Verify with: `sudo systemd-cryptenroll /dev/nvme0n1p2`
 
 **Troubleshooting:**
+
 - If TPM unlock fails, system falls back to password prompt
 - Check TPM status: `sudo tpm2_getcap properties-fixed`
 - Re-enroll after BIOS updates: `sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto /dev/nvme0n1p2`
 - Secure Boot status: `sbctl status`
 
 **Tools available:**
+
 - `sbctl` - Secure Boot key management
 - `tpm2-tools` - TPM utilities
 
@@ -298,6 +319,7 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 The repository uses a **modular architecture** with conditional imports based on configuration options:
 
 **Core Configuration Files:**
+
 - **`options.nix`** - Defines custom options that control what gets imported:
   - `desktop.mode`: "none" | "kde" | "hyprland"
   - `machine.type`: "server" | "desktop" | "laptop"
@@ -321,6 +343,7 @@ The repository uses a **modular architecture** with conditional imports based on
     ```
 
 **How Configuration Flows:**
+
 1. **NixOS systems** (`hosts/*/default.nix`) import host config and set options
 2. **Standalone HM configs** (`flake-modules/home-manager.nix`) pass host config as `osConfig`
 3. **Modules** check `osConfig` options to conditionally enable features
@@ -464,3 +487,4 @@ When adding new features, follow these patterns:
 - See `hosts/naspi/README.md` for comprehensive NasPi documentation
 - Use `just --list` to discover all available commands
 - always run shellcheck on sh scripts after edits
+
