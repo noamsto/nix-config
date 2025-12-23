@@ -36,19 +36,6 @@
     # Network file system support for Dolphin/file managers
     gvfs # Virtual filesystem with NFS/SMB support
   ];
-  work-packages = with pkgs; [
-    slack
-
-    stable.awscli2
-    stable.aws-sam-cli
-    ssm-session-manager-plugin
-
-    # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
-    crush
-    stable.postman # Uses stable for API testing reliability
-    ngrok
-    dbeaver-bin
-  ];
 in {
   home.packages =
     (with pkgs; [
@@ -143,6 +130,5 @@ in {
       # bat available system-wide
       # delta conflicts with diff-so-fancy - using diff-so-fancy via programs.git
     ])
-    ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
-    ++ lib.optionals (osConfig.profile == "work") work-packages;
+    ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages;
 }

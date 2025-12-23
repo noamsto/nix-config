@@ -20,6 +20,7 @@
     ]
     ++ lib.optionals (osConfig.profile == "work") [
       ./kubernetes
+      ./work
     ];
 
   home = {
