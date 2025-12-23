@@ -16,7 +16,7 @@
 # Requires app restart:
 # - Qt/Kvantum apps (Dolphin, etc.)
 # - KDE apps (KDE Connect) via kdeglobals
-# - yazi (picks up theme on next start)
+# - yazi (config updated, picks up theme on next start)
 
 set -euo pipefail
 
@@ -857,6 +857,45 @@ update_fzf() {
   hyprctl keyword env FZF_DEFAULT_OPTS_THEME,"--color=$fzf_colors" >/dev/null 2>&1 || true
 }
 
+# Update yazi file manager theme
+# Note: Requires yazi restart to take effect
+update_yazi() {
+  local theme="$1"
+  local yazi_flavor yazi_theme_file
+  log_debug "Updating yazi to $theme"
+
+  if [[ -z ${YAZI_THEMES_PATH:-} ]]; then
+    log_error "YAZI_THEMES_PATH not set"
+    record_failure "yazi"
+    return 1
+  fi
+
+  if [[ $theme == "light" ]]; then
+    yazi_flavor="latte"
+  else
+    yazi_flavor="mocha"
+  fi
+
+  yazi_theme_file="${YAZI_THEMES_PATH}/${yazi_flavor}/catppuccin-${yazi_flavor}-blue.toml"
+
+  if [[ ! -f $yazi_theme_file ]]; then
+    log_error "Yazi theme file not found: $yazi_theme_file"
+    record_failure "yazi"
+    return 1
+  fi
+
+  local yazi_config="${XDG_CONFIG_HOME}/yazi/theme.toml"
+  mkdir -p "$(dirname "$yazi_config")"
+
+  # Remove existing file (may be symlink from HM)
+  rm -f "$yazi_config"
+  cp "$yazi_theme_file" "$yazi_config" || {
+    record_failure "yazi"
+    return 1
+  }
+  chmod 644 "$yazi_config"
+}
+
 # Update Claude Code theme
 # Note: Only affects new sessions; running sessions won't update until restart
 update_claude_code() {
@@ -963,6 +1002,7 @@ apply_theme() {
   update_bat "$theme" || true
   update_delta "$theme" || true
   update_fzf "$theme" || true
+  update_yazi "$theme" || true
   update_tmux "$theme" || true
   update_kvantum "$theme" || true
   update_waybar "$theme" || true
@@ -1054,6 +1094,7 @@ sync_theme() {
     bat) update_bat "$current" ;;
     delta) update_delta "$current" ;;
     fzf) update_fzf "$current" ;;
+    yazi) update_yazi "$current" ;;
     tmux) update_tmux "$current" ;;
     kvantum) update_kvantum "$current" ;;
     waybar) update_waybar "$current" ;;

@@ -11,9 +11,18 @@
     sha256 = "sha256-gM0HplHhcpvtpmIVdlX/p59h0v+ihKEidS1imqPYlBg=";
   };
 
+  # Fetch catppuccin-yazi themes
+  catppuccin-yazi = pkgs.fetchFromGitHub {
+    owner = "catppuccin";
+    repo = "yazi";
+    rev = "043ffae14e7f7fcc136636d5f2c617b5bc2f5e31";
+    sha256 = "sha256-zkL46h1+U9ThD4xXkv1uuddrlQviEQD3wNZFRgv7M8Y=";
+  };
+
   # Theme source directories - injected into script as env vars
   kittyThemesPath = "${pkgs.kitty-themes}/share/kitty-themes/themes";
   lazygitThemesPath = "${catppuccin-lazygit}/themes";
+  yaziThemesPath = "${catppuccin-yazi}/themes";
   nixConfigDir = "${config.home.homeDirectory}/nix-config";
 
   # Source theme files (read-only templates)
@@ -45,6 +54,7 @@
       # Theme source paths (read-only)
       export KITTY_THEMES_PATH="${kittyThemesPath}"
       export LAZYGIT_THEMES_PATH="${lazygitThemesPath}"
+      export YAZI_THEMES_PATH="${yaziThemesPath}"
       export WAYBAR_THEMES_DIR="${waybarThemesDir}"
       export SWAYNC_THEMES_DIR="${swayNcThemesDir}"
       export PROCESS_COMPOSE_THEMES_DIR="${processComposeThemesDir}"

@@ -10,6 +10,7 @@
     rev = "f437574b600f1c6d932627050b15ff5153b58fa3";
     sha256 = "sha256-mEGZwScVPWGu+Vbtddc/sJ+mNdD2kKienGZVUcTSl+c=";
   };
+  catppuccin-yazi = pkgs.catppuccin-yazi;
 in {
   imports = [inputs.catppuccin.homeModules.catppuccin];
 
@@ -26,7 +27,8 @@ in {
       "$HOME/.config/starship.toml" \
       "$HOME/.config/k9s/config.yaml" \
       "$HOME/.config/lazygit/config.yml" \
-      "$HOME/.config/foot/foot.ini"
+      "$HOME/.config/foot/foot.ini" \
+      "$HOME/.config/yazi/theme.toml"
     do
       if [ -f "$f" ] && [ ! -L "$f" ]; then
         $VERBOSE_ECHO "Removing theme-managed file: $f"
@@ -62,7 +64,7 @@ in {
     kitty.enable = true;
     # k9s.enable = true;  # Managed by theme-toggle
     bat.enable = true;
-    yazi.enable = true;
+    # yazi.enable = true;  # Managed by theme-toggle
     # lazygit.enable = true;  # Managed by theme-toggle
     fzf.enable = true;
     zsh-syntax-highlighting.enable = true;

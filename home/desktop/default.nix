@@ -33,7 +33,7 @@
     # When true, this fakes your timezone to UTC and window size, causing immediate Cloudflare loops.
     "privacy.resistFingerprinting" = false;
 
-    # Standard tracking protection (Blocks trackers, but allows Cloudflare scripts)
+    # Standard tracking protection (Firefox's default, well-tested)
     "browser.contentblocking.category" = "standard";
 
     # Disable specific fingerprinting blocking that breaks verification
