@@ -40,6 +40,12 @@ in {
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
 
+  # Thinkfan configuration
+  hardware.thinkpad.thinkfan = {
+    enable = true;
+    generation = "gen5";
+  };
+
   # AMD Ryzen 7 PRO 8840HS: 16 cores, 54GB RAM
   nix.settings = {
     max-jobs = 4;

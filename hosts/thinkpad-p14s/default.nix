@@ -22,6 +22,12 @@ in {
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
 
+  # Thinkfan configuration (currently disabled for gen4)
+  hardware.thinkpad.thinkfan = {
+    enable = false;
+    generation = "gen4";
+  };
+
   # Host-specific overrides can go here
   # (aliases are now in nixos/core/aliases.nix)
 }
