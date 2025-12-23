@@ -10,7 +10,6 @@
     rev = "f437574b600f1c6d932627050b15ff5153b58fa3";
     sha256 = "sha256-mEGZwScVPWGu+Vbtddc/sJ+mNdD2kKienGZVUcTSl+c=";
   };
-  catppuccin-yazi = pkgs.catppuccin-yazi;
 in {
   imports = [inputs.catppuccin.homeModules.catppuccin];
 
@@ -51,33 +50,14 @@ in {
   catppuccin = {
     flavor = "mocha";
 
-    # === DEVELOPMENT & EDITORS ===
-    # neovim theming is handled by LazyVim catppuccin plugin
-
-    # === TERMINAL APPLICATIONS ===
-    # NOTE: Apps with dynamic theme switching via theme-toggle.sh are disabled here
-    # to avoid conflicts. theme-toggle manages their configs at runtime.
-    # Disabled: lazygit, k9s, fish (config files conflict with theme-toggle)
-    starship.enable = true;
-    btop.enable = true;
-    foot.enable = true;
-    kitty.enable = true;
-    # k9s.enable = true;  # Managed by theme-toggle
-    bat.enable = true;
-    # yazi.enable = true;  # Managed by theme-toggle
-    # lazygit.enable = true;  # Managed by theme-toggle
-    fzf.enable = true;
-    zsh-syntax-highlighting.enable = true;
-    # fish.enable = true;  # Managed by theme-toggle (fish_config theme choose conflicts)
-    # wleave doesn't have catppuccin theme support yet - using custom CSS in wleave.nix
-
-    # === DEVELOPMENT TOOLS ===
-    delta.enable = true;
-
     # === BROWSERS ===
     brave.enable = true;
 
     # === HYPRLAND ===
-    hyprlock.enable = true;
+    # hyprlock always stays dark (mocha) regardless of theme toggle
+    hyprlock = {
+      enable = true;
+      flavor = "mocha";
+    };
   };
 }

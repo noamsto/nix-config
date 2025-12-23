@@ -120,11 +120,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    mcp-hub = {
-      url = "github:ravitemer/mcp-hub";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # === SPECIALIZED HARDWARE ===
     # Monthly updates for hardware support
     # Pinned to d0e2a7a (Nov 1) - Last known working with cached kernel & auth
@@ -157,10 +152,6 @@
 
     # === UTILITIES ===
     # Stable versions - quarterly updates
-    nur = {
-      url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
@@ -174,11 +165,6 @@
 
     nix-search-tv = {
       url = "github:3timeslazy/nix-search-tv";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    opencode = {
-      url = "github:sst/opencode";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

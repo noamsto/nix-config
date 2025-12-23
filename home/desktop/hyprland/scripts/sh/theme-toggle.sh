@@ -745,7 +745,15 @@ update_bat() {
     bat_theme="Catppuccin Mocha"
   fi
 
-  # Update systemd user environment for new processes
+  # Set fish universal variable (persists across sessions, updates immediately)
+  # New shells will pick this up automatically
+  # Note: explicit `true` at end ensures exit 0 even if set -U returns non-zero
+  fish -c "set -U BAT_THEME '$bat_theme'; true" 2>/dev/null || true
+
+  # For existing fish sessions: update their BAT_THEME environment
+  fish -c "set -gx BAT_THEME '$bat_theme'; true" 2>/dev/null || true
+
+  # Also update systemd user environment for non-fish shells
   systemctl --user set-environment BAT_THEME="$bat_theme" 2>/dev/null || true
   # Also update Hyprland environment
   hyprctl keyword env BAT_THEME,"$bat_theme" >/dev/null 2>&1 || true

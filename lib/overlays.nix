@@ -16,8 +16,6 @@ inputs: [
       nurpkgs = final;
       pkgs = final;
     };
-
-    # opencode = inputs.opencode.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
   (final: _: let
@@ -33,7 +31,7 @@ inputs: [
 
   # Add claude-code from flake
   (final: _: {
-    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent;
+    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush;
   })
 
   # Add mcp-servers-nix overlay

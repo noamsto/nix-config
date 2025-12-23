@@ -44,7 +44,7 @@
     ssm-session-manager-plugin
 
     # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
-    nur.repos.charmbracelet.crush
+    crush
     stable.postman # Uses stable for API testing reliability
     ngrok
     dbeaver-bin
@@ -141,8 +141,6 @@ in {
       # === TEXT PROCESSING ===
       # bat available system-wide
       # delta conflicts with diff-so-fancy - using diff-so-fancy via programs.git
-
-      inputs.mcp-hub.packages."${pkgs.stdenv.hostPlatform.system}".default
     ])
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile == "work") work-packages;

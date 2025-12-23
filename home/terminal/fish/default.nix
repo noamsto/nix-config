@@ -133,6 +133,9 @@
               set -l base_opts (string replace -r -- '--color=[^ ]+$' "" $FZF_DEFAULT_OPTS; or true)
               set -gx FZF_DEFAULT_OPTS $base_opts $fzf_theme_colors
           end
+
+          # NOTE: BAT_THEME universal variable is automatically available
+          # No need to explicitly set it here - handled in interactiveShellInit
       end
     '';
 
@@ -154,6 +157,9 @@
               set -gx FZF_DEFAULT_OPTS $base_opts $fzf_theme_colors
           end
       end
+
+      # NOTE: No watcher needed for BAT_THEME - universal variables are automatically
+      # available across all fish sessions. We just export it in interactiveShellInit.
 
       # Reload theme colors based on state file
       __reload_theme
@@ -577,6 +583,11 @@
         # This overrides catppuccin's build-time colors for runtime theme switching
         if set -q fzf_theme_colors
           set -gx FZF_DEFAULT_OPTS $FZF_DEFAULT_OPTS $fzf_theme_colors
+        end
+
+        # Apply bat theme from universal variable (set by theme-toggle)
+        if set -q BAT_THEME
+          set -gx BAT_THEME $BAT_THEME
         end
 
         # Function to clean old or duplicate history
