@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./thinkpad-common.nix
+  ];
+}
