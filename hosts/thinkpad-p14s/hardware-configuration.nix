@@ -23,67 +23,6 @@
   boot.kernel.sysctl."kernel.sysrq" = 502;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  services.thinkfan = {
-    # Reference: https://github.com/m4tx/thinkpad-p14s-g4-linux/blob/master/thinkfan.conf
-    enable = false;
-    sensors = [
-      # GPU
-      {
-        name = "amdgpu";
-        type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
-      }
-
-      # CPU
-      {
-        name = "k10temp";
-        type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
-      }
-      {
-        name = "thinkpad";
-        type = "hwmon";
-        indices = [1 3 6 7];
-        query = "/sys/class/hwmon";
-        max_errors = 10;
-      }
-      # SSD
-      {
-        name = "nvme";
-        type = "hwmon";
-        indices = [1 2 3];
-        correction = [(-5) 0 0];
-        query = "/sys/class/hwmon";
-      }
-      #   # MB
-      {
-        name = "acpitz";
-        type = "hwmon";
-        indices = [1];
-        query = "/sys/class/hwmon";
-      }
-    ];
-    fans = [
-      {
-        type = "tpacpi";
-        query = "/proc/acpi/ibm/fan";
-      }
-    ];
-    levels = [
-      [0 0 55]
-      [1 53 58]
-      [2 56 61]
-      [3 59 64]
-      [4 62 67]
-      [5 65 70]
-      [6 69 74]
-      [7 72 77]
-      ["level full-speed" 75 32767]
-    ];
-  };
-
   boot.initrd.luks.devices = {
     root = {
       # Use https://nixos.wiki/wiki/Full_Disk_Encryption

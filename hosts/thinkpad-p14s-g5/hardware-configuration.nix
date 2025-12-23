@@ -45,67 +45,6 @@
     '';
   };
 
-  services.thinkfan = {
-    # Using name-based lookup for stable sensor paths across reboots
-    # Reference: https://github.com/kikislater/thinkpad-p14s-g5-linux/blob/master/thinkfan.conf
-    enable = true;
-    sensors = [
-      # GPU (amdgpu)
-      {
-        type = "hwmon";
-        query = "/sys/devices/pci0000:00/0000:00:08.1/0000:c4:00.0/hwmon";
-        indices = [1];
-      }
-
-      # CPU (k10temp)
-      {
-        type = "hwmon";
-        query = "/sys/devices/pci0000:00/0000:00:18.3/hwmon";
-        indices = [1];
-      }
-
-      # ThinkPad EC sensors (thinkpad_hwmon)
-      {
-        type = "hwmon";
-        query = "/sys/devices/platform/thinkpad_hwmon/hwmon";
-        indices = [1 3 6 7];
-      }
-
-      # SSD (nvme) - temperature readings with -5°C correction
-      {
-        type = "hwmon";
-        query = "/sys/devices/pci0000:00/0000:00:02.4/0000:03:00.0/nvme/nvme0";
-        indices = [1];
-        correction = [(-5)];
-      }
-
-      # Motherboard (acpitz)
-      {
-        type = "hwmon";
-        query = "/sys/devices/virtual/thermal/thermal_zone0";
-        indices = [1];
-      }
-    ];
-    fans = [
-      {
-        type = "tpacpi";
-        query = "/proc/acpi/ibm/fan";
-      }
-    ];
-    # Aggressive fan curve from reference repo (starts at 60°C, full-speed at 79°C)
-    levels = [
-      [0 0 60]
-      [1 58 63]
-      [2 61 66]
-      [3 64 69]
-      [4 67 72]
-      [5 70 75]
-      [6 73 78]
-      [7 76 81]
-      ["level full-speed" 79 32767]
-    ];
-  };
-
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/099f8145-315b-4129-9f2e-493675df0e5c";
     fsType = "ext4";
