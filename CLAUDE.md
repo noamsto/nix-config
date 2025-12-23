@@ -236,6 +236,63 @@ If naspi fails to boot or shows these errors:
 
 See `hosts/naspi/README.md` for comprehensive troubleshooting, ZFS management, and service configuration.
 
+### ThinkPad Configuration
+
+The repository has specialized support for ThinkPad P14s laptops (Gen 4 and Gen 5):
+
+**Hardware Modules** (`nixos/hardware/`):
+- `thinkpad-common.nix` - Shared boot settings, kernel modules, AMD microcode
+- `thinkfan.nix` - Generation-aware fan control with custom options
+
+**Thinkfan Configuration:**
+```nix
+# In hosts/<hostname>/default.nix
+hardware.thinkpad.thinkfan = {
+  enable = true;           # Enable thinkfan service
+  generation = "gen5";     # "gen4" or "gen5" - sets sensor paths and fan curves
+};
+```
+
+**Laptop Features** (`nixos/laptop/`):
+- `pam-lid-check.nix` - Skips fingerprint auth when lid is closed (clamshell mode)
+- `suspend-handling.nix` - Suppresses spurious AC wakes, clears phantom monitors
+
+### Secure Boot & TPM (thinkpad-p14s-g5)
+
+The Gen 5 ThinkPad uses **Lanzaboote** for Secure Boot and **TPM2** for LUKS auto-unlock:
+
+**Current Configuration:**
+```nix
+# Secure Boot with Lanzaboote (auto key generation/enrollment)
+boot.lanzaboote = {
+  enable = true;
+  pkiBundle = "/etc/secureboot";
+  autoGenerateKeys.enable = true;
+  autoEnrollKeys.enable = true;
+};
+
+# TPM2-based LUKS auto-unlock
+boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
+```
+
+**Initial Setup (one-time):**
+1. First boot enrolls Secure Boot keys automatically
+2. After successful boot, enroll TPM for LUKS:
+   ```bash
+   sudo systemd-cryptenroll --tpm2-device=auto /dev/nvme0n1p2
+   ```
+3. Verify with: `sudo systemd-cryptenroll /dev/nvme0n1p2`
+
+**Troubleshooting:**
+- If TPM unlock fails, system falls back to password prompt
+- Check TPM status: `sudo tpm2_getcap properties-fixed`
+- Re-enroll after BIOS updates: `sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto /dev/nvme0n1p2`
+- Secure Boot status: `sbctl status`
+
+**Tools available:**
+- `sbctl` - Secure Boot key management
+- `tpm2-tools` - TPM utilities
+
 ### Configuration System
 
 The repository uses a **modular architecture** with conditional imports based on configuration options:
@@ -276,14 +333,21 @@ The repository uses a **modular architecture** with conditional imports based on
 ├── justfile               # Command runner recipes
 ├── options.nix            # Custom configuration options
 ├── nixos/                 # System-level NixOS modules
-│   ├── core/              # Boot, locale, networking, users
+│   ├── core/              # Boot, locale, networking, users, pc.nix
 │   ├── desktop/           # Desktop environments (KDE, SDDM)
+│   ├── hardware/          # Hardware-specific modules
+│   │   ├── thinkpad-common.nix  # Shared ThinkPad settings
+│   │   └── thinkfan.nix         # Generation-aware fan control
+│   ├── laptop/            # Laptop-specific features
+│   │   ├── pam-lid-check.nix    # Skip fprintd when lid closed
+│   │   └── suspend-handling.nix # AC wake suppression, phantom monitors
 │   └── virtualization/    # Containers, VMs
 ├── home/                  # User-level Home Manager modules
 │   ├── desktop/           # Desktop apps, window managers, themes
 │   ├── terminal/          # Shell, terminal multiplexer
 │   ├── nvim/              # Neovim configuration
-│   └── git/               # Git and related tools
+│   ├── git/               # Git and related tools
+│   └── work/              # Work profile packages (slack, AWS, etc.)
 ├── hosts/                 # Per-host configurations
 │   └── naspi/             # NasPi configuration
 │       └── README.md      # Detailed NasPi documentation
@@ -300,8 +364,8 @@ The repository uses a **modular architecture** with conditional imports based on
    - Example: `home/noams.nix` only imports kubernetes module if `osConfig.profile == "work"`
 
 2. **Profile-based Packages**: Work vs personal profile determines which packages are installed
-   - `home/packages.nix` uses `lib.optionals (osConfig.profile == "work") work-packages`
-   - Work packages include: slack, AWS tools, chromium, postman
+   - Work packages defined in `home/work/default.nix`, imported when `osConfig.profile == "work"`
+   - Work packages include: slack, AWS tools, chromium, postman, dbeaver
    - Desktop packages only installed when `osConfig.desktop.mode != "none"`
 
 3. **Shared Configuration**: `lib/host-configs.nix` ensures NixOS and Home Manager stay in sync
