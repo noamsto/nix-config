@@ -135,21 +135,32 @@ update_gtk_theme() {
   log_debug "Updating GTK theme to $theme"
 
   if [[ $theme == "light" ]]; then
-    dconf write /org/gnome/desktop/interface/color-scheme "'prefer-light'" || {
-      record_failure "gtk"
-      return 1
-    }
-    dconf write /org/gnome/desktop/interface/gtk-theme "'Adwaita'"
-    dconf write /org/gnome/desktop/interface/icon-theme "'Papirus-Light'"
     gtk_theme_variant="Adwaita"
   else
-    dconf write /org/gnome/desktop/interface/color-scheme "'prefer-dark'" || {
+    gtk_theme_variant="Adwaita:dark"
+  fi
+
+  # Use dconf load to write all values atomically (single portal notification)
+  if [[ $theme == "light" ]]; then
+    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'; then
+[/]
+color-scheme='prefer-light'
+gtk-theme='Adwaita'
+icon-theme='Papirus-Light'
+EOF
       record_failure "gtk"
       return 1
-    }
-    dconf write /org/gnome/desktop/interface/gtk-theme "'Adwaita-dark'"
-    dconf write /org/gnome/desktop/interface/icon-theme "'Papirus-Dark'"
-    gtk_theme_variant="Adwaita:dark"
+    fi
+  else
+    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'; then
+[/]
+color-scheme='prefer-dark'
+gtk-theme='Adwaita-dark'
+icon-theme='Papirus-Dark'
+EOF
+      record_failure "gtk"
+      return 1
+    fi
   fi
 
   # Update environment for new processes (Hyprland + systemd user)
@@ -984,6 +995,9 @@ signal_apps() {
 
   # Swaync - restart for theme changes
   restart_service "swaync"
+
+  # GTK portal - restart to pick up new GTK theme settings (for Firefox file picker, etc.)
+  systemctl --user restart xdg-desktop-portal-gtk.service 2>/dev/null || true
 }
 
 # =============================================================================
