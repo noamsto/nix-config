@@ -19,10 +19,26 @@ SPINNER_COUNT=${#SPINNER_FRAMES[@]}
 ICON_WAITING="󰔟" # nf-md-timer-sand
 ICON_DONE=""    # nf-fa-check
 
-# Colors (tmux style)
-COLOR_PROCESSING="#[fg=colour116]" # Teal
-COLOR_WAITING="#[fg=colour216]"    # Peach
-COLOR_DONE="#[fg=colour151]"       # Green
+# Detect current theme from state file
+THEME_STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/theme-state.json"
+if [[ -f $THEME_STATE_FILE ]]; then
+  CURRENT_THEME=$(grep -o '"theme"[[:space:]]*:[[:space:]]*"[^"]*"' "$THEME_STATE_FILE" 2>/dev/null | cut -d'"' -f4)
+else
+  CURRENT_THEME="dark"
+fi
+
+# Colors (tmux style) - Catppuccin palette
+if [[ $CURRENT_THEME == "light" ]]; then
+  # Catppuccin Latte - darker colors for light background
+  COLOR_PROCESSING="#[fg=#179299]" # Teal
+  COLOR_WAITING="#[fg=#fe640b]"    # Peach
+  COLOR_DONE="#[fg=#40a02b]"       # Green
+else
+  # Catppuccin Mocha - lighter colors for dark background
+  COLOR_PROCESSING="#[fg=#94e2d5]" # Teal
+  COLOR_WAITING="#[fg=#fab387]"    # Peach
+  COLOR_DONE="#[fg=#a6e3a1]"       # Green
+fi
 COLOR_RESET="#[fg=default]"
 
 # Parse arguments

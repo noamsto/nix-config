@@ -20,9 +20,10 @@ if [[ -z $session ]]; then
   exit 0
 fi
 
-# Strip tmux target format prefixes/suffixes (e.g., "=session:" -> "session")
+# Strip tmux target format prefixes/suffixes (e.g., "=session:2." -> "session")
 session="${session#=}"
-session="${session%:}"
+# Remove window.pane suffix (e.g., ":2." or ":2" or ":win.0")
+session="${session%%:*}"
 
 # Check if session exists
 if ! tmux has-session -t "$session" 2>/dev/null; then

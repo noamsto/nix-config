@@ -168,6 +168,46 @@ EOF
   systemctl --user set-environment GTK_THEME="$gtk_theme_variant" 2>/dev/null || true
 }
 
+# Update GTK CSS with Catppuccin colors (libadwaita color injection)
+update_gtk_css() {
+  local theme="$1"
+  local css_file
+  log_debug "Updating GTK CSS to $theme"
+
+  if [[ -z ${GTK_THEMES_DIR:-} ]]; then
+    log_debug "GTK_THEMES_DIR not set, skipping CSS update"
+    return 0
+  fi
+
+  if [[ $theme == "light" ]]; then
+    css_file="${GTK_THEMES_DIR}/gtk-latte.css"
+  else
+    css_file="${GTK_THEMES_DIR}/gtk-mocha.css"
+  fi
+
+  if [[ ! -f $css_file ]]; then
+    log_error "GTK CSS file not found: $css_file"
+    record_failure "gtk-css"
+    return 1
+  fi
+
+  # Update GTK4 (libadwaita)
+  mkdir -p "${XDG_CONFIG_HOME}/gtk-4.0"
+  cp "$css_file" "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css" || {
+    record_failure "gtk-css"
+    return 1
+  }
+
+  # Update GTK3 (for apps using adw-gtk3 or respecting gtk.css)
+  mkdir -p "${XDG_CONFIG_HOME}/gtk-3.0"
+  cp "$css_file" "${XDG_CONFIG_HOME}/gtk-3.0/gtk.css" || {
+    record_failure "gtk-css"
+    return 1
+  }
+
+  log_debug "GTK CSS updated to $theme"
+}
+
 # Update Hyprland border colors
 update_hyprland_borders() {
   local theme="$1"
@@ -848,13 +888,13 @@ update_fzf() {
   local fzf_colors
   log_debug "Updating fzf to $theme"
 
-  # Catppuccin color schemes for fzf
+  # Catppuccin color schemes for fzf (official from github.com/catppuccin/fzf)
   if [[ $theme == "light" ]]; then
     # Catppuccin Latte
-    fzf_colors="bg+:#ccd0da,bg:#eff1f5,spinner:#dc8a78,hl:#d20f39,fg:#4c4f69,header:#d20f39,info:#8839ef,pointer:#dc8a78,marker:#dc8a78,fg+:#4c4f69,prompt:#8839ef,hl+:#d20f39"
+    fzf_colors="bg+:#ccd0da,bg:#eff1f5,spinner:#dc8a78,hl:#d20f39,fg:#4c4f69,header:#d20f39,info:#8839ef,pointer:#dc8a78,marker:#7287fd,fg+:#4c4f69,prompt:#8839ef,hl+:#d20f39,selected-bg:#bcc0cc,border:#9ca0b0,label:#4c4f69"
   else
     # Catppuccin Mocha
-    fzf_colors="bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8,fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc,marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8"
+    fzf_colors="bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8,fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc,marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8,selected-bg:#45475a,border:#6c7086,label:#cdd6f4"
   fi
 
   # Set fish universal variable (persists across sessions, updates immediately)
@@ -917,29 +957,38 @@ update_yazi() {
 
 # Update Claude Code theme
 # Note: Only affects new sessions; running sessions won't update until restart
+# In Claude Code: dark theme = no "theme" key, light theme = "theme": "light"
 update_claude_code() {
   local theme="$1"
-  local settings_file="${HOME}/.claude/settings.json"
+  local config_file="${HOME}/.claude.json"
   log_debug "Updating Claude Code to $theme"
 
-  # Ensure .claude directory exists
-  mkdir -p "${HOME}/.claude"
-
-  if [[ ! -f $settings_file ]]; then
-    # Create minimal settings file with theme
-    echo "{\"theme\": \"$theme\"}" >"$settings_file"
+  if [[ ! -f $config_file ]]; then
+    log_debug "Claude config not found: $config_file"
     return 0
   fi
 
-  # Update theme in existing settings.json using jq
   local tmp_file
   tmp_file=$(mktemp)
-  if jq --arg theme "$theme" '.theme = $theme' "$settings_file" >"$tmp_file" 2>/dev/null; then
-    mv "$tmp_file" "$settings_file"
+
+  if [[ $theme == "dark" ]]; then
+    # Dark theme = remove theme key
+    if jq 'del(.theme)' "$config_file" >"$tmp_file" 2>/dev/null; then
+      mv "$tmp_file" "$config_file"
+    else
+      rm -f "$tmp_file"
+      record_failure "claude-code"
+      return 1
+    fi
   else
-    rm -f "$tmp_file"
-    record_failure "claude-code"
-    return 1
+    # Light theme = set theme key
+    if jq --arg theme "$theme" '.theme = $theme' "$config_file" >"$tmp_file" 2>/dev/null; then
+      mv "$tmp_file" "$config_file"
+    else
+      rm -f "$tmp_file"
+      record_failure "claude-code"
+      return 1
+    fi
   fi
 }
 
@@ -1013,6 +1062,7 @@ apply_theme() {
 
   # Update all components (|| true prevents set -e from exiting on failures)
   update_gtk_theme "$theme" || true
+  update_gtk_css "$theme" || true
   update_hyprland_borders "$theme" || true
   update_kitty "$theme" || true
   update_foot "$theme" || true
@@ -1126,6 +1176,7 @@ sync_theme() {
     kde) update_kde_colorscheme "$current" ;;
     wleave) update_wleave "$current" ;;
     claude-code) update_claude_code "$current" ;;
+    gtk-css) update_gtk_css "$current" ;;
     *) log_warn "Unknown component: $component" ;;
     esac
   done

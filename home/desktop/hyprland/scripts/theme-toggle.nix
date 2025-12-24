@@ -28,6 +28,7 @@
   # Source theme files (read-only templates)
   waybarThemesDir = "${nixConfigDir}/home/desktop/hyprland/waybar";
   swayNcThemesDir = "${nixConfigDir}/home/desktop/hyprland/swaync";
+  gtkThemesDir = "${nixConfigDir}/home/desktop/hyprland/gtk-theme";
   processComposeThemesDir = "${nixConfigDir}/home/terminal/process_compose";
 
   # Target directories for generated files (mutable runtime state)
@@ -57,6 +58,7 @@
       export YAZI_THEMES_PATH="${yaziThemesPath}"
       export WAYBAR_THEMES_DIR="${waybarThemesDir}"
       export SWAYNC_THEMES_DIR="${swayNcThemesDir}"
+      export GTK_THEMES_DIR="${gtkThemesDir}"
       export PROCESS_COMPOSE_THEMES_DIR="${processComposeThemesDir}"
 
       # Target config directories (mutable)

@@ -81,6 +81,7 @@
       fish_pager_color_prefix f5c2e7
       fish_pager_color_completion cdd6f4
       fish_pager_color_description 6c7086
+      fish_pager_color_selected_background --background=45475a
     '';
 
     # __reload_theme function for dynamic theme switching

@@ -117,6 +117,7 @@
   };
 
   # Final wrapper that adds settings flag
+  # Theme is handled by theme-toggle.sh updating ~/.claude.json directly
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';

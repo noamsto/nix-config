@@ -11,21 +11,19 @@
     gtk.enable = true;
   };
 
+  # Kvantum Qt style engines (catppuccin.kvantum handles theme files)
   home.packages = with pkgs; [
-    catppuccin-kvantum # Catppuccin themes for Kvantum (Mocha, Latte, etc.)
     libsForQt5.qtstyleplugin-kvantum # Kvantum Qt5 style engine
     kdePackages.qtstyleplugin-kvantum # Kvantum Qt6 style engine
   ];
 
   # Qt theming - use Kvantum for runtime theme switching
+  # Kvantum theme is set dynamically by theme-toggle script
   qt = {
     enable = true;
     platformTheme.name = "kvantum";
     style.name = "kvantum";
   };
-
-  # Kvantum configuration is written dynamically by theme-toggle script
-  # Initial setup creates the file if it doesn't exist
 
   gtk = {
     enable = true;
@@ -35,6 +33,7 @@
       size = 12;
     };
 
+    # Icon name set dynamically by theme-toggle (Papirus-Dark/Papirus-Light)
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;

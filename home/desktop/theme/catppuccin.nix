@@ -27,7 +27,8 @@ in {
       "$HOME/.config/k9s/config.yaml" \
       "$HOME/.config/lazygit/config.yml" \
       "$HOME/.config/foot/foot.ini" \
-      "$HOME/.config/yazi/theme.toml"
+      "$HOME/.config/yazi/theme.toml" \
+      "$HOME/.config/Kvantum/kvantum.kvconfig"
     do
       if [ -f "$f" ] && [ ! -L "$f" ]; then
         $VERBOSE_ECHO "Removing theme-managed file: $f"
@@ -52,6 +53,12 @@ in {
 
     # === BROWSERS ===
     brave.enable = true;
+    # Firefox: Use built-in "System theme" or Catppuccin extension for auto light/dark
+    # The nix module sets a fixed flavor, so we skip it for dynamic theming
+
+    # === GTK ===
+    # Using standard Papirus icons (set in gtk.nix), not catppuccin-papirus-folders
+    gtk.icon.enable = false;
 
     # === HYPRLAND ===
     # hyprlock always stays dark (mocha) regardless of theme toggle
@@ -59,5 +66,9 @@ in {
       enable = true;
       flavor = "mocha";
     };
+
+    # === QT ===
+    # Kvantum theming for Qt apps (runtime switchable via theme-toggle)
+    kvantum.enable = true;
   };
 }
