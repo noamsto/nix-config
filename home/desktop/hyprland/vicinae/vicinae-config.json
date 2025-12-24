@@ -18,5 +18,12 @@
          "name": "vicinae-dark"
       }
    },
-   "keybinds": {}
+   "keybinds": {},
+   "providers": {
+      "clipboard": {
+         "preferences": {
+            "monitoring": true
+         }
+      }
+   }
 }

@@ -18,6 +18,9 @@ in {
       # enable flakes globally
       experimental-features = ["nix-command" "flakes"];
 
+      # Trust flake.nix nixConfig (substituters, keys) without prompts
+      accept-flake-config = true;
+
       # allow sudo users to mark the following values as trusted
       allowed-users = ["@wheel"];
       trusted-users = ["@wheel"];

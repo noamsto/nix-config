@@ -37,9 +37,11 @@
   security.polkit.enable = true;
 
   # Increase inotify limits for file-watching tools (Claude Code, VS Code, etc.)
+  # With 2M watches (~2GB max memory if all used), plenty of headroom
   boot.kernel.sysctl = {
-    "fs.inotify.max_user_watches" = 524288;
-    "fs.inotify.max_user_instances" = 1024;
+    "fs.inotify.max_user_watches" = 2097152;
+    "fs.inotify.max_user_instances" = 8192;
+    "fs.inotify.max_queued_events" = 65536;
   };
 
   environment.shells = with pkgs; [zsh];

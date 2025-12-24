@@ -25,8 +25,8 @@
     src = pkgs.fetchFromGitHub {
       owner = "joshmedeski";
       repo = "tmux-nerd-font-window-name";
-      rev = "4c9e7a51387d0cead1465a3628244beb790a3c95";
-      sha256 = "sha256-UcfEsq7BqJMeYXtGDNMoi/E+iEnEe9iM2KVoi7ektOE=";
+      rev = "9a66e18972de25c0bb3a58b7422d6e6555f166ba";
+      sha256 = "sha256-X4Li6xkxKjqac7xedCNzzSoW7wT6N2oqVKIx7TFay64=";
     };
   };
 
@@ -40,6 +40,9 @@
     };
     icons = {
       claude = "🧠";
+      nh = "";
+      fish = "🐟";
+      process-compose = "";
     };
   };
 
@@ -342,6 +345,12 @@ in {
       set -g @fingers-highlight-style "fg=colour216,bg=colour236"           # Peach on Surface0
       set -g @fingers-selected-hint-style "fg=colour234,bg=colour151,bold"  # Crust on Green
       set -g @fingers-selected-highlight-style "fg=colour116,bg=colour236"  # Teal on Surface0
+
+      # Custom patterns
+      set -g @fingers-pattern-0 "[A-Z]{2,}-[0-9]+"                          # Linear/JIRA tickets (NOA-123)
+      set -g @fingers-pattern-1 "[a-z][a-z_]*_[0-9a-hjkmnp-tv-z]{26}"       # TypeIDs (user_2x4y6z8a0b...)
+      set -g @fingers-pattern-2 "sha256-[A-Za-z0-9+/]{43}="                 # Nix SRI hashes
+      set -g @fingers-pattern-3 "sha256:[0-9a-z]{52}"                       # Nix base32 hashes
 
       run-shell ${pkgs.tmuxPlugins.fingers}/share/tmux-plugins/tmux-fingers/tmux-fingers.tmux
 

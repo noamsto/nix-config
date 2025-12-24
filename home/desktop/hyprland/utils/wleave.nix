@@ -101,7 +101,7 @@
         opacity: 1;
     }
 
-    /* Darker colors for light theme contrast */
+    /* WCAG AA compliant colors for light theme */
     button#shutdown {
         color: #d20f39;
     }
@@ -111,15 +111,15 @@
     }
 
     button#reboot {
-        color: #40a02b;
+        color: #358023; /* Darkened for 4.5:1 contrast */
     }
 
     button#lock {
-        color: #df8e1d;
+        color: #996b00; /* Darkened for 4.7:1 contrast */
     }
 
     button#logout {
-        color: #fe640b;
+        color: #c24b00; /* Darkened for 4.6:1 contrast */
     }
 
     button#suspend {

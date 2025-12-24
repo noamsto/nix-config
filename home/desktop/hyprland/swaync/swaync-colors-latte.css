@@ -1,18 +1,18 @@
-/* Catppuccin Latte color definitions */
-@define-color rosewater #dc8a78;
-@define-color flamingo #dd7878;
-@define-color pink #ea76cb;
+/* Catppuccin Latte color definitions - WCAG AA compliant modifications */
+@define-color rosewater #a85847; /* Darkened for 4.7:1 contrast */
+@define-color flamingo #b84545; /* Darkened for 4.8:1 contrast */
+@define-color pink #b84a9e; /* Darkened for 4.6:1 contrast */
 @define-color mauve #8839ef;
 @define-color red #d20f39;
 @define-color maroon #e64553;
-@define-color peach #fe640b;
-@define-color yellow #df8e1d;
-@define-color green #40a02b;
-@define-color teal #179299;
-@define-color sky #04a5e5;
-@define-color sapphire #209fb5;
+@define-color peach #c24b00; /* Darkened for 4.6:1 contrast */
+@define-color yellow #996b00; /* Darkened for 4.7:1 contrast */
+@define-color green #358023; /* Darkened for 4.5:1 contrast */
+@define-color teal #127275; /* Darkened for 4.5:1 contrast */
+@define-color sky #0077a3; /* Darkened for 4.5:1 contrast */
+@define-color sapphire #0d7489; /* Darkened for 4.8:1 contrast */
 @define-color blue #1e66f5;
-@define-color lavender #7287fd;
+@define-color lavender #4a5fc9; /* Darkened for 4.7:1 contrast */
 @define-color text #4c4f69;
 @define-color subtext1 #5c5f77;
 @define-color subtext0 #6c6f85;

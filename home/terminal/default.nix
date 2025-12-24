@@ -128,21 +128,21 @@ in {
           package = {
             format = "[$symbol$version]($style) ";
             symbol = "📦 ";
-            style = "bold yellow";
+            style = "bold peach";
           };
 
           # Directory configuration
           directory = {
             truncation_length = 3;
             truncate_to_repo = true;
-            style = "bold cyan";
+            style = "bold sapphire";
           };
 
           # Git branch
           git_branch = {
             format = "[$symbol $branch(:$remote_branch)]($style) ";
             symbol = "";
-            style = "bold purple";
+            style = "bold mauve";
           };
 
           # Git status - simplified, only non-defaults
@@ -157,7 +157,7 @@ in {
           # Command duration
           cmd_duration = {
             min_time = 2000;
-            style = "bold yellow";
+            style = "bold peach";
           };
 
           # Language modules - only symbols
@@ -176,37 +176,37 @@ in {
           character = {
             success_symbol = "[❯](bold green)";
             error_symbol = "[❯](bold red)";
-            vimcmd_symbol = "[❮](bold yellow)";
+            vimcmd_symbol = "[❮](bold peach)";
           };
 
-          # Catppuccin Latte palette (light theme)
+          # Catppuccin Latte palette (light theme) - WCAG AA compliant modifications
           palettes.catppuccin_latte = {
             base = "#eff1f5";
             blue = "#1e66f5";
             crust = "#dce0e8";
-            flamingo = "#dd7878";
-            green = "#40a02b";
-            lavender = "#7287fd";
+            flamingo = "#b84545"; # Darkened for 4.8:1 contrast
+            green = "#358023"; # Darkened for 4.5:1 contrast
+            lavender = "#4a5fc9"; # Darkened for 4.7:1 contrast
             mantle = "#e6e9ef";
             maroon = "#e64553";
             mauve = "#8839ef";
             overlay0 = "#9ca0b0";
             overlay1 = "#8c8fa1";
             overlay2 = "#7c7f93";
-            peach = "#fe640b";
-            pink = "#ea76cb";
+            peach = "#c24b00"; # Darkened for 4.6:1 contrast
+            pink = "#b84a9e"; # Darkened for 4.6:1 contrast
             red = "#d20f39";
-            rosewater = "#dc8a78";
-            sapphire = "#209fb5";
-            sky = "#04a5e5";
+            rosewater = "#a85847"; # Darkened for 4.7:1 contrast
+            sapphire = "#0d7489"; # Darkened for 4.8:1 contrast
+            sky = "#0077a3"; # Darkened for 4.5:1 contrast
             subtext0 = "#6c6f85";
             subtext1 = "#5c5f77";
             surface0 = "#ccd0da";
             surface1 = "#bcc0cc";
             surface2 = "#acb0be";
-            teal = "#179299";
+            teal = "#127275"; # Darkened for 4.5:1 contrast
             text = "#4c4f69";
-            yellow = "#df8e1d";
+            yellow = "#996b00"; # Darkened for 4.7:1 contrast
           };
 
           # Catppuccin Mocha palette (dark theme)

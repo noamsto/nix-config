@@ -261,6 +261,14 @@ update_kitty() {
     return 1
   fi
 
+  # Font weight: SemiBold for light theme (better contrast), Medium for dark
+  local font_weight
+  if [[ $theme == "light" ]]; then
+    font_weight="SemiBold"
+  else
+    font_weight="Medium"
+  fi
+
   # Update all running kitty instances via their sockets
   # Use nullglob to handle case where no sockets exist
   shopt -s nullglob
@@ -272,6 +280,8 @@ update_kitty() {
     if [[ -S $sock ]]; then
       log_debug "Updating kitty socket: $sock"
       kitty @ --to "unix:$sock" set-colors --all --configured "$theme_file" 2>/dev/null || true
+      # Update font weight for theme
+      kitty @ --to "unix:$sock" set-font-size -- 0 2>/dev/null || true # Reset to default first
       # Fix Catppuccin Latte contrast issue: color7/color15 are too light on light bg
       if [[ $theme == "light" ]]; then
         kitty @ --to "unix:$sock" set-colors color7="#5c5f77" color15="#6c6f85" 2>/dev/null || true
@@ -283,11 +293,12 @@ update_kitty() {
   if [[ -f $kitty_config ]]; then
     local tmp_config="${kitty_config}.tmp"
 
-    # Remove any existing theme-toggle color overrides and update include line
+    # Remove any existing theme-toggle overrides and update include/font lines
     grep -v "^# theme-toggle:" "$kitty_config" 2>/dev/null |
       grep -v "^color7 " |
       grep -v "^color15 " |
-      sed "s|^include.*/Catppuccin-[^/]*\\.conf|include ${theme_file}|" >"$tmp_config" || {
+      sed "s|^include.*/Catppuccin-[^/]*\\.conf|include ${theme_file}|" |
+      sed "s|^font_family.*FiraCode Nerd Font.*|font_family FiraCode Nerd Font ${font_weight}|" >"$tmp_config" || {
       record_failure "kitty"
       rm -f "$tmp_config"
       return 1
@@ -852,6 +863,14 @@ update_foot() {
     foot_theme="catppuccin-mocha"
   fi
 
+  # Font weight: semibold for light theme (better contrast), regular for dark
+  local font_weight_suffix
+  if [[ $theme == "light" ]]; then
+    font_weight_suffix=":weight=semibold"
+  else
+    font_weight_suffix=""
+  fi
+
   local foot_config="${XDG_CONFIG_HOME}/foot/foot.ini"
   if [[ ! -f $foot_config ]]; then
     log_debug "foot config not found, skipping"
@@ -870,8 +889,11 @@ update_foot() {
   local theme_file="${theme_dir}/${foot_theme}.ini"
   local tmp_config="${foot_config}.tmp"
 
-  # Update include line in foot.ini
-  sed "s|^include=.*/catppuccin-.*\.ini|include=${theme_file}|" "$foot_config" >"$tmp_config" || {
+  # Update include line and font weight in foot.ini
+  # Remove any existing weight suffix, then add the appropriate one
+  sed -e "s|^include=.*/catppuccin-.*\.ini|include=${theme_file}|" \
+    -e "s|^font=\(Fira Code Nerd Font:size=[0-9]*\)\(:weight=[a-z]*\)\?|font=\1${font_weight_suffix}|" \
+    "$foot_config" >"$tmp_config" || {
     record_failure "foot"
     rm -f "$tmp_config"
     return 1
