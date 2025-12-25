@@ -6,6 +6,10 @@
 }: let
   isServer = osConfig.machine.type == "server";
 in {
+  # Add ~/.local/bin to PATH for tools that install there (pip --user, cargo install, etc.)
+  # Also silences Claude Code "native installation" warning
+  home.sessionPath = ["$HOME/.local/bin"];
+
   imports = [
     ./foot
     ./kitty
@@ -94,85 +98,65 @@ in {
         {
           add_newline = false;
 
-          # Default palette (can be dynamically changed by theme-toggle.sh)
           palette = "catppuccin_mocha";
 
-          # Essential format for all systems
+          # Minimal format - only what matters
           format = lib.concatStrings [
             "$nix_shell"
-            "$username"
-            "$hostname"
+            "$direnv"
             "$directory"
             "$git_branch"
-            "$git_state"
             "$git_status"
-            "$package"
-            "$nodejs"
-            "$python"
-            "$rust"
-            "$golang"
             "$cmd_duration"
             "$line_break"
-            "$jobs"
             "$character"
           ];
 
-          # Nix shell indicator
           nix_shell = {
-            format = "[$symbol$state]($style) ";
-            symbol = "❄️ ";
+            format = "[❄ $state]($style) ";
             style = "bold blue";
           };
 
-          # Package version (for package.json, pyproject.toml, etc.)
-          package = {
-            format = "[$symbol$version]($style) ";
-            symbol = "📦 ";
-            style = "bold peach";
+          direnv = {
+            disabled = false;
+            format = "[$loaded]($style) ";
+            style = "bold teal";
+            loaded_msg = "📂";
+            unloaded_msg = "";
+            allowed_msg = "";
+            not_allowed_msg = "📂!";
+            denied_msg = "";
           };
 
-          # Directory configuration
           directory = {
-            truncation_length = 3;
+            truncation_length = 4;
             truncate_to_repo = true;
+            fish_style_pwd_dir_length = 1;
             style = "bold sapphire";
           };
 
-          # Git branch
           git_branch = {
-            format = "[$symbol $branch(:$remote_branch)]($style) ";
-            symbol = "";
+            format = "[$symbol$branch]($style) ";
+            symbol = " ";
             style = "bold mauve";
           };
 
-          # Git status - simplified, only non-defaults
           git_status = {
-            conflicted = "⚡";
-            ahead = "⇡\${count}";
-            behind = "⇣\${count}";
-            diverged = "⇕⇡\${ahead_count}⇣\${behind_count}";
+            format = "[$all_status$ahead_behind]($style) ";
+            style = "bold red";
+            conflicted = "!";
+            ahead = "⇡";
+            behind = "⇣";
+            diverged = "⇕";
             up_to_date = "";
+            stashed = "≡";
           };
 
-          # Command duration
           cmd_duration = {
             min_time = 2000;
             style = "bold peach";
           };
 
-          # Language modules - only symbols
-          nodejs.symbol = "󰎙 ";
-          python.symbol = "󰌠 ";
-          rust.symbol = "󱘗 ";
-          golang.symbol = " ";
-
-          # Jobs indicator
-          jobs = {
-            symbol = "✦";
-            style = "bold blue";
-          };
-
-          # Character (prompt symbol)
           character = {
             success_symbol = "[❯](bold green)";
             error_symbol = "[❯](bold red)";

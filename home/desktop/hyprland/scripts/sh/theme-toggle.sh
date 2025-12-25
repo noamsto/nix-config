@@ -824,25 +824,48 @@ update_bat() {
 # Update delta git diff theme
 update_delta() {
   local theme="$1"
-  local delta_features
+  local syntax_theme minus_style minus_emph plus_style plus_emph
+  local minus_line plus_line zero_line
   local theme_override_file="$XDG_CONFIG_HOME/git/theme-override"
   log_debug "Updating delta to $theme"
 
   if [[ $theme == "light" ]]; then
-    delta_features="catppuccin-latte"
+    syntax_theme="Catppuccin Latte"
+    # Latte: subtle backgrounds for diff
+    minus_style="syntax #e8cdd0"
+    minus_emph="syntax #d4a5ab"
+    plus_style="syntax #cee0cf"
+    plus_emph="syntax #a8d1aa"
+    minus_line="#d20f39"
+    plus_line="#358023"
+    zero_line="#9ca0b0"
   else
-    delta_features="catppuccin-mocha"
+    syntax_theme="Catppuccin Mocha"
+    # Mocha: subtle backgrounds for diff
+    minus_style="syntax #3b2c37"
+    minus_emph="syntax #5c3a4a"
+    plus_style="syntax #2d3b2e"
+    plus_emph="syntax #3f5a42"
+    minus_line="#f38ba8"
+    plus_line="#a6e3a1"
+    zero_line="#6c7086"
   fi
 
   # Write to mutable theme-override file (included by main git config)
-  # This overrides the catppuccin module's delta.features setting
   local tmp_file
   tmp_file=$(mktemp)
   cat >"$tmp_file" <<EOF
 # This file is managed by theme-toggle script at runtime
 # Do not edit manually - changes will be overwritten
 [delta]
-  features = $delta_features
+  syntax-theme = $syntax_theme
+  minus-style = $minus_style
+  minus-emph-style = $minus_emph
+  plus-style = $plus_style
+  plus-emph-style = $plus_emph
+  line-numbers-minus-style = $minus_line
+  line-numbers-plus-style = $plus_line
+  line-numbers-zero-style = $zero_line
 EOF
   mv "$tmp_file" "$theme_override_file" || {
     rm -f "$tmp_file"

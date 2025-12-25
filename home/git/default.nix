@@ -107,6 +107,11 @@ in {
 
   programs.delta = {
     enable = true;
-    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      side-by-side = false;
+      navigate = true;
+      # Theme colors set dynamically by theme-toggle via ~/.config/git/theme-override
+    };
   };
 }

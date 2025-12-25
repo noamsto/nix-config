@@ -18,6 +18,7 @@
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
+      installMethod = "nix";
       includeCoAuthoredBy = false;
       statusLine = {
         type = "command";
@@ -118,7 +119,10 @@
 
   # Final wrapper that adds settings flag
   # Theme is handled by theme-toggle.sh updating ~/.claude.json directly
+  # DISABLE_INSTALLATION_CHECKS=1 suppresses false "native installation" warnings
+  # when running via Nix (see: https://github.com/anthropics/claude-code/issues/8523)
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
+    export DISABLE_INSTALLATION_CHECKS=1
     exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';
 in {

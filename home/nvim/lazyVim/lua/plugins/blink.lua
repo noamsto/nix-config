@@ -22,6 +22,15 @@ return {
       },
     })
 
+    -- Floating window borders
+    opts.completion = vim.tbl_deep_extend("force", opts.completion or {}, {
+      menu = { border = "rounded" },
+      documentation = { window = { border = "rounded" } },
+    })
+    opts.signature = vim.tbl_deep_extend("force", opts.signature or {}, {
+      window = { border = "rounded" },
+    })
+
     return opts
   end,
 }
