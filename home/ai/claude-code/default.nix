@@ -18,7 +18,6 @@
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
-      installMethod = "nix";
       includeCoAuthoredBy = false;
       statusLine = {
         type = "command";

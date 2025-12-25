@@ -1,53 +1,25 @@
-{pkgs, ...}: let
-  # Shared CSS structure
-  baseCss = ''
-    button label.action-name {
-        font-size: 24px;
-    }
+{
+  pkgs,
+  config,
+  ...
+}: let
+  palette = config.theme.palette;
 
-    button label.keybind {
-        font-size: 20px;
-        font-family: monospace;
-    }
+  # Generate wleave CSS from palette
+  # Window background uses semi-transparent variant of base
+  windowBg = p:
+    if p.variant == "dark"
+    then "rgba(12, 12, 12, 0.8)"
+    else "rgba(239, 241, 245, 0.9)";
 
-    button:hover label.keybind, button:focus label.keybind {
-        opacity: 1;
-    }
-
-    button#shutdown {
-        color: #ff8d8d;
-    }
-
-    button#hibernate {
-        color: #a8c0ff;
-    }
-
-    button#reboot {
-        color: #84ffaa;
-    }
-
-    button#lock {
-        color: #ffe8b6;
-    }
-
-    button#logout {
-        color: #ffcca8;
-    }
-
-    button#suspend {
-        color: #caaff9;
-    }
-  '';
-
-  # Dark theme (Catppuccin Mocha)
-  darkCss = ''
-    /* Catppuccin Mocha */
+  mkWleaveCss = p: ''
+    /* ${p.name} - Generated from config.theme.palette */
     window {
-        background-color: rgba(12, 12, 12, 0.8);
+        background-color: ${windowBg p};
     }
 
     button {
-        background-color: #1e1e2e;
+        background-color: ${p.base};
         border: none;
         padding: 10px;
         border-radius: 12px;
@@ -55,37 +27,11 @@
 
     button:focus,
     button:hover {
-        background-color: #313244;
+        background-color: ${p.surface0};
     }
 
     button:active {
-        background-color: #45475a;
-    }
-
-    ${baseCss}
-  '';
-
-  # Light theme (Catppuccin Latte) - uses darker colors for contrast
-  lightCss = ''
-    /* Catppuccin Latte */
-    window {
-        background-color: rgba(239, 241, 245, 0.9);
-    }
-
-    button {
-        background-color: #eff1f5;
-        border: none;
-        padding: 10px;
-        border-radius: 12px;
-    }
-
-    button:focus,
-    button:hover {
-        background-color: #ccd0da;
-    }
-
-    button:active {
-        background-color: #bcc0cc;
+        background-color: ${p.surface1};
     }
 
     button label.action-name {
@@ -101,30 +47,12 @@
         opacity: 1;
     }
 
-    /* WCAG AA compliant colors for light theme */
-    button#shutdown {
-        color: #d20f39;
-    }
-
-    button#hibernate {
-        color: #1e66f5;
-    }
-
-    button#reboot {
-        color: #358023; /* Darkened for 4.5:1 contrast */
-    }
-
-    button#lock {
-        color: #996b00; /* Darkened for 4.7:1 contrast */
-    }
-
-    button#logout {
-        color: #c24b00; /* Darkened for 4.6:1 contrast */
-    }
-
-    button#suspend {
-        color: #8839ef;
-    }
+    button#shutdown { color: ${p.red}; }
+    button#hibernate { color: ${p.blue}; }
+    button#reboot { color: ${p.green}; }
+    button#lock { color: ${p.yellow}; }
+    button#logout { color: ${p.peach}; }
+    button#suspend { color: ${p.mauve}; }
   '';
 in {
   programs.wleave = {
@@ -132,10 +60,10 @@ in {
     # Don't use style option - we manage style.css via theme-toggle for dynamic switching
   };
 
-  # Theme CSS files for dynamic switching
+  # Theme CSS files for dynamic switching (generated from palette)
   # theme-toggle.sh copies the appropriate one to style.css
   xdg.configFile = {
-    "wleave/style-mocha.css".text = darkCss;
-    "wleave/style-latte.css".text = lightCss;
+    "wleave/style-${palette.dark.name}.css".text = mkWleaveCss palette.dark;
+    "wleave/style-${palette.light.name}.css".text = mkWleaveCss palette.light;
   };
 }

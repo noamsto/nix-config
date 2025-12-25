@@ -3,7 +3,40 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  # Generate CSS color definitions from palette
+  mkWaybarColorsCss = p: ''
+    /* ${p.name} Colors - Generated from config.theme.palette */
+    @define-color rosewater ${p.rosewater};
+    @define-color flamingo ${p.flamingo};
+    @define-color pink ${p.pink};
+    @define-color mauve ${p.mauve};
+    @define-color red ${p.red};
+    @define-color maroon ${p.maroon};
+    @define-color peach ${p.peach};
+    @define-color yellow ${p.yellow};
+    @define-color green ${p.green};
+    @define-color teal ${p.teal};
+    @define-color sky ${p.sky};
+    @define-color sapphire ${p.sapphire};
+    @define-color blue ${p.blue};
+    @define-color lavender ${p.lavender};
+    @define-color text ${p.text};
+    @define-color subtext1 ${p.subtext1};
+    @define-color subtext0 ${p.subtext0};
+    @define-color overlay2 ${p.overlay2};
+    @define-color overlay1 ${p.overlay1};
+    @define-color overlay0 ${p.overlay0};
+    @define-color surface2 ${p.surface2};
+    @define-color surface1 ${p.surface1};
+    @define-color surface0 ${p.surface0};
+    @define-color base ${p.base};
+    @define-color mantle ${p.mantle};
+    @define-color crust ${p.crust};
+  '';
+
+  palette = config.theme.palette;
+in {
   programs.waybar = {
     enable = true;
     systemd.enable = true; # Disabled because using UWSM instead of systemd
@@ -42,6 +75,9 @@
     "waybar/style.css" = lib.mkForce {
       source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/waybar/style.css";
     };
+    # Generated color CSS files (used by theme-toggle)
+    "waybar/colors-${palette.dark.name}.css".text = mkWaybarColorsCss palette.dark;
+    "waybar/colors-${palette.light.name}.css".text = mkWaybarColorsCss palette.light;
   };
 
   # Keep the old inline config commented for reference

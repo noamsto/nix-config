@@ -158,9 +158,11 @@ in {
           };
 
           character = {
-            success_symbol = "[❯](bold green)";
-            error_symbol = "[❯](bold red)";
-            vimcmd_symbol = "[❮](bold peach)";
+            success_symbol = "[󰈺](bold green)";
+            error_symbol = "[󰈺](bold red)";
+            vimcmd_symbol = "[](bold blue)";
+            vimcmd_visual_symbol = "[](bold peach)";
+            vimcmd_replace_one_symbol = "[](bold orange)";
           };
 
           # Catppuccin Latte palette (light theme) - WCAG AA compliant modifications

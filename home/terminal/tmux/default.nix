@@ -40,9 +40,9 @@
     };
     icons = {
       claude = "🧠";
-      nh = "";
-      fish = "🐟";
-      process-compose = "";
+      nh = "#[bold,fg=#{@thm_sapphire}]#[none,fg=default]";
+      fish = "#[bold,fg=#{@thm_teal}]󰈺#[none,fg=default]";
+      process-compose = "#[bold,fg=#{@thm_peach}]#[none,fg=default]";
     };
   };
 

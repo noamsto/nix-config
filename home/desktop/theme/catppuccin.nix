@@ -2,8 +2,10 @@
   inputs,
   pkgs,
   lib,
+  config,
   ...
 }: let
+  themeToggleBin = "${config.programs.theme-toggle.package}/bin/theme-toggle";
   catppuccin-btop = pkgs.fetchFromGitHub {
     owner = "catppuccin";
     repo = "btop";
@@ -41,11 +43,8 @@ in {
   # This ensures theme-managed configs (kitty, starship, k9s, btop, lazygit)
   # are updated to match the current theme after rebuilds
   home.activation.restoreTheme = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    # Only run if theme-toggle exists and we have a display (not in headless rebuild)
-    if command -v theme-toggle &>/dev/null && [ -n "''${DISPLAY:-}''${WAYLAND_DISPLAY:-}" ]; then
-      $VERBOSE_ECHO "Restoring theme settings..."
-      run theme-toggle restore || true
-    fi
+    $VERBOSE_ECHO "Restoring theme settings..."
+    run ${themeToggleBin} restore || true
   '';
 
   catppuccin = {
