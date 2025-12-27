@@ -35,7 +35,6 @@
     substituters = [
       "https://cache.nixos.org"
       "https://hyprland.cachix.org"
-      "https://walker.cachix.org"
       "https://vicinae.cachix.org"
       "https://claude-code.cachix.org"
       "https://nixpkgs-unfree.cachix.org"
@@ -47,7 +46,6 @@
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
-      "walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="
       "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
       "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
@@ -104,12 +102,6 @@
 
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
-
-    elephant.url = "github:abenz1267/elephant";
-    walker = {
-      url = "github:abenz1267/walker";
-      inputs.elephant.follows = "elephant";
-    };
     vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
     catppuccin = {

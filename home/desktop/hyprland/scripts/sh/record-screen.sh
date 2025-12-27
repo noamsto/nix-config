@@ -183,7 +183,7 @@ else
 
   # Show selection menu
   if [ -n "$active_geometry" ] && [ "$active_geometry" != "null,null 0x0" ]; then
-    selection=$(printf "Active Window\nSelect Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
+    selection=$(printf "Active Window\nSelect Area\nActive Monitor\nAll Monitors" | vicinae dmenu -p "Record ${record_type^^}")
 
     # Wait for vicinae to fully close before proceeding
     sleep 0.5
@@ -207,7 +207,7 @@ else
     esac
   else
     # No active window, show all options except Active Window
-    selection=$(printf "Select Area\nActive Monitor\nAll Monitors" | walker --dmenu -p "Record ${record_type^^}")
+    selection=$(printf "Select Area\nActive Monitor\nAll Monitors" | vicinae dmenu -p "Record ${record_type^^}")
 
     # Wait for vicinae to fully close before proceeding
     sleep 0.5

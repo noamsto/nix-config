@@ -176,7 +176,6 @@ The flake is pre-configured with multiple binary caches for faster builds:
 
 - `cache.nixos.org` - Official NixOS cache
 - `hyprland.cachix.org` - Hyprland compositor
-- `walker.cachix.org` - Walker application launcher
 - `nixpkgs-unfree.cachix.org` - Unfree packages
 - `nix-community.cachix.org` - Community packages
 - `nixos-raspberrypi.cachix.org` - Raspberry Pi builds
@@ -487,4 +486,3 @@ When adding new features, follow these patterns:
 - See `hosts/naspi/README.md` for comprehensive NasPi documentation
 - Use `just --list` to discover all available commands
 - always run shellcheck on sh scripts after edits
-

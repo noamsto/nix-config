@@ -15,7 +15,6 @@
 
       highopacity = [
         "vicinae"
-        "walker"
         "osd"
         "logout_dialog"
       ];

@@ -5,7 +5,6 @@
 }: {
   imports = [
     ./gtk.nix
-    ./walker
     ./vicinae
     ./terminal
     ./services

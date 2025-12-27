@@ -33,7 +33,7 @@
     # - BRAVE_USER_FLAGS
     # - CHROMIUM_USER_FLAGS
     # This ensures flags are available to all processes launched in the Hyprland session,
-    # including applications started from launchers like Vicinae/Walker.
+    # including applications started from launchers like Vicinae.
   };
 
   # Let home Manager install and manage itself.

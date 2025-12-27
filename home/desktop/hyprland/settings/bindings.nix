@@ -48,7 +48,6 @@ in {
       "$mainMod, grave, hyprexpo:expo, toggle"
 
       "$mainMod, V, exec, vicinae vicinae://extensions/vicinae/clipboard/history"
-      "$mainMod SHIFT, V, exec, walker -m clipboard"
 
       "$mainMod ALT, L, exec, hyprlock"
       "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
@@ -101,7 +100,6 @@ in {
       "$mainMod, M, movetoworkspace, special:magic"
 
       "$ALT, SPACE, exec, vicinae vicinae://toggle"
-      "$ALTSHIFT, SPACE, exec, walker"
 
       # === PRODUCTIVITY SHORTCUTS ===
       # Quick application access
