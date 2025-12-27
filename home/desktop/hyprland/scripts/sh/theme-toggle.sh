@@ -236,25 +236,20 @@ update_hyprland_borders() {
 # Update kitty terminal theme (all running instances and config for new instances)
 update_kitty() {
   local theme="$1"
-  local kitty_theme
+  local theme_name
   log_debug "Updating kitty to $theme"
 
+  # Get theme name from environment (set by Nix from palette)
   if [[ $theme == "light" ]]; then
-    kitty_theme="Catppuccin-Latte"
+    theme_name="$LIGHT_THEME_NAME"
   else
-    kitty_theme="Catppuccin-Mocha"
+    theme_name="$DARK_THEME_NAME"
   fi
 
   local kitty_config="${XDG_CONFIG_HOME}/kitty/kitty.conf"
 
-  # Check for theme path from Nix
-  if [[ -z ${KITTY_THEMES_PATH:-} ]]; then
-    log_error "KITTY_THEMES_PATH not set"
-    record_failure "kitty"
-    return 1
-  fi
-
-  local theme_file="${KITTY_THEMES_PATH}/${kitty_theme}.conf"
+  # Use generated theme from ~/.config/kitty/themes/
+  local theme_file="${XDG_CONFIG_HOME}/kitty/themes/${theme_name}.conf"
   if [[ ! -f $theme_file ]]; then
     log_error "Kitty theme file not found: $theme_file"
     record_failure "kitty"
@@ -282,10 +277,6 @@ update_kitty() {
       kitty @ --to "unix:$sock" set-colors --all --configured "$theme_file" 2>/dev/null || true
       # Update font weight for theme
       kitty @ --to "unix:$sock" set-font-size -- 0 2>/dev/null || true # Reset to default first
-      # Fix Catppuccin Latte contrast issue: color7/color15 are too light on light bg
-      if [[ $theme == "light" ]]; then
-        kitty @ --to "unix:$sock" set-colors color7="$LIGHT_SUBTEXT1" color15="$LIGHT_SUBTEXT0" 2>/dev/null || true
-      fi
     fi
   done
 
@@ -295,9 +286,7 @@ update_kitty() {
 
     # Remove any existing theme-toggle overrides and update include/font lines
     grep -v "^# theme-toggle:" "$kitty_config" 2>/dev/null |
-      grep -v "^color7 " |
-      grep -v "^color15 " |
-      grep -v "^include.*/Catppuccin-" |
+      grep -v "^include.*/kitty/themes/" |
       sed "s|^font_family.*FiraCode Nerd Font.*|font_family FiraCode Nerd Font ${font_weight}|" >"$tmp_config" || {
       record_failure "kitty"
       rm -f "$tmp_config"
@@ -314,16 +303,6 @@ update_kitty() {
     } >"$final_config"
     rm -f "$tmp_config"
     mv "$final_config" "$tmp_config"
-
-    # Add color overrides for light mode
-    if [[ $theme == "light" ]]; then
-      {
-        echo "# theme-toggle: light mode color overrides"
-        echo "color7 $LIGHT_SUBTEXT1"
-        echo "color15 $LIGHT_SUBTEXT0"
-      } >>"$tmp_config"
-    fi
-
     mv "$tmp_config" "$kitty_config"
   fi
 }
@@ -912,13 +891,14 @@ EOF
 # Update foot terminal theme
 update_foot() {
   local theme="$1"
-  local foot_theme
+  local theme_name
   log_debug "Updating foot to $theme"
 
+  # Get theme name from environment (set by Nix from palette)
   if [[ $theme == "light" ]]; then
-    foot_theme="catppuccin-latte"
+    theme_name="$LIGHT_THEME_NAME"
   else
-    foot_theme="catppuccin-mocha"
+    theme_name="$DARK_THEME_NAME"
   fi
 
   # Font weight: semibold for light theme (better contrast), regular for dark
@@ -935,21 +915,19 @@ update_foot() {
     return 0
   fi
 
-  # Find catppuccin-foot package in nix store for theme path
-  local theme_dir
-  theme_dir=$(find /nix/store -maxdepth 1 -name "*catppuccin-foot-*" -type d 2>/dev/null | head -1)
-
-  if [[ -z $theme_dir || ! -f "${theme_dir}/${foot_theme}.ini" ]]; then
-    log_debug "foot theme file not found in nix store"
+  # Use generated theme from ~/.config/foot/themes/
+  local theme_file="${XDG_CONFIG_HOME}/foot/themes/${theme_name}.ini"
+  if [[ ! -f $theme_file ]]; then
+    log_debug "foot theme file not found: $theme_file"
     return 0
   fi
 
-  local theme_file="${theme_dir}/${foot_theme}.ini"
   local tmp_config="${foot_config}.tmp"
 
   # Update include line and font weight in foot.ini
   # Remove any existing weight suffix, then add the appropriate one
-  sed -e "s|^include=.*/catppuccin-.*\.ini|include=${theme_file}|" \
+  sed -e "s|^include=.*/foot/themes/.*\.ini|include=${theme_file}|" \
+    -e "s|^include=.*/catppuccin-.*\.ini|include=${theme_file}|" \
     -e "s|^font=\(Fira Code Nerd Font:size=[0-9]*\)\(:weight=[a-z]*\)\?|font=\1${font_weight_suffix}|" \
     "$foot_config" >"$tmp_config" || {
     record_failure "foot"

@@ -28,8 +28,7 @@
   };
 
   # Theme source directories - injected into script as env vars
-  # These are Nix store paths for external theme packages
-  kittyThemesPath = "${pkgs.kitty-themes}/share/kitty-themes/themes";
+  # These are Nix store paths for external theme packages (apps we don't generate themes for)
   lazygitThemesPath = "${catppuccin-lazygit}/themes";
   yaziThemesPath = "${catppuccin-yazi}/themes";
 
@@ -58,8 +57,7 @@
       fish # fish theme reload
     ];
     text = ''
-      # Theme source paths (Nix store, read-only)
-      export KITTY_THEMES_PATH="${kittyThemesPath}"
+      # Theme source paths (Nix store, read-only) - for apps we don't generate themes for
       export LAZYGIT_THEMES_PATH="${lazygitThemesPath}"
       export YAZI_THEMES_PATH="${yaziThemesPath}"
 

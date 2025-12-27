@@ -1,4 +1,85 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: let
+  palette = config.theme.palette;
+
+  # Strip # from hex colors for kitty format
+  stripHash = color: lib.removePrefix "#" color;
+
+  # Generate kitty theme from palette
+  mkKittyTheme = p: ''
+    # ${p.name} - Generated from config.theme.palette
+
+    # Basic colors
+    foreground              ${p.text}
+    background              ${p.base}
+    selection_foreground    ${p.base}
+    selection_background    ${p.rosewater}
+
+    # Cursor colors
+    cursor                  ${p.rosewater}
+    cursor_text_color       ${p.base}
+
+    # URL underline color
+    url_color               ${p.rosewater}
+
+    # Kitty window border colors
+    active_border_color     ${p.lavender}
+    inactive_border_color   ${p.overlay0}
+    bell_border_color       ${p.yellow}
+
+    # Tab bar colors
+    active_tab_foreground   ${p.crust}
+    active_tab_background   ${p.mauve}
+    inactive_tab_foreground ${p.text}
+    inactive_tab_background ${p.mantle}
+    tab_bar_background      ${p.crust}
+
+    # Mark colors
+    mark1_foreground ${p.base}
+    mark1_background ${p.lavender}
+    mark2_foreground ${p.base}
+    mark2_background ${p.mauve}
+    mark3_foreground ${p.base}
+    mark3_background ${p.sapphire}
+
+    # Terminal colors
+    # black
+    color0  ${p.surface1}
+    color8  ${p.surface2}
+
+    # red
+    color1  ${p.red}
+    color9  ${p.red}
+
+    # green
+    color2  ${p.green}
+    color10 ${p.green}
+
+    # yellow
+    color3  ${p.yellow}
+    color11 ${p.yellow}
+
+    # blue
+    color4  ${p.blue}
+    color12 ${p.blue}
+
+    # magenta
+    color5  ${p.pink}
+    color13 ${p.pink}
+
+    # cyan
+    color6  ${p.teal}
+    color14 ${p.teal}
+
+    # white
+    color7  ${p.subtext1}
+    color15 ${p.subtext0}
+  '';
+in {
   programs.kitty = {
     enable = true;
     settings = {
@@ -105,5 +186,11 @@
       # Claude Code: Map Shift+Enter to Alt+Enter for newlines
       "shift+enter" = "send_text all \\x1b\\r";
     };
+  };
+
+  # Generated kitty theme files (used by theme-toggle)
+  xdg.configFile = {
+    "kitty/themes/${palette.dark.name}.conf".text = mkKittyTheme palette.dark;
+    "kitty/themes/${palette.light.name}.conf".text = mkKittyTheme palette.light;
   };
 }
