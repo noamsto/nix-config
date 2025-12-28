@@ -11,9 +11,10 @@
     ./media
     ./utils
     ./settings
-    ./waybar
-    ./swaync
-    ./nwg-dock
+    # Replaced by Noctalia Shell:
+    # ./waybar
+    # ./swaync
+    # ./nwg-dock
     ./scripts/screenshot-utils.nix
     ./scripts/brightness-control.nix
     ./scripts/keyboard-layout.nix
@@ -43,8 +44,8 @@
     xfce.thunar-archive-plugin # Archive support
     xfce.tumbler # Thumbnail service for image previews
 
-    # Dock
-    nwg-dock-hyprland # Dock for Hyprland
+    # Dock - now handled by Noctalia
+    # nwg-dock-hyprland
 
     # XWayland HiDPI support
     xorg.xrdb # X resources database for XWayland scaling

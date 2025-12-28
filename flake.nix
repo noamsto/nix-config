@@ -104,6 +104,11 @@
     # Pinned versions for stability - update quarterly
     vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     catppuccin = {
       url = "github:catppuccin/nix";
       inputs.nixpkgs.follows = "nixpkgs";

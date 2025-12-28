@@ -41,7 +41,6 @@
       dconf # dconf write for GTK settings
       libnotify # notify-send
       hyprland # hyprctl
-      swaynotificationcenter # swaync-client
       procps # pkill, pgrep
       kitty # kitty @ remote control
       tmux # tmux set/run-shell
@@ -55,6 +54,7 @@
       libsForQt5.qtstyleplugin-kvantum # kvantummanager
       jq # JSON state file handling
       fish # fish theme reload
+      quickshell # qs for Noctalia IPC
     ];
     text = ''
       # Theme source paths (Nix store, read-only) - for apps we don't generate themes for

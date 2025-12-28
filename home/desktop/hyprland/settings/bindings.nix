@@ -52,8 +52,8 @@ in {
       "$mainMod ALT, L, exec, hyprlock"
       "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
 
-      # logout menu
-      "$mainMod, Escape, exec, ${toggle "wleave" false} -p layer-shell --no-version-info --show-keybinds=true -C ~/.config/wleave/style.css"
+      # Session/logout menu (Noctalia)
+      "$mainMod, Escape, exec, noctalia-ipc sessionMenu toggle"
 
       # Move focus with SUPER+hjkl (using SUPER+ALT+L for right to avoid conflict with lock)
       "$mainMod, H, movefocus, l"

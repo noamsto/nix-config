@@ -11,6 +11,7 @@
     ]
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
       ./hyprland
+      ./noctalia
     ];
 
   programs = {
