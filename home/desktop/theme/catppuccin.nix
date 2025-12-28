@@ -1,22 +1,14 @@
 {
   inputs,
-  pkgs,
   lib,
   config,
   ...
 }: let
   themeToggleBin = "${config.programs.theme-toggle.package}/bin/theme-toggle";
-  catppuccin-btop = pkgs.fetchFromGitHub {
-    owner = "catppuccin";
-    repo = "btop";
-    rev = "f437574b600f1c6d932627050b15ff5153b58fa3";
-    sha256 = "sha256-mEGZwScVPWGu+Vbtddc/sJ+mNdD2kKienGZVUcTSl+c=";
-  };
 in {
   imports = [inputs.catppuccin.homeModules.catppuccin];
 
-  # Add latte theme for btop (catppuccin module only adds mocha)
-  xdg.configFile."btop/themes/catppuccin_latte.theme".source = "${catppuccin-btop}/themes/catppuccin_latte.theme";
+  # btop themes are now generated from palette in home/terminal/btop.nix
 
   # Clean up theme-managed files before Home Manager creates symlinks
   # This prevents "file would be clobbered" errors after theme-toggle modifies configs
@@ -28,6 +20,7 @@ in {
       "$HOME/.config/starship.toml" \
       "$HOME/.config/k9s/config.yaml" \
       "$HOME/.config/lazygit/config.yml" \
+      "$HOME/.config/lazydocker/config.yml" \
       "$HOME/.config/foot/foot.ini" \
       "$HOME/.config/yazi/theme.toml" \
       "$HOME/.config/Kvantum/kvantum.kvconfig"

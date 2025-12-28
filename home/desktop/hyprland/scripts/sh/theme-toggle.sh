@@ -11,6 +11,7 @@
 # - Vicinae via config JSON + server restart
 # - wleave via CSS swap (logout menu)
 # - lazygit via config.yml swap (requires restart)
+# - lazydocker via config.yml swap (requires restart)
 # - btop via btop.conf theme setting (requires restart)
 #
 # Requires app restart:
@@ -473,16 +474,17 @@ EOF
   chmod 644 "$lazygit_config"
 }
 
-# Update btop theme
+# Update btop theme (uses palette-generated themes)
 update_btop() {
   local theme="$1"
   local btop_theme
   log_debug "Updating btop to $theme"
 
+  # Use theme names from palette (DARK_THEME_NAME/LIGHT_THEME_NAME set by theme-toggle.nix)
   if [[ $theme == "light" ]]; then
-    btop_theme="catppuccin_latte"
+    btop_theme="$LIGHT_THEME_NAME"
   else
-    btop_theme="catppuccin_mocha"
+    btop_theme="$DARK_THEME_NAME"
   fi
 
   local btop_config="${XDG_CONFIG_HOME}/btop/btop.conf"
@@ -508,6 +510,42 @@ update_btop() {
     }
     mv "$tmp_config" "$btop_config"
   fi
+}
+
+# Update lazydocker theme (copies pre-generated config from themes directory)
+update_lazydocker() {
+  local theme="$1"
+  local lazydocker_theme
+  log_debug "Updating lazydocker to $theme"
+
+  # Use theme names from palette
+  if [[ $theme == "light" ]]; then
+    lazydocker_theme="$LIGHT_THEME_NAME"
+  else
+    lazydocker_theme="$DARK_THEME_NAME"
+  fi
+
+  local lazydocker_config="${XDG_CONFIG_HOME}/lazydocker/config.yml"
+  local theme_source="${XDG_CONFIG_HOME}/lazydocker/themes/${lazydocker_theme}.yml"
+
+  if [[ ! -f $theme_source ]]; then
+    log_debug "lazydocker theme source not found: $theme_source, skipping"
+    return 0
+  fi
+
+  # Ensure config directory exists
+  mkdir -p "$(dirname "$lazydocker_config")"
+
+  # Remove existing config if not writable (HM symlink)
+  if [[ -f $lazydocker_config && ! -w $lazydocker_config ]]; then
+    rm -f "$lazydocker_config"
+  fi
+
+  cp "$theme_source" "$lazydocker_config" || {
+    record_failure "lazydocker"
+    return 1
+  }
+  chmod 644 "$lazydocker_config"
 }
 
 # Update tmux catppuccin flavor
@@ -1128,6 +1166,7 @@ apply_theme() {
   update_starship "$theme" || true
   update_k9s "$theme" || true
   update_lazygit "$theme" || true
+  update_lazydocker "$theme" || true
   update_btop "$theme" || true
   update_bat "$theme" || true
   update_delta "$theme" || true
@@ -1220,6 +1259,7 @@ sync_theme() {
     starship) update_starship "$current" ;;
     k9s) update_k9s "$current" ;;
     lazygit) update_lazygit "$current" ;;
+    lazydocker) update_lazydocker "$current" ;;
     btop) update_btop "$current" ;;
     bat) update_bat "$current" ;;
     delta) update_delta "$current" ;;

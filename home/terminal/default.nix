@@ -17,8 +17,9 @@ in {
     ./zsh # Keep temporarily during migration
     ./tmux
     ./process_compose
-
     ./television
+    ./btop.nix
+    ./lazydocker.nix
   ];
   programs = {
     yazi = {
@@ -82,12 +83,6 @@ in {
             desc = "Dragon drop target (receive files)";
           }
         ];
-      };
-    };
-    btop = {
-      enable = true;
-      settings = {
-        vim_keys = true;
       };
     };
 
