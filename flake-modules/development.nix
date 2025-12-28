@@ -20,7 +20,7 @@
         pkgs.git
         pkgs.nh
         pkgs.nodePackages.prettier
-        pkgs.zsh
+        pkgs.fish
         pkgs.nix-output-monitor
         pkgs.just
         pkgs.statix

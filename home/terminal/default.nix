@@ -13,8 +13,7 @@ in {
   imports = [
     ./foot
     ./kitty
-    ./fish # Migrating from zsh to fish
-    ./zsh # Keep temporarily during migration
+    ./fish
     ./tmux
     ./process_compose
     ./television
@@ -24,7 +23,7 @@ in {
   programs = {
     yazi = {
       enable = true;
-      enableZshIntegration = true;
+      enableFishIntegration = true;
 
       plugins = {
         mount = pkgs.yaziPlugins.mount;

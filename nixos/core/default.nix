@@ -12,10 +12,10 @@
     ./clamav.nix
   ];
 
-  users.defaultUserShell = pkgs.zsh;
+  users.defaultUserShell = pkgs.fish;
 
   programs = {
-    zsh.enable = true;
+    fish.enable = true;
     dconf.enable = true;
     ssh.startAgent = false; # Explicitly disable to avoid conflicts with GCR SSH agent
     nix-ld = {
@@ -44,7 +44,7 @@
     "fs.inotify.max_queued_events" = 65536;
   };
 
-  environment.shells = with pkgs; [zsh];
+  environment.shells = with pkgs; [fish];
 
   services = {
     dbus.implementation = "broker";
