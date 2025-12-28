@@ -416,7 +416,7 @@
 
     fish = {
       enable = true;
-      generateCompletions = false; # TODO: issue https://github.com/nix-community/home-manager/issues/8178
+      generateCompletions = true; # Fixed in home-manager PR #8226 (Nov 2025)
 
       # Prefer abbreviations over aliases (shows full command, enables completions)
       preferAbbrs = true;
