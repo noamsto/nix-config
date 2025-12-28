@@ -1053,6 +1053,9 @@ signal_apps() {
 
   # GTK portal - restart to pick up new GTK theme settings (for Firefox file picker, etc.)
   systemctl --user restart xdg-desktop-portal-gtk.service 2>/dev/null || true
+
+  # Restart vicinae so it launches apps with the new GTK_THEME environment
+  systemctl --user restart vicinae.service 2>/dev/null || true
 }
 
 # =============================================================================

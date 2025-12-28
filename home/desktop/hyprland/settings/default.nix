@@ -38,6 +38,9 @@ in {
         "CHROMIUM_USER_FLAGS,--disable-accelerated-2d-canvas --disable-features=WaylandWpColorManagerV1"
 
         "WLR_NO_HARDWARE_CURSORS,1"
+
+        # Quickshell (Noctalia) icon theme for proper app icon lookup
+        "QS_ICON_THEME,Papirus-Dark"
       ];
 
       exec-once = [
@@ -57,7 +60,7 @@ in {
 
         "kitty --single-instance --instance-group=hypr"
 
-        "launch-dock"
+        # Dock now handled by Noctalia Shell
 
         # Valent - KDE Connect protocol for phone integration
         "valent --gapplication-service"

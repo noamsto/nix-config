@@ -199,14 +199,9 @@ main() {
     ;;
   esac
 
-  # Launch dock (unless undocked with lid closed or about to suspend)
-  if [ "$PROFILE" = "docked" ] || ! is_lid_closed; then
-    launch-dock &
-  fi
-
-  # Restart waybar to fix layout after monitor changes
-  log "Restarting waybar service..."
-  systemctl --user restart waybar.service || true
+  # Dock and bar now handled by Noctalia Shell (auto-adapts to monitor changes)
+  # Restart noctalia-shell if needed for monitor updates
+  systemctl --user restart noctalia-shell.service || true
 
   log "=== Completed successfully ==="
 }
