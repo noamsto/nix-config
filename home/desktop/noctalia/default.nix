@@ -164,7 +164,10 @@ in {
                 id = "KeyboardLayout";
                 displayMode = "forceOpen"; # Always show current layout
               }
-              {id = "Battery";} # Critical status
+              {
+                id = "Battery";
+                showPowerProfiles = true;
+              } # Critical status
               {id = "ControlCenter";} # Settings hub at edge
             ];
           };

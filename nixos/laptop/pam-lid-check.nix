@@ -31,7 +31,7 @@ in {
     # Applied to common auth services where fingerprint timeout is annoying
     security.pam.services =
       lib.genAttrs
-      ["sudo" "su" "polkit-1" "login" "hyprlock" "swaylock"]
+      ["sudo" "su" "polkit-1" "login" "noctalia-shell" "swaylock"]
       (_: {rules.auth.fprintd-lid-check = fprintdLidRule;});
   };
 }

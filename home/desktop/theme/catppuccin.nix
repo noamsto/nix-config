@@ -52,12 +52,8 @@ in {
     # Using standard Papirus icons (set in gtk.nix), not catppuccin-papirus-folders
     gtk.icon.enable = false;
 
-    # === HYPRLAND ===
-    # hyprlock always stays dark (mocha) regardless of theme toggle
-    hyprlock = {
-      enable = true;
-      flavor = "mocha";
-    };
+    # === LOCK SCREEN ===
+    # Using Noctalia's built-in lock screen (hyprlock removed)
 
     # === QT ===
     # Kvantum theming for Qt apps (runtime switchable via theme-toggle)

@@ -11,7 +11,8 @@ in {
 
     settings = {
       general = {
-        lock_cmd = "pidof hyprlock || ${lib.getExe config.programs.hyprlock.package}";
+        # Use Noctalia's built-in lock screen (replaces hyprlock)
+        lock_cmd = "noctalia-ipc lockScreen lock";
         before_sleep_cmd = "${pkgs.systemd}/bin/loginctl lock-session";
         after_sleep_cmd = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
         ignore_dbus_inhibit = false;

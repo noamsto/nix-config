@@ -49,7 +49,7 @@ in {
 
       "$mainMod, V, exec, vicinae vicinae://extensions/vicinae/clipboard/history"
 
-      "$mainMod ALT, L, exec, hyprlock"
+      "$mainMod ALT, L, exec, noctalia-ipc lockScreen lock"
       "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
 
       # Session/logout menu (Noctalia)
