@@ -1,6 +1,6 @@
 # Noctalia Shell - minimal desktop shell for Wayland
-# Replaces: waybar, swaync, nwg-dock, wlogout
-# Keeps: vicinae (launcher), hyprlock, theme-toggle system
+# Replaces: waybar, swaync, nwg-dock, wlogout, hyprlock
+# Keeps: vicinae (launcher), theme-toggle system
 #
 # Theme switching: Noctalia is the source of truth for dark/light mode.
 # When toggled (via keybind or GUI), Noctalia triggers theme-toggle via hook.
@@ -84,6 +84,9 @@ in {
     # Add helper scripts to PATH
     home.packages = [noctalia-ipc restore-wallpaper];
 
+    # Profile picture for Noctalia (symlinked to ~/.face)
+    home.file.".face".source = ./assets/avatar.png;
+
     # Add icon theme environment to Noctalia service for proper icon lookup
     systemd.user.services.noctalia-shell.Service.Environment = lib.mkForce [
       "NOCTALIA_SETTINGS_FALLBACK=%h/.config/noctalia/gui-settings.json"
@@ -118,9 +121,21 @@ in {
       # Copy each enabled plugin directory
       (lib.listToAttrs (map (plugin: {
           name = "noctalia/plugins/${plugin}";
-          value = {source = "${noctalia-plugins}/${plugin}";};
+          value = {
+            source = "${noctalia-plugins}/${plugin}";
+            # Use recursive for privacy-indicator so we can add settings.json
+            recursive = plugin == "privacy-indicator";
+          };
         })
         enabledPlugins))
+      # Plugin settings (privacy-indicator needs hideInactive)
+      {
+        "noctalia/plugins/privacy-indicator/settings.json".text = builtins.toJSON {
+          hideInactive = true;
+          iconSpacing = 4;
+          removeMargins = false;
+        };
+      }
     ];
 
     programs.noctalia-shell = {
@@ -154,10 +169,12 @@ in {
             # Right side: rarely used -> frequent -> critical -> hub
             right = [
               {id = "ScreenRecorder";} # Rarely used
-              {id = "plugin:privacy-indicator";} # Mic/camera/screen sharing
+              {id = "plugin:privacy-indicator";} # Configure hideInactive in GUI
               {id = "Tray";} # Background apps
-              {id = "DarkMode";} # Occasional toggle
+              {id = "DarkMode";} # Theme toggle
               {id = "NotificationHistory";} # Check unread
+              {id = "WiFi";}
+              {id = "Bluetooth";}
               {id = "Brightness";} # Hardware control
               {id = "Volume";} # Frequent hardware control
               {
@@ -168,7 +185,10 @@ in {
                 id = "Battery";
                 showPowerProfiles = true;
               } # Critical status
-              {id = "ControlCenter";} # Settings hub at edge
+              {
+                id = "ControlCenter";
+                useDistroLogo = true; # Show NixOS logo
+              }
             ];
           };
         };
@@ -197,6 +217,14 @@ in {
         # Brightness - enable DDC/CI for external monitors
         brightness = {
           enableDdcSupport = true;
+        };
+
+        # Night light - auto blue light filter
+        nightLight = {
+          enabled = true;
+          autoSchedule = true;
+          dayTemp = "6500";
+          nightTemp = "4000";
         };
 
         # System monitoring - enable GPU

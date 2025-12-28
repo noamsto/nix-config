@@ -130,15 +130,18 @@ configure_undocked() {
     log "Initiating lock + suspend"
     rm -f "$SUSPEND_LOCK_FILE"
     trap - EXIT
-    # Lock session before suspend to ensure security on resume
-    # This is the targeted fix for undock-with-lid-closed scenario
+
+    # Lock via loginctl (triggers hypridle's lock_cmd which handles Noctalia)
     loginctl lock-session
-    sleep 0.3
+
+    # Brief wait for lock to engage
+    sleep 1
+
     systemctl suspend
 
-    # After resume, exit and let HDM reconfigure
-    log "Resumed from suspend, exiting to allow HDM reconfiguration"
-    return
+    # After resume, exit immediately - don't run noctalia restart below
+    log "Resumed from suspend"
+    exit 0
   fi
 
   # Lid is open - proceed with normal undocked configuration
@@ -199,9 +202,7 @@ main() {
     ;;
   esac
 
-  # Dock and bar now handled by Noctalia Shell (auto-adapts to monitor changes)
-  # Restart noctalia-shell if needed for monitor updates
-  systemctl --user restart noctalia-shell.service || true
+  # Noctalia Shell auto-adapts to monitor changes, no restart needed
 
   log "=== Completed successfully ==="
 }
