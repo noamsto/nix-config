@@ -24,7 +24,7 @@
     obsidian
 
     youtube-tui
-    youtube-music
+    pear-desktop
 
     sublime-merge
 

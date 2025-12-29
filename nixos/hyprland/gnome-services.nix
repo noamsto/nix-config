@@ -17,6 +17,7 @@ in
       gnome.gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
       gvfs.enable = true;
     };
+
     programs.seahorse.enable = true;
     security.pam.services = {
       # Enable keyring unlock during actual login process

@@ -6,12 +6,7 @@
   terminal = "kitty";
   fileManager = "${lib.getExe pkgs.xfce.thunar}";
   browser = "${lib.getExe pkgs.firefox}";
-  youtube-music = "${lib.getExe pkgs.youtube-music}";
-
-  toggle = program: service: let
-    prog = builtins.substring 0 14 program;
-    runserv = lib.optionalString service "run-as-service";
-  in "pkill ${prog} || ${runserv} ${program}";
+  youtube-music = "${lib.getExe pkgs.pear-desktop}";
 
   runOnce = program: let
     progName = builtins.baseNameOf program;
