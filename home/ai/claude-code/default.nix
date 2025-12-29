@@ -70,6 +70,8 @@
           }
         ];
         # Permission prompt -> waiting for user
+        # Other notifications (idle_prompt, auth_success, etc.) -> processing
+        # This handles the case where user responds to permission dialog (no dedicated hook exists)
         Notification = [
           {
             matcher = "permission_prompt";
@@ -77,6 +79,16 @@
               {
                 type = "command";
                 command = "${seshUtils.claude-status-update}/bin/claude-status-update waiting";
+              }
+            ];
+          }
+          {
+            # Catch-all for non-permission notifications - helps reset from stale waiting state
+            matcher = "idle_prompt";
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update done";
               }
             ];
           }

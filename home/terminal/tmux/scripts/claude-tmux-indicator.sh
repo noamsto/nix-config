@@ -81,7 +81,7 @@ get_spinner_frame() {
   echo "${SPINNER_FRAMES[$frame_idx]}"
 }
 
-# Read pane state
+# Read pane state (with staleness check for "waiting")
 read_pane_state() {
   local pane="$1"
   local pane_file="${pane#%}"
@@ -89,22 +89,45 @@ read_pane_state() {
 
   [[ -f $state_file ]] || return 1
 
-  local state
+  local state timestamp now age
   state=$(grep "^state=" "$state_file" 2>/dev/null | cut -d= -f2)
+  timestamp=$(grep "^timestamp=" "$state_file" 2>/dev/null | cut -d= -f2)
+
+  # If "waiting" for more than 30s, treat as stale (permission was likely responded to)
+  # This works around missing hook for permission dialog response
+  if [[ $state == "waiting" && -n $timestamp ]]; then
+    now=$(date +%s)
+    age=$((now - timestamp))
+    if [[ $age -gt 30 ]]; then
+      # Stale waiting - assume processing (Claude responded to user's decision)
+      echo "processing"
+      return 0
+    fi
+  fi
 
   echo "$state"
 }
 
-# Read session aggregate state
+# Read session aggregate state (with staleness check for "waiting")
 read_session_state() {
   local sess="$1"
   local state_file="$SESSIONS_DIR/$sess"
 
   [[ -f $state_file ]] || return 1
 
-  local state count
+  local state count timestamp now age
   state=$(grep "^state=" "$state_file" 2>/dev/null | cut -d= -f2)
   count=$(grep "^count=" "$state_file" 2>/dev/null | cut -d= -f2)
+  timestamp=$(grep "^timestamp=" "$state_file" 2>/dev/null | cut -d= -f2)
+
+  # If "waiting" for more than 30s, treat as stale
+  if [[ $state == "waiting" && -n $timestamp ]]; then
+    now=$(date +%s)
+    age=$((now - timestamp))
+    if [[ $age -gt 30 ]]; then
+      state="processing"
+    fi
+  fi
 
   echo "$state:$count"
 }

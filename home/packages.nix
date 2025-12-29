@@ -81,7 +81,6 @@ in {
       glow # markdown previewer in terminal
 
       # media and archives - critical missing apps
-      mpv # video/audio player
       file-roller # archive manager (GNOME, lightweight)
 
       # system call monitoring

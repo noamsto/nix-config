@@ -8,6 +8,7 @@
     [
       ./theme
       ./easyeffects
+      ./mpv.nix
     ]
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
       ./hyprland
