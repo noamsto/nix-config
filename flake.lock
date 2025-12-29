@@ -825,11 +825,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1766978160,
-        "narHash": "sha256-EcaO3TFhEOLgH+D1PXk0+3xZAD7SZ443E7PQN/2Tmho=",
+        "lastModified": 1767018837,
+        "narHash": "sha256-sMa8NaM/nfElqiezqVdrg20BqRlfz/olk48hU0Mc5OU=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "06ac78b503efeafeeb190983f46b2fad7f816f32",
+        "rev": "edcea569dfdadb140d6e6960bdf91ecda19b3696",
         "type": "github"
       },
       "original": {
@@ -1297,11 +1297,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767033563,
-        "narHash": "sha256-rDXhWskwuZ5sL+/YvKWUAlZG85aiRwpRySb+JwfwFIs=",
+        "lastModified": 1767035112,
+        "narHash": "sha256-cGsWeGCqYNYpPm2Y/xBlBGVCFSN6Qi8waxe4os8oMuI=",
         "owner": "noamsto",
         "repo": "noctalia-shell",
-        "rev": "20aa7a768f44214f113816672c32f7e1f1661a51",
+        "rev": "543b75329b250d12b0337d21e2f7da5cc3a26da7",
         "type": "github"
       },
       "original": {
@@ -1638,11 +1638,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1766525018,
-        "narHash": "sha256-KxuDPpgX1Em+u3TmVJid6ZYmu4Ka1+jqo34fDzN61hE=",
+        "lastModified": 1767019742,
+        "narHash": "sha256-bHyS4YOZAzuo59t45do99055+9CFx9jtFQ0ai2xC6LM=",
         "owner": "Lassulus",
         "repo": "wrappers",
-        "rev": "7ea9ba94ed2bd1fa4ae37b2665498e1950180f8a",
+        "rev": "63876bd221447d902f909d6681f645c1554a983d",
         "type": "github"
       },
       "original": {
