@@ -170,13 +170,12 @@ in {
 
     # Keybindings
     keybindings = {
-      "ctrl+shift+t" = "new_tab";
-      "ctrl+shift+w" = "close_tab";
-      "ctrl+shift+right" = "next_tab";
-      "ctrl+shift+left" = "previous_tab";
+      # Font size
       "ctrl+equal" = "increase_font_size";
-      "ctrl+minus" = "decrease_font_size"; # Ctrl+- for zoom out
+      "ctrl+minus" = "decrease_font_size";
       "ctrl+shift+equal" = "restore_font_size";
+
+      # Clipboard
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+shift+v" = "paste_from_clipboard";
 
@@ -185,6 +184,28 @@ in {
 
       # Claude Code: Map Shift+Enter to Alt+Enter for newlines
       "shift+enter" = "send_text all \\x1b\\r";
+
+      # Disable tab/window features (using tmux instead)
+      "ctrl+shift+t" = "no_op";
+      "ctrl+shift+w" = "no_op";
+      "ctrl+shift+right" = "no_op";
+      "ctrl+shift+left" = "no_op";
+      "ctrl+shift+n" = "no_op";
+      "ctrl+shift+enter" = "no_op";
+      "ctrl+shift+]" = "no_op";
+      "ctrl+shift+[" = "no_op";
+      "ctrl+shift+." = "no_op";
+      "ctrl+shift+," = "no_op";
+      "ctrl+shift+q" = "no_op";
+      "ctrl+shift+1" = "no_op";
+      "ctrl+shift+2" = "no_op";
+      "ctrl+shift+3" = "no_op";
+      "ctrl+shift+4" = "no_op";
+      "ctrl+shift+5" = "no_op";
+      "ctrl+shift+6" = "no_op";
+      "ctrl+shift+7" = "no_op";
+      "ctrl+shift+8" = "no_op";
+      "ctrl+shift+9" = "no_op";
     };
   };
 

@@ -73,7 +73,6 @@ in {
     seshUtils.sesh-icon
     seshUtils.sesh-preview
     seshUtils.sesh-extract-name
-    seshUtils.worktree-session-hook
 
     # Claude status integration for tmux
     seshUtils.claude-status-update

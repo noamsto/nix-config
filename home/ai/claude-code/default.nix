@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   inputs,
   ...
 }: let
@@ -139,6 +140,11 @@
 in {
   # Import MCP profiles module (generates conditional MCP configs and aliases)
   imports = [./mcp-profiles.nix];
+
+  # Global Claude instructions - out-of-store symlink so Claude can edit it
+  # The file is tracked in nix-config repo
+  home.file.".claude/CLAUDE.md".source =
+    config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/ai/claude-code/CLAUDE.global.md";
 
   programs.claude-code = {
     enable = true;

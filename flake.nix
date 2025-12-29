@@ -105,7 +105,7 @@
     vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
     noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
+      url = "github:noamsto/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

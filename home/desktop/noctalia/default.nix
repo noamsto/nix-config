@@ -145,10 +145,10 @@ in {
       systemd.enable = true;
 
       settings = {
-        # Use predefined Catppuccin colorscheme (plural key!)
+        # Use predefined Monochrome colorscheme (plural key!)
         colorSchemes = {
           useWallpaperColors = false;
-          predefinedScheme = "Catppuccin";
+          predefinedScheme = "Monochrome";
           darkMode = true;
         };
 
