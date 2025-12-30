@@ -164,7 +164,11 @@ in {
               {id = "SystemMonitor";}
               # Network indicator removed due to contrast issues
               {id = "ActiveWindow";}
-              {id = "MediaMini";}
+              {
+                id = "MediaMini";
+                showAlbumArt = true;
+                showProgressRing = true;
+              }
             ];
             # Right side: rarely used -> frequent -> critical -> hub
             right = [
@@ -206,6 +210,7 @@ in {
         # General UI settings
         general = {
           animationSpeed = 1.0;
+          lockOnSuspend = false; # Managed by hypridle's before_sleep_cmd
         };
 
         # UI fonts

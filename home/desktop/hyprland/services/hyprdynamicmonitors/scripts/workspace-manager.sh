@@ -93,10 +93,10 @@ configure_docked() {
 configure_undocked() {
   log "Configuring undocked"
 
-  # Check lid state FIRST - suspend immediately if closed
-  # This must happen before hyprctl reload to avoid race with HDM killing the script
+  # Check lid state FIRST - spawn detached suspend handler if closed
+  # Must use setsid to survive HDM killing this script on profile switch
   if is_lid_closed; then
-    log "Lid closed while undocked - triggering suspend"
+    log "Lid closed while undocked - spawning suspend handler"
 
     # Check for stale lock (older than 30 seconds = way past the 2s debounce)
     if [ -f "$SUSPEND_LOCK_FILE" ]; then
@@ -111,37 +111,51 @@ configure_undocked() {
       fi
     fi
 
+    # Create lock BEFORE spawning to prevent race condition
     touch "$SUSPEND_LOCK_FILE"
 
-    # Ensure lock is cleaned up on exit (trap handles SIGTERM, errors, etc.)
-    trap 'rm -f "$SUSPEND_LOCK_FILE"' EXIT
+    # Spawn detached suspend handler - survives HDM killing this script
+    # Uses setsid to create new session, immune to parent termination
+    setsid bash -c "
+      LOG_FILE='$LOG_FILE'
+      SUSPEND_LOCK_FILE='$SUSPEND_LOCK_FILE'
 
-    # Confirm lid still closed after 2s
-    for _ in {1..4}; do
-      sleep 0.5
-      if ! is_lid_closed; then
-        log "Lid opened, canceling suspend"
-        rm -f "$SUSPEND_LOCK_FILE"
-        trap - EXIT
-        return
-      fi
-    done
+      log() { echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] [suspend-handler] \$*\" >>\"\$LOG_FILE\"; }
 
-    log "Initiating lock + suspend"
-    rm -f "$SUSPEND_LOCK_FILE"
-    trap - EXIT
+      is_lid_closed() {
+        gdbus call --system \
+          --dest org.freedesktop.UPower \
+          --object-path /org/freedesktop/UPower \
+          --method org.freedesktop.DBus.Properties.Get \
+          org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'
+      }
 
-    # Lock via loginctl (triggers hypridle's lock_cmd which handles Noctalia)
-    loginctl lock-session
+      trap 'rm -f \"\$SUSPEND_LOCK_FILE\"' EXIT
 
-    # Brief wait for lock to engage
-    sleep 1
+      log 'Debouncing for 2s...'
 
-    systemctl suspend
+      # Confirm lid still closed after 2s
+      for _ in {1..4}; do
+        sleep 0.5
+        if ! is_lid_closed; then
+          log 'Lid opened during debounce - canceling suspend'
+          exit 0
+        fi
+      done
 
-    # After resume, exit immediately - don't run noctalia restart below
-    log "Resumed from suspend"
-    exit 0
+      log 'Initiating lock + suspend'
+      rm -f \"\$SUSPEND_LOCK_FILE\"
+      trap - EXIT
+
+      loginctl lock-session
+      sleep 1
+      systemctl suspend
+
+      log 'Resumed from suspend'
+    " &>/dev/null &
+
+    log "Suspend handler spawned (detached)"
+    return
   fi
 
   # Lid is open - proceed with normal undocked configuration

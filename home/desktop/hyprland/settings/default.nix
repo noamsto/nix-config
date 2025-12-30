@@ -96,6 +96,12 @@ in {
           name = "logitech-usb-receiver-mouse";
           accel_profile = "flat";
         }
+        # TrackPoint (red point) - adaptive acceleration with reduced sensitivity
+        {
+          name = "tpps/2-elan-trackpoint";
+          sensitivity = -0.4; # Reduce overall speed (range: -1.0 to 1.0)
+          accel_profile = "adaptive"; # Natural acceleration - light touch = slow, hard push = fast
+        }
       ];
 
       general = {

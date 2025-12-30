@@ -8,11 +8,18 @@
 
   # Script to check lid state for PAM - exits 0 if open, 1 if closed
   # Uses full paths since PAM context has minimal environment
+  # Retry logic: After resume, lid state may need time to stabilize (up to 300ms)
   lidCheckScript = pkgs.writeShellScript "pam-lid-check" ''
-    if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
-      exit 1
-    fi
-    exit 0
+    for i in 1 2 3; do
+      if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
+        exit 1  # Lid definitely closed
+      fi
+      # Brief delay before retry (skip on last iteration)
+      if [ $i -lt 3 ]; then
+        ${pkgs.coreutils}/bin/sleep 0.1
+      fi
+    done
+    exit 0  # Lid open or state unreadable (assume open)
   '';
 
   # PAM rule to skip fprintd when lid is closed

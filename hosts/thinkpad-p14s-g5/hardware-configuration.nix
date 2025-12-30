@@ -30,8 +30,7 @@
     kernelParams = [
       "systemd.gpt_auto=0" # Solve annoying dmesg warning
       "amdgpu.dcdebugmask=0x10" # Fix GPU flickering and lag (P14s Gen 5)
-      # Note: acpi.ec_no_wakeup=1 was removed to allow dock wake from suspend
-      # Spurious AC-plug wakes are handled by suppress-ac-wake systemd service
+      "acpi.ec_no_wakeup=1" # Prevent spurious wake on AC plug/unplug (see docs/power-management.md)
     ];
     kernel.sysctl = {
       "vm.overcommit_memory" = 1;

@@ -29,14 +29,17 @@ in {
           enable = true;
           resyncTimer = "10m";
         };
+
+        # Disable USB autosuspend for Logitech receivers (Bolt/Unifying)
+        # Fixes: external keyboard not waking screen from DPMS off
+        udev.extraRules = ''
+          ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="046d", TEST=="power/control", ATTR{power/control}="on"
+        '';
       }
       // lib.optionalAttrs isLaptop {
         power-profiles-daemon.enable = true;
         upower.enable = true;
-        fprintd = {
-          enable = true;
-          package = pkgs.fprintd;
-        };
+        fprintd.enable = true;
       };
 
     hardware = {

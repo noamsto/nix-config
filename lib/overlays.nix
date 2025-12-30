@@ -14,12 +14,6 @@ inputs: [
     };
   })
 
-  (final: _: let
-    inherit (final.stdenv.hostPlatform) system;
-  in {
-    inherit (inputs.nixpkgs-fprintd-1_94_2.legacyPackages.${system}) fprintd;
-  })
-
   # Override nix-search-tv with flake version
   (final: _: {
     nix-search-tv = inputs.nix-search-tv.packages.${final.stdenv.hostPlatform.system}.default;

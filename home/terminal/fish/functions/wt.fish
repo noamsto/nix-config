@@ -6,15 +6,28 @@ function wt --description 'Git worktree + tmux session manager'
     set -l args
 
     for arg in $argv
-        switch $arg
-            case -y --yes
+        # Handle combined short flags like -ymq
+        if string match -rq '^-[ymq]+$' -- $arg
+            if string match -q '*y*' -- $arg
                 set skip_prompt true
-            case -m --move
+            end
+            if string match -q '*m*' -- $arg
                 set move_window true
-            case -q --quiet
+            end
+            if string match -q '*q*' -- $arg
                 set quiet true
-            case '*'
-                set -a args $arg
+            end
+        else
+            switch $arg
+                case -y --yes
+                    set skip_prompt true
+                case -m --move
+                    set move_window true
+                case -q --quiet
+                    set quiet true
+                case '*'
+                    set -a args $arg
+            end
         end
     end
 
@@ -25,6 +38,8 @@ function wt --description 'Git worktree + tmux session manager'
             __wt_list
         case remove rm
             __wt_remove $args[2..-1]
+        case main
+            __wt_main $skip_prompt $move_window $quiet
         case help -h --help ""
             __wt_help
         case "*"
@@ -46,6 +61,7 @@ function __wt_help
     echo "  wt -m <branch>        Move current window to new session"
     echo "  wt -q <branch>        Quiet mode (only output path)"
     echo "  wt -ymq <branch>      Combine flags (for Claude/scripts)"
+    echo "  wt main               Switch to root repository session"
     echo "  wt list               List all worktrees"
     echo "  wt remove <branch>    Remove worktree + kill session"
     echo "  wt help               Show this help"
@@ -220,6 +236,23 @@ function __wt_switch_to_session
         echo ""
         echo "Worktree: $worktree_path"
     end
+end
+
+function __wt_main
+    set -l skip_prompt $argv[1]
+    set -l move_window $argv[2]
+    set -l quiet $argv[3]
+
+    if not git rev-parse --git-dir >/dev/null 2>&1
+        echo "Error: Not in a git repository" >&2
+        return 1
+    end
+
+    set -l repo_root (git rev-parse --show-toplevel)
+    set -l repo_name (basename $repo_root)
+    set -l session_name "$repo_name/main"
+
+    __wt_switch_to_session $session_name $repo_root $move_window $quiet
 end
 
 function __wt_list
