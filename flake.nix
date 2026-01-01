@@ -102,7 +102,7 @@
     vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
     noctalia = {
-      url = "path:/home/noams/Data/git/hyprland/noctalia-shell";
+      url = "github:noamsto/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -168,7 +168,6 @@
 
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     wrappers.url = "github:Lassulus/wrappers";

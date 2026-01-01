@@ -9,12 +9,6 @@
         env = {};
       };
 
-      sequential-thinking = {
-        command = "${pkgs.mcp-server-sequential-thinking}/bin/mcp-server-sequential-thinking";
-        args = [];
-        env = {};
-      };
-
       tavily = {
         command = "${pkgs.tavily-mcp}/bin/tavily-mcp";
         args = [];

@@ -43,9 +43,16 @@ cleanup_stale_panes() {
   done
 }
 
+# Sanitize session name for use as filename (replace / with _)
+sanitize_filename() {
+  echo "${1//\//_}"
+}
+
 # Function to update session aggregate state
 update_session_aggregate() {
   local sess="$1"
+  local sess_file
+  sess_file=$(sanitize_filename "$sess")
   local has_waiting=false
   local has_processing=false
   local has_done=false
@@ -80,15 +87,15 @@ update_session_aggregate() {
     agg_state="done"
   fi
 
-  # Write session aggregate
+  # Write session aggregate (use sanitized filename)
   if [[ $count -gt 0 ]]; then
-    cat >"$SESSIONS_DIR/$sess" <<EOF
+    cat >"$SESSIONS_DIR/$sess_file" <<EOF
 state=$agg_state
 count=$count
 timestamp=$(date +%s)
 EOF
   else
-    rm -f "$SESSIONS_DIR/$sess"
+    rm -f "$SESSIONS_DIR/$sess_file"
   fi
 }
 

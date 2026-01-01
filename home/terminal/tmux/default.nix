@@ -304,11 +304,9 @@ in {
       set -g prompt-cursor-colour "colour183"  # Catppuccin mauve (#cba6f7)
 
       set -g status-left ""
-      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #S },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #S }}"
+      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #{=/25/...:session_name} },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #{=/25/...:session_name} }}"
       set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
-      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{window_name} "
-      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
-      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_blue}]  #{=/-32/...:#{s|$USER|~|:#{b:pane_current_path}}} "
+      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{=/20/...:window_name} "
 
       set -g status-right ""
       set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│ "
