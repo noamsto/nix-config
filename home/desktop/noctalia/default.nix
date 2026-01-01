@@ -44,13 +44,8 @@
     fi
   '';
 
-  # Fetch Noctalia plugins from official repo
-  noctalia-plugins = pkgs.fetchFromGitHub {
-    owner = "noctalia-dev";
-    repo = "noctalia-plugins";
-    rev = "main";
-    sha256 = "sha256-wmWUjG9jQS0eygjWUKnKsTqMTXC6iYEqmz08OhvW1Yg=";
-  };
+  # Noctalia plugins from flake input (update with: nix flake update noctalia-plugins)
+  inherit (inputs) noctalia-plugins;
 
   # Plugins to enable
   enabledPlugins = [
@@ -156,6 +151,7 @@ in {
         bar = {
           position = "top";
           floating = false;
+          density = "comfortable";
           widgets = {
             # Left side: clock, system monitor, network, active window
             left = [

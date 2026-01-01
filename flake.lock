@@ -825,11 +825,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1767151028,
-        "narHash": "sha256-jvoOvubDeM0cuO87BU23wVfMaeKBHDMkwhx1Nmf9wUA=",
+        "lastModified": 1767192721,
+        "narHash": "sha256-+hD5e3GdzNgY1ijeWmt1ySjjOfWEs3dWz/h/6wSBlJs=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "41a0d4896e2a79780140d033724e3f526169a2e5",
+        "rev": "0cfdf2f732581c50e11735bdb5b1200cdcab4a1d",
         "type": "github"
       },
       "original": {
@@ -980,11 +980,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1767070591,
-        "narHash": "sha256-b0aM3221Pw6vbACFqZrVzZjMNqXVPi1dvgLr8QTbajc=",
+        "lastModified": 1767185284,
+        "narHash": "sha256-ljDBUDpD1Cg5n3mJI81Hz5qeZAwCGxon4kQW3Ho3+6Q=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "9b3c38bf6c260d0e88154ef07fa833fa845bfd14",
+        "rev": "40b1a28dce561bea34858287fbb23052c3ee63fe",
         "type": "github"
       },
       "original": {
@@ -1281,14 +1281,30 @@
         ]
       },
       "locked": {
-        "lastModified": 1767166384,
-        "narHash": "sha256-uegRRURQSqUI8gpClxfOiyFOr5NmSN6Hb9WgAkHStHk=",
+        "lastModified": 1767205200,
+        "narHash": "sha256-ScQG5pLjbuRLshY8LI+AbI87W2UyUMVfEbvyF4hW1cs=",
         "path": "/home/noams/Data/git/hyprland/noctalia-shell",
         "type": "path"
       },
       "original": {
         "path": "/home/noams/Data/git/hyprland/noctalia-shell",
         "type": "path"
+      }
+    },
+    "noctalia-plugins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767124903,
+        "narHash": "sha256-iO6oRbB8i/MkNY2zUuEy4an6tYoY5Qnxt6z2xU9511w=",
+        "owner": "noctalia-dev",
+        "repo": "noctalia-plugins",
+        "rev": "e41dffb965ccb3c2b1e3a69a5bf153c99525e26a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "noctalia-plugins",
+        "type": "github"
       }
     },
     "pre-commit": {
@@ -1380,6 +1396,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-stable": "nixpkgs-stable",
         "noctalia": "noctalia",
+        "noctalia-plugins": "noctalia-plugins",
         "pre-commit-hooks": "pre-commit-hooks",
         "systems": "systems_5",
         "treefmt-nix": "treefmt-nix_3",

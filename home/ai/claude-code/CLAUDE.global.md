@@ -81,8 +81,13 @@ cd "$(wt -ymq <branch-name>)"
 ```
 
 Flags:
+
 - `-y` / `--yes`: Skip confirmation prompts
 - `-m` / `--move`: Move current tmux window to new session
 - `-q` / `--quiet`: Only output the worktree path (for scripting)
 
 This creates the worktree, creates a tmux session, moves the current window to it, and outputs the path for cd.
+
+## Shell Preference
+
+I use fish shell, not bash. Provide shell commands in fish syntax.

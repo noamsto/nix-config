@@ -106,6 +106,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    noctalia-plugins = {
+      url = "github:noctalia-dev/noctalia-plugins";
+      flake = false;
+    };
+
     catppuccin = {
       url = "github:catppuccin/nix";
       inputs.nixpkgs.follows = "nixpkgs";

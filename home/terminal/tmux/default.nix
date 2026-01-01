@@ -40,9 +40,9 @@
     };
     icons = {
       claude = "🧠";
-      nh = "#[bold,fg=#{@thm_sapphire}]#[none,fg=default]";
-      fish = "#[bold,fg=#{@thm_teal}]󰈺#[none,fg=default]";
-      process-compose = "#[bold,fg=#{@thm_peach}]#[none,fg=default]";
+      nh = "❄️";
+      fish = "🐟";
+      process-compose = "⚙️";
     };
   };
 
@@ -274,7 +274,7 @@ in {
 
       # Sync window name with terminal name
       set-option -g set-titles on
-      set-option -g set-titles-string "#S / #W"
+      set-option -g set-titles-string "#S / #{pane_current_command}"
 
 
       # Catppucin
