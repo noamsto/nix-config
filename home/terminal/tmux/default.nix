@@ -86,6 +86,10 @@ in {
 
     # Pane border styling
     seshUtils.tmux-set-pane-border
+
+    # Status bar helpers
+    seshUtils.tmux-branch-display
+    seshUtils.tmux-dir-display
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -289,12 +293,12 @@ in {
       set -g status 2
 
       # Line 0: Context (session on left │ branch + dir on right)
-      # Branch: use @branch if set, otherwise get from git
-      # Dir: show "/" if same as branch, otherwise show basedir
-      set -g status-format[0] "#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_green}]} S: #S #[align=right,fg=#{@thm_mauve}]B: #{?#{@branch},#{@branch},#(git -C \"#{pane_current_path}\" branch --show-current 2>/dev/null || echo -)} #[fg=#{@thm_overlay_0}]│#[fg=#{@thm_blue}] D: #{b:pane_current_path} "
+      # Branch: @branch (stable wt identifier) > git branch (fallback)
+      # Dir: "/" if same as branch, otherwise basedir
+      set -g status-format[0] "#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_green}]} S: #S #[align=right,fg=#{@thm_mauve}]B: #(tmux-branch-display '#{@branch}' '#{pane_current_path}') #[fg=#{@thm_overlay_0}]│#[fg=#{@thm_blue}] D: #(tmux-dir-display '#{@branch}' '#{pane_current_path}') "
 
-      # Line 1: Windows (left-aligned, matching indent with line 0)
-      set -g status-format[1] "#[bg=#{@thm_bg},fg=#{@thm_subtext_0}] #{W:#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_mauve}],}#I: #{window_name}}"
+      # Line 1: Windows (left-aligned, with claude indicator)
+      set -g status-format[1] "#[bg=#{@thm_bg},fg=#{@thm_subtext_0}] #{W:#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_mauve}],}#I: #{window_name} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values

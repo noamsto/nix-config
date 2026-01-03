@@ -18,4 +18,8 @@
 
   # Pane border styling
   tmux-set-pane-border = pkgs.writeShellScriptBin "tmux-set-pane-border" (builtins.readFile ./scripts/tmux-set-pane-border.sh);
+
+  # Status bar helpers
+  tmux-branch-display = pkgs.writeShellScriptBin "tmux-branch-display" (builtins.readFile ./scripts/tmux-branch-display.sh);
+  tmux-dir-display = pkgs.writeShellScriptBin "tmux-dir-display" (builtins.readFile ./scripts/tmux-dir-display.sh);
 }
