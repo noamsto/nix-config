@@ -165,7 +165,8 @@ in {
       startup_session = "none";
 
       # Default shell command - tmux integration
-      shell = "${pkgs.fish}/bin/fish -l -c 'TMUX_TMPDIR=/run/user/$(id -u) tmux attach || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s main'";
+      # Connect to nix-config session, create it in ~/nix-config if it doesn't exist
+      shell = "${pkgs.fish}/bin/fish -l -c 'TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s nix-config -c ~/nix-config'";
     };
 
     # Keybindings

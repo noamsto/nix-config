@@ -94,7 +94,7 @@ in {
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
 
-  # Start tmux server on login
+  # Start tmux server on login with default nix-config session
   systemd.user.services.tmux-startup = {
     Unit = {
       Description = "Start tmux server on login";
@@ -107,8 +107,10 @@ in {
     in {
       Type = "forking";
       ExecStartPre = "${lib.getExe' pkgs.systemd "systemctl"} --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP COLORTERM TERM TERMINFO";
-      ExecStart = "-${tmux-bin} new -s main -d";
-      ExecStop = "-${tmux-bin} kill-session -t main";
+      # Create session if it doesn't exist, or succeed silently if it does
+      ExecStart = "-${tmux-bin} new -s nix-config -c %h/nix-config -d";
+      # Don't kill session on stop - let it persist across home-manager switches
+      RemainAfterExit = true;
       Environment = [
         "COLORTERM=truecolor"
         "TERM=xterm-kitty"
@@ -292,13 +294,15 @@ in {
       # 2-line status bar (tmux 3.4+)
       set -g status 2
 
-      # Line 0: Context (session on left │ branch + dir on right)
-      # Branch: @branch (stable wt identifier) > git branch (fallback)
-      # Dir: "/" if same as branch, otherwise basedir
-      set -g status-format[0] "#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_green}]} S: #S #[align=right,fg=#{@thm_mauve}]B: #(tmux-branch-display '#{@branch}' '#{pane_current_path}') #[fg=#{@thm_overlay_0}]│#[fg=#{@thm_blue}] D: #(tmux-dir-display '#{@branch}' '#{pane_current_path}') "
+      # Line 0: Session (left) │ Branch (right)
+      # Session: mauve (subtle), prefix: red
+      # Continuum save script runs invisibly at start to trigger periodic saves
+      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]}  #S #[align=right,fg=#{@thm_blue}] #(tmux-branch-display '#{@branch}' '#{pane_current_path}') "
 
-      # Line 1: Windows (left-aligned, with claude indicator)
-      set -g status-format[1] "#[bg=#{@thm_bg},fg=#{@thm_subtext_0}] #{W:#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_mauve}],}#I: #{window_name} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}"
+      # Line 1: Windows (left) │ Dir (right)
+      # Active window: green + bold (prominent), inactive: subtext
+      # Zoom icon (󰁌) shown when window has zoomed pane
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}] #{W:#[fg=#{@thm_subtext_0}#,nobold]#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_green}#,bold],}#I: #{window_name}#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}#[align=right,fg=#{@thm_subtext_0},bold] #(tmux-dir-display '#{@branch}' '#{pane_current_path}') "
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values
@@ -325,14 +329,9 @@ in {
       set -wg automatic-rename on
       set -g automatic-rename-format "Window"
 
-      # Load continuum manually after status line configuration
-      set -g @continuum-restore 'on'
-      set -g @continuum-save-interval '10'
-      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
-
       run-shell ${tmux-nerd-font-window-name}/share/tmux-plugins/tmux-nerd-font-window-name/tmux-nerd-font-window-name.tmux
 
-      # Load tmux-fingers LAST to ensure all settings are ready
+      # Load tmux-fingers after nerd-font-window-name
       # Catppuccin Mocha colors
       set -g @fingers-hint-style "fg=colour234,bg=colour183,bold"           # Crust on Mauve
       set -g @fingers-highlight-style "fg=colour216,bg=colour236"           # Peach on Surface0
@@ -354,6 +353,12 @@ in {
       # Set pane-border-format with expanded @thm_* color values
       # Must run after catppuccin theme loads (which sets @thm_* variables)
       run-shell "tmux-set-pane-border"
+
+      # Load continuum LAST - after all other plugins and configuration
+      # This ensures session restoration works correctly with all features enabled
+      set -g @continuum-restore 'on'
+      set -g @continuum-save-interval '10'
+      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
     '';
   };
 }

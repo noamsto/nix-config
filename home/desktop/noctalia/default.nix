@@ -153,13 +153,12 @@ in {
           floating = false;
           density = "comfortable";
           widgets = {
-            # Left side: workspace indicator, system monitor, active window
+            # Left side: clock, system monitor, active window
             left = [
               {id = "plugin:catwalk";}
               {
-                id = "Workspace"; # Singular!
-                labelMode = "index";
-                showLabelsOnlyWhenOccupied = true;
+                id = "Clock";
+                formatHorizontal = "HH:mm";
               }
               {
                 id = "SystemMonitor";
@@ -179,11 +178,12 @@ in {
                 showProgressRing = true;
               }
             ];
-            # Center: time only
+            # Center: workspace indicator
             center = [
               {
-                id = "Clock";
-                formatHorizontal = "HH:mm";
+                id = "Workspace"; # Singular!
+                labelMode = "index";
+                showLabelsOnlyWhenOccupied = true;
               }
             ];
             # Right side: rarely used -> frequent -> critical -> hub
