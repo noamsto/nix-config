@@ -236,7 +236,9 @@ in {
       bind s choose-tree -Zs -O name \
         -F '#{?window_id,#{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}"),#{session_name} │ #(claude-priority-window "#{session_name}" --display)}' \
         'run-shell "tmux switch-client -t \"$(claude-priority-window \"%1\" --target)\""'
-      bind w choose-tree -Zw -O name
+      # Window picker - built-in choose-tree with windows expanded, Claude indicator
+      bind w choose-tree -Zw -O name \
+        -F '#{window_index}: #{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}")  #{?pane_current_command,#{pane_current_command},}'
 
       # Create new session with name prompt (Prefix+N)
       bind N command-prompt -p "New session name:" "new-session -s '%%'"
@@ -277,14 +279,22 @@ in {
       set-option -g set-titles-string "#S / #{pane_current_command}"
 
 
-      # Catppucin
+      # Catppuccin + 2-line status bar
       set -g allow-rename off
       set -g status-position top
-      set -g status-justify "absolute-centre"
       set -g status-interval 1
-      set -g status-left-length 100
-      set -g status-right-length 100
       set -g status-style "bg=#{@thm_bg}"
+
+      # 2-line status bar (tmux 3.4+)
+      set -g status 2
+
+      # Line 0: Context (session on left │ branch + dir on right)
+      # Branch: use @branch if set, otherwise get from git
+      # Dir: show "/" if same as branch, otherwise show basedir
+      set -g status-format[0] "#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_green}]} S: #S #[align=right,fg=#{@thm_mauve}]B: #{?#{@branch},#{@branch},#(git -C \"#{pane_current_path}\" branch --show-current 2>/dev/null || echo -)} #[fg=#{@thm_overlay_0}]│#[fg=#{@thm_blue}] D: #{b:pane_current_path} "
+
+      # Line 1: Windows (left-aligned, matching indent with line 0)
+      set -g status-format[1] "#[bg=#{@thm_bg},fg=#{@thm_subtext_0}] #{W:#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_mauve}],}#I: #{window_name}}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values
@@ -293,6 +303,10 @@ in {
       setw -g pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
       setw -g pane-border-style "bg=#{@thm_bg},fg=#{@thm_overlay_1}"
       setw -g pane-border-lines heavy
+
+      # Pane background: dim inactive panes to make active pane stand out
+      set -g window-style "fg=#{@thm_text},bg=#{@thm_mantle}"
+      set -g window-active-style "fg=#{@thm_text},bg=#{@thm_bg}"
 
       # Pane scrollbars (tmux 3.6+) - disabled to prevent resize issues
       set -g pane-scrollbars off
@@ -303,31 +317,9 @@ in {
       set -g prompt-cursor-style "blinking-bar"
       set -g prompt-cursor-colour "colour183"  # Catppuccin mauve (#cba6f7)
 
-      set -g status-left ""
-      set -ga status-left "#{?client_prefix,#{#[bg=#{@thm_red},fg=#{@thm_bg},bold]  #{=/25/...:session_name} },#{#[bg=#{@thm_bg},fg=#{@thm_green}]  #{=/25/...:session_name} }}"
-      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│"
-      set -ga status-left "#[bg=#{@thm_bg},fg=#{@thm_mauve}] #{=/20/...:window_name} "
-
-      set -g status-right ""
-      set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_overlay_0},none]│ "
-      set -ga status-right "#[bg=#{@thm_bg},fg=#{@thm_blue}] #H "
-
-      # Window look and feel with nerd font icons
+      # Window settings for nerd font plugin
       set -wg automatic-rename on
       set -g automatic-rename-format "Window"
-
-      # Window status with Claude indicator
-      # Use subtext colors for better contrast in light theme (rosewater is too light)
-      set -g window-status-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
-      set -g window-status-style "bg=#{@thm_bg},fg=#{@thm_subtext_0}"
-      set -g window-status-last-style "bg=#{@thm_bg},fg=#{@thm_subtext_1}"
-      set -g window-status-activity-style "bg=#{@thm_red},fg=#{@thm_bg}"
-      set -g window-status-bell-style "bg=#{@thm_red},fg=#{@thm_bg},bold"
-      set -gF window-status-separator "#[bg=#{@thm_bg},fg=#{@thm_overlay_0}]│"
-
-      set -g window-status-current-format " #I#{?window_zoomed_flag,#{E:@catppuccin_window_flags_icon_zoom},} #(claude-tmux-indicator --window '#{session_name}:#{window_index}') "
-      set -g window-status-current-style "bg=#{@thm_bg},fg=#{@thm_mauve},bold"
-
 
       # Load continuum manually after status line configuration
       set -g @continuum-restore 'on'

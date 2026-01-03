@@ -53,27 +53,31 @@ function wt --description 'Git worktree + tmux session manager'
 end
 
 function __wt_help
-    echo "Git Worktree + Tmux Session Manager"
+    echo "Git Worktree + Tmux Window Manager"
     echo ""
     echo "Usage:"
     echo "  wt <branch>           Smart switch/create (prompts before creating)"
     echo "  wt -y <branch>        Skip prompts"
-    echo "  wt -m <branch>        Move current window to new session"
+    echo "  wt -m <branch>        Move current window to repo session"
     echo "  wt -q <branch>        Quiet mode (only output path)"
     echo "  wt -ymq <branch>      Combine flags (for Claude/scripts)"
-    echo "  wt main               Switch to root repository session"
+    echo "  wt main               Switch to root repository window"
     echo "  wt list               List all worktrees"
-    echo "  wt remove <branch>    Remove worktree + kill session"
+    echo "  wt remove <branch>    Remove worktree + kill window"
     echo "  wt help               Show this help"
     echo ""
+    echo "Model: Session = Project, Window = Worktree"
+    echo "  • One tmux session per repository (e.g., 'nix-config')"
+    echo "  • One window per worktree/branch (e.g., 'feat-x', 'fix-y')"
+    echo "  • Fast switching between branches: \`n / \`p"
+    echo ""
     echo "Smart mode:"
-    echo "  • Worktree exists     → switch to session"
+    echo "  • Worktree exists     → switch to window"
     echo "  • Branch exists       → prompt to create worktree"
     echo "  • Branch not found    → prompt to create new branch"
     echo ""
     echo "Claude usage:  cd \"\$(wt -ymq feature-x)\""
     echo ""
-    echo "Session names: repo-name/branch-name"
     echo "Worktree location: .worktrees/<branch-name>"
 end
 
@@ -97,7 +101,8 @@ function __wt_smart
     # Case 1: Worktree already exists → switch to it
     set -l existing_worktree ""
     for line in (git worktree list 2>/dev/null)
-        if string match -rq "\[$branch\]\$" -- $line
+        # Use single quotes for regex anchors, double quotes for variable
+        if string match -rq '\['"$branch"'\]$' -- $line
             set existing_worktree (string split -f1 " " -- $line)
             break
         end
@@ -195,37 +200,127 @@ function __wt_create_worktree
     __wt_switch_to_session $session_name $worktree_path $move_window $quiet
 end
 
-# Switch to or create tmux session
+# Helper: find window index by @worktree option
+function __wt_find_window_by_worktree
+    set -l session $argv[1]
+    set -l worktree $argv[2]
+    # List windows with their @worktree option and find matching one
+    for line in (tmux list-windows -t "$session" -F '#{window_index}:#{@worktree}' 2>/dev/null)
+        set -l idx (string split -f1 ':' -- $line)
+        set -l wt (string split -f2 ':' -- $line)
+        if test "$wt" = "$worktree"
+            echo $idx
+            return 0
+        end
+    end
+    return 1
+end
+
+# Switch to or create tmux session/window
+# Uses window-per-worktree model: one session per repo, windows per branch
+# Windows are tracked by @worktree option, not by name (lets nerd-font plugin work)
 function __wt_switch_to_session
-    set -l session_name $argv[1]
+    set -l session_name $argv[1]  # Format: repo-name/branch
     set -l worktree_path $argv[2]
     set -l move_window $argv[3]
     set -l quiet $argv[4]
 
+    # Parse repo and branch from session_name
+    set -l repo_name (string split -f1 '/' -- $session_name)
+    set -l branch_name (string split -f2 '/' -- $session_name)
+
     if test -n "$TMUX"
-        # Inside tmux
-        if not tmux has-session -t "$session_name" 2>/dev/null
-            tmux new-session -d -s "$session_name" -c "$worktree_path"
-            if test "$quiet" = false
-                echo "✓ Session created: $session_name"
-            end
+        # Inside tmux - use window-per-worktree model
+        set -l current_session (tmux display-message -p '#{session_name}')
+
+        # Check if we're already in a session for this repo
+        set -l in_repo_session false
+        if test "$current_session" = "$repo_name"; or string match -q "$repo_name/*" -- "$current_session"
+            set in_repo_session true
         end
 
-        if test "$move_window" = true
-            # Move current window to the new session
-            tmux move-window -t "$session_name"
-            if test "$quiet" = false
-                echo "✓ Window moved to: $session_name"
+        if test "$in_repo_session" = true
+            # Already in repo session - create/switch to window
+            set -l target_session "$current_session"
+
+            # Check if window already exists (by @worktree option)
+            set -l window_idx (__wt_find_window_by_worktree "$target_session" "$worktree_path")
+
+            if test -n "$window_idx"
+                # Window exists - switch to it
+                tmux select-window -t "$target_session:$window_idx"
+                if test "$quiet" = false
+                    echo "✓ Switched to window: $branch_name"
+                end
+            else
+                # Create new window (no name - let nerd-font plugin handle it)
+                tmux new-window -t "$target_session" -c "$worktree_path"
+                # Store worktree path and branch for identification and display
+                tmux set-option -w @worktree "$worktree_path"
+                tmux set-option -w @branch "$branch_name"
+                if test "$quiet" = false
+                    echo "✓ Window created: $branch_name"
+                end
             end
         else
-            tmux switch-client -t "$session_name"
+            # Not in repo session - create/switch to session
+            if not tmux has-session -t "$repo_name" 2>/dev/null
+                # Create new session (no window name)
+                tmux new-session -d -s "$repo_name" -c "$worktree_path"
+                tmux set-option -t "$repo_name" -w @worktree "$worktree_path"
+                tmux set-option -t "$repo_name" -w @branch "$branch_name"
+                if test "$quiet" = false
+                    echo "✓ Session created: $repo_name"
+                end
+            else
+                # Session exists - add window if needed
+                set -l window_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+                if test -z "$window_idx"
+                    tmux new-window -t "$repo_name" -c "$worktree_path"
+                    tmux set-option -t "$repo_name" -w @worktree "$worktree_path"
+                    tmux set-option -t "$repo_name" -w @branch "$branch_name"
+                end
+            end
+
+            # Find the window index for switching
+            set -l target_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+
+            if test "$move_window" = true
+                # Move current window to the repo session
+                tmux move-window -t "$repo_name"
+                if test "$quiet" = false
+                    echo "✓ Window moved to: $repo_name"
+                end
+            else
+                if test -n "$target_idx"
+                    tmux switch-client -t "$repo_name:$target_idx"
+                else
+                    tmux switch-client -t "$repo_name"
+                end
+            end
         end
     else
-        # Outside tmux
-        if tmux has-session -t "$session_name" 2>/dev/null
-            sesh connect "$session_name"
+        # Outside tmux - create session with window
+        if tmux has-session -t "$repo_name" 2>/dev/null
+            # Check if window exists
+            set -l window_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+            if test -z "$window_idx"
+                tmux new-window -t "$repo_name" -c "$worktree_path"
+                tmux set-option -t "$repo_name" -w @worktree "$worktree_path"
+                tmux set-option -t "$repo_name" -w @branch "$branch_name"
+            end
+            set -l target_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+            if test -n "$target_idx"
+                sesh connect "$repo_name:$target_idx"
+            else
+                sesh connect "$repo_name"
+            end
         else
-            sesh connect "$session_name" --root "$worktree_path"
+            # Create new session
+            tmux new-session -d -s "$repo_name" -c "$worktree_path"
+            tmux set-option -t "$repo_name" -w @worktree "$worktree_path"
+            tmux set-option -t "$repo_name" -w @branch "$branch_name"
+            sesh connect "$repo_name"
         end
     end
 
@@ -250,6 +345,7 @@ function __wt_main
 
     set -l repo_root (git rev-parse --show-toplevel)
     set -l repo_name (basename $repo_root)
+    # Use repo/main format so __wt_switch_to_session can parse it
     set -l session_name "$repo_name/main"
 
     __wt_switch_to_session $session_name $repo_root $move_window $quiet
@@ -279,12 +375,11 @@ function __wt_remove
     end
 
     set -l repo_name (basename (git rev-parse --show-toplevel))
-    set -l session_name "$repo_name/$branch"
 
     # Find worktree path from git worktree list
     set -l worktree_path ""
     for line in (git worktree list 2>/dev/null)
-        if string match -rq "\[$branch\]\$" -- $line
+        if string match -rq '\['"$branch"'\]$' -- $line
             set worktree_path (string split -f1 " " -- $line)
             break
         end
@@ -299,17 +394,22 @@ function __wt_remove
     end
 
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🗑️  Removing worktree + tmux session"
+    echo "🗑️  Removing worktree + tmux window"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    # Kill tmux session if it exists
-    if tmux has-session -t "$session_name" 2>/dev/null
-        echo "Killing tmux session: $session_name"
-        tmux kill-session -t "$session_name"
-        echo "✓ Session killed"
+    # Kill tmux window if it exists (find by @worktree option)
+    if tmux has-session -t "$repo_name" 2>/dev/null
+        set -l window_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+        if test -n "$window_idx"
+            echo "Killing tmux window: $repo_name:$window_idx"
+            tmux kill-window -t "$repo_name:$window_idx"
+            echo "✓ Window killed"
+        else
+            echo "No tmux window found for worktree: $worktree_path"
+        end
     else
-        echo "No tmux session found: $session_name"
+        echo "No tmux session found: $repo_name"
     end
 
     echo ""

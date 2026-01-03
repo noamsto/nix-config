@@ -1,5 +1,56 @@
 # Global Claude Code Instructions
 
+## New Work Workflow
+
+**REQUIRED**: Before implementing or planning any new work:
+
+1. **Create a Linear ticket** (if one doesn't exist):
+   - Follow the "Linear Ticket Creation" guidelines below
+   - Get user confirmation before creating
+
+2. **Create a git worktree** for the work:
+   - Use the branch name from Linear (`Cmd+Shift+.` to copy)
+   - Run: `cd "$(wt -ymq <branch-name>)"`
+
+This ensures all work is tracked and isolated properly.
+
+## Linear Data Display
+
+**IMPORTANT**: When displaying Linear data, always format it readably:
+
+### Issues
+Show in a clear format with key fields visible:
+```
+[PL-123] Issue Title
+Status: In Progress | Priority: High | Assignee: @name
+Labels: bug, backend
+
+Description:
+[formatted description]
+```
+
+### Comments
+Format with author, timestamp, and proper markdown:
+```
+@author (2 hours ago):
+> Comment content here
+> With proper formatting
+
+  @replier (1 hour ago):
+  > Nested reply indented
+```
+
+### Projects
+Display with status and key metadata:
+```
+Project: Project Name
+Status: In Progress | Lead: @name
+Progress: 45% (9/20 issues)
+
+Description:
+[formatted description]
+```
+
 ## Linear Ticket Creation
 
 **IMPORTANT**: Before creating a Linear ticket, you MUST:

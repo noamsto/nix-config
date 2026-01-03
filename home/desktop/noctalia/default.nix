@@ -153,41 +153,77 @@ in {
           floating = false;
           density = "comfortable";
           widgets = {
-            # Left side: clock, system monitor, network, active window
+            # Left side: workspace indicator, system monitor, active window
             left = [
-              {id = "plugin:catwalk";} # 🐱
-              {id = "Clock";}
-              {id = "SystemMonitor";}
-              # Network indicator removed due to contrast issues
-              {id = "ActiveWindow";}
+              {id = "plugin:catwalk";}
+              {
+                id = "Workspace"; # Singular!
+                labelMode = "index";
+                showLabelsOnlyWhenOccupied = true;
+              }
+              {
+                id = "SystemMonitor";
+                compactMode = true;
+                showCpuUsage = true;
+                showCpuTemp = true;
+                showMemoryUsage = true;
+                useMonospaceFont = true;
+              }
+              {
+                id = "ActiveWindow";
+                maxWidth = 145;
+              }
               {
                 id = "MediaMini";
                 showAlbumArt = true;
                 showProgressRing = true;
               }
             ];
+            # Center: time only
+            center = [
+              {
+                id = "Clock";
+                formatHorizontal = "HH:mm";
+              }
+            ];
             # Right side: rarely used -> frequent -> critical -> hub
             right = [
-              {id = "ScreenRecorder";} # Rarely used
-              {id = "plugin:privacy-indicator";} # Configure hideInactive in GUI
-              {id = "Tray";} # Background apps
-              {id = "DarkMode";} # Theme toggle
-              {id = "NotificationHistory";} # Check unread
-              {id = "WiFi";}
-              {id = "Bluetooth";}
-              {id = "Brightness";} # Hardware control
-              {id = "Volume";} # Frequent hardware control
+              {id = "ScreenRecorder";}
+              {id = "plugin:privacy-indicator";}
+              {id = "Tray";}
+              {id = "DarkMode";}
+              {
+                id = "NotificationHistory";
+                showUnreadBadge = true;
+              }
+              {
+                id = "WiFi";
+                displayMode = "onhover";
+              }
+              {
+                id = "Bluetooth";
+                displayMode = "onhover";
+              }
+              {
+                id = "Brightness";
+                displayMode = "onhover";
+              }
+              {
+                id = "Volume";
+                displayMode = "onhover";
+              }
               {
                 id = "KeyboardLayout";
-                displayMode = "forceOpen"; # Always show current layout
+                displayMode = "forceOpen";
               }
               {
                 id = "Battery";
+                displayMode = "onhover";
                 showPowerProfiles = true;
-              } # Critical status
+              }
               {
                 id = "ControlCenter";
-                useDistroLogo = true; # Show NixOS logo
+                useDistroLogo = true;
               }
             ];
           };
