@@ -1,327 +1,273 @@
 {lib, ...}: {
   wayland.windowManager.hyprland.settings = {
-    # layer rules
+    # layer rules - Hyprland 0.53+ syntax
     layerrule = let
-      toRegex = list: let
-        elements = lib.concatStringsSep "|" list;
-      in "^(${elements})$";
+      mkLayerRules = rules: namespaces:
+        lib.flatten (map (ns: map (rule: "${rule}, match:namespace ${ns}") rules) namespaces);
 
-      lowopacity = [
-        "bar"
-        "calendar"
-        "notifications"
-        "system-menu"
-      ];
+      lowopacity = ["bar" "calendar" "notifications" "system-menu"];
+      highopacity = ["vicinae" "osd" "logout_dialog"];
+      blurred = lib.concatLists [lowopacity highopacity];
+      sensitive = ["gnome-keyring-prompt" "polkit" "hyprpolkitagent" "gcr-prompter"];
+    in
+      (mkLayerRules ["blur on"] blurred)
+      ++ (mkLayerRules ["xray on"] ["bar"])
+      ++ (mkLayerRules ["ignore_alpha 0"] ["vicinae"])
+      ++ (mkLayerRules ["ignore_alpha 0.5"] (highopacity ++ ["music"]))
+      ++ (mkLayerRules ["ignore_alpha 0.2"] lowopacity)
+      ++ (mkLayerRules ["no_anim on"] ["vicinae"])
+      ++ (mkLayerRules ["no_screen_share on"] sensitive);
 
-      highopacity = [
-        "vicinae"
-        "osd"
-        "logout_dialog"
-      ];
-
-      blurred = lib.concatLists [
-        lowopacity
-        highopacity
-      ];
-    in [
-      "blur, ${toRegex blurred}"
-      "xray 1, ${toRegex ["bar"]}"
-      "ignorealpha 0, vicinae" # Vicinae-specific: more aggressive alpha ignore (per docs)
-      "ignorealpha 0.5, ${toRegex (highopacity ++ ["music"])}"
-      "ignorealpha 0.2, ${toRegex lowopacity}"
-      "noanim, vicinae" # Vicinae-specific: disable fade animations for snappier feel (per docs)
-    ];
-
-    # window rules
-    windowrulev2 = [
-      "suppressevent maximize, class:.*"
+    # window rules - Hyprland 0.53+ syntax
+    # Format: "effect value, match:prop value"
+    windowrule = [
+      "suppress_event maximize, match:class .*"
 
       # === VICINAE ===
-      "pin, title:^(Vicinae Launcher)$"
-      "plugin:hyprbars:nobar, title:^(Vicinae Launcher)$"
-      "size 900 700, title:^(Vicinae Launcher)$"
+      "pin on, match:title ^(Vicinae Launcher)$"
+      "hyprbars:no_bar 1, match:title ^(Vicinae Launcher)$"
+      "size 900 700, match:title ^(Vicinae Launcher)$"
 
       # telegram media viewer
-      "float, title:^(Media viewer)$"
+      "float on, match:title ^(Media viewer)$"
 
       # gnome calculator
-      "float, class:^(org.gnome.Calculator)$"
-      "size 360 490, class:^(org.gnome.Calculator)$"
+      "float on, match:class ^(org.gnome.Calculator)$"
+      "size 360 490, match:class ^(org.gnome.Calculator)$"
 
       # === ENHANCED FLOATING WINDOWS ===
-      "float, class:^(pavucontrol)$"
-      "float, class:^(nm-connection-editor)$"
-      "float, class:^(blueman-manager)$"
-      "float, class:^(file-roller)$"
+      "float on, match:class ^(pavucontrol)$"
+      "float on, match:class ^(nm-connection-editor)$"
+      "float on, match:class ^(blueman-manager)$"
+      "float on, match:class ^(file-roller)$"
 
       # 1Password
-      "float, class:^(1Password|1password|com.1password.1Password)$"
-      "center, class:^(1Password|1password|com.1password.1Password)$"
-      "immediate, class:^(1Password|1password|com.1password.1Password)$"
+      "float on, match:class ^(1Password|1password|com.1password.1Password)$"
+      "center on, match:class ^(1Password|1password|com.1password.1Password)$"
+      "immediate on, match:class ^(1Password|1password|com.1password.1Password)$"
 
       # 1Password Quick Access
-      "float, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
-      "center, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
-      "size 400 500, class:^(1Password|1password|com.1password.1Password)$,title:^(Quick Access)$"
+      "float on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^(Quick Access)$"
+      "center on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^(Quick Access)$"
+      "size 400 500, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^(Quick Access)$"
 
       # 1Password unlock/authentication/lock screen windows
-      "float, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
-      "center, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
-      "size 900 600, class:^(1Password|1password|com.1password.1Password)$,title:.*(Password|Lock).*"
+      "float on, match:class ^(1Password|1password|com.1password.1Password)$, match:title .*(Password|Lock).*"
+      "center on, match:class ^(1Password|1password|com.1password.1Password)$, match:title .*(Password|Lock).*"
+      "size 900 600, match:class ^(1Password|1password|com.1password.1Password)$, match:title .*(Password|Lock).*"
 
       # 1Password main window with generic title
-      "size 500 600, class:^(1Password|1password|com.1password.1Password)$,title:^(1Password)$"
+      "size 500 600, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^(1Password)$"
 
       # 1Password menus and popups
-      "float, class:^(1Password|1password|com.1password.1Password)$,title:^$"
-      "immediate, class:^(1Password|1password|com.1password.1Password)$,title:^$"
-      "noborder, class:^(1Password|1password|com.1password.1Password)$,title:^$"
-      "noshadow, class:^(1Password|1password|com.1password.1Password)$,title:^$"
-      "pin, class:^(1Password|1password|com.1password.1Password)$,title:^$"
+      "float on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^$"
+      "immediate on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^$"
+      "decorate off, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^$"
+      "no_shadow on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^$"
+      "pin on, match:class ^(1Password|1password|com.1password.1Password)$, match:title ^$"
 
       # Size dialogs appropriately
-      "size 800 600, class:^(pavucontrol)$"
-      "size 600 500, class:^(nm-connection-editor)$"
-      "size 500 600, class:^(blueman-manager)$"
+      "size 800 600, match:class ^(pavucontrol)$"
+      "size 600 500, match:class ^(nm-connection-editor)$"
+      "size 500 600, match:class ^(blueman-manager)$"
 
       # Valent (KDE Connect alternative)
-      "float, class:^(ca.andyholmes.Valent)$"
-      "center, class:^(ca.andyholmes.Valent)$"
-      "size 800 600, class:^(ca.andyholmes.Valent)$"
+      "float on, match:class ^(ca.andyholmes.Valent)$"
+      "center on, match:class ^(ca.andyholmes.Valent)$"
+      "size 800 600, match:class ^(ca.andyholmes.Valent)$"
 
       # Bluetooth pairing dialogs
-      "float, class:^(blueman-agent|blueman-applet)$"
-      "center, class:^(blueman-agent|blueman-applet)$"
-      "dimaround, class:^(blueman-agent|blueman-applet)$"
+      "float on, match:class ^(blueman-agent|blueman-applet)$"
+      "center on, match:class ^(blueman-agent|blueman-applet)$"
+      "dim_around on, match:class ^(blueman-agent|blueman-applet)$"
 
-      "float, title:^(Bluetooth)$"
-      "center, title:^(Bluetooth)$"
-      "dimaround, title:^(Bluetooth)$"
+      "float on, match:title ^(Bluetooth)$"
+      "center on, match:title ^(Bluetooth)$"
+      "dim_around on, match:title ^(Bluetooth)$"
 
-      "float, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
-      "center, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
-      "dimaround, title:^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
+      "float on, match:title ^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
+      "center on, match:title ^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
+      "dim_around on, match:title ^(.*[Bb]luetooth.*(Pairing|Authentication)).*$"
 
       # === PICTURE-IN-PICTURE RULES ===
-      # Firefox PiP window
-      "float, title:^(Picture-in-Picture)$"
-      "pin, title:^(Picture-in-Picture)$"
-      "noinitialfocus, title:^(Picture-in-Picture)$"
+      # Generic PiP (Firefox and others)
+      "float on, match:title ^(Picture-in-Picture)$"
+      "pin on, match:title ^(Picture-in-Picture)$"
+      "no_initial_focus on, match:title ^(Picture-in-Picture)$"
 
       # Brave Browser PiP
-      "float, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
-      "noinitialfocus, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
-      "size 400 225, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
-      "move 100%-420 100%-245, class:^(Brave-browser|brave-browser)$,title:^(Picture-in-Picture)$"
+      "float on, match:class ^(Brave-browser|brave-browser)$, match:title ^(Picture-in-Picture)$"
+      "no_initial_focus on, match:class ^(Brave-browser|brave-browser)$, match:title ^(Picture-in-Picture)$"
+      "size 400 225, match:class ^(Brave-browser|brave-browser)$, match:title ^(Picture-in-Picture)$"
+      "move 100%-420 100%-245, match:class ^(Brave-browser|brave-browser)$, match:title ^(Picture-in-Picture)$"
 
       # Additional PiP patterns
-      "float, class:^(Brave-browser|brave-browser)$,title:^(.*Picture.in.Picture.*)$"
-      "noinitialfocus, class:^(Brave-browser|brave-browser)$,title:^(.*Picture.in.Picture.*)$"
+      "float on, match:class ^(Brave-browser|brave-browser)$, match:title ^(.*Picture.in.Picture.*)$"
+      "no_initial_focus on, match:class ^(Brave-browser|brave-browser)$, match:title ^(.*Picture.in.Picture.*)$"
 
       # Google Meet specific
-      "float, class:^(Brave-browser|brave-browser)$,title:^(.*meet\.google\.com.*)$"
+      "float on, match:class ^(Brave-browser|brave-browser)$, match:title ^(.*meet\\.google\\.com.*)$"
 
-      "float, class:^(chromium)$,title:^(Picture-in-Picture)$"
-      "pin, class:^(chromium)$,title:^(Picture-in-Picture)$"
-      "noinitialfocus, class:^(chromium)$,title:^(Picture-in-Picture)$"
+      # Chromium PiP
+      "float on, match:class ^(chromium)$, match:title ^(Picture-in-Picture)$"
+      "pin on, match:class ^(chromium)$, match:title ^(Picture-in-Picture)$"
+      "no_initial_focus on, match:class ^(chromium)$, match:title ^(Picture-in-Picture)$"
 
       # throw sharing indicators away
-      "workspace special silent, title:^(Firefox — Sharing Indicator)$"
-      "workspace special silent, title:^(.*is sharing (your screen|a window)\\.)$"
-      "workspace special silent, title:^(.*Sharing Indicator)$"
+      "workspace special silent, match:title ^(Firefox — Sharing Indicator)$"
+      "workspace special silent, match:title ^(.*is sharing (your screen|a window)\\.)$"
+      "workspace special silent, match:title ^(.*Sharing Indicator)$"
 
       # better screen sharing window handling
-      "float,title:^(.*is sharing (your screen|a window).*)$"
-      "size 800 600,title:^(Volume Control)$"
+      "float on, match:title ^(.*is sharing (your screen|a window).*)$"
+      "size 800 600, match:title ^(Volume Control)$"
 
       # Media players
-      "float, class:^(vlc)$"
-      "idleinhibit focus, class:^(vlc)$"
-      "idleinhibit focus, class:^(mpv|.+exe|celluloid)$"
+      "float on, match:class ^(vlc)$"
+      "idle_inhibit focus, match:class ^(vlc)$"
+      "float on, match:class ^(mpv)$"
+      "idle_inhibit focus, match:class ^(mpv|.+exe|celluloid)$"
+
+      # === BROWSER RULES ===
+      # Prevent accidental close (2s protection after tab opens)
+      "no_close_for 2000, match:class ^(firefox)$"
+      "no_close_for 2000, match:class ^(Brave-browser|brave-browser)$"
+      "no_close_for 2000, match:class ^(chromium)$"
 
       # Browser idle inhibit
-      "idleinhibit focus, class:^(firefox)$, title:^(.*YouTube.*)$"
-      "idleinhibit fullscreen, class:^(firefox)$"
-      "idleinhibit focus, class:^(Brave-browser)$,title:^(.*YouTube.*)$"
-      "idleinhibit fullscreen, class:^(Brave-browser)$"
-      "idleinhibit focus, class:^(chromium)$,title:^(.*YouTube.*)$"
-      "idleinhibit fullscreen, class:^(chromium)$"
+      "idle_inhibit focus, match:class ^(firefox)$, match:title ^(.*YouTube.*)$"
+      "idle_inhibit fullscreen, match:class ^(firefox)$"
+      "idle_inhibit focus, match:class ^(Brave-browser)$, match:title ^(.*YouTube.*)$"
+      "idle_inhibit fullscreen, match:class ^(Brave-browser)$"
+      "idle_inhibit focus, match:class ^(chromium)$, match:title ^(.*YouTube.*)$"
+      "idle_inhibit fullscreen, match:class ^(chromium)$"
 
       # File manager progress dialogs
-      "float, class:^(thunar|Thunar)$,title:^(Progress Dialog)$"
-      "float, class:^(thunar|Thunar)$,title:^(Copying)$"
-      "float, class:^(thunar|Thunar)$,title:^(File Operation Progress)$"
+      "float on, match:class ^(thunar|Thunar)$, match:title ^(Progress Dialog|Copying|File Operation Progress)$"
 
-      # Dragon drop - moves to active workspace, allows focus below
-      "float, class:^(dragon|dragon-drop)$"
-      "pin, class:^(dragon|dragon-drop)$"
-      "noinitialfocus, class:^(dragon|dragon-drop)$"
-      "size 400 300, class:^(dragon|dragon-drop)$"
+      # Dragon drop
+      "float on, match:class ^(dragon|dragon-drop)$"
+      "pin on, match:class ^(dragon|dragon-drop)$"
+      "no_initial_focus on, match:class ^(dragon|dragon-drop)$"
+      "size 400 300, match:class ^(dragon|dragon-drop)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
-      # Note: Use workspace IDs, not names. Named workspaces create dynamic WS with negative IDs.
-      # The HDM profiles define names for display only (waybar shows them).
-
-      # Development - workspace 1 (named "dev" in HDM profiles)
-      "workspace 1 silent, class:^(kitty)$"
-
-      # Web browsers - workspace 2 (named "web" in HDM profiles)
-      # Firefox without silent - clicking links switches to browser workspace
-      # Brave/Chromium with silent - only initial placement, no auto-switch
-      "workspace 2, class:^(firefox)$"
-      "workspace 2 silent, class:^(brave-browser)$, initialTitle:.*"
-      "workspace 2 silent, class:^(chromium)$"
-
-      # Communication - workspace 5 (named "comms" in HDM profiles)
-      "workspace 5, class:^(slack)$"
-      "workspace 5, class:^(Slack)$"
-      "workspace 5 silent, class:^(ferdium)$"
-      "workspace 5, class:^(zoom)$"
-
-      # Media - workspace 9 (named "media" in HDM profiles)
-      "workspace 9 silent, class:^(com.github.th_ch.youtube_music)$"
-      "workspace 9 silent, class:^(spotify)$"
-
-      # vlc/mpv - floating (not assigned to media workspace)
-      "float, class:^(vlc)$"
-      "float, class:^(mpv)$"
+      "workspace 1 silent, match:class ^(kitty)$"
+      "workspace 2, match:class ^(firefox)$"
+      "workspace 2 silent, match:class ^(brave-browser)$, match:initial_title .*"
+      "workspace 2 silent, match:class ^(chromium)$"
+      "workspace 5, match:class ^(slack|Slack)$"
+      "workspace 5 silent, match:class ^(ferdium)$"
+      "workspace 5, match:class ^(zoom)$"
+      "workspace 9 silent, match:class ^(com.github.th_ch.youtube_music|spotify)$"
 
       # Zoom
-      "float, class:^(zoom)$,title:^(Zoom Meeting)$"
-      "idleinhibit focus, class:^(zoom)$"
+      "float on, match:class ^(zoom|Zoom)$"
+      "idle_inhibit focus, match:class ^(zoom)$"
+      "immediate on, match:class ^(zoom|Zoom)$"
+      "float on, match:class ^(zoom)$, match:title ^(Zoom Meeting)$"
 
       # Zoom menu fixes
-      "float, class:^(zoom)$,title:^$"
-      "pin, class:^(zoom)$,title:^$"
-      "noborder, class:^(zoom)$,title:^$"
-      "noshadow, class:^(zoom)$,title:^$"
-      "minsize 1 1, class:^(zoom)$,title:^$"
-      "maxsize 800 600, class:^(zoom)$,title:^$"
-
-      # Zoom general window handling
-      "immediate, class:^(zoom)$"
-
-      # Alternative Zoom class names
-      "float, class:^(Zoom)$"
-      "immediate, class:^(Zoom)$"
+      "float on, match:class ^(zoom)$, match:title ^$"
+      "pin on, match:class ^(zoom)$, match:title ^$"
+      "decorate off, match:class ^(zoom)$, match:title ^$"
+      "no_shadow on, match:class ^(zoom)$, match:title ^$"
+      "min_size 1 1, match:class ^(zoom)$, match:title ^$"
+      "max_size 800 600, match:class ^(zoom)$, match:title ^$"
 
       # XWayland-specific fix for Zoom
-      "rounding 0, class:^(zoom)$,xwayland:1"
+      "rounding 0, match:class ^(zoom)$, match:xwayland true"
 
-      "dimaround, class:^(gcr-prompter)$"
+      "dim_around on, match:class ^(gcr-prompter)$"
 
       # === GENERAL MENU AND POPUP FIXES ===
-      # Removed overly broad rules that were pinning all menus with empty titles
-
-      # Fix oversized menu windows
-      "maxsize 1200 900, floating:1,title:^$"
-      "minsize 1 1, floating:1,title:^$"
+      "max_size 1200 900, match:float true, match:title ^$"
+      "min_size 1 1, match:float true, match:title ^$"
 
       # Common menu patterns
-      "stayfocused, title:^(Menu)$"
-      "stayfocused, title:^(.*menu.*)$"
-      "stayfocused, title:^(.*dropdown.*)$"
-      "stayfocused, title:^(.*popup.*)$"
+      "stay_focused on, match:title ^(Menu|.*menu.*|.*dropdown.*|.*popup.*)$"
 
       # === SYSTEM DIALOGS ===
       # File picker dialogs
-      "dimaround, class:^(xdg-desktop-portal-gtk)$"
-      "float, class:^(xdg-desktop-portal-gtk)$"
-      "immediate, class:^(xdg-desktop-portal-gtk)$"
+      "dim_around on, match:class ^(xdg-desktop-portal-gtk)$"
+      "float on, match:class ^(xdg-desktop-portal-gtk)$"
+      "immediate on, match:class ^(xdg-desktop-portal-gtk)$"
 
-      # Other desktop portal dialogs
-      "dimaround, class:^(xdg-desktop-portal-kde)$"
-      "float, class:^(xdg-desktop-portal-kde)$"
-      "pin, class:^(xdg-desktop-portal-kde)$"
-      "immediate, class:^(xdg-desktop-portal-kde)$"
-
-      "dimaround, class:^(xdg-desktop-portal-wlr)$"
-      "float, class:^(xdg-desktop-portal-wlr)$"
-      "pin, class:^(xdg-desktop-portal-wlr)$"
-      "immediate, class:^(xdg-desktop-portal-wlr)$"
+      "dim_around on, match:class ^(xdg-desktop-portal-kde|xdg-desktop-portal-wlr)$"
+      "float on, match:class ^(xdg-desktop-portal-kde|xdg-desktop-portal-wlr)$"
+      "pin on, match:class ^(xdg-desktop-portal-kde|xdg-desktop-portal-wlr)$"
+      "immediate on, match:class ^(xdg-desktop-portal-kde|xdg-desktop-portal-wlr)$"
 
       # Print dialogs
-      "dimaround, title:^(Print)$"
-      "float, title:^(Print)$"
-      "pin, title:^(Print)$"
-      "immediate, title:^(Print)$"
+      "dim_around on, match:title ^(Print|Print Document)$"
+      "float on, match:title ^(Print|Print Document)$"
+      "pin on, match:title ^(Print|Print Document)$"
+      "immediate on, match:title ^(Print|Print Document)$"
 
-      "dimaround, title:^(Print Document)$"
-      "float, title:^(Print Document)$"
-      "pin, title:^(Print Document)$"
-      "immediate, title:^(Print Document)$"
-
-      "dimaround, class:^(gtk3-print-backends)$"
-      "float, class:^(gtk3-print-backends)$"
-      "pin, class:^(gtk3-print-backends)$"
-      "immediate, class:^(gtk3-print-backends)$"
+      "dim_around on, match:class ^(gtk3-print-backends)$"
+      "float on, match:class ^(gtk3-print-backends)$"
+      "pin on, match:class ^(gtk3-print-backends)$"
+      "immediate on, match:class ^(gtk3-print-backends)$"
 
       # Authentication dialogs
-      "dimaround, class:^(polkit-gnome-authentication-agent-1)$"
-      "float, class:^(polkit-gnome-authentication-agent-1)$"
-      "pin, class:^(polkit-gnome-authentication-agent-1)$"
-      "stayfocused, class:^(polkit-gnome-authentication-agent-1)$"
-      "immediate, class:^(polkit-gnome-authentication-agent-1)$"
-
-      "dimaround, class:^(gnome-keyring-prompt)$"
-      "float, class:^(gnome-keyring-prompt)$"
-      "pin, class:^(gnome-keyring-prompt)$"
-      "stayfocused, class:^(gnome-keyring-prompt)$"
-      "immediate, class:^(gnome-keyring-prompt)$"
+      "dim_around on, match:class ^(polkit-gnome-authentication-agent-1|gnome-keyring-prompt|hyprpolkitagent)$"
+      "float on, match:class ^(polkit-gnome-authentication-agent-1|gnome-keyring-prompt|hyprpolkitagent)$"
+      "pin on, match:class ^(polkit-gnome-authentication-agent-1|gnome-keyring-prompt|hyprpolkitagent)$"
+      "stay_focused on, match:class ^(polkit-gnome-authentication-agent-1|gnome-keyring-prompt|hyprpolkitagent)$"
+      "immediate on, match:class ^(polkit-gnome-authentication-agent-1|gnome-keyring-prompt|hyprpolkitagent)$"
 
       # Screenshot/screen capture permission dialogs
-      "dimaround, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
-      "float, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
-      "pin, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
-      "immediate, title:^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "dim_around on, match:title ^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "float on, match:title ^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "pin on, match:title ^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
+      "immediate on, match:title ^(.*(Screen|Desktop) (Share|Capture|Record)).*$"
 
       # Screen sharing picker dialog
-      "dimaround, title:^(Select what to share)$"
-      "float, title:^(Select what to share)$"
-      "pin, title:^(Select what to share)$"
-      "stayfocused, title:^(Select what to share)$"
-      "immediate, title:^(Select what to share)$"
+      "dim_around on, match:title ^(Select what to share)$"
+      "float on, match:title ^(Select what to share)$"
+      "pin on, match:title ^(Select what to share)$"
+      "stay_focused on, match:title ^(Select what to share)$"
+      "immediate on, match:title ^(Select what to share)$"
 
       # Permission dialogs
-      "dimaround, title:^(.*Permission.*)$"
-      "float, title:^(.*Permission.*)$"
-      "pin, title:^(.*Permission.*)$"
-      "immediate, title:^(.*Permission.*)$"
+      "dim_around on, match:title ^(.*Permission.*)$"
+      "float on, match:title ^(.*Permission.*)$"
+      "pin on, match:title ^(.*Permission.*)$"
+      "immediate on, match:title ^(.*Permission.*)$"
 
       # General system modal dialogs
-      "dimaround, title:^(Authentication Required)$"
-      "float, title:^(Authentication Required)$"
-      "pin, title:^(Authentication Required)$"
-      "stayfocused, title:^(Authentication Required)$"
-      "immediate, title:^(Authentication Required)$"
+      "dim_around on, match:title ^(Authentication Required)$"
+      "float on, match:title ^(Authentication Required)$"
+      "pin on, match:title ^(Authentication Required)$"
+      "stay_focused on, match:title ^(Authentication Required)$"
+      "immediate on, match:title ^(Authentication Required)$"
 
-      "dimaround, title:^(Confirm)$"
-      "float, title:^(Confirm)$"
-      "pin, title:^(Confirm)$"
-      "immediate, title:^(Confirm)$"
-      "dimaround, class:^(hyprpolkitagent)$"
+      "dim_around on, match:title ^(Confirm)$"
+      "float on, match:title ^(Confirm)$"
+      "pin on, match:title ^(Confirm)$"
+      "immediate on, match:title ^(Confirm)$"
 
       # fix xwayland apps
-      "rounding 0, xwayland:1"
-      "immediate, xwayland:1,floating:1"
-      "center, class:^(.*jetbrains.*)$, title:^(Confirm Exit|Open Project|win424|win201|splash)$"
-      "size 640 400, class:^(.*jetbrains.*)$, title:^(splash)$"
+      "rounding 0, match:xwayland true"
+      "immediate on, match:xwayland true, match:float true"
+      "center on, match:class ^(.*jetbrains.*)$, match:title ^(Confirm Exit|Open Project|win424|win201|splash)$"
+      "size 640 400, match:class ^(.*jetbrains.*)$, match:title ^(splash)$"
 
       # don't render hyprbars on tiling windows
-      "plugin:hyprbars:nobar, floating:0"
+      "hyprbars:no_bar 1, match:float false"
 
       # Fullscreen focus mode rules
-      "noborder, fullscreen:1"
-      "noshadow, fullscreen:1"
-      "rounding 0, fullscreen:1"
-      "opacity 0.95, fullscreen:1"
-      "plugin:hyprbars:nobar, fullscreen:1"
+      "decorate off, match:fullscreen true"
+      "no_shadow on, match:fullscreen true"
+      "rounding 0, match:fullscreen true"
+      "opacity 0.95, match:fullscreen true"
+      "hyprbars:no_bar 1, match:fullscreen true"
 
       # Visual indicator for pinned windows - yellow border (catppuccin mocha)
-      "bordercolor rgb(f9e2af) rgb(f1fa8c), pinned:1"
+      "border_color rgb(f9e2af) rgb(f1fa8c), match:pin true"
 
       # Override vicinae border to normal blue (must come after pinned rule)
-      "bordercolor rgb(89b4fa) rgb(74c7ec), title:^(Vicinae Launcher)$"
+      "border_color rgb(89b4fa) rgb(74c7ec), match:title ^(Vicinae Launcher)$"
     ];
   };
 }

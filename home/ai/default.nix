@@ -7,7 +7,7 @@
   ];
   programs = {
     gemini-cli = {
-      enable = true;
+      enable = false;
       settings = {
         vimMode = true;
         preferredEditor = "vim";

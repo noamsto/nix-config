@@ -4,7 +4,7 @@
   ...
 }: let
   terminal = "kitty";
-  fileManager = "${lib.getExe pkgs.xfce.thunar}";
+  fileManager = "${lib.getExe pkgs.thunar}";
   browser = "${lib.getExe pkgs.firefox}";
   youtube-music = "${lib.getExe pkgs.pear-desktop}";
 
@@ -34,10 +34,8 @@ in {
 
       "$mainMod, R, togglesplit,"
 
-      # Toggle floating with auto-resize to 80% and center
-      "$mainMod, T, togglefloating"
-      "$mainMod, T, resizeactive, exact 80% 80%"
-      "$mainMod, T, centerwindow"
+      # Smart toggle floating: tiled→float+resize+center, floating→just unfloat
+      "$mainMod, T, exec, toggle-floating"
 
       "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
       "$mainMod, grave, hyprexpo:expo, toggle"
@@ -133,9 +131,8 @@ in {
       ", Print, exec, grimblast-satty" # screenshot with frozen screen and satty editor (mapped from SUPER+SHIFT+S via xremap)
       "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with vicinae
 
-      # Screen recording (similar to grimblast)
-      "$mainMod SHIFT, R, exec, record-screen-mp4" # record selected area/window as MP4
-      "$ALTSHIFT, R, exec, record-screen-gif" # record selected area/window as GIF
+      # Screen recording is handled by Noctalia's ScreenRecorder widget
+      # GIF conversion available via post-processor after recording completes
     ];
     bindm = [
       # Move/resize windows with mainMod + LMB/RMB and dragging

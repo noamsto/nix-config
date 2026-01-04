@@ -129,6 +129,7 @@ in {
     enable = true;
     terminal = "tmux-256color";
     historyLimit = 100000;
+    baseIndex = 1; # Start windows at 1, set early in config to avoid race conditions
     plugins = with pkgs; [
       tmuxPlugins.better-mouse-mode
       # catppuccin theme must be loaded before manual continuum loading
@@ -161,6 +162,13 @@ in {
       }
       tmuxPlugins.vim-tmux-navigator
       tmuxPlugins.tmux-fzf
+      {
+        plugin = tmuxPlugins.continuum;
+        extraConfig = ''
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '10'
+        '';
+      }
     ];
     extraConfig = ''
       set -g mouse on
@@ -168,8 +176,7 @@ in {
       set -g window-size smallest
       set -g aggressive-resize on
 
-      # start index at 1
-      set -g base-index 1
+      # pane-base-index must be set here (HM only handles window base-index)
       set -g pane-base-index 1
       bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
 
@@ -353,12 +360,6 @@ in {
       # Set pane-border-format with expanded @thm_* color values
       # Must run after catppuccin theme loads (which sets @thm_* variables)
       run-shell "tmux-set-pane-border"
-
-      # Load continuum LAST - after all other plugins and configuration
-      # This ensures session restoration works correctly with all features enabled
-      set -g @continuum-restore 'on'
-      set -g @continuum-save-interval '10'
-      run-shell ${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/continuum.tmux
     '';
   };
 }

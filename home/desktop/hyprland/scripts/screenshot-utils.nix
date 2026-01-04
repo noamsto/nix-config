@@ -1,6 +1,4 @@
 {pkgs, ...}: let
-  # Unified screen recording script
-  recordScreenScript = builtins.readFile ./sh/record-screen.sh;
   # Screenshot helper script
   screenshotHelperScript = builtins.readFile ./sh/screenshot-helper.sh;
   # Satty copy wrapper - saves image and copies path
@@ -25,18 +23,6 @@ in {
 
     # Grimblast edit wrapper - takes screenshot and opens in satty without keeping screen frozen
     (pkgs.writeShellScriptBin "grimblast-satty" grimblastEditWrapperScript)
-
-    # Unified screen recording script
-    (pkgs.writeShellScriptBin "record-screen" recordScreenScript)
-
-    # Screen recording scripts (using unified script with arguments)
-    (pkgs.writeShellScriptBin "record-screen-mp4" ''
-      exec ${pkgs.writeShellScript "record-screen" recordScreenScript} mp4
-    '')
-
-    (pkgs.writeShellScriptBin "record-screen-gif" ''
-      exec ${pkgs.writeShellScript "record-screen" recordScreenScript} gif
-    '')
 
     # System toggles
     (pkgs.writeShellScriptBin "system-toggles" (builtins.readFile ./sh/system-toggles.sh))

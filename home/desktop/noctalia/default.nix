@@ -5,6 +5,9 @@
 # Theme switching: Noctalia is the source of truth for dark/light mode.
 # When toggled (via keybind or GUI), Noctalia triggers theme-toggle via hook.
 #
+# Screen recording: ScreenRecorder widget saves to ~/Videos. The recording-post-processor
+# service watches for new recordings and offers GIF conversion via vicinae dmenu.
+#
 # TODO: Dock icons missing for flatpak apps and NixOS-wrapped binaries
 #   - Issue: Window class doesn't match icon name (e.g., "BambuStudio" vs "com.bambulab.BambuStudio")
 #   - Tracking: https://github.com/noctalia-dev/noctalia-shell/issues/1172
