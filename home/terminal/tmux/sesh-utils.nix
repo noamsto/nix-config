@@ -22,4 +22,7 @@
   # Status bar helpers
   tmux-branch-display = pkgs.writeShellScriptBin "tmux-branch-display" (builtins.readFile ./scripts/tmux-branch-display.sh);
   tmux-dir-display = pkgs.writeShellScriptBin "tmux-dir-display" (builtins.readFile ./scripts/tmux-dir-display.sh);
+  tmux-branch-dir-display = pkgs.writeShellScriptBin "tmux-branch-dir-display" (builtins.readFile ./scripts/tmux-branch-dir-display.sh);
+  tmux-window-branch-display = pkgs.writeShellScriptBin "tmux-window-branch-display" (builtins.readFile ./scripts/tmux-window-branch-display.sh);
+  tmux-update-window-name = pkgs.writeShellScriptBin "tmux-update-window-name" (builtins.readFile ./scripts/tmux-update-window-name.sh);
 }

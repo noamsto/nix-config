@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
-# Display directory for tmux status bar
-# Shows "/" if basedir equals branch, otherwise shows basedir
-# Args: $1 = @branch value, $2 = pane_current_path
+# Display directory for tmux status bar as relative path from git root
+# Shows "./" when at git/worktree root, "./subdir" when in subdirectory
+# Args: $1 = @branch value (unused), $2 = pane_current_path
 
-branch="$1"
 pane_path="$2"
 
-# Get branch (from @branch or git)
-if [[ -z $branch ]] && [[ -n $pane_path ]] && [[ -d $pane_path ]]; then
-  branch=$(git -C "$pane_path" branch --show-current 2>/dev/null)
+# Get git root
+git_root=""
+if [[ -n $pane_path ]] && [[ -d $pane_path ]]; then
+  git_root=$(git -C "$pane_path" rev-parse --show-toplevel 2>/dev/null)
 fi
 
-# Get basedir
-basedir=$(basename "$pane_path" 2>/dev/null)
-
-# Compare and output
-if [[ $basedir == "$branch" ]]; then
-  echo "/"
+# Show relative path from git root
+if [[ -n $git_root ]]; then
+  if [[ $pane_path == "$git_root" ]]; then
+    echo "./"
+  else
+    # Get relative path and prefix with ./
+    rel_path="${pane_path#"$git_root"/}"
+    echo "./$rel_path"
+  fi
 else
-  echo "$basedir"
+  # Not in git repo, show basename
+  basename "$pane_path" 2>/dev/null
 fi

@@ -35,6 +35,8 @@
 
     # Network file system support for Dolphin/file managers
     gvfs # Virtual filesystem with NFS/SMB support
+
+    shellcheck
   ];
 in {
   home.packages =

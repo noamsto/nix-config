@@ -93,14 +93,21 @@ read_pane_state() {
   state=$(grep "^state=" "$state_file" 2>/dev/null | cut -d= -f2)
   timestamp=$(grep "^timestamp=" "$state_file" 2>/dev/null | cut -d= -f2)
 
-  # If "waiting" for more than 30s, treat as stale (permission was likely responded to)
-  # This works around missing hook for permission dialog response
-  if [[ $state == "waiting" && -n $timestamp ]]; then
+  # Staleness checks to work around unreliable Stop hook
+  if [[ -n $timestamp ]]; then
     now=$(date +%s)
     age=$((now - timestamp))
-    if [[ $age -gt 30 ]]; then
-      # Stale waiting - assume processing (Claude responded to user's decision)
+
+    # If "waiting" for more than 30s, treat as stale (permission was likely responded to)
+    if [[ $state == "waiting" && $age -gt 30 ]]; then
       echo "processing"
+      return 0
+    fi
+
+    # If "processing" for more than 15s without updates, assume done (Stop hook didn't fire)
+    # Safe because active processing refreshes timestamp via PreToolUse/PostToolUse hooks
+    if [[ $state == "processing" && $age -gt 15 ]]; then
+      echo "done"
       return 0
     fi
   fi
@@ -120,12 +127,20 @@ read_session_state() {
   count=$(grep "^count=" "$state_file" 2>/dev/null | cut -d= -f2)
   timestamp=$(grep "^timestamp=" "$state_file" 2>/dev/null | cut -d= -f2)
 
-  # If "waiting" for more than 30s, treat as stale
-  if [[ $state == "waiting" && -n $timestamp ]]; then
+  # Staleness checks for session aggregate
+  if [[ -n $timestamp ]]; then
     now=$(date +%s)
     age=$((now - timestamp))
-    if [[ $age -gt 30 ]]; then
+
+    # If "waiting" for more than 30s, treat as stale
+    if [[ $state == "waiting" && $age -gt 30 ]]; then
       state="processing"
+    fi
+
+    # If "processing" for more than 15s without updates, assume done
+    # Safe because active processing refreshes timestamp via PreToolUse/PostToolUse hooks
+    if [[ $state == "processing" && $age -gt 15 ]]; then
+      state="done"
     fi
   fi
 

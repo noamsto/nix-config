@@ -142,3 +142,13 @@ This creates the worktree, creates a tmux session, moves the current window to i
 ## Shell Preference
 
 I use fish shell, not bash. Provide shell commands in fish syntax.
+
+## Shell Script Validation
+
+**REQUIRED**: Always run `shellcheck` on shell scripts after creating or editing them.
+
+```bash
+shellcheck <script-path>
+```
+
+Fix all warnings and errors before considering the work complete.
