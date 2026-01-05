@@ -21,6 +21,17 @@ if [[ -z $branch ]] && [[ -n $pane_path ]] && [[ -d $pane_path ]]; then
   branch=$(git -C "$pane_path" branch --show-current 2>/dev/null)
 fi
 
+# Strip Linear issue prefix (e.g., "pl-123-" or "PL-123-" or "ABC-456-")
+# Keep only the description part for better readability
+if [[ $branch =~ ^[A-Za-z]+-[0-9]+-(.+)$ ]]; then
+  branch="${BASH_REMATCH[1]}"
+fi
+
+# Replace common main branches with single letter
+case "$branch" in
+main | master) branch="M" ;;
+esac
+
 # Calculate dynamic max length based on client width
 # Formula: (client_width - padding) / window_count - overhead_per_window
 # Overhead per window: "N: " (3) + " │ " (3) + zoom icon (2) + claude indicator (2) = ~10 chars
@@ -30,15 +41,15 @@ available_space=$((window_width - 20)) # Conservative padding for status bar edg
 space_per_window=$((available_space / window_count))
 max_branch_length=$((space_per_window - 10)) # Reduced overhead estimate
 
-# Set minimum to 50 chars - prefer showing full branch names when there's space
-# Only trim on very narrow terminals
-if [[ $max_branch_length -lt 50 ]]; then
-  max_branch_length=50
+# Set minimum to 15 chars - allows more windows before overflow
+# Stripped Linear prefixes make short names more meaningful
+if [[ $max_branch_length -lt 15 ]]; then
+  max_branch_length=15
 fi
 
 # Trim if needed
 if [[ ${#branch} -gt $max_branch_length ]]; then
-  echo "${branch:0:max_branch_length}..."
+  echo "${branch:0:max_branch_length}…"
 else
   echo "$branch"
 fi

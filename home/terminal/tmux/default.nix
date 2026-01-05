@@ -317,11 +317,10 @@ in {
       set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_subtext_0},bold]#{@icon_window}#{window_name} "
 
       # Line 1: Windows with per-window branches (left only)
+      # Simple window list using tmux native formatting
       # Active window: green + bold (prominent), inactive: subtext
-      # Branch names trim dynamically based on client width (terminal size) and window count
-      # Zoom icon (󰁌) shown when window has zoomed pane
-      # Rounded tree branch (╰─) in subtle color creates visual hierarchy
-      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#[fg=#{@thm_subtext_0}#,nobold]#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_green}#,bold],}#I: #(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}"
+      # Branch names shown directly via script (first N chars), tmux handles overflow naturally
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')  }"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values
