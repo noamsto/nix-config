@@ -26,14 +26,14 @@ fi
 # Overhead per window: "N: " (3) + " │ " (3) + zoom icon (2) + claude indicator (2) = ~10 chars
 # Note: client_width is passed as window_width parameter (renamed for clarity in tmux config)
 # Bottom status line has only windows, no session/app on that line
-available_space=$((window_width - 10)) # Minimal padding for status bar edges
+available_space=$((window_width - 20)) # Conservative padding for status bar edges
 space_per_window=$((available_space / window_count))
-max_branch_length=$((space_per_window - 12)) # Subtract per-window overhead
+max_branch_length=$((space_per_window - 10)) # Reduced overhead estimate
 
-# Only enforce minimum of 8 chars - no arbitrary maximum
-# Let the calculation determine the max based on actual terminal width
-if [[ $max_branch_length -lt 8 ]]; then
-  max_branch_length=8
+# Set minimum to 50 chars - prefer showing full branch names when there's space
+# Only trim on very narrow terminals
+if [[ $max_branch_length -lt 50 ]]; then
+  max_branch_length=50
 fi
 
 # Trim if needed

@@ -310,16 +310,18 @@ in {
       set -g @icon_branch ""
       set -g @icon_dir ""
 
-      # Line 0: Session | Branch | Dir (left) │ App (right)
+      # Line 0: Session  Branch  Dir (left) │ App (right)
       # Session: mauve (subtle), Branch: blue bold, Dir: subtext, App: subtext, prefix: red
+      # Icons provide visual separation, no pipes needed
       # Continuum save script runs invisibly at start to trigger periodic saves
-      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S #[fg=#{@thm_subtext_0},nobold]| #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}') #[fg=#{@thm_subtext_0},nobold]| #{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_subtext_0},bold]#{@icon_window}#{window_name} "
+      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_subtext_0},bold]#{@icon_window}#{window_name} "
 
       # Line 1: Windows with per-window branches (left only)
       # Active window: green + bold (prominent), inactive: subtext
       # Branch names trim dynamically based on client width (terminal size) and window count
       # Zoom icon (󰁌) shown when window has zoomed pane
-      set -g status-format[1] "#[align=left,bg=#{@thm_bg}] #{W:#[fg=#{@thm_subtext_0}#,nobold]#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_green}#,bold],}#I: #(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}"
+      # Rounded tree branch (╰─) in subtle color creates visual hierarchy
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#[fg=#{@thm_subtext_0}#,nobold]#{?#{==:#I,1},, │ }#{?window_active,#[fg=#{@thm_green}#,bold],}#I: #(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values
