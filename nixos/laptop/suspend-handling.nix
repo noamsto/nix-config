@@ -44,6 +44,10 @@ in {
 
           # Restart HDM to re-detect actual monitors
           ${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host restart hyprdynamicmonitors.service 2>/dev/null || true
+
+          # Turn displays back on now that monitor configuration is stable
+          # This prevents lockscreen from rendering while display config is changing
+          ${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true
         '';
       };
       wantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];

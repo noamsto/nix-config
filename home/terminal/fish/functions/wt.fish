@@ -100,7 +100,7 @@ function __wt_smart
 
     # Case 1: Worktree already exists → switch to it
     set -l existing_worktree ""
-    for line in (git worktree list 2>/dev/null)
+    for line in (git -C "$repo_root" worktree list 2>/dev/null)
         # Use single quotes for regex anchors, double quotes for variable
         if string match -rq '\['"$branch"'\]$' -- $line
             set existing_worktree (string split -f1 " " -- $line)
@@ -117,9 +117,9 @@ function __wt_smart
     set -l branch_exists false
     set -l is_remote false
 
-    if git show-ref --verify --quiet "refs/heads/$branch" 2>/dev/null
+    if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch" 2>/dev/null
         set branch_exists true
-    else if git show-ref --verify --quiet "refs/remotes/origin/$branch" 2>/dev/null
+    else if git -C "$repo_root" show-ref --verify --quiet "refs/remotes/origin/$branch" 2>/dev/null
         set branch_exists true
         set is_remote true
     end
@@ -138,7 +138,7 @@ function __wt_smart
                 return 1
             end
         end
-        __wt_create_worktree $branch $worktree_path $session_name false $is_remote $move_window $quiet
+        __wt_create_worktree $repo_root $branch $worktree_path $session_name false $is_remote $move_window $quiet
     else
         # Case 3: Branch doesn't exist → create new
         if test "$skip_prompt" = false
@@ -149,19 +149,20 @@ function __wt_smart
                 return 1
             end
         end
-        __wt_create_worktree $branch $worktree_path $session_name true false $move_window $quiet
+        __wt_create_worktree $repo_root $branch $worktree_path $session_name true false $move_window $quiet
     end
 end
 
 # Create worktree and switch to session
 function __wt_create_worktree
-    set -l branch $argv[1]
-    set -l worktree_path $argv[2]
-    set -l session_name $argv[3]
-    set -l create_branch $argv[4]
-    set -l is_remote $argv[5]
-    set -l move_window $argv[6]
-    set -l quiet $argv[7]
+    set -l repo_root $argv[1]
+    set -l branch $argv[2]
+    set -l worktree_path $argv[3]
+    set -l session_name $argv[4]
+    set -l create_branch $argv[5]
+    set -l is_remote $argv[6]
+    set -l move_window $argv[7]
+    set -l quiet $argv[8]
 
     if test "$quiet" = false
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -175,13 +176,13 @@ function __wt_create_worktree
     set -l git_output
     if test "$create_branch" = true
         # New branch
-        set git_output (git worktree add -b "$branch" "$worktree_path" 2>&1)
+        set git_output (git -C "$repo_root" worktree add -b "$branch" "$worktree_path" 2>&1)
     else if test "$is_remote" = true
         # Track remote branch
-        set git_output (git worktree add --track -b "$branch" "$worktree_path" "origin/$branch" 2>&1)
+        set git_output (git -C "$repo_root" worktree add --track -b "$branch" "$worktree_path" "origin/$branch" 2>&1)
     else
         # Existing local branch
-        set git_output (git worktree add "$worktree_path" "$branch" 2>&1)
+        set git_output (git -C "$repo_root" worktree add "$worktree_path" "$branch" 2>&1)
     end
 
     if test $status -ne 0
@@ -357,7 +358,8 @@ function __wt_list
         return 1
     end
 
-    git worktree list
+    set -l repo_root (git rev-parse --show-toplevel)
+    git -C "$repo_root" worktree list
 end
 
 function __wt_remove
@@ -374,11 +376,12 @@ function __wt_remove
         return 1
     end
 
-    set -l repo_name (basename (git rev-parse --show-toplevel))
+    set -l repo_root (git rev-parse --show-toplevel)
+    set -l repo_name (basename $repo_root)
 
     # Find worktree path from git worktree list
     set -l worktree_path ""
-    for line in (git worktree list 2>/dev/null)
+    for line in (git -C "$repo_root" worktree list 2>/dev/null)
         if string match -rq '\['"$branch"'\]$' -- $line
             set worktree_path (string split -f1 " " -- $line)
             break
@@ -414,7 +417,7 @@ function __wt_remove
 
     echo ""
     echo "Removing worktree: $worktree_path"
-    if git worktree remove "$worktree_path"
+    if git -C "$repo_root" worktree remove "$worktree_path"
         echo "✓ Worktree removed"
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

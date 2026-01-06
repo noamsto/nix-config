@@ -52,7 +52,6 @@ in {
     programs = {
       # Fan and thermal control
       coolercontrol.enable = true;
-      adb.enable = true;
     };
 
     # Recommended for alsa

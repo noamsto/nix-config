@@ -13,7 +13,9 @@ in {
       general = {
         lock_cmd = "noctalia-ipc lockScreen lock";
         before_sleep_cmd = "${pkgs.systemd}/bin/loginctl lock-session";
-        after_sleep_cmd = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
+        # Display turn-on is handled by hyprdynamicmonitors-resume service
+        # to ensure monitor configuration is stable before lockscreen renders
+        after_sleep_cmd = "";
         ignore_dbus_inhibit = false;
       };
 
