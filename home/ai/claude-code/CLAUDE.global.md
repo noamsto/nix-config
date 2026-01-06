@@ -152,3 +152,29 @@ shellcheck <script-path>
 ```
 
 Fix all warnings and errors before considering the work complete.
+
+## Effort Estimation with AI Context
+
+When asked about task sizing, provide **structured effort estimates** (not calendar timelines):
+
+**Format:**
+- **Implementation effort:** X-Y hours (what's included)
+- **Not included:** reviews, deployment, edge cases, etc.
+- **Human decisions needed:** architecture choices, UX, business logic
+- **AI advantage:** [where AI accelerates work]
+
+**Examples:**
+
+✅ "Implementation: 1-2 hours (API changes, tests, basic docs). Not included: client SDK updates, production deployment."
+
+✅ "Quick win: ~30 min to add the field and update handlers. You'll need to decide on validation rules first."
+
+❌ "This will be done by tomorrow afternoon"
+
+❌ "Exactly 3.5 hours of work"
+
+**Rules:**
+1. Ranges, not precision (1-2 hours, not 1.5 hours)
+2. Scope what's included/excluded
+3. Never promise calendar dates
+4. Flag where human decisions block progress

@@ -320,7 +320,8 @@ in {
       # Simple window list using tmux native formatting
       # Active window: green + bold (prominent), inactive: subtext
       # Branch names shown directly via script (first N chars), tmux handles overflow naturally
-      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,} #(claude-tmux-indicator --window '#{session_name}:#{window_index}')  }"
+      # Separator (│) only shown between windows, not after last window
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,}#(claude-tmux-indicator --window '#{session_name}:#{window_index}')#{?window_end_flag,, #[fg=#{@thm_subtext_0}]│ }}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values

@@ -168,22 +168,23 @@ output_indicator() {
     color="$COLOR_DONE"
     ;;
   *)
-    echo ""
+    printf ""
     return
     ;;
   esac
 
+  # Add leading space for proper spacing in tmux status bar
   if $no_color; then
     if [[ $count -gt 1 ]]; then
-      echo "$icon$count"
+      printf " %s" "$icon$count"
     else
-      echo "$icon"
+      printf " %s" "$icon"
     fi
   else
     if [[ $count -gt 1 ]]; then
-      echo "${color}${icon}${count}${COLOR_RESET}"
+      printf " %s" "${color}${icon}${count}${COLOR_RESET}"
     else
-      echo "${color}${icon}${COLOR_RESET}"
+      printf " %s" "${color}${icon}${COLOR_RESET}"
     fi
   fi
 }
@@ -192,7 +193,7 @@ output_indicator() {
 case "$mode" in
 pane)
   if [[ -z $pane_id ]]; then
-    echo ""
+    printf ""
     exit 0
   fi
   state=$(read_pane_state "$pane_id") || exit 0
@@ -201,7 +202,7 @@ pane)
 
 session)
   if [[ -z $session_name ]]; then
-    echo ""
+    printf ""
     exit 0
   fi
   result=$(read_session_state "$session_name") || exit 0
@@ -214,7 +215,7 @@ window)
   # For window mode, scan all panes in the window
   # This requires tmux commands to list panes
   if [[ -z $window_id ]]; then
-    echo ""
+    printf ""
     exit 0
   fi
 
