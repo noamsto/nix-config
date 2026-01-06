@@ -253,15 +253,17 @@
       "center on, match:class ^(.*jetbrains.*)$, match:title ^(Confirm Exit|Open Project|win424|win201|splash)$"
       "size 640 400, match:class ^(.*jetbrains.*)$, match:title ^(splash)$"
 
-      # don't render hyprbars on tiling windows
+      # hyprbars rules
+      "hyprbars:no_bar 1, match:fullscreen false"
+      "hyprbars:no_bar 1, match:fullscreen true"
       "hyprbars:no_bar 1, match:float false"
+      "hyprbars:no_bar 0, match:float true"
 
       # Fullscreen focus mode rules
       "decorate off, match:fullscreen true"
       "no_shadow on, match:fullscreen true"
       "rounding 0, match:fullscreen true"
       "opacity 0.95, match:fullscreen true"
-      "hyprbars:no_bar 1, match:fullscreen true"
 
       # Visual indicator for pinned windows - yellow border (catppuccin mocha)
       "border_color rgb(f9e2af) rgb(f1fa8c), match:pin true"

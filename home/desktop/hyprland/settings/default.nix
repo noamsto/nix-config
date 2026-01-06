@@ -220,7 +220,7 @@ in {
             # close - red (catppuccin mocha)
             "rgb(f38ba8), 16, 󰖭, hyprctl dispatch killactive"
             # maximize - green (catppuccin mocha)
-            "rgb(a6e3a1), 16, 󰖯, fullscreen-toggle 1"
+            "rgb(a6e3a1), 16, 󰖯, hyprctl dispatch fullscreen 1"
             # pin/unpin toggle - yellow (catppuccin mocha)
             "rgb(f9e2af), 16, 󰐃, hyprctl dispatch pin active"
           ];

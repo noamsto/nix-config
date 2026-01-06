@@ -25,8 +25,8 @@ in {
       "$mainMod, C, exec, ${terminal} --single-instance --instance-group=hypr" # Changed from Q to C for console/terminal
       "$mainMod, E, exec, ${fileManager}"
       "$mainMod, B, exec, ${browser}"
-      "$mainMod, F, exec, fullscreen-toggle 1" # Fullscreen with gaps (focus mode)
-      "$mainMod SHIFT, F, exec, fullscreen-toggle 0" # True fullscreen (no gaps)
+      "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)
+      "$mainMod SHIFT, F, fullscreen, 0" # True fullscreen (no gaps)
       "$mainMod, Q, killactive" # Changed from C to Q for quit/close window
 
       # Toggle pseudo (no auto-resize - pseudo maintains floating dimensions)
