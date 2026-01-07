@@ -14,6 +14,16 @@
 
 This ensures all work is tracked and isolated properly.
 
+## Task Context Switching
+
+When a new task is **unrelated** to current in-progress work and there are uncommitted changes:
+
+1. Briefly note: "Uncommitted changes from [previous task] — committing first."
+2. Commit the previous work with an appropriate message
+3. Proceed with the new task
+
+No confirmation needed — this is the default. User can say "don't commit" to override.
+
 ## Linear Data Display
 
 **IMPORTANT**: When displaying Linear data, always format it readably:
