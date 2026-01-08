@@ -19,9 +19,23 @@ inputs: [
     nix-search-tv = inputs.nix-search-tv.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
-  # Add claude-code from flake
-  (final: _: {
+  # Add LLM agents from flake
+  (final: prev: {
     inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush happy-coder;
+    # Amp with process.title wrapper so it shows as "amp" instead of "node" in ps
+    amp = let
+      upstream = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.amp;
+      mainJs = "${upstream}/lib/node_modules/@sourcegraph/amp/dist/main.js";
+      loader = final.writeText "amp-loader.mjs" ''
+        process.title = 'amp';
+        await import('${mainJs}');
+      '';
+    in
+      final.writeShellScriptBin "amp" ''
+        export PATH="${final.lib.makeBinPath [final.ripgrep]}:$PATH"
+        export AMP_SKIP_UPDATE_CHECK=1
+        exec ${final.nodejs_24}/bin/node ${loader} "$@"
+      '';
   })
 
   # Add mcp-servers-nix overlay
