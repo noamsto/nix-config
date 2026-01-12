@@ -39,10 +39,11 @@
       icon-position = "left"; # show the icon to the "left" or "right" of the window name (defaults to left)
     };
     icons = {
-      claude = "🧠";
+      claude = "🤖";
       nh = "❄️";
       fish = "🐟";
       process-compose = "⚙️";
+      amp = "🧠";
     };
   };
 
@@ -231,6 +232,10 @@ in {
 
       # restore clear screen to <prefix> C-L
       bind -n M-l send-keys 'C-l'
+
+      # Shift+Enter: process-aware newline for Claude Code / Amp
+      # Amp needs backslash + Enter, Claude Code needs Alt+Enter
+      bind -n S-Enter if-shell "ps -o comm= -t '#{pane_tty}' | grep -qE '^(amp|bun)$'" "send-keys \\\\ Enter" "send-keys M-Enter"
 
       # Bind window spliting
       unbind %

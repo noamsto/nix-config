@@ -131,6 +131,11 @@ in {
       ", Print, exec, grimblast-satty" # screenshot with frozen screen and satty editor (mapped from SUPER+SHIFT+S via xremap)
       "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with vicinae
 
+      # Accessibility tools
+      "$mainMod SHIFT, O, exec, normcap" # OCR - select area and copy text
+      "$mainMod, Z, exec, woomer" # Screen zoom (scroll to zoom, drag to pan, Esc to exit)
+      "$mainMod SHIFT, A, exec, ptt-toggle" # Speech-to-text: toggle recording
+
       # Screen recording is handled by Noctalia's ScreenRecorder widget
       # GIF conversion available via post-processor after recording completes
     ];

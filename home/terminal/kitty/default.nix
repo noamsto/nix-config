@@ -183,8 +183,8 @@ in {
       # Allow Ctrl+Shift+- (Ctrl+_) to pass through to shell for undo
       "ctrl+shift+minus" = "no_op";
 
-      # Claude Code: Map Shift+Enter to Alt+Enter for newlines
-      "shift+enter" = "send_text all \\x1b\\r";
+      # Shift+Enter: send CSI sequence for tmux extended-keys
+      "shift+enter" = "send_text all \\e[13;2u";
 
       # Disable tab/window features (using tmux instead)
       "ctrl+shift+t" = "no_op";

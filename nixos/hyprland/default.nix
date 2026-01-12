@@ -30,9 +30,13 @@ in {
     };
 
     # Ensure video group permissions for backlight control
-    users.users.${config.username}.extraGroups = ["video" "i2c"];
+    # ydotool group for speech-to-text typing (created by programs.ydotool)
+    users.users.${config.username}.extraGroups = ["video" "i2c" "ydotool"];
     hardware.i2c.enable = true;
-    boot.kernelModules = ["i2c_dev"];
+    boot.kernelModules = ["i2c_dev" "uinput"];
+
+    # ydotool for speech-to-text typing
+    programs.ydotool.enable = true;
 
     environment.systemPackages = with pkgs; [
       pavucontrol

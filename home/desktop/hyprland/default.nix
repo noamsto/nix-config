@@ -25,6 +25,7 @@
     ./scripts/sesh-launcher.nix
     ./scripts/theme-toggle.nix
     ./scripts/recording-post-processor.nix
+    ./scripts/accessibility-tools.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];

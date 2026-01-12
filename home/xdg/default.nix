@@ -37,6 +37,9 @@
         "text/markdown" = "nvim.desktop";
         "application/x-shellscript" = "nvim.desktop";
 
+        # Directories
+        "inode/directory" = "thunar.desktop";
+
         # Video files - critical missing
         "video/mp4" = "mpv.desktop";
         "video/x-matroska" = "mpv.desktop";
