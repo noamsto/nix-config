@@ -126,11 +126,10 @@ in {
           };
         })
         enabledPlugins))
-      # Plugin settings (privacy-indicator needs hideInactive)
+      # Plugin settings (privacy-indicator)
       {
         "noctalia/plugins/privacy-indicator/settings.json".text = builtins.toJSON {
-          hideInactive = true;
-          iconSpacing = 4;
+          hideInactive = false;
           removeMargins = false;
         };
       }
@@ -155,6 +154,8 @@ in {
           position = "top";
           floating = false;
           density = "comfortable";
+          backgroundOpacity = 0.93;
+          outerCorners = true;
           widgets = {
             # Left side: clock, system monitor, active window
             left = [
@@ -174,17 +175,22 @@ in {
               {
                 id = "ActiveWindow";
                 maxWidth = 145;
+                hideMode = "hidden";
+                scrollingMode = "hover";
               }
               {
                 id = "MediaMini";
                 showAlbumArt = true;
                 showProgressRing = true;
+                hideMode = "hidden";
+                scrollingMode = "hover";
+                maxWidth = 145;
               }
             ];
             # Center: workspace indicator
             center = [
               {
-                id = "Workspace"; # Singular!
+                id = "Workspace";
                 labelMode = "index";
                 showLabelsOnlyWhenOccupied = true;
               }
@@ -200,7 +206,7 @@ in {
                 showUnreadBadge = true;
               }
               {
-                id = "WiFi";
+                id = "Network";
                 displayMode = "onhover";
               }
               {
@@ -218,6 +224,7 @@ in {
               {
                 id = "KeyboardLayout";
                 displayMode = "forceOpen";
+                showIcon = true;
               }
               {
                 id = "Battery";
@@ -248,10 +255,12 @@ in {
           lockOnSuspend = false; # Managed by hypridle's before_sleep_cmd
         };
 
-        # UI fonts
+        # UI fonts and panel settings
         ui = {
           fontDefault = "Inter Nerd Font";
           fontFixed = "FiraCode Nerd Font";
+          panelBackgroundOpacity = 0.93;
+          panelsAttachedToBar = true;
         };
 
         # Brightness - enable DDC/CI for external monitors
