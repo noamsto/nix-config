@@ -34,6 +34,11 @@ in {
   # Add scripts to PATH
   home.packages = [workspaceManager];
 
+  # Add upower to hyprdynamicmonitors-prepare PATH to fix "upower not found" warning
+  systemd.user.services.hyprdynamicmonitors-prepare.Service.Environment = [
+    "PATH=${lib.makeBinPath [pkgs.upower]}:$PATH"
+  ];
+
   # Add systemd service to restart HDM after system resume
   # This fixes the undock-while-asleep issue by re-detecting hardware state
   systemd.user.services.hyprdynamicmonitors-resume = {

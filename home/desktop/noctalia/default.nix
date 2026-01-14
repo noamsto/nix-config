@@ -129,7 +129,7 @@ in {
       # Plugin settings (privacy-indicator)
       {
         "noctalia/plugins/privacy-indicator/settings.json".text = builtins.toJSON {
-          hideInactive = false;
+          hideInactive = true;
           removeMargins = false;
         };
       }
@@ -153,7 +153,7 @@ in {
         bar = {
           position = "top";
           floating = false;
-          density = "comfortable";
+          density = "spacious";
           backgroundOpacity = 0.93;
           outerCorners = true;
           widgets = {

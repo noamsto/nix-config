@@ -38,6 +38,8 @@ function wt --description 'Git worktree + tmux session manager'
             __wt_list
         case remove rm
             __wt_remove $args[2..-1]
+        case clean prune
+            __wt_clean $skip_prompt
         case main
             __wt_main $skip_prompt $move_window $quiet
         case help -h --help ""
@@ -64,6 +66,7 @@ function __wt_help
     echo "  wt main               Switch to root repository window"
     echo "  wt list               List all worktrees"
     echo "  wt remove <branch>    Remove worktree + kill window"
+    echo "  wt clean              Remove worktrees with merged branches"
     echo "  wt help               Show this help"
     echo ""
     echo "Model: Session = Project, Window = Worktree"
@@ -426,4 +429,113 @@ function __wt_remove
         echo "❌ Failed to remove worktree"
         return 1
     end
+end
+
+# Clean up worktrees with merged branches
+function __wt_clean
+    set -l skip_prompt $argv[1]
+
+    if not git rev-parse --git-dir >/dev/null 2>&1
+        echo "Error: Not in a git repository" >&2
+        return 1
+    end
+
+    set -l repo_root (git rev-parse --show-toplevel)
+    set -l repo_name (basename $repo_root)
+
+    # Determine default branch (main or master)
+    set -l default_branch
+    if git -C "$repo_root" show-ref --verify --quiet refs/heads/main
+        set default_branch main
+    else if git -C "$repo_root" show-ref --verify --quiet refs/heads/master
+        set default_branch master
+    else
+        echo "Error: Could not find main or master branch" >&2
+        return 1
+    end
+
+    # Get list of merged branches (excluding default branch)
+    set -l merged_branches (git -C "$repo_root" branch --merged "$default_branch" | string trim | string match -rv "^\*|^$default_branch\$")
+
+    if test (count $merged_branches) -eq 0
+        echo "No merged branches found."
+        return 0
+    end
+
+    # Find worktrees for merged branches
+    set -l stale_worktrees
+    set -l stale_branches
+
+    for branch in $merged_branches
+        for line in (git -C "$repo_root" worktree list 2>/dev/null)
+            if string match -rq '\['"$branch"'\]$' -- $line
+                set -l worktree_path (string split -f1 " " -- $line)
+                # Skip if it's the main worktree (repo root)
+                if test "$worktree_path" != "$repo_root"
+                    set -a stale_worktrees $worktree_path
+                    set -a stale_branches $branch
+                end
+                break
+            end
+        end
+    end
+
+    if test (count $stale_worktrees) -eq 0
+        echo "No stale worktrees found (merged branches have no worktrees)."
+        return 0
+    end
+
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🧹 Found "(count $stale_worktrees)" stale worktree(s) with merged branches"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+
+    for i in (seq (count $stale_worktrees))
+        echo "  • $stale_branches[$i] → $stale_worktrees[$i]"
+    end
+    echo ""
+
+    if test "$skip_prompt" = false
+        read -P "Remove all stale worktrees? [y/N] " confirm
+        if not string match -riq '^y' -- $confirm
+            echo "Cancelled."
+            return 1
+        end
+    end
+
+    echo ""
+    set -l failed 0
+
+    for i in (seq (count $stale_worktrees))
+        set -l branch $stale_branches[$i]
+        set -l worktree_path $stale_worktrees[$i]
+
+        echo "Removing: $branch"
+
+        # Kill tmux window if it exists
+        if tmux has-session -t "$repo_name" 2>/dev/null
+            set -l window_idx (__wt_find_window_by_worktree "$repo_name" "$worktree_path")
+            if test -n "$window_idx"
+                tmux kill-window -t "$repo_name:$window_idx" 2>/dev/null
+            end
+        end
+
+        # Remove worktree
+        if git -C "$repo_root" worktree remove "$worktree_path" 2>/dev/null
+            echo "  ✓ Removed worktree"
+        else
+            echo "  ❌ Failed to remove worktree (may have uncommitted changes)"
+            set failed (math $failed + 1)
+        end
+    end
+
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    if test $failed -eq 0
+        echo "✓ Cleaned "(count $stale_worktrees)" worktree(s)"
+    else
+        echo "⚠ Cleaned "( math (count $stale_worktrees) - $failed)" worktree(s), $failed failed"
+    end
+
+    return $failed
 end
