@@ -432,11 +432,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1768360687,
-        "narHash": "sha256-t/AN85gsc+4vHA6Xq6nOA0xALbvjjcgXfRW7WRJe+GA=",
+        "lastModified": 1768370489,
+        "narHash": "sha256-/tZo3ePuv6gbJ+OUAtn/vIL/NHwXmVdmTqwpRKKYuW4=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "7ba08af1bef5fd58c164ea27ac638fd67e1ee8c0",
+        "rev": "41130668102a77795069d950e001926dd7542c99",
         "type": "github"
       },
       "original": {
@@ -466,11 +466,11 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1763975600,
-        "narHash": "sha256-ewrvt4kn/GHiTC1HRfgpoqoFd/lXnAGJ1SEPZwNKgkU=",
+        "lastModified": 1768470180,
+        "narHash": "sha256-hWZpubkSj0qMYkTO8e2IqzmmRKiORkP0nVesGhEk3lg=",
         "ref": "refs/heads/main",
-        "rev": "0dc5616a07ca3ffcc2a4191c605544ab70d280ba",
-        "revCount": 40,
+        "rev": "62d51588fb2cc928ec21cfe4f377b1bbf6144952",
+        "revCount": 41,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
       },

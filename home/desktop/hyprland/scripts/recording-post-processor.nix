@@ -35,6 +35,8 @@ in {
       ExecStart = "${recordingPostProcessor}/bin/recording-post-processor";
       Restart = "on-failure";
       RestartSec = 5;
+      # Prevent shutdown hang - ffmpeg processes should stop quickly
+      TimeoutStopSec = "5s";
 
       # Inherit Wayland display for vicinae dmenu
       PassEnvironment = ["WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "DISPLAY"];

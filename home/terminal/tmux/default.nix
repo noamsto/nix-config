@@ -115,6 +115,8 @@ in {
       ExecStart = "-${tmux-bin} new -s nix-config -c %h/nix-config -d";
       # Don't kill session on stop - let it persist across home-manager switches
       RemainAfterExit = true;
+      # Prevent shutdown hang - stop quickly since tmux persists anyway
+      TimeoutStopSec = "5s";
       Environment = [
         "COLORTERM=truecolor"
         "TERM=xterm-kitty"
@@ -286,6 +288,7 @@ in {
       )\""
 
       bind-key x kill-pane # skip "kill-pane 1? (y/n)" prompt
+      bind-key & confirm-before -p "kill-window #W? (y/n)" kill-window
       set -g detach-on-destroy off  # don't exit from tmux when closing a session
 
       # Navigation: pass to vim if in vim, otherwise navigate tmux (but not if zoomed)

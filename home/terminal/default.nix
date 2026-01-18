@@ -15,6 +15,7 @@ in {
     ./kitty
     ./fish
     ./tmux
+    ./wt
     ./process_compose
     ./television
     ./btop.nix

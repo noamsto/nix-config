@@ -125,6 +125,8 @@ in {
       ExecStart = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server -m ${whisperModelPath}/ggml-${whisperModel}.bin --host 127.0.0.1 --port ${whisperPort} -l en --no-timestamps";
       Restart = "on-failure";
       RestartSec = "5";
+      # GPU services need extra time to release resources cleanly
+      TimeoutStopSec = "10s";
     };
     Install = {
       WantedBy = ["default.target"];

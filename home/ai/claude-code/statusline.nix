@@ -9,7 +9,6 @@ pkgs.writeShellApplication {
   runtimeInputs = with pkgs; [
     jq
     bc
-    starship
     coreutils
   ];
 
@@ -18,20 +17,15 @@ pkgs.writeShellApplication {
   text = ''
     #!/usr/bin/env bash
     # Claude Code Statusline
-    # Shows: Model | Tokens | Conversation Duration | Messages
-    # Only displays reliable data from input JSON and transcript
+    # Shows: Model | Tokens | Duration | Messages
+    # Focused on Claude-specific info (tmux shows path/branch)
 
     # Read Claude Code session data from stdin
     input=$(cat)
 
     # Exit gracefully if no input (e.g., during home-manager activation)
     if [[ -z "$input" ]] || ! echo "$input" | jq empty 2>/dev/null; then
-      # Return a simple starship prompt if available, otherwise minimal output
-      if command -v starship &> /dev/null; then
-        starship prompt | head -n1 | sed 's/\x1b\[J//'
-      else
-        echo "Claude Code"
-      fi
+      echo "Claude Code"
       exit 0
     fi
 
@@ -102,9 +96,6 @@ pkgs.writeShellApplication {
     # Build statusline components
     # ========================================
 
-    # Get starship prompt (first line only, strip control sequences)
-    starship_line=$(starship prompt | head -n1 | sed 's/\x1b\[J//')
-
     # Model info
     model_display=$(printf "\033[1;34m🤖 %s\033[0m" "$model")
 
@@ -133,7 +124,7 @@ pkgs.writeShellApplication {
     # Conversation duration
     conversation_duration_ms=''${conversation_duration_ms:-0}
     conversation_hours=$(echo "scale=2; $conversation_duration_ms / 3600000" | bc 2>/dev/null || echo "0.00")
-    duration_display=$(printf "\033[1;35m⏱️  %.2fh\033[0m" "$conversation_hours")
+    duration_display=$(printf "\033[1;35m⏱️ %.2fh\033[0m" "$conversation_hours")
 
     # Message count
     msg_display=$(printf "\033[1;35m💬 %d msgs\033[0m" "$message_count")
@@ -141,6 +132,6 @@ pkgs.writeShellApplication {
     # ========================================
     # Output single line
     # ========================================
-    echo -e "''${starship_line} ''${model_display} | ''${token_display} | ''${duration_display} | ''${msg_display}"
+    echo -e "''${model_display} | ''${token_display} | ''${duration_display} | ''${msg_display}"
   '';
 }

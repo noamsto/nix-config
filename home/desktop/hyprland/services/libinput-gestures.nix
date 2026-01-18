@@ -17,6 +17,8 @@
       ExecStart = "${lib.getExe pkgs.libinput-gestures} -d";
       Restart = "on-failure";
       RestartSec = "1s";
+      # Prevent shutdown hang
+      TimeoutStopSec = "3s";
     };
 
     Install = {

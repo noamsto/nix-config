@@ -22,6 +22,8 @@ in {
       ExecStart = "${smart-dnd-audio}/bin/smart-dnd-audio monitor";
       Restart = "on-failure";
       RestartSec = 5;
+      # Prevent shutdown hang
+      TimeoutStopSec = "3s";
 
       # Dependencies
       Environment = [

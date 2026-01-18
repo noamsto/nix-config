@@ -10,7 +10,7 @@
 
 2. **Create a git worktree** for the work:
    - Use the branch name from Linear (`Cmd+Shift+.` to copy)
-   - Run: `cd "$(wt -ymq <branch-name>)"`
+   - Run: `cd "$(wt -yq <branch-name>)"`
 
 This ensures all work is tracked and isolated properly.
 
@@ -137,17 +137,30 @@ users[3]{id,name,role}:
 When creating or switching to git worktrees, use the `wt` command:
 
 ```bash
-# Create/switch to worktree + move window + cd to it
-cd "$(wt -ymq <branch-name>)"
+# Create/switch to worktree and cd to it
+cd "$(wt -yq <branch-name>)"
 ```
 
 Flags:
 
 - `-y` / `--yes`: Skip confirmation prompts
-- `-m` / `--move`: Move current tmux window to new session
 - `-q` / `--quiet`: Only output the worktree path (for scripting)
 
-This creates the worktree, creates a tmux session, moves the current window to it, and outputs the path for cd.
+**Model**: Session = Project, Window = Worktree
+- One tmux session per repository (e.g., 'nix-config')
+- One window per worktree/branch
+
+This creates the worktree (if needed), switches to its tmux window, and outputs the path for cd.
+
+## Pull Requests
+
+When creating PRs, always create them as **drafts** initially:
+
+```bash
+gh pr create --draft --title "..." --body "..."
+```
+
+This allows for review before marking ready.
 
 ## Shell Preference
 

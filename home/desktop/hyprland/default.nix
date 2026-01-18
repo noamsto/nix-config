@@ -39,63 +39,65 @@
     systemd.enable = false;
   };
 
-  home.packages = with pkgs; [
-    papirus-icon-theme
-    bibata-cursors
-    thunar
-    thunar-volman # Volume manager for thunar
-    thunar-archive-plugin # Archive support
-    tumbler # Thumbnail service for image previews
+  home = {
+    packages = with pkgs; [
+      papirus-icon-theme
+      bibata-cursors
+      thunar
+      thunar-volman # Volume manager for thunar
+      thunar-archive-plugin # Archive support
+      tumbler # Thumbnail service for image previews
 
-    # Dock - now handled by Noctalia
-    # nwg-dock-hyprland
+      # Dock - now handled by Noctalia
+      # nwg-dock-hyprland
 
-    # XWayland HiDPI support
-    xorg.xrdb # X resources database for XWayland scaling
+      # XWayland HiDPI support
+      xorg.xrdb # X resources database for XWayland scaling
 
-    # Screenshot and recording tools
-    grim # High-quality Wayland screenshot tool
-    grimblast # Backup screenshot tool
-    satty # Screenshot editor (modern alternative to swappy)
-    wl-screenrec
-    slurp # Area selection for screenshots/recording
-    ffmpeg # Video/GIF conversion
-    wl-clipboard
-    jq # JSON parsing for smart selection
-    hyprpicker # Required for grimblast --freeze functionality
+      # Screenshot and recording tools
+      grim # High-quality Wayland screenshot tool
+      grimblast # Backup screenshot tool
+      satty # Screenshot editor (modern alternative to swappy)
+      wl-screenrec
+      slurp # Area selection for screenshots/recording
+      ffmpeg # Video/GIF conversion
+      wl-clipboard
+      jq # JSON parsing for smart selection
+      hyprpicker # Required for grimblast --freeze functionality
 
-    # Notification support
-    libnotify # For notify-send in scripts
+      # Notification support
+      libnotify # For notify-send in scripts
 
-    # Sound theme support
-    sound-theme-freedesktop # Provides standard system sounds
-    libcanberra # Sound theme support library
+      # Sound theme support
+      sound-theme-freedesktop # Provides standard system sounds
+      libcanberra # Sound theme support library
 
-    # Image editing and viewing
-    gimp # Full-featured image editor
-    eog # GNOME image viewer
-  ];
+      # Image editing and viewing
+      gimp # Full-featured image editor
+      eog # GNOME image viewer
+    ];
 
-  # make stuff work on wayland
-  home.sessionVariables = {
-    QT_QPA_PLATFORM = "wayland";
-    SDL_VIDEODRIVER = "wayland";
-    XDG_SESSION_TYPE = "wayland";
-    GRIMBLAST_EDITOR = "satty";
+    # make stuff work on wayland
+    sessionVariables = {
+      QT_QPA_PLATFORM = "wayland";
+      SDL_VIDEODRIVER = "wayland";
+      XDG_SESSION_TYPE = "wayland";
+      GRIMBLAST_EDITOR = "satty";
+    };
+
+    # Satty configuration for high-quality screenshot editing
+    file.".config/satty/config.toml".text = ''
+      [general]
+      early-exit = true
+      copy-command = "satty-copy-path"
+      annotation-size-factor = 2
+      output-filename = "${config.xdg.userDirs.pictures}/Screenshots/satty-%Y-%m-%d_%H-%M-%S.png"
+      disable-notifications = true
+
+      [font]
+      family = "Roboto"
+    '';
   };
-
-  # Satty configuration for high-quality screenshot editing
-  home.file.".config/satty/config.toml".text = ''
-    [general]
-    early-exit = true
-    copy-command = "satty-copy-path"
-    annotation-size-factor = 2
-    output-filename = "${config.xdg.userDirs.pictures}/Screenshots/satty-%Y-%m-%d_%H-%M-%S.png"
-    disable-notifications = true
-
-    [font]
-    family = "Roboto"
-  '';
 
   # Custom desktop entry for browser URL handler with workspace switching
   xdg.dataFile."applications/firefox-workspace-switch.desktop".text = ''

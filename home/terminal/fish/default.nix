@@ -1,8 +1,4 @@
 {pkgs, ...}: {
-  imports = [
-    ./wt.nix
-  ];
-
   home.packages = with pkgs; [
     eza
     zoxide
