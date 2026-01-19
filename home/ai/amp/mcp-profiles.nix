@@ -21,15 +21,12 @@ in {
       };
     };
 
-    # Frontend MCPs: Playwright + Chrome DevTools
+    # Frontend MCP: Playwright for browser automation and UI inspection
     # Note: Amp has built-in web browsing, but Playwright adds UI testing/automation
     "amp/mcp-playwright.json".text = builtins.toJSON {
       playwright = {
         command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
         args = ["--executable-path" executable];
-      };
-      chrome-devtools = helpers.mkNpxMcp {
-        package = "chrome-devtools-mcp@latest";
       };
     };
 

@@ -22,15 +22,12 @@ in {
       };
     };
 
-    # Frontend MCPs: Playwright + Chrome DevTools
+    # Frontend MCP: Playwright for browser automation and UI inspection
     "claude-code/mcp-playwright.json".text = builtins.toJSON {
       mcpServers = {
         playwright = {
           command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
           args = ["--executable-path" executable];
-        };
-        chrome-devtools = helpers.mkNpxMcp {
-          package = "chrome-devtools-mcp@latest";
         };
       };
     };
