@@ -72,6 +72,7 @@
       # === ESSENTIAL LSP SERVERS (Better via Nix than Mason) ===
       rust-analyzer # Rust
       gopls # Go
+      golangci-lint-langserver # Go linting LSP
       nodePackages.typescript-language-server # TypeScript/JavaScript
       yaml-language-server # YAML
       taplo # TOML

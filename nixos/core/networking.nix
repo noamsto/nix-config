@@ -53,10 +53,8 @@
     # DNS service - disable mDNS to avoid conflict with Avahi
     resolved = {
       enable = true;
-      extraConfig = ''
-        MulticastDNS=no
-        LLMNR=no
-      '';
+      llmnr = "false";
+      settings.Resolve.MulticastDNS = false;
     };
 
     # For discovering zero-conf network sharing

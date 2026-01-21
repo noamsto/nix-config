@@ -134,7 +134,7 @@ in {
   programs.tmux = {
     enable = true;
     terminal = "tmux-256color";
-    historyLimit = 100000;
+    historyLimit = 1500000; # Large buffer to mitigate Claude Code scroll event storm (issue #9935)
     baseIndex = 1; # Start windows at 1, set early in config to avoid race conditions
     plugins = with pkgs; [
       tmuxPlugins.better-mouse-mode

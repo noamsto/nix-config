@@ -63,6 +63,20 @@ return {
         mason = false,
         cmd = { "qmlls", "-E" },
       },
+      gopls = {
+        mason = false,
+        settings = {
+          gopls = {
+            buildFlags = { "-tags=integration" },
+          },
+        },
+      },
+      golangci_lint_ls = {
+        mason = false,
+        init_options = {
+          command = { "golangci-lint", "run", "--build-tags=integration", "--output.json.path=stdout", "--show-stats=false" },
+        },
+      },
     },
   },
 }
