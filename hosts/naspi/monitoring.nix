@@ -62,17 +62,21 @@
         serve_from_sub_path = true;
       };
 
-      # Security settings
+      # Security settings - Tailscale-only access
       security = {
         admin_user = "admin";
-        admin_password = "admin"; # CHANGE THIS after first login!
+        admin_password = "admin";
         allow_embedding = true;
       };
 
-      # Anonymous access disabled for security
+      # Anonymous admin access - secured by Tailscale
       "auth.anonymous" = {
-        enabled = false;
+        enabled = true;
+        org_role = "Admin";
       };
+
+      # Disable login form since we use anonymous access
+      "auth.basic".enabled = false;
     };
 
     # Provision Prometheus datasource automatically

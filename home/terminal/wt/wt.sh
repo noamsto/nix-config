@@ -5,6 +5,7 @@
 # Flags
 SKIP_PROMPT=false
 QUIET=false
+NO_SWITCH=false
 
 # Colors for non-gum output
 RED='\033[0;31m'
@@ -49,7 +50,8 @@ Usage:
   wt <branch>           Smart switch/create (prompts before creating)
   wt -y <branch>        Skip prompts
   wt -q <branch>        Quiet mode (only output path)
-  wt -yq <branch>       Combine flags (for Claude/scripts)
+  wt -n <branch>        No tmux (skip window creation/switching)
+  wt -yqn <branch>      Combine flags (for Claude/scripts)
   wt z [query]          Fuzzy find worktree, output path (use: cd "$(wt z)")
   wt main               Switch to root repository window
   wt list               List all worktrees
@@ -63,11 +65,11 @@ Model: Session = Project, Window = Worktree
   • Fast switching between branches: `n / `p
 
 Smart mode:
-  • Worktree exists     → switch to window
+  • Worktree exists     → switch to window (unless -n)
   • Branch exists       → prompt to create worktree
   • Branch not found    → prompt to create new branch
 
-Claude usage:  cd "$(wt -yq feature-x)"
+Claude usage:  cd "$(wt -yqn feature-x)"
 
 Worktree location: .worktrees/<branch-name>
 EOF
@@ -89,6 +91,17 @@ wt_find_window_by_worktree() {
 wt_switch_to_session() {
   local session_name="$1" # Format: repo-name/branch
   local worktree_path="$2"
+
+  # If NO_SWITCH, skip all tmux operations - just output the path
+  if [[ $NO_SWITCH == "true" ]]; then
+    if [[ $QUIET == "true" ]]; then
+      echo "$worktree_path"
+    else
+      echo ""
+      echo "Worktree: $worktree_path"
+    fi
+    return 0
+  fi
 
   # Parse repo and branch from session_name
   local repo_name="${session_name%%/*}"
@@ -235,6 +248,25 @@ wt_create_worktree() {
   wt_switch_to_session "$session_name" "$worktree_path"
 }
 
+# Get the true repository root (works from worktrees too)
+get_repo_root() {
+  local git_common_dir
+  git_common_dir=$(git rev-parse --git-common-dir)
+
+  # If git-common-dir is ".git", we're in the main repo
+  if [[ $git_common_dir == ".git" ]]; then
+    git rev-parse --show-toplevel
+  else
+    # We're in a worktree - git-common-dir points to main repo's .git
+    # e.g., /path/to/repo/.git or /path/to/repo/.git/worktrees/branch
+    # Resolve to absolute path and get parent
+    local abs_git_dir
+    abs_git_dir=$(cd "$(dirname "$git_common_dir")" && pwd)/$(basename "$git_common_dir")
+    # Remove /.git suffix to get repo root
+    echo "${abs_git_dir%/.git}"
+  fi
+}
+
 # Smart worktree handler with prompts
 wt_smart() {
   local branch="$1"
@@ -245,7 +277,7 @@ wt_smart() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   local repo_name
   repo_name=$(basename "$repo_root")
   local worktree_path="$repo_root/.worktrees/$branch"
@@ -308,7 +340,7 @@ wt_main() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   local repo_name
   repo_name=$(basename "$repo_root")
   # Use repo/main format so wt_switch_to_session can parse it
@@ -324,7 +356,7 @@ wt_list() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   git -C "$repo_root" worktree list
 }
 
@@ -343,7 +375,7 @@ wt_remove() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   local repo_name
   repo_name=$(basename "$repo_root")
 
@@ -402,7 +434,7 @@ wt_clean() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   local repo_name
   repo_name=$(basename "$repo_root")
 
@@ -513,7 +545,7 @@ wt_z() {
   fi
 
   local repo_root
-  repo_root=$(git rev-parse --show-toplevel)
+  repo_root=$(get_repo_root)
   local repo_name
   repo_name=$(basename "$repo_root")
 
@@ -575,17 +607,17 @@ main() {
       QUIET=true
       shift
       ;;
-    -yq | -qy)
-      SKIP_PROMPT=true
-      QUIET=true
+    -n | --no-switch)
+      NO_SWITCH=true
       shift
       ;;
     -*)
-      # Handle combined short flags like -yq
+      # Handle combined short flags like -yqn
       local flags="${1#-}"
-      if [[ $flags =~ ^[yq]+$ ]]; then
+      if [[ $flags =~ ^[yqn]+$ ]]; then
         [[ $flags == *y* ]] && SKIP_PROMPT=true
         [[ $flags == *q* ]] && QUIET=true
+        [[ $flags == *n* ]] && NO_SWITCH=true
         shift
       else
         args+=("$1")

@@ -14,6 +14,26 @@ in {
       package = pkgs.hyprland;
     };
 
+    # Custom UWSM session that directly invokes start-hyprland
+    # instead of referencing hyprland.desktop (which we want to hide from greeter)
+    # See: https://github.com/NixOS/nixpkgs/issues/471800
+    # See: https://github.com/hyprwm/Hyprland/discussions/12661
+    services.displayManager.sessionPackages = lib.mkForce [
+      (pkgs.runCommand "hyprland-uwsm-only" {
+          passthru.providedSessions = ["hyprland-uwsm"];
+        } ''
+                  mkdir -p $out/share/wayland-sessions
+                  cat > $out/share/wayland-sessions/hyprland-uwsm.desktop << EOF
+          [Desktop Entry]
+          Name=Hyprland (uwsm-managed)
+          Comment=An intelligent dynamic tiling Wayland compositor
+          Exec=uwsm start -e -D Hyprland -F -- ${pkgs.hyprland}/bin/start-hyprland
+          Type=Application
+          DesktopNames=Hyprland
+          EOF
+        '')
+    ];
+
     services.greetd = {
       enable = true;
       settings = {

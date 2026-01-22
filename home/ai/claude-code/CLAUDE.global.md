@@ -137,14 +137,15 @@ users[3]{id,name,role}:
 When creating or switching to git worktrees, use the `wt` command:
 
 ```bash
-# Create/switch to worktree and cd to it
-cd "$(wt -yq <branch-name>)"
+# Create/switch to worktree and cd to it (no window switch)
+cd "$(wt -yqn <branch-name>)"
 ```
 
 Flags:
 
 - `-y` / `--yes`: Skip confirmation prompts
 - `-q` / `--quiet`: Only output the worktree path (for scripting)
+- `-n` / `--no-switch`: Skip all tmux operations (no window creation/switching)
 
 **Model**: Session = Project, Window = Worktree
 - One tmux session per repository (e.g., 'nix-config')

@@ -30,11 +30,8 @@ in {
       rpc-bind-address = "0.0.0.0";
       rpc-port = 9091;
       rpc-whitelist-enabled = false;
-      # Basic auth for RPC (Flood, Sonarr, Radarr)
-      # Password will be automatically hashed by Transmission on first start
-      rpc-authentication-required = true;
-      rpc-username = "transmission";
-      rpc-password = "transmission";
+      # Auth disabled - Tailscale-only access
+      rpc-authentication-required = false;
 
       # Download settings - TRaSH Guides structure
       # On same filesystem as /media/storage for hardlink support
@@ -137,8 +134,8 @@ in {
     host = "0.0.0.0";
     port = 3000;
     openFirewall = true;
-    # Enable subfolder access via /flood
-    extraArgs = ["--baseuri" "/flood"];
+    # Auth disabled - Tailscale-only access
+    extraArgs = ["--baseuri" "/flood" "--noauth"];
   };
 
   # Create TRaSH Guides compliant directory structure
