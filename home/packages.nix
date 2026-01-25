@@ -19,6 +19,7 @@
 
     # 3D modeling and animation
     blender
+    freecad
 
     # Note taking
     obsidian

@@ -5,6 +5,14 @@
 }: let
   executable = lib.getExe pkgs.chromium;
   helpers = import ../mcp-helpers.nix {inherit pkgs;};
+
+  # FreeCAD MCP addon source
+  freecad-mcp-addon = pkgs.fetchFromGitHub {
+    owner = "neka-nat";
+    repo = "freecad-mcp";
+    rev = "main";
+    sha256 = "sha256-st/3ta9HouoTnic+oUBQF/3bpSoARq5U8JxWTcolIbw=";
+  };
 in {
   # Generate additional MCP configs (add to base MCPs)
   xdg.configFile = {
@@ -41,18 +49,33 @@ in {
         };
       };
     };
+
+    # FreeCAD MCP for CAD modeling
+    "claude-code/mcp-freecad.json".text = builtins.toJSON {
+      mcpServers = {
+        freecad = helpers.mkUvxMcp {
+          package = "freecad-mcp";
+          args = ["--only-text-feedback"]; # Reduce token usage
+        };
+      };
+    };
   };
+
+  # Install FreeCAD MCP addon
+  home.file.".local/share/FreeCAD/Mod/FreeCADMCP".source = "${freecad-mcp-addon}/addon/FreeCADMCP";
 
   # Shell aliases (adds to base, allows project .mcp.json)
   programs.fish.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
     claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
+    claude-cad = "claude --mcp-config ~/.config/claude-code/mcp-freecad.json";
   };
 
   programs.bash.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
     claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
+    claude-cad = "claude --mcp-config ~/.config/claude-code/mcp-freecad.json";
   };
 }

@@ -33,6 +33,10 @@ in {
       # Auth disabled - Tailscale-only access
       rpc-authentication-required = false;
 
+      # Host whitelist - DNS rebinding protection
+      rpc-host-whitelist-enabled = true;
+      rpc-host-whitelist = "naspi,naspi.local,*.ts.net,localhost,127.0.0.1";
+
       # Download settings - TRaSH Guides structure
       # On same filesystem as /media/storage for hardlink support
       download-dir = "/media/storage/torrents/complete";
@@ -70,11 +74,11 @@ in {
       alt-speed-time-end = 1425; # 11:45 PM (23*60 + 45 = 1425 minutes)
       # Note: Uses system timezone (Asia/Jerusalem) configured in nixos/core/locale.nix
 
-      # Seeding limits - stop torrents after reasonable sharing
+      # Seeding limits - good citizen contribution levels
       ratio-limit-enabled = true;
-      ratio-limit = 2.0; # Stop after uploading 2x what was downloaded
+      ratio-limit = 3.0; # Stop after uploading 3x what was downloaded
       idle-seeding-limit-enabled = true;
-      idle-seeding-limit = 30; # Stop after 30 minutes of no activity
+      idle-seeding-limit = 10080; # Stop after 7 days (10080 minutes) of no activity
 
       # File permissions for hardlinks (must be integer, not string)
       umask = 2; # Creates files as 664 (rw-rw-r--), directories as 775
@@ -135,7 +139,8 @@ in {
     port = 3000;
     openFirewall = true;
     # Auth disabled - Tailscale-only access
-    extraArgs = ["--baseuri" "/flood" "--noauth"];
+    # When auth=none, must provide client config via CLI flags (username/password required by validation even if Transmission auth is disabled)
+    extraArgs = ["--baseuri" "/flood" "--auth" "none" "--trurl" "http://localhost:9091/transmission/rpc" "--truser" "" "--trpass" ""];
   };
 
   # Create TRaSH Guides compliant directory structure

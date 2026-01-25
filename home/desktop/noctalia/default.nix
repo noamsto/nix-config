@@ -138,6 +138,8 @@ in {
     programs.noctalia-shell = {
       enable = true;
 
+      pam.fingerprint.enable = true;
+
       # Use systemd for auto-start
       systemd.enable = true;
 
