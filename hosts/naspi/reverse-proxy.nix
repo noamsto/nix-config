@@ -20,8 +20,9 @@
         };
 
         # Go Bills - Shared Bills Management
-        "/bills/" = {
-          proxyPass = "http://127.0.0.1:8082/";
+        # No trailing slash on proxyPass = path is preserved (app handles /bills/*)
+        "/bills" = {
+          proxyPass = "http://127.0.0.1:8082";
           extraConfig = ''
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Host $host;
