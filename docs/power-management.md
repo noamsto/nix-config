@@ -66,17 +66,62 @@ services.udev.extraRules = ''
 - Receiver stays active, immediately sends HID events on keypress
 - hypridle detects activity and runs `on-resume` (DPMS on)
 
-### 4. hyprdynamicmonitors-resume Service Failing
+### 4. hyprdynamicmonitors-resume Service Issues
+
+#### 4a. Service Can't Connect to Hyprland (Original Issue)
 
 **Problem**: Service runs as root but needs to communicate with user's Hyprland session.
 
-**Root Cause**: Missing `XDG_RUNTIME_DIR` export. Service was trying to connect to `/run/user/0/hypr/` (root) instead of `/run/user/1000/hypr/` (user).
+**Root Cause**: Missing `XDG_RUNTIME_DIR` export.
 
-**Solution**: Export both environment variables:
-```bash
-export XDG_RUNTIME_DIR=/run/user/1000
-export HYPRLAND_INSTANCE_SIGNATURE=$(ls /run/user/1000/hypr/ 2>/dev/null | head -1)
+**Solution**: Export environment variables for user session.
+
+#### 4b. Stale Socket Selection (2026-01-28)
+
+**Problem**: Resume service connects to stale/old Hyprland socket instead of active one.
+
+**Root Cause**: `ls /run/user/1000/hypr/ | head -1` picks alphabetically first directory, which may be from a previous session that hasn't been cleaned up.
+
+**Symptoms in journal**:
 ```
+Couldn't connect to /run/user/1000/hypr/ab1d80f3..._OLD_SIGNATURE/.socket.sock. (4)
+```
+
+**Solution**: Use `ls -t` to sort by modification time (most recent first), and verify socket responds:
+```bash
+export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/1000/hypr/ 2>/dev/null | head -1)
+# Also verify socket is accessible before proceeding
+hyprctl monitors &>/dev/null || exit 0
+```
+
+#### 4c. Lockscreen Crash on Resume (2026-01-28)
+
+**Problem**: Lockscreen occasionally crashes when opening laptop lid after suspend.
+
+**Root Cause**: Race condition - DPMS turns on before laptop monitor (eDP-1) is enabled:
+1. Docked with lid closed: eDP-1 is disabled
+2. User undocks while asleep, opens lid to wake
+3. Resume service disables phantom external monitors
+4. DPMS turns on
+5. Lockscreen tries to render but eDP-1 is still disabled → crash
+
+**Solution**: Enable eDP-1 with safe defaults BEFORE turning on DPMS:
+```bash
+# Enable laptop monitor first (lockscreen needs a render target)
+hyprctl keyword monitor "eDP-1,preferred,auto,2.0"
+sleep 0.3
+# Now safe to turn on display
+hyprctl dispatch dpms on
+sleep 0.2
+# HDM will refine monitor config
+systemctl --user restart hyprdynamicmonitors.service
+```
+
+#### 4d. Duplicate Resume Services (2026-01-28)
+
+**Problem**: Both system-level and user-level services were restarting HDM on resume, causing race conditions.
+
+**Solution**: Removed user-level `hyprdynamicmonitors-resume` service. Only the system-level service in `nixos/laptop/suspend-handling.nix` handles resume now.
 
 ## Wake Source Detection (Future Reference)
 
@@ -134,6 +179,7 @@ cat /proc/acpi/wakeup
 | Block AC spurious wake | `acpi.ec_no_wakeup=1` | `hosts/thinkpad-p14s-g5/hardware-configuration.nix` |
 | Logitech USB wake | udev rule disable autosuspend | `nixos/core/pc.nix` |
 | Phantom monitors on resume | hyprdynamicmonitors-resume service | `nixos/laptop/suspend-handling.nix` |
+| Lockscreen crash prevention | Enable eDP-1 before DPMS on | `nixos/laptop/suspend-handling.nix` |
 | Power profile switching | auto-power-profile service | `nixos/services/auto-power-profile.nix` |
 | Lid close suspend | Detached setsid handler with debounce | `home/.../scripts/workspace-manager.sh` |
 

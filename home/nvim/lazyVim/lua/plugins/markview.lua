@@ -20,16 +20,17 @@ return {
     Snacks.toggle({
       name = "Markview",
       get = function()
-        return require("markview").state.enable
+        local markview = require("markview")
+        local buf = vim.api.nvim_get_current_buf()
+        -- State is now per-buffer
+        return markview.state and markview.state[buf] and markview.state[buf].enable or false
       end,
       set = function(enabled)
-        local m = require("markview")
+        local commands = require("markview.commands")
         if enabled then
-          m.commands["Enable"]()
-          m.commands["Start"]()
+          commands.enable()
         else
-          m.commands["Disable"]()
-          m.commands["Stop"]()
+          commands.disable()
         end
       end,
     }):map("<leader>um")

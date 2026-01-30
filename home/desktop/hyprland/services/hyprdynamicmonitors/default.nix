@@ -39,19 +39,8 @@ in {
     "PATH=${lib.makeBinPath [pkgs.upower]}:$PATH"
   ];
 
-  # Add systemd service to restart HDM after system resume
-  # This fixes the undock-while-asleep issue by re-detecting hardware state
-  systemd.user.services.hyprdynamicmonitors-resume = {
-    Unit = {
-      Description = "Restart hyprdynamicmonitors after system resume";
-      After = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.systemd}/bin/systemctl --user restart hyprdynamicmonitors.service";
-    };
-    Install = {
-      WantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
-    };
-  };
+  # NOTE: HDM restart on resume is handled by the system-level service in
+  # nixos/laptop/suspend-handling.nix (hyprdynamicmonitors-resume).
+  # That service also handles phantom monitor cleanup, eDP-1 enable, and DPMS.
+  # Having a duplicate user-level service caused race conditions.
 }
