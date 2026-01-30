@@ -103,6 +103,7 @@ in {
       SESSION_SECRET = "naspi-bills-session-2024";
       PORT = toString port;
       GIN_MODE = "release";
+      BASE_URL = "/bills";
       TESSDATA_PREFIX = "${tesseractWithLangs}/share/tessdata";
     };
 
