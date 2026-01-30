@@ -71,9 +71,12 @@ in {
 
     preStart = ''
       # Copy static files and migrations to data directory
+      # Use chmod first to make files writable (they inherit read-only from Nix store)
+      chmod -R u+w ${dataDir}/static ${dataDir}/migrations 2>/dev/null || true
       rm -rf ${dataDir}/static ${dataDir}/migrations
       cp -r ${go-bills}/share/go-bills/static ${dataDir}/
       cp -r ${go-bills}/share/go-bills/migrations ${dataDir}/
+      chmod -R u+w ${dataDir}/static ${dataDir}/migrations
       chown -R go-bills:go-bills ${dataDir}/static ${dataDir}/migrations
     '';
 
