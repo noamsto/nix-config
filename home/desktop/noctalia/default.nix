@@ -53,20 +53,9 @@
     # "network-indicator" # Removed due to contrast issues
     "mini-docker"
     "catwalk"
+    "screen-recorder"
+    "tailscale"
   ];
-
-  # Generate plugins.json with enabled states
-  pluginsJson = builtins.toJSON {
-    version = 1;
-    sources = [
-      {
-        enabled = true;
-        name = "Official Noctalia Plugins";
-        url = "https://github.com/noctalia-dev/noctalia-plugins";
-      }
-    ];
-    states = lib.genAttrs enabledPlugins (_: {enabled = true;});
-  };
 in {
   imports = [
     inputs.noctalia.homeModules.default
@@ -77,14 +66,14 @@ in {
 
   config = {
     # Add helper scripts to PATH
-    home.packages = [noctalia-ipc restore-wallpaper];
+    # gpu-screen-recorder is required by the screen-recorder plugin
+    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder];
 
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
 
     # Add icon theme environment to Noctalia service for proper icon lookup
     systemd.user.services.noctalia-shell.Service.Environment = lib.mkForce [
-      "NOCTALIA_SETTINGS_FALLBACK=%h/.config/noctalia/gui-settings.json"
       "QS_ICON_THEME=Papirus-Dark"
     ];
 
@@ -104,33 +93,16 @@ in {
       };
     };
 
-    # Install plugins via xdg.configFile
-    xdg.configFile = lib.mkMerge [
-      # plugins.json with enabled states (force to overwrite existing)
-      {
-        "noctalia/plugins.json" = {
-          text = pluginsJson;
-          force = true;
+    # Install plugin source files via xdg.configFile
+    # (plugins.json, settings.json, and plugin settings are managed by the HM module)
+    xdg.configFile = lib.listToAttrs (map (plugin: {
+        name = "noctalia/plugins/${plugin}";
+        value = {
+          source = "${noctalia-plugins}/${plugin}";
+          recursive = true;
         };
-      }
-      # Copy each enabled plugin directory
-      (lib.listToAttrs (map (plugin: {
-          name = "noctalia/plugins/${plugin}";
-          value = {
-            source = "${noctalia-plugins}/${plugin}";
-            # Use recursive for privacy-indicator so we can add settings.json
-            recursive = plugin == "privacy-indicator";
-          };
-        })
-        enabledPlugins))
-      # Plugin settings (privacy-indicator)
-      {
-        "noctalia/plugins/privacy-indicator/settings.json".text = builtins.toJSON {
-          hideInactive = true;
-          removeMargins = false;
-        };
-      }
-    ];
+      })
+      enabledPlugins);
 
     programs.noctalia-shell = {
       enable = true;
@@ -139,6 +111,27 @@ in {
 
       # Use systemd for auto-start
       systemd.enable = true;
+
+      # Plugin registry configuration
+      plugins = {
+        version = 1;
+        sources = [
+          {
+            enabled = true;
+            name = "Official Noctalia Plugins";
+            url = "https://github.com/noctalia-dev/noctalia-plugins";
+          }
+        ];
+        states = lib.genAttrs enabledPlugins (_: {enabled = true;});
+      };
+
+      # Per-plugin settings (only non-defaults)
+      pluginSettings = {
+        tailscale = {
+          compactMode = true;
+          terminalCommand = "kitty -e";
+        };
+      };
 
       settings = {
         # Use predefined Monochrome colorscheme (plural key!)
@@ -196,6 +189,8 @@ in {
             ];
             # Right side: rarely used -> frequent -> critical -> hub
             right = [
+              {id = "plugin:screen-recorder";}
+              {id = "plugin:tailscale";}
               {id = "plugin:privacy-indicator";}
               {id = "Tray";}
               {id = "DarkMode";}
