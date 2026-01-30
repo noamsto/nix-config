@@ -171,5 +171,11 @@
     };
 
     wrappers.url = "github:Lassulus/wrappers";
+
+    # === LOCAL APPLICATIONS ===
+    go-bills = {
+      url = "git+ssh://git@github.com/noamsto/go-bills.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

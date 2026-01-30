@@ -12,6 +12,7 @@
     ./tailscale.nix
     ./network-resilience.nix
     ./reverse-proxy.nix
+    ./go-bills.nix
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/nix.nix
     ../../nixos/core/locale.nix
