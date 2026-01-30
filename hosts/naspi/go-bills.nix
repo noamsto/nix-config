@@ -15,8 +15,8 @@
   dataDir = "/var/lib/go-bills";
   uploadsDir = "/data/bills";
   dbName = "go_bills";
-  dbUser = "go-bills";
-  dbPassword = "go-bills";
+  dbUser = "go_bills";
+  dbPassword = "go_bills";
   port = 8082;
 in {
   # Create user and group
