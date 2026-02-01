@@ -555,11 +555,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769945091,
-        "narHash": "sha256-CD+doQrv0CcM+sQ8nwpAw/0jtUe13D/JU3KHOQWw4Wk=",
+        "lastModified": 1769945735,
+        "narHash": "sha256-Zjjmlhgoyu8vfGsnSkzG3VUKrAs6fWEJQbhqc0r+rWc=",
         "ref": "refs/heads/main",
-        "rev": "5389f92e0ae2b32b1f0c93465cb83cf9c9164492",
-        "revCount": 51,
+        "rev": "dcb2a9a60227f60458540965f3a37813cc447403",
+        "revCount": 52,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/go-bills.git"
       },
