@@ -34,6 +34,7 @@
   nixConfig = {
     substituters = [
       "https://cache.nixos.org"
+      "https://cache.flakehub.com"
       "https://hyprland.cachix.org"
       "https://vicinae.cachix.org"
       "https://claude-code.cachix.org"

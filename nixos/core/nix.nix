@@ -1,5 +1,15 @@
-{...}: let
+{pkgs, ...}: let
   caches = import ../../lib/caches.nix;
+
+  # Post-build hook to push to FlakeHub Cache
+  # Only runs if ~/.config/flakehub/auth exists
+  flakehubPushHook = pkgs.writeShellScript "flakehub-push-hook" ''
+    set -euf
+    AUTH_FILE="$HOME/.config/flakehub/auth"
+    if [ -f "$AUTH_FILE" ] || [ -L "$AUTH_FILE" ]; then
+      ${pkgs.fh}/bin/fh cache push $OUT_PATHS 2>/dev/null || true
+    fi
+  '';
 in {
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -26,6 +36,9 @@ in {
       trusted-users = ["@wheel"];
 
       download-buffer-size = 128 * 1024 * 1024; # 128 MiB
+
+      # Push builds to FlakeHub Cache (if authenticated)
+      post-build-hook = flakehubPushHook;
 
       # Use shared cache configuration from lib/caches.nix
       inherit (caches) substituters;
