@@ -807,11 +807,11 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1769946442,
-        "narHash": "sha256-gvikmlWhpmaIpNK01W8LFGJdULa7a+05Bn/hW5iwfKM=",
+        "lastModified": 1769948567,
+        "narHash": "sha256-6OrsNnKYskW/9dh7rPRlG7nFkbhtZch5Du2s21+XKbg=",
         "ref": "refs/heads/main",
-        "rev": "38cc578d1d7f4bbfaebd9262bf2c89c3e0e7e70f",
-        "revCount": 43,
+        "rev": "ae9425cabf40d5f961c37c76af717132c23db0c3",
+        "revCount": 44,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
       },

@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   ...
@@ -37,7 +38,7 @@
   };
 
   # FlakeHub authentication (symlink to agenix-managed secret)
-  xdg.configFile."flakehub/auth".source = "/run/agenix/noams_flakehub";
+  xdg.configFile."flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink "/run/agenix/noams_flakehub";
 
   # Let home Manager install and manage itself.
   programs.home-manager.enable = true;
