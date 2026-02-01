@@ -140,6 +140,43 @@
       end
     '';
 
+    # TTY auto-logout for security
+    # Logs out after 5 minutes of inactivity on TTY sessions only
+    # Does NOT affect graphical terminals (foot, kitty, etc.)
+    "fish/conf.d/tty-auto-logout.fish".text = ''
+      # Only run on real TTYs (tty1-tty6), not graphical terminals
+      if not status is-interactive
+          exit
+      end
+
+      # Check if we're on a TTY (not a pts/pseudo-terminal from graphical apps)
+      if not string match -qr '^/dev/tty[0-9]+$' (tty)
+          exit
+      end
+
+      # TTY auto-logout: 2 minutes (120 seconds) of inactivity
+      set -g __tty_logout_timeout 120
+
+      function __tty_idle_logout_reset --on-event fish_prompt
+          # Kill any existing timer
+          if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
+              kill $__tty_idle_timer_pid 2>/dev/null
+          end
+
+          # Start new timer - sends SIGHUP to fish after timeout
+          fish -c "sleep $__tty_logout_timeout; kill -HUP $fish_pid 2>/dev/null" &
+          set -g __tty_idle_timer_pid $last_pid
+          disown $__tty_idle_timer_pid 2>/dev/null
+      end
+
+      # Clean up timer on exit
+      function __tty_idle_logout_cleanup --on-event fish_exit
+          if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
+              kill $__tty_idle_timer_pid 2>/dev/null
+          end
+      end
+    '';
+
     # Dynamic theme initialization (runs on shell startup)
     # Named zzz- to run after other conf.d scripts
     "fish/conf.d/zzz-dynamic-theme.fish".text = ''
