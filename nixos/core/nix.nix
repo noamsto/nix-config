@@ -36,6 +36,9 @@ in {
       allowed-users = ["@wheel"];
       trusted-users = ["@wheel"];
 
+      # FlakeHub Cache uses JWT auth, not public keys - must be explicitly trusted
+      trusted-substituters = ["https://cache.flakehub.com"];
+
       download-buffer-size = 128 * 1024 * 1024; # 128 MiB
 
       # Push builds to FlakeHub Cache (if authenticated)
