@@ -13,7 +13,7 @@
     zoom-us
 
     evince # PDF Viewer
-    gnome-calendar # Calendar management for Noctalia/evolution-data-server
+    evolution # Calendar with embedded OAuth for Noctalia/evolution-data-server
     spotify
 
     vlc
