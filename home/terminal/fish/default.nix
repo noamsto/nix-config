@@ -226,8 +226,6 @@
         update = "sudo nixos-rebuild switch";
         ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
 
-        # Workaround for https://github.com/anthropics/claude-code/issues/9935
-        # claude = "claude-chill claude";
         hdm = "hyprdynamicmonitors";
 
         # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)

@@ -116,7 +116,6 @@ in {
 
       # AI coding tools
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.claude-squad
-      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.claude-chill
       happy-coder
 
       nh
