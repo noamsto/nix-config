@@ -42,7 +42,7 @@ in {
       post-build-hook = flakehubPushHook;
 
       # Use shared cache configuration from lib/caches.nix
-      inherit (caches) substituters trustedSubstituters;
+      inherit (caches) substituters;
       trusted-public-keys = caches.trustedPublicKeys;
       trusted-substituters = caches.trustedSubstituters;
       extra-substituters = caches.extraSubstituters;
