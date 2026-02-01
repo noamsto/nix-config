@@ -5,7 +5,6 @@
   substituters = [
     "https://cache.nixos.org"
     "https://cache.flakehub.com"
-    "https://cache.determinate.systems"
     "https://hyprland.cachix.org"
     "https://vicinae.cachix.org"
     "https://claude-code.cachix.org"
@@ -23,7 +22,6 @@
   # Keys for primary substituters
   trustedPublicKeys = [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-    "cache.determinate.systems:GsijX2T9bK2pwsOeNFzBSIA2FKGJ/puvIqCBHQC3HsU="
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
     "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="

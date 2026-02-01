@@ -2,13 +2,14 @@
   caches = import ../../lib/caches.nix;
 
   # Post-build hook to push to FlakeHub Cache
-  # Only runs if ~/.config/flakehub/auth exists
+  # Only runs if auth exists, never fails the build
   flakehubPushHook = pkgs.writeShellScript "flakehub-push-hook" ''
-    set -euf
-    AUTH_FILE="$HOME/.config/flakehub/auth"
+    set -f  # disable globbing
+    AUTH_FILE="''${HOME:-/root}/.config/flakehub/auth"
     if [ -f "$AUTH_FILE" ] || [ -L "$AUTH_FILE" ]; then
-      ${pkgs.fh}/bin/fh cache push $OUT_PATHS 2>/dev/null || true
+      ${pkgs.fh}/bin/fh cache push $OUT_PATHS >/dev/null 2>&1 || true
     fi
+    exit 0
   '';
 in {
   # Allow unfree packages
