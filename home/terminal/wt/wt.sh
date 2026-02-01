@@ -293,8 +293,25 @@ wt_smart() {
   done < <(git -C "$repo_root" worktree list 2>/dev/null)
 
   if [[ -n $existing_worktree ]]; then
-    wt_switch_to_session "$session_name" "$existing_worktree"
-    return $?
+    # Check if directory actually exists (worktree/branch mismatch)
+    if [[ ! -d $existing_worktree ]]; then
+      log_error "Worktree directory missing: $existing_worktree"
+      log "Git thinks branch '$branch' has a worktree, but directory doesn't exist."
+      echo ""
+      if confirm "Run 'git worktree prune' to fix stale references?"; then
+        git -C "$repo_root" worktree prune
+        log_success "Pruned stale worktree references"
+        echo ""
+        # Now continue to create new worktree
+        existing_worktree=""
+      else
+        log "You can manually fix with: git worktree prune"
+        return 1
+      fi
+    else
+      wt_switch_to_session "$session_name" "$existing_worktree"
+      return $?
+    fi
   fi
 
   # Case 2: Check if branch exists (local or remote)
