@@ -1,0 +1,40 @@
+name: Build and Publish to FlakeHub
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for FlakeHub authentication
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: true
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Build thinkpad-p14s
+        run: nix build .#nixosConfigurations.thinkpad-p14s.config.system.build.toplevel
+
+      - name: Build thinkpad-p14s-g5
+        run: nix build .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel
+
+      # Publish to FlakeHub (only on main)
+      - uses: DeterminateSystems/flakehub-push@main
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: noamsto/nix-config
+          rolling: true
+          visibility: private
+          include-output-paths: true

@@ -6,12 +6,18 @@ in {
   flake = {
     nixosConfigurations = {
       thinkpad-p14s = nixpkgs.lib.nixosSystem {
-        modules = [../hosts/thinkpad-p14s];
+        modules = [
+          ../hosts/thinkpad-p14s
+          inputs.determinate.nixosModules.default
+        ];
         specialArgs = {inherit inputs;};
       };
 
       thinkpad-p14s-g5 = nixpkgs.lib.nixosSystem {
-        modules = [../hosts/thinkpad-p14s-g5];
+        modules = [
+          ../hosts/thinkpad-p14s-g5
+          inputs.determinate.nixosModules.default
+        ];
         specialArgs = {inherit inputs;};
       };
 

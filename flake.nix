@@ -133,6 +133,11 @@
 
     # === SECURITY & SECRETS ===
     # Security-critical - immediate updates
+    determinate = {
+      url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
+      # Don't follow nixpkgs - leads to cache misses for FlakeHub Cache artifacts
+    };
+
     agenix = {
       url = "github:ryantm/agenix";
       inputs = {

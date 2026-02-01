@@ -36,6 +36,9 @@
     # including applications started from launchers like Vicinae.
   };
 
+  # FlakeHub authentication (symlink to agenix-managed secret)
+  xdg.configFile."flakehub/auth".source = "/run/agenix/noams_flakehub";
+
   # Let home Manager install and manage itself.
   programs.home-manager.enable = true;
 }

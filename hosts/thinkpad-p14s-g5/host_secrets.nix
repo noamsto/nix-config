@@ -12,6 +12,11 @@
       mode = "0440";
       group = "wheel";
     };
+    noams_flakehub = {
+      file = "${inputs.mysecrets}/noams_flakehub.age";
+      owner = config.username;
+      mode = "0400";
+    };
     # thinkpad_p15s_aliases.file = "${inputs.mysecrets}/thinkpad_p15s_aliases.age";
   };
 
