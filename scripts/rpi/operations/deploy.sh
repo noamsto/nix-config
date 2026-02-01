@@ -62,7 +62,8 @@ if [[ $BUILD == "local" ]]; then
   nixos-rebuild switch \
     --flake ".#$FLAKE" \
     --target-host "$USER@$HOSTNAME" \
-    --use-remote-sudo
+    --use-remote-sudo \
+    --accept-flake-config
 
 elif [[ $BUILD == remote:* ]]; then
   BUILD_HOST="${BUILD#remote:}"
@@ -73,7 +74,8 @@ elif [[ $BUILD == remote:* ]]; then
     --flake ".#$FLAKE" \
     --target-host "$USER@$HOSTNAME" \
     --build-host "$BUILD_HOST" \
-    --use-remote-sudo |& nom
+    --use-remote-sudo \
+    --accept-flake-config |& nom
 
 else
   # Custom build host
@@ -84,7 +86,8 @@ else
     --flake ".#$FLAKE" \
     --target-host "$USER@$HOSTNAME" \
     --build-host "$BUILD" \
-    --use-remote-sudo |& nom
+    --use-remote-sudo \
+    --accept-flake-config |& nom
 fi
 
 # =============================================================================
