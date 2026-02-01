@@ -55,6 +55,8 @@
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
+    # FlakeHub Cache uses JWT auth, not public keys
+    trusted-substituters = ["https://cache.flakehub.com"];
   };
 
   inputs = {
