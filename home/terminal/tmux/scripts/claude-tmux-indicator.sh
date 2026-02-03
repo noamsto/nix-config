@@ -16,8 +16,10 @@ SPINNER_FRAMES=("󰪞" "󰪟" "󰪠" "󰪡" "󰪢" "󰪣" "󰪤" "󰪥")
 SPINNER_COUNT=${#SPINNER_FRAMES[@]}
 
 # Icons for different states (Nerd Font)
-ICON_WAITING="󰔟" # nf-md-timer-sand
-ICON_DONE=""    # nf-fa-check
+ICON_WAITING="󰔟"     # nf-md-timer-sand
+ICON_COMPACTING=" " # nf-md-archive
+ICON_DONE=""        # nf-fa-check
+ICON_IDLE=""        # nf-md-robot
 
 # Detect current theme from state file
 THEME_STATE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/theme-state.json"
@@ -32,12 +34,16 @@ if [[ $CURRENT_THEME == "light" ]]; then
   # Catppuccin Latte - darker colors for light background
   COLOR_PROCESSING="#[fg=#179299]" # Teal
   COLOR_WAITING="#[fg=#fe640b]"    # Peach
+  COLOR_COMPACTING="#[fg=#04a5e5]" # Sky/Cyan
   COLOR_DONE="#[fg=#40a02b]"       # Green
+  COLOR_IDLE="#[fg=#6c6f85]"       # Overlay0 (grey)
 else
   # Catppuccin Mocha - lighter colors for dark background
   COLOR_PROCESSING="#[fg=#94e2d5]" # Teal
   COLOR_WAITING="#[fg=#fab387]"    # Peach
+  COLOR_COMPACTING="#[fg=#89dceb]" # Sky/Cyan
   COLOR_DONE="#[fg=#a6e3a1]"       # Green
+  COLOR_IDLE="#[fg=#6c7086]"       # Overlay0 (grey)
 fi
 COLOR_RESET="#[fg=default]"
 
@@ -163,9 +169,17 @@ output_indicator() {
     icon="$ICON_WAITING"
     color="$COLOR_WAITING"
     ;;
+  compacting)
+    icon="$ICON_COMPACTING"
+    color="$COLOR_COMPACTING"
+    ;;
   done)
     icon="$ICON_DONE"
     color="$COLOR_DONE"
+    ;;
+  idle)
+    icon="$ICON_IDLE"
+    color="$COLOR_IDLE"
     ;;
   *)
     printf ""
@@ -220,8 +234,10 @@ window)
   fi
 
   has_waiting=false
+  has_compacting=false
   has_processing=false
   has_done=false
+  has_idle=false
 
   # Get all panes in window
   while IFS= read -r pane; do
@@ -230,18 +246,24 @@ window)
 
     case "$state" in
     waiting) has_waiting=true ;;
+    compacting) has_compacting=true ;;
     processing) has_processing=true ;;
     done) has_done=true ;;
+    idle) has_idle=true ;;
     esac
   done < <(tmux list-panes -t "$window_id" -F '#{pane_id}' 2>/dev/null)
 
-  # Priority: waiting > processing > done
+  # Priority: waiting > compacting > processing > done > idle
   if $has_waiting; then
     output_indicator "waiting"
+  elif $has_compacting; then
+    output_indicator "compacting"
   elif $has_processing; then
     output_indicator "processing"
   elif $has_done; then
     output_indicator "done"
+  elif $has_idle; then
+    output_indicator "idle"
   fi
   ;;
 esac

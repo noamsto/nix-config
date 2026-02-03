@@ -55,7 +55,9 @@ update_session_aggregate() {
   sess_file=$(sanitize_filename "$sess")
   local has_waiting=false
   local has_processing=false
+  local has_compacting=false
   local has_done=false
+  local has_idle=false
   local count=0
 
   # Scan all pane files for this session
@@ -73,18 +75,24 @@ update_session_aggregate() {
     case "$pane_state" in
     waiting) has_waiting=true ;;
     processing) has_processing=true ;;
+    compacting) has_compacting=true ;;
     done) has_done=true ;;
+    idle) has_idle=true ;;
     esac
   done
 
-  # Determine aggregate state (priority: waiting > processing > done > idle)
+  # Determine aggregate state (priority: waiting > compacting > processing > done > idle)
   local agg_state="idle"
   if $has_waiting; then
     agg_state="waiting"
+  elif $has_compacting; then
+    agg_state="compacting"
   elif $has_processing; then
     agg_state="processing"
   elif $has_done; then
     agg_state="done"
+  elif $has_idle; then
+    agg_state="idle"
   fi
 
   # Write session aggregate (use sanitized filename)
@@ -123,9 +131,9 @@ done
 
 # Validate state
 case "$state" in
-processing | waiting | done | idle | clear | cleanup) ;;
+processing | waiting | done | idle | compacting | clear | cleanup) ;;
 *)
-  echo "Error: Invalid state '$state'. Use: processing, waiting, done, idle, clear, cleanup" >&2
+  echo "Error: Invalid state '$state'. Use: processing, waiting, done, idle, compacting, clear, cleanup" >&2
   exit 1
   ;;
 esac
@@ -140,9 +148,8 @@ if [[ $state == "cleanup" ]]; then
   exit 0
 fi
 
-# If no pane_id, try to detect from environment
+# If no pane_id, silently exit (common when called from non-tmux context)
 if [[ -z $pane_id ]]; then
-  echo "Warning: No TMUX_PANE detected, cannot update status" >&2
   exit 0
 fi
 

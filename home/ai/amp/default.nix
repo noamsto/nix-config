@@ -58,30 +58,12 @@ in {
   home.file.".config/AGENTS.md".source =
     config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/ai/claude-code/CLAUDE.global.md";
 
-  # Generate MCP configuration for VS Code (Amp's config location)
-  # This assumes VS Code settings.json integration
-  # Alternative: users can manually add to VS Code settings
-  xdg.configFile = {
-    # Amp MCP config (for CLI --mcp-config flag)
-    # --mcp-config expects flat object: {serverName: {command/args/url/headers}}
-    "amp/mcp.json".text = builtins.toJSON ampMcpServers;
-
-    # Optional: Generate VS Code settings snippet (user must merge manually)
-    # VS Code/Cursor settings use "amp.mcpServers" wrapper
-    "amp/vscode-mcp-snippet.json".text = builtins.toJSON {
-      "amp.mcpServers" = ampMcpServers;
-    };
+  # Amp settings.json - CLI reads MCP servers from here
+  xdg.configFile."amp/settings.json".text = builtins.toJSON {
+    "amp.terminal.theme" = "catppuccin-mocha";
+    "amp.mcpServers" = ampMcpServers;
   };
 
   # Install Amp with wrapped version (nodejs/uv in PATH)
   home.packages = [amp-wrapped];
-
-  # Shell aliases for Amp with MCP config
-  programs.fish.shellAliases = {
-    amp-mcp = "amp --mcp-config ~/.config/amp/mcp.json";
-  };
-
-  programs.bash.shellAliases = {
-    amp-mcp = "amp --mcp-config ~/.config/amp/mcp.json";
-  };
 }

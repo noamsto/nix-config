@@ -26,13 +26,59 @@
       };
       # Hooks for tmux status integration
       hooks = {
-        # Session started -> cleanup stale entries from dead panes
+        # Session started -> cleanup stale entries, set state based on how session started
         SessionStart = [
           {
+            # New session or resume -> idle (waiting for user input)
+            matcher = "startup";
             hooks = [
               {
                 type = "command";
                 command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+              }
+            ];
+          }
+          {
+            matcher = "resume";
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+              }
+            ];
+          }
+          {
+            matcher = "clear";
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+              }
+            ];
+          }
+          {
+            # After compaction -> processing (Claude continues working)
+            matcher = "compact";
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
               }
             ];
           }
@@ -101,6 +147,17 @@
               {
                 type = "command";
                 command = "${seshUtils.claude-status-update}/bin/claude-status-update done";
+              }
+            ];
+          }
+        ];
+        # Before compaction -> compacting status
+        PreCompact = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update compacting";
               }
             ];
           }
