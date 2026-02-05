@@ -103,19 +103,19 @@ in {
           query = "/proc/acpi/ibm/fan";
         }
       ];
-      # Aggressive fan curve (starts at 55-60°C, full-speed at 75-79°C)
+      # Aggressive fan curve (starts at 55°C, targets ~65°C, full-speed at 74-75°C)
       levels =
         if cfg.generation == "gen5"
         then [
-          [0 0 60]
-          [1 58 63]
-          [2 61 66]
-          [3 64 69]
-          [4 67 72]
-          [5 70 75]
-          [6 73 78]
-          [7 76 81]
-          ["level full-speed" 79 32767]
+          [0 0 55]
+          [1 53 58]
+          [2 56 61]
+          [3 59 64]
+          [4 62 67]
+          [5 65 70]
+          [6 68 73]
+          [7 71 76]
+          ["level full-speed" 74 32767]
         ]
         else [
           [0 0 55]

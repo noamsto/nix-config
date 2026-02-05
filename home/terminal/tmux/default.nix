@@ -40,6 +40,7 @@
     };
     icons = {
       claude = "🤖";
+      ".claude-wrapper_" = "🤖";
       nh = "❄️";
       fish = "🐟";
       process-compose = "⚙️";

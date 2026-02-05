@@ -588,11 +588,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1770108229,
-        "narHash": "sha256-TBT3Ds5yqnMb3N+KkVDRGQ5UBGiqFHSeouBrPTaU1sE=",
+        "lastModified": 1770195497,
+        "narHash": "sha256-syhQFd0hYN35OE+xD8uSRcHuRqYNxDMJTQhSPl5jYIU=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "1303625e7e1034ffd03a8d55176902da24cd9709",
+        "rev": "0fc9de9ceca5a13d04e2c3a221a4032d5bc1020c",
         "type": "github"
       },
       "original": {
@@ -1022,11 +1022,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1770015011,
-        "narHash": "sha256-7vUo0qWCl/rip+fzr6lcMlz9I0tN/8m7d5Bla/rS2kk=",
+        "lastModified": 1770141374,
+        "narHash": "sha256-yD4K/vRHPwXbJf5CK3JkptBA6nFWUKNX/jlFp2eKEQc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f08e6b11a5ed43637a8ac444dd44118bc7d273b9",
+        "rev": "41965737c1797c1d83cfb0b644ed0840a6220bd1",
         "type": "github"
       },
       "original": {
@@ -1123,11 +1123,11 @@
     "noctalia-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1770073719,
-        "narHash": "sha256-HH5g0QIwB4Wsg/LpAiLdgCJqkyaTKANwwp0p/gaxin8=",
+        "lastModified": 1770136691,
+        "narHash": "sha256-wierciZBGmkcOSCMoQkZFtIQuR7P9NNtDq3p+K114M4=",
         "owner": "noctalia-dev",
         "repo": "noctalia-plugins",
-        "rev": "ebf9eace9aefbbd0b3c4852e26fd19157f17b47b",
+        "rev": "9720fb42532b0eb359b95d6e831dbf8f8c3e7256",
         "type": "github"
       },
       "original": {

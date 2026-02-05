@@ -7,6 +7,7 @@ set -euo pipefail
 # Constants
 readonly SUSPEND_LOCK_FILE="/tmp/hyprdynamicmonitors-suspend.lock"
 readonly LOG_FILE="/tmp/workspace-manager.log"
+readonly LOCK_LOG_FILE="/tmp/noctalia-lock.log"
 
 # Arguments
 readonly PROFILE="${1:-}"
@@ -93,6 +94,18 @@ configure_docked() {
 configure_undocked() {
   log "Configuring undocked"
 
+  # Log current monitor state for debugging
+  log "Current Hyprland monitors:"
+  hyprctl monitors -j 2>/dev/null | jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >>"$LOG_FILE" 2>&1 || log "  (failed to get monitors)"
+
+  # Check Noctalia status
+  noctalia_pid=$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+  if [ -n "$noctalia_pid" ]; then
+    log "Noctalia running (PID: $noctalia_pid)"
+  else
+    log "WARNING: Noctalia NOT running!"
+  fi
+
   # Check lid state FIRST - spawn detached suspend handler if closed
   # Must use setsid to survive HDM killing this script on profile switch
   if is_lid_closed; then
@@ -118,9 +131,14 @@ configure_undocked() {
     # Uses setsid to create new session, immune to parent termination
     setsid bash -c "
       LOG_FILE='$LOG_FILE'
+      LOCK_LOG_FILE='$LOCK_LOG_FILE'
       SUSPEND_LOCK_FILE='$SUSPEND_LOCK_FILE'
 
-      log() { echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] [suspend-handler] \$*\" >>\"\$LOG_FILE\"; }
+      log() {
+        local msg=\"[\$(date '+%Y-%m-%d %H:%M:%S.%3N')] [suspend-handler] \$*\"
+        echo \"\$msg\" >>\"\$LOG_FILE\"
+        echo \"\$msg\" >>\"\$LOCK_LOG_FILE\"
+      }
 
       is_lid_closed() {
         gdbus call --system \
@@ -143,15 +161,37 @@ configure_undocked() {
         fi
       done
 
+      # Check Noctalia before lock
+      noctalia_pid=\$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+      if [ -n \"\$noctalia_pid\" ]; then
+        log \"Noctalia running before lock (PID: \$noctalia_pid)\"
+      else
+        log 'ERROR: Noctalia NOT running before lock!'
+      fi
+
       log 'Initiating lock + suspend'
       rm -f \"\$SUSPEND_LOCK_FILE\"
       trap - EXIT
 
       loginctl lock-session
-      sleep 1
-      systemctl suspend
+      lock_result=\$?
+      log \"loginctl lock-session returned: \$lock_result\"
 
-      log 'Resumed from suspend'
+      # Check Noctalia after lock
+      sleep 0.5
+      noctalia_pid=\$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+      if [ -n \"\$noctalia_pid\" ]; then
+        log \"Noctalia still running after lock (PID: \$noctalia_pid)\"
+      else
+        log 'ERROR: Noctalia DIED after lock!'
+      fi
+
+      sleep 0.5
+      log 'Calling systemctl suspend...'
+      systemctl suspend
+      suspend_result=\$?
+
+      log \"Resumed from suspend (suspend returned: \$suspend_result)\"
     " &>/dev/null &
 
     log "Suspend handler spawned (detached)"
@@ -184,6 +224,8 @@ main() {
   fi
 
   log "=== Starting: $PROFILE ==="
+  # Also log to lock log for unified timeline
+  echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [workspace-manager] Profile switch to: $PROFILE" >>"$LOCK_LOG_FILE"
 
   # Wait for Hyprland IPC to be ready
   if ! wait_for_hyprland; then

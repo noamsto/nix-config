@@ -19,12 +19,37 @@
   lib,
   ...
 }: let
-  # Helper script for Noctalia IPC commands (qs may not be in PATH)
+  # Log file for lock screen debugging
+  lockLogFile = "/tmp/noctalia-lock.log";
+
+  # Helper script for Noctalia IPC commands with logging
   noctalia-ipc = pkgs.writeShellScriptBin "noctalia-ipc" ''
+    LOG="${lockLogFile}"
+
+    log() {
+      echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [noctalia-ipc] $*" | tee -a "$LOG"
+    }
+
+    log "Called with args: $*"
+    log "  HYPRLAND_INSTANCE_SIGNATURE=$HYPRLAND_INSTANCE_SIGNATURE"
+
+    # Check Hyprland monitor state before lock
+    if [ "$1" = "lockScreen" ]; then
+      log "  Current monitors:"
+      ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "    \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >> "$LOG" 2>&1 || log "    (failed to get monitors)"
+    fi
+
     pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
     if [ -n "$pid" ]; then
-      ${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@"
+      log "  Found Noctalia PID: $pid"
+      result=$(${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@" 2>&1)
+      exit_code=$?
+      log "  IPC result (exit=$exit_code): $result"
+      echo "$result"
+      exit $exit_code
     else
+      log "  ERROR: Noctalia not running!"
+      log "  Quickshell processes: $(${pkgs.procps}/bin/pgrep -a quickshell 2>/dev/null || echo 'none')"
       echo "Noctalia not running" >&2
       exit 1
     fi
@@ -42,6 +67,58 @@
         echo "Restored wallpaper: $WP_PATH"
       fi
     fi
+  '';
+
+  # Debug helper script for lock screen issues
+  lock-debug = pkgs.writeShellScriptBin "lock-debug" ''
+    LOG="${lockLogFile}"
+
+    case "''${1:-}" in
+      watch|tail|-f)
+        echo "Watching lock log (Ctrl+C to stop)..."
+        ${pkgs.coreutils}/bin/tail -f "$LOG" 2>/dev/null || echo "No log file yet"
+        ;;
+      clear)
+        rm -f "$LOG" /tmp/workspace-manager.log
+        echo "Logs cleared"
+        ;;
+      status)
+        echo "=== Noctalia Status ==="
+        pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+        if [ -n "$pid" ]; then
+          echo "Running (PID: $pid)"
+          echo "Memory: $(${pkgs.procps}/bin/ps -o rss= -p "$pid" | awk '{print $1/1024 " MB"}')"
+        else
+          echo "NOT RUNNING"
+        fi
+        echo ""
+        echo "=== Hyprland Monitors ==="
+        ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "\(.name): \(.width)x\(.height) disabled=\(.disabled)"' || echo "Failed to get monitors"
+        echo ""
+        echo "=== Lock State ==="
+        if ${pkgs.systemd}/bin/loginctl show-session --property=LockedHint 2>/dev/null | grep -q "yes"; then
+          echo "Session is LOCKED"
+        else
+          echo "Session is UNLOCKED"
+        fi
+        ;;
+      *)
+        echo "=== Lock Screen Debug Log ==="
+        echo "Location: $LOG"
+        echo ""
+        if [ -f "$LOG" ]; then
+          echo "Last 50 lines:"
+          ${pkgs.coreutils}/bin/tail -50 "$LOG"
+        else
+          echo "(no log file yet)"
+        fi
+        echo ""
+        echo "Commands:"
+        echo "  lock-debug watch   - Follow log in real-time"
+        echo "  lock-debug clear   - Clear log files"
+        echo "  lock-debug status  - Show current status"
+        ;;
+    esac
   '';
 
   # Noctalia plugins from flake input (update with: nix flake update noctalia-plugins)
@@ -67,7 +144,7 @@ in {
   config = {
     # Add helper scripts to PATH
     # gpu-screen-recorder is required by the screen-recorder plugin
-    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder];
+    home.packages = [noctalia-ipc restore-wallpaper lock-debug pkgs.gpu-screen-recorder];
 
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
@@ -87,6 +164,85 @@ in {
       Service = {
         Type = "oneshot";
         ExecStart = "${restore-wallpaper}/bin/noctalia-restore-wallpaper";
+      };
+      Install = {
+        WantedBy = ["noctalia-shell.service"];
+      };
+    };
+
+    # Systemd service to monitor Noctalia and log crashes
+    # This helps debug "lock screen died" issues during undocking
+    systemd.user.services.noctalia-crash-monitor = {
+      Unit = {
+        Description = "Monitor Noctalia for crashes and log events";
+        After = ["noctalia-shell.service"];
+        PartOf = ["noctalia-shell.service"];
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = pkgs.writeShellScript "noctalia-crash-monitor" ''
+          LOG="${lockLogFile}"
+          log() {
+            echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [crash-monitor] $*" | tee -a "$LOG"
+          }
+
+          log "Crash monitor started"
+
+          # Wait for Noctalia to start
+          while ! ${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' >/dev/null 2>&1; do
+            sleep 0.5
+          done
+
+          NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+          log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
+
+          # Monitor the process
+          while true; do
+            if ! ${pkgs.procps}/bin/kill -0 "$NOCTALIA_PID" 2>/dev/null; then
+              log "!!! NOCTALIA DIED (was PID: $NOCTALIA_PID) !!!"
+
+              # Log system state at time of crash
+              log "Monitor state at crash:"
+              ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >> "$LOG" 2>&1 || log "  (failed to get monitors)"
+
+              # Check if lid is closed
+              if ${pkgs.glib}/bin/gdbus call --system \
+                  --dest org.freedesktop.UPower \
+                  --object-path /org/freedesktop/UPower \
+                  --method org.freedesktop.DBus.Properties.Get \
+                  org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"; then
+                log "Lid state: CLOSED"
+              else
+                log "Lid state: OPEN"
+              fi
+
+              # Check DRM connectors
+              log "DRM connectors:"
+              for status_file in /sys/class/drm/card*/status; do
+                if [ -f "$status_file" ]; then
+                  connector=$(basename $(dirname "$status_file"))
+                  connector_name=''${connector#card?-}
+                  status=$(cat "$status_file")
+                  log "  $connector_name: $status"
+                fi
+              done
+
+              # Wait for Noctalia to restart (if it does)
+              sleep 2
+              NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+              if [ -n "$NEW_PID" ]; then
+                log "Noctalia restarted (new PID: $NEW_PID)"
+                NOCTALIA_PID="$NEW_PID"
+              else
+                log "Noctalia has NOT restarted - monitor exiting"
+                exit 1
+              fi
+            fi
+            sleep 1
+          done
+        '';
+        Restart = "on-failure";
+        RestartSec = "2s";
       };
       Install = {
         WantedBy = ["noctalia-shell.service"];
