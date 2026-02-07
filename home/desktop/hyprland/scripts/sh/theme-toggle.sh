@@ -208,7 +208,34 @@ update_gtk_css() {
   log_debug "GTK CSS updated to $theme"
 }
 
-# Update Hyprland border colors
+# Wait for Hyprland to be ready (responsive IPC)
+# This prevents crashes during resume when Hyprland is reconfiguring displays
+wait_for_hyprland() {
+  local max_attempts=10
+  local attempt=1
+  local delay=0.2
+
+  while [[ $attempt -le $max_attempts ]]; do
+    # Check if hyprctl can communicate with Hyprland
+    if hyprctl version &>/dev/null; then
+      log_debug "Hyprland ready after $attempt attempt(s)"
+      return 0
+    fi
+
+    log_debug "Waiting for Hyprland... attempt $attempt/$max_attempts"
+    sleep "$delay"
+
+    # Exponential backoff (0.2, 0.4, 0.8, 1.0, 1.0, ...)
+    delay=$(awk "BEGIN {d=$delay*2; print (d>1.0)?1.0:d}")
+    ((attempt++))
+  done
+
+  log_debug "Hyprland not ready after $max_attempts attempts"
+  return 1
+}
+
+# Update Hyprland border colors with retry logic
+# Robust against transient failures during resume
 update_hyprland_borders() {
   local theme="$1"
   log_debug "Updating Hyprland borders to $theme"
@@ -218,19 +245,51 @@ update_hyprland_borders() {
     return 0
   fi
 
-  if [[ $theme == "light" ]]; then
-    hyprctl keyword general:col.active_border "rgba(${LATTE_BLUE}ee) rgba(${LATTE_LAVENDER}ee) 45deg" >/dev/null || {
-      record_failure "hyprland"
-      return 1
-    }
-    hyprctl keyword general:col.inactive_border "rgba(${LATTE_LAVENDER}40)" >/dev/null
-  else
-    hyprctl keyword general:col.active_border "rgba(${MOCHA_BLUE}ee) rgba(${MOCHA_LAVENDER}ee) 45deg" >/dev/null || {
-      record_failure "hyprland"
-      return 1
-    }
-    hyprctl keyword general:col.inactive_border "rgba(${MOCHA_LAVENDER}40)" >/dev/null
+  # Check for Hyprland socket (skip if not running)
+  local socket_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr"
+  if [[ ! -d $socket_dir ]] || ! ls "$socket_dir"/*/.socket.sock &>/dev/null 2>&1; then
+    log_debug "Hyprland socket not found, skipping (not running?)"
+    return 0
   fi
+
+  # Wait for Hyprland to be responsive (critical during resume)
+  if ! wait_for_hyprland; then
+    log_debug "Hyprland not responsive, skipping border update"
+    record_failure "hyprland"
+    return 1
+  fi
+
+  # Retry logic for border updates (hyprctl can fail transiently during resume)
+  local max_retries=3
+  local retry=0
+  local success=false
+
+  while [[ $retry -lt $max_retries && $success == false ]]; do
+    if [[ $theme == "light" ]]; then
+      if hyprctl keyword general:col.active_border "rgba(${LATTE_BLUE}ee) rgba(${LATTE_LAVENDER}ee) 45deg" >/dev/null 2>&1; then
+        hyprctl keyword general:col.inactive_border "rgba(${LATTE_LAVENDER}40)" >/dev/null 2>&1
+        success=true
+      fi
+    else
+      if hyprctl keyword general:col.active_border "rgba(${MOCHA_BLUE}ee) rgba(${MOCHA_LAVENDER}ee) 45deg" >/dev/null 2>&1; then
+        hyprctl keyword general:col.inactive_border "rgba(${MOCHA_LAVENDER}40)" >/dev/null 2>&1
+        success=true
+      fi
+    fi
+
+    if [[ $success == false ]]; then
+      ((retry++))
+      log_debug "Hyprland border update failed, retry $retry/$max_retries"
+      sleep 0.5
+    fi
+  done
+
+  if [[ $success == false ]]; then
+    record_failure "hyprland"
+    return 1
+  fi
+
+  return 0
 }
 
 # Update kitty terminal theme (all running instances and config for new instances)

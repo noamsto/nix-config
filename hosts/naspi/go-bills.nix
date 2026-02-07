@@ -27,12 +27,80 @@ in {
     createHome = true;
   };
   users.groups.go-bills = {};
+  systemd = {
+    # Create directories
+    tmpfiles.rules = [
+      "d ${dataDir} 0750 go-bills go-bills - -"
+      "d ${uploadsDir} 0750 go-bills go-bills - -"
+    ];
 
-  # Create directories
-  systemd.tmpfiles.rules = [
-    "d ${dataDir} 0750 go-bills go-bills - -"
-    "d ${uploadsDir} 0750 go-bills go-bills - -"
-  ];
+    # Set password after PostgreSQL starts
+    services.go-bills-db-setup = {
+      description = "Set up go-bills database password";
+      after = ["postgresql.service"];
+      requires = ["postgresql.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = "postgres";
+      };
+      script = ''
+        ${config.services.postgresql.package}/bin/psql -c "ALTER USER \"${dbUser}\" WITH PASSWORD '${dbPassword}';" || true
+      '';
+    };
+
+    # Main service
+    services.go-bills = {
+      description = "Go Bills - Shared Bills Management";
+      after = ["network.target" "postgresql.service" "go-bills-db-setup.service"];
+      wants = ["postgresql.service"];
+      wantedBy = ["multi-user.target"];
+
+      preStart = ''
+        # Copy static files and migrations to data directory
+        # Use chmod first to make files writable (they inherit read-only from Nix store)
+        chmod -R u+w ${dataDir}/static ${dataDir}/migrations 2>/dev/null || true
+        rm -rf ${dataDir}/static ${dataDir}/migrations
+        cp -r ${go-bills}/share/go-bills/static ${dataDir}/
+        cp -r ${go-bills}/share/go-bills/migrations ${dataDir}/
+        chmod -R u+w ${dataDir}/static ${dataDir}/migrations
+        chown -R go-bills:go-bills ${dataDir}/static ${dataDir}/migrations
+      '';
+
+      serviceConfig = {
+        Type = "simple";
+        User = "go-bills";
+        Group = "go-bills";
+        WorkingDirectory = dataDir;
+        ExecStart = "${go-bills}/bin/bills";
+        Restart = "on-failure";
+        RestartSec = 5;
+
+        # Hardening
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        ReadWritePaths = [dataDir uploadsDir];
+      };
+
+      environment = {
+        DB_HOST = "localhost";
+        DB_PORT = "5432";
+        DB_NAME = dbName;
+        DB_USER = dbUser;
+        DB_PASSWORD = dbPassword;
+        SESSION_SECRET = "naspi-bills-session-2024";
+        PORT = toString port;
+        GIN_MODE = "release";
+        BASE_URL = "/bills";
+        TESSDATA_PREFIX = "${tesseractWithLangs}/share/tessdata";
+      };
+
+      path = [tesseractWithLangs pkgs.poppler_utils];
+    };
+  };
 
   # PostgreSQL database
   services.postgresql = {
@@ -44,72 +112,5 @@ in {
         ensureDBOwnership = true;
       }
     ];
-  };
-
-  # Set password after PostgreSQL starts
-  systemd.services.go-bills-db-setup = {
-    description = "Set up go-bills database password";
-    after = ["postgresql.service"];
-    requires = ["postgresql.service"];
-    wantedBy = ["multi-user.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      User = "postgres";
-    };
-    script = ''
-      ${config.services.postgresql.package}/bin/psql -c "ALTER USER \"${dbUser}\" WITH PASSWORD '${dbPassword}';" || true
-    '';
-  };
-
-  # Main service
-  systemd.services.go-bills = {
-    description = "Go Bills - Shared Bills Management";
-    after = ["network.target" "postgresql.service" "go-bills-db-setup.service"];
-    wants = ["postgresql.service"];
-    wantedBy = ["multi-user.target"];
-
-    preStart = ''
-      # Copy static files and migrations to data directory
-      # Use chmod first to make files writable (they inherit read-only from Nix store)
-      chmod -R u+w ${dataDir}/static ${dataDir}/migrations 2>/dev/null || true
-      rm -rf ${dataDir}/static ${dataDir}/migrations
-      cp -r ${go-bills}/share/go-bills/static ${dataDir}/
-      cp -r ${go-bills}/share/go-bills/migrations ${dataDir}/
-      chmod -R u+w ${dataDir}/static ${dataDir}/migrations
-      chown -R go-bills:go-bills ${dataDir}/static ${dataDir}/migrations
-    '';
-
-    serviceConfig = {
-      Type = "simple";
-      User = "go-bills";
-      Group = "go-bills";
-      WorkingDirectory = dataDir;
-      ExecStart = "${go-bills}/bin/bills";
-      Restart = "on-failure";
-      RestartSec = 5;
-
-      # Hardening
-      NoNewPrivileges = true;
-      ProtectSystem = "strict";
-      ProtectHome = true;
-      PrivateTmp = true;
-      ReadWritePaths = [dataDir uploadsDir];
-    };
-
-    environment = {
-      DB_HOST = "localhost";
-      DB_PORT = "5432";
-      DB_NAME = dbName;
-      DB_USER = dbUser;
-      DB_PASSWORD = dbPassword;
-      SESSION_SECRET = "naspi-bills-session-2024";
-      PORT = toString port;
-      GIN_MODE = "release";
-      BASE_URL = "/bills";
-      TESSDATA_PREFIX = "${tesseractWithLangs}/share/tessdata";
-    };
-
-    path = [tesseractWithLangs pkgs.poppler_utils];
   };
 }

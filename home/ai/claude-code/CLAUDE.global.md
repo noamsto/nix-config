@@ -88,6 +88,13 @@ Description:
 - Clear acceptance criteria
 ```
 
+## Safe File Deletion
+
+- **Always use `gtrash put` instead of `rm`** when deleting files. This sends files to the trash instead of permanently deleting them.
+- **Before running destructive git commands** (`git checkout -- <file>`, `git restore`, `git reset --hard`, `git clean -f`, `git stash drop`, etc.):
+  1. Committed work is recoverable via reflog — no extra steps needed
+  2. **Uncommitted changes and untracked files** are NOT recoverable — run `gtrash put` on them before proceeding
+
 ## Pre-commit Hook Notes
 
 - `golangci-lint` pre-commit hook now uses `scripts/golangci-lint-staged.sh` to run only on modules with staged changes
