@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  inputs,
+  ...
+}: let
   caches = import ../../lib/caches.nix;
 
   # Post-build hook to push to FlakeHub Cache
@@ -12,6 +16,10 @@
     exit 0
   '';
 in {
+  imports = [
+    inputs.determinate.nixosModules.default
+  ];
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 

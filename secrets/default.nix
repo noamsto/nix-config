@@ -26,6 +26,7 @@
 
   age.secrets.noams_password.file = "${inputs.mysecrets}/noams_password.age";
   age.secrets.paperless-naspi-password.file = "${inputs.mysecrets}/paperless-naspi-admin-password.age";
+  age.secrets.go-bills-gemini-key.file = "${inputs.mysecrets}/bills_gemini_key.age";
 
   nix = {
     extraOptions =

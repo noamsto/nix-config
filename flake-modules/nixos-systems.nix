@@ -8,7 +8,6 @@ in {
       thinkpad-p14s = nixpkgs.lib.nixosSystem {
         modules = [
           ../hosts/thinkpad-p14s
-          inputs.determinate.nixosModules.default
         ];
         specialArgs = {inherit inputs;};
       };
@@ -16,7 +15,6 @@ in {
       thinkpad-p14s-g5 = nixpkgs.lib.nixosSystem {
         modules = [
           ../hosts/thinkpad-p14s-g5
-          inputs.determinate.nixosModules.default
         ];
         specialArgs = {inherit inputs;};
       };
@@ -32,6 +30,7 @@ in {
           ../hosts/naspi
           inputs.disko.nixosModules.disko
           ../hosts/naspi/disko.nix
+          inputs.go-bills.nixosModules.default
         ];
       };
 

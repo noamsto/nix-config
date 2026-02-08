@@ -268,6 +268,9 @@
     hdparm
     sdparm
 
+    # FlakeHub CLI (cache auth, publishing)
+    fh
+
     # Monitoring
     iotop
     nmon

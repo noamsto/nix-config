@@ -46,6 +46,11 @@ inputs: [
     inherit (inputs.self.packages.${final.stdenv.hostPlatform.system}) tavily-mcp;
   })
 
+  # Enable AMD GPU monitoring in btop via ROCm
+  (final: prev: {
+    btop = prev.btop.override {rocmSupport = true;};
+  })
+
   # Brave with Wayland fixes
   (final: prev: {
     brave = prev.brave.overrideAttrs (oldAttrs: {
