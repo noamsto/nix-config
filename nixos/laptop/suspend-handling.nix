@@ -19,7 +19,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         ExecStart = pkgs.writeShellScript "hdm-resume" ''
-          LOG="/tmp/noctalia-lock.log"
+          LOG="/tmp/hdm-resume.log"
           log() {
             echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [hdm-resume] $*" | tee -a "$LOG"
           }
@@ -102,12 +102,13 @@ in {
 
           sleep 0.2
 
-          # Check Noctalia status after DPMS on
-          noctalia_pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
-          if [ -n "$noctalia_pid" ]; then
-            log "Noctalia still running (PID: $noctalia_pid)"
+          # Re-trigger lockscreen if aegis-lock died during topology change
+          # Requires misc:allow_session_lock_restore = true in Hyprland config.
+          if ${pkgs.procps}/bin/pgrep -f 'quickshell.*aegis-lock' >/dev/null 2>&1; then
+            log "aegis-lock still running, session lock intact"
           else
-            log "ERROR: Noctalia DIED after DPMS on!"
+            log "WARNING: aegis-lock not running, re-launching..."
+            su - ${config.username} -c "aegis-lock &" 2>/dev/null || true
           fi
 
           # Restart HDM to detect actual hardware state and apply correct profile

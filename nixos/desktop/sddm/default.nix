@@ -11,7 +11,7 @@ in
     # install theme and cursor
     environment.systemPackages = with pkgs; [
       xsettingsd
-      xorg.xrdb
+      xrdb
 
       bibata-cursors
       (where-is-my-sddm-theme.override {

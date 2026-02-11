@@ -112,9 +112,11 @@
     vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
 
     noctalia = {
-      url = "github:noamsto/noctalia-shell";
+      url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    aegis-lock.url = "https://flakehub.com/f/noamsto/aegis-lock/*.tar.gz";
 
     noctalia-plugins = {
       url = "github:noctalia-dev/noctalia-plugins";

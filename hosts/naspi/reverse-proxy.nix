@@ -31,6 +31,9 @@
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $http_connection;
+            # OCR bill extraction via Gemini can take up to 5 minutes
+            proxy_read_timeout 300s;
+            proxy_send_timeout 300s;
           '';
         };
 

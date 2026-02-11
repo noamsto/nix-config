@@ -19,37 +19,12 @@
   lib,
   ...
 }: let
-  # Log file for lock screen debugging
-  lockLogFile = "/tmp/noctalia-lock.log";
-
-  # Helper script for Noctalia IPC commands with logging
+  # Helper script for Noctalia IPC commands
   noctalia-ipc = pkgs.writeShellScriptBin "noctalia-ipc" ''
-    LOG="${lockLogFile}"
-
-    log() {
-      echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [noctalia-ipc] $*" | tee -a "$LOG"
-    }
-
-    log "Called with args: $*"
-    log "  HYPRLAND_INSTANCE_SIGNATURE=$HYPRLAND_INSTANCE_SIGNATURE"
-
-    # Check Hyprland monitor state before lock
-    if [ "$1" = "lockScreen" ]; then
-      log "  Current monitors:"
-      ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "    \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >> "$LOG" 2>&1 || log "    (failed to get monitors)"
-    fi
-
     pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
     if [ -n "$pid" ]; then
-      log "  Found Noctalia PID: $pid"
-      result=$(${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@" 2>&1)
-      exit_code=$?
-      log "  IPC result (exit=$exit_code): $result"
-      echo "$result"
-      exit $exit_code
+      ${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@"
     else
-      log "  ERROR: Noctalia not running!"
-      log "  Quickshell processes: $(${pkgs.procps}/bin/pgrep -a quickshell 2>/dev/null || echo 'none')"
       echo "Noctalia not running" >&2
       exit 1
     fi
@@ -69,58 +44,6 @@
     fi
   '';
 
-  # Debug helper script for lock screen issues
-  lock-debug = pkgs.writeShellScriptBin "lock-debug" ''
-    LOG="${lockLogFile}"
-
-    case "''${1:-}" in
-      watch|tail|-f)
-        echo "Watching lock log (Ctrl+C to stop)..."
-        ${pkgs.coreutils}/bin/tail -f "$LOG" 2>/dev/null || echo "No log file yet"
-        ;;
-      clear)
-        rm -f "$LOG" /tmp/workspace-manager.log
-        echo "Logs cleared"
-        ;;
-      status)
-        echo "=== Noctalia Status ==="
-        pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
-        if [ -n "$pid" ]; then
-          echo "Running (PID: $pid)"
-          echo "Memory: $(${pkgs.procps}/bin/ps -o rss= -p "$pid" | awk '{print $1/1024 " MB"}')"
-        else
-          echo "NOT RUNNING"
-        fi
-        echo ""
-        echo "=== Hyprland Monitors ==="
-        ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "\(.name): \(.width)x\(.height) disabled=\(.disabled)"' || echo "Failed to get monitors"
-        echo ""
-        echo "=== Lock State ==="
-        if ${pkgs.systemd}/bin/loginctl show-session --property=LockedHint 2>/dev/null | grep -q "yes"; then
-          echo "Session is LOCKED"
-        else
-          echo "Session is UNLOCKED"
-        fi
-        ;;
-      *)
-        echo "=== Lock Screen Debug Log ==="
-        echo "Location: $LOG"
-        echo ""
-        if [ -f "$LOG" ]; then
-          echo "Last 50 lines:"
-          ${pkgs.coreutils}/bin/tail -50 "$LOG"
-        else
-          echo "(no log file yet)"
-        fi
-        echo ""
-        echo "Commands:"
-        echo "  lock-debug watch   - Follow log in real-time"
-        echo "  lock-debug clear   - Clear log files"
-        echo "  lock-debug status  - Show current status"
-        ;;
-    esac
-  '';
-
   # Noctalia plugins from flake input (update with: nix flake update noctalia-plugins)
   inherit (inputs) noctalia-plugins;
 
@@ -136,15 +59,13 @@
 in {
   imports = [
     inputs.noctalia.homeModules.default
-    # Noctalia bundles Catppuccin, so we don't need custom colorscheme files
-    # ./colorscheme.nix
-    # ./terminal-themes.nix
+    inputs.aegis-lock.homeModules.default
   ];
 
   config = {
     # Add helper scripts to PATH
     # gpu-screen-recorder is required by the screen-recorder plugin
-    home.packages = [noctalia-ipc restore-wallpaper lock-debug pkgs.gpu-screen-recorder];
+    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder];
 
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
@@ -170,8 +91,7 @@ in {
       };
     };
 
-    # Systemd service to monitor Noctalia and log crashes
-    # This helps debug "lock screen died" issues during undocking
+    # Systemd service to monitor Noctalia shell and log crashes
     systemd.user.services.noctalia-crash-monitor = {
       Unit = {
         Description = "Monitor Noctalia for crashes and log events";
@@ -181,7 +101,7 @@ in {
       Service = {
         Type = "simple";
         ExecStart = pkgs.writeShellScript "noctalia-crash-monitor" ''
-          LOG="${lockLogFile}"
+          LOG="/tmp/noctalia-shell.log"
           log() {
             echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [crash-monitor] $*" | tee -a "$LOG"
           }
@@ -265,8 +185,6 @@ in {
       package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
         calendarSupport = true;
       };
-
-      pam.fingerprint.enable = true;
 
       # Use systemd for auto-start
       systemd.enable = true;
@@ -404,6 +322,37 @@ in {
           enableKeyboardLayoutToast = false;
         };
 
+        # Session menu - use aegis-lock for lock action
+        sessionMenu = {
+          powerOptions = [
+            {
+              action = "lock";
+              enabled = true;
+              command = "aegis-lock";
+            }
+            {
+              action = "suspend";
+              enabled = true;
+            }
+            {
+              action = "hibernate";
+              enabled = true;
+            }
+            {
+              action = "reboot";
+              enabled = true;
+            }
+            {
+              action = "logout";
+              enabled = true;
+            }
+            {
+              action = "shutdown";
+              enabled = true;
+            }
+          ];
+        };
+
         # General UI settings
         general = {
           animationSpeed = 1.0;
@@ -458,6 +407,22 @@ in {
           wallpaperChange = "echo \"$1\" > ~/.config/noctalia/last-wallpaper";
           # Trigger theme-toggle when dark mode changes
           darkModeChange = "theme-toggle apply $([ \"$1\" = \"true\" ] && echo dark || echo light)";
+        };
+      };
+    };
+
+    # Aegis Lock - standalone Wayland lockscreen (replaces Noctalia's built-in lock)
+    # Uses WlSessionLock protocol, supports PAM + fingerprint, syncs MD3 colors with Noctalia
+    programs.aegis-lock = {
+      enable = true;
+      fingerprint.enable = true;
+      settings = {
+        general = {
+          clockFormat = "HH:mm";
+          dateFormat = "dddd, MMMM d";
+          showSessionButtons = true;
+          countdownEnabled = true;
+          countdownDuration = 10000;
         };
       };
     };

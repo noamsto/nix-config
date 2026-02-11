@@ -44,7 +44,7 @@ in {
     };
 
     services.blueman.enable = true;
-    # PAM service for Noctalia lock screen (replaces hyprlock)
+    # PAM service for Noctalia shell (GNOME keyring unlock)
     security.pam.services.noctalia-shell = {
       enableGnomeKeyring = true;
     };

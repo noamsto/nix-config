@@ -1,8 +1,10 @@
 # Global Claude Code Instructions
 
-## New Work Workflow
+## New Work Workflow (factify-inc repos only)
 
-**REQUIRED**: Before implementing or planning any new work:
+**REQUIRED** for repos under the `factify-inc` GitHub org. Does NOT apply to personal repos.
+
+Before implementing or planning any new work:
 
 1. **Create a Linear ticket** (if one doesn't exist):
    - Follow the "Linear Ticket Creation" guidelines below

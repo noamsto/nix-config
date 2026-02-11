@@ -52,7 +52,7 @@
       # nwg-dock-hyprland
 
       # XWayland HiDPI support
-      xorg.xrdb # X resources database for XWayland scaling
+      xrdb # X resources database for XWayland scaling
 
       # Screenshot and recording tools
       grim # High-quality Wayland screenshot tool

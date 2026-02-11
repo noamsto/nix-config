@@ -204,6 +204,7 @@ in {
       set -ga update-environment TERMINFO
       set -ga update-environment TERMINFO_DIRS
 
+
       # Set escape-time as recomended by nvim
       set -s escape-time 0
 

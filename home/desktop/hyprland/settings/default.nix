@@ -53,7 +53,10 @@ in {
         # Load XWayland HiDPI settings
         "xrdb -merge ~/.Xresources"
 
-        # Tmux wayland integration
+        # Propagate Hyprland/Wayland env to all running fish shells (universal vars)
+        # and tmux global env (for non-fish shells)
+        "fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE'"
+        "fish -c 'set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
@@ -182,6 +185,10 @@ in {
 
         # Fullscreen behavior
         layers_hog_keyboard_focus = true; # Ensure fullscreen windows get keyboard focus
+
+        # Allow a new lockscreen to take over if the previous one crashed
+        # (e.g. Noctalia dies during monitor topology change on undock)
+        allow_session_lock_restore = true;
       };
       render = {
         direct_scanout = true;
