@@ -39,7 +39,7 @@
 
     # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
     extraModprobeConfig = ''
-      options thinkpad_acpi fan_control=1 charge_start_thresh=75 charge_stop_thresh=85
+      options thinkpad_acpi fan_control=1
     '';
   };
 

@@ -36,7 +36,6 @@ in {
         '';
       }
       // lib.optionalAttrs isLaptop {
-        power-profiles-daemon.enable = true;
         upower.enable = true;
         fprintd.enable = true;
       };

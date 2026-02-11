@@ -1,7 +1,8 @@
 {...}: {
   imports = [
-    ./auto-power-profile.nix
-    # ./battery-threshold.nix
+    ./tlp.nix
+    # ./auto-power-profile.nix  # Replaced by TLP
+    # ./battery-threshold.nix   # Replaced by TLP
     ./tailscale.nix
   ];
 }
