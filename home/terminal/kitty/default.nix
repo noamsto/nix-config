@@ -82,6 +82,11 @@
 in {
   programs.kitty = {
     enable = true;
+    # Default dark theme - ensures kitty starts themed before theme-toggle runs.
+    # theme-toggle replaces this include line at runtime with the saved preference.
+    extraConfig = ''
+      include ${config.xdg.configHome}/kitty/themes/${palette.dark.name}.conf
+    '';
     settings = {
       # Background and transparency
       background_opacity = "0.92";

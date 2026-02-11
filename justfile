@@ -85,6 +85,11 @@ naspi-deploy STRATEGY="auto":
 naspi:
     @just naspi-deploy
 
+# Deploy naspi over Tailscale (when not on local network)
+naspi-deploy-tailscale:
+    @echo "🔄 Deploying configuration update to naspi via Tailscale..."
+    nixos-rebuild switch --flake ".#naspi" --target-host noams@naspi --use-remote-sudo --accept-flake-config |& nom
+
 # Fresh installation of naspi (DESTRUCTIVE!)
 naspi-install:
     @echo "⚠️  This will WIPE and REPARTITION naspi!"
