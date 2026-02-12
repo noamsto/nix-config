@@ -11,6 +11,9 @@
   # Statusline script package
   claude-statusline = pkgs.callPackage ./statusline.nix {};
 
+  # PreToolUse hook: auto-approve safe psql, block destructive (DROP/TRUNCATE/DELETE/REVOKE)
+  psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
+
   # Import tmux/sesh utilities for Claude status integration
   seshUtils = import ../../terminal/tmux/sesh-utils.nix {inherit pkgs;};
 
@@ -94,13 +97,22 @@
             ];
           }
         ];
-        # Tool use -> still processing
+        # Tool use -> still processing + psql safety guard
         PreToolUse = [
           {
             hooks = [
               {
                 type = "command";
                 command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+              }
+            ];
+          }
+          {
+            matcher = "Bash";
+            hooks = [
+              {
+                type = "command";
+                command = "${psql-guard}/bin/claude-psql-guard";
               }
             ];
           }

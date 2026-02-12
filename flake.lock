@@ -542,12 +542,12 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1770836325,
-        "narHash": "sha256-K/VQk15bfukB9kjGnKeHSNRhJSuAobwYPe7/DuEzOyk=",
-        "rev": "145996eeb2f42cca0a13ebfe31f7ce97982aa948",
-        "revCount": 117,
+        "lastModified": 1770885396,
+        "narHash": "sha256-JoR3G452In4Ib00q+D6/2ZWQ75ZvR4gsBErv0q4wBx8=",
+        "rev": "cdfd8ed8bc9d184c3771ee85e4338fb5df49f9ee",
+        "revCount": 120,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/noamsto/go-bills/0.1.117%2Brev-145996eeb2f42cca0a13ebfe31f7ce97982aa948/019c4e15-9a21-7b2a-9e92-e442cf7554ff/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/noamsto/go-bills/0.1.120%2Brev-cdfd8ed8bc9d184c3771ee85e4338fb5df49f9ee/019c5102-5d0f-7fc1-88b9-2aea270ceaef/source.tar.gz"
       },
       "original": {
         "type": "tarball",

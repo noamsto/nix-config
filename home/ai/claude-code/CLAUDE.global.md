@@ -164,10 +164,10 @@ This creates the worktree (if needed), switches to its tmux window, and outputs 
 
 ## Pull Requests
 
-When creating PRs, always create them as **drafts** initially:
+When creating PRs, always create them as **drafts** and assign to me:
 
 ```bash
-gh pr create --draft --title "..." --body "..."
+gh pr create --draft --assignee @me --title "..." --body "..."
 ```
 
 This allows for review before marking ready.

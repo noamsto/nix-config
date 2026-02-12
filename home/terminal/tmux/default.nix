@@ -42,6 +42,7 @@
       claude = "🤖";
       ".claude-wrapper_" = "🤖";
       nh = "❄️";
+      nix = "❄️";
       fish = "🐟";
       process-compose = "⚙️";
       amp = "🧠";
@@ -80,7 +81,6 @@ in {
     seshUtils.claude-status-update
     seshUtils.claude-tmux-indicator
     seshUtils.claude-session-status
-    seshUtils.claude-priority-window
 
     # Session sidebar
     seshUtils.tmux-sidebar
@@ -89,12 +89,13 @@ in {
     # Pane border styling
     seshUtils.tmux-set-pane-border
 
+    # Pickers
+    seshUtils.tmux-session-picker
+    seshUtils.tmux-window-picker
+
     # Status bar helpers
     seshUtils.tmux-branch-display
     seshUtils.tmux-dir-display
-    seshUtils.tmux-branch-dir-display
-    seshUtils.tmux-window-branch-display
-    seshUtils.tmux-update-window-name
   ];
 
   xdg.configFile."tmux/tmux-nerd-font-window-name.yml".source = yamlFormat.generate "tmux-nerd-font-window-name.yml" tmuxNerdFontConfig;
@@ -254,17 +255,11 @@ in {
       # Session sidebar toggle
       bind -n M-b run-shell "tmux-sidebar"
 
-      # Session picker with Claude status display
-      # - Shows session name + priority window info (for display only)
-      # - Selecting a session navigates to last active window (tmux default)
-      # Format: session rows show "session │ priority_window", window rows show window with indicator
-      bind s choose-tree -Zs -O name \
-        -F '#{?window_id,#{window_name} #(claude-tmux-indicator --window "#{session_name}:#{window_index}"),#{session_name} │ #(claude-priority-window "#{session_name}" --display)}' \
-        'switch-client -t "%1"'
-      # Window picker - built-in choose-tree with windows expanded, shows branch name
-      # Pass 1000 as width to prevent trimming in full-screen list
-      bind w choose-tree -Zw -O name \
-        -F '#{window_index}: #(tmux-window-branch-display "#{session_name}" "#{window_index}" "#{pane_current_path}" "1000" "1") #(claude-tmux-indicator --window "#{session_name}:#{window_index}")  #{?pane_current_command,#{pane_current_command},}'
+      # Session picker - wrapper pre-computes claude status into @claude_status,
+      # then opens choose-tree (avoids tmux #() caching returning empty on first call)
+      bind s run-shell 'tmux-session-picker'
+      # Window picker - wrapper pre-computes claude status per window, then opens choose-tree
+      bind w run-shell 'tmux-window-picker'
 
       # Create new session with name prompt (Prefix+N)
       bind N command-prompt -p "New session name:" "new-session -s '%%'"
@@ -324,14 +319,14 @@ in {
       # Session: mauve (subtle), Branch: blue bold, Dir: subtext, App: subtext, prefix: red
       # Icons provide visual separation, no pipes needed
       # Continuum save script runs invisibly at start to trigger periodic saves
-      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_subtext_0},bold]#{@icon_window}#{window_name} "
+      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_overlay_1}]󰚩 #(claude-session-status '#{session_name}' --format icon-color) "
 
-      # Line 1: Windows with per-window branches (left only)
-      # Simple window list using tmux native formatting
-      # Active window: green + bold (prominent), inactive: subtext
-      # Branch names shown directly via script (first N chars), tmux handles overflow naturally
+      # Line 1: Window list (left only)
+      # Uses #{window_name} (nerd font icon + dir basename) instead of branch scripts
+      # Active window: green + bold, inactive: subtext
+      # Claude indicator kept (shell commands fine in status bar with status-interval)
       # Separator (│) only shown between windows, not after last window
-      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#(tmux-window-branch-display '#{session_name}' '#{window_index}' '#{pane_current_path}' '#{client_width}' '#{session_windows}')#{?window_zoomed_flag, 󰁌,}#(claude-tmux-indicator --window '#{session_name}:#{window_index}')#{?window_end_flag,, #[fg=#{@thm_subtext_0}]│ }}"
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#{window_name}#{?window_zoomed_flag, 󰁌,}#(claude-tmux-indicator --window '#{session_name}:#{window_index}')#[norange]#{?window_end_flag,, #[fg=#{@thm_subtext_0}]│ }}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values
@@ -356,7 +351,7 @@ in {
 
       # Window settings for nerd font plugin
       # Let automatic-rename work so tmux_nerd can add icons to window_name
-      # Branch names are shown via tmux-window-branch-display in status bar and prefix+w
+      # Branch info shown via native #{@branch} in pickers; status bar uses #{window_name}
       set -wg automatic-rename on
       set -g automatic-rename-format "#{b:pane_current_path}"
 

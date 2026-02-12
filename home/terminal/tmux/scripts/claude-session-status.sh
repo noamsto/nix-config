@@ -35,6 +35,16 @@ get_spinner_frame() {
   echo "${SPINNER_FRAMES[$frame_idx]}"
 }
 
+# Detect current theme from state file
+detect_theme() {
+  local theme_file="${XDG_STATE_HOME:-$HOME/.local/state}/theme-state.json"
+  if [[ -f $theme_file ]]; then
+    grep -o '"theme"[[:space:]]*:[[:space:]]*"[^"]*"' "$theme_file" 2>/dev/null | cut -d'"' -f4
+  else
+    echo "dark"
+  fi
+}
+
 # Count states for this session
 count_processing=0
 count_waiting=0
@@ -69,13 +79,13 @@ short)
   if [[ $count_waiting -gt 0 ]]; then
     echo "󰔟$total" # nf-md-timer-sand
   elif [[ $count_compacting -gt 0 ]]; then
-    echo "$total" # nf-md-archive (compacting)
+    echo "$total" # nf-md-archive (compacting)
   elif [[ $count_processing -gt 0 ]]; then
     echo "$(get_spinner_frame)$total"
   elif [[ $count_done -gt 0 ]]; then
     echo "$total" # nf-fa-check
   elif [[ $count_idle -gt 0 ]]; then
-    echo 🤖"$total" # nf-md-robot (idle)
+    echo "󰚩$total" # nf-md-robot (idle)
   fi
   ;;
 
@@ -101,7 +111,7 @@ icon)
   if [[ $count_waiting -gt 0 ]]; then
     echo "󰔟$count_suffix" # nf-md-timer-sand
   elif [[ $count_compacting -gt 0 ]]; then
-    echo "$count_suffix" # nf-md-archive (compacting)
+    echo "$count_suffix" # nf-md-archive (compacting)
   elif [[ $count_processing -gt 0 ]]; then
     echo "$(get_spinner_frame)$count_suffix"
   elif [[ $count_done -gt 0 ]]; then
@@ -113,20 +123,39 @@ icon)
 
 icon-color)
   # Priority icon with tmux colors and count if multiple
-  # Colors: peach=waiting, cyan=compacting, mauve=processing, green=done, grey=idle
+  # Theme-aware: uses Catppuccin hex colors for proper contrast in both themes
+  current_theme=$(detect_theme)
+
+  if [[ $current_theme == "light" ]]; then
+    # Catppuccin Latte
+    C_WAITING="#[fg=#fe640b]" # Peach
+    C_COMPACT="#[fg=#04a5e5]" # Sky
+    C_PROCESS="#[fg=#8839ef]" # Mauve
+    C_DONE="#[fg=#40a02b]"    # Green
+    C_IDLE="#[fg=#6c6f85]"    # Overlay0
+  else
+    # Catppuccin Mocha
+    C_WAITING="#[fg=#fab387]" # Peach
+    C_COMPACT="#[fg=#89dceb]" # Sky
+    C_PROCESS="#[fg=#cba6f7]" # Mauve
+    C_DONE="#[fg=#a6e3a1]"    # Green
+    C_IDLE="#[fg=#6c7086]"    # Overlay0
+  fi
+  C_RESET="#[fg=default]"
+
   count_suffix=""
   [[ $total -gt 1 ]] && count_suffix=" $total"
 
   if [[ $count_waiting -gt 0 ]]; then
-    echo "#[fg=colour216]󰔟$count_suffix#[fg=default]" # Peach
+    echo "${C_WAITING}󰔟$count_suffix${C_RESET}"
   elif [[ $count_compacting -gt 0 ]]; then
-    echo "#[fg=colour117]$count_suffix#[fg=default]" # Cyan (compacting)
+    echo "${C_COMPACT}$count_suffix${C_RESET}"
   elif [[ $count_processing -gt 0 ]]; then
-    echo "#[fg=colour183]$(get_spinner_frame)$count_suffix#[fg=default]" # Mauve
+    echo "${C_PROCESS}$(get_spinner_frame)$count_suffix${C_RESET}"
   elif [[ $count_done -gt 0 ]]; then
-    echo "#[fg=colour151]$count_suffix#[fg=default]" # Green (U+F00C)
+    echo "${C_DONE}$count_suffix${C_RESET}"
   elif [[ $count_idle -gt 0 ]]; then
-    echo "#[fg=colour245]🤖$count_suffix#[fg=default]" # Grey (idle)
+    echo "${C_IDLE}󰚩$count_suffix${C_RESET}"
   fi
   ;;
 
@@ -135,13 +164,13 @@ gum)
   if [[ $count_waiting -gt 0 ]]; then
     gum style --foreground 216 "󰔟 $count_waiting waiting" 2>/dev/null || echo "󰔟 $count_waiting waiting"
   elif [[ $count_compacting -gt 0 ]]; then
-    gum style --foreground 117 " $count_compacting compacting" 2>/dev/null || echo "󰛆 $count_compacting compacting"
+    gum style --foreground 117 " $count_compacting compacting" 2>/dev/null || echo "󰛆 $count_compacting compacting"
   elif [[ $count_processing -gt 0 ]]; then
     gum style --foreground 183 "$(get_spinner_frame) $count_processing working" 2>/dev/null || echo "$(get_spinner_frame) $count_processing working"
   elif [[ $count_done -gt 0 ]]; then
     gum style --foreground 151 " $count_done done" 2>/dev/null || echo " $count_done done"
   elif [[ $count_idle -gt 0 ]]; then
-    gum style --foreground 245 "🤖 $count_idle idle" 2>/dev/null || echo "󰚩 $count_idle idle"
+    gum style --foreground 245 "󰚩 $count_idle idle" 2>/dev/null || echo "󰚩 $count_idle idle"
   fi
   ;;
 esac
