@@ -8,7 +8,7 @@ set -euo pipefail
 while IFS=$'\t' read -r sess_name win_idx; do
   [[ -n $win_idx ]] || continue
   target="${sess_name}:${win_idx}"
-  status=$(claude-tmux-indicator --window "$target" 2>/dev/null || true)
+  status=$(claude-status --window "$target" 2>/dev/null || true)
   tmux set -w -t "$target" @claude_win_status "$status"
 done < <(tmux list-windows -a -F '#{session_name}	#{window_index}')
 

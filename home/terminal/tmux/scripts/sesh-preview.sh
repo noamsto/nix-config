@@ -62,7 +62,7 @@ if tmux has-session -t "$target" 2>/dev/null; then
   echo ""
 
   # Claude status (if any Claude sessions in this tmux session)
-  claude_status=$(claude-session-status "$session_name" --format long 2>/dev/null || true)
+  claude_status=$(claude-status --session "$session_name" --format long 2>/dev/null || true)
   if [[ -n $claude_status ]]; then
     PURPLE="\033[35m"
     echo -e "${BOLD}${PURPLE}Claude Status:${RESET}"

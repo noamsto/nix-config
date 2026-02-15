@@ -79,8 +79,7 @@ in {
 
     # Claude status integration for tmux
     seshUtils.claude-status-update
-    seshUtils.claude-tmux-indicator
-    seshUtils.claude-session-status
+    seshUtils.claude-status
 
     # Session sidebar
     seshUtils.tmux-sidebar
@@ -319,14 +318,14 @@ in {
       # Session: mauve (subtle), Branch: blue bold, Dir: subtext, App: subtext, prefix: red
       # Icons provide visual separation, no pipes needed
       # Continuum save script runs invisibly at start to trigger periodic saves
-      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_overlay_1}]󰚩 #(claude-session-status '#{session_name}' --format icon-color) "
+      set -g status-format[0] "#(${pkgs.tmuxPlugins.continuum}/share/tmux-plugins/continuum/scripts/continuum_save.sh)#[align=left,bg=#{@thm_bg}]#{?client_prefix,#[fg=#{@thm_red}#,bold],#[fg=#{@thm_mauve}]} #{@icon_session} #S  #[fg=#{@thm_blue},bold]#{@icon_branch} #(tmux-branch-display '#{@branch}' '#{pane_current_path}')  #[fg=#{@thm_subtext_0},nobold]#{@icon_dir} #(tmux-dir-display '#{@branch}' '#{pane_current_path}') #[align=right,fg=#{@thm_overlay_1}]#(claude-status --session '#{session_name}' --format icon-color) "
 
       # Line 1: Window list (left only)
       # Uses #{window_name} (nerd font icon + dir basename) instead of branch scripts
       # Active window: green + bold, inactive: subtext
       # Claude indicator kept (shell commands fine in status bar with status-interval)
       # Separator (│) only shown between windows, not after last window
-      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#{window_name}#{?window_zoomed_flag, 󰁌,}#(claude-tmux-indicator --window '#{session_name}:#{window_index}')#[norange]#{?window_end_flag,, #[fg=#{@thm_subtext_0}]│ }}"
+      set -g status-format[1] "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold],#[fg=#{@thm_subtext_0}#,nobold]}#{window_index}: #[fg=#{@thm_text}#,nobold]#{window_name}#{?window_zoomed_flag, 󰁌,}#(claude-status --window '#{session_name}:#{window_index}')#[norange]#{?window_end_flag,, #[fg=#{@thm_subtext_0}]│ }}"
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values

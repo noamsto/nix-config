@@ -47,7 +47,7 @@ get_current_session() {
 # Get Claude status icon for a session (reuses existing script)
 get_claude_icon() {
   local session="$1"
-  claude-session-status "$session" --format icon 2>/dev/null || echo ""
+  claude-status --session "$session" --format icon 2>/dev/null || echo ""
 }
 
 # Fetch all sessions

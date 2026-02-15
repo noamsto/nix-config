@@ -25,10 +25,8 @@
          "preferences": {
             "paths": [
                "/home/noams/.local/share/applications",
-               "/nix/store/k99vvncx631gmbc51vajmy3jgxiqgqb2-vicinae-0.18.3/share/applications",
                "/nix/store/apw386d39c4imw0ijw18s8k9m1f5nkdx-cups-2.4.14/share/applications",
                "/var/lib/flatpak/exports/share/applications",
-               "/home/noams/.nix-profile/share/applications",
                "/etc/profiles/per-user/noams/share/applications",
                "/run/current-system/sw/share/applications"
             ]

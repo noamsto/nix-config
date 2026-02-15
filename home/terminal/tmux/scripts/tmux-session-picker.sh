@@ -7,7 +7,7 @@ set -euo pipefail
 # Pre-compute claude status for each session into @claude_status user variable
 while IFS= read -r sess; do
   [[ -n $sess ]] || continue
-  status=$(claude-session-status "$sess" --format icon-color 2>/dev/null || true)
+  status=$(claude-status --session "$sess" --format icon-color 2>/dev/null || true)
   tmux set -t "$sess" @claude_status "$status"
 done < <(tmux list-sessions -F '#{session_name}')
 

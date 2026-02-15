@@ -56,7 +56,7 @@ Usage:
   wt main               Switch to root repository window
   wt list               List all worktrees
   wt remove <branch>    Remove worktree + kill window
-  wt clean              Remove worktrees with merged branches
+  wt clean              Remove stale worktrees (merged, squash-merged, deleted)
   wt help               Show this help
 
 Model: Session = Project, Window = Worktree
@@ -444,6 +444,10 @@ wt_remove() {
 }
 
 # Clean up worktrees with merged branches
+# Uses three strategies to detect stale worktrees:
+#   1. git branch --merged (regular merges / fast-forwards)
+#   2. Remote branch deleted after merge (repos with auto-delete)
+#   3. GitHub PR squash-merged (requires gh CLI, checks in parallel)
 wt_clean() {
   if ! git rev-parse --git-dir >/dev/null 2>&1; then
     log_error "Not in a git repository"
@@ -466,46 +470,109 @@ wt_clean() {
     return 1
   fi
 
-  # Get list of merged branches (excluding default branch)
-  local merged_branches=()
-  while IFS= read -r branch; do
-    branch="${branch#"${branch%%[![:space:]]*}"}" # trim leading whitespace
-    [[ -z $branch || $branch == "$default_branch" || $branch == \** ]] && continue
-    merged_branches+=("$branch")
-  done < <(git -C "$repo_root" branch --merged "$default_branch")
+  # Fetch and prune to get accurate remote state
+  log "Fetching latest remote state..."
+  git -C "$repo_root" fetch --prune 2>/dev/null || true
 
-  if [[ ${#merged_branches[@]} -eq 0 ]]; then
-    log "No merged branches found."
+  # Build list of worktree branches and paths (excluding main worktree and default branch)
+  local wt_branches=()
+  local wt_paths=()
+  local current_path=""
+  while IFS= read -r line; do
+    if [[ $line == worktree\ * ]]; then
+      current_path="${line#worktree }"
+    elif [[ $line == branch\ refs/heads/* ]]; then
+      local current_branch="${line#branch refs/heads/}"
+      if [[ $current_path != "$repo_root" && $current_branch != "$default_branch" ]]; then
+        wt_branches+=("$current_branch")
+        wt_paths+=("$current_path")
+      fi
+      current_path=""
+    fi
+  done < <(git -C "$repo_root" worktree list --porcelain 2>/dev/null)
+
+  if [[ ${#wt_branches[@]} -eq 0 ]]; then
+    log "No worktrees to clean (besides main)."
     return 0
   fi
 
-  # Find worktrees for merged branches
-  local stale_worktrees=()
-  local stale_branches=()
+  # Detect stale worktrees using multiple strategies
+  local stale_indices=()
+  local stale_reasons=()
+  local -A checked_map # track indices already identified as stale
 
-  for branch in "${merged_branches[@]}"; do
-    while IFS= read -r line; do
-      if [[ $line =~ \[$branch\]$ ]]; then
-        local worktree_path="${line%% *}"
-        # Skip if it's the main worktree (repo root)
-        if [[ $worktree_path != "$repo_root" ]]; then
-          stale_worktrees+=("$worktree_path")
-          stale_branches+=("$branch")
-        fi
-        break
-      fi
-    done < <(git -C "$repo_root" worktree list 2>/dev/null)
+  # Strategy 1: git branch --merged (fast, works for regular merges)
+  local git_merged
+  git_merged=$(git -C "$repo_root" branch --merged "$default_branch" 2>/dev/null | sed 's/^[*+ ]*//')
+
+  for i in "${!wt_branches[@]}"; do
+    if echo "$git_merged" | grep -qxF "${wt_branches[$i]}"; then
+      stale_indices+=("$i")
+      stale_reasons+=("merged into $default_branch")
+      checked_map[$i]=1
+    fi
   done
 
-  if [[ ${#stale_worktrees[@]} -eq 0 ]]; then
-    log "No stale worktrees found (merged branches have no worktrees)."
+  # Strategy 2: remote branch deleted after merge (works with auto-delete on GitHub)
+  for i in "${!wt_branches[@]}"; do
+    [[ -n ${checked_map[$i]:-} ]] && continue
+    if ! git -C "$repo_root" show-ref --verify --quiet "refs/remotes/origin/${wt_branches[$i]}" 2>/dev/null; then
+      stale_indices+=("$i")
+      stale_reasons+=("remote branch deleted")
+      checked_map[$i]=1
+    fi
+  done
+
+  # Strategy 3: GitHub PR squash-merged (parallel checks via gh CLI)
+  local unchecked=()
+  for i in "${!wt_branches[@]}"; do
+    [[ -n ${checked_map[$i]:-} ]] && continue
+    unchecked+=("$i")
+  done
+
+  if [[ ${#unchecked[@]} -gt 0 ]] && command -v gh &>/dev/null; then
+    log "Checking ${#unchecked[@]} branches against GitHub PRs..."
+
+    local tmpdir
+    tmpdir=$(mktemp -d)
+
+    for idx in "${unchecked[@]}"; do
+      (
+        local branch="${wt_branches[$idx]}"
+        local pr_num
+        pr_num=$(cd "$repo_root" && gh pr list --head "$branch" --state merged --json number --jq '.[0].number' 2>/dev/null) || true
+        if [[ -n $pr_num ]]; then
+          echo "$pr_num" >"$tmpdir/$idx"
+        fi
+      ) &
+    done
+    wait || true
+
+    for idx in "${unchecked[@]}"; do
+      if [[ -f "$tmpdir/$idx" ]]; then
+        local pr_num
+        pr_num=$(<"$tmpdir/$idx")
+        stale_indices+=("$idx")
+        stale_reasons+=("PR #$pr_num squash-merged")
+      fi
+    done
+
+    rm -rf "$tmpdir"
+  elif [[ ${#unchecked[@]} -gt 0 ]]; then
+    log "Tip: install gh CLI to also detect squash-merged branches"
+  fi
+
+  if [[ ${#stale_indices[@]} -eq 0 ]]; then
+    log "No stale worktrees found."
     return 0
   fi
 
-  log_header "🧹 Found ${#stale_worktrees[@]} stale worktree(s) with merged branches"
+  log_header "🧹 Found ${#stale_indices[@]} stale worktree(s)"
 
-  for i in "${!stale_worktrees[@]}"; do
-    echo "  • ${stale_branches[$i]} → ${stale_worktrees[$i]}"
+  for j in "${!stale_indices[@]}"; do
+    local i="${stale_indices[$j]}"
+    echo "  • ${wt_branches[$i]} (${stale_reasons[$j]})"
+    echo "    ${wt_paths[$i]}"
   done
   echo ""
 
@@ -516,10 +583,12 @@ wt_clean() {
 
   echo ""
   local failed=0
+  local failed_lines=()
 
-  for i in "${!stale_worktrees[@]}"; do
-    local branch="${stale_branches[$i]}"
-    local worktree_path="${stale_worktrees[$i]}"
+  for j in "${!stale_indices[@]}"; do
+    local i="${stale_indices[$j]}"
+    local branch="${wt_branches[$i]}"
+    local worktree_path="${wt_paths[$i]}"
 
     log "Removing: $branch"
 
@@ -533,23 +602,36 @@ wt_clean() {
     fi
 
     # Remove worktree
-    if git -C "$repo_root" worktree remove "$worktree_path" 2>/dev/null; then
+    local git_error
+    if git_error=$(git -C "$repo_root" worktree remove "$worktree_path" 2>&1); then
       echo "  ✓ Removed worktree"
     else
-      echo "  ❌ Failed to remove worktree (may have uncommitted changes)"
-      ((failed++))
+      echo "  ❌ Failed: $git_error"
+      failed=$((failed + 1))
+      failed_lines+=("  • $branch: $git_error")
     fi
   done
 
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  local cleaned=$((${#stale_indices[@]} - failed))
   if [[ $failed -eq 0 ]]; then
-    echo "✓ Cleaned ${#stale_worktrees[@]} worktree(s)"
+    echo "✓ Cleaned ${#stale_indices[@]} worktree(s)"
   else
-    echo "⚠ Cleaned $((${#stale_worktrees[@]} - failed)) worktree(s), $failed failed"
+    echo "⚠ Cleaned $cleaned worktree(s), $failed failed:"
+    for line in "${failed_lines[@]}"; do
+      echo "$line"
+    done
+    echo ""
+    echo "Tip: use 'git worktree remove --force <path>' for worktrees with uncommitted changes"
   fi
 
-  return $failed
+  if [[ $cleaned -gt 0 ]]; then
+    echo ""
+    echo "Run 'nix store gc' to reclaim nix store space from removed worktrees"
+  fi
+
+  return 0
 }
 
 # Fuzzy find worktree using zoxide - outputs path for cd

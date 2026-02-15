@@ -147,7 +147,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update done";
+                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
               }
             ];
           }

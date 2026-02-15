@@ -8,8 +8,7 @@
 
   # Claude status integration for tmux
   claude-status-update = pkgs.writeShellScriptBin "claude-status-update" (builtins.readFile ./scripts/claude-status-update.sh);
-  claude-tmux-indicator = pkgs.writeShellScriptBin "claude-tmux-indicator" (builtins.readFile ./scripts/claude-tmux-indicator.sh);
-  claude-session-status = pkgs.writeShellScriptBin "claude-session-status" (builtins.readFile ./scripts/claude-session-status.sh);
+  claude-status = pkgs.writeShellScriptBin "claude-status" (builtins.readFile ./scripts/claude-status.sh);
 
   # Session sidebar
   tmux-sidebar = pkgs.writeShellScriptBin "tmux-sidebar" (builtins.readFile ./scripts/tmux-sidebar.sh);
