@@ -83,17 +83,41 @@ in {
             fi
           done
 
-          # CRITICAL: Enable laptop monitor BEFORE turning on display
-          # The lockscreen is already active and will render as soon as DPMS turns on.
-          # If eDP-1 was disabled (docked with lid closed), we must enable it first
-          # to prevent lockscreen crash. HDM will refine the config afterward.
-          log "Enabling eDP-1 before DPMS on..."
-          ${pkgs.hyprland}/bin/hyprctl keyword monitor "eDP-1,preferred,auto,2.0" 2>/dev/null || true
+          # Enable laptop monitor BEFORE turning on display, but only when appropriate.
+          # When lid is closed and external monitors are connected, skip enabling eDP-1
+          # to avoid wrong layout / rendering on the closed screen before HDM applies the profile.
+          # Only force-enable eDP-1 as fallback when no other monitors are connected.
+          lid_closed=false
+          if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
+            lid_closed=true
+          fi
+
+          # Count non-eDP connected monitors from DRM
+          other_connected=0
+          for status_file in /sys/class/drm/card*/status; do
+            if [ -f "$status_file" ]; then
+              connector=$(basename $(dirname "$status_file"))
+              connector_name=''${connector#card?-}
+              status=$(cat "$status_file")
+              if [ "$status" = "connected" ] && [ "$connector_name" != "eDP-1" ] && [ "$connector_name" != "Writeback-1" ]; then
+                other_connected=$((other_connected + 1))
+              fi
+            fi
+          done
+
+          log "Lid closed: $lid_closed, other connected monitors: $other_connected"
+
+          if [ "$lid_closed" = "true" ] && [ "$other_connected" -gt 0 ]; then
+            log "Lid closed with external monitors present, skipping eDP-1 enable"
+          else
+            log "Enabling eDP-1 before DPMS on (lid open or no other monitors)..."
+            ${pkgs.hyprland}/bin/hyprctl keyword monitor "eDP-1,preferred,auto,2.0" 2>/dev/null || true
+          fi
 
           sleep 0.3
 
-          # Check monitor state after enabling eDP-1
-          log "Monitor state after eDP-1 enable:"
+          # Check monitor state after adjustment
+          log "Monitor state after resume adjustment:"
           ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read line; do log "$line"; done
 
           # Turn displays on - lockscreen can now render safely on eDP-1

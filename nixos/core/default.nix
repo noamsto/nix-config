@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./networking.nix
     ./nix.nix
@@ -73,5 +77,11 @@
 
   # For RaspberryPi 4 image generating
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
+  system.nixos.tags = [
+    config.desktop.mode
+    config.machine.type
+    config.profile
+  ];
+
   system.stateVersion = "23.05";
 }
