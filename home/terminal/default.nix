@@ -25,6 +25,7 @@ in {
     yazi = {
       enable = true;
       enableFishIntegration = true;
+      shellWrapperName = "y";
 
       plugins = {
         mount = pkgs.yaziPlugins.mount;

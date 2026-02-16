@@ -9,14 +9,20 @@ in {
         modules = [
           ../hosts/thinkpad-p14s
         ];
-        specialArgs = {inherit inputs;};
+        specialArgs = {
+          inherit inputs;
+          self = inputs.self;
+        };
       };
 
       thinkpad-p14s-g5 = nixpkgs.lib.nixosSystem {
         modules = [
           ../hosts/thinkpad-p14s-g5
         ];
-        specialArgs = {inherit inputs;};
+        specialArgs = {
+          inherit inputs;
+          self = inputs.self;
+        };
       };
 
       # Raspberry Pi with ZFS RAID1 on dual SSDs
@@ -24,6 +30,7 @@ in {
         specialArgs = {
           inherit inputs;
           inherit nixos-raspberrypi;
+          self = inputs.self;
         };
         system = "aarch64-linux";
         modules = [
@@ -39,6 +46,7 @@ in {
         specialArgs = {
           inherit inputs;
           inherit nixos-raspberrypi;
+          self = inputs.self;
         };
         system = "aarch64-linux";
         modules = [

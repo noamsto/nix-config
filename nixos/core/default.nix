@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  self,
   ...
 }: {
   imports = [
@@ -81,6 +82,7 @@
     config.desktop.mode
     config.machine.type
     config.profile
+    (self.shortRev or self.dirtyShortRev or "unknown")
   ];
 
   system.stateVersion = "23.05";
