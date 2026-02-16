@@ -6,12 +6,12 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1771164548,
-        "narHash": "sha256-BJVhJgzlp2hN5UDcYJtAbOkaE9epsTzEckclYrFWJ+A=",
-        "rev": "a39824fcd2504fbdb61c4fed8fca8c67c466138c",
-        "revCount": 8,
+        "lastModified": 1771248344,
+        "narHash": "sha256-gf8GVFb8AZBWb8zDvP0gB9TpFpQQwweFVpLG/u81XEY=",
+        "rev": "e6ddb0c9ef72c18120992b25ec1ed00f16d98f88",
+        "revCount": 10,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/noamsto/aegis-lock/0.1.8%2Brev-a39824fcd2504fbdb61c4fed8fca8c67c466138c/019c61a3-badf-70e9-9061-ee95759c011c/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/noamsto/aegis-lock/0.2.10%2Brev-e6ddb0c9ef72c18120992b25ec1ed00f16d98f88/019c66a2-8b5e-7d3b-babc-1a73f18e452f/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -1174,11 +1174,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771201930,
-        "narHash": "sha256-Oirf2QTHL0gRKNCGEwZ2vx6JnlGLO51mBzlkEB2QTAU=",
+        "lastModified": 1771241895,
+        "narHash": "sha256-DlOqqnea1WwCzbE9ybkonIS86kjhyTnHOTq+N4Lh8MQ=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "1dc00a137325f8a9308baed0845911ef37626dd9",
+        "rev": "d1d0ff9862d4d3299266af233c1ceb77d1a81fe5",
         "type": "github"
       },
       "original": {

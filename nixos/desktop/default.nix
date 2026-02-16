@@ -52,13 +52,11 @@
     xkb.options = "compose:menu, grp:win_space_toggle";
   };
 
-  xdg.portal = {
-    enable = true;
-    extraPortals = [pkgs.xdg-desktop-portal-hyprland];
-    config = {
-      common.default = "hyprland";
-      hyprland.default = ["hyprland" "gtk"];
-    };
+  # Portal is enabled and extraPortals are added by programs.hyprland NixOS module.
+  # Only set the config here to avoid duplicate portal packages when hyprland is overridden.
+  xdg.portal.config = {
+    common.default = "hyprland";
+    hyprland.default = ["hyprland" "gtk"];
   };
 
   # tell Electron/Chromium to run on Wayland

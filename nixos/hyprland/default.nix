@@ -5,34 +5,44 @@
   ...
 }: let
   isHypr = config.desktop.mode == "hyprland";
+
+  # Override hyprland package to only offer the UWSM session to display managers.
+  # The upstream package ships both hyprland.desktop (direct) and hyprland-uwsm.desktop
+  # (UWSM-managed). Display managers like tuigreet/GDM can pick the wrong one, bypassing
+  # UWSM and leaving graphical-session.target inactive — breaking all user services.
+  # We replace both with a single entry that invokes start-hyprland directly via -F flag,
+  # avoiding the desktop file lookup that would require the removed hyprland.desktop.
+  # See: https://github.com/NixOS/nixpkgs/issues/484328
+  # See: https://github.com/NixOS/nixpkgs/issues/471800
+  hyprlandUwsmOnly = pkgs.hyprland.overrideAttrs (old: {
+    passthru =
+      (old.passthru or {})
+      // {
+        providedSessions = ["hyprland-uwsm"];
+      };
+    postInstall =
+      (old.postInstall or "")
+      + ''
+                rm -f $out/share/wayland-sessions/hyprland.desktop
+                rm -f $out/share/wayland-sessions/hyprland-uwsm.desktop
+                cat > $out/share/wayland-sessions/hyprland-uwsm.desktop <<DESKTOP
+        [Desktop Entry]
+        Name=Hyprland (uwsm-managed)
+        Comment=An intelligent dynamic tiling Wayland compositor
+        Exec=uwsm start -e -D Hyprland -F -- $out/bin/start-hyprland
+        Type=Application
+        DesktopNames=Hyprland
+        DESKTOP
+      '';
+  });
 in {
   imports = [./gnome-services.nix];
   config = lib.mkIf isHypr {
     programs.hyprland = {
       withUWSM = true;
       enable = true;
-      package = pkgs.hyprland;
+      package = hyprlandUwsmOnly;
     };
-
-    # Custom UWSM session that directly invokes start-hyprland
-    # instead of referencing hyprland.desktop (which we want to hide from greeter)
-    # See: https://github.com/NixOS/nixpkgs/issues/471800
-    # See: https://github.com/hyprwm/Hyprland/discussions/12661
-    services.displayManager.sessionPackages = lib.mkForce [
-      (pkgs.runCommand "hyprland-uwsm-only" {
-          passthru.providedSessions = ["hyprland-uwsm"];
-        } ''
-                  mkdir -p $out/share/wayland-sessions
-                  cat > $out/share/wayland-sessions/hyprland-uwsm.desktop << EOF
-          [Desktop Entry]
-          Name=Hyprland (uwsm-managed)
-          Comment=An intelligent dynamic tiling Wayland compositor
-          Exec=uwsm start -e -D Hyprland -F -- ${pkgs.hyprland}/bin/start-hyprland
-          Type=Application
-          DesktopNames=Hyprland
-          EOF
-        '')
-    ];
 
     services.greetd = {
       enable = true;
