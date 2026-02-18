@@ -28,8 +28,8 @@ SPINNER_FRAMES=("󰪞" "󰪟" "󰪠" "󰪡" "󰪢" "󰪣" "󰪤" "󰪥")
 SPINNER_COUNT=${#SPINNER_FRAMES[@]}
 ICON_CLAUDE="󱙺"
 ICON_WAITING="󰔟"
-ICON_COMPACTING=" "
-ICON_DONE=""
+ICON_COMPACTING=""
+ICON_DONE="󰸞"
 ICON_IDLE="󰒲"
 
 get_spinner_frame() {
@@ -173,9 +173,8 @@ format_output() {
     ;;
   icon-color)
     setup_colors
-    local count_prefix=""
-    [[ $count -gt 1 ]] && count_prefix="${count} "
-    echo "${prefix}${count_prefix}${ICON_CLAUDE} $(state_color "$state")${icon}${C_RESET} "
+    # Fixed-width: " 󱙺 X " — no count prefix to keep alignment consistent
+    echo "${prefix}${ICON_CLAUDE} $(state_color "$state")${icon}${C_RESET} "
     ;;
   short)
     echo "${prefix}${count} ${ICON_CLAUDE} ${icon}"
@@ -263,7 +262,11 @@ pane)
   ;;
 window)
   count_for_window "$target"
-  [[ $total -gt 0 ]] || exit 0
+  if [[ $total -eq 0 ]]; then
+    # Fixed-width blank: match the visible width of " 󱙺 X " (4 visible cols)
+    echo "    "
+    exit 0
+  fi
   format_output "$(priority_state)" "$total" "$format" "true"
   ;;
 session)

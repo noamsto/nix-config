@@ -24,4 +24,7 @@
   # Status bar helpers
   tmux-branch-display = pkgs.writeShellScriptBin "tmux-branch-display" (builtins.readFile ./scripts/tmux-branch-display.sh);
   tmux-dir-display = pkgs.writeShellScriptBin "tmux-dir-display" (builtins.readFile ./scripts/tmux-dir-display.sh);
+
+  # Window list overflow
+  tmux-reflow-windows = pkgs.writeShellScriptBin "tmux-reflow-windows" (builtins.readFile ./scripts/tmux-reflow-windows.sh);
 }
