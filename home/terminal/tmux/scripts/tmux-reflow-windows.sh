@@ -87,36 +87,54 @@ for ((j = 0; j < total; j++)); do
   prev_idx=${indices[$j]}
 done
 
-tmux set -g @window_split "$split1"
-tmux set -g @window_split2 "$split2"
+tmux set -t "$SESSION" @window_split "$split1"
+tmux set -t "$SESSION" @window_split2 "$split2"
 
 if ((current_line >= 2)); then
-  tmux set -g status 4
+  tmux set -t "$SESSION" status 4
 elif ((current_line == 1)); then
-  tmux set -g status 3
+  tmux set -t "$SESSION" status 3
 else
-  tmux set -g status 2
+  tmux set -t "$SESSION" status 2
 fi
 
-# Build window entry format with icon SEPARATE from padded text
-# #{@window_icon_display} is cached per-window (no shell call on render)
-# #{pN:TEXT} pads only the ASCII text portion for consistent alignment
-P=$max_text_len
-TEXT='#{?#{@branch},#{=20:@branch}#{?#{==:#{=20:@branch},#{@branch}},,…},#{b:pane_current_path}}'
+# Preserve status-format[0] (session info line) at session level
+# Setting session-level status-format[1+] overrides global inheritance for ALL indices
+FMT0=$(tmux show -gv status-format[0] 2>/dev/null)
+[[ -n $FMT0 ]] && tmux set -t "$SESSION" status-format[0] "$FMT0"
+
+# Common format fragments
 ICON='#{@window_icon_display}'
-ENTRY="#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold]#{window_index}: ${ICON} #{p${P}:${TEXT}},#[fg=#{@thm_subtext_0}#,nobold]#{window_index}: #[fg=#{@thm_fg}]${ICON} #{p${P}:${TEXT}}}#{?window_zoomed_flag, 󰁌,}#(claude-status --window '#{session_name}:#{window_index}')#[norange]"
+TEXT='#{?#{@branch},#{=20:@branch}#{?#{==:#{=20:@branch},#{@branch}},,…},#{b:pane_current_path}}'
+CLAUDE='#(claude-status --window '"'"'#{session_name}:#{window_index}'"'"')'
 SEP=" #[fg=#{@thm_subtext_0}#,nobold]│ "
 
-# Line 1: windows 1..split1
-PREFIX1="#{?#{e|>|:#{session_windows},#{@window_split}},├,╰}─"
-tmux set -g status-format[1] \
-  "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ${PREFIX1} #{W:#{?#{e|<=|:#{window_index},#{@window_split}},${ENTRY}#{?window_end_flag,,#{?#{e|==|:#{window_index},#{@window_split}},,${SEP}}},}}"
+if ((current_line == 0)); then
+  # Single line: compact, no padding — just use window_name directly
+  ENTRY="#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold]#{window_index}: #{window_name},#[fg=#{@thm_subtext_0}#,nobold]#{window_index}: #[fg=#{@thm_fg}]#{window_name}}#{?window_zoomed_flag, 󰁌,}${CLAUDE}#[norange]"
+  tmux set -t "$SESSION" status-format[1] \
+    "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:${ENTRY}#{?window_end_flag,,${SEP}}}"
+  tmux set -t "$SESSION" status-format[2] ""
+  tmux set -t "$SESSION" status-format[3] ""
+else
+  # Multi-line: padded columns with icon separated from text
+  # Zoom indicator inside padded area so it consumes padding space, not extra width
+  # +2 for " 󰁌" (space + 1-char icon) when zoomed
+  P=$((max_text_len + 2))
+  TEXT_Z="${TEXT}#{?window_zoomed_flag, 󰁌,}"
+  ENTRY="#[range=window|#{window_index}]#{?window_active,#[fg=#{@thm_green}#,bold]#{window_index}: ${ICON} #{p${P}:${TEXT_Z}},#[fg=#{@thm_subtext_0}#,nobold]#{window_index}: #[fg=#{@thm_fg}]${ICON} #{p${P}:${TEXT_Z}}}${CLAUDE}#[norange]"
 
-# Line 2: windows split1+1..split2
-PREFIX2="#{?#{e|>|:#{session_windows},#{@window_split2}},├,╰}─"
-tmux set -g status-format[2] \
-  "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ${PREFIX2} #{W:#{?#{e|>|:#{window_index},#{@window_split}},#{?#{e|<=|:#{window_index},#{@window_split2}},${ENTRY}#{?window_end_flag,,#{?#{e|==|:#{window_index},#{@window_split2}},,${SEP}}},},}}"
+  # Line 1: windows 1..split1
+  PREFIX1="#{?#{e|>|:#{session_windows},#{@window_split}},├,╰}─"
+  tmux set -t "$SESSION" status-format[1] \
+    "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ${PREFIX1} #{W:#{?#{e|<=|:#{window_index},#{@window_split}},${ENTRY}#{?window_end_flag,,#{?#{e|==|:#{window_index},#{@window_split}},,${SEP}}},}}"
 
-# Line 3: windows beyond split2
-tmux set -g status-format[3] \
-  "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?#{e|>|:#{window_index},#{@window_split2}},${ENTRY}#{?window_end_flag,,${SEP}},}}"
+  # Line 2: windows split1+1..split2
+  PREFIX2="#{?#{e|>|:#{session_windows},#{@window_split2}},├,╰}─"
+  tmux set -t "$SESSION" status-format[2] \
+    "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ${PREFIX2} #{W:#{?#{e|>|:#{window_index},#{@window_split}},#{?#{e|<=|:#{window_index},#{@window_split2}},${ENTRY}#{?window_end_flag,,#{?#{e|==|:#{window_index},#{@window_split2}},,${SEP}}},},}}"
+
+  # Line 3: windows beyond split2
+  tmux set -t "$SESSION" status-format[3] \
+    "#[align=left,bg=#{@thm_bg}]#[fg=#{@thm_overlay_1}] ╰─ #{W:#{?#{e|>|:#{window_index},#{@window_split2}},${ENTRY}#{?window_end_flag,,${SEP}},}}"
+fi
