@@ -172,6 +172,18 @@ gh pr create --draft --assignee @me --title "..." --body "..."
 
 This allows for review before marking ready.
 
+## Git Commits
+
+Git commit actions (staging, committing, etc.) are always allowed without asking for confirmation.
+
+## Nerd Font Icons
+
+When working with Nerd Font icons that fail due to Unicode rendering issues, don't keep retrying the literal Unicode character. Instead:
+
+1. Use a variable for the icon
+2. Add a comment hinting at the intended icon name (e.g., `# nerd: nf-md-folder`)
+3. The user will set the correct Nerd Font glyph in the variable
+
 ## Shell Preference
 
 I use fish shell, not bash. Provide shell commands in fish syntax.

@@ -39,13 +39,12 @@
       icon-position = "left"; # show the icon to the "left" or "right" of the window name (defaults to left)
     };
     icons = {
-      claude = "🤖";
-      ".claude-wrapper_" = "🤖";
+      claude = "🧠";
       nh = "❄️";
       nix = "❄️";
       fish = "🐟";
       process-compose = "⚙️";
-      amp = "🧠";
+      amp = "⚡";
     };
   };
 
