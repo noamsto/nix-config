@@ -332,12 +332,13 @@ in {
       set -g status-format[3] ""
 
       # Hooks to reflow windows across status lines on layout changes
-      set-hook -g window-linked      'run-shell "tmux-reflow-windows"'
-      set-hook -g window-unlinked    'run-shell "tmux-reflow-windows"'
-      set-hook -g window-renamed     'run-shell "tmux-reflow-windows"'
-      set-hook -g client-resized     'run-shell "tmux-reflow-windows"'
-      set-hook -g after-new-session   'run-shell "tmux-reflow-windows"'
-      set-hook -g client-session-changed 'run-shell "tmux-reflow-windows"'
+      # Pass #{session_name} and #{client_width} so the script operates on the correct session
+      set-hook -g window-linked      'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
+      set-hook -g window-unlinked    'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
+      set-hook -g window-renamed     'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
+      set-hook -g client-resized     'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
+      set-hook -g after-new-session   'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
+      set-hook -g client-session-changed 'run-shell "tmux-reflow-windows #{session_name} #{client_width}"'
 
       # Pane border - dot on active split, clean line when zoomed/inactive
       # Full themed format is set by theme-toggle script after reading @thm_* values

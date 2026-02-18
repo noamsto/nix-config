@@ -8,8 +8,9 @@
 # so padding only the text portion (ASCII branch/dir names) gives
 # consistent column alignment regardless of icon encoding.
 
-SESSION=$(tmux display-message -p '#{session_name}')
-WIDTH=$(tmux display-message -p '#{client_width}')
+# Accept session/width as args (from hooks) or fall back to display-message
+SESSION=${1:-$(tmux display-message -p '#{session_name}')}
+WIDTH=${2:-$(tmux display-message -p '#{client_width}')}
 
 PREFIX_WIDTH=5 # " ├─ " or " ╰─ "
 
@@ -58,8 +59,10 @@ for ((j = 0; j < total; j++)); do
 done
 
 # Compute split points using padded slot width
-# Each slot: "N: " (3) + icon (2) + space (1) + padded_text (max_text_len) + claude_status (6) + " │ " (3) = max_text_len + 15
-slot_width=$((max_text_len + 15))
+# Each slot: "N: " (3) + icon (2) + space (1) + padded_text (max_text_len) + claude_status (5) + " │ " (3) = max_text_len + 14
+# Note: nerd font icons are 1 display col each; emoji icons (🤖🐟) are 2 cols
+# Zoom indicator not reserved — appended only when zoomed (rare, minor overflow OK)
+slot_width=$((max_text_len + 14))
 available=$((WIDTH - PREFIX_WIDTH))
 
 cumulative=0

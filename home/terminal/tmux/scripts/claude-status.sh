@@ -263,8 +263,9 @@ pane)
 window)
   count_for_window "$target"
   if [[ $total -eq 0 ]]; then
-    # Fixed-width blank: match the visible width of " 󱙺 X " (4 visible cols)
-    echo "    "
+    # Fixed-width blank: match visible width of " 󱙺 X " (5 display cols)
+    # space(1) + claude_icon(1) + space(1) + state_icon(1) + space(1) = 5
+    echo "     "
     exit 0
   fi
   format_output "$(priority_state)" "$total" "$format" "true"
