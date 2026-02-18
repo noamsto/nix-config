@@ -1,6 +1,14 @@
 return {
   "folke/sidekick.nvim",
   opts = {
+    nes = {
+      enabled = false, -- requires Copilot LSP
+    },
+    copilot = {
+      status = {
+        enabled = false, -- no Copilot subscription
+      },
+    },
     cli = {
       mux = {
         backend = "tmux",
