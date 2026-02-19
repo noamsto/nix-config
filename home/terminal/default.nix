@@ -1,4 +1,5 @@
 {
+  inputs,
   lib,
   osConfig,
   pkgs,
@@ -11,16 +12,31 @@ in {
   home.sessionPath = ["$HOME/.local/bin"];
 
   imports = [
+    inputs.lazytmux.homeManagerModules.default
     ./foot
     ./kitty
     ./fish
-    ./tmux
-    ./wt
     ./process_compose
     ./television
     ./btop.nix
     ./lazydocker.nix
   ];
+  programs.lazytmux = {
+    enable = true;
+    wt.enable = true;
+    startupSession = {
+      enable = true;
+      name = "nix-config";
+      directory = "%h/nix-config";
+      terminal = {
+        term = "xterm-kitty";
+        colorterm = "truecolor";
+        termProgram = "kitty";
+        terminfoPath = "${pkgs.kitty}/share/terminfo";
+      };
+    };
+  };
+
   programs = {
     yazi = {
       enable = true;
