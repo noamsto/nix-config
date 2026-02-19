@@ -14,9 +14,6 @@
   # PreToolUse hook: auto-approve safe psql, block destructive (DROP/TRUNCATE/DELETE/REVOKE)
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
 
-  # Import tmux/sesh utilities for Claude status integration
-  seshUtils = import ../../terminal/tmux/sesh-utils.nix {inherit pkgs;};
-
   # Create nix-managed settings file (merged via --settings flag)
   # This allows Claude Code to maintain its own settings.json for plugins
   nix-settings-json = pkgs.writeTextFile {
@@ -37,11 +34,11 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+                command = "claude-status-update cleanup";
               }
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+                command = "claude-status-update idle";
               }
             ];
           }
@@ -50,11 +47,11 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+                command = "claude-status-update cleanup";
               }
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+                command = "claude-status-update idle";
               }
             ];
           }
@@ -63,11 +60,11 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+                command = "claude-status-update cleanup";
               }
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+                command = "claude-status-update idle";
               }
             ];
           }
@@ -77,11 +74,11 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update cleanup";
+                command = "claude-status-update cleanup";
               }
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+                command = "claude-status-update processing";
               }
             ];
           }
@@ -92,7 +89,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+                command = "claude-status-update processing";
               }
             ];
           }
@@ -103,7 +100,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+                command = "claude-status-update processing";
               }
             ];
           }
@@ -123,7 +120,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update processing";
+                command = "claude-status-update processing";
               }
             ];
           }
@@ -137,7 +134,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update waiting";
+                command = "claude-status-update waiting";
               }
             ];
           }
@@ -147,7 +144,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update idle";
+                command = "claude-status-update idle";
               }
             ];
           }
@@ -158,7 +155,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update done";
+                command = "claude-status-update done";
               }
             ];
           }
@@ -169,7 +166,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update compacting";
+                command = "claude-status-update compacting";
               }
             ];
           }
@@ -180,7 +177,7 @@
             hooks = [
               {
                 type = "command";
-                command = "${seshUtils.claude-status-update}/bin/claude-status-update clear";
+                command = "claude-status-update clear";
               }
             ];
           }
