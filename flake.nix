@@ -189,6 +189,11 @@
 
     wrappers.url = "github:Lassulus/wrappers";
 
+    lazytmux = {
+      url = "github:noamsto/lazytmux";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # === LOCAL APPLICATIONS ===
     go-bills.url = "https://flakehub.com/f/noamsto/go-bills/*";
   };
