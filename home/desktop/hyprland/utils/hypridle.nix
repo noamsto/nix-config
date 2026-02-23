@@ -18,13 +18,22 @@
     ${pkgs.systemd}/bin/loginctl lock-session
     log "  loginctl returned: $?"
   '';
+
+  # Wrapper that kills stale aegis-lock instances before spawning a new one.
+  # Defense-in-depth: aegis-lock should exit on unlock (Qt.quit), but if a
+  # stale process lingers, this prevents accumulation.
+  aegis-lock-cmd = pkgs.writeShellScript "aegis-lock-cmd" ''
+    ${pkgs.procps}/bin/pkill -f 'quickshell.*aegis-lock' 2>/dev/null || true
+    sleep 0.1
+    exec aegis-lock
+  '';
 in {
   services.hypridle = {
     enable = true;
 
     settings = {
       general = {
-        lock_cmd = "aegis-lock";
+        lock_cmd = "${aegis-lock-cmd}";
         before_sleep_cmd = "${loginctl-lock}";
         # Display turn-on is handled by hyprdynamicmonitors-resume service
         # to ensure monitor configuration is stable before lockscreen renders

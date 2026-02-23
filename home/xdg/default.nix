@@ -73,6 +73,11 @@
         "application/x-extension-xht" = browser;
         "application/x-extension-xhtml" = browser;
 
+        # Calendar
+        "x-scheme-handler/webcal" = "org.gnome.Calendar.desktop";
+        "x-scheme-handler/webcals" = "org.gnome.Calendar.desktop";
+        "text/calendar" = "org.gnome.Calendar.desktop";
+
         "x-scheme-handler/about" = browser;
         "x-scheme-handler/ftp" = browser;
         "x-scheme-handler/http" = browser;

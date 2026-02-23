@@ -15,6 +15,7 @@
 # (see home/desktop/default.nix), so no runtime check needed here.
 {
   inputs,
+  config,
   pkgs,
   lib,
   ...
@@ -44,14 +45,14 @@
     fi
   '';
 
-  # Noctalia plugins from flake input (update with: nix flake update noctalia-plugins)
-  inherit (inputs) noctalia-plugins;
+  pluginSource = "https://github.com/noctalia-dev/noctalia-plugins";
 
-  # Plugins to enable
+  # Plugins to enable (Noctalia auto-installs from source URL on startup)
   enabledPlugins = [
     "privacy-indicator"
     # "network-indicator" # Removed due to contrast issues
     "mini-docker"
+    "weekly-calendar"
     "catwalk"
     "screen-recorder"
     "tailscale"
@@ -65,7 +66,8 @@ in {
   config = {
     # Add helper scripts to PATH
     # gpu-screen-recorder is required by the screen-recorder plugin
-    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder];
+    # gnome-calendar is used to add Google Calendar accounts to evolution-data-server
+    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.gnome-calendar pkgs.gnome-control-center];
 
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
@@ -169,17 +171,6 @@ in {
       };
     };
 
-    # Install plugin source files via xdg.configFile
-    # (plugins.json, settings.json, and plugin settings are managed by the HM module)
-    xdg.configFile = lib.listToAttrs (map (plugin: {
-        name = "noctalia/plugins/${plugin}";
-        value = {
-          source = "${noctalia-plugins}/${plugin}";
-          recursive = true;
-        };
-      })
-      enabledPlugins);
-
     programs.noctalia-shell = {
       enable = true;
       package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
@@ -189,17 +180,20 @@ in {
       # Use systemd for auto-start
       systemd.enable = true;
 
-      # Plugin registry configuration
+      # Plugin registry - Noctalia auto-installs enabled plugins from sourceUrl
       plugins = {
-        version = 1;
+        version = 2;
         sources = [
           {
             enabled = true;
             name = "Official Noctalia Plugins";
-            url = "https://github.com/noctalia-dev/noctalia-plugins";
+            url = pluginSource;
           }
         ];
-        states = lib.genAttrs enabledPlugins (_: {enabled = true;});
+        states = lib.genAttrs enabledPlugins (_: {
+          enabled = true;
+          sourceUrl = pluginSource;
+        });
       };
 
       # Per-plugin settings (only non-defaults)
@@ -236,6 +230,7 @@ in {
                 id = "Clock";
                 formatHorizontal = "HH:mm";
               }
+              {id = "plugin:weekly-calendar";}
               {
                 id = "SystemMonitor";
                 compactMode = true;
@@ -269,10 +264,11 @@ in {
             ];
             # Right side: rarely used -> frequent -> critical -> hub
             right = [
+              {id = "Tray";}
+              {id = "plugin:mini-docker";}
               {id = "plugin:screen-recorder";}
               {id = "plugin:tailscale";}
               {id = "plugin:privacy-indicator";}
-              {id = "Tray";}
               {id = "DarkMode";}
               {
                 id = "NotificationHistory";
@@ -426,5 +422,10 @@ in {
         };
       };
     };
+
+    # Symlink aegis-lock colors.json to noctalia's runtime-generated colors.json
+    # so the lockscreen uses the same MD3 color scheme as the shell
+    xdg.configFile."aegis-lock/colors.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/noctalia/colors.json";
   };
 }

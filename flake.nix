@@ -118,11 +118,6 @@
 
     aegis-lock.url = "https://flakehub.com/f/noamsto/aegis-lock/*.tar.gz";
 
-    noctalia-plugins = {
-      url = "github:noctalia-dev/noctalia-plugins";
-      flake = false;
-    };
-
     catppuccin = {
       url = "github:catppuccin/nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -13,7 +13,6 @@
     zoom-us
 
     evince # PDF Viewer
-    evolution # Calendar with embedded OAuth for Noctalia/evolution-data-server
     spotify
 
     vlc

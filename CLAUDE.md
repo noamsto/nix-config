@@ -480,35 +480,6 @@ When adding new features, follow these patterns:
 - **Test on multiple hosts** when making system-wide changes
   - Test with both `nh os switch` and `nh home switch` to catch issues
 
-## Known Issues & Failed Experiments
-
-### Noctalia Google Calendar Integration (Not Working)
-
-**Attempted:** 2025-12-29
-
-**Goal:** Show Google Calendar events in Noctalia's clock popup via evolution-data-server.
-
-**What Noctalia docs say:** Add to NixOS config:
-```nix
-services.gnome.evolution-data-server.enable = true;
-environment.systemPackages = [ (python3.withPackages (p: [ p.pygobject3 ])) ];
-environment.sessionVariables.GI_TYPELIB_PATH = lib.makeSearchPath "lib/girepository-1.0" (with pkgs; [
-  evolution-data-server libical glib.out libsoup_3 json-glib gobject-introspection
-]);
-```
-
-**Problem:** Google OAuth callback doesn't work on NixOS + Hyprland:
-1. `gnome-control-center` refuses to run outside GNOME (workaround: `XDG_CURRENT_DESKTOP=GNOME`)
-2. OAuth opens in Firefox, but callback URL (`com.googleusercontent.apps.XXX://`) doesn't return to GOA
-3. Even with `WEBKIT_FORCE_SANDBOX=0`, the custom URL scheme handler fails
-4. This is a NixOS + Hyprland + GNOME Online Accounts issue, not Noctalia-specific
-
-**Alternatives not tried:**
-- Evolution (has embedded OAuth webview)
-- ICS subscription (read-only, no OAuth)
-- Manual evolution-data-server configuration
-
-**Reference:** Noctalia issue #682 confirms the NixOS config is correct; the OAuth callback is the blocker.
 
 ## Additional Resources
 
