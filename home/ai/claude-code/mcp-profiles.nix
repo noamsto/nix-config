@@ -34,7 +34,7 @@ in {
     "claude-code/mcp-playwright.json".text = builtins.toJSON {
       mcpServers = {
         playwright = {
-          command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
+          command = "${pkgs.playwright-mcp}/bin/playwright-mcp";
           args = ["--executable-path" executable];
         };
       };
