@@ -22,7 +22,7 @@
 }: let
   # Helper script for Noctalia IPC commands
   noctalia-ipc = pkgs.writeShellScriptBin "noctalia-ipc" ''
-    pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+    pid=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
     if [ -n "$pid" ]; then
       ${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@"
     else
@@ -111,11 +111,11 @@ in {
           log "Crash monitor started"
 
           # Wait for Noctalia to start
-          while ! ${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' >/dev/null 2>&1; do
+          while ! ${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' >/dev/null 2>&1; do
             sleep 0.5
           done
 
-          NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+          NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
           log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
 
           # Monitor the process
@@ -151,7 +151,7 @@ in {
 
               # Wait for Noctalia to restart (if it does)
               sleep 2
-              NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+              NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
               if [ -n "$NEW_PID" ]; then
                 log "Noctalia restarted (new PID: $NEW_PID)"
                 NOCTALIA_PID="$NEW_PID"
@@ -331,11 +331,11 @@ in {
               enabled = true;
             }
             {
-              action = "hibernate";
+              action = "reboot";
               enabled = true;
             }
             {
-              action = "reboot";
+              action = "rebootToUefi";
               enabled = true;
             }
             {

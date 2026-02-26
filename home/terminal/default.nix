@@ -117,7 +117,8 @@ in {
             "$nix_shell"
             "$direnv"
             "$directory"
-            "$git_branch"
+            "\${custom.git_branch_smart}"
+            "\${custom.git_wt}"
             "$git_status"
             "$cmd_duration"
             "$line_break"
@@ -145,12 +146,40 @@ in {
             truncate_to_repo = true;
             fish_style_pwd_dir_length = 1;
             style = "bold sapphire";
+            repo_root_style = "bold mauve";
+            repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style) ";
           };
 
-          git_branch = {
-            format = "[$symbol$branch]($style) ";
-            symbol = " ";
-            style = "bold mauve";
+          git_branch.disabled = true;
+
+          custom.git_branch_smart = {
+            disabled = false;
+            command = ''
+              set icon \ue725 # nerd: nf-dev-git_branch
+              set branch (git branch --show-current 2>/dev/null)
+              or exit 1
+              test -z "$branch"; and exit 1
+              set wt_dir (basename (git rev-parse --show-toplevel 2>/dev/null))
+              set normalized (string replace -a '/' '-' -- $branch)
+              if test "$normalized" = "$wt_dir"
+                echo "$icon"
+              else
+                echo "$icon $branch"
+              end
+            '';
+            when = "git rev-parse --is-inside-work-tree 2>/dev/null";
+            shell = ["fish" "--no-config"];
+            style = "bold lavender";
+            format = "[$output]($style) ";
+          };
+
+          custom.git_wt = {
+            disabled = false;
+            command = "echo '🌳'";
+            when = "test -f .git";
+            shell = ["fish" "--no-config"];
+            style = "bold lavender";
+            format = "[$output]($style) ";
           };
 
           git_status = {

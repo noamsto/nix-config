@@ -56,6 +56,22 @@ in {
     # Recommended for alsa
     security.rtkit.enable = true;
 
+    # Raise memlock limit for io_uring (semgrep, modern Rust/OCaml tooling)
+    security.pam.loginLimits = [
+      {
+        domain = "*";
+        type = "soft";
+        item = "memlock";
+        value = "unlimited";
+      }
+      {
+        domain = "*";
+        type = "hard";
+        item = "memlock";
+        value = "unlimited";
+      }
+    ];
+
     # OBS virtual Camera
     boot.extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
     boot.extraModprobeConfig = ''
