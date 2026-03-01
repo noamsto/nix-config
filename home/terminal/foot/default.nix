@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Strip # from hex colors for foot format
   s = color: lib.removePrefix "#" color;

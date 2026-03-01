@@ -20,7 +20,7 @@ inputs: [
   })
 
   # Add LLM agents from flake
-  (final: prev: {
+  (final: _prev: {
     inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush happy-coder;
     # Amp with process.title wrapper so it shows as "amp" instead of "node" in ps
     amp = let
@@ -47,7 +47,7 @@ inputs: [
   })
 
   # Enable AMD GPU monitoring in btop via ROCm
-  (final: prev: {
+  (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })
 

@@ -5,8 +5,7 @@
   ...
 }: let
   # Theme palette from config
-  dark = config.theme.palette.dark;
-  light = config.theme.palette.light;
+  inherit (config.theme.palette) dark light;
 
   # Strip # from hex colors for use in rgba() and other formats
   stripHash = color: lib.removePrefix "#" color;

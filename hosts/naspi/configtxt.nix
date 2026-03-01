@@ -1,4 +1,4 @@
-{...}: {
+_: {
   # Default config.txt as provided with the official Raspberry Pi OS images
   # https://github.com/RPi-Distro/pi-gen/blob/master/stage1/00-boot-files/files/config.txt
 

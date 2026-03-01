@@ -2,7 +2,7 @@
   pkgs ? import <nixpkgs> {},
   easyeffects_config_home ? "~/.config/easyeffects", # Default only for testing
 }:
-pkgs.stdenv.mkDerivation (finalAttrs: {
+pkgs.stdenv.mkDerivation (_finalAttrs: {
   pname = "thinkpad-p14s-g5-linux";
   version = "2024.07.12";
   src = pkgs.fetchFromGitHub {

@@ -1,9 +1,5 @@
 # Cursor CLI module with shared MCP configuration
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{pkgs, ...}: let
   # Shared MCP server definitions (same as Claude Code)
   mcpServers = import ../mcp-servers.nix {inherit pkgs;};
 

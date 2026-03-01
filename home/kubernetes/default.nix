@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Generate k9s skin from palette
   mkK9sSkin = p: {

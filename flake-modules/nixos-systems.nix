@@ -11,7 +11,7 @@ in {
         ];
         specialArgs = {
           inherit inputs;
-          self = inputs.self;
+          inherit (inputs) self;
         };
       };
 
@@ -21,7 +21,7 @@ in {
         ];
         specialArgs = {
           inherit inputs;
-          self = inputs.self;
+          inherit (inputs) self;
         };
       };
 
@@ -30,7 +30,7 @@ in {
         specialArgs = {
           inherit inputs;
           inherit nixos-raspberrypi;
-          self = inputs.self;
+          inherit (inputs) self;
         };
         system = "aarch64-linux";
         modules = [
@@ -46,7 +46,7 @@ in {
         specialArgs = {
           inherit inputs;
           inherit nixos-raspberrypi;
-          self = inputs.self;
+          inherit (inputs) self;
         };
         system = "aarch64-linux";
         modules = [
@@ -59,7 +59,7 @@ in {
       # RPI4 Installer configuration (using nixos-raspberrypi base + custom WiFi)
       # This creates a minimal installer image using mkNixOSRPiInstaller pattern
       rpi4-installer = nixos-raspberrypi.lib.nixosInstaller {
-        specialArgs = inputs // {nixos-raspberrypi = nixos-raspberrypi;};
+        specialArgs = inputs // {inherit nixos-raspberrypi;};
         modules = [
           nixos-raspberrypi.nixosModules.raspberry-pi-4.base
           nixos-raspberrypi.nixosModules.trusted-nix-caches

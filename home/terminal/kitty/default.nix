@@ -1,13 +1,11 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Strip # from hex colors for kitty format
-  stripHash = color: lib.removePrefix "#" color;
 
   # Generate kitty theme from palette
   mkKittyTheme = p: ''

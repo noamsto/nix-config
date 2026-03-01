@@ -1,10 +1,6 @@
 # Theme palette module - provides config.theme.palette.{dark,light}
 # Currently using Catppuccin (dark = Mocha, light = Latte)
-{
-  config,
-  lib,
-  ...
-}:
+{lib, ...}:
 with lib; let
   # Color type for validation
   hexColor = types.strMatching "#[0-9a-fA-F]{6}";

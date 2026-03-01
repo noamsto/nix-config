@@ -1,9 +1,5 @@
 # Custom WiFi configuration overlay for rpi4-installer
-{
-  nixos-raspberrypi,
-  pkgs,
-  ...
-}: {
+_: {
   # Override networking to disable iwd and use wpa_supplicant with pre-hashed PSK
   networking = {
     hostName = "rpi4-installer";

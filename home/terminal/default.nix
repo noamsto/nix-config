@@ -44,8 +44,7 @@ in {
       shellWrapperName = "y";
 
       plugins = {
-        mount = pkgs.yaziPlugins.mount;
-        git = pkgs.yaziPlugins.git;
+        inherit (pkgs.yaziPlugins) mount git;
         gvfs = pkgs.fetchFromGitHub {
           owner = "boydaihungst";
           repo = "gvfs.yazi";

@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Shade colors vary by theme variant
   shadeColor = p:

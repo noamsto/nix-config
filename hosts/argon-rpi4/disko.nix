@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: {
+_: {
   # https://nixos.wiki/wiki/Btrfs#Scrubbing
   services.btrfs.autoScrub = {
     enable = true;

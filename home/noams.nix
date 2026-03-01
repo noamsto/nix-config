@@ -25,7 +25,7 @@
     ];
 
   home = {
-    username = osConfig.username;
+    inherit (osConfig) username;
     homeDirectory = "/home/${osConfig.username}";
     stateVersion = "23.05";
 

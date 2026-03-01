@@ -1,4 +1,4 @@
-{config, ...}: {
+_: {
   # Tailscale VPN for remote access
   services.tailscale = {
     enable = true;

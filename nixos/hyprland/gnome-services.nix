@@ -13,10 +13,12 @@ in
         gcr
         gnome-settings-daemon
       ];
-      gnome.gnome-keyring.enable = true;
-      gnome.gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
-      gnome.evolution-data-server.enable = true; # Calendar support for Noctalia
-      gnome.gnome-online-accounts.enable = true; # Google Calendar OAuth via gnome-control-center
+      gnome = {
+        gnome-keyring.enable = true;
+        gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
+        evolution-data-server.enable = true; # Calendar support for Noctalia
+        gnome-online-accounts.enable = true; # Google Calendar OAuth via gnome-control-center
+      };
       gvfs.enable = true;
     };
 

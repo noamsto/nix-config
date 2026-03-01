@@ -1,12 +1,7 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  palette = config.theme.palette;
+{config, ...}: let
+  inherit (config.theme) palette;
 
   # Strip # from hex colors for btop format
-  s = color: lib.removePrefix "#" color;
 
   # Generate btop theme from palette
   mkBtopTheme = p: ''

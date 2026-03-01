@@ -12,12 +12,7 @@
     progName = builtins.baseNameOf program;
     # Always use -f flag for reliable detection across all program types
   in "pgrep -f ${progName} || ${program}";
-
   # Kill and restart a program in background with disown
-  restartProgramBackground = program: let
-    progName = builtins.baseNameOf program;
-    # Always use -f flag for reliable detection across all program types
-  in "pkill -f ${progName} || true; sleep 0.5; ${program} & disown";
 in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";

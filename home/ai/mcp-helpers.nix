@@ -26,6 +26,6 @@
   }: {
     command = "${pkgs.uv}/bin/uvx";
     args = [package] ++ args;
-    env = env;
+    inherit env;
   };
 }

@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{...}: {
   imports = [
     ./hyprdynamicmonitors
     ./libinput-gestures.nix

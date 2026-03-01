@@ -18,7 +18,7 @@
     }
     else if server ? url || server ? type
     then {
-      url = server.url;
+      inherit (server) url;
       headers = server.headers or {};
     }
     else throw "Invalid MCP server definition for ${name}";

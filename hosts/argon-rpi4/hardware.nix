@@ -1,48 +1,41 @@
-{
-  nixos-raspberrypi,
-  pkgs,
-  config,
-  ...
-}: let
-  self = config.services.argonone;
-  arg1pk = nixos-raspberrypi.packages.${pkgs.stdenv.hostPlatform.system}.argononed;
-in {
+{nixos-raspberrypi, ...}: {
   imports = with nixos-raspberrypi.nixosModules; [
     raspberry-pi-4.base
     raspberry-pi-4.display-vc4
     raspberry-pi-4.case-argonone
   ];
 
-  # Add device tree filtering to prevent overlay conflicts
+  hardware = {
+    # Add device tree filtering to prevent overlay conflicts
+    deviceTree.filter = "*rpi-4-*.dtb";
 
-  hardware.deviceTree.filter = "*rpi-4-*.dtb";
+    # Enable i2c hardware - CRITICAL for Argon ONE case
+    i2c.enable = true;
 
-  # Enable i2c hardware - CRITICAL for Argon ONE case
-  hardware.i2c.enable = true;
-
-  hardware.raspberry-pi.config = {
-    all = {
-      base-dt-params = {
-        i2c_arm = {
-          enable = true;
-          value = "on";
+    raspberry-pi.config = {
+      all = {
+        base-dt-params = {
+          i2c_arm = {
+            enable = true;
+            value = "on";
+          };
         };
-      };
-      dt-overlays = {
-        i2c1 = {
-          enable = true;
-          params = {};
-        };
-        argoneone = {
-          enable = true;
-          params = {
+        dt-overlays = {
+          i2c1 = {
+            enable = true;
+            params = {};
+          };
+          argoneone = {
+            enable = true;
+            params = {
+            };
           };
         };
       };
     };
-  };
 
-  hardware.enableRedistributableFirmware = true;
+    enableRedistributableFirmware = true;
+  };
 
   # fileSystems managed by disko.nix
 }

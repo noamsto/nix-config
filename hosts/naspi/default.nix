@@ -1,4 +1,4 @@
-{config, ...}: {
+{...}: {
   imports = [
     # Core configuration
     ../../options.nix

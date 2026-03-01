@@ -3,15 +3,14 @@
   lib,
   ...
 }: {
-  # Set hostname
-  networking.hostName = "rpi4-standard";
-
-  # Network configuration
-  networking.networkmanager = {
-    enable = true;
-    wifi.powersave = false;
+  networking = {
+    hostName = "rpi4-standard";
+    networkmanager = {
+      enable = true;
+      wifi.powersave = false;
+    };
+    firewall.allowedTCPPorts = [22];
   };
-  networking.firewall.allowedTCPPorts = [22];
 
   # Enable SSH for remote access
   services.openssh = {

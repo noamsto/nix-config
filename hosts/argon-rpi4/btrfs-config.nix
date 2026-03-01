@@ -1,12 +1,28 @@
 # Btrfs configuration and utilities for Raspberry Pi 4
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
-  # Enable btrfs support
-  boot.supportedFilesystems = ["btrfs"];
+{pkgs, ...}: {
+  boot = {
+    # Enable btrfs support
+    supportedFilesystems = ["btrfs"];
+
+    # Btrfs-specific kernel parameters for Raspberry Pi 4 (8GB RAM)
+    kernelParams = [
+      # Optimize for SSD
+      "rootflags=compress=zstd:3,noatime,ssd"
+    ];
+
+    # Additional 8GB RAM optimizations
+    kernel.sysctl = {
+      # Btrfs-specific optimizations for 8GB RAM
+      "vm.dirty_expire_centisecs" = 3000; # 30 seconds
+      "vm.dirty_writeback_centisecs" = 500; # 5 seconds
+
+      # More aggressive read-ahead for better performance
+      "vm.page-cluster" = 3; # Read 8 pages at once (default is 3)
+
+      # Memory allocation optimizations
+      "vm.min_free_kbytes" = 131072; # 128MB reserved (recommended for 8GB)
+    };
+  };
 
   # Install btrfs utilities
   environment.systemPackages = with pkgs; [
@@ -16,12 +32,10 @@
   ];
 
   # Btrfs maintenance services
-  services.btrfs = {
-    autoScrub = {
-      enable = true;
-      interval = "weekly";
-      fileSystems = ["/"];
-    };
+  services.btrfs.autoScrub = {
+    enable = true;
+    interval = "weekly";
+    fileSystems = ["/"];
   };
 
   # Optional: Automatic snapshots with btrbk
@@ -59,23 +73,4 @@
       size = 4096; # 4GB - good balance for 8GB system
     }
   ];
-
-  # Btrfs-specific kernel parameters for Raspberry Pi 4 (8GB RAM)
-  boot.kernelParams = [
-    # Optimize for SSD
-    "rootflags=compress=zstd:3,noatime,ssd"
-  ];
-
-  # Additional 8GB RAM optimizations
-  boot.kernel.sysctl = {
-    # Btrfs-specific optimizations for 8GB RAM
-    "vm.dirty_expire_centisecs" = 3000; # 30 seconds
-    "vm.dirty_writeback_centisecs" = 500; # 5 seconds
-
-    # More aggressive read-ahead for better performance
-    "vm.page-cluster" = 3; # Read 8 pages at once (default is 3)
-
-    # Memory allocation optimizations
-    "vm.min_free_kbytes" = 131072; # 128MB reserved (recommended for 8GB)
-  };
 }

@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Generate lazydocker theme from palette
   # Lazydocker uses terminal color names, but we can use closest matches

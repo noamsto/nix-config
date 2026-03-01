@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  palette = config.theme.palette;
+  inherit (config.theme) palette;
 
   # Generate process-compose theme YAML from palette
   mkProcessComposeTheme = p: ''

@@ -1,13 +1,7 @@
 {
   description = "NixOS configuration of Noam Stolero";
   # All outputs for the system (configs)
-  outputs = {
-    home-manager,
-    nixpkgs,
-    flake-parts,
-    self,
-    ...
-  } @ inputs:
+  outputs = {flake-parts, ...} @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
         "x86_64-linux"

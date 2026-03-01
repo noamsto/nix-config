@@ -1,4 +1,4 @@
-{config, ...}: {
+_: {
   # Nginx reverse proxy for subfolder access to services
   services.nginx = {
     enable = true;

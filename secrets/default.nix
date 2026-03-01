@@ -14,19 +14,19 @@
     inputs.agenix.packages."${pkgs.stdenv.hostPlatform.system}".default
   ];
 
-  #   if you changed this key, you need to regenerate all encrypt files from the decrypt contents!
-  age.identityPaths =
-    if config.machine.type == "server"
-    then [
-      "/etc/ssh/ssh_host_ed25519_key"
-    ]
-    else [
-      "/home/${config.username}/.ssh/id_ed25519"
-    ];
+  age = {
+    #   if you changed this key, you need to regenerate all encrypt files from the decrypt contents!
+    identityPaths =
+      if config.machine.type == "server"
+      then ["/etc/ssh/ssh_host_ed25519_key"]
+      else ["/home/${config.username}/.ssh/id_ed25519"];
 
-  age.secrets.noams_password.file = "${inputs.mysecrets}/noams_password.age";
-  age.secrets.paperless-naspi-password.file = "${inputs.mysecrets}/paperless-naspi-admin-password.age";
-  age.secrets.go-bills-gemini-key.file = "${inputs.mysecrets}/bills_gemini_key.age";
+    secrets = {
+      noams_password.file = "${inputs.mysecrets}/noams_password.age";
+      paperless-naspi-password.file = "${inputs.mysecrets}/paperless-naspi-admin-password.age";
+      go-bills-gemini-key.file = "${inputs.mysecrets}/bills_gemini_key.age";
+    };
+  };
 
   nix = {
     extraOptions =

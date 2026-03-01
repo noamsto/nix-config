@@ -4,8 +4,15 @@
   lib,
   ...
 }: {
-  # Set hostname
-  networking.hostName = "argon-rpi4";
+  networking = {
+    hostName = "argon-rpi4";
+    networkmanager = {
+      enable = true;
+      # Disable NetworkManager VPN plugins (pulls in GNOME/WebKit/gjs)
+      plugins = lib.mkForce [];
+    };
+    firewall.allowedTCPPorts = [22];
+  };
 
   # Raspberry Pi 4: 4 cores, 8GB RAM
   nix.settings = {
@@ -14,12 +21,6 @@
     max-silent-time = 14400;
     timeout = 172800;
   };
-
-  # Network configuration
-  networking.networkmanager.enable = true;
-  # Disable NetworkManager VPN plugins (pulls in GNOME/WebKit/gjs)
-  networking.networkmanager.plugins = lib.mkForce [];
-  networking.firewall.allowedTCPPorts = [22];
 
   # Enable mDNS for .local hostname resolution
   services.avahi = {

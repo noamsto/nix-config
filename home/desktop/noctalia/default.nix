@@ -72,104 +72,106 @@ in {
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
 
-    # Add icon theme environment to Noctalia service for proper icon lookup
-    systemd.user.services.noctalia-shell.Service.Environment = lib.mkForce [
-      "QS_ICON_THEME=Papirus-Dark"
-    ];
+    systemd.user.services = {
+      # Add icon theme environment to Noctalia service for proper icon lookup
+      noctalia-shell.Service.Environment = lib.mkForce [
+        "QS_ICON_THEME=Papirus-Dark"
+      ];
 
-    # Systemd service to restore wallpaper after Noctalia starts
-    systemd.user.services.noctalia-restore-wallpaper = {
-      Unit = {
-        Description = "Restore Noctalia wallpaper from saved state";
-        After = ["noctalia-shell.service"];
-        PartOf = ["noctalia-shell.service"];
+      # Systemd service to restore wallpaper after Noctalia starts
+      noctalia-restore-wallpaper = {
+        Unit = {
+          Description = "Restore Noctalia wallpaper from saved state";
+          After = ["noctalia-shell.service"];
+          PartOf = ["noctalia-shell.service"];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${restore-wallpaper}/bin/noctalia-restore-wallpaper";
+        };
+        Install = {
+          WantedBy = ["noctalia-shell.service"];
+        };
       };
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${restore-wallpaper}/bin/noctalia-restore-wallpaper";
-      };
-      Install = {
-        WantedBy = ["noctalia-shell.service"];
-      };
-    };
 
-    # Systemd service to monitor Noctalia shell and log crashes
-    systemd.user.services.noctalia-crash-monitor = {
-      Unit = {
-        Description = "Monitor Noctalia for crashes and log events";
-        After = ["noctalia-shell.service"];
-        PartOf = ["noctalia-shell.service"];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = pkgs.writeShellScript "noctalia-crash-monitor" ''
-          LOG="/tmp/noctalia-shell.log"
-          log() {
-            echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [crash-monitor] $*" | tee -a "$LOG"
-          }
+      # Systemd service to monitor Noctalia shell and log crashes
+      noctalia-crash-monitor = {
+        Unit = {
+          Description = "Monitor Noctalia for crashes and log events";
+          After = ["noctalia-shell.service"];
+          PartOf = ["noctalia-shell.service"];
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = pkgs.writeShellScript "noctalia-crash-monitor" ''
+            LOG="/tmp/noctalia-shell.log"
+            log() {
+              echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [crash-monitor] $*" | tee -a "$LOG"
+            }
 
-          log "Crash monitor started"
+            log "Crash monitor started"
 
-          # Wait for Noctalia to start
-          while ! ${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' >/dev/null 2>&1; do
-            sleep 0.5
-          done
+            # Wait for Noctalia to start
+            while ! ${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' >/dev/null 2>&1; do
+              sleep 0.5
+            done
 
-          NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
-          log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
+            NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
+            log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
 
-          # Monitor the process
-          while true; do
-            if ! ${pkgs.procps}/bin/kill -0 "$NOCTALIA_PID" 2>/dev/null; then
-              log "!!! NOCTALIA DIED (was PID: $NOCTALIA_PID) !!!"
+            # Monitor the process
+            while true; do
+              if ! ${pkgs.procps}/bin/kill -0 "$NOCTALIA_PID" 2>/dev/null; then
+                log "!!! NOCTALIA DIED (was PID: $NOCTALIA_PID) !!!"
 
-              # Log system state at time of crash
-              log "Monitor state at crash:"
-              ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >> "$LOG" 2>&1 || log "  (failed to get monitors)"
+                # Log system state at time of crash
+                log "Monitor state at crash:"
+                ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >> "$LOG" 2>&1 || log "  (failed to get monitors)"
 
-              # Check if lid is closed
-              if ${pkgs.glib}/bin/gdbus call --system \
-                  --dest org.freedesktop.UPower \
-                  --object-path /org/freedesktop/UPower \
-                  --method org.freedesktop.DBus.Properties.Get \
-                  org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"; then
-                log "Lid state: CLOSED"
-              else
-                log "Lid state: OPEN"
-              fi
-
-              # Check DRM connectors
-              log "DRM connectors:"
-              for status_file in /sys/class/drm/card*/status; do
-                if [ -f "$status_file" ]; then
-                  connector=$(basename $(dirname "$status_file"))
-                  connector_name=''${connector#card?-}
-                  status=$(cat "$status_file")
-                  log "  $connector_name: $status"
+                # Check if lid is closed
+                if ${pkgs.glib}/bin/gdbus call --system \
+                    --dest org.freedesktop.UPower \
+                    --object-path /org/freedesktop/UPower \
+                    --method org.freedesktop.DBus.Properties.Get \
+                    org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"; then
+                  log "Lid state: CLOSED"
+                else
+                  log "Lid state: OPEN"
                 fi
-              done
 
-              # Wait for Noctalia to restart (if it does)
-              sleep 2
-              NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
-              if [ -n "$NEW_PID" ]; then
-                log "Noctalia restarted (new PID: $NEW_PID)"
-                NOCTALIA_PID="$NEW_PID"
-              else
-                log "Noctalia has NOT restarted - monitor exiting"
-                exit 1
+                # Check DRM connectors
+                log "DRM connectors:"
+                for status_file in /sys/class/drm/card*/status; do
+                  if [ -f "$status_file" ]; then
+                    connector=$(basename $(dirname "$status_file"))
+                    connector_name=''${connector#card?-}
+                    status=$(cat "$status_file")
+                    log "  $connector_name: $status"
+                  fi
+                done
+
+                # Wait for Noctalia to restart (if it does)
+                sleep 2
+                NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
+                if [ -n "$NEW_PID" ]; then
+                  log "Noctalia restarted (new PID: $NEW_PID)"
+                  NOCTALIA_PID="$NEW_PID"
+                else
+                  log "Noctalia has NOT restarted - monitor exiting"
+                  exit 1
+                fi
               fi
-            fi
-            sleep 1
-          done
-        '';
-        Restart = "on-failure";
-        RestartSec = "2s";
+              sleep 1
+            done
+          '';
+          Restart = "on-failure";
+          RestartSec = "2s";
+        };
+        Install = {
+          WantedBy = ["noctalia-shell.service"];
+        };
       };
-      Install = {
-        WantedBy = ["noctalia-shell.service"];
-      };
-    };
+    }; # systemd.user.services
 
     programs.noctalia-shell = {
       enable = true;

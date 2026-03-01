@@ -1,4 +1,4 @@
-{...}: {
+_: {
   # Enable Tailscale VPN service
   services.tailscale = {
     enable = true;

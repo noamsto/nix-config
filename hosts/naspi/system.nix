@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  lib,
   ...
 }: {
   # Raspberry Pi 4: 4 cores, 8GB RAM
@@ -93,78 +92,139 @@
         2049 # NFS
       ];
     };
+
+    # Enable iwd for WiFi management (lightweight, no GUI dependencies)
+    wireless.iwd.enable = true;
   };
 
-  # Configure all interfaces to use DHCP (IPv4 only, IPv6 disabled)
-  systemd.network = {
-    enable = true;
-    networks = {
-      # Ethernet interface
-      "10-ethernet" = {
-        matchConfig.Name = "eth* en*";
-        networkConfig = {
-          DHCP = "ipv4";
-          IPv6AcceptRA = false;
-        };
-        dhcpV4Config.RouteMetric = 100;
-      };
-      # WiFi interface (if present)
-      "20-wireless" = {
-        matchConfig.Name = "wlan*";
-        networkConfig = {
-          DHCP = "ipv4";
-          IPv6AcceptRA = false;
-        };
-        dhcpV4Config.RouteMetric = 200;
-      };
-    };
-
-    # Configure systemd-networkd-wait-online properly
-    # Use anyInterface so it exits when ANY interface is online (not all)
-    wait-online = {
+  # systemd configuration - network, tmpfiles, and services
+  systemd = {
+    # Configure all interfaces to use DHCP (IPv4 only, IPv6 disabled)
+    network = {
       enable = true;
-      anyInterface = true; # Exit when end0 comes up, don't wait for wlan0
-      timeout = 30; # Reduce from 120s default
+      networks = {
+        # Ethernet interface
+        "10-ethernet" = {
+          matchConfig.Name = "eth* en*";
+          networkConfig = {
+            DHCP = "ipv4";
+            IPv6AcceptRA = false;
+          };
+          dhcpV4Config.RouteMetric = 100;
+        };
+        # WiFi interface (if present)
+        "20-wireless" = {
+          matchConfig.Name = "wlan*";
+          networkConfig = {
+            DHCP = "ipv4";
+            IPv6AcceptRA = false;
+          };
+          dhcpV4Config.RouteMetric = 200;
+        };
+      };
+
+      # Configure systemd-networkd-wait-online properly
+      # Use anyInterface so it exits when ANY interface is online (not all)
+      wait-online = {
+        enable = true;
+        anyInterface = true; # Exit when end0 comes up, don't wait for wlan0
+        timeout = 30; # Reduce from 120s default
+      };
+    };
+
+    # Ensure proper permissions for storage directories and ZFS key storage
+    tmpfiles.rules = [
+      "d /data 0755 root root -"
+      "d /data/temp 0777 root root -"
+      "d /media/storage 0755 root root -"
+      "d /boot/zfs-keys 0700 root root -"
+    ];
+
+    # Configure systemd service dependencies
+    services = {
+      # Load ZFS encryption key for /data dataset
+      zfs-load-data-key = {
+        description = "Load ZFS encryption key for /data dataset";
+        after = ["zfs-import-rpool.service"];
+        before = ["zfs-mount.service" "data.mount"];
+        wantedBy = ["zfs-mount.service"];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          set -euo pipefail
+          echo "Loading ZFS encryption key for rpool/data..."
+          KEYSTATUS=$(${config.boot.zfs.package}/bin/zfs get -H -o value keystatus rpool/data)
+          if [ "$KEYSTATUS" = "available" ]; then
+            echo "✓ Key already loaded for rpool/data"
+            exit 0
+          fi
+          echo "Key status: $KEYSTATUS - loading key..."
+          if [ -f /boot/zfs-keys/rpool ]; then
+            ${config.boot.zfs.package}/bin/zfs load-key rpool/data
+            echo "✓ Encryption key loaded successfully"
+          else
+            echo "ERROR: Encryption key not found at /boot/zfs-keys/rpool"
+            exit 1
+          fi
+        '';
+      };
+
+      # Boot source verification and diagnostics
+      naspi-boot-verify = {
+        description = "NasPi Boot Source Verification";
+        wantedBy = ["multi-user.target"];
+        after = ["local-fs.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = [pkgs.util-linux];
+        script = ''
+          echo "========================================"
+          echo "NasPi Boot Verification"
+          echo "========================================"
+          ROOT_DEVICE=$(findmnt -n -o SOURCE /)
+          echo "Root filesystem: $ROOT_DEVICE"
+          if [[ "$ROOT_DEVICE" =~ "rpool" ]]; then
+            echo "✓ Booting from ZFS pool (correct)"
+          else
+            echo "⚠ WARNING: Not booting from expected ZFS pool!"
+          fi
+          BOOT_DEVICE=$(findmnt -n -o SOURCE /boot)
+          echo "Boot partition: $BOOT_DEVICE"
+          if [[ "$BOOT_DEVICE" =~ "BOOT1" ]] || [[ "$BOOT_DEVICE" =~ "ata-PNY" ]]; then
+            echo "✓ Booting from SSD (correct)"
+          else
+            echo "⚠ WARNING: Boot partition might be from SD card!"
+          fi
+          if systemctl list-unit-files | grep -q "emergency-ssh"; then
+            echo "❌ ERROR: emergency-ssh service detected!"
+          else
+            echo "✓ No conflicting services detected"
+          fi
+          echo ""
+          echo "ZFS Pool Status:"
+          ${config.boot.zfs.package}/bin/zpool status rpool | head -n 15
+          echo "========================================"
+        '';
+      };
     };
   };
-
-  # Enable iwd for WiFi management (lightweight, no GUI dependencies)
-  networking.wireless.iwd.enable = true;
 
   # SSH with socket activation to avoid race conditions with networkd
-  services.openssh = {
-    enable = true;
-    # Socket activation: sshd starts on-demand instead of running as daemon
-    startWhenNeeded = true;
-    settings = {
-      PermitRootLogin = "yes";
-      PasswordAuthentication = true;
-    };
-  };
-
-  # User configuration
-  users.users = {
-    # Root user - needed for emergency mode access
-    root = {
-      initialPassword = "nixos";
-    };
-
-    # Normal user
-    noams = {
-      isNormalUser = true;
-      extraGroups = ["wheel" "gpio"];
-      # initialPassword removed - using hashedPassword from password-fix.nix
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
-      ];
-    };
-  };
-
-  # Enable sudo without password for wheel group
-  security.sudo.wheelNeedsPassword = false;
-
-  # ZFS-specific services
   services = {
+    openssh = {
+      enable = true;
+      # Socket activation: sshd starts on-demand instead of running as daemon
+      startWhenNeeded = true;
+      settings = {
+        PermitRootLogin = "yes";
+        PasswordAuthentication = true;
+      };
+    };
+
     # ZFS maintenance
     zfs = {
       autoScrub = {
@@ -250,6 +310,27 @@
     };
   };
 
+  # User configuration
+  users.users = {
+    # Root user - needed for emergency mode access
+    root = {
+      initialPassword = "nixos";
+    };
+
+    # Normal user
+    noams = {
+      isNormalUser = true;
+      extraGroups = ["wheel" "gpio"];
+      # initialPassword removed - using hashedPassword from password-fix.nix
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com"
+      ];
+    };
+  };
+
+  # Enable sudo without password for wheel group
+  security.sudo.wheelNeedsPassword = false;
+
   # Packages - merge base and ZFS-specific
   environment.systemPackages = with pkgs; [
     # Base packages
@@ -285,95 +366,17 @@
     rclone # Cloud storage sync
   ];
 
-  # Ensure proper permissions for storage directories and ZFS key storage
-  systemd.tmpfiles.rules = [
-    "d /data 0755 root root -"
-    "d /data/temp 0777 root root -"
-    "d /media/storage 0755 root root -"
-    "d /boot/zfs-keys 0700 root root -"
-  ];
-
-  # Configure systemd service dependencies
-  systemd.services = {
-    # Load ZFS encryption key for /data dataset
-    zfs-load-data-key = {
-      description = "Load ZFS encryption key for /data dataset";
-      after = ["zfs-import-rpool.service"];
-      before = ["zfs-mount.service" "data.mount"];
-      wantedBy = ["zfs-mount.service"];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      script = ''
-        set -euo pipefail
-        echo "Loading ZFS encryption key for rpool/data..."
-        KEYSTATUS=$(${config.boot.zfs.package}/bin/zfs get -H -o value keystatus rpool/data)
-        if [ "$KEYSTATUS" = "available" ]; then
-          echo "✓ Key already loaded for rpool/data"
-          exit 0
-        fi
-        echo "Key status: $KEYSTATUS - loading key..."
-        if [ -f /boot/zfs-keys/rpool ]; then
-          ${config.boot.zfs.package}/bin/zfs load-key rpool/data
-          echo "✓ Encryption key loaded successfully"
-        else
-          echo "ERROR: Encryption key not found at /boot/zfs-keys/rpool"
-          exit 1
-        fi
-      '';
-    };
-
-    # Boot source verification and diagnostics
-    naspi-boot-verify = {
-      description = "NasPi Boot Source Verification";
-      wantedBy = ["multi-user.target"];
-      after = ["local-fs.target"];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      path = [pkgs.util-linux];
-      script = ''
-        echo "========================================"
-        echo "NasPi Boot Verification"
-        echo "========================================"
-        ROOT_DEVICE=$(findmnt -n -o SOURCE /)
-        echo "Root filesystem: $ROOT_DEVICE"
-        if [[ "$ROOT_DEVICE" =~ "rpool" ]]; then
-          echo "✓ Booting from ZFS pool (correct)"
-        else
-          echo "⚠ WARNING: Not booting from expected ZFS pool!"
-        fi
-        BOOT_DEVICE=$(findmnt -n -o SOURCE /boot)
-        echo "Boot partition: $BOOT_DEVICE"
-        if [[ "$BOOT_DEVICE" =~ "BOOT1" ]] || [[ "$BOOT_DEVICE" =~ "ata-PNY" ]]; then
-          echo "✓ Booting from SSD (correct)"
-        else
-          echo "⚠ WARNING: Boot partition might be from SD card!"
-        fi
-        if systemctl list-unit-files | grep -q "emergency-ssh"; then
-          echo "❌ ERROR: emergency-ssh service detected!"
-        else
-          echo "✓ No conflicting services detected"
-        fi
-        echo ""
-        echo "ZFS Pool Status:"
-        ${config.boot.zfs.package}/bin/zpool status rpool | head -n 15
-        echo "========================================"
-      '';
-    };
+  # System configuration
+  system = {
+    nixos.tags = let
+      cfg = config.boot.loader.raspberryPi;
+    in [
+      "raspberry-pi-${cfg.variant}"
+      cfg.bootloader
+      config.boot.kernelPackages.kernel.version
+    ];
+    stateVersion = "25.05";
   };
 
-  # System configuration
-  system.nixos.tags = let
-    cfg = config.boot.loader.raspberryPi;
-  in [
-    "raspberry-pi-${cfg.variant}"
-    cfg.bootloader
-    config.boot.kernelPackages.kernel.version
-  ];
-
-  system.stateVersion = "25.05";
   nixpkgs.hostPlatform = "aarch64-linux";
 }

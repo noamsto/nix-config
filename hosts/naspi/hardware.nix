@@ -1,8 +1,4 @@
-{
-  nixos-raspberrypi,
-  pkgs,
-  ...
-}: {
+{nixos-raspberrypi, ...}: {
   imports = with nixos-raspberrypi.nixosModules; [
     ./configtxt.nix
 

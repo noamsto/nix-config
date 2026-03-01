@@ -69,21 +69,22 @@
     };
   };
 
-  system.activationScripts.binbash = {
-    deps = ["binsh"];
-    text = ''
-      [ -f /bin/bash ] || ln -s /bin/sh /bin/bash
-    '';
-  };
-
   # For RaspberryPi 4 image generating
   boot.binfmt.emulatedSystems = ["aarch64-linux"];
-  system.nixos.tags = [
-    config.desktop.mode
-    config.machine.type
-    config.profile
-    (self.shortRev or self.dirtyShortRev or "unknown")
-  ];
 
-  system.stateVersion = "23.05";
+  system = {
+    activationScripts.binbash = {
+      deps = ["binsh"];
+      text = ''
+        [ -f /bin/bash ] || ln -s /bin/sh /bin/bash
+      '';
+    };
+    nixos.tags = [
+      config.desktop.mode
+      config.machine.type
+      config.profile
+      (self.shortRev or self.dirtyShortRev or "unknown")
+    ];
+    stateVersion = "23.05";
+  };
 }

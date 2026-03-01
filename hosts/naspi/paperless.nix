@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{config, ...}: {
   # Paperless-ngx document management system
   services.paperless = {
     enable = true;
