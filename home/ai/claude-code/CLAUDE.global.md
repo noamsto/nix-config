@@ -1,5 +1,15 @@
 # Global Claude Code Instructions
 
+## Bash Command Simplicity
+
+**Prefer** simple, single commands that match `Bash(cmd *)` permission patterns cleanly.
+
+- **Avoid `$()` and backticks** — use direct arguments instead (e.g., `git commit -m "message"`, not HEREDOC with `$(cat ...)`).
+- **Avoid `&&` / `||` chaining** — prefer separate Bash tool calls for each command.
+- **Avoid pipes `|`** — prefer dedicated tools (Grep, Glob, Read) or separate calls.
+
+These are **not hard bans** — use compound syntax when genuinely needed (e.g., a subshell `(cd dir && build)`, or a pipe that can't be split). But default to simple commands first.
+
 ## New Work Workflow (factify-inc repos only)
 
 **REQUIRED** for repos under the `factify-inc` GitHub org. Does NOT apply to personal repos.

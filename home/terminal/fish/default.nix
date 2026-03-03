@@ -228,6 +228,11 @@
 
         hdm = "hyprdynamicmonitors";
 
+        # Claude Code
+        c = "claude";
+        cc = "claude --continue";
+        cr = "claude --resume";
+
         # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
         # Status & info
         gsb = "git status -sb";
