@@ -232,6 +232,7 @@
         c = "claude";
         cc = "claude --continue";
         cr = "claude --resume";
+        cf = "claude-frontend";
 
         # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
         # Status & info
