@@ -129,21 +129,26 @@ in {
           # it now that eDP-1 is enabled so it creates valid lock surfaces.
           # Do this BEFORE DPMS on so the user never sees an unlocked frame.
           # Requires misc:allow_session_lock_restore = true in Hyprland config.
+          #
+          # Use loginctl lock-session to relaunch: this triggers hypridle's lock_cmd
+          # which runs within the graphical session (correct WAYLAND_DISPLAY, etc).
+          # Direct su/sudo launch fails because it lacks the wayland environment.
           if ${pkgs.procps}/bin/pgrep -f 'quickshell.*aegis-lock' >/dev/null 2>&1; then
             if [ "$initial_monitor_count" -eq 0 ] 2>/dev/null; then
               log "aegis-lock running but started with 0 monitors (broken surfaces), restarting..."
               ${pkgs.procps}/bin/pkill -f 'quickshell.*aegis-lock' 2>/dev/null || true
               sleep 0.3
-              su - ${config.username} -c "aegis-lock &" 2>/dev/null || true
-              sleep 0.5  # wait for lock surface creation
-              log "aegis-lock restarted with valid monitors"
+              log "Triggering lock-session to relaunch aegis-lock via hypridle..."
+              ${pkgs.systemd}/bin/loginctl lock-session
+              sleep 0.8  # wait for hypridle lock_cmd + surface creation
+              log "aegis-lock restarted via loginctl lock-session"
             else
               log "aegis-lock still running, session lock intact"
             fi
           else
-            log "WARNING: aegis-lock not running, re-launching..."
-            su - ${config.username} -c "aegis-lock &" 2>/dev/null || true
-            sleep 0.5  # wait for lock surface creation
+            log "WARNING: aegis-lock not running, re-launching via loginctl..."
+            ${pkgs.systemd}/bin/loginctl lock-session
+            sleep 0.8  # wait for hypridle lock_cmd + surface creation
           fi
 
           # Turn displays on - lockscreen can now render safely on eDP-1
