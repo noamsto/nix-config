@@ -1,11 +1,8 @@
 return {
-  -- Pinned to v1.6.3: v2 ships a Rust .so named identically to blink.cmp's fuzzy
-  -- matcher, causing a dlsym collision. v1 uses a distinct "generator" symbol name
-  -- so there is no conflict. Track: https://github.com/mistricky/codesnap.nvim/issues/162
+  -- Use cmd-based lazy loading to avoid blink.cmp cpath conflict (issue #162, still open)
+  -- v2 ships pre-built binaries so no build step needed (v1 required `make build_generator`)
   "mistricky/codesnap.nvim",
-  tag = "v1.6.3",
-  build = "make build_generator",
-  event = "VeryLazy",
+  cmd = { "CodeSnap", "CodeSnapSave" },
   keys = {
     { "<leader>Cc", "<cmd>CodeSnap<cr>", mode = "x", desc = "Save selected code snapshot into clipboard" },
     { "<leader>Cs", "<cmd>CodeSnapSave<cr>", mode = "x", desc = "Save selected code snapshot in ~/Pictures" },

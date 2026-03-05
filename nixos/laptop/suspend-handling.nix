@@ -122,48 +122,7 @@ in {
           log "Monitor state after resume adjustment:"
           ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read line; do log "$line"; done
 
-          # Re-trigger lockscreen if aegis-lock died or has broken surfaces.
-          # When initial_monitor_count=0, aegis-lock started on phantom surfaces
-          # (e.g., dock disconnected during suspend triggered a wake, aegis-lock
-          # launched before any real wayland screens existed). Kill and restart
-          # it now that eDP-1 is enabled so it creates valid lock surfaces.
-          # Do this BEFORE DPMS on so the user never sees an unlocked frame.
-          # Requires misc:allow_session_lock_restore = true in Hyprland config.
-          #
-          # Use loginctl lock-session <ID>: triggers hypridle's lock_cmd in the
-          # graphical session (correct WAYLAND_DISPLAY, etc.).
-          # Must pass explicit session ID — "loginctl lock-session" without an ID
-          # defaults to 'auto' which fails in root systemd service context.
-          lock_session_id=$(${pkgs.systemd}/bin/loginctl list-sessions --no-legend | \
-            grep " ${config.username} " | awk '{print $1}' | head -1)
-          log "User session ID: $lock_session_id"
-
-          lock_session() {
-            if [ -n "$lock_session_id" ]; then
-              log "Locking session $lock_session_id..."
-              ${pkgs.systemd}/bin/loginctl lock-session "$lock_session_id"
-              sleep 0.8  # wait for hypridle lock_cmd + surface creation
-            else
-              log "ERROR: Could not find session for ${config.username}, skipping lock"
-            fi
-          }
-
-          if ${pkgs.procps}/bin/pgrep -f 'quickshell.*aegis-lock' >/dev/null 2>&1; then
-            if [ "$initial_monitor_count" -eq 0 ] 2>/dev/null; then
-              log "aegis-lock running but started with 0 monitors (broken surfaces), restarting..."
-              ${pkgs.procps}/bin/pkill -f 'quickshell.*aegis-lock' 2>/dev/null || true
-              sleep 0.3
-              lock_session
-              log "aegis-lock restarted via loginctl lock-session"
-            else
-              log "aegis-lock still running, session lock intact"
-            fi
-          else
-            log "WARNING: aegis-lock not running, re-launching via loginctl..."
-            lock_session
-          fi
-
-          # Turn displays on - lockscreen can now render safely on eDP-1
+          # Turn displays on
           log "Turning DPMS on..."
           ${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true
 
