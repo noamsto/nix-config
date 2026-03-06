@@ -40,69 +40,53 @@ print_step() {
 # Metadata Query Functions
 # =============================================================================
 
-# Get full configuration for a host
+# Cached host config JSON — avoids repeated nix eval calls
+declare -A _host_config_cache
+
+# Get full configuration for a host (cached)
 # Usage: get_host_config "naspi"
 # Returns: JSON string with all host configuration
 get_host_config() {
   local host=$1
-  nix eval --json ".#rpiHosts.${host}" 2>/dev/null
+  if [[ -z ${_host_config_cache[$host]+x} ]]; then
+    _host_config_cache[$host]=$(nix eval --json ".#rpiHosts.${host}" 2>/dev/null)
+  fi
+  echo "${_host_config_cache[$host]}"
 }
 
 # Get hostname for a host configuration
-# Usage: get_hostname "naspi"
-# Returns: hostname string (e.g., "naspi.local")
 get_hostname() {
-  local host=$1
-  get_host_config "$host" | jq -r '.hostname'
+  get_host_config "$1" | jq -r '.hostname'
 }
 
 # Get username for a host configuration
-# Usage: get_user "naspi"
-# Returns: user string (e.g., "noams")
 get_user() {
-  local host=$1
-  get_host_config "$host" | jq -r '.user'
+  get_host_config "$1" | jq -r '.user'
 }
 
 # Get flake name for a host configuration
-# Usage: get_flake "naspi"
-# Returns: flake string (e.g., "naspi")
 get_flake() {
-  local host=$1
-  get_host_config "$host" | jq -r '.flake'
+  get_host_config "$1" | jq -r '.flake'
 }
 
 # Get installer user for a host configuration
-# Usage: get_installer_user "naspi"
-# Returns: installer user string (e.g., "nixos")
 get_installer_user() {
-  local host=$1
-  get_host_config "$host" | jq -r '.installer_user // "nixos"'
+  get_host_config "$1" | jq -r '.installer_user // "nixos"'
 }
 
 # Get filesystem type for a host configuration
-# Usage: get_filesystem "naspi"
-# Returns: filesystem string (e.g., "zfs")
 get_filesystem() {
-  local host=$1
-  get_host_config "$host" | jq -r '.filesystem // "ext4"'
+  get_host_config "$1" | jq -r '.filesystem // "ext4"'
 }
 
 # Get default build strategy for a host configuration
-# Usage: get_default_build_strategy "naspi"
-# Returns: strategy string (e.g., "remote")
 get_default_build_strategy() {
-  local host=$1
-  get_host_config "$host" | jq -r '.build_strategy // "remote"'
+  get_host_config "$1" | jq -r '.build_strategy // "remote"'
 }
 
 # Check if host is an installer configuration
-# Usage: is_installer "rpi4-installer"
-# Returns: "true" or "false"
 is_installer() {
-  local host=$1
-  local is_inst=$(get_host_config "$host" | jq -r '.is_installer // false')
-  echo "$is_inst"
+  get_host_config "$1" | jq -r '.is_installer // false'
 }
 
 # =============================================================================

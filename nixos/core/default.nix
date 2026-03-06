@@ -12,7 +12,6 @@
     ./pc.nix
     ./users.nix
     ./nice-looking-console.nix
-    ./aliases.nix
     ./auto-upgrade.nix
     ./clamav.nix
   ];
@@ -35,7 +34,7 @@
         enable = true;
         extraArgs = "--keep-since 14d";
       };
-      flake = "/home/noams/nix-config";
+      flake = config.flakePath;
     };
   };
 

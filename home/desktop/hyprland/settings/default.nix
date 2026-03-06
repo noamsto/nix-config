@@ -1,6 +1,7 @@
 {config, ...}: let
   pointer = config.home.pointerCursor;
-  cursorName = "Bibata-Modern-Ice";
+  cursorName = pointer.name;
+  iconThemeName = config.gtk.iconTheme.name;
 in {
   imports = [./bindings.nix ./window_rule.nix ./animations.nix];
   wayland.windowManager.hyprland = {
@@ -40,7 +41,7 @@ in {
         "WLR_NO_HARDWARE_CURSORS,1"
 
         # Quickshell (Noctalia) icon theme for proper app icon lookup
-        "QS_ICON_THEME,Papirus-Dark"
+        "QS_ICON_THEME,${iconThemeName}"
       ];
 
       exec-once = [

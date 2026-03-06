@@ -1,15 +1,42 @@
-{lib, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   options = {
-    server.enable = lib.mkEnableOption "server"; #NOTE: This might be useless
-    desktop.mode = lib.mkOption {
-      type = lib.types.enum ["none" "kde" "hyprland"];
-      default = "none";
-      description = "Desktop mode";
+    desktop = {
+      mode = lib.mkOption {
+        type = lib.types.enum ["none" "kde" "hyprland"];
+        default = "none";
+        description = "Desktop mode";
+      };
+      isEnabled = lib.mkOption {
+        type = lib.types.bool;
+        default = config.desktop.mode != "none";
+        readOnly = true;
+      };
+      isHyprland = lib.mkOption {
+        type = lib.types.bool;
+        default = config.desktop.mode == "hyprland";
+        readOnly = true;
+      };
     };
-    machine.type = lib.mkOption {
-      type = lib.types.enum ["server" "desktop" "laptop"];
-      default = "server";
-      description = "Machine type";
+    machine = {
+      type = lib.mkOption {
+        type = lib.types.enum ["server" "desktop" "laptop"];
+        default = "server";
+        description = "Machine type";
+      };
+      isLaptop = lib.mkOption {
+        type = lib.types.bool;
+        default = config.machine.type == "laptop";
+        readOnly = true;
+      };
+      isPC = lib.mkOption {
+        type = lib.types.bool;
+        default = config.machine.type == "laptop" || config.machine.type == "desktop";
+        readOnly = true;
+      };
     };
     profile = lib.mkOption {
       type = lib.types.enum ["personal" "work"];
@@ -31,6 +58,11 @@
     };
     hostname = lib.mkOption {
       type = lib.types.str;
+      readOnly = true;
+    };
+    flakePath = lib.mkOption {
+      type = lib.types.str;
+      default = "/home/${config.username}/nix-config";
       readOnly = true;
     };
   };

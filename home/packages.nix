@@ -6,6 +6,12 @@
   ...
 }: let
   desktop-packages = with pkgs; [
+    # Hyprland dynamic monitor management
+    inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+    # Advanced touchpad gesture support
+    libinput-gestures
+
     bottles
 
     # social
@@ -108,23 +114,12 @@ in {
       tokei
       hyperfine
 
-      # Wayland clipboard
-      wl-clipboard
-
       # github
       gh
 
       # AI coding tools
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.claude-squad
       happy-coder
-
-      nh
-
-      # Hyprland dynamic monitor management
-      inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
-
-      # Advanced touchpad gesture support
-      libinput-gestures
 
       # Better system monitoring
       btop

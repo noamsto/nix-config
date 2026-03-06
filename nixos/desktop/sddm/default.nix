@@ -4,8 +4,8 @@
   lib,
   ...
 }: let
-  isDesktop = config.desktop.mode != "none";
-  isHypr = config.desktop.mode == "hyprland";
+  isDesktop = config.desktop.isEnabled;
+  isHypr = config.desktop.isHyprland;
 in
   lib.mkIf (isDesktop && !isHypr) {
     # install theme and cursor

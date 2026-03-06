@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 
   # Skip fprintd when lid is closed (clamshell mode)
   # Avoids waiting for unreachable fingerprint sensor

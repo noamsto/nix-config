@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  isDesktop = config.desktop.mode != "none";
+  isDesktop = config.desktop.isEnabled;
   desktop-packages = with pkgs; [
     distrobox
     distrobox-tui

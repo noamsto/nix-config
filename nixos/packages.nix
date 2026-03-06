@@ -4,9 +4,8 @@
   config,
   ...
 }: let
-  isDesktop = config.desktop.mode != "none";
-  isLaptop = config.machine.type == "laptop";
-  isDesktopOrLaptop = isDesktop || isLaptop;
+  inherit (config.desktop) isEnabled;
+  inherit (config.machine) isLaptop isPC;
   core-packages = with pkgs; [
     nix-output-monitor
     vim
@@ -62,7 +61,7 @@ in {
   environment.systemPackages =
     core-packages
     ++ lib.optionals
-    isDesktop
+    isEnabled
     desktop-packages
     ++ lib.optionals
     isLaptop
@@ -71,7 +70,7 @@ in {
   # Grant btop Linux capabilities for accurate hardware monitoring
   # (memory, per-process stats, network) without requiring sudo.
   # This preserves the user's theme config unlike sudo.
-  security.wrappers = lib.mkIf isDesktopOrLaptop {
+  security.wrappers = lib.mkIf isPC {
     btop = {
       source = "${pkgs.btop}/bin/btop";
       capabilities = "cap_dac_read_search,cap_perfmon,cap_sys_ptrace,cap_net_raw+ep";

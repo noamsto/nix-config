@@ -30,13 +30,4 @@
     is_installer = true;
     description = "Minimal installer image for initial RPi4 deployment";
   };
-
-  rpi4-standard = {
-    flake = "rpi4-standard";
-    hostname = "rpi4-standard.local";
-    user = "nixos";
-    filesystem = "ext4";
-    build_strategy = "local";
-    description = "Standard RPi4 configuration using NixOS wiki approach";
-  };
 }

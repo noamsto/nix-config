@@ -99,11 +99,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+    hyprdynamicmonitors = {
+      url = "github:fiffeek/hyprdynamicmonitors";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # === APPLICATION PACKAGES ===
     # Pinned versions for stability - update quarterly
-    vicinae.url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
+    vicinae = {
+      url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
@@ -155,11 +161,6 @@
     # === UTILITIES ===
     # Stable versions - quarterly updates
 
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -170,10 +171,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    llm-agents.url = "github:numtide/llm-agents.nix/";
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix/";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     wrappers.url = "github:Lassulus/wrappers";

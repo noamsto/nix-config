@@ -4,7 +4,7 @@
   config,
   ...
 }: let
-  isHypr = config.desktop.mode == "hyprland";
+  isHypr = config.desktop.isHyprland;
 in
   lib.mkIf isHypr {
     services = {

@@ -1,4 +1,6 @@
-{...}: {
+_: let
+  hostConfig = (import ../../lib/host-configs.nix).naspi;
+in {
   imports = [
     # Core configuration
     ../../options.nix
@@ -20,10 +22,10 @@
     # ./password-fix.nix  # Removed - systemd cycles fixed, agenix works now
   ];
 
-  # Configuration options
-  desktop.mode = "none";
-  machine.type = "server";
-  profile = "personal";
+  # Configuration options from shared host-configs
+  inherit (hostConfig) hostname email profile;
+  desktop.mode = hostConfig.desktop.mode;
+  machine.type = hostConfig.machine.type;
 
   # Additional settings for ZFS system
   # Disabled - SSD boot doesn't need tmpfs protection, kernel builds need >4GB tmp space

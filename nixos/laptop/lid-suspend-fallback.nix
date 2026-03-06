@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 
   lidCheckScript = pkgs.writeShellScript "lid-suspend-fallback" ''
     # If lid is open, nothing to do

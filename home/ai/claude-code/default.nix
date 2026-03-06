@@ -209,7 +209,7 @@ in {
   # Global Claude instructions - out-of-store symlink so Claude can edit it
   # The file is tracked in nix-config repo
   home.file.".claude/CLAUDE.md".source =
-    config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/ai/claude-code/CLAUDE.global.md";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
 
   programs.claude-code = {
     enable = true;

@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 
   # Battery threshold management script
   batteryThresholdScript = pkgs.writeShellScript "battery-threshold-setup" ''

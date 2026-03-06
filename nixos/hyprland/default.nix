@@ -4,7 +4,7 @@
   config,
   ...
 }: let
-  isHypr = config.desktop.mode == "hyprland";
+  isHypr = config.desktop.isHyprland;
 
   # Override hyprland package to only offer the UWSM session to display managers.
   # The upstream package ships both hyprland.desktop (direct) and hyprland-uwsm.desktop

@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 
   # Simplified script that only responds to AC state changes
   powerProfileScript = pkgs.writeShellScript "auto-power-profile" ''

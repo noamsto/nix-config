@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 in {
   config = lib.mkIf isLaptop {
     # Note: Spurious AC-plug wakes are blocked by kernel param acpi.ec_no_wakeup=1
@@ -27,11 +27,12 @@ in {
           log "=== Resume handler started ==="
 
           # Run as user to access Hyprland socket
-          export XDG_RUNTIME_DIR=/run/user/1000
+          USER_UID=$(id -u ${config.username})
+          export XDG_RUNTIME_DIR=/run/user/$USER_UID
 
           # Find the ACTIVE Hyprland socket (most recently modified, not alphabetically first)
           # Old stale sockets may exist; ls -t sorts by modification time
-          export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/1000/hypr/ 2>/dev/null | head -1)
+          export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/$USER_UID/hypr/ 2>/dev/null | head -1)
 
           if [ -z "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
             log "No Hyprland socket found, exiting"

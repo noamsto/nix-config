@@ -56,7 +56,7 @@ in {
   # Amp searches for AGENTS.md (primary) or CLAUDE.md (fallback)
   # This makes the same instructions available to both agents
   home.file.".config/AGENTS.md".source =
-    config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/ai/claude-code/CLAUDE.global.md";
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
 
   # Amp settings.json - CLI reads MCP servers from here
   xdg.configFile."amp/settings.json".text = builtins.toJSON {

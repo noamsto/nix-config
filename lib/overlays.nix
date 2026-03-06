@@ -1,13 +1,7 @@
 # Reusable overlays for both NixOS and standalone Home Manager
 inputs: [
-  # Expose multiple nixpkgs versions for selective package usage
+  # Expose stable nixpkgs for selective package pinning
   (final: _: {
-    # Main unstable nixpkgs (useful for naspi to get newer packages)
-    unstable = import inputs.nixpkgs {
-      inherit (final.stdenv.hostPlatform) system;
-      config.allowUnfree = true;
-    };
-    # Stable channel packages
     stable = import inputs.nixpkgs-stable {
       inherit (final.stdenv.hostPlatform) system;
       config.allowUnfree = true;

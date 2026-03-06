@@ -3,9 +3,7 @@
   config,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
-  isDesktop = config.machine.type == "desktop";
-  isPC = isLaptop || isDesktop;
+  inherit (config.machine) isPC;
 in {
   imports = [
     inputs.xremap.nixosModules.default

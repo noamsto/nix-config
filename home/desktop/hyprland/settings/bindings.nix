@@ -114,12 +114,6 @@ in {
       "$mainMod CTRL SHIFT, H, movewindow, mon:l" # Move window to left monitor
       "$mainMod CTRL SHIFT, L, movewindow, mon:r" # Move window to right monitor
 
-      # Resize windows
-      "$mainMod, left, resizeactive, -20 0"
-      "$mainMod, right, resizeactive, 20 0"
-      "$mainMod, up, resizeactive, 0 -20"
-      "$mainMod, down, resizeactive, 0 20"
-
       # Quick resize shortcuts (smart: works for both floating and tiled/pseudo)
       "$mainMod, equal, exec, window-resize grow"
       "$mainMod, minus, exec, window-resize shrink"
@@ -170,12 +164,6 @@ in {
       "$mainMod, right, resizeactive, 20 0"
       "$mainMod, up, resizeactive, 0 -20"
       "$mainMod, down, resizeactive, 0 20"
-    ];
-
-    bindr = [
-      # launcher
-      # "$mainMod, SUPER_L, exec, vicinae vicinae://toggle"  # Fix toggle for vicinae
-      # "$mainMod, SUPER_L, exec, vicinae"
     ];
   };
 }

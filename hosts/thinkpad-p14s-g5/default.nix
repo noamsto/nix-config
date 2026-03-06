@@ -67,5 +67,4 @@ in {
   '';
 
   # Host-specific overrides can go here
-  # (aliases are now in nixos/core/aliases.nix)
 }

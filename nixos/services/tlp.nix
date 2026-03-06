@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  isLaptop = config.machine.type == "laptop";
+  inherit (config.machine) isLaptop;
 in {
   config = lib.mkIf isLaptop {
     services.tlp = {

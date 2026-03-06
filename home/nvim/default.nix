@@ -5,7 +5,7 @@
   ...
 }: {
   xdg.configFile = {
-    "nvim".source = config.lib.file.mkOutOfStoreSymlink "/home/noams/nix-config/home/nvim/lazyVim";
+    "nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/lazyVim";
   };
 
   programs.neovim = {

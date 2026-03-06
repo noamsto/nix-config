@@ -75,7 +75,7 @@ in {
     systemd.user.services = {
       # Add icon theme environment to Noctalia service for proper icon lookup
       noctalia-shell.Service.Environment = lib.mkForce [
-        "QS_ICON_THEME=Papirus-Dark"
+        "QS_ICON_THEME=${config.gtk.iconTheme.name}"
       ];
 
       # Systemd service to restore wallpaper after Noctalia starts
@@ -393,7 +393,7 @@ in {
         # Wallpaper settings
         wallpaper = {
           enabled = true;
-          directory = "/home/noams/Pictures/Wallpapers";
+          directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
           fillMode = "crop";
           setWallpaperOnAllMonitors = true;
         };
