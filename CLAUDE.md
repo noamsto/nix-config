@@ -109,7 +109,6 @@ just rpi-build-installer                  # Build minimal installer image
 - `naspi` - Raspberry Pi 4 with ZFS RAID1 on dual SSDs
 - `argon-rpi4` - Raspberry Pi 4 with Argon V2 case and external SSD boot
 - `rpi4-installer` - Minimal RPi4 installer image
-- `rpi4-standard` - Standard RPi4 configuration using NixOS wiki approach
 
 **Standalone Home Manager (for development):**
 
@@ -196,7 +195,10 @@ flake.nix                          # Entry point - imports flake-modules
 │   ├── nixos-systems.nix          # All nixosConfigurations
 │   └── home-manager.nix           # Standalone homeConfigurations
 ├── lib/
-│   ├── host-configs.nix           # Shared host settings (used by both NixOS and HM)
+│   ├── host-configs.nix           # Shared host settings + SSH keys (used by both NixOS and HM)
+│   ├── caches.nix                 # Binary cache configuration (SYNC with flake.nix nixConfig)
+│   ├── rpi-hosts.nix              # RPi deployment metadata (used by scripts/rpi/)
+│   ├── rpi-common.sh              # Shared RPi deployment library (cached nix eval)
 │   └── overlays.nix               # Package overlays
 ├── packages/                      # Custom package definitions
 └── justfile                       # Command runner recipes
@@ -321,25 +323,29 @@ The repository uses a **modular architecture** with conditional imports based on
 
 - **`options.nix`** - Defines custom options that control what gets imported:
   - `desktop.mode`: "none" | "kde" | "hyprland"
+  - `desktop.isEnabled`, `desktop.isHyprland` - Derived read-only booleans
   - `machine.type`: "server" | "desktop" | "laptop"
+  - `machine.isLaptop`, `machine.isPC` - Derived read-only booleans
   - `profile`: "personal" | "work"
   - `username`, `email`, `hostname` - Per-host identity settings
+  - `flakePath` - Derived from username, read-only (e.g. `/home/noams/nix-config`)
+
+  **Use derived booleans** in modules instead of raw comparisons:
+  ```nix
+  # Good - use derived options
+  inherit (config.machine) isLaptop;
+  inherit (config.desktop) isEnabled;
+
+  # Avoid - raw comparisons
+  isLaptop = config.machine.type == "laptop";
+  ```
 
 - **`lib/host-configs.nix`** - Shared configuration source of truth:
-  - Single file defining settings for all hosts (thinkpad-p14s, thinkpad-p14s-g5, naspi)
+  - Single file defining settings for all hosts (thinkpad-p14s, thinkpad-p14s-g5, naspi, argon-rpi4)
+  - Contains `sshPublicKeys` for shared SSH key constants
   - Used by **both** NixOS systems and standalone Home Manager configs
   - Ensures consistency between full rebuilds and HM-only rebuilds
-  - Example:
-    ```nix
-    thinkpad-p14s = {
-      username = "noams";
-      email = "noamstolero@gmail.com";
-      hostname = "thinkpad-p14s";
-      desktop.mode = "hyprland";
-      machine.type = "laptop";
-      profile = "personal";
-    };
-    ```
+  - All hosts (including RPi) should use `inherit` from this file
 
 **How Configuration Flows:**
 
@@ -459,11 +465,20 @@ nh home switch .                 # Home Manager only (faster)
 
 When adding new features, follow these patterns:
 
+- **Use derived boolean options** in NixOS modules instead of raw comparisons:
+  - `config.desktop.isEnabled` instead of `config.desktop.mode != "none"`
+  - `config.desktop.isHyprland` instead of `config.desktop.mode == "hyprland"`
+  - `config.machine.isLaptop` instead of `config.machine.type == "laptop"`
+  - `config.machine.isPC` instead of `isLaptop || isDesktop`
+  - Use `inherit (config.machine) isLaptop;` for cleaner let-bindings
+
 - **Check `osConfig.profile`** when adding work-specific configurations
   - Example: `++ lib.optionals (osConfig.profile == "work") work-packages`
 
 - **Use conditional imports** based on `desktop.mode` for desktop environment features
   - Example: `++ lib.optionals (osConfig.desktop.mode == "hyprland") [./hyprland]`
+
+- **Use `config.flakePath`** (NixOS) or `config.home.homeDirectory` (HM) instead of hardcoded paths
 
 - **Add new packages** to appropriate files:
   - `nixos/packages.nix` - System-wide packages (vim, git, essential CLI tools)
