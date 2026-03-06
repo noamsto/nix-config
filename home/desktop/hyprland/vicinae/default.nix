@@ -17,14 +17,32 @@
       enable = true;
       autoStart = true;
     };
-    # Settings are now in settings.json (new path) for runtime theme switching
-    # The JSON file is symlinked out-of-store so theme-toggle.sh can modify it
   };
 
-  # Override home-manager generated config with out-of-store symlink for runtime editing
-  # Note: settings file path changed from vicinae.json to settings.json
-  xdg.configFile."vicinae/settings.json" = lib.mkForce {
-    source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/desktop/hyprland/vicinae/vicinae-config.json";
-    force = true; # Overwrite if file exists (prevents activation failures)
-  };
+  # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime
+  home.activation.seedVicinaeConfig = let
+    seedConfig = pkgs.writeText "vicinae-seed-config.json" (builtins.toJSON {
+      "$schema" = "https://vicinae.com/schemas/config.json";
+      keybinding = "default";
+      theme.dark.name = "vicinae-dark";
+      keybinds = {};
+      providers = {
+        applications.preferences.paths = [
+          "${config.home.homeDirectory}/.local/share/applications"
+          "/var/lib/flatpak/exports/share/applications"
+          "/etc/profiles/per-user/${config.home.username}/share/applications"
+          "/run/current-system/sw/share/applications"
+        ];
+        clipboard.preferences.monitoring = true;
+      };
+    });
+  in
+    lib.hm.dag.entryAfter ["writeBoundary"] ''
+      config_path="${config.xdg.configHome}/vicinae/settings.json"
+      if [ ! -f "$config_path" ]; then
+        mkdir -p "$(dirname "$config_path")"
+        cp ${seedConfig} "$config_path"
+        chmod 644 "$config_path"
+      fi
+    '';
 }
