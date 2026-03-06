@@ -33,7 +33,7 @@ in {
       "$mainMod, T, exec, toggle-floating"
 
       "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
-      "$mainMod, grave, hyprexpo:expo, toggle"
+      # "$mainMod, grave, hyprexpo:expo, toggle" # disabled: hyprexpo plugin not loaded
 
       "$mainMod, V, exec, vicinae vicinae://extensions/vicinae/clipboard/history"
 
@@ -109,6 +109,10 @@ in {
       "$mainMod CTRL, L, movewindow, r" # Move window right
       "$mainMod CTRL, K, movewindow, u" # Move window up
       "$mainMod CTRL, J, movewindow, d" # Move window down
+
+      # Move window between monitors
+      "$mainMod CTRL SHIFT, H, movewindow, mon:l" # Move window to left monitor
+      "$mainMod CTRL SHIFT, L, movewindow, mon:r" # Move window to right monitor
 
       # Resize windows
       "$mainMod, left, resizeactive, -20 0"

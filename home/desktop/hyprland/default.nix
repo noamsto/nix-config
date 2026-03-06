@@ -32,10 +32,10 @@
 
   wayland.windowManager.hyprland = {
     enable = true;
-    plugins = with pkgs.hyprlandPlugins; [
-      hyprbars
-      hyprexpo
-    ];
+    # plugins = with pkgs.hyprlandPlugins; [
+    #   hyprbars
+    #   hyprexpo
+    # ];
     systemd.enable = false;
   };
 

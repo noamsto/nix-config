@@ -35,8 +35,8 @@
     # Application launcher
     gesture swipe up 4 hyprctl dispatch exec "vicinae vicinae://toggle"
 
-    # Show all windows (hyprexpo overview)
-    gesture swipe down 4 hyprctl dispatch hyprexpo:expo toggle
+    # Show all windows (hyprexpo overview) - disabled: hyprexpo plugin not loaded
+    # gesture swipe down 4 hyprctl dispatch hyprexpo:expo toggle
 
     # Move window to adjacent non-empty workspace (r = relative, skips empty)
     gesture swipe left 4 hyprctl dispatch movetoworkspace r-1

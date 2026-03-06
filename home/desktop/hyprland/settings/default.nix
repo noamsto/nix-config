@@ -213,37 +213,33 @@ in {
 
       xwayland.force_zero_scaling = true;
       debug.disable_logs = false;
-      plugin = {
-        hyprbars = {
-          bar_height = 24;
-          bar_precedence_over_border = true;
-          bar_text_font = "FiraCode Nerd Font";
-          "col.text" = "rgb(cdd6f4)"; # Light text color for better readability
-          "bar_color" = "rgba(1e1e2ecc)"; # More opaque dark background
-          "bar_text_size" = 12;
-
-          # order is right-to-left
-          hyprbars-button = [
-            # close - red (catppuccin mocha)
-            "rgb(f38ba8), 16, 󰖭, hyprctl dispatch killactive"
-            # maximize - green (catppuccin mocha)
-            "rgb(a6e3a1), 16, 󰖯, hyprctl dispatch fullscreen 1"
-            # pin/unpin toggle - yellow (catppuccin mocha)
-            "rgb(f9e2af), 16, 󰐃, hyprctl dispatch pin active"
-          ];
-        };
-
-        hyprexpo = {
-          columns = 3;
-          gap_size = 4;
-          bg_col = "rgb(000000)";
-          workspace_method = "first 1"; # Always show workspaces starting from WS 1
-
-          enable_gesture = true;
-          gesture_distance = 250; # More responsive overview activation
-          gesture_positive = false;
-        };
-      };
+      # plugin = {
+      #   hyprbars = {
+      #     bar_height = 24;
+      #     bar_precedence_over_border = true;
+      #     bar_text_font = "FiraCode Nerd Font";
+      #     "col.text" = "rgb(cdd6f4)";
+      #     "bar_color" = "rgba(1e1e2ecc)";
+      #     "bar_text_size" = 12;
+      #
+      #     hyprbars-button = [
+      #       "rgb(f38ba8), 16, 󰖭, hyprctl dispatch killactive"
+      #       "rgb(a6e3a1), 16, 󰖯, hyprctl dispatch fullscreen 1"
+      #       "rgb(f9e2af), 16, 󰐃, hyprctl dispatch pin active"
+      #     ];
+      #   };
+      #
+      #   hyprexpo = {
+      #     columns = 3;
+      #     gap_size = 4;
+      #     bg_col = "rgb(000000)";
+      #     workspace_method = "first 1";
+      #
+      #     enable_gesture = true;
+      #     gesture_distance = 250;
+      #     gesture_positive = false;
+      #   };
+      # };
     };
   };
 }

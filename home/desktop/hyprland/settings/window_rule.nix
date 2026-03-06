@@ -25,7 +25,7 @@
 
       # === VICINAE ===
       "pin on, match:title ^(Vicinae Launcher)$"
-      "hyprbars:no_bar 1, match:title ^(Vicinae Launcher)$"
+      # "hyprbars:no_bar 1, match:title ^(Vicinae Launcher)$" # disabled: hyprbars plugin not loaded
       "size 900 700, match:title ^(Vicinae Launcher)$"
 
       # telegram media viewer
@@ -253,11 +253,11 @@
       "center on, match:class ^(.*jetbrains.*)$, match:title ^(Confirm Exit|Open Project|win424|win201|splash)$"
       "size 640 400, match:class ^(.*jetbrains.*)$, match:title ^(splash)$"
 
-      # hyprbars rules
-      "hyprbars:no_bar 1, match:fullscreen false"
-      "hyprbars:no_bar 1, match:fullscreen true"
-      "hyprbars:no_bar 1, match:float false"
-      "hyprbars:no_bar 0, match:float true"
+      # hyprbars rules - disabled: hyprbars plugin not loaded
+      # "hyprbars:no_bar 1, match:fullscreen false"
+      # "hyprbars:no_bar 1, match:fullscreen true"
+      # "hyprbars:no_bar 1, match:float false"
+      # "hyprbars:no_bar 0, match:float true"
 
       # Fullscreen focus mode rules
       "decorate off, match:fullscreen true"
