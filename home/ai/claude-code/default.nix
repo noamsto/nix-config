@@ -138,12 +138,12 @@
             ];
           }
           {
-            # Catch-all for non-permission notifications - helps reset from stale waiting state
+            # idle_prompt fires after Stop - show done (ready for next prompt)
             matcher = "idle_prompt";
             hooks = [
               {
                 type = "command";
-                command = "claude-status-update idle";
+                command = "claude-status-update done";
               }
             ];
           }
