@@ -24,6 +24,9 @@ in {
   programs.lazytmux = {
     enable = true;
     wt.enable = true;
+    processIcons = {
+      houston = "🚀";
+    };
     startupSession = {
       enable = true;
       name = "nix-config";

@@ -65,6 +65,10 @@
       HandleLidSwitch = "ignore";
       HandleLidSwitchExternalPower = "ignore";
       HandleLidSwitchDocked = "ignore";
+      # systemd 259: Sleep() D-Bus method defaults to suspend-then-hibernate,
+      # which resolves to hybrid-sleep. Override to plain suspend to prevent
+      # unexpected hibernation when anything calls Sleep() instead of Suspend().
+      SleepOperation = "suspend";
     };
   };
 

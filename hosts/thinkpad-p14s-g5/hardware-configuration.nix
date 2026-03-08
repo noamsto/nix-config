@@ -31,6 +31,8 @@
       "systemd.gpt_auto=0" # Solve annoying dmesg warning
       "amdgpu.dcdebugmask=0x10" # Fix GPU flickering and lag (P14s Gen 5)
       "acpi.ec_no_wakeup=1" # Prevent spurious wake on AC plug/unplug (see docs/power-management.md)
+      "amd_pmc.enable_stb=0" # Allow s2idle to reach deepest sleep state
+      "rtc_cmos.use_acpi_alarm=1" # Use ACPI alarm for RTC, avoids s2idle deep sleep blocker on AMD
     ];
     kernel.sysctl = {
       "vm.overcommit_memory" = 1;
@@ -40,6 +42,7 @@
     # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
+      options ath11k_pci frame_mode=2
     '';
   };
 
