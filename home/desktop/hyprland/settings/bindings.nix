@@ -27,7 +27,7 @@ in {
       # Toggle pseudo (no auto-resize - pseudo maintains floating dimensions)
       "$mainMod, P, pseudo"
 
-      "$mainMod, R, togglesplit,"
+      "$mainMod, R, layoutmsg, togglesplit"
 
       # Smart toggle floating: tiled→float+resize+center, floating→just unfloat
       "$mainMod, T, exec, toggle-floating"
