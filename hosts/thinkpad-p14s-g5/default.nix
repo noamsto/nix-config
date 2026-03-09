@@ -69,10 +69,15 @@ in {
     # Must disable both the device and its parent PCI bridge
     ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x17cb", ATTR{device}=="0x1103", ATTR{power/wakeup}="disabled"
     ACTION=="add", SUBSYSTEM=="pci", KERNEL=="0000:00:02.2", ATTR{power/wakeup}="disabled"
+
+    # Enable Wake-on-LAN (magic packet) on Realtek NIC at device add time.
+    # Required for AMD PMC deepest sleep state — firmware quirk on this platform.
+    # udev rule ensures WoL is set regardless of NM connection state (e.g. undocked).
+    # See: https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_5
+    ACTION=="add", SUBSYSTEM=="net", KERNEL=="eth0", RUN+="${pkgs.ethtool}/bin/ethtool -s eth0 wol g"
   '';
 
-  # Enable Wake-on-LAN for Realtek NIC — required for proper s2idle depth on this platform.
-  # Without WoL enabled, AMD PMC never reaches deepest sleep state (firmware quirk).
-  # See: https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_5
+  # Also tell NM to use magic-packet WoL when it manages the connection (docked).
+  # The udev rule above handles the undocked case; this prevents NM from resetting WoL to disabled.
   networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
 }
