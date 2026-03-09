@@ -67,6 +67,9 @@
     {device = "/dev/disk/by-uuid/64fa1a26-1ebd-49c9-93ab-8e62a9681395";}
   ];
 
+  # Enable hibernate resume from swap (required for systemd 259 battery-triggered hybrid-sleep)
+  boot.resumeDevice = "/dev/disk/by-uuid/64fa1a26-1ebd-49c9-93ab-8e62a9681395";
+
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
   # still possible to use this option, but it's recommended to use it in conjunction

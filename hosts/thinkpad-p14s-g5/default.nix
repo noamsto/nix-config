@@ -64,7 +64,15 @@ in {
 
     # Allow access to RAPL (Running Average Power Limit) for power monitoring
     SUBSYSTEM=="powercap", MODE="0644"
+
+    # Disable WLAN wakeup to prevent spurious wakes during s2idle (ath11k/GPP6 GPIO 18)
+    # Must disable both the device and its parent PCI bridge
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x17cb", ATTR{device}=="0x1103", ATTR{power/wakeup}="disabled"
+    ACTION=="add", SUBSYSTEM=="pci", KERNEL=="0000:00:02.2", ATTR{power/wakeup}="disabled"
   '';
 
-  # Host-specific overrides can go here
+  # Enable Wake-on-LAN for Realtek NIC — required for proper s2idle depth on this platform.
+  # Without WoL enabled, AMD PMC never reaches deepest sleep state (firmware quirk).
+  # See: https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_5
+  networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
 }

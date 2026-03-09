@@ -327,26 +327,37 @@ in {
               action = "lock";
               enabled = true;
               command = "aegis-lock";
+              keybind = "1";
             }
             {
               action = "suspend";
               enabled = true;
+              keybind = "2";
+            }
+            {
+              action = "hibernate";
+              enabled = true;
+              keybind = "3";
             }
             {
               action = "reboot";
               enabled = true;
+              keybind = "4";
             }
             {
               action = "rebootToUefi";
               enabled = true;
+              keybind = "5";
             }
             {
               action = "logout";
               enabled = true;
+              keybind = "6";
             }
             {
               action = "shutdown";
               enabled = true;
+              keybind = "7";
             }
           ];
         };
