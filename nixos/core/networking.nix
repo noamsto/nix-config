@@ -1,4 +1,9 @@
-{config, ...}: {
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   networking = {
     firewall = {
       enable = true;
@@ -49,6 +54,18 @@
         };
       };
     };
+  };
+
+  # Restart IWD after resume to clear stale firmware/crypto state
+  # Without this, 4-way handshake fails repeatedly after suspend
+  systemd.services.iwd-resume = lib.mkIf config.networking.wireless.iwd.enable {
+    description = "Restart IWD after suspend to fix WiFi reconnection";
+    after = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.systemd}/bin/systemctl restart iwd.service";
+    };
+    wantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
   };
 
   services = {

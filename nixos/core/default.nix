@@ -40,6 +40,10 @@
 
   security.polkit.enable = true;
 
+  # NixOS creates pre-sleep.service even when powerDownCommands is empty,
+  # causing "Service has no ExecStart" warnings on every suspend
+  powerManagement.powerDownCommands = "true";
+
   # Increase inotify limits for file-watching tools (Claude Code, VS Code, etc.)
   # With 2M watches (~2GB max memory if all used), plenty of headroom
   boot.kernel.sysctl = {
