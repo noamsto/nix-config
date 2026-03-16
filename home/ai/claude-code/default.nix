@@ -19,6 +19,7 @@
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
       includeCoAuthoredBy = false;
+      permissions.defaultMode = "acceptEdits";
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
