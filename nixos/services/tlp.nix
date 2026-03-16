@@ -18,8 +18,8 @@ in {
         CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
         # EPP hints
-        CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
-        CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
+        CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+        CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_performance";
 
         # Turbo boost
         CPU_BOOST_ON_AC = 1;
@@ -27,7 +27,7 @@ in {
 
         # Platform profile: controls BIOS-level STAPM/PPT power envelope
         PLATFORM_PROFILE_ON_AC = "performance";
-        PLATFORM_PROFILE_ON_BAT = "low-power";
+        PLATFORM_PROFILE_ON_BAT = "balanced";
 
         # NVMe/disk power saving
         DISK_APM_LEVEL_ON_AC = "254";

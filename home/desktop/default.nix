@@ -33,6 +33,7 @@
           # =======================================================================
           "gfx.webrender.all" = true;
           "media.ffmpeg.vaapi.enabled" = true;
+          "media.ffmpeg.low-latency.enabled" = true; # VA-API decode for WebRTC (video calls)
           "dom.webgpu.enabled" = true;
           "layers.acceleration.disabled" = false;
           "browser.tabs.unloadOnLowMemory" = true;

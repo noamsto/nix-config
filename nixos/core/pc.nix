@@ -20,6 +20,11 @@ in {
           alsa.support32Bit = true;
           pulse.enable = true;
           jack.enable = true;
+          extraConfig.pipewire."92-webrtc-stable" = {
+            "context.properties" = {
+              "default.clock.min-quantum" = 512;
+            };
+          };
         };
 
         # profile-sync-daemon
