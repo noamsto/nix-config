@@ -20,11 +20,15 @@
   lib,
   ...
 }: let
-  # Helper script for Noctalia IPC commands
+  noctaliaPackage = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    calendarSupport = true;
+  };
+
+  # Helper script for Noctalia IPC commands (uses noctalia's own quickshell for version compatibility)
   noctalia-ipc = pkgs.writeShellScriptBin "noctalia-ipc" ''
-    pid=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
+    pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
     if [ -n "$pid" ]; then
-      ${pkgs.quickshell}/bin/qs ipc --pid "$pid" call "$@"
+      ${noctaliaPackage}/bin/noctalia-shell ipc --pid "$pid" call "$@"
     else
       echo "Noctalia not running" >&2
       exit 1
@@ -112,11 +116,11 @@ in {
             log "Crash monitor started"
 
             # Wait for Noctalia to start
-            while ! ${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' >/dev/null 2>&1; do
+            while ! ${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' >/dev/null 2>&1; do
               sleep 0.5
             done
 
-            NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
+            NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
             log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
 
             # Monitor the process
@@ -152,7 +156,7 @@ in {
 
                 # Wait for Noctalia to restart (if it does)
                 sleep 2
-                NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'qs.*noctalia-shell' | head -1)
+                NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
                 if [ -n "$NEW_PID" ]; then
                   log "Noctalia restarted (new PID: $NEW_PID)"
                   NOCTALIA_PID="$NEW_PID"
@@ -175,9 +179,7 @@ in {
 
     programs.noctalia-shell = {
       enable = true;
-      package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
-        calendarSupport = true;
-      };
+      package = noctaliaPackage;
 
       # Use systemd for auto-start
       systemd.enable = true;
@@ -210,6 +212,9 @@ in {
       };
 
       settings = {
+        # Auto-update plugins on startup
+        plugins.autoUpdate = true;
+
         # Use predefined Monochrome colorscheme (plural key!)
         colorSchemes = {
           useWallpaperColors = false;
