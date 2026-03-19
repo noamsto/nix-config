@@ -267,6 +267,22 @@ in {
                 id = "Workspace";
                 labelMode = "index";
                 showLabelsOnlyWhenOccupied = true;
+                characterCount = 2;
+                colorizeIcons = false;
+                emptyColor = "secondary";
+                enableScrollWheel = true;
+                focusedColor = "primary";
+                followFocusedScreen = false;
+                fontWeight = "bold";
+                groupedBorderOpacity = 1;
+                hideUnoccupied = false;
+                iconScale = 0.8;
+                occupiedColor = "secondary";
+                pillSize = 0.6;
+                showApplications = true;
+                showApplicationsHover = true;
+                showBadge = true;
+                unfocusedIconsOpacity = 1;
               }
             ];
             # Right side: rarely used -> frequent -> critical -> hub

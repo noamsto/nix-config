@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   config,
   inputs,
   ...
@@ -17,173 +18,185 @@
   # This allows Claude Code to maintain its own settings.json for plugins
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
-    text = builtins.toJSON {
-      includeCoAuthoredBy = false;
-      permissions.defaultMode = "acceptEdits";
-      statusLine = {
-        type = "command";
-        command = "${claude-statusline}/bin/claude-statusline";
-      };
-      # Hooks for tmux status integration
-      hooks = {
-        # Session started -> cleanup stale entries, set state based on how session started
-        SessionStart = [
-          {
-            # New session or resume -> idle (waiting for user input)
-            matcher = "startup";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            matcher = "resume";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            matcher = "clear";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            # After compaction -> processing (Claude continues working)
-            matcher = "compact";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-        ];
-        # User submitted prompt -> processing
-        UserPromptSubmit = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-        ];
-        # Tool use -> still processing + psql safety guard
-        PreToolUse = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-          {
-            matcher = "Bash";
-            hooks = [
-              {
-                type = "command";
-                command = "${psql-guard}/bin/claude-psql-guard";
-              }
-            ];
-          }
-        ];
-        # Tool completed -> back to processing (covers permission granted)
-        PostToolUse = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-        ];
-        # Permission prompt -> waiting for user
-        # Other notifications (idle_prompt, auth_success, etc.) -> processing
-        # This handles the case where user responds to permission dialog (no dedicated hook exists)
-        Notification = [
-          {
-            matcher = "permission_prompt";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update waiting";
-              }
-            ];
-          }
-          {
-            # idle_prompt fires after Stop - show done (ready for next prompt)
-            matcher = "idle_prompt";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update done";
-              }
-            ];
-          }
-        ];
-        # Claude finished responding -> done
-        Stop = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update done";
-              }
-            ];
-          }
-        ];
-        # Before compaction -> compacting status
-        PreCompact = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update compacting";
-              }
-            ];
-          }
-        ];
-        # Session ended -> clear status
-        SessionEnd = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update clear";
-              }
-            ];
-          }
-        ];
-      };
-    };
+    text = builtins.toJSON ({
+        includeCoAuthoredBy = false;
+        permissions.defaultMode = "acceptEdits";
+        statusLine = {
+          type = "command";
+          command = "${claude-statusline}/bin/claude-statusline";
+        };
+        # Hooks for tmux status integration
+        hooks = {
+          # Session started -> cleanup stale entries, set state based on how session started
+          SessionStart = [
+            {
+              # New session or resume -> idle (waiting for user input)
+              matcher = "startup";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update cleanup";
+                }
+                {
+                  type = "command";
+                  command = "claude-status-update idle";
+                }
+              ];
+            }
+            {
+              matcher = "resume";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update cleanup";
+                }
+                {
+                  type = "command";
+                  command = "claude-status-update idle";
+                }
+              ];
+            }
+            {
+              matcher = "clear";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update cleanup";
+                }
+                {
+                  type = "command";
+                  command = "claude-status-update idle";
+                }
+              ];
+            }
+            {
+              # After compaction -> processing (Claude continues working)
+              matcher = "compact";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update cleanup";
+                }
+                {
+                  type = "command";
+                  command = "claude-status-update processing";
+                }
+              ];
+            }
+          ];
+          # User submitted prompt -> processing
+          UserPromptSubmit = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update processing";
+                }
+              ];
+            }
+          ];
+          # Tool use -> still processing + psql safety guard
+          PreToolUse = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update processing";
+                }
+              ];
+            }
+            {
+              matcher = "Bash";
+              hooks = [
+                {
+                  type = "command";
+                  command = "${psql-guard}/bin/claude-psql-guard";
+                }
+              ];
+            }
+          ];
+          # Tool completed -> back to processing (covers permission granted)
+          PostToolUse = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update processing";
+                }
+              ];
+            }
+          ];
+          # Permission prompt -> waiting for user
+          # Other notifications (idle_prompt, auth_success, etc.) -> processing
+          # This handles the case where user responds to permission dialog (no dedicated hook exists)
+          Notification = [
+            {
+              matcher = "permission_prompt";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update waiting";
+                }
+              ];
+            }
+            {
+              # idle_prompt fires after Stop - show done (ready for next prompt)
+              matcher = "idle_prompt";
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update done";
+                }
+              ];
+            }
+          ];
+          # Claude finished responding -> done
+          Stop = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update done";
+                }
+              ];
+            }
+          ];
+          # Before compaction -> compacting status
+          PreCompact = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update compacting";
+                }
+              ];
+            }
+          ];
+          # Session ended -> clear status
+          SessionEnd = [
+            {
+              hooks = [
+                {
+                  type = "command";
+                  command = "claude-status-update clear";
+                }
+              ];
+            }
+          ];
+        };
+      }
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        sandbox = {
+          enabled = true;
+          autoAllowBashIfSandboxed = true;
+          filesystem.allowWrite = [
+            "~/.config"
+            "~/.cache"
+            "~/.local"
+            "~/.npm"
+          ];
+        };
+      });
   };
 
   # Wrap claude-code with npx/uvx access and settings
@@ -227,6 +240,6 @@ in {
     #   claude-frontend - adds Playwright MCP
     #   claude-analytics - adds PostHog MCP
     # See mcp-profiles.nix for configuration
-    mcpServers = mcpServers.base;
+    mcpServers = lib.removeAttrs mcpServers.base mcpServers.claudeAiProvided;
   };
 }

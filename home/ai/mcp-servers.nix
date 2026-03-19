@@ -23,6 +23,9 @@ in {
     };
   };
 
+  # MCPs provided natively by claude.ai — exclude from Claude Code
+  claudeAiProvided = ["linear"];
+
   # Optional MCPs (heavy/specialized) - load via profiles or on-demand
   optional = {
     playwright = helpers.mkNpxMcp {

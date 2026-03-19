@@ -40,16 +40,6 @@ in {
       };
     };
 
-    # Notion MCP for documentation/knowledge base work
-    "claude-code/mcp-notion.json".text = builtins.toJSON {
-      mcpServers = {
-        Notion = {
-          type = "http";
-          url = "https://mcp.notion.com/mcp";
-        };
-      };
-    };
-
     # FreeCAD MCP for CAD modeling
     "claude-code/mcp-freecad.json".text = builtins.toJSON {
       mcpServers = {
@@ -68,14 +58,12 @@ in {
   programs.fish.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
-    claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
     claude-cad = "claude --mcp-config ~/.config/claude-code/mcp-freecad.json";
   };
 
   programs.bash.shellAliases = {
     claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
-    claude-docs = "claude --mcp-config ~/.config/claude-code/mcp-notion.json";
     claude-cad = "claude --mcp-config ~/.config/claude-code/mcp-freecad.json";
   };
 }
