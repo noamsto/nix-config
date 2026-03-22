@@ -10,7 +10,11 @@
       owner = config.username;
       mode = "0600";
     };
-    tp-p14s-factify-env.file = "${inputs.mysecrets}/tp-p14s-factify-env.age";
+    tp-p14s-factify-env = {
+      file = "${inputs.mysecrets}/tp-p14s-factify-env.age";
+      owner = config.username;
+      mode = "0600";
+    };
     nixAccessTokens = {
       file = "${inputs.mysecrets}/tp-p14s-factify-nix-access-tokens.age";
       mode = "0440";
