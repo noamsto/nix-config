@@ -41,8 +41,15 @@
     };
   };
 
-  # Declaratively manage wallpaper file
-  xdg.configFile."wallpapers/space_nebula.png" = {
-    source = ./wallpapers/space_nebula.png;
+  # Declaratively manage wallpaper files (for hyprpaper fallback)
+  xdg.configFile."wallpapers/space_nebula.png".source = ./wallpapers/space_nebula.png;
+
+  # Wallpapers for Noctalia shuffle (~/Pictures/Wallpapers)
+  home.file = {
+    "Pictures/Wallpapers/space_nebula.png".source = ./wallpapers/space_nebula.png;
+    "Pictures/Wallpapers/crimson_migration.jpeg".source = ./wallpapers/3840_x_2160_a_silent_migration_across_a_crimson.jpeg;
+    "Pictures/Wallpapers/natures_quiet_masterpiece.jpeg".source = ./wallpapers/3840_x_2160_natures_quiet_masterpiece.jpeg;
+    "Pictures/Wallpapers/still_waters_at_dusk.jpeg".source = ./wallpapers/3840_x_2160_still_waters_at_dusk.jpeg;
+    "Pictures/Wallpapers/island_sunny_day.png".source = ./wallpapers/island_sunny_day_3840_x_2160.png;
   };
 }

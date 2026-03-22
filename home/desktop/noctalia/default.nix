@@ -428,6 +428,9 @@ in {
           directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
           fillMode = "crop";
           setWallpaperOnAllMonitors = true;
+          randomEnabled = true;
+          randomIntervalSec = 1800;
+          wallpaperChangeMode = "random";
         };
 
         # Hooks

@@ -21,7 +21,10 @@
   programs = {
     fish.enable = true;
     dconf.enable = true;
-    ssh.startAgent = false; # Explicitly disable to avoid conflicts with GCR SSH agent
+    ssh = {
+      startAgent = false; # Explicitly disable to avoid conflicts with GCR SSH agent
+      systemd-ssh-proxy.enable = false; # Nix store ownership (nobody:nogroup) breaks OpenSSH strict permissions
+    };
     nix-ld = {
       enable = true;
       libraries = with pkgs; [libgit2 sqlite];
