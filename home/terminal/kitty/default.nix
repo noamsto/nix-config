@@ -78,7 +78,7 @@ in {
       initial_window_width = "120c";
       initial_window_height = "30c";
 
-      mouse_hide_wait = -1;
+      mouse_hide_wait = -1; # hide immediately when typing
       shell_integration = "enabled";
 
       tab_bar_edge = "top";
@@ -99,7 +99,7 @@ in {
 
       single_window_margin_width = -1;
       scrollback_lines = 10000;
-      scrollback_pager_history_size = 0;
+      scrollback_pager_history_size = 0; # use all scrollback for pager
       window_padding_width = 8;
       wayland_titlebar_color = "background";
       update_check_interval = 0;

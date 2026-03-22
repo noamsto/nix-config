@@ -36,8 +36,7 @@ in {
         "xrdb -merge ~/.Xresources"
 
         # Propagate Wayland env to fish (universal vars) and tmux (global env)
-        "fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE'"
-        "fish -c 'set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'"
+        "fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE; set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
         "tmux setenv -g WAYLAND_DISPLAY \"$WAYLAND_DISPLAY\""
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
