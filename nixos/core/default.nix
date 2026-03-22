@@ -44,6 +44,13 @@
   # causing "Service has no ExecStart" warnings on every suspend
   powerManagement.powerDownCommands = "true";
 
+  # Workaround for Claude Code sandbox TMPDIR bug (#29329):
+  # Sandbox sets TMPDIR=/tmp/claude but only creates /tmp/claude-{UID}.
+  # Symlink bridges the gap so tools find a writable temp dir.
+  systemd.tmpfiles.rules = [
+    "L /tmp/claude - - - - /tmp/claude-1000"
+  ];
+
   # Increase inotify limits for file-watching tools (Claude Code, VS Code, etc.)
   # With 2M watches (~2GB max memory if all used), plenty of headroom
   boot.kernel.sysctl = {

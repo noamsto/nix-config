@@ -89,6 +89,12 @@ pkgs.writeShellApplication {
     reset="\033[0m"
 
     # ========================================
+    # Rate limits (Claude Code 2.1.80+)
+    # ========================================
+    rate_5h_pct=$(echo "$input" | jq -r '.rate_limits[]? | select(.type == "5_hour") | .used_percentage // empty' 2>/dev/null)
+    rate_7d_pct=$(echo "$input" | jq -r '.rate_limits[]? | select(.type == "7_day") | .used_percentage // empty' 2>/dev/null)
+
+    # ========================================
     # Build statusline components
     # ========================================
 
@@ -97,15 +103,14 @@ pkgs.writeShellApplication {
 
     # Token info with color coding
     if [[ "$TOKEN_LIMIT" -ge 1000000 ]]; then
-      # For 1M contexts: show as "200k/1M (20%)"
+      # For 1M contexts: show as "200k/1M" (no percentage - obvious from ratio)
       token_count_k=$((token_count / 1000))
       token_limit_m=$(echo "scale=0; $TOKEN_LIMIT / 1000000" | bc 2>/dev/null || echo "1")
 
-      token_display=$(printf "%b📊 %dk/%sM (%s%%)%b" \
+      token_display=$(printf "%b📊 %dk/%sM%b" \
         "$token_color" \
         "$token_count_k" \
         "$token_limit_m" \
-        "$token_percent" \
         "$reset")
     else
       # Format as thousands (k)
@@ -125,9 +130,36 @@ pkgs.writeShellApplication {
     # Message count
     msg_display=$(printf "\033[1;35m💬 %d msgs\033[0m" "$message_count")
 
+    # Rate limit display with color coding
+    rate_display=""
+    if [[ -n "$rate_5h_pct" || -n "$rate_7d_pct" ]]; then
+      rate_parts=""
+      for label_pct in "5h:$rate_5h_pct" "7d:$rate_7d_pct"; do
+        label=''${label_pct%%:*}
+        pct=''${label_pct#*:}
+        if [[ -z "$pct" ]]; then continue; fi
+        pct_int=''${pct%%.*}
+        if [[ "$pct_int" -ge 90 ]]; then
+          rc="\033[1;31m"  # Red
+        elif [[ "$pct_int" -ge 70 ]]; then
+          rc="\033[1;33m"  # Yellow
+        else
+          rc="\033[1;32m"  # Green
+        fi
+        rate_parts="''${rate_parts}''${rate_parts:+ }''${rc}''${label}:''${pct_int}%''${reset}"
+      done
+      if [[ -n "$rate_parts" ]]; then
+        rate_display=$(printf "⚡ %b" "$rate_parts")
+      fi
+    fi
+
     # ========================================
     # Output single line
     # ========================================
-    echo -e "''${model_display} | ''${token_display} | ''${duration_display} | ''${msg_display}"
+    line="''${model_display} | ''${token_display} | ''${duration_display} | ''${msg_display}"
+    if [[ -n "$rate_display" ]]; then
+      line="''${line} | ''${rate_display}"
+    fi
+    echo -e "$line"
   '';
 }
