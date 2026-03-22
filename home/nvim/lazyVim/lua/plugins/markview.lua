@@ -5,10 +5,10 @@ return {
   },
   enabled = true,
   event = "InsertEnter",
-  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
+  ft = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante", "octo" },
   opts = {
     preview = {
-      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante" },
+      filetypes = { "markdown", "norg", "rmd", "org", "vimwiki", "codecompanion", "Avante", "octo" },
       ignore_buftypes = {},
       modes = { "n", "no", "c", "i" },
       hybrid_modes = { "n", "no", "c", "i" },

@@ -3,7 +3,6 @@
   pkgs,
   ...
 }: {
-  # Define a user account. Don't forget to set a password with 'passwd'.
   users.users.${config.username} = {
     isNormalUser = true;
     description = config.user-full-name;
@@ -12,6 +11,5 @@
     shell = pkgs.fish;
   };
 
-  # Enable fish shell system-wide
   programs.fish.enable = true;
 }

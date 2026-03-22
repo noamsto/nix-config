@@ -8,14 +8,9 @@
   # Shared MCP server definitions
   mcpServers = import ../mcp-servers.nix {inherit pkgs;};
 
-  # Statusline script package
   claude-statusline = pkgs.callPackage ./statusline.nix {};
-
-  # PreToolUse hook: auto-approve safe psql, block destructive (DROP/TRUNCATE/DELETE/REVOKE)
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
 
-  # Create nix-managed settings file (merged via --settings flag)
-  # This allows Claude Code to maintain its own settings.json for plugins
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON ({
@@ -25,12 +20,11 @@
           type = "command";
           command = "${claude-statusline}/bin/claude-statusline";
         };
-        # Hooks for tmux status integration
+        # Tmux status integration state machine
         hooks = {
-          # Session started -> cleanup stale entries, set state based on how session started
+          # startup/resume/clear -> idle, compact -> processing
           SessionStart = [
             {
-              # New session or resume -> idle (waiting for user input)
               matcher = "startup";
               hooks = [
                 {
@@ -70,7 +64,6 @@
               ];
             }
             {
-              # After compaction -> processing (Claude continues working)
               matcher = "compact";
               hooks = [
                 {
@@ -84,7 +77,6 @@
               ];
             }
           ];
-          # User submitted prompt -> processing
           UserPromptSubmit = [
             {
               hooks = [
@@ -95,7 +87,6 @@
               ];
             }
           ];
-          # Tool use -> still processing + psql safety guard
           PreToolUse = [
             {
               hooks = [
@@ -115,7 +106,6 @@
               ];
             }
           ];
-          # Tool completed -> back to processing (covers permission granted)
           PostToolUse = [
             {
               hooks = [
@@ -126,9 +116,7 @@
               ];
             }
           ];
-          # Permission prompt -> waiting for user
-          # Other notifications (idle_prompt, auth_success, etc.) -> processing
-          # This handles the case where user responds to permission dialog (no dedicated hook exists)
+          # permission_prompt -> waiting, idle_prompt -> done
           Notification = [
             {
               matcher = "permission_prompt";
@@ -140,7 +128,6 @@
               ];
             }
             {
-              # idle_prompt fires after Stop - show done (ready for next prompt)
               matcher = "idle_prompt";
               hooks = [
                 {
@@ -150,7 +137,6 @@
               ];
             }
           ];
-          # Claude finished responding -> done
           Stop = [
             {
               hooks = [
@@ -161,7 +147,6 @@
               ];
             }
           ];
-          # Before compaction -> compacting status
           PreCompact = [
             {
               hooks = [
@@ -172,7 +157,6 @@
               ];
             }
           ];
-          # Session ended -> clear status
           SessionEnd = [
             {
               hooks = [
@@ -200,47 +184,30 @@
       });
   };
 
-  # Wrap claude-code with npx/uvx access and settings
-  # Uses wrappers lib for clean PATH injection
   claude-wrapped = inputs.wrappers.lib.wrapPackage {
     inherit pkgs;
     package = pkgs.claude-code;
-    # Make npx (nodejs) and uvx (uv) available for MCP servers and tools
     runtimeInputs = [pkgs.nodejs pkgs.uv];
   };
 
-  # Final wrapper that adds settings flag
-  # Theme is handled by theme-toggle.sh updating ~/.claude.json directly
-  # DISABLE_INSTALLATION_CHECKS=1 suppresses false "native installation" warnings
-  # when running via Nix (see: https://github.com/anthropics/claude-code/issues/8523)
+  # DISABLE_INSTALLATION_CHECKS: suppress false warnings when running via Nix
+  # https://github.com/anthropics/claude-code/issues/8523
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';
 in {
-  # Import MCP profiles module (generates conditional MCP configs and aliases)
   imports = [./mcp-profiles.nix];
 
-  # Global Claude instructions - out-of-store symlink so Claude can edit it
-  # The file is tracked in nix-config repo
+  # Out-of-store symlink so Claude can edit it at runtime
   home.file.".claude/CLAUDE.md".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
 
   programs.claude-code = {
     enable = true;
-    # Use our wrapper instead of the direct package
     package = claude-wrapper;
-
-    # Don't generate settings.json - let Claude Code manage it
-    # (the wrapper handles --settings for HM-managed config)
-    settings = {};
-
-    # Use shared base MCPs (heavy MCPs loaded via --mcp-config aliases)
-    # See ../mcp-servers.nix for definitions
-    # NOTE: Playwright and PostHog MCPs loaded conditionally via aliases:
-    #   claude-frontend - adds Playwright MCP
-    #   claude-analytics - adds PostHog MCP
-    # See mcp-profiles.nix for configuration
+    settings = {}; # Managed via --settings flag in wrapper
+    # Heavy MCPs (Playwright, PostHog) loaded conditionally via mcp-profiles.nix aliases
     mcpServers = lib.removeAttrs mcpServers.base mcpServers.claudeAiProvided;
   };
 }

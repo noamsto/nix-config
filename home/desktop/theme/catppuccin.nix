@@ -8,10 +8,7 @@
 in {
   imports = [inputs.catppuccin.homeModules.catppuccin];
 
-  # btop themes are now generated from palette in home/terminal/btop.nix
-
-  # Clean up theme-managed files before Home Manager creates symlinks
-  # This prevents "file would be clobbered" errors after theme-toggle modifies configs
+  # Prevent "file would be clobbered" errors after theme-toggle modifies configs
   home.activation.cleanThemeFiles = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
     # Remove files that theme-toggle may have modified (no longer symlinks)
     for f in \
@@ -43,20 +40,9 @@ in {
   catppuccin = {
     flavor = "mocha";
 
-    # === BROWSERS ===
     brave.enable = true;
-    # Firefox: Use built-in "System theme" or Catppuccin extension for auto light/dark
-    # The nix module sets a fixed flavor, so we skip it for dynamic theming
-
-    # === GTK ===
-    # Using standard Papirus icons (set in gtk.nix), not catppuccin-papirus-folders
-    gtk.icon.enable = false;
-
-    # === LOCK SCREEN ===
-    # Using Noctalia's built-in lock screen (hyprlock removed)
-
-    # === QT ===
-    # Kvantum theming for Qt apps (runtime switchable via theme-toggle)
+    # Firefox skipped: nix module sets fixed flavor, incompatible with dynamic theming
+    gtk.icon.enable = false; # Using Papirus (set in gtk.nix)
     kvantum.enable = true;
   };
 }

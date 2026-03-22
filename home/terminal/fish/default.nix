@@ -6,13 +6,8 @@
     nix-search-tv
   ];
 
-  # === DYNAMIC THEME SUPPORT ===
-  # Fish themes for light/dark mode switching
-  # catppuccin.fish is disabled to avoid `fish_config theme choose` conflicting
-  # with dynamic theme switching. Both themes are defined here manually.
+  # catppuccin.fish disabled — conflicts with dynamic theme switching via theme-toggle
   xdg.configFile = {
-    # Catppuccin Latte theme (light mode)
-    # Official colors from https://github.com/catppuccin/fish
     "fish/themes/Catppuccin Latte.theme".text = ''
       # name: 'Catppuccin Latte'
       # url: 'https://github.com/catppuccin/fish'
@@ -48,8 +43,6 @@
       fish_pager_color_selected_background --background=ccd0da
     '';
 
-    # Catppuccin Mocha theme (dark mode)
-    # Official colors from https://github.com/catppuccin/fish
     "fish/themes/Catppuccin Mocha.theme".text = ''
       # name: 'Catppuccin Mocha'
       # url: 'https://github.com/catppuccin/fish'
@@ -84,7 +77,6 @@
       fish_pager_color_selected_background --background=45475a
     '';
 
-    # __reload_theme function for dynamic theme switching
     "fish/functions/__reload_theme.fish".text = ''
       function __reload_theme
           # Accept theme as argument, or read from state file
@@ -103,13 +95,11 @@
               end
           end
 
-          # Select theme file
           set -l theme_file "$HOME/.config/fish/themes/Catppuccin Mocha.theme"
           if test "$current_theme" = "light"
               set theme_file "$HOME/.config/fish/themes/Catppuccin Latte.theme"
           end
 
-          # Load colors from theme file
           if test -f "$theme_file"
               while read -l line
                   # Skip comments and empty lines
@@ -140,36 +130,28 @@
       end
     '';
 
-    # TTY auto-logout for security
-    # Logs out after 5 minutes of inactivity on TTY sessions only
-    # Does NOT affect graphical terminals (foot, kitty, etc.)
+    # TTY-only: auto-logout after idle timeout (doesn't affect graphical terminals)
     "fish/conf.d/tty-auto-logout.fish".text = ''
-      # Only run on real TTYs (tty1-tty6), not graphical terminals
       if not status is-interactive
           exit
       end
 
-      # Check if we're on a TTY (not a pts/pseudo-terminal from graphical apps)
       if not string match -qr '^/dev/tty[0-9]+$' (tty)
           exit
       end
 
-      # TTY auto-logout: 2 minutes (120 seconds) of inactivity
       set -g __tty_logout_timeout 120
 
       function __tty_idle_logout_reset --on-event fish_prompt
-          # Kill any existing timer
           if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
               kill $__tty_idle_timer_pid 2>/dev/null
           end
 
-          # Start new timer - sends SIGHUP to fish after timeout
           fish -c "sleep $__tty_logout_timeout; kill -HUP $fish_pid 2>/dev/null" &
           set -g __tty_idle_timer_pid $last_pid
           disown $__tty_idle_timer_pid 2>/dev/null
       end
 
-      # Clean up timer on exit
       function __tty_idle_logout_cleanup --on-event fish_exit
           if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
               kill $__tty_idle_timer_pid 2>/dev/null
@@ -177,29 +159,17 @@
       end
     '';
 
-    # Dynamic theme initialization (runs on shell startup)
-    # Named zzz- to run after other conf.d scripts
+    # zzz- prefix: run after other conf.d scripts
     "fish/conf.d/zzz-dynamic-theme.fish".text = ''
-      # Dynamic theme loading based on current theme mode
-      # This overrides the hardcoded theme in config.fish
-
-      # Only run in interactive shells
       status is-interactive; or exit
 
-      # Watch for fzf_theme_colors changes (set by theme-toggle)
-      # This updates FZF_DEFAULT_OPTS automatically in all running fish sessions
       function __on_fzf_theme_change --on-variable fzf_theme_colors
           if set -q fzf_theme_colors
-              # Get base opts without our theme colors
               set -l base_opts (string replace -r -- '--color=[^ ]+$' "" $FZF_DEFAULT_OPTS; or true)
               set -gx FZF_DEFAULT_OPTS $base_opts $fzf_theme_colors
           end
       end
 
-      # NOTE: No watcher needed for BAT_THEME - universal variables are automatically
-      # available across all fish sessions. We just export it in interactiveShellInit.
-
-      # Reload theme colors based on state file
       __reload_theme
     '';
   };
@@ -214,11 +184,7 @@
       enable = true;
       generateCompletions = true; # Fixed in home-manager PR #8226 (Nov 2025)
 
-      # Prefer abbreviations over aliases (shows full command, enables completions)
       preferAbbrs = true;
-
-      # Fish uses its own history format, no need to configure path
-      # History is automatically stored in ~/.local/share/fish/fish_history
 
       shellAliases = {
         ll = "eza -l --icons --git";
@@ -234,24 +200,19 @@
         cr = "claude --resume";
         cf = "claude-frontend";
 
-        # Essential git aliases not covered by forgit (forgit has ga, gd, glo, gcb, gss, grb, etc.)
-        # Status & info
+        # Git (aliases not covered by forgit)
         gsb = "git status -sb";
         gst = "git status";
-
-        # Branching & switching
         gsw = "git switch";
         gswc = "git switch --create";
         gcom = "git checkout main || git checkout master";
-
-        # Worktree management
+        # Worktrees
         gwa = "git worktree add";
         gwl = "git worktree list";
         gwr = "git worktree remove";
         gwp = "git worktree prune";
         gwm = "git worktree move";
-
-        # Remote operations
+        # Remote
         gpf = "git push --force-with-lease";
         gpu = "git push -u origin HEAD";
         gp = "git push";
@@ -259,7 +220,6 @@
         gf = "git fetch";
         gfa = "git fetch --all --prune";
         gup = "git pull --rebase";
-
         # Staging & committing
         gaa = "git add --all";
         gc = "git commit -v";
@@ -268,13 +228,10 @@
         gcan = "git commit -v -a --no-edit --amend";
         gwip = "git add -A && git commit -m 'WIP'";
         gunwip = "git reset HEAD~1";
-
         # Rebasing
         grbi = "git-forgit rebase -i";
         grbc = "git rebase --continue";
         grba = "git rebase --abort";
-
-        # Reset
         grhh = "git reset --hard";
       };
 
@@ -298,17 +255,14 @@
       ];
 
       interactiveShellInit = ''
-        # Disable greeting
         set fish_greeting
 
-        # History optimizations
-        set -g fish_history_save_max 10000           # Limit saved history items
-        set -g fish_history_max_items 100000         # Max items to keep in memory
-        set -g fish_history_ignore_space yes         # Don't save commands starting with space
-        set -g fish_history_ignore_duplicates yes    # Remove consecutive duplicates
-        set -g fish_history_search_case_sensitive no # Case-insensitive history search
+        set -g fish_history_save_max 10000
+        set -g fish_history_max_items 100000
+        set -g fish_history_ignore_space yes
+        set -g fish_history_ignore_duplicates yes
+        set -g fish_history_search_case_sensitive no
 
-        # Tmux function to auto-attach or create session
         function tmux
           if test (count $argv) -eq 0
             # No arguments, use smart attach/create behavior
@@ -323,13 +277,11 @@
           end
         end
 
-        # Load work aliases if available
         if test -f /etc/agenix/work_aliases.fish
           echo "Loading Work Aliases"
           source /etc/agenix/work_aliases.fish
         end
 
-        # Load host environment if available
         if test -f /etc/agenix/host_env.env
           echo "Loading Host Env"
           # Fish can source bash-style env files
@@ -340,7 +292,6 @@
           end
         end
 
-        # Bash-style history shortcuts
         abbr -a !! --position anywhere --function last_history_item
         abbr -a '!$' --position anywhere --function last_command_arg
 
@@ -353,7 +304,6 @@
           echo $args[-1]
         end
 
-        # Vi mode (built-in)
         fish_vi_key_bindings
 
         # Configure fzf.fish to use Alt+X for variables instead of Ctrl+V (conflicts with paste)
@@ -375,27 +325,22 @@
         bind -M default \c_ undo # Ctrl+_ in normal mode
         bind -M insert \cz undo  # Alternative Ctrl+Z in insert mode
 
-        # fzf history configuration
-        set -gx fzf_history_opts --tmux 80%,70%                      # Popup: 80% width, 70% height
-        set -gx fzf_history_opts $fzf_history_opts --preview-window 'down,50%,wrap'  # Bigger preview (50% of popup)
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'    # Toggle preview with Ctrl+/
-        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-j:preview-down'       # Scroll preview down
-        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'         # Scroll preview up
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down' # Page down in preview
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'   # Page up in preview
+        set -gx fzf_history_opts --tmux 80%,70%
+        set -gx fzf_history_opts $fzf_history_opts --preview-window 'down,50%,wrap'
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'
+        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-j:preview-down'
+        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down'
+        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'
 
-        # Apply fzf theme colors from universal variable (set by theme-toggle)
-        # This overrides catppuccin's build-time colors for runtime theme switching
         if set -q fzf_theme_colors
           set -gx FZF_DEFAULT_OPTS $FZF_DEFAULT_OPTS $fzf_theme_colors
         end
 
-        # Apply bat theme from universal variable (set by theme-toggle)
         if set -q BAT_THEME
           set -gx BAT_THEME $BAT_THEME
         end
 
-        # Function to clean old or duplicate history
         function history-clean
           history --merge                              # Merge all sessions
           history --delete --prefix "cd "              # Remove simple cd commands
@@ -406,7 +351,6 @@
       '';
 
       loginShellInit = ''
-        # Locale settings
         set -gx LANG "en_US.UTF-8"
         set -gx LANGUAGE "en_US.UTF-8"
         set -gx LC_ALL "en_US.UTF-8"

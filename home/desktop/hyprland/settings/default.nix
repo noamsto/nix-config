@@ -6,16 +6,8 @@ in {
   imports = [./bindings.nix ./window_rule.nix ./animations.nix];
   wayland.windowManager.hyprland = {
     settings = {
-      # Source hyprdynamicmonitors generated config
       source = ["~/.config/hypr/monitors.conf"];
-
-      monitor = [
-        # Fallback for any monitor not configured by hyprdynamicmonitors
-        ",preferred,auto,auto"
-      ];
-      # Workspace rules are defined in hyprdynamicmonitors profile configs
-      # (profiles/docked-home.conf, profiles/undocked.conf, etc.)
-      # This ensures workspace-to-monitor bindings are applied correctly on reload
+      monitor = [",preferred,auto,auto"];
 
       env = [
         "XCURSOR_SIZE,${toString pointer.size}"
@@ -26,36 +18,24 @@ in {
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
-        # GTK theme - Adwaita:dark for dark variant (theme-toggle updates this at runtime)
-        "GTK_THEME,Adwaita:dark"
+        "GTK_THEME,Adwaita:dark" # theme-toggle updates at runtime
 
-        # Chromium-based browser fixes:
-        # 1. --disable-accelerated-2d-canvas: Fix AMD Radeon 780M PDF rendering artifacts
-        #    Upstream bug: https://issues.chromium.org/40184451
-        # 2. --disable-features=WaylandWpColorManagerV1: Fix crashes when moving between monitors
-        #    Upstream bug: Chrome 141 Wayland regression (fixed in main, Oct 2025)
-        #    Issue: https://github.com/brave/brave-browser/issues/49921
-        "BRAVE_USER_FLAGS,--disable-accelerated-2d-canvas --disable-features=WaylandWpColorManagerV1"
-        "CHROMIUM_USER_FLAGS,--disable-accelerated-2d-canvas --disable-features=WaylandWpColorManagerV1"
+        # --disable-accelerated-2d-canvas: AMD Radeon 780M PDF rendering artifacts
+        # https://issues.chromium.org/40184451
+        "BRAVE_USER_FLAGS,--disable-accelerated-2d-canvas"
+        "CHROMIUM_USER_FLAGS,--disable-accelerated-2d-canvas"
 
         "WLR_NO_HARDWARE_CURSORS,1"
 
-        # Quickshell (Noctalia) icon theme for proper app icon lookup
         "QS_ICON_THEME,${iconThemeName}"
       ];
 
       exec-once = [
-        # set cursor for HL itself
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
-
-        # Restore theme preference (dark/light mode)
         "theme-toggle restore"
-
-        # Load XWayland HiDPI settings
         "xrdb -merge ~/.Xresources"
 
-        # Propagate Hyprland/Wayland env to all running fish shells (universal vars)
-        # and tmux global env (for non-fish shells)
+        # Propagate Wayland env to fish (universal vars) and tmux (global env)
         "fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE'"
         "fish -c 'set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'"
         "tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE \"$HYPRLAND_INSTANCE_SIGNATURE\""
@@ -64,33 +44,26 @@ in {
 
         "kitty --single-instance --instance-group=hypr"
 
-        # Dock now handled by Noctalia Shell
-
-        # Valent - KDE Connect protocol for phone integration
         "valent --gapplication-service"
-
-        # "wl-paste -p -w wl-copy &" # Merge primary selection clipboard with regular clipboard
       ];
 
       input = {
         kb_layout = "us,il";
         kb_options = "grp:win_space_toggle,caps:escape";
-        # focus change on cursor move
         follow_mouse = 1;
-        accel_profile = "adaptive"; # Default for trackpad
+        accel_profile = "adaptive";
         sensitivity = 0;
 
         touchpad = {
           natural_scroll = true;
-          scroll_factor = 0.6; # Reduced for finer control in 3D viewports
+          scroll_factor = 0.6;
           disable_while_typing = true;
           tap-to-click = true;
           # Note: clickfinger and drag_lock are configured at system level in nixos/desktop/default.nix
         };
       };
 
-      # External mice - flat acceleration for consistent 1:1 movement
-      # Glob pattern catches MX Master 3, MX Master 3S, MX Anywhere, etc.
+      # External mice: flat for 1:1 movement, trackpoint: adaptive with reduced speed
       device = [
         {
           name = "logitech-wireless-mouse-*";
@@ -100,25 +73,24 @@ in {
           name = "logitech-usb-receiver-mouse";
           accel_profile = "flat";
         }
-        # TrackPoint (red point) - adaptive acceleration with reduced sensitivity
         {
           name = "tpps/2-elan-trackpoint";
-          sensitivity = -0.4; # Reduce overall speed (range: -1.0 to 1.0)
-          accel_profile = "adaptive"; # Natural acceleration - light touch = slow, hard push = fast
+          sensitivity = -0.4;
+          accel_profile = "adaptive";
         }
       ];
 
       general = {
         gaps_in = 5;
-        gaps_out = 15; # Increased for more margins in fullscreen mode
-        border_size = 2; # Reduced for subtlety
-        "col.active_border" = "rgba(89b4fa66) rgba(cba6f766) 45deg"; # Blue to mauve gradient with reduced opacity
-        "col.inactive_border" = "rgba(31324455)"; # Even more subtle inactive border
+        gaps_out = 15;
+        border_size = 2;
+        "col.active_border" = "rgba(89b4fa66) rgba(cba6f766) 45deg";
+        "col.inactive_border" = "rgba(31324455)";
 
         allow_tearing = true;
         resize_on_border = true;
-        extend_border_grab_area = 15; # Extends border grab area (works on floating windows)
-        hover_icon_on_border = true; # Shows resize cursor on border hover
+        extend_border_grab_area = 15;
+        hover_icon_on_border = true;
         no_focus_fallback = true;
         layout = "dwindle";
       };
@@ -150,15 +122,13 @@ in {
           offset = "0 15";
           range = 100;
           scale = 0.97;
-          render_power = 3; # Increased from 2 for stronger shadow effect
+          render_power = 3;
           ignore_window = true;
-          color = "rgba(00000099)"; # Increased opacity from 55 to 99 for darker shadow
+          color = "rgba(00000099)";
         };
       };
       dwindle = {
-        # keep floating dimensions while tiling
         pseudotile = true;
-        # preserve split orientation when toggling
         preserve_split = true;
       };
 
@@ -167,25 +137,18 @@ in {
       };
 
       misc = {
-        # disable auto polling for config file changes
         disable_autoreload = true;
-
         force_default_wallpaper = 0;
         disable_hyprland_logo = true;
-
-        # disable dragging animation
         animate_mouse_windowdragging = false;
 
-        # enable variable refresh rate (effective depending on hardware)
-        vrr = 2; # Improved VRR mode
+        vrr = 2;
         vfr = true;
 
-        # enable window swallowing
         enable_swallow = true;
         swallow_regex = "^(foot|kitty)$";
 
-        # Fullscreen behavior
-        layers_hog_keyboard_focus = true; # Ensure fullscreen windows get keyboard focus
+        layers_hog_keyboard_focus = true;
 
         # Allow a new lockscreen to take over if the previous one crashed
         # (e.g. Noctalia dies during monitor topology change on undock)
@@ -193,54 +156,14 @@ in {
       };
       render = {
         direct_scanout = true;
-        # explicit_sync is now default in Hyprland 0.50+, no need to configure
       };
 
-      # Gesture bindings (Hyprland 0.51+ new syntax)
-      # Format: fingers, direction, action
-      # Note: Only workspace action is confirmed to work reliably in Hyprland 0.51
       gesture = [
-        # === 3-FINGER GESTURES (Primary Workflow Navigation) ===
-        # Horizontal swipe: Switch workspaces
         "3, horizontal, workspace"
-
-        # === PINCH GESTURES ===
-        # 2-finger pinch: Passed through to applications (Blender, Bambu Studio, browsers)
-        # This allows native app zoom/rotate functionality
-
-        # Note: Additional gestures can be added using libinput-gestures
-        # See home/desktop/hyprland/services/libinput-gestures.nix
       ];
 
       xwayland.force_zero_scaling = true;
       debug.disable_logs = false;
-      # plugin = {
-      #   hyprbars = {
-      #     bar_height = 24;
-      #     bar_precedence_over_border = true;
-      #     bar_text_font = "FiraCode Nerd Font";
-      #     "col.text" = "rgb(cdd6f4)";
-      #     "bar_color" = "rgba(1e1e2ecc)";
-      #     "bar_text_size" = 12;
-      #
-      #     hyprbars-button = [
-      #       "rgb(f38ba8), 16, 󰖭, hyprctl dispatch killactive"
-      #       "rgb(a6e3a1), 16, 󰖯, hyprctl dispatch fullscreen 1"
-      #       "rgb(f9e2af), 16, 󰐃, hyprctl dispatch pin active"
-      #     ];
-      #   };
-      #
-      #   hyprexpo = {
-      #     columns = 3;
-      #     gap_size = 4;
-      #     bg_col = "rgb(000000)";
-      #     workspace_method = "first 1";
-      #
-      #     enable_gesture = true;
-      #     gesture_distance = 250;
-      #     gesture_positive = false;
-      #   };
-      # };
     };
   };
 }

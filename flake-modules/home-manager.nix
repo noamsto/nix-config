@@ -1,6 +1,5 @@
 # Home Manager configurations
 {inputs, ...}: let
-  # Import shared host configurations
   hostConfigs = import ../lib/host-configs.nix;
 
   # Helper to create x86_64 Home Manager configuration

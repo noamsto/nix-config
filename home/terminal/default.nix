@@ -7,8 +7,6 @@
 }: let
   isServer = osConfig.machine.type == "server";
 in {
-  # Add ~/.local/bin to PATH for tools that install there (pip --user, cargo install, etc.)
-  # Also silences Claude Code "native installation" warning
   home.sessionPath = ["$HOME/.local/bin"];
 
   imports = [

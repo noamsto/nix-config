@@ -5,12 +5,6 @@
 # Theme switching: Noctalia is the source of truth for dark/light mode.
 # When toggled (via keybind or GUI), Noctalia triggers theme-toggle via hook.
 #
-# TODO: Dock icons missing for flatpak apps and NixOS-wrapped binaries
-#   - Issue: Window class doesn't match icon name (e.g., "BambuStudio" vs "com.bambulab.BambuStudio")
-#   - Tracking: https://github.com/noctalia-dev/noctalia-shell/issues/1172
-#   - Fix: Noctalia needs to use heuristicLookup instead of exact byId matching
-#   - Workaround if needed: Create icon symlinks in xdg.dataFile
-#
 # NOTE: This module is only imported when desktop.mode == "hyprland"
 # (see home/desktop/default.nix), so no runtime check needed here.
 {
