@@ -5,5 +5,9 @@
     packages = [
       "com.bambulab.BambuStudio"
     ];
+
+    overrides."com.bambulab.BambuStudio".Context.filesystems = [
+      "xdg-config/BambuStudio"
+    ];
   };
 }

@@ -679,12 +679,12 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1774175339,
-        "narHash": "sha256-VOjg6lHM9GZk86eGIT8jIpqE29ekHykcsnWQzTq8D2s=",
-        "rev": "e063bcdadbcb856d081f5ea26d6ce781383e5770",
-        "revCount": 198,
+        "lastModified": 1774185612,
+        "narHash": "sha256-O9HTWDRS4RhWe8cm9TYkE69bYGF8fhZHwqOlbO/EtX8=",
+        "rev": "5ff152fddd429662ca1f185773ad9d8e74f2ac70",
+        "revCount": 201,
         "type": "tarball",
-        "url": "https://api.flakehub.com/f/pinned/noamsto/go-bills/0.1.198%2Brev-e063bcdadbcb856d081f5ea26d6ce781383e5770/019d151a-faa1-7d86-ab63-d26890edb76a/source.tar.gz"
+        "url": "https://api.flakehub.com/f/pinned/noamsto/go-bills/0.1.201%2Brev-5ff152fddd429662ca1f185773ad9d8e74f2ac70/019d15b7-cdba-79dc-b725-1843e1782955/source.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -873,6 +873,21 @@
       "original": {
         "type": "tarball",
         "url": "https://flakehub.com/f/DeterminateSystems/nix-src/%2A"
+      }
+    },
+    "nix-flatpak": {
+      "locked": {
+        "lastModified": 1768656715,
+        "narHash": "sha256-Sbh037scxKFm7xL0ahgSCw+X2/5ZKeOwI2clqrYr9j4=",
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "rev": "123fe29340a5b8671367055b75a6e7c320d6f89a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "gmodena",
+        "repo": "nix-flatpak",
+        "type": "github"
       }
     },
     "nix-search-tv": {
@@ -1386,6 +1401,7 @@
         "llm-agents": "llm-agents",
         "mcp-servers-nix": "mcp-servers-nix",
         "mysecrets": "mysecrets",
+        "nix-flatpak": "nix-flatpak",
         "nix-search-tv": "nix-search-tv",
         "nixos-anywhere": "nixos-anywhere",
         "nixos-hardware": "nixos-hardware",
