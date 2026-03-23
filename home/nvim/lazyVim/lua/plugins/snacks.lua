@@ -1,5 +1,15 @@
 return {
   "folke/snacks.nvim",
+  -- Disable snacks GitHub picker keys — they hijack <leader>g* used by Octo
+  keys = {
+    { "<leader>gh", false },
+    { "<leader>gH", false },
+    { "<leader>gi", false },
+    { "<leader>gI", false },
+    { "<leader>gp", false },
+    { "<leader>gP", false },
+    { "<leader>gf", false },
+  },
   ---@type snacks.Config
   opts = {
     image = {

@@ -152,6 +152,7 @@ in {
     # this via dconf and GTK_THEME env var. Electron apps read color-scheme
     # from the portal which is updated dynamically.
 
+    gtk4.theme = null;
     gtk4.extraConfig = {
       gtk-enable-animations = true;
       gtk-overlay-scrolling = true;

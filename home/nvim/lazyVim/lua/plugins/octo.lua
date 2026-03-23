@@ -63,6 +63,23 @@ return {
 
       { "@", "@<C-x><C-o>", mode = "i", ft = "octo", silent = true },
       { "#", "#<C-x><C-o>", mode = "i", ft = "octo", silent = true },
+      {
+        "<localleader><space>",
+        function()
+          local layout = require("octo.reviews").get_current_layout()
+          if not layout then return end
+          local panel = layout.file_panel
+          for line = vim.fn.line("'<"), vim.fn.line("'>") do
+            local file = panel.files[line - 1] -- header_size = 1
+            if file then file:toggle_viewed() end
+          end
+          panel:render()
+          panel:redraw()
+        end,
+        desc = "Toggle viewed (visual)",
+        mode = "v",
+        ft = "octo",
+      },
     },
   },
 }
