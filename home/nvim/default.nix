@@ -6,6 +6,7 @@
 }: {
   xdg.configFile = {
     "nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/lazyVim";
+    "harper-ls/dictionary.txt".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/harper-dictionary.txt";
   };
 
   programs.neovim = {
@@ -65,7 +66,6 @@
       lldb
 
       marksman # Markdown
-      harper # Grammar checker for developers
       hadolint
       uv
 

@@ -54,6 +54,7 @@
     "catwalk"
     "screen-recorder"
     "tailscale"
+    "valent-connect"
   ];
 in {
   imports = [
@@ -65,7 +66,8 @@ in {
     # Add helper scripts to PATH
     # gpu-screen-recorder is required by the screen-recorder plugin
     # gnome-calendar is used to add Google Calendar accounts to evolution-data-server
-    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.gnome-calendar pkgs.gnome-control-center];
+    # glib.bin provides gdbus, required by valent-connect plugin for D-Bus queries
+    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.gnome-calendar pkgs.gnome-control-center pkgs.glib.bin];
 
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
@@ -75,6 +77,23 @@ in {
       noctalia-shell.Service.Environment = lib.mkForce [
         "QS_ICON_THEME=${config.gtk.iconTheme.name}"
       ];
+
+      # Valent daemon - auto-restarts if it crashes (replaces exec-once)
+      valent = {
+        Unit = {
+          Description = "Valent - KDE Connect protocol implementation";
+          After = ["graphical-session.target"];
+          PartOf = ["graphical-session.target"];
+        };
+        Service = {
+          ExecStart = "${pkgs.valent}/bin/valent --gapplication-service";
+          Restart = "on-failure";
+          RestartSec = "3s";
+        };
+        Install = {
+          WantedBy = ["graphical-session.target"];
+        };
+      };
 
       # Systemd service to restore wallpaper after Noctalia starts
       noctalia-restore-wallpaper = {
@@ -295,6 +314,7 @@ in {
                 id = "Network";
                 displayMode = "onhover";
               }
+              {id = "plugin:valent-connect";}
               {
                 id = "Bluetooth";
                 displayMode = "onhover";

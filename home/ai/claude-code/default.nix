@@ -180,6 +180,7 @@
             "~/.npm"
             "~/go"
           ];
+          network.allowedDomains = ["*"];
         };
       });
   };
