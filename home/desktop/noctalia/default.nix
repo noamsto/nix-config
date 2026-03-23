@@ -18,15 +18,10 @@
     calendarSupport = true;
   };
 
-  # Helper script for Noctalia IPC commands (uses noctalia's own quickshell for version compatibility)
+  # Helper script for Noctalia IPC commands
+  # Quickshell's IPC auto-discovers the running instance via /run/user/$UID/quickshell/
   noctalia-ipc = pkgs.writeShellScriptBin "noctalia-ipc" ''
-    pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
-    if [ -n "$pid" ]; then
-      ${noctaliaPackage}/bin/noctalia-shell ipc --pid "$pid" call "$@"
-    else
-      echo "Noctalia not running" >&2
-      exit 1
-    fi
+    exec ${noctaliaPackage}/bin/noctalia-shell ipc call "$@"
   '';
 
   # Script to restore wallpaper from saved state
