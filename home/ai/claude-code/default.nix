@@ -171,7 +171,7 @@
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         sandbox = {
-          enabled = false;
+          enabled = true;
           autoAllowBashIfSandboxed = true;
           filesystem.allowWrite = [
             "~/.config"
