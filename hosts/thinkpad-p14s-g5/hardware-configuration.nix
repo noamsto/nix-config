@@ -33,6 +33,7 @@
       "acpi.ec_no_wakeup=1" # Prevent spurious wake on AC plug/unplug (see docs/power-management.md)
       "amd_pmc.enable_stb=0" # Allow s2idle to reach deepest sleep state
       "rtc_cmos.use_acpi_alarm=1" # Use ACPI alarm for RTC, avoids s2idle deep sleep blocker on AMD
+      "amd_pstate=active" # Ensure amd-pstate EPP driver loads (TLP also sets this at runtime)
     ];
     kernel.sysctl = {
       "vm.overcommit_memory" = 1;
@@ -79,16 +80,20 @@
   # networking.interfaces.wlp2s0.useDHCP = lib.mkDefault true;
 
   # GPU Acceleration
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
-    extraPackages = with pkgs; [
-      stable.rocmPackages.clr.icd
-      # VAAPI drivers for AMD GPU
-      mesa
-      libva-vdpau-driver
-      libvdpau-va-gl
-    ];
+  hardware = {
+    graphics = {
+      enable = true;
+      enable32Bit = true;
+      extraPackages = with pkgs; [
+        stable.rocmPackages.clr.icd
+        # VAAPI drivers for AMD GPU
+        mesa
+        libva-vdpau-driver
+        libvdpau-va-gl
+      ];
+    };
+    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+    amdgpu.initrd.enable = true;
   };
 
   environment.variables = {
@@ -99,5 +104,4 @@
   };
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

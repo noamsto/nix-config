@@ -16,10 +16,10 @@ return {
       enabled = true,
     },
     explorer = {
-      include = { ".env*", "gen" },
+      include = { ".env*", "gen", ".github", ".claude", ".husky", ".vscode", ".devcontainer", ".cursor", ".semgrep", ".speakeasy" },
     },
     picker = {
-      include = { ".env*", "gen" },
+      include = { ".env*", "gen", ".github", ".claude", ".husky", ".vscode", ".devcontainer", ".cursor", ".semgrep", ".speakeasy" },
       formatters = {
         file = {
           filename_first = true,

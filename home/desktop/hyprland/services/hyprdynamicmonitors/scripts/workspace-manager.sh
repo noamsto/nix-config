@@ -106,7 +106,20 @@ configure_undocked() {
     log "WARNING: Noctalia NOT running!"
   fi
 
-  # Check lid state FIRST - spawn detached suspend handler if closed
+  # Always turn DPMS on and reload when undocking, REGARDLESS of lid state.
+  # When docked with lid closed, eDP-1 was disabled and DPMS may be off.
+  # Without resetting the display pipeline here, suspend+resume leaves eDP-1
+  # in a broken state (black screen on lid open after resume).
+  log "Turning DPMS on (unconditional on undock)..."
+  hyprctl dispatch dpms on 2>/dev/null || true
+
+  log "Reloading Hyprland configuration..."
+  hyprctl reload 2>/dev/null || true
+
+  # Let the display pipeline settle before any further actions
+  sleep 0.5
+
+  # Check lid state - spawn detached suspend handler if closed
   # Must use setsid to survive HDM killing this script on profile switch
   if is_lid_closed; then
     log "Lid closed while undocked - spawning suspend handler"
@@ -198,16 +211,7 @@ configure_undocked() {
     return
   fi
 
-  # Lid is open - proceed with normal undocked configuration
-  log "Reloading Hyprland configuration..."
-  if ! hyprctl reload; then
-    log "WARNING: Failed to reload Hyprland configuration"
-  fi
-
-  # Small delay to let Hyprland process the reload
-  sleep 0.3
-
-  # Move all workspaces to laptop
+  # Lid is open - move all workspaces to laptop
   for ws in {1..9}; do
     if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
       log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
