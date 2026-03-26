@@ -2,164 +2,88 @@
 pkgs.writeShellApplication {
   name = "claude-statusline";
 
-  runtimeInputs = with pkgs; [
-    jq
-    bc
-    coreutils
-  ];
+  runtimeInputs = with pkgs; [jq coreutils];
 
-  excludeShellChecks = ["SC2155"];
+  excludeShellChecks = ["SC2155" "SC2154"];
 
   text = ''
-    #!/usr/bin/env bash
-    # Claude Code Statusline
-    # Shows: Model | Tokens | Duration | Messages
-    # Focused on Claude-specific info (tmux shows path/branch)
-
-    # Read Claude Code session data from stdin
     input=$(cat)
-
-    # Exit gracefully if no input (e.g., during home-manager activation)
     if [[ -z "$input" ]] || ! echo "$input" | jq empty 2>/dev/null; then
       echo "Claude Code"
       exit 0
     fi
 
-    # ========================================
-    # Extract basic info from stdin (Claude Code 2.0.65+)
-    # ========================================
-    model=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
-    conversation_duration_ms=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
+    eval "$(echo "$input" | jq -r '
+      @sh "model=\(.model.display_name // "Unknown")",
+      @sh "ctx_size=\(.context_window.context_window_size // 0)",
+      @sh "ctx_pct=\(.context_window.used_percentage // 0)",
+      @sh "r5_pct=\(.rate_limits.five_hour.used_percentage // "")",
+      @sh "r5_reset=\(.rate_limits.five_hour.resets_at // "")",
+      @sh "r7_pct=\(.rate_limits.seven_day.used_percentage // "")",
+      @sh "r7_reset=\(.rate_limits.seven_day.resets_at // "")"
+    ')"
 
-    # Context window size from API (this field is accurate)
-    context_window_size=$(echo "$input" | jq -r '.context_window.context_window_size // 0')
+    R="\033[0m"
 
-    # Use context_window_size from Claude Code, fallback to 200k if not provided
-    if [[ "$context_window_size" -gt 0 ]]; then
-      TOKEN_LIMIT=$context_window_size
-    else
-      TOKEN_LIMIT=200000
-    fi
+    # Emoji via hex (nix writeShellApplication can't encode them)
+    robot=$(printf '\xF0\x9F\xA4\x96')
+    chart=$(printf '\xF0\x9F\x93\x8A')
+    zap=$(printf '\xE2\x9A\xA1')
 
-    # Get transcript info for token calculation
-    transcript_path=$(echo "$input" | jq -r '.transcript_path // ""')
-    session_id=$(echo "$input" | jq -r '.session_id // ""')
-    message_count=0
-    token_count=0
-
-    # NOTE: context_window.total_input_tokens and total_output_tokens are CUMULATIVE
-    # session totals, NOT current context usage. They don't update when context is
-    # auto-compacted. We must parse the transcript to get actual current usage.
-    if [[ -f "$transcript_path" && -r "$transcript_path" && -n "$session_id" ]]; then
-      message_count=$(jq -s --arg sid "$session_id" '[.[] | select(.sessionId == $sid)] | length' "$transcript_path" 2>/dev/null || echo "0")
-
-      # Get LAST assistant message's token usage (represents current active context)
-      # Context window = input_tokens + cache_read_input_tokens
-      # NOTE: cache_creation_input_tokens is a subset of input (what was newly cached)
-      # NOTE: output_tokens are the response, not part of context window limit
-      token_count=$(jq -s --arg sid "$session_id" '
-        [.[] |
-          select(.sessionId == $sid and .type == "assistant" and .message.usage)] |
-        if length > 0 then
-          .[-1].message.usage |
-          ((.cache_read_input_tokens // 0) + (.input_tokens // 0))
-        else
-          0
-        end
-      ' "$transcript_path" 2>/dev/null || echo "0")
-    fi
-
-    # Safe defaults
-    message_count=''${message_count:-0}
-    token_count=''${token_count:-0}
-    token_percent=$(echo "scale=1; ($token_count * 100) / $TOKEN_LIMIT" | bc 2>/dev/null || echo "0.0")
-
-    # ========================================
-    # Color coding based on token usage
-    # ========================================
-    token_percent_int=$(echo "$token_percent / 1" | bc 2>/dev/null || echo "0")
-    if [[ "$token_percent_int" -ge 95 ]]; then
-      token_color="\033[1;31m"  # Red
-    elif [[ "$token_percent_int" -ge 80 ]]; then
-      token_color="\033[1;33m"  # Yellow
-    else
-      token_color="\033[1;32m"  # Green
-    fi
-
-    reset="\033[0m"
-
-    # ========================================
-    # Rate limits (Claude Code 2.1.80+)
-    # ========================================
-    rate_5h_pct=$(echo "$input" | jq -r '.rate_limits[]? | select(.type == "5_hour") | .used_percentage // empty' 2>/dev/null)
-    rate_7d_pct=$(echo "$input" | jq -r '.rate_limits[]? | select(.type == "7_day") | .used_percentage // empty' 2>/dev/null)
-
-    # ========================================
-    # Build statusline components
-    # ========================================
-
-    # Model info
-    model_display=$(printf "\033[1;34m🤖 %s\033[0m" "$model")
-
-    # Token info with color coding
-    if [[ "$TOKEN_LIMIT" -ge 1000000 ]]; then
-      # For 1M contexts: show as "200k/1M" (no percentage - obvious from ratio)
-      token_count_k=$((token_count / 1000))
-      token_limit_m=$(echo "scale=0; $TOKEN_LIMIT / 1000000" | bc 2>/dev/null || echo "1")
-
-      token_display=$(printf "%b📊 %dk/%sM%b" \
-        "$token_color" \
-        "$token_count_k" \
-        "$token_limit_m" \
-        "$reset")
-    else
-      # Format as thousands (k)
-      token_display=$(printf "%b📊 %dk/%dk (%s%%)%b" \
-        "$token_color" \
-        "$((token_count / 1000))" \
-        "$((TOKEN_LIMIT / 1000))" \
-        "$token_percent" \
-        "$reset")
-    fi
-
-    # Conversation duration
-    conversation_duration_ms=''${conversation_duration_ms:-0}
-    conversation_hours=$(echo "scale=2; $conversation_duration_ms / 3600000" | bc 2>/dev/null || echo "0.00")
-    duration_display=$(printf "\033[1;35m⏱️ %.2fh\033[0m" "$conversation_hours")
-
-    # Message count
-    msg_display=$(printf "\033[1;35m💬 %d msgs\033[0m" "$message_count")
-
-    # Rate limit display with color coding
-    rate_display=""
-    if [[ -n "$rate_5h_pct" || -n "$rate_7d_pct" ]]; then
-      rate_parts=""
-      for label_pct in "5h:$rate_5h_pct" "7d:$rate_7d_pct"; do
-        label=''${label_pct%%:*}
-        pct=''${label_pct#*:}
-        if [[ -z "$pct" ]]; then continue; fi
-        pct_int=''${pct%%.*}
-        if [[ "$pct_int" -ge 90 ]]; then
-          rc="\033[1;31m"  # Red
-        elif [[ "$pct_int" -ge 70 ]]; then
-          rc="\033[1;33m"  # Yellow
-        else
-          rc="\033[1;32m"  # Green
-        fi
-        rate_parts="''${rate_parts}''${rate_parts:+ }''${rc}''${label}:''${pct_int}%''${reset}"
-      done
-      if [[ -n "$rate_parts" ]]; then
-        rate_display=$(printf "⚡ %b" "$rate_parts")
+    # Color by threshold
+    color_pct() {
+      local p=''${1%%.*}
+      if ((p >= 90)); then   printf "\033[1;31m"
+      elif ((p >= 70)); then printf "\033[1;33m"
+      else                   printf "\033[1;32m"
       fi
+    }
+
+    fmt_countdown() {
+      local now
+      printf -v now '%(%s)T' -1
+      local left=$(($1 - now))
+      ((left <= 0)) && { echo "0m"; return; }
+      local h=$(((left % 86400) / 3600)) m=$(((left % 3600) / 60))
+      ((h > 0)) && echo "''${h}h''${m}m" || echo "''${m}m"
+    }
+
+    # --- Model ---
+    out="\033[1;34m$robot $model$R"
+
+    # --- Context ---
+    ctx_int=''${ctx_pct%%.*}
+    ctx_used=$(((''${ctx_size:-200000} * ctx_int + 50) / 100))
+    tc=$(color_pct "$ctx_int")
+    if ((''${ctx_size:-200000} >= 1000000)); then
+      out+=" | ''${tc}$chart $((ctx_used / 1000))k/$((ctx_size / 1000000))M$R"
+    else
+      out+=" | ''${tc}$chart $((ctx_used / 1000))k/$((''${ctx_size:-200000} / 1000))k$R"
     fi
 
-    # ========================================
-    # Output single line
-    # ========================================
-    line="''${model_display} | ''${token_display} | ''${duration_display} | ''${msg_display}"
-    if [[ -n "$rate_display" ]]; then
-      line="''${line} | ''${rate_display}"
+    # --- Rate limits (Claude Code statusline) ---
+    # Format: ⚡ 56% (32m) · 7d 76% (15h)
+    if [[ -n "$r5_pct" ]]; then
+      r5i=''${r5_pct%%.*}
+      rc=$(color_pct "$r5i")
+      part="''${rc}''${r5i}%"
+      [[ -n "$r5_reset" ]] && part+=" ($(fmt_countdown "''${r5_reset%%.*}"))"
+      part+="$R"
+
+      # Show 7d only when >50%
+      if [[ -n "$r7_pct" ]]; then
+        r7i=''${r7_pct%%.*}
+        if ((r7i > 50)); then
+          r7c=$(color_pct "$r7i")
+          part+=" ''${r7c}7d ''${r7i}%"
+          [[ -n "$r7_reset" ]] && part+=" ($(fmt_countdown "''${r7_reset%%.*}"))"
+          part+="$R"
+        fi
+      fi
+
+      out+=" | $zap $part"
     fi
-    echo -e "$line"
+
+    echo -e "$out"
   '';
 }
