@@ -9,6 +9,7 @@ inputs: [
 
   (final: _: {
     nix-search-tv = inputs.nix-search-tv.packages.${final.stdenv.hostPlatform.system}.default;
+    zr = inputs.zr.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
   (final: _prev: {

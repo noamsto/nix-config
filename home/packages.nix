@@ -107,6 +107,7 @@ in {
       lazygit
 
       gtrash
+      zr
       ncdu
       dust
       sd

@@ -190,6 +190,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    zr = {
+      url = "github:noamsto/zr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # === LOCAL APPLICATIONS ===
     go-bills.url = "https://flakehub.com/f/noamsto/go-bills/*";
   };
