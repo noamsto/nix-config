@@ -46,12 +46,24 @@
   # Replace HM's symlink with a 600-permission copy.
   # OpenSSH rejects the nix-store symlink (lrwxrwxrwx / root-owned target).
   # No native HM option exists yet (nix-community/home-manager#322).
+  #
+  # On first run: linkGeneration creates symlink → we resolve and copy it.
+  # On subsequent runs: linkGeneration skips (sees existing regular file with
+  # same content) → we still need to ensure 600 ownership. We find the
+  # intended source from the current generation's home-files tree.
   home.activation.copySshConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ -L "$HOME/.ssh/config" ]; then
-      src="$(readlink -f "$HOME/.ssh/config")"
-      if [ -f "$src" ]; then
-        run rm -f "$HOME/.ssh/config"
-        run install -m 600 "$src" "$HOME/.ssh/config"
+    sshCfg="$HOME/.ssh/config"
+    if [ -L "$sshCfg" ]; then
+      src="$(readlink -f "$sshCfg")"
+      run rm -f "$sshCfg"
+      run install -m 600 "$src" "$sshCfg"
+    elif [ -f "$sshCfg" ]; then
+      src="$(readlink -f "$newGenPath/home-files/.ssh/config")"
+      if [ -f "$src" ] && ! cmp -s "$sshCfg" "$src"; then
+        run rm -f "$sshCfg"
+        run install -m 600 "$src" "$sshCfg"
+      else
+        run chmod 600 "$sshCfg"
       fi
     fi
   '';
