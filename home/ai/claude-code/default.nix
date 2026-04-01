@@ -179,6 +179,7 @@
             "~/.local"
             "~/.npm"
             "~/go"
+            ".claude/skills"
           ];
           network.allowedDomains = ["*"];
         };

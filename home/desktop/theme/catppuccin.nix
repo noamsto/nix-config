@@ -20,7 +20,9 @@ in {
       "$HOME/.config/lazydocker/config.yml" \
       "$HOME/.config/foot/foot.ini" \
       "$HOME/.config/yazi/theme.toml" \
-      "$HOME/.config/Kvantum/kvantum.kvconfig"
+      "$HOME/.config/Kvantum/kvantum.kvconfig" \
+      "$HOME/.config/gtk-3.0/settings.ini" \
+      "$HOME/.config/gtk-4.0/settings.ini"
     do
       if [ -f "$f" ] && [ ! -L "$f" ]; then
         $VERBOSE_ECHO "Removing theme-managed file: $f"
@@ -32,7 +34,7 @@ in {
   # Run theme-toggle restore after Home Manager activation
   # This ensures theme-managed configs (kitty, starship, k9s, btop, lazygit)
   # are updated to match the current theme after rebuilds
-  home.activation.restoreTheme = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.restoreTheme = lib.hm.dag.entryAfter ["linkGeneration"] ''
     $VERBOSE_ECHO "Restoring theme settings..."
     run ${themeToggleBin} restore || true
   '';

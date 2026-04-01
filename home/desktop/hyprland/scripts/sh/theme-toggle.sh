@@ -167,6 +167,44 @@ EOF
   # Update environment for new processes (Hyprland + systemd user)
   hyprctl keyword env GTK_THEME,"$gtk_theme_variant" >/dev/null 2>&1 || true
   systemctl --user set-environment GTK_THEME="$gtk_theme_variant" 2>/dev/null || true
+
+  # Update GTK3/4 settings.ini for apps that read it directly (e.g. Thunar)
+  # These may be Nix store symlinks, so replace them with writable copies
+  local prefer_dark=0
+  local gtk_theme_name="Adwaita"
+  local icon_theme="Papirus-Dark"
+  if [[ $theme == "dark" ]]; then
+    prefer_dark=1
+    gtk_theme_name="Adwaita-dark"
+    icon_theme="Papirus-Dark"
+  else
+    icon_theme="Papirus-Light"
+  fi
+
+  for settings_dir in "${XDG_CONFIG_HOME}/gtk-3.0" "${XDG_CONFIG_HOME}/gtk-4.0"; do
+    local ini="$settings_dir/settings.ini"
+    mkdir -p "$settings_dir"
+
+    # If it's a symlink (Nix store), read contents and replace with a real file
+    if [[ -L $ini ]]; then
+      local contents
+      contents=$(cat "$ini" 2>/dev/null) || contents=""
+      rm -f "$ini"
+      printf '%s\n' "$contents" >"$ini"
+    fi
+
+    if [[ -f $ini ]]; then
+      # Remove existing theme keys, then append updated values
+      local tmp="${ini}.tmp"
+      grep -v -E '^gtk-(application-prefer-dark-theme|theme-name|icon-theme-name)=' "$ini" >"$tmp" 2>/dev/null || true
+      {
+        printf 'gtk-application-prefer-dark-theme=%d\n' "$prefer_dark"
+        printf 'gtk-theme-name=%s\n' "$gtk_theme_name"
+        printf 'gtk-icon-theme-name=%s\n' "$icon_theme"
+      } >>"$tmp"
+      mv "$tmp" "$ini"
+    fi
+  done
 }
 
 # Update GTK CSS with Catppuccin colors (libadwaita color injection)

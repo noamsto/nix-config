@@ -27,6 +27,10 @@
     blender
     freecad
 
+    # Video editing
+    kdePackages.kdenlive
+    losslesscut-bin
+
     # Note taking
     obsidian
 
