@@ -19,7 +19,7 @@
         config.treefmt.build.wrapper
         pkgs.git
         pkgs.nh
-        pkgs.nodePackages.prettier
+        pkgs.prettier
         pkgs.fish
         pkgs.nix-output-monitor
         pkgs.just

@@ -73,7 +73,7 @@
       rust-analyzer # Rust
       gopls # Go
       golangci-lint-langserver # Go linting LSP
-      nodePackages.typescript-language-server # TypeScript/JavaScript
+      typescript-language-server # TypeScript/JavaScript
       yaml-language-server # YAML
       taplo # TOML
       bash-language-server
@@ -82,7 +82,7 @@
       # === KEY FORMATTERS ===
       rustfmt # Rust formatting
       gotools # Go imports and formatting
-      nodePackages.prettier # Web formatting
+      prettier # Web formatting
       shfmt
 
       inotify-tools
