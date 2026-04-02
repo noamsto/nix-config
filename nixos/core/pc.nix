@@ -46,8 +46,11 @@ in {
 
     hardware = {
       alsa.enablePersistence = true;
-      bluetooth.enable = true;
-      bluetooth.powerOnBoot = true;
+      bluetooth = {
+        enable = true;
+        powerOnBoot = true;
+        settings.General.Experimental = true; # battery reporting + newer BT features
+      };
       logitech.wireless.enable = true; # solaar
       logitech.wireless.enableGraphical = true;
     };

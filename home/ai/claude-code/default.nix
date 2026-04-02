@@ -13,177 +13,162 @@
 
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
-    text = builtins.toJSON ({
-        includeCoAuthoredBy = false;
-        permissions.defaultMode = "auto";
-        statusLine = {
-          type = "command";
-          command = "${claude-statusline}/bin/claude-statusline";
-        };
-        # Tmux status integration state machine
-        hooks = {
-          # startup/resume/clear -> idle, compact -> processing
-          SessionStart = [
-            {
-              matcher = "startup";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update cleanup";
-                }
-                {
-                  type = "command";
-                  command = "claude-status-update idle";
-                }
-              ];
-            }
-            {
-              matcher = "resume";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update cleanup";
-                }
-                {
-                  type = "command";
-                  command = "claude-status-update idle";
-                }
-              ];
-            }
-            {
-              matcher = "clear";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update cleanup";
-                }
-                {
-                  type = "command";
-                  command = "claude-status-update idle";
-                }
-              ];
-            }
-            {
-              matcher = "compact";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update cleanup";
-                }
-                {
-                  type = "command";
-                  command = "claude-status-update processing";
-                }
-              ];
-            }
-          ];
-          UserPromptSubmit = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update processing";
-                }
-              ];
-            }
-          ];
-          PreToolUse = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update processing";
-                }
-              ];
-            }
-            {
-              matcher = "Bash";
-              hooks = [
-                {
-                  type = "command";
-                  command = "${psql-guard}/bin/claude-psql-guard";
-                }
-              ];
-            }
-          ];
-          PostToolUse = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update processing";
-                }
-              ];
-            }
-          ];
-          # permission_prompt -> waiting, idle_prompt -> done
-          Notification = [
-            {
-              matcher = "permission_prompt";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update waiting";
-                }
-              ];
-            }
-            {
-              matcher = "idle_prompt";
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update done";
-                }
-              ];
-            }
-          ];
-          Stop = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update done";
-                }
-              ];
-            }
-          ];
-          PreCompact = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update compacting";
-                }
-              ];
-            }
-          ];
-          SessionEnd = [
-            {
-              hooks = [
-                {
-                  type = "command";
-                  command = "claude-status-update clear";
-                }
-              ];
-            }
-          ];
-        };
-      }
-      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        sandbox = {
-          enabled = true;
-          autoAllowBashIfSandboxed = true;
-          filesystem.allowWrite = [
-            "~/.config"
-            "~/.cache"
-            "~/.local"
-            "~/.npm"
-            "~/go"
-            ".claude/skills"
-          ];
-          network.allowedDomains = ["*"];
-        };
-      });
+    text = builtins.toJSON {
+      includeCoAuthoredBy = false;
+      permissions.defaultMode = "auto";
+      statusLine = {
+        type = "command";
+        command = "${claude-statusline}/bin/claude-statusline";
+      };
+      # Tmux status integration state machine
+      hooks = {
+        # startup/resume/clear -> idle, compact -> processing
+        SessionStart = [
+          {
+            matcher = "startup";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "claude-status-update idle";
+              }
+            ];
+          }
+          {
+            matcher = "resume";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "claude-status-update idle";
+              }
+            ];
+          }
+          {
+            matcher = "clear";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "claude-status-update idle";
+              }
+            ];
+          }
+          {
+            matcher = "compact";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update cleanup";
+              }
+              {
+                type = "command";
+                command = "claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        UserPromptSubmit = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        PreToolUse = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update processing";
+              }
+            ];
+          }
+          {
+            matcher = "Bash";
+            hooks = [
+              {
+                type = "command";
+                command = "${psql-guard}/bin/claude-psql-guard";
+              }
+            ];
+          }
+        ];
+        PostToolUse = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update processing";
+              }
+            ];
+          }
+        ];
+        # permission_prompt -> waiting, idle_prompt -> done
+        Notification = [
+          {
+            matcher = "permission_prompt";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update waiting";
+              }
+            ];
+          }
+          {
+            matcher = "idle_prompt";
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update done";
+              }
+            ];
+          }
+        ];
+        Stop = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update done";
+              }
+            ];
+          }
+        ];
+        PreCompact = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update compacting";
+              }
+            ];
+          }
+        ];
+        SessionEnd = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "claude-status-update clear";
+              }
+            ];
+          }
+        ];
+      };
+    };
   };
 
   claude-wrapped = inputs.wrappers.lib.wrapPackage {
