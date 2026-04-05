@@ -14,6 +14,14 @@
       ./noctalia
     ];
 
+  # Hardware-accelerated video for all Electron apps (Slack, Ferdium, etc.)
+  xdg.configFile."electron-flags.conf".text = ''
+    --enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks
+    --enable-gpu-rasterization
+    --enable-zero-copy
+    --ignore-gpu-blocklist
+  '';
+
   programs = {
     obs-studio.enable = true;
 

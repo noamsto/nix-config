@@ -746,11 +746,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775377341,
-        "narHash": "sha256-id8jhah6tyIMtoAOFKvpl9nBjDTUVxIUSWUiyWdSBVU=",
+        "lastModified": 1775397257,
+        "narHash": "sha256-0yWWyx33802DAgHsD+7KaUBWRN3mI5AhD+RT+4YnEX0=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "e5d48960367ac0d326dd03976873508c0cf305e2",
+        "rev": "be65cfc46013ff82c0942cfe73c0d466b86add6a",
         "type": "github"
       },
       "original": {
