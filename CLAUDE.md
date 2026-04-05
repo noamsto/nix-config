@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops) and desktop environments (KDE Plasma, Hyprland). Raspberry Pi configurations live in a separate repo (`nix-rpi`).
+This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops) and desktop environments (KDE Plasma, Hyprland). Raspberry Pi configurations live in a separate repo (`noamsto/nix-rpi`).
 
 ## ToonFormat Preference
 
@@ -78,6 +78,7 @@ home-manager switch --flake .#<config>  # Manual standalone rebuild with specifi
 
 - `noams@thinkpad-p14s` - Auto-detected by nh (personal)
 - `noams@thinkpad-p14s-g5` - Auto-detected by nh (work)
+- `noams` - Fallback for nh auto-detection (defaults to personal)
 - `noams-kde` - KDE variant for testing
 - `noams-hyprland` - Legacy name for personal profile
 - `noams-hyprland-work` - Legacy name for work profile
@@ -117,14 +118,16 @@ When you run `nix develop`, you get:
 
 - `agenix` - Secret management and editing
 - `nh` - NixOS helper for easier rebuilds
-- `nixos-anywhere` - Remote NixOS deployment
+- `home-manager` - Standalone Home Manager CLI
 - `nom` (nix-output-monitor) - Better build output
+- `nixos-anywhere` - Remote NixOS deployment
 - `just` - Command runner (see `just --list`)
 - `prettier` - Code formatting for non-Nix files
 - `statix` - Nix linter
+- `shellcheck` - Shell script linter
 - `jq` - JSON processing
 - `tokei` - Code statistics
-- Pre-commit hooks (alejandra, prettier, shellcheck)
+- Pre-commit hooks (treefmt: alejandra, ruff, shfmt, shellcheck)
 
 **Shell aliases** (when using fish):
 
@@ -134,13 +137,17 @@ When you run `nix develop`, you get:
 
 ### Binary Caches
 
-The flake is pre-configured with multiple binary caches for faster builds:
+The flake is pre-configured with multiple binary caches for faster builds (defined in both `flake.nix:nixConfig` and `lib/caches.nix` — keep them in sync):
 
 - `cache.nixos.org` - Official NixOS cache
+- `cache.flakehub.com` - FlakeHub cache (trusted substituter)
 - `hyprland.cachix.org` - Hyprland compositor
+- `vicinae.cachix.org` - Vicinae package
+- `claude-code.cachix.org` - Claude Code packages
 - `nixpkgs-unfree.cachix.org` - Unfree packages
 - `nix-community.cachix.org` - Community packages
-- `claude-code.cachix.org` - Claude Code packages
+- `yazi.cachix.org` - Yazi file manager
+- `numtide.cachix.org` - Numtide packages
 
 These are automatically used and significantly speed up builds. No manual configuration needed.
 
@@ -277,27 +284,29 @@ The repository uses a **modular architecture** with conditional imports based on
 ### Directory Structure
 
 ```
-├── flake.nix              # Main flake definition
+├── flake.nix              # Entry point - imports flake-modules
+├── flake-modules/         # Flake-parts modules (systems, HM, dev)
 ├── justfile               # Command runner recipes
 ├── options.nix            # Custom configuration options
+├── lib/                   # Shared config (host-configs, caches, overlays)
 ├── nixos/                 # System-level NixOS modules
 │   ├── core/              # Boot, locale, networking, users, pc.nix
 │   ├── desktop/           # Desktop environments (KDE, SDDM)
-│   ├── hardware/          # Hardware-specific modules
-│   │   ├── thinkpad-common.nix  # Shared ThinkPad settings
-│   │   └── thinkfan.nix         # Generation-aware fan control
-│   ├── laptop/            # Laptop-specific features
-│   │   ├── pam-lid-check.nix    # Skip fprintd when lid closed
-│   │   └── suspend-handling.nix # AC wake suppression, phantom monitors
-│   └── virtualization/    # Containers, VMs
+│   ├── hardware/          # ThinkPad-specific (thinkpad-common, thinkfan)
+│   ├── hyprland/          # Hyprland compositor system config
+│   ├── laptop/            # Laptop features (pam-lid-check, suspend-handling)
+│   ├── services/          # System services
+│   ├── virtualization/    # Containers, VMs
+│   └── xremap/            # Key remapping
 ├── home/                  # User-level Home Manager modules
+│   ├── ai/                # AI tools (opencode, etc.)
 │   ├── desktop/           # Desktop apps, window managers, themes
 │   ├── terminal/          # Shell, terminal multiplexer
-│   ├── nvim/              # Neovim configuration
+│   ├── nvim/              # Neovim/LazyVim configuration
 │   ├── git/               # Git and related tools
+│   ├── kubernetes/        # K8s tools (work profile only)
 │   └── work/              # Work profile packages (slack, AWS, etc.)
-├── hosts/                 # Per-host configurations
-├── scripts/               # Deployment and management scripts
+├── hosts/                 # Per-host configurations (thinkpad-p14s, thinkpad-p14s-g5)
 ├── secrets/               # Agenix encrypted secrets
 ├── packages/              # Custom package definitions
 └── overlays/              # Nix package overlays
@@ -322,7 +331,7 @@ The repository uses a **modular architecture** with conditional imports based on
    - Secrets stored in `mysecrets` flake input (private GitHub repo)
    - Edit with: `agenix -e secrets/<secret_name>.age` or `just secret-edit <secret_name>`
 
-5. **Multi-architecture Support**: x86_64-linux (RPi configs moved to `nix-rpi` repo)
+5. **Single architecture**: x86_64-linux only (RPi configs live in `noamsto/nix-rpi`)
    - `perSystem` in flake-parts handles per-architecture outputs
 
 ## Important Configuration Files
