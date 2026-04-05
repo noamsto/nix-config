@@ -5,7 +5,6 @@
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
         "x86_64-linux"
-        "aarch64-linux"
       ];
 
       imports = [
@@ -17,11 +16,7 @@
 
       # perSystem configuration is now handled in flake-modules/development.nix
 
-      flake = {
-        # Raspberry Pi host configurations metadata
-        # Used by deployment scripts for metadata-driven operations
-        rpiHosts = import ./lib/rpi-hosts.nix;
-      };
+      flake = {};
     };
 
   # SYNC: Keep in sync with lib/caches.nix (nixConfig can't use imports)
@@ -35,7 +30,7 @@
       "https://nixpkgs-unfree.cachix.org"
       "https://nix-community.cachix.org"
       "https://yazi.cachix.org"
-      "https://nixos-raspberrypi.cachix.org"
+
       "https://numtide.cachix.org"
     ];
     trusted-public-keys = [
@@ -54,7 +49,7 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
       "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
-      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
     trusted-substituters = ["https://cache.flakehub.com"];
@@ -124,10 +119,6 @@
     };
 
     # === SPECIALIZED HARDWARE ===
-    # Monthly updates for hardware support
-    # Pinned to d0e2a7a (Nov 1) - Last known working with cached kernel & auth
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/d0e2a7a36b08e2049e3024bc23ab391ca9de454c";
-
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -194,8 +185,5 @@
       url = "github:noamsto/zr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # === LOCAL APPLICATIONS ===
-    go-bills.url = "https://flakehub.com/f/noamsto/go-bills/*";
   };
 }

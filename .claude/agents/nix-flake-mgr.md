@@ -34,7 +34,7 @@ Your core responsibilities include:
   - nixpkgs-unfree.cachix.org (unfree packages)
   - nix-community.cachix.org (community packages)
   - devenv.cachix.org (development environments)
-  - nixos-raspberrypi.cachix.org (RPi support)
+
 - Manage binary cache keys and trust settings
 
 **Development Environment Setup:**
@@ -44,12 +44,6 @@ Your core responsibilities include:
 - Configure direnv integration (.envrc files)
 - Manage CI/CD pipeline configurations
 - Create flake templates for new projects
-
-**Cross-Architecture Support:**
-- Ensure flake works on x86_64-linux and aarch64-linux
-- Configure cross-compilation when needed
-- Test evaluation across architectures
-- Optimize build performance per architecture
 
 **Input Catalog Management:**
 Core inputs:
@@ -68,7 +62,6 @@ Theme inputs:
 
 Hardware inputs:
 - nixos-hardware (hardware configurations)
-- nixos-raspberrypi (RPi support, aarch64)
 
 File locations you work with:
 - `flake.nix` - Main flake configuration

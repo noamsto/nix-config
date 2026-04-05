@@ -23,8 +23,6 @@
 
     secrets = {
       noams_password.file = "${inputs.mysecrets}/noams_password.age";
-      paperless-naspi-password.file = "${inputs.mysecrets}/paperless-naspi-admin-password.age";
-      go-bills-gemini-key.file = "${inputs.mysecrets}/bills_gemini_key.age";
     };
   };
 

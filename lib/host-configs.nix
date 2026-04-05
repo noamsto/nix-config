@@ -24,24 +24,4 @@
     machine.type = "laptop";
     profile = "work";
   };
-
-  naspi = {
-    username = "noams";
-    user-full-name = "Noam Stolero";
-    email = "noamstolero@gmail.com";
-    hostname = "naspi";
-    desktop.mode = "none";
-    machine.type = "server";
-    profile = "personal";
-  };
-
-  argon-rpi4 = {
-    username = "noams";
-    user-full-name = "Noam Stolero";
-    email = "noamstolero@gmail.com";
-    hostname = "argon-rpi4";
-    desktop.mode = "none";
-    machine.type = "server";
-    profile = "personal";
-  };
 }

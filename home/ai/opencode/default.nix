@@ -3,8 +3,10 @@ _: {
     enable = true;
     enableMcpIntegration = true;
     settings = {
-      theme = "catppuccin";
       autoupdate = false;
+    };
+    tui = {
+      theme = "catppuccin";
     };
   };
 }

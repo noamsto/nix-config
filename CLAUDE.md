@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops, servers, Raspberry Pi) and desktop environments (KDE Plasma, Hyprland).
+This is a **NixOS Configuration Repository** using Nix flakes that manages both NixOS system configurations and Home Manager user configurations. It's a personal dotfiles repository with support for multiple hosts (laptops) and desktop environments (KDE Plasma, Hyprland). Raspberry Pi configurations live in a separate repo (`nix-rpi`).
 
 ## ToonFormat Preference
 
@@ -15,10 +15,9 @@ ToonFormat provides 30-60% token savings compared to JSON. Use it for configurat
 **Format example:**
 
 ```toon
-hosts[3]{name,type,profile,desktop}:
+hosts[2]{name,type,profile,desktop}:
  thinkpad-p14s,laptop,personal,hyprland
  thinkpad-p14s-g5,laptop,work,hyprland
- naspi,server,personal,none
 ```
 
 **When to use:**
@@ -44,13 +43,6 @@ just check            # Validate flake
 just fmt              # Format all code
 just update           # Update flake inputs
 just clean            # Clean build artifacts
-
-# Raspberry Pi commands
-just help-rpi         # Detailed Pi deployment guide
-just rpi-list         # List all Pi configurations
-just naspi-deploy     # Deploy to naspi
-just naspi-install    # Fresh install to naspi (DESTRUCTIVE!)
-just argon-deploy     # Deploy to argon-rpi4
 ```
 
 ### Core Development
@@ -73,31 +65,6 @@ nh os switch -S          # With --show-trace for debugging
 # Home Manager only - Hybrid approach for faster development
 nh home switch .         # Fast user-only rebuild (auto-detects username@hostname)
 home-manager switch --flake .#<config>  # Manual standalone rebuild with specific config
-
-# Raspberry Pi deployment
-# All RPi operations use unified CLI: ./scripts/rpi/rpi
-./scripts/rpi/rpi list                    # List all available configurations
-./scripts/rpi/rpi help                    # Show detailed usage help
-
-# Quick commands via justfile (recommended)
-just naspi                                # Deploy to naspi (fastest)
-just naspi-deploy                         # Deploy with auto build strategy
-just naspi-deploy local                   # Deploy with local build
-just naspi-deploy remote                  # Deploy with remote build
-just rpi-build-installer                  # Build minimal installer image
-
-# Direct CLI usage
-./scripts/rpi/rpi naspi deploy            # Update existing system (auto strategy)
-./scripts/rpi/rpi naspi deploy local      # Deploy with local build
-./scripts/rpi/rpi naspi deploy remote     # Deploy with remote build
-./scripts/rpi/rpi naspi install           # Fresh install with disko (DESTRUCTIVE!)
-./scripts/rpi/rpi rpi4-installer build    # Build installer image
-./scripts/rpi/rpi argon-rpi4 deploy       # Deploy to argon-rpi4
-
-# Build strategies:
-# - auto: Use host's default strategy (recommended)
-# - local: Build on development machine (uses local cache, cross-compile)
-# - remote: Build on target Pi (slower, but native aarch64, no overheating)
 ```
 
 ### Available Hosts
@@ -106,15 +73,11 @@ just rpi-build-installer                  # Build minimal installer image
 
 - `thinkpad-p14s` - Main laptop (personal, Hyprland)
 - `thinkpad-p14s-g5` - Work laptop (work profile, Hyprland)
-- `naspi` - Raspberry Pi 4 with ZFS RAID1 on dual SSDs
-- `argon-rpi4` - Raspberry Pi 4 with Argon V2 case and external SSD boot
-- `rpi4-installer` - Minimal RPi4 installer image
 
 **Standalone Home Manager (for development):**
 
 - `noams@thinkpad-p14s` - Auto-detected by nh (personal)
 - `noams@thinkpad-p14s-g5` - Auto-detected by nh (work)
-- `noams@naspi` - Raspberry Pi Home Manager
 - `noams-kde` - KDE variant for testing
 - `noams-hyprland` - Legacy name for personal profile
 - `noams-hyprland-work` - Legacy name for work profile
@@ -177,7 +140,6 @@ The flake is pre-configured with multiple binary caches for faster builds:
 - `hyprland.cachix.org` - Hyprland compositor
 - `nixpkgs-unfree.cachix.org` - Unfree packages
 - `nix-community.cachix.org` - Community packages
-- `nixos-raspberrypi.cachix.org` - Raspberry Pi builds
 - `claude-code.cachix.org` - Claude Code packages
 
 These are automatically used and significantly speed up builds. No manual configuration needed.
@@ -197,8 +159,6 @@ flake.nix                          # Entry point - imports flake-modules
 ├── lib/
 │   ├── host-configs.nix           # Shared host settings + SSH keys (used by both NixOS and HM)
 │   ├── caches.nix                 # Binary cache configuration (SYNC with flake.nix nixConfig)
-│   ├── rpi-hosts.nix              # RPi deployment metadata (used by scripts/rpi/)
-│   ├── rpi-common.sh              # Shared RPi deployment library (cached nix eval)
 │   └── overlays.nix               # Package overlays
 ├── packages/                      # Custom package definitions
 └── justfile                       # Command runner recipes
@@ -210,46 +170,6 @@ flake.nix                          # Entry point - imports flake-modules
 - Outputs are defined close to their implementation
 - Easy to add new systems or outputs without modifying flake.nix
 - `perSystem` configuration in development.nix handles per-architecture setup
-
-### Raspberry Pi Configurations
-
-The repository provides **multiple NixOS configurations for Raspberry Pi**:
-
-1. **`naspi`** - Production NAS with ZFS RAID1
-   - Dual SSD setup with ZFS mirroring
-   - Uses disko for automatic partitioning
-   - Command: `just install-naspi` or `./scripts/naspi-deploy.sh naspi.local install`
-   - **IMPORTANT**: Boots from USB SSD, not SD card - Remove SD card from slot to avoid boot interference
-
-2. **`argon-rpi4`** - Raspberry Pi with Argon V2 case
-   - External SSD boot configuration
-   - Uses disko for disk management
-   - Optimized for Argon case features (fan control, power button)
-   - Command: `just install-argon` or `just rpi-install-argon`
-
-3. **`rpi4-installer`** - Minimal installer image
-   - Lightweight bootable SD image for initial deployment
-   - Build: `just rpi-build-installer` or `./scripts/build-rpi4-installer.sh`
-   - Deploy: `./scripts/naspi-deploy.sh rpi4-installer install`
-
-### NasPi Boot Troubleshooting
-
-If naspi fails to boot or shows these errors:
-
-- "Card did not respond to voltage select! : -110"
-- "Timeout waiting for cmd & data inhibit"
-- "mmc1 busy timeout"
-- "[FAILED] Failed to start Emergency SSH"
-
-**Root Cause**: SD card in slot interfering with USB/SSD boot
-
-**Solution**:
-
-1. Remove SD card from Raspberry Pi slot
-2. Update EEPROM boot order: `sudo rpi-eeprom-config --edit` → Set `BOOT_ORDER=0x4f6` (USB priority)
-3. Check boot verification: `sudo journalctl -u naspi-boot-verify.service`
-
-See `hosts/naspi/README.md` for comprehensive troubleshooting, ZFS management, and service configuration.
 
 ### ThinkPad Configuration
 
@@ -341,11 +261,11 @@ The repository uses a **modular architecture** with conditional imports based on
   ```
 
 - **`lib/host-configs.nix`** - Shared configuration source of truth:
-  - Single file defining settings for all hosts (thinkpad-p14s, thinkpad-p14s-g5, naspi, argon-rpi4)
+  - Single file defining settings for all hosts (thinkpad-p14s, thinkpad-p14s-g5)
   - Contains `sshPublicKeys` for shared SSH key constants
   - Used by **both** NixOS systems and standalone Home Manager configs
   - Ensures consistency between full rebuilds and HM-only rebuilds
-  - All hosts (including RPi) should use `inherit` from this file
+  - All hosts should use `inherit` from this file
 
 **How Configuration Flows:**
 
@@ -377,8 +297,6 @@ The repository uses a **modular architecture** with conditional imports based on
 │   ├── git/               # Git and related tools
 │   └── work/              # Work profile packages (slack, AWS, etc.)
 ├── hosts/                 # Per-host configurations
-│   └── naspi/             # NasPi configuration
-│       └── README.md      # Detailed NasPi documentation
 ├── scripts/               # Deployment and management scripts
 ├── secrets/               # Agenix encrypted secrets
 ├── packages/              # Custom package definitions
@@ -404,8 +322,7 @@ The repository uses a **modular architecture** with conditional imports based on
    - Secrets stored in `mysecrets` flake input (private GitHub repo)
    - Edit with: `agenix -e secrets/<secret_name>.age` or `just secret-edit <secret_name>`
 
-5. **Multi-architecture Support**: x86_64-linux and aarch64-linux (for Raspberry Pi)
-   - Different nixpkgs instances for each architecture
+5. **Multi-architecture Support**: x86_64-linux (RPi configs moved to `nix-rpi` repo)
    - `perSystem` in flake-parts handles per-architecture outputs
 
 ## Important Configuration Files
@@ -498,6 +415,5 @@ When adding new features, follow these patterns:
 
 ## Additional Resources
 
-- Run `just help` or `just help-rpi` for detailed command usage
-- See `hosts/naspi/README.md` for comprehensive NasPi documentation
+- Run `just help` for command usage
 - Use `just --list` to discover all available commands

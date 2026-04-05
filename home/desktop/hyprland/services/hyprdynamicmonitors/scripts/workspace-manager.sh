@@ -99,7 +99,7 @@ configure_undocked() {
   hyprctl monitors -j 2>/dev/null | jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >>"$LOG_FILE" 2>&1 || log "  (failed to get monitors)"
 
   # Check Noctalia status
-  noctalia_pid=$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+  noctalia_pid=$(pgrep -f 'quickshell.*noctalia-shell' | head -1 || true)
   if [ -n "$noctalia_pid" ]; then
     log "Noctalia running (PID: $noctalia_pid)"
   else

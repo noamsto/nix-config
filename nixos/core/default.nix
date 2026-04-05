@@ -87,9 +87,6 @@
     };
   };
 
-  # For RaspberryPi 4 image generating
-  boot.binfmt.emulatedSystems = ["aarch64-linux"];
-
   system = {
     activationScripts.binbash = {
       deps = ["binsh"];
