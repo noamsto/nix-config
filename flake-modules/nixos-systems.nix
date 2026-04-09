@@ -23,6 +23,16 @@ in {
           inherit (inputs) self;
         };
       };
+
+      thinkpad-p14s-g6 = nixpkgs.lib.nixosSystem {
+        modules = [
+          ../hosts/thinkpad-p14s-g6
+        ];
+        specialArgs = {
+          inherit inputs;
+          inherit (inputs) self;
+        };
+      };
     };
   };
 }

@@ -23,6 +23,7 @@ in {
     # Default configs for nh auto-detection (username@hostname)
     "noams@thinkpad-p14s" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s;
     "noams@thinkpad-p14s-g5" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g5;
+    "noams@thinkpad-p14s-g6" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g6;
 
     # Fallback configs for nh auto-detection (username only)
     noams = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s; # Default to personal

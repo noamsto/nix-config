@@ -24,4 +24,14 @@
     machine.type = "laptop";
     profile = "work";
   };
+
+  thinkpad-p14s-g6 = {
+    username = "noams";
+    user-full-name = "Noam Stolero";
+    email = "noamstolero@gmail.com";
+    hostname = "thinkpad-p14s-g6";
+    desktop.mode = "hyprland";
+    machine.type = "laptop";
+    profile = "personal";
+  };
 }

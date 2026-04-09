@@ -9,7 +9,7 @@ in {
     enable = lib.mkEnableOption "ThinkPad fan control via thinkfan";
 
     generation = lib.mkOption {
-      type = lib.types.nullOr (lib.types.enum ["gen4" "gen5"]);
+      type = lib.types.nullOr (lib.types.enum ["gen4" "gen5" "gen6"]);
       default = null;
       example = "gen5";
       description = "ThinkPad P14s generation for sensor paths. Required when thinkfan is enabled.";
@@ -32,7 +32,7 @@ in {
     services.thinkfan = {
       enable = true;
       sensors =
-        if cfg.generation == "gen5"
+        if cfg.generation == "gen5" || cfg.generation == "gen6"
         then [
           # Gen5: Path-based sensor lookup (stable across reboots)
           {
@@ -105,7 +105,7 @@ in {
       ];
       # Aggressive fan curve (starts at 55°C, targets ~65°C, full-speed at 74-75°C)
       levels =
-        if cfg.generation == "gen5"
+        if cfg.generation == "gen5" || cfg.generation == "gen6"
         then [
           [0 0 55]
           [1 53 58]
