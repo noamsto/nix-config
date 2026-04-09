@@ -128,6 +128,15 @@ in {
 
       # Better system monitoring
       btop
+      (writeShellScriptBin "amdgpu_top" ''
+        scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+        if [ "$scheme" = "'prefer-light'" ]; then
+          flag="--light"
+        else
+          flag="--dark"
+        fi
+        exec ${amdgpu_top}/bin/amdgpu_top "$flag" "$@"
+      '')
 
       # === TEXT PROCESSING ===
       # bat available system-wide

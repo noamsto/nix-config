@@ -40,8 +40,37 @@ process_recording() {
 
   touch "$TEMP_MARKER"
 
-  # Show vicinae dmenu for user choice
-  choice=$(printf "Keep as MP4\nConvert to GIF" | vicinae dmenu -p "Recording saved: $filename")
+  # Launch vicinae via a helper script in Hyprland's session context
+  # (vicinae won't show a window when launched directly from a systemd service)
+  local choice_file="$HOME/.cache/recording-choice"
+  rm -f "$choice_file"
+
+  # Write a helper script that vicinae runs in the graphical session
+  local helper="/tmp/recording-dmenu-helper.sh"
+  cat >"$helper" <<HELPER
+#!/bin/bash
+choice=\$(printf "Keep as MP4\nConvert to GIF" | vicinae dmenu -p "Recording saved: $filename")
+echo "\$choice" > "$choice_file"
+HELPER
+  chmod +x "$helper"
+
+  # Launch via hyprctl so it runs in the compositor session
+  hyprctl dispatch exec "$helper"
+
+  # Wait for the user to make a choice (timeout after 60s)
+  local waited=0
+  while [ ! -f "$choice_file" ] && [ "$waited" -lt 60 ]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if [ -f "$choice_file" ]; then
+    choice=$(cat "$choice_file")
+    rm -f "$choice_file"
+  else
+    choice=""
+    log "Timed out waiting for user choice"
+  fi
 
   case "$choice" in
   "Keep as MP4")
@@ -59,7 +88,7 @@ process_recording() {
     ;;
   esac
 
-  rm -f "$TEMP_MARKER"
+  rm -f "$TEMP_MARKER" "$helper"
 }
 
 # Convert MP4 to optimized GIF

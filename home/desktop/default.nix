@@ -14,7 +14,8 @@
       ./noctalia
     ];
 
-  # Hardware-accelerated video for all Electron apps (Slack, Ferdium, etc.)
+  # Hardware-accelerated video for Electron apps using system Electron
+  # Apps with bundled Electron (Slack, etc.) get flags via overlays in lib/overlays.nix
   xdg.configFile."electron-flags.conf".text = ''
     --enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks
     --enable-gpu-rasterization

@@ -39,4 +39,18 @@ inputs: [
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })
+
+  (_final: prev: {
+    slack = prev.slack.overrideAttrs (old: {
+      installPhase =
+        (old.installPhase or "")
+        + ''
+          wrapProgram $out/bin/slack \
+            --add-flags "--enable-features=VaapiVideoDecodeLinuxGL,VaapiVideoEncoder,VaapiIgnoreDriverChecks" \
+            --add-flags "--enable-gpu-rasterization" \
+            --add-flags "--enable-zero-copy" \
+            --add-flags "--ignore-gpu-blocklist"
+        '';
+    });
+  })
 ]
