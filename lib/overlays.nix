@@ -13,7 +13,7 @@ inputs: [
   })
 
   (final: _prev: {
-    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush happy-coder;
+    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code gemini-cli codex cursor-agent crush happy-coder oh-my-opencode opencode;
     # Amp with process.title wrapper so it shows as "amp" instead of "node" in ps
     amp = let
       upstream = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.amp;
@@ -31,10 +31,6 @@ inputs: [
   })
 
   inputs.mcp-servers-nix.overlays.default
-
-  (final: _: {
-    inherit (inputs.self.packages.${final.stdenv.hostPlatform.system}) tavily-mcp;
-  })
 
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
