@@ -223,10 +223,10 @@ in {
         # Auto-update plugins on startup
         plugins.autoUpdate = true;
 
-        # Use predefined Monochrome colorscheme (plural key!)
+        # Use predefined Catppuccin colorscheme (plural key!)
         colorSchemes = {
           useWallpaperColors = false;
-          predefinedScheme = "Monochrome";
+          predefinedScheme = "Catppuccin";
           darkMode = true;
         };
 

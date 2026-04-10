@@ -745,14 +745,14 @@ update_noctalia() {
     dark_mode="true"
   fi
 
-  local gui_settings="${XDG_CONFIG_HOME}/noctalia/gui-settings.json"
+  local gui_settings="${XDG_CONFIG_HOME}/noctalia/settings.json"
 
   if [[ ! -f $gui_settings ]]; then
-    log_debug "Noctalia gui-settings.json not found, skipping"
+    log_debug "Noctalia settings.json not found, skipping"
     return 0
   fi
 
-  # Update darkMode in gui-settings.json
+  # Update darkMode in settings.json
   local tmp_file
   tmp_file=$(mktemp)
   if jq --argjson dark "$dark_mode" '.colorSchemes.darkMode = $dark' "$gui_settings" >"$tmp_file" 2>/dev/null; then
@@ -1238,7 +1238,7 @@ toggle_theme() {
     log_debug "Found Noctalia at PID $noctalia_pid"
     # Use Noctalia IPC to toggle dark mode - this triggers the darkModeChange hook
     # which then calls `theme-toggle apply` to update all other apps
-    if qs ipc --pid "$noctalia_pid" call darkMode toggle 2>/dev/null; then
+    if noctalia-ipc --pid "$noctalia_pid" darkMode toggle 2>/dev/null; then
       log_debug "Noctalia dark mode toggled via IPC"
       return 0
     fi
