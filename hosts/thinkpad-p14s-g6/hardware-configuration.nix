@@ -6,6 +6,8 @@
 {
   pkgs,
   modulesPath,
+  lib,
+  config,
   ...
 }: {
   imports = [
@@ -16,13 +18,15 @@
     # MediaTek mt7925 WiFi needs kernel 6.17+ for out-of-box support
     kernelPackages = pkgs.linuxPackages_latest;
 
+    initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt"];
+    kernelModules = ["kvm-amd"];
+
     # Enable thinkpad_acpi fan control for thinkfan
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
     '';
 
     kernelParams = [
-      "amd_pstate=active" # Redundant on 6.17+ (default) but explicit
       "amdgpu.dcdebugmask=0x10" # Fix GPU flickering / panel self-refresh lag
     ];
   };
@@ -39,7 +43,9 @@
       ];
     };
     amdgpu.initrd.enable = true;
+    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
   };
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   environment.variables = {
     "VDPAU_DRIVER" = "radeonsi";

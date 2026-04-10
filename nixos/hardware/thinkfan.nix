@@ -32,7 +32,37 @@ in {
     services.thinkfan = {
       enable = true;
       sensors =
-        if cfg.generation == "gen5" || cfg.generation == "gen6"
+        if cfg.generation == "gen6"
+        then [
+          # Gen6: Path-based sensor lookup (stable across reboots)
+          {
+            type = "hwmon";
+            query = "/sys/devices/pci0000:00/0000:00:08.1/0000:c4:00.0/hwmon";
+            indices = [1];
+          }
+          {
+            type = "hwmon";
+            query = "/sys/devices/pci0000:00/0000:00:18.3/hwmon";
+            indices = [1];
+          }
+          {
+            type = "hwmon";
+            query = "/sys/devices/platform/thinkpad_hwmon/hwmon";
+            indices = [1 3 6 7];
+          }
+          {
+            type = "hwmon";
+            query = "/sys/devices/pci0000:00/0000:00:02.1/0000:c1:00.0/nvme/nvme0";
+            indices = [1];
+            correction = [(-5)];
+          }
+          {
+            type = "hwmon";
+            query = "/sys/devices/virtual/thermal/thermal_zone0";
+            indices = [1];
+          }
+        ]
+        else if cfg.generation == "gen5"
         then [
           # Gen5: Path-based sensor lookup (stable across reboots)
           {
@@ -103,31 +133,18 @@ in {
           query = "/proc/acpi/ibm/fan";
         }
       ];
-      # Aggressive fan curve (starts at 55°C, targets ~65°C, full-speed at 74-75°C)
-      levels =
-        if cfg.generation == "gen5" || cfg.generation == "gen6"
-        then [
-          [0 0 55]
-          [1 53 58]
-          [2 56 61]
-          [3 59 64]
-          [4 62 66]
-          [5 64 68]
-          [6 66 70]
-          [7 68 72]
-          ["level full-speed" 70 32767]
-        ]
-        else [
-          [0 0 55]
-          [1 53 58]
-          [2 56 61]
-          [3 59 64]
-          [4 62 67]
-          [5 65 70]
-          [6 69 74]
-          [7 72 77]
-          ["level full-speed" 75 32767]
-        ];
+      # Balanced fan curve for all generations (prioritizes quietness, full-speed at 85°C)
+      levels = [
+        [0 0 55]
+        [1 50 60]
+        [2 55 65]
+        [3 60 70]
+        [4 65 75]
+        [5 70 80]
+        [6 75 85]
+        [7 80 90]
+        ["level full-speed" 85 32767]
+      ];
     };
   };
 }
