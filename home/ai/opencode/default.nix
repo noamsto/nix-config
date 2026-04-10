@@ -41,6 +41,7 @@
   };
 
   xdg.configFile."opencode/oh-my-openagent.json".text = builtins.toJSON {
+    default_run_agent = "sisyphus";
     agents = {
       sisyphus = {model = "opencode/kimi-k2.5";};
       oracle = {model = "opencode/gpt-5.4";};
