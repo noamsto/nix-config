@@ -78,6 +78,8 @@
       taplo # TOML
       bash-language-server
       statix
+      nil # Nix LSP (nil_ls)
+      alejandra # Nix formatter
 
       # === KEY FORMATTERS ===
       rustfmt # Rust formatting

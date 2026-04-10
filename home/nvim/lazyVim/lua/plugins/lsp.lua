@@ -3,6 +3,16 @@ return {
   "neovim/nvim-lspconfig",
   opts = {
     servers = {
+      nil_ls = {
+        mason = false,
+        settings = {
+          ["nil"] = {
+            formatting = {
+              command = { "alejandra" },
+            },
+          },
+        },
+      },
       harper_ls = {
         mason = false,
         settings = {
