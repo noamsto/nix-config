@@ -1,21 +1,16 @@
 # Cursor CLI module with shared MCP configuration
-{pkgs, ...}: let
+{
+  pkgs,
+  lib,
+  osConfig,
+  ...
+}: let
   # Shared MCP server definitions (same as Claude Code)
-  mcpServers = import ../mcp-servers.nix {inherit pkgs;};
+  mcpServers = import ../mcp-servers.nix {inherit pkgs lib osConfig;};
 
   # Cursor-specific: add env var references since Cursor doesn't inherit shell env
   # Uses ${env:NAME} syntax that Cursor resolves at runtime
-  cursorMcpServers =
-    mcpServers.base
-    // {
-      tavily =
-        mcpServers.base.tavily
-        // {
-          env = {
-            TAVILY_API_KEY = "\${env:TAVILY_API_KEY}";
-          };
-        };
-    };
+  cursorMcpServers = mcpServers.base;
 in {
   home.packages = [pkgs.cursor-agent];
 

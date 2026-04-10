@@ -1,27 +1,28 @@
 # Shared MCP server definitions for AI tools (Claude Code, Cursor, etc.)
 # Single source of truth - import this in each tool's module
-{pkgs}: let
+{
+  pkgs,
+  lib,
+  osConfig ? {profile = "personal";},
+}: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
 in {
   # Base MCPs - always loaded by all AI tools
-  base = {
-    context7 = {
-      command = "${pkgs.context7-mcp}/bin/context7-mcp";
-      args = [];
-      env = {};
-    };
+  base =
+    {
+      context7 = {
+        command = "${pkgs.context7-mcp}/bin/context7-mcp";
+        args = [];
+        env = {};
+      };
 
-    tavily = {
-      command = "${pkgs.tavily-mcp}/bin/tavily-mcp";
-      args = [];
-      env = {};
+    }
+    // lib.optionalAttrs (osConfig.profile == "work") {
+      linear = {
+        type = "http";
+        url = "https://mcp.linear.app/mcp";
+      };
     };
-
-    linear = {
-      type = "http";
-      url = "https://mcp.linear.app/mcp";
-    };
-  };
 
   # MCPs provided natively by claude.ai — exclude from Claude Code
   claudeAiProvided = ["linear"];
