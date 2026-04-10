@@ -13,7 +13,6 @@
     ./users.nix
     ./nice-looking-console.nix
     ./auto-upgrade.nix
-    ./clamav.nix
   ];
 
   users.defaultUserShell = pkgs.fish;

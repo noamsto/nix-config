@@ -15,6 +15,7 @@ in {
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
+    ../../nixos/core/clamav.nix
     inputs.lanzaboote.nixosModules.lanzaboote
   ];
 

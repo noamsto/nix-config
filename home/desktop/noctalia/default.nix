@@ -10,6 +10,7 @@
 {
   inputs,
   config,
+  osConfig,
   pkgs,
   lib,
   ...
@@ -233,8 +234,11 @@ in {
         # Bar configuration - top position like current waybar
         bar = {
           position = "top";
-          floating = false;
-          density = "spacious";
+          barType = "simple";
+          density =
+            if osConfig.hostname == "thinkpad-p14s-g5"
+            then "spacious"
+            else "comfortable";
           backgroundOpacity = 0.93;
           outerCorners = true;
           widgets = {
@@ -366,28 +370,27 @@ in {
             }
             {
               action = "hibernate";
-              enabled = true;
-              keybind = "3";
+              enabled = false;
             }
             {
               action = "reboot";
               enabled = true;
-              keybind = "4";
+              keybind = "3";
             }
             {
               action = "rebootToUefi";
               enabled = true;
-              keybind = "5";
+              keybind = "4";
             }
             {
               action = "logout";
               enabled = true;
-              keybind = "6";
+              keybind = "5";
             }
             {
               action = "shutdown";
               enabled = true;
-              keybind = "7";
+              keybind = "6";
             }
           ];
         };
@@ -424,10 +427,8 @@ in {
           enableDgpuMonitoring = true;
         };
 
-        # Disable Noctalia's launcher - keep Vicinae
-        # But set terminal for any launcher usage
+        # Launcher terminal command (Vicinae is the primary launcher)
         appLauncher = {
-          enable = false;
           terminalCommand = "kitty -e";
         };
 
@@ -437,7 +438,7 @@ in {
           directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
           fillMode = "crop";
           setWallpaperOnAllMonitors = true;
-          randomEnabled = true;
+          automationEnabled = true;
           randomIntervalSec = 1800;
           wallpaperChangeMode = "random";
         };

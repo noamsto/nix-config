@@ -22,7 +22,9 @@ in {
       "$HOME/.config/yazi/theme.toml" \
       "$HOME/.config/Kvantum/kvantum.kvconfig" \
       "$HOME/.config/gtk-3.0/settings.ini" \
-      "$HOME/.config/gtk-4.0/settings.ini"
+      "$HOME/.config/gtk-3.0/gtk.css" \
+      "$HOME/.config/gtk-4.0/settings.ini" \
+      "$HOME/.config/gtk-4.0/gtk.css"
     do
       if [ -f "$f" ] && [ ! -L "$f" ]; then
         $VERBOSE_ECHO "Removing theme-managed file: $f"

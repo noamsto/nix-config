@@ -14,6 +14,7 @@ in {
     ../../overlays
     ../../secrets
     ../../options.nix
+    ./host_secrets.nix
     inputs.disko.nixosModules.disko
     inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6

@@ -1,4 +1,10 @@
 {lib, ...}: {
+  # force = true: HM's checkLinkTargets sees the regular file left by
+  # copySshConfig (below) and would refuse to overwrite it. Forcing lets
+  # linkGeneration replace it with a symlink, then copySshConfig converts
+  # it back to a 600-permission copy.
+  home.file.".ssh/config".force = true;
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;

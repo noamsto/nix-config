@@ -1,5 +1,6 @@
 {lib, ...}: {
-  # Prevents home-manager from managing GTK4 CSS file, allowing manual customization
+  # Prevents home-manager from managing GTK CSS files, allowing theme-toggle to modify them
+  xdg.configFile."gtk-3.0/gtk.css".enable = lib.mkForce false;
   xdg.configFile."gtk-4.0/gtk.css".enable = lib.mkForce false;
 
   gtk = {

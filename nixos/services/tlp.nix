@@ -44,9 +44,9 @@ in {
         # Disable NMI watchdog (saves power)
         NMI_WATCHDOG = 0;
 
-        # Battery charge thresholds — DISABLED until battery replacement
-        # START_CHARGE_THRESH_BAT0 = 75;
-        # STOP_CHARGE_THRESH_BAT0 = 80;
+        # Battery charge thresholds (balanced: longevity vs usable capacity)
+        START_CHARGE_THRESH_BAT0 = 60;
+        STOP_CHARGE_THRESH_BAT0 = 80;
       };
     };
 

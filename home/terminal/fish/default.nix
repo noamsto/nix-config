@@ -200,6 +200,9 @@
         cr = "claude --resume";
         cf = "claude-frontend";
 
+        # OpenCode
+        oc = "opencode";
+
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";
         gst = "git status";
