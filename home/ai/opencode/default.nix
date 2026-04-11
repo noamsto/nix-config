@@ -41,16 +41,85 @@
   };
 
   xdg.configFile."opencode/oh-my-openagent.json".text = builtins.toJSON {
+    "$schema" = "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json";
     default_run_agent = "sisyphus";
+
+    # Agent model assignments
     agents = {
-      sisyphus = {model = "opencode/kimi-k2.5";};
+      sisyphus = {
+        model = "opencode/kimi-k2.5";
+        fallback_models = [
+          "opencode/gemini-3.1-pro"
+          "opencode/claude-opus-4-6"
+        ];
+      };
+      hephaestus = {
+        model = "opencode/gpt-5.4";
+        fallback_models = [
+          "opencode/claude-opus-4-6"
+        ];
+      };
       oracle = {model = "opencode/gpt-5.4";};
-      explore = {model = "opencode/claude-haiku-4-5";};
       prometheus = {model = "opencode/gemini-3.1-pro";};
       atlas = {model = "opencode/claude-sonnet-4-6";};
       metis = {model = "opencode/gemini-3.1-pro";};
-      librarian = {model = "opencode/claude-haiku-4-5";};
-      hephaestus = {model = "opencode/gpt-5.3-codex";};
+      explore = {model = "opencode/gemini-3-flash";};
+      librarian = {model = "opencode/gemini-3-flash";};
+    };
+
+    # Orchestration
+    sisyphus_agent = {
+      disabled = false;
+      planner_enabled = true;
+      replace_plan = true;
+      tdd = true;
+    };
+
+    # Tmux integration for background agent visibility
+    tmux = {
+      enabled = true;
+      layout = "main-vertical";
+      main_pane_size = 60;
+      main_pane_min_width = 120;
+      agent_pane_min_width = 40;
+      isolation = "inline";
+    };
+
+    # Ralph loop for autonomous execution
+    ralph_loop = {
+      enabled = true;
+      default_max_iterations = 100;
+      default_strategy = "continue";
+    };
+
+    # Model fallback and runtime resilience
+    model_fallback = true;
+    runtime_fallback = {
+      enabled = true;
+      retry_on_errors = [400 429 503 529];
+      notify_on_fallback = true;
+    };
+
+    # Background task concurrency limits
+    background_task = {
+      providerConcurrency = {
+        anthropic = 2;
+        openai = 3;
+        google = 5;
+        opencode = 10;
+      };
+    };
+
+    # Auto-refresh model capabilities on start
+    model_capabilities = {
+      enabled = true;
+      auto_refresh_on_start = true;
+      refresh_timeout_ms = 5000;
+    };
+
+    # Experimental features
+    experimental = {
+      auto_resume = true;
     };
   };
 }
