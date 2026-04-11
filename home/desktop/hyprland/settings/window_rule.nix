@@ -152,7 +152,7 @@
       "size 400 300, match:class ^(dragon|dragon-drop)$"
 
       # === SMART WORKSPACE ASSIGNMENTS ===
-      "workspace 1 silent, match:class ^(kitty)$"
+      "workspace 1 silent, match:class ^(kitty|com\\.mitchellh\\.ghostty)$"
       "workspace 2, match:class ^(firefox)$"
       "workspace 2 silent, match:class ^(brave-browser)$, match:initial_title .*"
       "workspace 2 silent, match:class ^(chromium)$"

@@ -12,6 +12,7 @@ in {
   imports = [
     inputs.lazytmux.homeManagerModules.default
     ./foot
+    ./ghostty
     ./kitty
     ./fish
     ./process_compose

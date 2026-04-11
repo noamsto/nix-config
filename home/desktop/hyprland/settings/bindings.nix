@@ -17,7 +17,7 @@ in {
   wayland.windowManager.hyprland.settings = {
     "$mainMod" = "SUPER";
     bind = [
-      "$mainMod, C, exec, ${terminal} --single-instance --instance-group=hypr" # Changed from Q to C for console/terminal
+      "$mainMod, C, exec, ${terminal} --single-instance --instance-group=hypr"
       "$mainMod, E, exec, ${fileManager}"
       "$mainMod, B, exec, ${browser}"
       "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)

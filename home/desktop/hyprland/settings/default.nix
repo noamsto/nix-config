@@ -143,7 +143,7 @@ in {
         vfr = true;
 
         enable_swallow = true;
-        swallow_regex = "^(foot|kitty)$";
+        swallow_regex = "^(foot|kitty|com\\.mitchellh\\.ghostty)$";
 
         layers_hog_keyboard_focus = true;
 

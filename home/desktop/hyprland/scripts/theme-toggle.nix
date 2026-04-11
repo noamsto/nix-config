@@ -41,7 +41,7 @@
       libnotify # notify-send
       hyprland # hyprctl
       procps # pkill, pgrep
-      kitty # kitty @ remote control
+      kitty # kitty @ remote control (kept alongside ghostty)
       tmux # tmux set/run-shell
       coreutils # cp, nohup, date, sort, tr
       gnugrep # grep

@@ -13,7 +13,7 @@
   # - Hyprland border colors (hyprctl)
   # - Waybar/swaync signal reload
   #
-  # Note: Apps configured via catppuccin.nix (kitty, btop, etc.) retain their
+  # Note: Apps configured via catppuccin.nix (ghostty, btop, etc.) retain their
   # built theme until a rebuild with different flavor is performed.
   # HM specialisations were attempted but blocked by catppuccin module deprecations.
 }

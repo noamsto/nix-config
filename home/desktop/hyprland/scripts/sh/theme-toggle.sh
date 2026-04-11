@@ -330,6 +330,38 @@ update_hyprland_borders() {
   return 0
 }
 
+# Update ghostty terminal theme (config file + SIGUSR1 reload)
+update_ghostty() {
+  local theme="$1"
+  local theme_name
+  log_debug "Updating ghostty to $theme"
+
+  # Get theme name from environment (set by Nix from palette)
+  if [[ $theme == "light" ]]; then
+    theme_name="$LIGHT_THEME_NAME"
+  else
+    theme_name="$DARK_THEME_NAME"
+  fi
+
+  local ghostty_config="${XDG_CONFIG_HOME}/ghostty/config"
+  if [[ ! -f $ghostty_config ]]; then
+    log_debug "ghostty config not found, skipping"
+    return 0
+  fi
+
+  # Update theme line in config (atomically)
+  local tmp_config="${ghostty_config}.tmp"
+  sed "s|^theme = .*|theme = ${theme_name}|" "$ghostty_config" >"$tmp_config" || {
+    record_failure "ghostty"
+    rm -f "$tmp_config"
+    return 1
+  }
+  mv "$tmp_config" "$ghostty_config"
+
+  # Signal running ghostty instances to reload config
+  pkill -USR1 ghostty 2>/dev/null || true
+}
+
 # Update kitty terminal theme (all running instances and config for new instances)
 update_kitty() {
   local theme="$1"
@@ -348,9 +380,8 @@ update_kitty() {
   # Use generated theme from ~/.config/kitty/themes/
   local theme_file="${XDG_CONFIG_HOME}/kitty/themes/${theme_name}.conf"
   if [[ ! -f $theme_file ]]; then
-    log_error "Kitty theme file not found: $theme_file"
-    record_failure "kitty"
-    return 1
+    log_debug "Kitty theme file not found: $theme_file, skipping"
+    return 0
   fi
 
   # Font weight: SemiBold for light theme (better contrast), Medium for dark
@@ -362,18 +393,14 @@ update_kitty() {
   fi
 
   # Update all running kitty instances via their sockets
-  # Use nullglob to handle case where no sockets exist
   shopt -s nullglob
   local sockets=(/tmp/kitty-*)
   shopt -u nullglob
 
-  log_debug "Found ${#sockets[@]} kitty sockets"
   for sock in "${sockets[@]}"; do
     if [[ -S $sock ]]; then
-      log_debug "Updating kitty socket: $sock"
       kitty @ --to "unix:$sock" set-colors --all --configured "$theme_file" 2>/dev/null || true
-      # Update font weight for theme
-      kitty @ --to "unix:$sock" set-font-size -- 0 2>/dev/null || true # Reset to default first
+      kitty @ --to "unix:$sock" set-font-size -- 0 2>/dev/null || true
     fi
   done
 
@@ -381,7 +408,6 @@ update_kitty() {
   if [[ -f $kitty_config ]]; then
     local tmp_config="${kitty_config}.tmp"
 
-    # Remove any existing theme-toggle overrides and update include/font lines
     grep -v "^# theme-toggle:" "$kitty_config" 2>/dev/null |
       grep -v "^include.*/kitty/themes/" |
       sed "s|^font_family.*FiraCode Nerd Font.*|font_family FiraCode Nerd Font ${font_weight}|" >"$tmp_config" || {
@@ -390,7 +416,6 @@ update_kitty() {
       return 1
     }
 
-    # Prepend theme include at the top of the config
     local final_config="${kitty_config}.final"
     {
       echo "# theme-toggle: catppuccin theme"
@@ -1170,6 +1195,7 @@ apply_theme_from_noctalia() {
   update_gtk_theme "$theme" || true
   update_gtk_css "$theme" || true
   update_hyprland_borders "$theme" || true
+  update_ghostty "$theme" || true
   update_kitty "$theme" || true
   update_foot "$theme" || true
   update_fish "$theme" || true
@@ -1203,6 +1229,7 @@ apply_theme() {
   update_gtk_theme "$theme" || true
   update_gtk_css "$theme" || true
   update_hyprland_borders "$theme" || true
+  update_ghostty "$theme" || true
   update_kitty "$theme" || true
   update_foot "$theme" || true
   update_fish "$theme" || true
@@ -1333,6 +1360,7 @@ sync_theme() {
     case "$component" in
     gtk) update_gtk_theme "$current" ;;
     hyprland) update_hyprland_borders "$current" ;;
+    ghostty) update_ghostty "$current" ;;
     kitty) update_kitty "$current" ;;
     foot) update_foot "$current" ;;
     fish) update_fish "$current" ;;

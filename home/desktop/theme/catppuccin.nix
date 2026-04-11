@@ -12,6 +12,7 @@ in {
   home.activation.cleanThemeFiles = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
     # Remove files that theme-toggle may have modified (no longer symlinks)
     for f in \
+      "$HOME/.config/ghostty/config" \
       "$HOME/.config/kitty/kitty.conf" \
       "$HOME/.config/btop/btop.conf" \
       "$HOME/.config/starship.toml" \
@@ -34,7 +35,7 @@ in {
   '';
 
   # Run theme-toggle restore after Home Manager activation
-  # This ensures theme-managed configs (kitty, starship, k9s, btop, lazygit)
+  # This ensures theme-managed configs (ghostty, starship, k9s, btop, lazygit)
   # are updated to match the current theme after rebuilds
   home.activation.restoreTheme = lib.hm.dag.entryAfter ["linkGeneration"] ''
     $VERBOSE_ECHO "Restoring theme settings..."
