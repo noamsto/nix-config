@@ -49,10 +49,55 @@ is_lid_closed() {
     org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"
 }
 
+# Resolve monitor identifier to actual Hyprland monitor name
+# Handles: "left", "right", "laptop", or direct monitor names (eDP-1, DP-1, etc.)
+resolve_monitor() {
+  local identifier="$1"
+
+  # If it's already a direct monitor name (contains a dash), return as-is
+  if [[ $identifier == *-* ]]; then
+    echo "$identifier"
+    return 0
+  fi
+
+  # Query Hyprland for monitors and resolve based on position
+  local monitors_json
+  monitors_json=$(hyprctl monitors -j 2>/dev/null || echo "[]")
+
+  case "$identifier" in
+  "left")
+    # Find the leftmost monitor (excluding eDP-1)
+    echo "$monitors_json" | jq -r '[.[] | select(.name != "eDP-1" and .disabled == false)] | sort_by(.x) | first | .name' 2>/dev/null || echo ""
+    ;;
+  "right")
+    # Find the rightmost monitor (excluding eDP-1)
+    echo "$monitors_json" | jq -r '[.[] | select(.name != "eDP-1" and .disabled == false)] | sort_by(.x) | last | .name' 2>/dev/null || echo ""
+    ;;
+  "laptop" | "eDP")
+    echo "eDP-1"
+    ;;
+  *)
+    # Unknown identifier, return as-is and let caller handle error
+    echo "$identifier"
+    ;;
+  esac
+}
+
 # Configure dual monitor docked setup
 configure_docked() {
-  local left="$1"
-  local right="$2"
+  local left_identifier="$1"
+  local right_identifier="$2"
+
+  # Resolve identifiers to actual monitor names
+  local left
+  local right
+  left=$(resolve_monitor "$left_identifier")
+  right=$(resolve_monitor "$right_identifier")
+
+  if [ -z "$left" ] || [ -z "$right" ]; then
+    log "ERROR: Failed to resolve monitors - left='$left', right='$right'"
+    return 1
+  fi
 
   log "Configuring docked: left=$left, right=$right"
 

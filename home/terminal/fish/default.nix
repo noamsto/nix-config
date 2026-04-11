@@ -310,6 +310,8 @@
 
         # OpenCode
         oc = "opencode";
+        occ = "oc -c";
+        ocs = "oc -s";
 
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";
