@@ -117,9 +117,26 @@
   xdg.configFile."Thunar/thunarrc".text = ''
     [Configuration]
     LastView=ThunarDetailsView
+    LastSortColumn=THUNAR_COLUMN_DATE_MODIFIED
+    LastSortOrder=GTK_SORT_DESCENDING
     MiscThumbnailMode=THUNAR_THUMBNAIL_MODE_ALWAYS
     MiscShowHidden=FALSE
     MiscFoldersFirst=TRUE
     MiscDateStyle=THUNAR_DATE_STYLE_SHORT
+    MiscDateCustomStyle=%Y-%m-%d %H:%M
+    MiscFileSizeInBytes=FALSE
+    MiscSingleClick=FALSE
   '';
+
+  # Sidebar bookmarks (shows in Thunar and other GTK file dialogs)
+  gtk.gtk3.bookmarks = let
+    home = config.home.homeDirectory;
+  in [
+    "file://${home}/Documents"
+    "file://${home}/Downloads"
+    "file://${home}/Pictures"
+    "file://${home}/Videos"
+    "file://${home}/Data Data"
+    "file://${home}/Data/git git"
+  ];
 }
