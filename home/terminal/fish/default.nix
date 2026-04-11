@@ -8,6 +8,114 @@
 
   # catppuccin.fish disabled — conflicts with dynamic theme switching via theme-toggle
   xdg.configFile = {
+    # Fish completions for opencode and oc with caching for speed
+    "fish/completions/opencode.fish".text = ''
+      set -g __opencode_cache_dir "$HOME/.cache/fish/opencode-completions"
+      set -g __opencode_cache_ttl 300  # 5 minutes
+
+      function __opencode_get_cache_file
+        set -l args $argv
+        set -l cache_key
+        if test (count $args) -eq 0
+          set cache_key "_root"
+        else
+          set cache_key (string join '_' -- $args | string replace -a '/' '_' | string replace -a ' ' '_')
+        end
+        echo "$__opencode_cache_dir/$cache_key"
+      end
+
+      function __opencode_is_cache_fresh
+        set -l cache_file $argv[1]
+        if not test -f $cache_file
+          return 1
+        end
+        set -l cache_age (math (date +%s) - (stat -c %Y $cache_file 2>/dev/null; or echo 0))
+        test $cache_age -lt $__opencode_cache_ttl
+      end
+
+      function __opencode_completions
+        set -l args (commandline -opc)
+        set -e args[1]
+        set -l current_token (commandline -ct)
+
+        # Ensure cache directory exists
+        if not test -d $__opencode_cache_dir
+          mkdir -p $__opencode_cache_dir 2>/dev/null
+        end
+
+        set -l cache_file (__opencode_get_cache_file $args)
+
+        # Check cache first
+        if __opencode_is_cache_fresh $cache_file
+          cat $cache_file 2>/dev/null
+          return 0
+        end
+
+        # Generate fresh completions in background, return cached if available
+        if test -f $cache_file
+          # Return stale cache immediately while refreshing in background
+          cat $cache_file 2>/dev/null &
+          opencode --get-yargs-completions $args 2>/dev/null | grep -v '^\\$0$' > $cache_file &
+        else
+          # No cache, generate synchronously (first time only)
+          opencode --get-yargs-completions $args 2>/dev/null | grep -v '^\\$0$' | tee $cache_file
+        end
+      end
+
+      complete -c opencode -f -a '(__opencode_completions)'
+    '';
+
+    "fish/completions/oc.fish".text = ''
+      # oc shares the same cache as opencode
+      set -g __opencode_cache_dir "$HOME/.cache/fish/opencode-completions"
+      set -g __opencode_cache_ttl 300
+
+      function __oc_get_cache_file
+        set -l args $argv
+        set -l cache_key
+        if test (count $args) -eq 0
+          set cache_key "_root"
+        else
+          set cache_key (string join '_' -- $args | string replace -a '/' '_' | string replace -a ' ' '_')
+        end
+        echo "$__opencode_cache_dir/$cache_key"
+      end
+
+      function __oc_is_cache_fresh
+        set -l cache_file $argv[1]
+        if not test -f $cache_file
+          return 1
+        end
+        set -l cache_age (math (date +%s) - (stat -c %Y $cache_file 2>/dev/null; or echo 0))
+        test $cache_age -lt $__opencode_cache_ttl
+      end
+
+      function __oc_completions
+        set -l args (commandline -opc)
+        set -e args[1]
+
+        if not test -d $__opencode_cache_dir
+          mkdir -p $__opencode_cache_dir 2>/dev/null
+        end
+
+        set -l cache_file (__oc_get_cache_file $args)
+
+        if __oc_is_cache_fresh $cache_file
+          cat $cache_file 2>/dev/null
+          return 0
+        end
+
+        if test -f $cache_file
+          cat $cache_file 2>/dev/null &
+          opencode --get-yargs-completions $args 2>/dev/null | grep -v '^\\$0$' > $cache_file &
+        else
+          opencode --get-yargs-completions $args 2>/dev/null | grep -v '^\\$0$' | tee $cache_file
+        end
+      end
+
+      complete -c oc -f -a '(__oc_completions)'
+    '';
+
     "fish/themes/Catppuccin Latte.theme".text = ''
       # name: 'Catppuccin Latte'
       # url: 'https://github.com/catppuccin/fish'

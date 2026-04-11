@@ -10,6 +10,7 @@
   };
 
   programs.neovim = {
+    withRuby = false;
     extraWrapperArgs = [
       "--suffix"
       "LIBRARY_PATH"
