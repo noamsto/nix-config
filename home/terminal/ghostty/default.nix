@@ -53,6 +53,8 @@ in {
       font-feature = ["zero" "ss01"];
 
       cursor-style = "block";
+      # Prevent fish integration from overriding cursor style — keeps shader uniforms consistent
+      shell-integration-features = "no-cursor";
       custom-shader = builtins.toString ./shaders/cursor-trail.glsl;
 
       window-decoration = false;
