@@ -187,16 +187,12 @@
     };
 
     # === AMD NPU Support ===
+    # Provides: fastflowlm, xrt, amdxdna-driver, amdxdna-firmware
+    # Pinned to specific commit for stability
+    # To update: check latest at https://github.com/robcohen/nix-amd-npu/commits/main
     nix-amd-npu = {
-      url = "github:robcohen/nix-amd-npu";
+      url = "github:robcohen/nix-amd-npu/8848c6f3382852290ac25fbe7634058c4e9c037e";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Lemonade AI SDK (pending nixpkgs merge - PR #498314)
-    # Provides OpenAI-compatible API server for local LLMs on NPU/GPU
-    # Remove this once PR is merged into nixpkgs-unstable
-    lemonade-nixpkgs = {
-      url = "github:Videl/nixpkgs/pkg-lemonade-ai-from-unstable";
     };
   };
 }

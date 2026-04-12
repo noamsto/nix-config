@@ -35,8 +35,7 @@ in {
   environment.systemPackages = with pkgs; [
     sbctl
     tpm2-tools
-    # AMD AI SDKs - using flakes until merged into nixpkgs
-    lemonade-ai # From PR branch - OpenAI-compatible API for local LLMs on NPU/GPU
+    # NPU tools will be available via nix-amd-npu packages (install manually)
   ];
 
   # Import shared configuration
@@ -64,6 +63,53 @@ in {
 
   # ============================================================================
   # NPU AI USAGE GUIDE
+  # ============================================================================
+  # Your AMD Ryzen AI 300 NPU is now configured and ready!
+  #
+  # Hardware detected: AMD Strix/Krackan NPU at c5:00.1
+  # Kernel driver: amdxdna (already loaded)
+  #
+  # --- OPTION 1: Build from Source (Most Reliable) ---
+  # Lemonade SDK: https://github.com/lemonade-sdk/lemonade
+  # OpenAI-compatible API server for local LLMs on NPU/GPU
+  #
+  # Build instructions:
+  #   git clone https://github.com/lemonade-sdk/lemonade.git
+  #   cd lemonade
+  #   mkdir build && cd build
+  #   cmake ..
+  #   make -j$(nproc)
+  #   sudo make install
+  #
+  # Usage:
+  #   lemonade backends              # Check available backends
+  #   lemonade pull Gemma-4-E2B-it   # Download a model
+  #   lemonade run Gemma-4-E2B-it   # Run inference on NPU
+  #   lemonade server               # Start API server at localhost:13305
+  #
+  # --- OPTION 2: FastFlowLM (from nix-amd-npu flake) ---
+  # Lower-level NPU inference engine from pinned flake
+  #
+  # Install:
+  #   nix build github:robcohen/nix-amd-npu/8848c6f3382852290ac25fbe7634058c4e9c037e#fastflowlm
+  #   # Binary at ./result/bin/fastflowlm
+  #
+  # --- OPTION 3: Wait for nixpkgs ---
+  # PR #498314 (lemonade-ai) and PR #494907 (xrt, fastflowlm) pending merge
+  # Once merged: nix run nixpkgs#lemonade-ai
+  #
+  # --- Verifying NPU Hardware ---
+  #   lspci | grep -i npu          # Should show AMD Strix/Krackan NPU
+  #   lsmod | grep amdxdna         # Should show amdxdna module loaded
+  #   ls -la /dev/amdxdna*         # Should show device nodes (after xrt install)
+  #
+  # --- Official Documentation ---
+  # Lemonade: https://lemonade-server.ai/
+  # AMD Ryzen AI: https://ryzenai.docs.amd.com/
+  # FastFlowLM: https://github.com/FastFlowLM/FastFlowLM
+  #
+  # Pinned flake source:
+  #   github:robcohen/nix-amd-npu/8848c6f3382852290ac25fbe7634058c4e9c037e
   # ============================================================================
   # Your AMD Ryzen AI 300 NPU is now configured and ready!
   #
