@@ -43,6 +43,8 @@
           "gfx.webrender.all" = true;
           "media.ffmpeg.vaapi.enabled" = true;
           "media.ffmpeg.low-latency.enabled" = true; # VA-API decode for WebRTC (video calls)
+          "media.webrtc.hw.h264.enabled" = true; # VA-API encode for outgoing camera stream
+          "media.navigator.mediadatadecoder.vpx.enabled" = true; # VA-API VP9 decode for incoming streams (Meet default codec)
           "dom.webgpu.enabled" = true;
           "layers.acceleration.disabled" = false;
           "browser.tabs.unloadOnLowMemory" = true;

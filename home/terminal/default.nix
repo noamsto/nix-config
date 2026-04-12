@@ -30,12 +30,7 @@ in {
       enable = true;
       name = "nix-config";
       directory = "%h/nix-config";
-      terminal = {
-        term = "xterm-kitty";
-        colorterm = "truecolor";
-        termProgram = "kitty";
-        terminfoPath = "${pkgs.kitty}/share/terminfo";
-      };
+      terminal.emulator = "ghostty";
     };
   };
 
