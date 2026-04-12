@@ -3,9 +3,9 @@
 
 // -- CONFIGURATION --
 vec4 TRAIL_COLOR = iCurrentCursorColor; // can change to eg: vec4(0.2, 0.6, 1.0, 0.5);
-const float DURATION = 0.06; // in seconds — shorter reduces tmux redraw artifacts
-const float MAX_TRAIL_LENGTH = 0.15; // smaller trail = fewer stale-position artifacts in tmux
-const float THRESHOLD_MIN_DISTANCE = 2.0; // higher threshold = less noise from tmux cell redraws
+const float DURATION = 0.06; // trail fade duration (seconds)
+const float MAX_TRAIL_LENGTH = 0.15; // max trail length relative to screen height
+const float THRESHOLD_MIN_DISTANCE = 2.0; // min cursor movement to trigger trail (cursor widths)
 const float BLUR = 2.0; // blur size in pixels (for antialiasing)
 
 // --- CONSTANTS for easing functions ---
