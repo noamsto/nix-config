@@ -12,7 +12,6 @@ in {
   imports = [
     inputs.lazytmux.homeManagerModules.default
     ./foot
-    ./ghostty
     ./kitty
     ./fish
     ./process_compose
@@ -30,7 +29,7 @@ in {
       enable = true;
       name = "nix-config";
       directory = "%h/nix-config";
-      terminal.emulator = "ghostty";
+      terminal.emulator = "kitty";
     };
   };
 
