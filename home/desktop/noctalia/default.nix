@@ -260,6 +260,7 @@ in {
               }
               {
                 id = "ActiveWindow";
+                colorizeIcons = false;
                 maxWidth = 145;
                 hideMode = "hidden";
                 scrollingMode = "hover";
@@ -469,6 +470,10 @@ in {
         };
       };
     };
+
+    # Noctalia modifies settings.json at runtime (dark mode, wallpaper, etc.).
+    # Force-overwrite so HM never tries to create a .bak — Nix config is source of truth.
+    xdg.configFile."noctalia/settings.json".force = true;
 
     # Symlink aegis-lock colors.json to noctalia's runtime-generated colors.json
     # so the lockscreen uses the same MD3 color scheme as the shell
