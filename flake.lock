@@ -777,22 +777,6 @@
         "type": "github"
       }
     },
-    "lemonade-nixpkgs": {
-      "locked": {
-        "lastModified": 1774387122,
-        "narHash": "sha256-RDXfLr3Y9fvYlMpp59JHAMtoo7BXkjaWBlS7doyDyx0=",
-        "owner": "Videl",
-        "repo": "nixpkgs",
-        "rev": "fec54e17fee7ee83d90a447aec5a910762e0fdfb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Videl",
-        "ref": "pkg-lemonade-ai-from-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "llm-agents": {
       "inputs": {
         "blueprint": "blueprint",
@@ -893,6 +877,7 @@
       "original": {
         "owner": "robcohen",
         "repo": "nix-amd-npu",
+        "rev": "8848c6f3382852290ac25fbe7634058c4e9c037e",
         "type": "github"
       }
     },
@@ -1337,7 +1322,6 @@
         "hyprdynamicmonitors": "hyprdynamicmonitors",
         "lanzaboote": "lanzaboote",
         "lazytmux": "lazytmux",
-        "lemonade-nixpkgs": "lemonade-nixpkgs",
         "llm-agents": "llm-agents",
         "mcp-servers-nix": "mcp-servers-nix",
         "mysecrets": "mysecrets",

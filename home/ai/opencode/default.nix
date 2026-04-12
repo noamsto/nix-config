@@ -16,8 +16,10 @@
     enableMcpIntegration = true;
     settings = {
       autoupdate = false;
+      # Register oh-my-opencode plugin - required for agents/categories to work
+      # Must use file:// protocol for Nix store paths
       plugin = [
-        "${pkgs.oh-my-opencode}/lib/oh-my-opencode"
+        "file://${pkgs.oh-my-opencode}/lib/oh-my-opencode"
       ];
     };
     tui = {
