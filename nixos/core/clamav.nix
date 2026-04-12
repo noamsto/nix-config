@@ -1,41 +1,14 @@
 # ClamAV antivirus with weekly scanning for SOC compliance
+# Daemon is disabled — weekly scan uses standalone clamscan which loads
+# definitions on-demand, avoiding ~1.5 GB resident memory from clamd.
 {pkgs, ...}: {
-  # ClamAV antivirus daemon and database updater
   services.clamav = {
-    daemon = {
-      enable = true;
-      settings = {
-        # Performance settings
-        MaxThreads = 4;
-        MaxDirectoryRecursion = 20;
+    daemon.enable = false;
 
-        # Scan settings
-        ScanArchive = true;
-        ArchiveBlockEncrypted = false;
-
-        # Alert on large files but don't skip them
-        AlertExceedsMax = true;
-
-        # Exclusions - skip immutable/virtual filesystems
-        ExcludePath = [
-          "^/nix/"
-          "^/proc/"
-          "^/sys/"
-          "^/dev/"
-          "^/run/"
-        ];
-
-        # Log settings
-        LogFile = "/var/log/clamav/clamd.log";
-        LogTime = true;
-        LogVerbose = false;
-      };
-    };
-
-    # Keep virus definitions updated
+    # Keep virus definitions updated for the weekly scan
     updater = {
       enable = true;
-      interval = "daily"; # Update definitions daily
+      interval = "daily";
       frequency = 1;
     };
   };
@@ -48,40 +21,30 @@
         Type = "oneshot";
         ExecStart = let
           scanScript = pkgs.writeShellScript "clamav-scan" ''
-            # Focus on user-writable locations with external files
-            # Skip /nix (immutable), virtual filesystems, and system dirs
-            SCAN_DIRS="/home /tmp /var/tmp /mnt /media"
+            # Only scan real attack surface: files arriving from outside the system.
+            # Excludes git repos, Go/Nix caches, app data (~260G of noise).
+            SCAN_DIRS="/home/noams/Downloads /home/noams/Desktop /home/noams/Documents /tmp /var/tmp /mnt /media"
 
-            # Log file
             LOG_FILE="/var/log/clamav/weekly-scan-$(date +%Y%m%d).log"
 
             echo "Starting weekly ClamAV scan at $(date)" | tee "$LOG_FILE"
 
-            # Run scan with exclusions for Nix-managed and virtual paths
             ${pkgs.clamav}/bin/clamscan \
               --recursive \
               --infected \
               --log="$LOG_FILE" \
-              --exclude-dir="^/nix" \
-              --exclude-dir="^/proc" \
-              --exclude-dir="^/sys" \
-              --exclude-dir="^/dev" \
-              --exclude-dir="^/run" \
-              --exclude-dir="\.nix-profile" \
-              --exclude-dir="\.nix-defexpr" \
-              --exclude-dir="\.cache/nix" \
               $SCAN_DIRS
 
             EXIT_CODE=$?
 
             echo "Scan completed at $(date) with exit code $EXIT_CODE" | tee -a "$LOG_FILE"
 
-            # Keep only last 4 weekly scan logs
             find /var/log/clamav -name "weekly-scan-*.log" -mtime +28 -delete 2>/dev/null || true
           '';
         in "${scanScript}";
         Nice = 19;
         IOSchedulingClass = "idle";
+        CPUSchedulingPolicy = "idle";
       };
     };
 
