@@ -35,6 +35,8 @@ in {
   environment.systemPackages = with pkgs; [
     sbctl
     tpm2-tools
+    # AMD AI SDKs - using flakes until merged into nixpkgs
+    lemonade-ai # From PR branch - OpenAI-compatible API for local LLMs on NPU/GPU
   ];
 
   # Import shared configuration
@@ -68,41 +70,38 @@ in {
   # Hardware detected: AMD Strix/Krackan NPU at c5:00.1
   # Kernel driver: amdxdna (already loaded)
   #
-  # --- OPTION 1: Lemonade SDK (Recommended) ---
+  # --- Lemonade SDK (Installed via flake) ---
   # Lemonade provides an OpenAI-compatible API server for your NPU.
   # It wraps FastFlowLM and supports multiple backends.
   #
-  # Installation (manual until packaged):
-  #   git clone https://github.com/lemonade-sdk/lemonade.git
-  #   cd lemonade
-  #   # Follow build instructions for NixOS/Linux
-  #
-  # Usage:
-  #   lemonade backends              # Check available backends
+  # Quick Start:
+  #   lemonade backends              # Check available backends (npu, rocm, vulkan, cpu)
   #   lemonade pull Gemma-4-E2B-it   # Download a model
   #   lemonade run Gemma-4-E2B-it   # Run inference on NPU
   #   lemonade launch claude        # Launch with Claude Code
   #
   # API endpoint: http://localhost:13305/v1 (OpenAI-compatible)
   #
-  # --- OPTION 2: FastFlowLM (Direct) ---
-  # Lower-level NPU inference engine. Available via nix-amd-npu flake.
-  #
-  # Build:
+  # --- FastFlowLM (from nix-amd-npu flake) ---
+  # Lower-level NPU inference engine. Install with:
   #   nix build github:robcohen/nix-amd-npu#fastflowlm
   #
-  # --- OPTION 3: Ryzen AI SDK (Official AMD) ---
+  # --- Ryzen AI SDK (Official AMD) ---
   # Proprietary SDK with hybrid execution. More complex setup.
   # See: https://ryzenai.docs.amd.com/
   #
   # --- Verifying NPU works ---
-  # After installing Lemonade or FastFlowLM:
-  #   xrt-smi validate          # Test NPU functionality
+  #   xrt-smi validate          # Test NPU functionality (after installing xrt)
   #   lspci | grep NPU          # Verify hardware detection
   #   lsmod | grep amdxdna      # Verify driver loaded
   #
   # Note: FastFlowLM models need to be in .flm format for NPU execution.
   # Convert GGUF models or download pre-converted ones from Lemonade hub.
+  #
+  # Flakes used:
+  #   - nix-amd-npu: github:robcohen/nix-amd-npu (FastFlowLM, XRT, drivers)
+  #   - lemonade-nixpkgs: github:Videl/nixpkgs/pkg-lemonade-ai-from-unstable
+  #     (Remove once PR #498314 is merged into nixpkgs-unstable)
   # ============================================================================
 
   # Btrfs swapfile for hibernate support

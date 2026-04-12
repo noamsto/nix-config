@@ -35,6 +35,11 @@ inputs: [
   # AMD XDNA NPU packages (FastFlowLM, XRT, etc.)
   inputs.nix-amd-npu.overlays.default
 
+  # Lemonade AI SDK from PR branch (until merged into nixpkgs)
+  (_final: _prev: {
+    inherit (inputs.lemonade-nixpkgs.legacyPackages.x86_64-linux) lemonade-ai;
+  })
+
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })

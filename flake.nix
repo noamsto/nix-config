@@ -191,5 +191,12 @@
       url = "github:robcohen/nix-amd-npu";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Lemonade AI SDK (pending nixpkgs merge - PR #498314)
+    # Provides OpenAI-compatible API server for local LLMs on NPU/GPU
+    # Remove this once PR is merged into nixpkgs-unstable
+    lemonade-nixpkgs = {
+      url = "github:Videl/nixpkgs/pkg-lemonade-ai-from-unstable";
+    };
   };
 }
