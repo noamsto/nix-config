@@ -151,21 +151,16 @@ configure_undocked() {
     log "WARNING: Noctalia NOT running!"
   fi
 
-  # Always turn DPMS on and reload when undocking, REGARDLESS of lid state.
+  # Always turn DPMS on when undocking, REGARDLESS of lid state.
   # When docked with lid closed, eDP-1 was disabled and DPMS may be off.
   # Without resetting the display pipeline here, suspend+resume leaves eDP-1
   # in a broken state (black screen on lid open after resume).
   log "Turning DPMS on (unconditional on undock)..."
   hyprctl dispatch dpms on 2>/dev/null || true
 
-  log "Reloading Hyprland configuration..."
-  hyprctl reload 2>/dev/null || true
-
-  # Let the display pipeline settle before any further actions
-  sleep 0.5
-
-  # Check lid state - spawn detached suspend handler if closed
-  # Must use setsid to survive HDM killing this script on profile switch
+  # Spawn suspend handler BEFORE reload — hyprctl reload triggers HDM
+  # re-evaluation which kills this script, so anything after reload is unreliable.
+  # The handler's 2s debounce gives reload time to complete.
   if is_lid_closed; then
     log "Lid closed while undocked - spawning suspend handler"
 
@@ -206,15 +201,34 @@ configure_undocked() {
           org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'
       }
 
+      has_external_monitors() {
+        for status_file in /sys/class/drm/card*/status; do
+          if [ -f \"\$status_file\" ]; then
+            connector=\$(basename \$(dirname \"\$status_file\"))
+            connector_name=\${connector#card?-}
+            if [ \"\$(cat \"\$status_file\")\" = 'connected' ] && \
+               [ \"\$connector_name\" != 'eDP-1' ] && \
+               [ \"\$connector_name\" != 'Writeback-1' ]; then
+              return 0
+            fi
+          fi
+        done
+        return 1
+      }
+
       trap 'rm -f \"\$SUSPEND_LOCK_FILE\"' EXIT
 
       log 'Debouncing for 2s...'
 
-      # Confirm lid still closed after 2s
+      # Confirm lid still closed and no external monitors (re-dock) after 2s
       for _ in {1..4}; do
         sleep 0.5
         if ! is_lid_closed; then
           log 'Lid opened during debounce - canceling suspend'
+          exit 0
+        fi
+        if has_external_monitors; then
+          log 'External monitors detected during debounce (re-docked?) - canceling suspend'
           exit 0
         fi
       done
@@ -253,8 +267,20 @@ configure_undocked() {
     " &>/dev/null &
 
     log "Suspend handler spawned (detached)"
+
+    # Reload for display pipeline health — handler's 2s debounce ensures
+    # reload completes before suspend. If HDM kills this script here, that's
+    # fine — the handler is already running in its own session.
+    log "Reloading Hyprland configuration..."
+    hyprctl reload 2>/dev/null || true
     return
   fi
+
+  log "Reloading Hyprland configuration..."
+  hyprctl reload 2>/dev/null || true
+
+  # Let the display pipeline settle before workspace moves
+  sleep 0.5
 
   # Lid is open - move all workspaces to laptop
   for ws in {1..9}; do
