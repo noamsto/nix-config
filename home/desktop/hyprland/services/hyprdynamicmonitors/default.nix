@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   lib,
+  osConfig,
   ...
 }: let
   # Create workspace-manager script with proper dependencies
@@ -11,6 +12,27 @@
       glib # provides gdbus for lid state checking
     ];
     text = builtins.readFile ./scripts/workspace-manager.sh;
+  };
+
+  # Get laptop scale from host config (defaults to 1.25)
+  laptopScale = osConfig.laptop-scale or "1.25";
+
+  # Generate profile files with scale substituted
+  profilesDir = pkgs.stdenvNoCC.mkDerivation {
+    name = "hyprdynamicmonitors-profiles";
+    src = ./profiles;
+    buildPhase = ''
+      mkdir -p $out
+      # Process template files (.conf.in -> .conf)
+      for file in $src/*.conf.in; do
+        if [ -f "$file" ]; then
+          filename=$(basename "$file")
+          output="$out/''${filename%.in}"
+          sed -e "s/@laptopScale@/${laptopScale}/g" "$file" > "$output"
+        fi
+      done
+    '';
+    preferLocalBuild = true;
   };
 
   # Use config.toml directly (workspace-manager is in PATH, no substitutions needed)
@@ -27,7 +49,7 @@ in {
 
   # Deploy profiles
   xdg.configFile = {
-    "hyprdynamicmonitors/profiles".source = ./profiles;
+    "hyprdynamicmonitors/profiles".source = profilesDir;
   };
 
   # Add scripts to PATH

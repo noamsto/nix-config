@@ -13,6 +13,7 @@
     desktop.mode = "hyprland";
     machine.type = "laptop";
     profile = "personal";
+    laptop-scale = "2.0";
   };
 
   thinkpad-p14s-g5 = {
@@ -23,6 +24,7 @@
     desktop.mode = "hyprland";
     machine.type = "laptop";
     profile = "work";
+    laptop-scale = "2.0";
   };
 
   thinkpad-p14s-g6 = {
@@ -33,5 +35,6 @@
     desktop.mode = "hyprland";
     machine.type = "laptop";
     profile = "personal";
+    laptop-scale = "1.25";
   };
 }

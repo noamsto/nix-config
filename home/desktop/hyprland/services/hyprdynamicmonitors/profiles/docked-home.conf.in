@@ -10,11 +10,11 @@
 monitor={{$left.Name}},2560x1440@60,0x0,1.0
 monitor={{$right.Name}},2560x1440@60,2560x0,1.0
 
-# Laptop screen (lid-aware) - auto scale for gen5/gen6 compatibility
+# Laptop screen (lid-aware) - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
 {{if isLidClosed}}
 monitor={{$laptop.Name}},disable
 {{else}}
-monitor={{$laptop.Name}},preferred,5120x0,auto
+monitor={{$laptop.Name}},preferred,5120x0,@laptopScale@
 {{end}}
 
 # Workspace assignments - left monitor (WS 1-4)

@@ -71,12 +71,90 @@
             "opencode/claude-opus-4-6"
           ];
         };
-        oracle = {model = "opencode/gpt-5.4";};
+        # Updated to gemini-3.1-pro per OMO docs (valid for oracle, gpt-5.4 kept as fallback)
+        oracle = {
+          model = "opencode/gemini-3.1-pro";
+          fallback_models = [
+            "opencode/gpt-5.4"
+          ];
+        };
         prometheus = {model = "opencode/gemini-3.1-pro";};
         atlas = {model = "opencode/claude-sonnet-4-6";};
         metis = {model = "opencode/gemini-3.1-pro";};
         explore = {model = "opencode/gemini-3-flash";};
         librarian = {model = "opencode/gemini-3-flash";};
+      };
+
+      # Category configurations for domain-optimized model routing
+      # Based on oh-my-opencode model requirements and fallback chains
+      categories = {
+        quick = {
+          model = "opencode/gemini-3-flash";
+          description = "Trivial tasks - single file changes, typo fixes, simple modifications";
+          fallback_models = [
+            "opencode/claude-haiku-4-5"
+            "opencode/gpt-5-nano"
+          ];
+        };
+        deep = {
+          model = "opencode/gemini-3.1-pro";
+          description = "Goal-oriented autonomous problem-solving. Thorough research before action. For hairy problems requiring deep understanding.";
+          fallback_models = [
+            "opencode/claude-opus-4-6"
+            "opencode/gpt-5.4"
+            "opencode/kimi-k2.5"
+          ];
+        };
+        ultrabrain = {
+          model = "opencode/gemini-3.1-pro";
+          description = "Use ONLY for genuinely hard, logic-heavy tasks. Give clear goals only, not step-by-step instructions.";
+          fallback_models = [
+            "opencode/claude-opus-4-6"
+            "opencode/gpt-5.4"
+          ];
+        };
+        artistry = {
+          model = "opencode/claude-opus-4-6";
+          description = "Complex problem-solving with unconventional, creative approaches - beyond standard patterns";
+          fallback_models = [
+            "opencode/gemini-3.1-pro"
+            "opencode/gpt-5.4"
+          ];
+        };
+        "unspecified-high" = {
+          model = "opencode/gemini-3.1-pro";
+          description = "Tasks that don't fit other categories, high effort required";
+          fallback_models = [
+            "opencode/claude-opus-4-6"
+            "opencode/gpt-5.4"
+            "opencode/kimi-k2.5"
+          ];
+        };
+        "unspecified-low" = {
+          model = "opencode/gemini-3-flash";
+          description = "Tasks that don't fit other categories, low effort required";
+          fallback_models = [
+            "opencode/claude-sonnet-4-6"
+            "opencode/gpt-5.3-codex"
+            "opencode/kimi-k2.5"
+          ];
+        };
+        writing = {
+          model = "opencode/gemini-3.1-pro";
+          description = "Documentation, prose, technical writing";
+          fallback_models = [
+            "opencode/gemini-3-flash"
+            "opencode/claude-sonnet-4-6"
+          ];
+        };
+        "visual-engineering" = {
+          model = "opencode/claude-sonnet-4-6";
+          description = "Frontend, UI/UX, design, styling, animation. Any task involving UI, UX, CSS, styling, layout, animation, design, or frontend components MUST go here.";
+          fallback_models = [
+            "opencode/gemini-3.1-pro"
+            "opencode/gpt-5.4"
+          ];
+        };
       };
 
       # Orchestration

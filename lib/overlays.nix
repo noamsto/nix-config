@@ -32,6 +32,9 @@ inputs: [
 
   inputs.mcp-servers-nix.overlays.default
 
+  # AMD XDNA NPU packages (FastFlowLM, XRT, etc.)
+  inputs.nix-amd-npu.overlays.default
+
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })

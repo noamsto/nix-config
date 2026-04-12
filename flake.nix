@@ -185,5 +185,11 @@
       url = "github:noamsto/zr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # === AMD NPU Support ===
+    nix-amd-npu = {
+      url = "github:robcohen/nix-amd-npu";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

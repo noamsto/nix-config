@@ -4,8 +4,8 @@
 
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 
-# Laptop screen configuration - auto scale adapts to gen5 OLED (2.0) vs gen6 LCD (1.25)
-monitor={{$laptop.Name}},preferred,0x0,auto
+# Laptop screen configuration - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
+monitor={{$laptop.Name}},preferred,0x0,@laptopScale@
 
 # Named workspaces on laptop
 workspace=1,monitor:{{$laptop.Name}},default:true,name:dev
