@@ -83,30 +83,68 @@ resolve_monitor() {
   esac
 }
 
+# Resolve left/right monitor from the newly-written monitors.conf.
+# HDM writes monitors.conf before running post_apply_exec, so the file has
+# correct positions even before hyprctl reload applies them to Hyprland.
+# Format: monitor=NAME,RESxRES@RATE,XxY,SCALE  or  monitor=NAME,disable
+resolve_monitor_from_conf() {
+  local identifier="$1"
+  local conf="$HOME/.config/hypr/monitors.conf"
+
+  if [[ $identifier == *-* ]]; then
+    echo "$identifier"
+    return 0
+  fi
+
+  if [ ! -f "$conf" ]; then
+    log "WARNING: monitors.conf not found, falling back to Hyprland query"
+    resolve_monitor "$identifier"
+    return
+  fi
+
+  case "$identifier" in
+  "left")
+    # Non-disabled monitor at x=0
+    awk -F',' '/^monitor=/ && $2 != "disable" {
+      name=$1; sub(/^monitor=/, "", name)
+      split($3, pos, "x"); x=pos[1]+0
+      if (x == 0) { print name; exit }
+    }' "$conf" 2>/dev/null
+    ;;
+  "right")
+    # Non-disabled monitor with highest x
+    awk -F',' '/^monitor=/ && $2 != "disable" {
+      name=$1; sub(/^monitor=/, "", name)
+      split($3, pos, "x"); x=pos[1]+0
+      if (x > maxX) { maxX=x; maxName=name }
+    } END { if (maxName) print maxName }' "$conf" 2>/dev/null
+    ;;
+  "laptop" | "eDP")
+    echo "eDP-1"
+    ;;
+  *)
+    echo "$identifier"
+    ;;
+  esac
+}
+
 # Configure dual monitor docked setup
 configure_docked() {
   local left_identifier="$1"
   local right_identifier="$2"
 
-  # Reload Hyprland FIRST to apply the newly-written monitors.conf.
-  # workspace-manager runs before Hyprland has applied the new conf, so monitor
-  # x-positions in Hyprland's current state reflect the OLD layout. Resolving
-  # "left"/"right" by physical position before reload causes workspaces to be
-  # moved to the wrong monitors. Reloading first (matching configure_undocked's
-  # approach) ensures positions are correct before we resolve and move.
-  log "Reloading Hyprland configuration..."
-  if ! hyprctl reload; then
-    log "WARNING: Failed to reload Hyprland configuration"
-  fi
-
-  # Let monitor positions settle after reload
-  sleep 0.5
-
-  # Resolve identifiers to actual monitor names (positions are now correct)
+  # Resolve from monitors.conf, NOT from Hyprland's current state.
+  # workspace-manager runs immediately after HDM writes monitors.conf but
+  # BEFORE hyprctl reload applies those positions to Hyprland. Querying
+  # Hyprland here would return the OLD (pre-reload) positions, causing
+  # workspaces to land on the wrong monitors.
+  #
+  # Workspace moves must happen BEFORE reload: hyprctl reload can trigger HDM
+  # re-evaluation which kills this script, so anything after reload is unreliable.
   local left
   local right
-  left=$(resolve_monitor "$left_identifier")
-  right=$(resolve_monitor "$right_identifier")
+  left=$(resolve_monitor_from_conf "$left_identifier")
+  right=$(resolve_monitor_from_conf "$right_identifier")
 
   if [ -z "$left" ] || [ -z "$right" ]; then
     log "ERROR: Failed to resolve monitors - left='$left', right='$right'"
@@ -137,6 +175,12 @@ configure_docked() {
     if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
       log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
     fi
+  fi
+
+  # Reload Hyprland to apply profile's monitor + workspace rules from config
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
   fi
 }
 
