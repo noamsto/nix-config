@@ -88,7 +88,21 @@ configure_docked() {
   local left_identifier="$1"
   local right_identifier="$2"
 
-  # Resolve identifiers to actual monitor names
+  # Reload Hyprland FIRST to apply the newly-written monitors.conf.
+  # workspace-manager runs before Hyprland has applied the new conf, so monitor
+  # x-positions in Hyprland's current state reflect the OLD layout. Resolving
+  # "left"/"right" by physical position before reload causes workspaces to be
+  # moved to the wrong monitors. Reloading first (matching configure_undocked's
+  # approach) ensures positions are correct before we resolve and move.
+  log "Reloading Hyprland configuration..."
+  if ! hyprctl reload; then
+    log "WARNING: Failed to reload Hyprland configuration"
+  fi
+
+  # Let monitor positions settle after reload
+  sleep 0.5
+
+  # Resolve identifiers to actual monitor names (positions are now correct)
   local left
   local right
   left=$(resolve_monitor "$left_identifier")
@@ -100,9 +114,6 @@ configure_docked() {
   fi
 
   log "Configuring docked: left=$left, right=$right"
-
-  # Move existing workspaces to match profile rules BEFORE reload
-  # This ensures workspaces are positioned correctly even if reload triggers HDM re-evaluation
 
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
@@ -126,12 +137,6 @@ configure_docked() {
     if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
       log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
     fi
-  fi
-
-  # Reload Hyprland to apply profile's monitor + workspace rules from config
-  log "Reloading Hyprland configuration..."
-  if ! hyprctl reload; then
-    log "WARNING: Failed to reload Hyprland configuration"
   fi
 }
 
