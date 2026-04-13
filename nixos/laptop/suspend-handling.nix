@@ -114,7 +114,7 @@ in {
             log "Lid closed with external monitors present, skipping eDP-1 enable"
           else
             log "Enabling eDP-1 before DPMS on (lid open or no other monitors)..."
-            ${pkgs.hyprland}/bin/hyprctl keyword monitor "eDP-1,preferred,auto,2.0" 2>/dev/null || true
+            ${pkgs.hyprland}/bin/hyprctl keyword monitor "eDP-1,preferred,auto,${config.laptop-scale}" 2>/dev/null || true
           fi
 
           sleep 0.3

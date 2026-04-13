@@ -18,7 +18,7 @@ in {
   ];
 
   # Import shared configuration
-  inherit (hostConfig) hostname email profile;
+  inherit (hostConfig) hostname email profile laptop-scale;
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
 

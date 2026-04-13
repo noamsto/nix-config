@@ -1,11 +1,20 @@
-{lib, ...}: {
+{
+  lib,
+  osConfig,
+  ...
+}: let
+  # Calculate DPI based on laptop-scale (default to 1.25 if not set)
+  # 96 * 1.25 = 120, 96 * 2.0 = 192
+  scale = builtins.fromJSON (osConfig.laptop-scale or "1.25");
+  dpi = builtins.floor (96.0 * scale);
+in {
   # XWayland HiDPI scaling via .Xresources
   # This provides proper scaling for XWayland apps when using force_zero_scaling
 
   home.file = {
-    # Laptop profile: 2.0 scale (96 * 2.0 = 192 DPI)
+    # Laptop profile: dynamic scale based on host config
     ".Xresources.laptop".text = ''
-      Xft.dpi: 192
+      Xft.dpi: ${toString dpi}
       Xft.autohint: 0
       Xft.lcdfilter: lcddefault
       Xft.hintstyle: hintfull
@@ -27,7 +36,7 @@
 
     # Default .Xresources symlinks to laptop profile (for undocked use)
     ".Xresources".source = lib.mkDefault (builtins.toFile "Xresources" ''
-      Xft.dpi: 192
+      Xft.dpi: ${toString dpi}
       Xft.autohint: 0
       Xft.lcdfilter: lcddefault
       Xft.hintstyle: hintfull

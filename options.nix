@@ -60,6 +60,11 @@
       type = lib.types.str;
       readOnly = true;
     };
+    laptop-scale = lib.mkOption {
+      type = lib.types.str;
+      default = "1.25";
+      description = "Laptop display scale";
+    };
     flakePath = lib.mkOption {
       type = lib.types.str;
       default = "/home/${config.username}/nix-config";
