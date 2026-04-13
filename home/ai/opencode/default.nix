@@ -81,16 +81,35 @@
               "opencode/claude-opus-4-6"
             ];
           };
-          # Updated to gemini-3.1-pro per OMO docs (valid for oracle, gpt-5.4 kept as fallback)
+          # Oracle needs STRONG model for hard debugging/architecture (Opus preferred)
           oracle = {
-            model = "opencode/gemini-3.1-pro";
+            model = "opencode/claude-opus-4-6";
             fallback_models = [
               "opencode/gpt-5.4"
             ];
           };
-          prometheus = {model = "opencode/gemini-3.1-pro";};
-          atlas = {model = "opencode/claude-sonnet-4-6";};
-          metis = {model = "opencode/gemini-3.1-pro";};
+          # Prometheus creates plans - needs strong reasoning (GPT-5.4 has dual prompts)
+          prometheus = {
+            model = "opencode/gpt-5.4";
+            fallback_models = [
+              "opencode/claude-opus-4-6"
+            ];
+          };
+          # Atlas: Kimi K2.5 is OMO default - cheaper than Sonnet, GPT-optimized for todo management
+          atlas = {
+            model = "opencode/kimi-k2.5";
+            fallback_models = [
+              "opencode/claude-sonnet-4-6"
+              "opencode/gpt-5.4"
+            ];
+          };
+          # Metis analyzes complex tasks - needs reasoning strength (Sonnet sweet spot)
+          metis = {
+            model = "opencode/claude-sonnet-4-6";
+            fallback_models = [
+              "opencode/gpt-5.4"
+            ];
+          };
           explore = {model = "opencode/gemini-3-flash";};
           librarian = {model = "opencode/gemini-3-flash";};
         };
