@@ -194,9 +194,11 @@
           tdd = true;
         };
 
-        # Tmux integration for background agent visibility
+        # Tmux integration disabled - open bugs cause blank/duplicate panes
+        # https://github.com/code-yeongyu/oh-my-openagent/issues/3280
+        # https://github.com/code-yeongyu/oh-my-openagent/issues/3350
         tmux = {
-          enabled = true;
+          enabled = false;
           layout = "main-vertical";
           main_pane_size = 60;
           main_pane_min_width = 120;
