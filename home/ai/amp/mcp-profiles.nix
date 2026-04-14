@@ -5,6 +5,13 @@
 }: let
   executable = lib.getExe pkgs.chromium;
   helpers = import ../mcp-helpers.nix {inherit pkgs;};
+
+  # Wrap playwright-mcp with NixOS-compatible environment
+  # Playwright on NixOS needs special handling for browser dependencies
+  playwright-mcp-wrapped = pkgs.writeShellScriptBin "mcp-server-playwright-wrapped" ''
+    export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+    exec ${pkgs.playwright-mcp}/bin/mcp-server-playwright "$@"
+  '';
 in {
   # Generate additional MCP configs (add to base MCPs)
   xdg.configFile = {
@@ -25,7 +32,7 @@ in {
     # Note: Amp has built-in web browsing, but Playwright adds UI testing/automation
     "amp/mcp-playwright.json".text = builtins.toJSON {
       playwright = {
-        command = "${pkgs.playwright-mcp}/bin/mcp-server-playwright";
+        command = "${playwright-mcp-wrapped}/bin/mcp-server-playwright-wrapped";
         args = ["--executable-path" executable];
       };
     };

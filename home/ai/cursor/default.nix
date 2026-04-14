@@ -2,17 +2,18 @@
 {
   pkgs,
   lib,
-  osConfig,
   ...
 }: let
   # Shared MCP server definitions (same as Claude Code)
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib osConfig;};
+  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   # Cursor-specific: add env var references since Cursor doesn't inherit shell env
   # Uses ${env:NAME} syntax that Cursor resolves at runtime
   cursorMcpServers = mcpServers.base;
 in {
-  home.packages = [pkgs.cursor-agent];
+  # TEMPORARILY DISABLED due to playwright-core collision with playwright-mcp
+  # Both bundle playwright-core at $out/index.js causing build failure
+  # home.packages = [pkgs.cursor-agent];
 
   # Generate cursor MCP config at ~/.cursor/mcp.json
   # Uses same base MCPs as Claude Code for consistent experience

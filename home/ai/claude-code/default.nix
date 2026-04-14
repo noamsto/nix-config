@@ -3,11 +3,10 @@
   lib,
   config,
   inputs,
-  osConfig,
   ...
 }: let
   # Shared MCP server definitions
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib osConfig;};
+  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);

@@ -4,8 +4,8 @@
   osConfig,
   ...
 }: let
-  executable = lib.getExe pkgs.chromium;
   helpers = import ../mcp-helpers.nix {inherit pkgs;};
+  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   # FreeCAD MCP addon source
   freecad-mcp-addon = pkgs.fetchFromGitHub {
@@ -21,10 +21,7 @@ in {
       # Frontend MCP: Playwright for browser automation and UI inspection
       "claude-code/mcp-playwright.json".text = builtins.toJSON {
         mcpServers = {
-          playwright = {
-            command = "${pkgs.playwright-mcp}/bin/playwright-mcp";
-            args = ["--executable-path" executable];
-          };
+          playwright = mcpServers.base.playwright;
         };
       };
 

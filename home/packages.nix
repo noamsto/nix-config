@@ -42,6 +42,11 @@
     dragon-drop
     stable.aider-chat-with-playwright # Uses stable for Playwright compatibility
     aichat
+
+    # Playwright testing dependencies
+    playwright-driver
+    chromium
+    firefox
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 
     # Network file system support for Dolphin/file managers

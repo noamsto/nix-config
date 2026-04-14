@@ -2,11 +2,10 @@
   pkgs,
   lib,
   config,
-  osConfig,
   ...
 }: let
   # Shared MCP server definitions
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib osConfig;};
+  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   toAmpMcpServer = name: server:
     if server ? command

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "instructions": [
+    "/home/noams/.config/opencode/instructions/conventional-commits.md"
+  ],
+  "plugin": [
+    "oh-my-openagent"
+  ],
+  "mcp": {
+    "context7": {
+      "type": "local",
+      "command": ["context7-mcp"],
+      "enabled": true
+    }
+  }
+}
