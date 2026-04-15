@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   inputs,
   ...
 }: let
@@ -16,26 +15,9 @@ in {
     ../../options.nix
     ./host_secrets.nix
     inputs.disko.nixosModules.disko
-    inputs.lanzaboote.nixosModules.lanzaboote
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
-  ];
-
-  # Secure Boot with Lanzaboote
-  boot = {
-    initrd.systemd.enable = true; # Required for TPM unlock
-    loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote replaces systemd-boot
-    lanzaboote = {
-      enable = true;
-      pkiBundle = "/etc/secureboot";
-      autoGenerateKeys.enable = true;
-      autoEnrollKeys.enable = true;
-    };
-  };
-
-  environment.systemPackages = with pkgs; [
-    sbctl
-    tpm2-tools
-    # NPU tools will be available via nix-amd-npu packages (install manually)
+    ../../nixos/core/lanzaboote.nix
+    ../../nixos/hardware/udev-hwmon.nix
   ];
 
   # Import shared configuration
@@ -64,90 +46,24 @@ in {
   # ============================================================================
   # NPU AI USAGE GUIDE
   # ============================================================================
-  # Your AMD Ryzen AI 300 NPU is now configured and ready!
+  # Hardware: AMD Ryzen AI 300 NPU (Strix/Krackan at c5:00.1)
+  # Driver: amdxdna (loaded by hardware.amd-npu module)
   #
-  # Hardware detected: AMD Strix/Krackan NPU at c5:00.1
-  # Kernel driver: amdxdna (already loaded)
-  #
-  # --- OPTION 1: Build from Source (Most Reliable) ---
-  # Lemonade SDK: https://github.com/lemonade-sdk/lemonade
+  # --- Lemonade SDK ---
   # OpenAI-compatible API server for local LLMs on NPU/GPU
-  #
-  # Build instructions:
-  #   git clone https://github.com/lemonade-sdk/lemonade.git
-  #   cd lemonade
-  #   mkdir build && cd build
-  #   cmake ..
-  #   make -j$(nproc)
-  #   sudo make install
-  #
-  # Usage:
-  #   lemonade backends              # Check available backends
+  #   lemonade backends              # Available backends (npu, rocm, vulkan, cpu)
   #   lemonade pull Gemma-4-E2B-it   # Download a model
-  #   lemonade run Gemma-4-E2B-it   # Run inference on NPU
-  #   lemonade server               # Start API server at localhost:13305
+  #   lemonade run Gemma-4-E2B-it    # Run inference on NPU
+  #   lemonade server                # API at localhost:13305/v1
   #
-  # --- OPTION 2: FastFlowLM (from nix-amd-npu flake) ---
-  # Lower-level NPU inference engine from pinned flake
-  #
-  # Install:
-  #   nix build github:robcohen/nix-amd-npu/8848c6f3382852290ac25fbe7634058c4e9c037e#fastflowlm
-  #   # Binary at ./result/bin/fastflowlm
-  #
-  # --- OPTION 3: Wait for nixpkgs ---
-  # PR #498314 (lemonade-ai) and PR #494907 (xrt, fastflowlm) pending merge
-  # Once merged: nix run nixpkgs#lemonade-ai
-  #
-  # --- Verifying NPU Hardware ---
-  #   lspci | grep -i npu          # Should show AMD Strix/Krackan NPU
-  #   lsmod | grep amdxdna         # Should show amdxdna module loaded
-  #   ls -la /dev/amdxdna*         # Should show device nodes (after xrt install)
-  #
-  # --- Official Documentation ---
-  # Lemonade: https://lemonade-server.ai/
-  # AMD Ryzen AI: https://ryzenai.docs.amd.com/
-  # FastFlowLM: https://github.com/FastFlowLM/FastFlowLM
-  #
-  # Pinned flake source:
-  #   github:robcohen/nix-amd-npu/8848c6f3382852290ac25fbe7634058c4e9c037e
-  # ============================================================================
-  # Your AMD Ryzen AI 300 NPU is now configured and ready!
-  #
-  # Hardware detected: AMD Strix/Krackan NPU at c5:00.1
-  # Kernel driver: amdxdna (already loaded)
-  #
-  # --- Lemonade SDK (Installed via flake) ---
-  # Lemonade provides an OpenAI-compatible API server for your NPU.
-  # It wraps FastFlowLM and supports multiple backends.
-  #
-  # Quick Start:
-  #   lemonade backends              # Check available backends (npu, rocm, vulkan, cpu)
-  #   lemonade pull Gemma-4-E2B-it   # Download a model
-  #   lemonade run Gemma-4-E2B-it   # Run inference on NPU
-  #   lemonade launch claude        # Launch with Claude Code
-  #
-  # API endpoint: http://localhost:13305/v1 (OpenAI-compatible)
-  #
-  # --- FastFlowLM (from nix-amd-npu flake) ---
-  # Lower-level NPU inference engine. Install with:
+  # --- FastFlowLM ---
   #   nix build github:robcohen/nix-amd-npu#fastflowlm
   #
-  # --- Ryzen AI SDK (Official AMD) ---
-  # Proprietary SDK with hybrid execution. More complex setup.
-  # See: https://ryzenai.docs.amd.com/
+  # --- Verify ---
+  #   lspci | grep -i npu    # Hardware detection
+  #   lsmod | grep amdxdna   # Driver loaded
   #
-  # --- Verifying NPU works ---
-  #   xrt-smi validate          # Test NPU functionality (after installing xrt)
-  #   lspci | grep NPU          # Verify hardware detection
-  #   lsmod | grep amdxdna      # Verify driver loaded
-  #
-  # Note: FastFlowLM models need to be in .flm format for NPU execution.
-  # Convert GGUF models or download pre-converted ones from Lemonade hub.
-  #
-  # Flakes used:
-  #   - nix-amd-npu: github:robcohen/nix-amd-npu (FastFlowLM, XRT, drivers)
-  #   - lemonade-nixpkgs: github:Videl/nixpkgs/pkg-lemonade-ai-from-unstable
-  #     (Remove once PR #498314 is merged into nixpkgs-unstable)
+  # Docs: https://lemonade-server.ai/ | https://ryzenai.docs.amd.com/
   # ============================================================================
 
   # Btrfs swapfile for hibernate support
@@ -165,11 +81,4 @@ in {
     max-silent-time = 14400;
     timeout = 172800;
   };
-
-  # Allow access to hardware monitoring for btop
-  services.udev.extraRules = ''
-    SUBSYSTEM=="hwmon", KERNEL=="hwmon*", MODE="0644"
-    SUBSYSTEM=="power_supply", MODE="0644"
-    SUBSYSTEM=="powercap", MODE="0644"
-  '';
 }

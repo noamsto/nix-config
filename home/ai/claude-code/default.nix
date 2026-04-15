@@ -11,6 +11,22 @@
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
 
+  # Hook helpers to reduce repetition in status state machine
+  statusCmd = state: {
+    type = "command";
+    command = "claude-status-update ${state}";
+  };
+  statusHook = state: {hooks = [(statusCmd state)];};
+  matchedStatusHook = matcher: state: {
+    inherit matcher;
+    hooks = [(statusCmd state)];
+  };
+  # cleanup + transition to a state
+  sessionStartHook = matcher: state: {
+    inherit matcher;
+    hooks = [(statusCmd "cleanup") (statusCmd state)];
+  };
+
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
@@ -22,80 +38,15 @@
       };
       # Tmux status integration state machine
       hooks = {
-        # startup/resume/clear -> idle, compact -> processing
         SessionStart = [
-          {
-            matcher = "startup";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            matcher = "resume";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            matcher = "clear";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update idle";
-              }
-            ];
-          }
-          {
-            matcher = "compact";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update cleanup";
-              }
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
+          (sessionStartHook "startup" "idle")
+          (sessionStartHook "resume" "idle")
+          (sessionStartHook "clear" "idle")
+          (sessionStartHook "compact" "processing")
         ];
-        UserPromptSubmit = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-        ];
+        UserPromptSubmit = [(statusHook "processing")];
         PreToolUse = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
+          (statusHook "processing")
           {
             matcher = "Bash";
             hooks = [
@@ -106,67 +57,14 @@
             ];
           }
         ];
-        PostToolUse = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update processing";
-              }
-            ];
-          }
-        ];
-        # permission_prompt -> waiting, idle_prompt -> done
+        PostToolUse = [(statusHook "processing")];
         Notification = [
-          {
-            matcher = "permission_prompt";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update waiting";
-              }
-            ];
-          }
-          {
-            matcher = "idle_prompt";
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update done";
-              }
-            ];
-          }
+          (matchedStatusHook "permission_prompt" "waiting")
+          (matchedStatusHook "idle_prompt" "done")
         ];
-        Stop = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update done";
-              }
-            ];
-          }
-        ];
-        PreCompact = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update compacting";
-              }
-            ];
-          }
-        ];
-        SessionEnd = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "claude-status-update clear";
-              }
-            ];
-          }
-        ];
+        Stop = [(statusHook "done")];
+        PreCompact = [(statusHook "compacting")];
+        SessionEnd = [(statusHook "clear")];
       };
     };
   };
@@ -196,5 +94,21 @@ in {
     settings = {}; # Managed via --settings flag in wrapper
     # Heavy MCPs (Playwright, PostHog) loaded conditionally via mcp-profiles.nix aliases
     mcpServers = lib.removeAttrs mcpServers.base mcpServers.claudeAiProvided;
+    lspServers = {
+      nix = {
+        command = "${pkgs.nixd}/bin/nixd";
+        extensionToLanguage = {
+          ".nix" = "nix";
+        };
+      };
+      bash = {
+        command = "${pkgs.bash-language-server}/bin/bash-language-server";
+        args = ["start"];
+        extensionToLanguage = {
+          ".sh" = "shellscript";
+          ".bash" = "shellscript";
+        };
+      };
+    };
   };
 }

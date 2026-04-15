@@ -4,24 +4,7 @@
   config,
   ...
 }: let
-  # Shared MCP server definitions
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
-
-  toAmpMcpServer = name: server:
-    if server ? command
-    then {
-      inherit (server) command;
-      args = server.args or [];
-      env = server.env or {};
-    }
-    else if server ? url || server ? type
-    then {
-      inherit (server) url;
-      headers = server.headers or {};
-    }
-    else throw "Invalid MCP server definition for ${name}";
-
-  ampMcpServers = lib.mapAttrs toAmpMcpServer mcpServers.base;
 
   amp-wrapped =
     if pkgs ? wrappers
@@ -50,7 +33,7 @@ in {
 
   xdg.configFile."amp/settings.json".text = builtins.toJSON {
     "amp.terminal.theme" = "catppuccin-mocha";
-    "amp.mcpServers" = ampMcpServers;
+    "amp.mcpServers" = mcpServers.base;
   };
 
   home.packages = [amp-wrapped];

@@ -45,7 +45,6 @@
 
     # Playwright testing dependencies
     playwright-driver
-    chromium
     firefox
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 

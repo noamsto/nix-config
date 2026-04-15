@@ -1,26 +1,22 @@
-# Centralized MCP server definitions
+# Centralized MCP server definitions for programs.mcp module
 {
   pkgs,
   lib,
   osConfig,
   ...
-}: {
+}: let
+  mcpServers = import ./mcp-servers.nix {inherit pkgs lib;};
+in {
   programs.mcp = {
     enable = true;
     servers =
       {
-        context7 = {
-          command = "${pkgs.context7-mcp}/bin/context7-mcp";
-          args = [];
-          env = {};
-        };
+        inherit (mcpServers.base) context7;
       }
       // lib.optionalAttrs (osConfig.profile == "work") {
-        groundcover = {
-          command = "npx";
+        groundcover = mcpServers.helpers.mkNpxMcp {
+          package = "mcp-remote@0.1.30";
           args = [
-            "-y"
-            "mcp-remote@0.1.30"
             "https://mcp.groundcover.com/api/mcp"
             "54278"
             "--header"
@@ -30,7 +26,6 @@
             "--header"
             "X-Backend-Id:groundcover"
           ];
-          env = {};
         };
       };
   };

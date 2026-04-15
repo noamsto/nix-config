@@ -25,7 +25,7 @@
   services = {
     # Enable flatpak
     flatpak.enable = true;
-    libinput = lib.mkIf (config.machine.type == "laptop") {
+    libinput = lib.mkIf config.machine.isLaptop {
       enable = true;
       touchpad = {
         naturalScrolling = true;
@@ -40,7 +40,7 @@
     # Disable scroll-on-button-down for ThinkPad TrackPoint
     # By default, libinput converts middle-button + TrackPoint movement into scroll events.
     # This prevents middle-click + drag from working as pan in 3D apps (Bambu Studio, Blender, etc.)
-    udev.extraRules = lib.mkIf (config.machine.type == "laptop") ''
+    udev.extraRules = lib.mkIf config.machine.isLaptop ''
       ACTION=="add|change", KERNEL=="event*", ATTRS{name}=="TPPS/2 Elan TrackPoint", ENV{LIBINPUT_ATTR_SCROLL_METHOD}="none"
     '';
   };

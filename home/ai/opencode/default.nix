@@ -38,7 +38,7 @@ in {
   # Generate MCP config for frontend work (playwright only)
   xdg.configFile."opencode/opencode-mcp.json".text = builtins.toJSON {
     mcp = {
-      playwright = mcpServers.opencode.playwright;
+      playwright = mcpServers.toOpencode mcpServers.base.playwright;
     };
   };
 

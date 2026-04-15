@@ -2,17 +2,14 @@
 {inputs, ...}: let
   hostConfigs = import ../lib/host-configs.nix;
 
-  # Helper to create x86_64 Home Manager configuration
-  mkHomeConfig = system: hostConfig:
+  mkHomeConfig = hostConfig:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
-        inherit system;
+        system = "x86_64-linux";
         config.allowUnfree = true;
         overlays = import ../lib/overlays.nix inputs;
       };
-      modules = [
-        ../home/noams.nix
-      ];
+      modules = [../home/noams.nix];
       extraSpecialArgs = {
         inherit inputs;
         osConfig = hostConfig;
@@ -21,21 +18,18 @@
 in {
   flake.homeConfigurations = {
     # Default configs for nh auto-detection (username@hostname)
-    "noams@thinkpad-p14s" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s;
-    "noams@thinkpad-p14s-g5" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g5;
-    "noams@thinkpad-p14s-g6" = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g6;
+    "noams@thinkpad-p14s" = mkHomeConfig hostConfigs.thinkpad-p14s;
+    "noams@thinkpad-p14s-g5" = mkHomeConfig hostConfigs.thinkpad-p14s-g5;
+    "noams@thinkpad-p14s-g6" = mkHomeConfig hostConfigs.thinkpad-p14s-g6;
 
-    # Fallback configs for nh auto-detection (username only)
-    noams = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s; # Default to personal
+    # Fallback for nh auto-detection (username only, defaults to personal)
+    noams = mkHomeConfig hostConfigs.thinkpad-p14s;
 
-    # Legacy names for compatibility and KDE testing
-    noams-hyprland = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s;
-    noams-hyprland-work = mkHomeConfig "x86_64-linux" hostConfigs.thinkpad-p14s-g5;
+    # Legacy names for compatibility
+    noams-hyprland = mkHomeConfig hostConfigs.thinkpad-p14s;
+    noams-hyprland-work = mkHomeConfig hostConfigs.thinkpad-p14s-g5;
 
-    # KDE variant using personal profile host as base
-    noams-kde = mkHomeConfig "x86_64-linux" (hostConfigs.thinkpad-p14s
-      // {
-        desktop.mode = "kde";
-      });
+    # KDE variant
+    noams-kde = mkHomeConfig (hostConfigs.thinkpad-p14s // {desktop.mode = "kde";});
   };
 }

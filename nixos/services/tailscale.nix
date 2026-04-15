@@ -1,7 +1,9 @@
-_: {
+{config, ...}: {
   # Enable Tailscale VPN service
   services.tailscale = {
     enable = true;
+    # Allow the main user to use tailscale commands (file get, etc.) without sudo
+    extraSetFlags = ["--operator=${config.username}"];
     # Use the Tailscale subnet router and exit node features if needed
     # useRoutingFeatures = "both";
   };
