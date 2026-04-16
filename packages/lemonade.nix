@@ -3,39 +3,52 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
+  rpm,
+  cpio,
   zstd,
   zlib,
   openssl,
+  libwebsockets,
+  systemd,
 }:
 stdenv.mkDerivation rec {
   pname = "lemonade";
   version = "10.2.0";
 
   src = fetchurl {
-    url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-embeddable-${version}-ubuntu-x64.tar.gz";
-    hash = "sha256-3YNcK4V+izK2lmNBOAt4EPGX0oNARw3sY3r07DE3NYQ=";
+    url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-server-${version}.x86_64.rpm";
+    hash = "sha256-+37NZ2qr5Kk7lbEHd9VYCgqq5VV37oy5TT9Pe7YYndg=";
   };
 
-  nativeBuildInputs = [autoPatchelfHook];
+  nativeBuildInputs = [autoPatchelfHook rpm cpio];
 
   buildInputs = [
     stdenv.cc.cc.lib # libstdc++
     zstd
     zlib
     openssl
+    libwebsockets
+    systemd
   ];
 
-  sourceRoot = "lemonade-embeddable-${version}-ubuntu-x64";
+  unpackPhase = ''
+    rpm2cpio $src | cpio -idm
+  '';
 
   installPhase = ''
-    mkdir -p $out/bin
+    mkdir -p $out/bin $out/share
 
-    install -m755 lemonade $out/bin/lemonade
-    install -m755 lemond $out/bin/lemond
+    install -m755 opt/bin/lemonade $out/bin/lemonade
+    install -m755 opt/bin/lemond $out/bin/lemond
+    install -m755 opt/bin/lemonade-server $out/bin/lemonade-server
 
-    # lemond expects resources/ as a sibling of the binary
-    cp -r resources $out/bin/resources
-    cp LICENSE $out/bin/
+    # lemond searches for resources/ next to the binary AND in /opt/share/lemonade-server/
+    # Place next to binary so the relative lookup works in the Nix store
+    cp -r opt/share/lemonade-server/resources $out/bin/resources
+
+    # Also install to share/ for completeness (man pages, examples)
+    cp -r opt/share/lemonade-server/* $out/share/
+    cp -r opt/share/man $out/share/
   '';
 
   meta = with lib; {
