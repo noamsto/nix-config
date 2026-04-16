@@ -12,34 +12,15 @@ with lib; let
   cfg = config.hardware.amd-npu;
 
   xrt-plugin-amdxdna-bin = pkgs.callPackage ../../packages/xrt-plugin-amdxdna-bin.nix {};
+  xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
 
   # XRT discovers driver plugins by scanning $XILINX_XRT/lib/ for libxrt_driver_*.so.2.
-  # Since the Nix store is read-only, create a merged directory containing XRT's libs
-  # plus the XDNA plugin so both are found in a single lookup path.
+  # Nix store is read-only, so merge XRT + XDNA plugin into one tree via symlinks.
   xrt-combined = pkgs.runCommand "xrt-combined" {} ''
-    mkdir -p $out/lib $out/bin
-
-    # Symlink all XRT libs
-    for f in ${pkgs.xrt}/opt/xilinx/xrt/lib/*; do
-      ln -s "$f" $out/lib/
-    done
-
-    # Add the XDNA plugin alongside XRT's libs
-    ln -sf ${xrt-plugin-amdxdna-bin}/lib/libxrt_driver_xdna.so.2.21.75 $out/lib/
-    ln -sf libxrt_driver_xdna.so.2.21.75 $out/lib/libxrt_driver_xdna.so.2
-
-    # Symlink XRT binaries with unwrapped/ subdir intact
-    for f in ${pkgs.xrt}/opt/xilinx/xrt/bin/*; do
-      [ -f "$f" ] && ln -s "$f" $out/bin/
-    done
-    ln -s ${pkgs.xrt}/opt/xilinx/xrt/bin/unwrapped $out/bin/unwrapped
-
-    # Symlink other XRT dirs (include, share, firmware, etc.)
-    for d in ${pkgs.xrt}/opt/xilinx/xrt/*; do
-      name=$(basename "$d")
-      [ "$name" = "lib" ] || [ "$name" = "bin" ] && continue
-      ln -s "$d" $out/"$name"
-    done
+    mkdir -p $out
+    cp -rs ${xrtPrefix}/* $out/
+    chmod -R u+w $out/lib
+    ln -sf ${xrt-plugin-amdxdna-bin}/lib/libxrt_driver_xdna* $out/lib/
   '';
 in {
   options.hardware.amd-npu = {
@@ -110,11 +91,9 @@ in {
       }
     ];
 
-    # XILINX_XRT tells XRT where to find its libs and plugins.
-    # xrt-combined merges XRT libs + XDNA plugin in one directory.
     environment.variables = {
-      "XILINX_XRT" = "${xrt-combined}";
-      "XRT_PATH" = "${xrt-combined}";
+      "XILINX_XRT" = "${xrt-combined}"; # XRT plugin discovery base path
+      "XRT_PATH" = "${xrt-combined}"; # used by FastFlowLM and lemonade
     };
 
     # Note: Add user to video and render groups in host configuration
