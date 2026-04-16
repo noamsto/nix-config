@@ -10,6 +10,37 @@
 }:
 with lib; let
   cfg = config.hardware.amd-npu;
+
+  xrt-plugin-amdxdna-bin = pkgs.callPackage ../../packages/xrt-plugin-amdxdna-bin.nix {};
+
+  # XRT discovers driver plugins by scanning $XILINX_XRT/lib/ for libxrt_driver_*.so.2.
+  # Since the Nix store is read-only, create a merged directory containing XRT's libs
+  # plus the XDNA plugin so both are found in a single lookup path.
+  xrt-combined = pkgs.runCommand "xrt-combined" {} ''
+    mkdir -p $out/lib $out/bin
+
+    # Symlink all XRT libs
+    for f in ${pkgs.xrt}/opt/xilinx/xrt/lib/*; do
+      ln -s "$f" $out/lib/
+    done
+
+    # Add the XDNA plugin alongside XRT's libs
+    ln -sf ${xrt-plugin-amdxdna-bin}/lib/libxrt_driver_xdna.so.2.21.75 $out/lib/
+    ln -sf libxrt_driver_xdna.so.2.21.75 $out/lib/libxrt_driver_xdna.so.2
+
+    # Symlink XRT binaries with unwrapped/ subdir intact
+    for f in ${pkgs.xrt}/opt/xilinx/xrt/bin/*; do
+      [ -f "$f" ] && ln -s "$f" $out/bin/
+    done
+    ln -s ${pkgs.xrt}/opt/xilinx/xrt/bin/unwrapped $out/bin/unwrapped
+
+    # Symlink other XRT dirs (include, share, firmware, etc.)
+    for d in ${pkgs.xrt}/opt/xilinx/xrt/*; do
+      name=$(basename "$d")
+      [ "$name" = "lib" ] || [ "$name" = "bin" ] && continue
+      ln -s "$d" $out/"$name"
+    done
+  '';
 in {
   options.hardware.amd-npu = {
     enable = mkEnableOption "AMD XDNA NPU support for AI inference acceleration";
@@ -79,32 +110,22 @@ in {
       }
     ];
 
-    # XRT wrapper scripts (xrt-smi etc.) resolve "unwrapped/loader" relative to
-    # their own directory.  NixOS merges flat symlinks into /run/current-system/sw/bin
-    # which breaks the relative lookup for unwrapped/.  Add the store's original
-    # bin/ to PATH so wrappers run from their real location and find loader.
+    # XILINX_XRT tells XRT where to find its libs and plugins.
+    # xrt-combined merges XRT libs + XDNA plugin in one directory.
     environment.variables = {
-      "XRT_PATH" = "${pkgs.xrt}/opt/xilinx/xrt";
+      "XILINX_XRT" = "${xrt-combined}";
+      "XRT_PATH" = "${xrt-combined}";
     };
+
     # Note: Add user to video and render groups in host configuration
     # users.users.<username>.extraGroups = [ "video" "render" ];
 
     # System packages for NPU management
-    # xrt-bin-path re-links XRT binaries with the unwrapped/ subdir intact so
-    # wrapper scripts (xrt-smi) can find the loader at ../unwrapped/loader.
-    environment.systemPackages = let
-      xrt-bin-path = pkgs.runCommand "xrt-bin-path" {} ''
-        mkdir -p $out/bin
-        for f in ${pkgs.xrt}/opt/xilinx/xrt/bin/*; do
-          [ -f "$f" ] && ln -s "$f" $out/bin/
-        done
-        ln -s ${pkgs.xrt}/opt/xilinx/xrt/bin/unwrapped $out/bin/unwrapped
-      '';
-    in
+    environment.systemPackages =
       [
         pkgs.pciutils
         pkgs.lshw
-        xrt-bin-path
+        xrt-combined
       ]
       ++ lib.optionals cfg.enableFastFlowLM [
         pkgs.fastflowlm
