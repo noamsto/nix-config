@@ -43,7 +43,7 @@
 
   # Plugins to enable (Noctalia auto-installs from source URL on startup)
   enabledPlugins = [
-    "privacy-indicator"
+    # "privacy-indicator" # Removed: webcam detection script burns 450% CPU scanning /proc/*/fd
     # "network-indicator" # Removed due to contrast issues
     "mini-docker"
     "weekly-calendar"
@@ -214,9 +214,6 @@ in {
         tailscale = {
           compactMode = true;
           terminalCommand = "kitty -e";
-        };
-        privacy-indicator = {
-          hideInactive = true;
         };
       };
 

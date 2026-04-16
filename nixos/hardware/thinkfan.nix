@@ -133,17 +133,16 @@ in {
           query = "/proc/acpi/ibm/fan";
         }
       ];
-      # Balanced fan curve for all generations (prioritizes quietness, full-speed at 85°C)
+      # Aggressive fan curve — ramps early, wide hysteresis to prevent oscillation
       levels = [
-        [0 0 55]
-        [1 50 60]
-        [2 55 65]
-        [3 60 70]
-        [4 65 75]
-        [5 70 80]
-        [6 75 85]
-        [7 80 90]
-        ["level full-speed" 85 32767]
+        [0 0 50]
+        [1 45 55]
+        [2 50 60]
+        [3 55 65]
+        [4 58 70]
+        [5 63 75]
+        [7 68 80]
+        ["level full-speed" 75 32767]
       ];
     };
   };
