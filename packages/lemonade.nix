@@ -28,13 +28,14 @@ stdenv.mkDerivation rec {
   sourceRoot = "lemonade-embeddable-${version}-ubuntu-x64";
 
   installPhase = ''
-    mkdir -p $out/bin $out/share/lemonade
+    mkdir -p $out/bin
 
     install -m755 lemonade $out/bin/lemonade
     install -m755 lemond $out/bin/lemond
 
-    cp -r resources $out/share/lemonade/
-    cp LICENSE $out/share/lemonade/
+    # lemond expects resources/ as a sibling of the binary
+    cp -r resources $out/bin/resources
+    cp LICENSE $out/bin/
   '';
 
   meta = with lib; {
