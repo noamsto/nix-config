@@ -1,5 +1,21 @@
 # Global Claude Code Instructions
 
+## Claude Code Settings Architecture
+
+Settings are split into two layers. **Never mix them.**
+
+| Layer | File | Owns | Writable |
+|-------|------|------|----------|
+| `settings.json` | `home/ai/claude-code/settings.json` (symlinked to `~/.claude/settings.json`) | permissions, plugins, theme, sandbox, mcpServers, preferences — everything that's plain JSON | Yes (third-party tools and UI can edit) |
+| `--settings` overlay | Nix-generated via `nix-settings-json` in `home/ai/claude-code/default.nix` | hooks, statusLine — **only** keys that reference `/nix/store` paths | No (read-only, rebuilt by Nix) |
+
+**Rules:**
+- If a setting needs a nix store path → `--settings` overlay (default.nix)
+- Everything else → `settings.json`
+- Never duplicate keys across the two layers (`--settings` wins and silently shadows `settings.json`)
+- Third-party tools (lazytmux, etc.) should modify `settings.json` — changes appear as git diffs
+- `feedbackSurveyState` and other runtime-mutated keys live in `settings.json`; ignore the noise in diffs
+
 ## Bash Command Simplicity
 
 **Prefer** simple, single commands that match `Bash(cmd *)` permission patterns cleanly.

@@ -13,7 +13,7 @@
       hyprctl dispatch togglefloating
     else
       # Currently tiled → float + resize + center
-      hyprctl --batch "dispatch togglefloating; dispatch resizeactive exact 80% 80%; dispatch centerwindow"
+      hyprctl --batch "dispatch togglefloating; dispatch resizeactive exact 65% 65%; dispatch centerwindow"
     fi
   '';
 in {

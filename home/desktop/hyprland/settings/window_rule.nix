@@ -30,6 +30,8 @@
 
       # telegram media viewer
       "float on, match:title ^(Media viewer)$"
+      "size 900 600, match:title ^(Media viewer)$"
+      "center on, match:title ^(Media viewer)$"
 
       # gnome calculator
       "float on, match:class ^(org.gnome.Calculator)$"
@@ -40,6 +42,8 @@
       "float on, match:class ^(nm-connection-editor)$"
       "float on, match:class ^(blueman-manager)$"
       "float on, match:class ^(file-roller)$"
+      "size 700 500, match:class ^(file-roller)$"
+      "center on, match:class ^(file-roller)$"
 
       # 1Password
       "float on, match:class ^(1Password|1password|com.1password.1Password)$"
@@ -125,8 +129,12 @@
       # Media players
       "float on, match:class ^(vlc)$"
       "idle_inhibit focus, match:class ^(vlc)$"
+      "size 960 640, match:class ^(vlc)$"
+      "center on, match:class ^(vlc)$"
       "float on, match:class ^(mpv)$"
       "idle_inhibit focus, match:class ^(mpv|.+exe|celluloid)$"
+      "size 960 640, match:class ^(mpv)$"
+      "center on, match:class ^(mpv)$"
 
       # === BROWSER RULES ===
       # Prevent accidental close (2s protection after tab opens)
@@ -166,6 +174,9 @@
       "idle_inhibit focus, match:class ^(zoom)$"
       "immediate on, match:class ^(zoom|Zoom)$"
       "float on, match:class ^(zoom)$, match:title ^(Zoom Meeting)$"
+      "size 960 640, match:class ^(zoom|Zoom)$, match:title ^(Zoom Meeting)$"
+      "size 500 400, match:class ^(zoom|Zoom)$, match:title ^(Zoom)$"
+      "center on, match:class ^(zoom|Zoom)$"
 
       # Zoom menu fixes
       "float on, match:class ^(zoom)$, match:title ^$"
@@ -180,8 +191,9 @@
 
       "dim_around on, match:class ^(gcr-prompter)$"
 
-      # === GENERAL MENU AND POPUP FIXES ===
-      "max_size 1200 900, match:float true, match:title ^$"
+      # === GENERAL FLOATING WINDOW CONSTRAINTS ===
+      # Catch-all max size for floating windows without explicit size rules
+      "max_size 1200 900, match:float true"
       "min_size 1 1, match:float true, match:title ^$"
 
       # Common menu patterns
@@ -191,6 +203,8 @@
       # File picker dialogs
       "dim_around on, match:class ^(xdg-desktop-portal-gtk)$"
       "float on, match:class ^(xdg-desktop-portal-gtk)$"
+      "size 900 600, match:class ^(xdg-desktop-portal-gtk)$"
+      "center on, match:class ^(xdg-desktop-portal-gtk)$"
       "immediate on, match:class ^(xdg-desktop-portal-gtk)$"
 
       "dim_around on, match:class ^(xdg-desktop-portal-kde|xdg-desktop-portal-wlr)$"

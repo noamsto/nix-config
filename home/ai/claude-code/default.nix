@@ -27,16 +27,16 @@
     hooks = [(statusCmd "cleanup") (statusCmd state)];
   };
 
+  # --settings overlay: ONLY keys that need /nix/store paths.
+  # Everything else belongs in settings.json (symlinked to repo).
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
       includeCoAuthoredBy = false;
-      permissions.defaultMode = "auto";
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
-      # Tmux status integration state machine
       hooks = {
         SessionStart = [
           (sessionStartHook "startup" "idle")
@@ -84,9 +84,11 @@
 in {
   imports = [./mcp-profiles.nix];
 
-  # Out-of-store symlink so Claude can edit it at runtime
+  # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
   home.file.".claude/CLAUDE.md".source =
     config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+  home.file.".claude/settings.json".source =
+    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
 
   programs.claude-code = {
     enable = true;
