@@ -79,20 +79,32 @@ in {
       }
     ];
 
-    # Environment variables for XRT
+    # XRT wrapper scripts (xrt-smi etc.) resolve "unwrapped/loader" relative to
+    # their own directory.  NixOS merges flat symlinks into /run/current-system/sw/bin
+    # which breaks the relative lookup for unwrapped/.  Add the store's original
+    # bin/ to PATH so wrappers run from their real location and find loader.
     environment.variables = {
-      "XRT_PATH" = "${pkgs.xrt}";
+      "XRT_PATH" = "${pkgs.xrt}/opt/xilinx/xrt";
     };
-
     # Note: Add user to video and render groups in host configuration
     # users.users.<username>.extraGroups = [ "video" "render" ];
 
     # System packages for NPU management
-    environment.systemPackages = with pkgs;
+    # xrt-bin-path re-links XRT binaries with the unwrapped/ subdir intact so
+    # wrapper scripts (xrt-smi) can find the loader at ../unwrapped/loader.
+    environment.systemPackages = let
+      xrt-bin-path = pkgs.runCommand "xrt-bin-path" {} ''
+        mkdir -p $out/bin
+        for f in ${pkgs.xrt}/opt/xilinx/xrt/bin/*; do
+          [ -f "$f" ] && ln -s "$f" $out/bin/
+        done
+        ln -s ${pkgs.xrt}/opt/xilinx/xrt/bin/unwrapped $out/bin/unwrapped
+      '';
+    in
       [
-        pciutils
-        lshw
-        xrt
+        pkgs.pciutils
+        pkgs.lshw
+        xrt-bin-path
       ]
       ++ lib.optionals cfg.enableFastFlowLM [
         pkgs.fastflowlm
