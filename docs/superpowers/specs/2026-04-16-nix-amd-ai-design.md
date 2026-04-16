@@ -1,6 +1,7 @@
 # nix-amd-ai: AMD AI Stack for NixOS
 
 **Repo:** `noamsto/nix-amd-ai`
+**Local path:** `/home/noams/Data/git/noamsto/nix-amd-ai`
 **Date:** 2026-04-16
 
 ## Problem
