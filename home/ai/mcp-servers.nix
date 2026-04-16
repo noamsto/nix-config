@@ -20,6 +20,11 @@ in {
       args = ["--executable-path" "${lib.getExe pkgs.chromium}"];
       env.PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
     };
+
+    obsidian = helpers.mkNpxMcp {
+      package = "obsidian-mcp";
+      args = ["/home/noams/vaults/personal" "/home/noams/vaults/work"];
+    };
   };
 
   # Convert a base MCP entry to opencode format (different structure)

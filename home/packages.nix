@@ -31,9 +31,6 @@
     kdePackages.kdenlive
     losslesscut-bin
 
-    # Note taking
-    obsidian
-
     youtube-tui
     pear-desktop
 
