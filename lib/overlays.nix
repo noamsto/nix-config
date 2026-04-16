@@ -34,6 +34,8 @@ inputs: [
 
   # AMD XDNA NPU: pull pre-built packages from nix-amd-npu flake directly
   # (their overlay is broken — it callPackage's fastflowlm without xrt in scope)
+  # NOTE: xrt-plugin-amdxdna is broken upstream (query::aie_coredump::args missing)
+  # See: https://github.com/robcohen/nix-amd-npu/issues/2
   (final: _: let
     npuPkgs = inputs.nix-amd-npu.packages.${final.stdenv.hostPlatform.system};
   in {
