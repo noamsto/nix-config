@@ -81,8 +81,7 @@ in {
 
     # Environment variables for XRT
     environment.variables = {
-      # XRT setup
-      "XRT_PATH" = "/opt/xilinx/xrt";
+      "XRT_PATH" = "${pkgs.xrt}";
     };
 
     # Note: Add user to video and render groups in host configuration
@@ -93,6 +92,7 @@ in {
       [
         pciutils
         lshw
+        xrt
       ]
       ++ lib.optionals cfg.enableFastFlowLM [
         pkgs.fastflowlm
