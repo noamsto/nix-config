@@ -16,6 +16,7 @@ in {
     ./host_secrets.nix
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
+    inputs.nix-amd-ai.nixosModules.default
     ../../nixos/core/lanzaboote.nix
     ../../nixos/hardware/udev-hwmon.nix
   ];
@@ -31,12 +32,13 @@ in {
     generation = "gen6";
   };
 
-  # AMD XDNA NPU (Neural Processing Unit) - AI acceleration
-  # Provides: LLM inference, Whisper transcription, on-device AI
+  # AMD AI: NPU inference (FastFlowLM) + GPU inference (ROCm) via Lemonade
   hardware.amd-npu = {
     enable = true;
     enableFastFlowLM = true;
     enableLemonade = true;
+    enableROCm = true;
+    lemonade.user = "noams";
   };
 
   # Add user to video/render groups for NPU access

@@ -4,6 +4,5 @@
     # ./auto-power-profile.nix  # Replaced by TLP
     # ./battery-threshold.nix   # Replaced by TLP
     ./tailscale.nix
-    ./lemonade.nix
   ];
 }

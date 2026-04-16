@@ -8,6 +8,7 @@
     "https://hyprland.cachix.org"
     "https://vicinae.cachix.org"
     "https://claude-code.cachix.org"
+    "https://nix-amd-ai.cachix.org"
   ];
 
   # Extra substituters - lower priority
@@ -33,6 +34,7 @@
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
     "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
+    "nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4X9A7pvaBmhQ="
   ];
 
   # Keys for extra substituters

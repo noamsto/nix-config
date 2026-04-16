@@ -74,6 +74,7 @@ hardware.amd-npu = {
 ### What the module configures
 
 **Kernel & hardware:**
+
 - Assertion: kernel >= 6.14
 - Kernel params: `iommu.passthrough=0`
 - Kernel modules: `amdxdna`
@@ -81,20 +82,24 @@ hardware.amd-npu = {
 - PAM limits: unlimited memlock for `@video` and `@render` groups
 
 **xrt-combined (internal):**
+
 - `runCommand` that merges XRT's `opt/xilinx/xrt/` tree with `xrt-plugin-amdxdna`'s `.so` via `cp -rs` + symlink overlay.
 - Not exposed as a package — implementation detail for XRT's plugin discovery.
 
 **Environment:**
+
 - `XILINX_XRT` and `XRT_PATH` pointing to xrt-combined.
 - System packages: xrt-combined, optionally fastflowlm.
 
 **Lemonade service (`systemd.services.lemond`):**
+
 - Runs as configured user.
 - `Environment` directives for `XILINX_XRT`, `XRT_PATH`, `LD_LIBRARY_PATH` (XRT libs + optionally ROCm libs), and `PATH` (xrt-combined + fastflowlm bins).
 - `LimitMEMLOCK=infinity` on the service unit for NPU buffer allocation.
 - Restart on failure, 5s backoff.
 
 **ROCm (when `enableROCm = true`):**
+
 - Adds ROCm runtime libs (`rocmPackages.clr`) to `LD_LIBRARY_PATH` on the lemond service.
 - Installs ROCm packages to system so `llamacpp:rocm` backend works.
 

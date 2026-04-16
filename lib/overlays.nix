@@ -32,16 +32,6 @@ inputs: [
 
   inputs.mcp-servers-nix.overlays.default
 
-  # AMD XDNA NPU: pull pre-built packages from nix-amd-npu flake directly
-  # (their overlay is broken — it callPackage's fastflowlm without xrt in scope)
-  # NOTE: xrt-plugin-amdxdna is broken upstream (query::aie_coredump::args missing)
-  # See: https://github.com/robcohen/nix-amd-npu/issues/2
-  (final: _: let
-    npuPkgs = inputs.nix-amd-npu.packages.${final.stdenv.hostPlatform.system};
-  in {
-    inherit (npuPkgs) xrt fastflowlm;
-  })
-
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })
