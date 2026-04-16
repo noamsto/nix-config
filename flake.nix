@@ -182,6 +182,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    wtc = {
+      url = "github:noamsto/wtc";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zr = {
       url = "github:noamsto/zr";
       inputs.nixpkgs.follows = "nixpkgs";
