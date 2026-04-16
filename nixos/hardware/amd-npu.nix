@@ -105,6 +105,7 @@ in {
         pkgs.pciutils
         pkgs.lshw
         xrt-bin-path
+        pkgs.xrt-plugin-amdxdna
       ]
       ++ lib.optionals cfg.enableFastFlowLM [
         pkgs.fastflowlm

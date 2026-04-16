@@ -37,7 +37,7 @@ inputs: [
   (final: _: let
     npuPkgs = inputs.nix-amd-npu.packages.${final.stdenv.hostPlatform.system};
   in {
-    inherit (npuPkgs) xrt fastflowlm;
+    inherit (npuPkgs) xrt xrt-plugin-amdxdna fastflowlm;
   })
 
   (_final: prev: {
