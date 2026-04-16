@@ -112,5 +112,13 @@ in {
 
     # Lemonade AI server service
     services.lemonade.enable = cfg.enableLemonade;
+
+    # lemond runs as a systemd service with minimal PATH — inject NPU tools
+    # and XRT env so it can find flm and the XDNA plugin during backend install.
+    systemd.services.lemond.serviceConfig.Environment = mkIf cfg.enableLemonade [
+      "XILINX_XRT=${xrt-combined}"
+      "XRT_PATH=${xrt-combined}"
+      "PATH=${xrt-combined}/bin:${pkgs.fastflowlm}/bin:/run/current-system/sw/bin"
+    ];
   };
 }
