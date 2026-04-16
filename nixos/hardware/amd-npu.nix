@@ -23,7 +23,7 @@ in {
     enableLemonade = mkOption {
       type = types.bool;
       default = false;
-      description = "Install Lemonade server for OpenAI-compatible local AI API.";
+      description = "Enable Lemonade server service for OpenAI-compatible local AI API.";
     };
   };
 
@@ -96,9 +96,9 @@ in {
       ]
       ++ lib.optionals cfg.enableFastFlowLM [
         pkgs.fastflowlm
-      ]
-      ++ lib.optionals cfg.enableLemonade [
-        (pkgs.callPackage ../../packages/lemonade.nix {})
       ];
+
+    # Lemonade AI server service
+    services.lemonade.enable = cfg.enableLemonade;
   };
 }

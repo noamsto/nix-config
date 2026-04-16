@@ -21,7 +21,7 @@ in {
   ];
   programs.lazytmux = {
     enable = true;
-    wt.enable = true;
+    wt.enable = false; # Replaced by worktrunk
     processIcons = {
       houston = "🚀";
     };
@@ -32,6 +32,37 @@ in {
       terminal.emulator = "kitty";
     };
   };
+
+  home.packages = [pkgs.worktrunk];
+
+  xdg.configFile."worktrunk/config.toml".text = ''
+    worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
+
+    [post-switch]
+    tmux = """
+    [ -z "$TMUX" ] && exit 0
+    SESSION=$(tmux display-message -p '#{session_name}')
+    # Find existing window by @worktree metadata or pane path
+    WIN=$(tmux list-windows -t "$SESSION" -F '#{window_index}\t#{@worktree}\t#{pane_current_path}' \
+      | awk -F'\t' '$2 == "{{ worktree_path }}" || $3 == "{{ worktree_path }}" { print $1; exit }')
+    if [ -n "$WIN" ]; then
+      tmux select-window -t "$SESSION:$WIN"
+    else
+      tmux new-window -a -t "$SESSION" -c "{{ worktree_path }}"
+      tmux set-option -t "$SESSION" -w @worktree "{{ worktree_path }}"
+      tmux set-option -t "$SESSION" -w @branch "{{ branch | sanitize }}"
+    fi
+    """
+
+    [post-remove]
+    tmux = """
+    [ -z "$TMUX" ] && exit 0
+    SESSION=$(tmux display-message -p '#{session_name}')
+    WIN=$(tmux list-windows -t "$SESSION" -F '#{window_index}\t#{@worktree}\t#{pane_current_path}' \
+      | awk -F'\t' '$2 == "{{ worktree_path }}" || $3 == "{{ worktree_path }}" { print $1; exit }')
+    [ -n "$WIN" ] && tmux kill-window -t "$SESSION:$WIN" 2>/dev/null || true
+    """
+  '';
 
   programs = {
     yazi = {

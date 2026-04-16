@@ -407,6 +407,13 @@
 
         abbr -a !! --position anywhere --function last_history_item
         abbr -a '!$' --position anywhere --function last_command_arg
+        abbr -a sc 'sesh connect'
+
+        # Sesh completions
+        sesh completion fish | source
+
+        # Worktrunk shell integration (auto-cd + completions)
+        wt config shell init fish | source
 
         function last_history_item
           echo $history[1]

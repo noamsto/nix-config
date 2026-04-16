@@ -31,9 +31,7 @@ in {
   };
 
   # Lemonade: local AI server (CPU/Vulkan — no NPU on this host)
-  environment.systemPackages = [
-    (pkgs.callPackage ../../packages/lemonade.nix {})
-  ];
+  services.lemonade.enable = true;
 
   # AMD Ryzen 7 PRO 8840HS: 16 cores, 54GB RAM
   nix.settings = {
