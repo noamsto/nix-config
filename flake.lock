@@ -863,9 +863,7 @@
     "nix-amd-npu": {
       "inputs": {
         "flake-parts": "flake-parts_6",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs_4"
       },
       "locked": {
         "lastModified": 1775660927,
@@ -878,7 +876,6 @@
       "original": {
         "owner": "robcohen",
         "repo": "nix-amd-npu",
-        "rev": "8848c6f3382852290ac25fbe7634058c4e9c037e",
         "type": "github"
       }
     },
@@ -1192,6 +1189,22 @@
     },
     "nixpkgs_4": {
       "locked": {
+        "lastModified": 1775660890,
+        "narHash": "sha256-hZoabmLFqWRyjJwwfzdpaJ+BpbNt5tI2ArkN7bIQCww=",
+        "owner": "robcohen",
+        "repo": "nixpkgs",
+        "rev": "9233c639efd91157644e73c7026b21e47a2c027c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "robcohen",
+        "ref": "vitis-ai",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_5": {
+      "locked": {
         "lastModified": 1776169885,
         "narHash": "sha256-l/iNYDZ4bGOAFQY2q8y5OAfBBtrDAaPuRQqWaFHVRXM=",
         "owner": "nixos",
@@ -1206,7 +1219,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1773734432,
         "narHash": "sha256-IF5ppUWh6gHGHYDbtVUyhwy/i7D261P7fWD1bPefOsw=",
@@ -1331,7 +1344,7 @@
         "nix-search-tv": "nix-search-tv",
         "nixos-anywhere": "nixos-anywhere",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_4",
+        "nixpkgs": "nixpkgs_5",
         "nixpkgs-stable": "nixpkgs-stable",
         "noctalia": "noctalia",
         "pre-commit-hooks": "pre-commit-hooks",
@@ -1618,7 +1631,7 @@
     },
     "wrappers": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5"
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1775600302,

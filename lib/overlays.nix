@@ -32,8 +32,13 @@ inputs: [
 
   inputs.mcp-servers-nix.overlays.default
 
-  # AMD XDNA NPU packages (FastFlowLM, XRT, etc.)
-  inputs.nix-amd-npu.overlays.default
+  # AMD XDNA NPU: pull pre-built packages from nix-amd-npu flake directly
+  # (their overlay is broken — it callPackage's fastflowlm without xrt in scope)
+  (final: _: let
+    npuPkgs = inputs.nix-amd-npu.packages.${final.stdenv.hostPlatform.system};
+  in {
+    inherit (npuPkgs) xrt fastflowlm;
+  })
 
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
