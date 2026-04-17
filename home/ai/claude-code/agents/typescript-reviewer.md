@@ -50,11 +50,25 @@ You DO NOT refactor or rewrite code — you report findings only.
 - **Implicit `any` from missing return types**: Public functions need explicit return types
 - **`==` instead of `===`**
 
+### HIGH -- Modern TypeScript (5.x)
+- **`satisfies` operator**: Prefer `const config = {...} satisfies Config` over `as Config` — validates without widening
+- **`const` type parameters**: `function f<const T>(x: T)` preserves literal types in generics
+- **`using` / `await using`**: Explicit resource management (TS 5.2+) — prefer over manual try/finally cleanup
+- **Import attributes**: `import data from './f.json' with { type: 'json' }` (not the deprecated `assert`)
+- **`Promise.withResolvers()`**: Replace manual resolve/reject capture from `new Promise`
+
 ### MEDIUM -- React / Next.js
 - **Missing dependency arrays**: `useEffect`/`useCallback`/`useMemo` deps
 - **State mutation**: Return new objects
 - **Key prop using index**: Use stable unique IDs
-- **Server/client boundary leaks** in Next.js
+- **Server/client boundary leaks** in Next.js (`'use client'` pragma placement)
+
+### MEDIUM -- Modern React (19)
+- **`use()` hook**: Prefer over manual `useEffect` + `useState` for reading promises/contexts conditionally
+- **Server Actions**: `'use server'` functions — validate inputs server-side, never trust client
+- **`useActionState` / `useFormStatus` / `useOptimistic`**: Replace ad-hoc form state + pending flags
+- **`ref` as prop**: Forwarding refs no longer needs `forwardRef`
+- **React Compiler**: If enabled, avoid manual `useMemo`/`useCallback` — the compiler handles memoization
 
 ### MEDIUM -- Performance
 - **Object/array creation in render**: Hoist or memoize

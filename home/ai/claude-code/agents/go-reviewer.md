@@ -56,6 +56,16 @@ When invoked:
 - **Package naming**: Short, lowercase, no underscores
 - **Deferred call in loop**: Resource accumulation risk
 
+### MEDIUM -- Modern stdlib (Go 1.21+)
+- **`log/slog`**: Prefer over `log` / `fmt.Printf` for structured logging
+- **`slices` / `maps` packages**: Use `slices.Contains`, `slices.SortFunc`, `maps.Keys` instead of hand-rolled loops or deprecated `sort.Slice`
+- **`errors.Join`**: Combine multiple errors (Go 1.20+) instead of concatenating strings
+- **`cmp.Or`**: Replace `if x != "" { a = x } else { a = y }` chains (Go 1.22+)
+- **`sync.OnceFunc` / `OnceValue` / `OnceValues`**: Prefer over manual `sync.Once` + captured var
+- **`context.WithoutCancel` / `context.AfterFunc`**: Detach or hook into cancellation cleanly (Go 1.21+)
+- **Range-over-function iterators**: Use `iter.Seq`/`iter.Seq2` for lazy sequences (Go 1.23+)
+- **`for i := range n`**: Integer range, prefer over `for i := 0; i < n; i++` (Go 1.22+)
+
 ## Diagnostic Commands
 
 ```bash
@@ -66,6 +76,26 @@ go build -race ./...
 go test -race ./...
 govulncheck ./...
 ```
+
+## Output Format
+
+Group findings by severity. For each finding include:
+- **File:line** reference
+- One-line description of the issue
+- Suggested fix (one line or short snippet)
+
+Example:
+```
+## CRITICAL
+- `internal/db/user.go:42` — SQL built via `fmt.Sprintf` with user input.
+  Fix: use `db.QueryContext(ctx, "SELECT ... WHERE id = $1", id)`.
+
+## HIGH
+- `internal/worker/pool.go:88` — goroutine has no context cancellation.
+  Fix: thread `ctx` through and `select` on `ctx.Done()`.
+```
+
+End with a single-line verdict using the Approval Criteria below.
 
 ## Approval Criteria
 

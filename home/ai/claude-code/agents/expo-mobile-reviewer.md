@@ -72,6 +72,14 @@ You work with:
 - **Missing `SafeAreaView`**: Always wrap root screens with `SafeAreaView` or use `useSafeAreaInsets`
 - **Keyboard handling**: Use `KeyboardAvoidingView` with correct `behavior` per platform
 
+### MEDIUM -- Modern Expo / RN
+- **New Architecture (Fabric + TurboModules)**: Default since SDK 52. Flag any `"newArchEnabled": false` in `app.json` without a documented reason. Check that native deps support the new arch.
+- **React Compiler**: If `experiments.reactCompiler` is on, avoid manual `useMemo`/`useCallback` — compiler handles it. Flag over-memoization.
+- **Reanimated v4**: Uses CSS-like animations API; worklets must be compiled by the Babel plugin. Verify `react-native-reanimated/plugin` is last in `babel.config.js`.
+- **Expo Router v4 Server Routes**: API routes use `+api.ts` suffix — run server-side, never bundle secrets into client code.
+- **`expo-file-system/next`**: Newer sync-capable API. Prefer over legacy `expo-file-system` for new code.
+- **React 19 in RN 0.76+**: Use `use()`, Server Actions (where supported), and `ref` as prop (no `forwardRef`).
+
 ## Diagnostic Commands
 
 ```bash

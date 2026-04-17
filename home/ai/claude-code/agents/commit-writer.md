@@ -64,6 +64,14 @@ git commit -m "feat(scope): summary" -m "Body explaining why."
 
 Stage files with specific paths, never `git add -A` unless user explicitly asks.
 
+## Pre-commit Hook Failures
+
+If a hook fails, the commit did NOT happen. Do NOT:
+- Skip with `--no-verify` / `--no-gpg-sign`
+- Use `--amend` to retry (amend modifies the PREVIOUS commit — risks overwriting unrelated work)
+
+Instead: fix the reported issue, re-stage, create a NEW commit.
+
 ## PR Description Format
 
 ```markdown

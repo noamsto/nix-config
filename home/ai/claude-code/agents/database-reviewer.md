@@ -45,6 +45,14 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 - Least privilege access — no `GRANT ALL` to application users
 - Public schema permissions revoked
 
+### 4. Migration Safety (CRITICAL on prod tables)
+- **`CREATE INDEX CONCURRENTLY`** — never `CREATE INDEX` on large live tables (takes ACCESS EXCLUSIVE)
+- **Adding `NOT NULL`** — add column nullable with default, backfill in batches, then `SET NOT NULL`
+- **`ALTER TABLE ... ADD COLUMN` with default** — PG11+ is fast for constants, slow for volatile expressions
+- **Wrap each migration step in its own transaction** — keep DDL locks short
+- **Avoid renaming columns in use** — add new, dual-write, migrate reads, drop old
+- Set `lock_timeout` and `statement_timeout` on migration sessions
+
 ## Key Principles
 
 - **Index foreign keys** — Always, no exceptions
@@ -67,6 +75,15 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 - `GRANT ALL` to application users
 - RLS policies calling functions per-row (not wrapped in `SELECT`)
 
+## Supabase-Specific
+
+- **RLS policies** use `(SELECT auth.uid())` — the `SELECT` wrapper lets the planner evaluate it once per query, not per row
+- **`auth.jwt()`** reads work similarly — wrap in `SELECT`
+- **Storage policies** mirror table RLS — check `storage.objects` policies for per-bucket access
+- **Realtime** — only replicated tables publish changes; confirm `supabase_realtime` publication membership
+- **Edge Functions** — use the `service_role` key only server-side; never expose to clients
+- **`security definer` functions** — use sparingly and set a fixed `search_path` to prevent hijacking
+
 ## Review Checklist
 
 - [ ] All WHERE/JOIN columns indexed
@@ -75,5 +92,6 @@ psql -c "SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes O
 - [ ] RLS enabled on multi-tenant tables
 - [ ] Foreign keys have indexes
 - [ ] No N+1 query patterns
-- [ ] EXPLAIN ANALYZE run on complex queries
+- [ ] `EXPLAIN (ANALYZE, BUFFERS)` run on complex queries
 - [ ] Transactions kept short
+- [ ] Index creation on live tables uses `CONCURRENTLY`
