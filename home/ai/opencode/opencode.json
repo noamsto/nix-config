@@ -16,7 +16,12 @@
     },
     "obsidian": {
       "type": "local",
-      "command": ["npx", "-y", "obsidian-mcp", "/home/noams/vaults/personal", "/home/noams/vaults/work"],
+      "command": ["obsidian-mcp-wrapper"],
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["playwright-mcp-wrapper"],
       "enabled": true
     }
   }

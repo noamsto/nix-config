@@ -19,6 +19,9 @@ in {
     # MCP servers
     context7-mcp
     # playwright-mcp has bundled chromium, no need to add separately
+    # MCP wrappers for editable JSON configs (ensures npx is in PATH)
+    mcpServers.wrappers.obsidian
+    mcpServers.wrappers.playwright
   ];
 
   programs.opencode = {
@@ -26,19 +29,6 @@ in {
     enableMcpIntegration = true;
     tui = {
       theme = "catppuccin";
-    };
-  };
-
-  # Frontend aliases with playwright MCP (like claude-frontend)
-  programs.fish.shellAliases = {
-    ocf = "OPENCODE_CONFIG=~/.config/opencode/opencode-mcp.json opencode";
-    opencode-front = "OPENCODE_CONFIG=~/.config/opencode/opencode-mcp.json opencode";
-  };
-
-  # Generate MCP config for frontend work (playwright only)
-  xdg.configFile."opencode/opencode-mcp.json".text = builtins.toJSON {
-    mcp = {
-      playwright = mcpServers.toOpencode mcpServers.base.playwright;
     };
   };
 

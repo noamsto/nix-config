@@ -5,6 +5,7 @@
   lib,
 }: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
+  obsidianVaults = ["/home/noams/vaults/personal" "/home/noams/vaults/work"];
 in {
   # Base MCPs - npx-style (avoids embedding deps that collide with cursor-agent)
   # Used by claude-code, amp, cursor (flat attribute)
@@ -23,7 +24,22 @@ in {
 
     obsidian = helpers.mkNpxMcp {
       package = "obsidian-mcp";
-      args = ["/home/noams/vaults/personal" "/home/noams/vaults/work"];
+      args = obsidianVaults;
+    };
+  };
+
+  # Wrapper-based MCPs for editable JSON configs (opencode.json, etc.)
+  # These provide simple command names that work when the wrapper is in PATH
+  wrappers = {
+    obsidian = helpers.mkNpxWrapper {
+      name = "obsidian-mcp-wrapper";
+      package = "obsidian-mcp";
+      extraArgs = obsidianVaults;
+    };
+    playwright = helpers.mkNpxWrapper {
+      name = "playwright-mcp-wrapper";
+      package = "playwright-mcp";
+      extraArgs = ["--executable-path" "${lib.getExe pkgs.chromium}"];
     };
   };
 
