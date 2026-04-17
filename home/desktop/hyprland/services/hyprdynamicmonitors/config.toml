@@ -24,8 +24,12 @@ object_path = "/org/freedesktop/UPower/devices/line_power_AC"
 # - No manual mode switching needed - fully automatic
 
 # Undocked with lid closed - triggers suspend after 2s delay
+# NOTE: Uses a distinct template file (not undocked.conf) so HDM detects a
+# content change and fires post_apply_exec. With identical templates, HDM
+# short-circuits with "Template content unchanged, skipping write" and the
+# suspend handler never runs.
 [profiles.undocked_lid_closed]
-config_file = "profiles/undocked.conf"
+config_file = "profiles/undocked-lid-closed.conf"
 config_file_type = "template"
 post_apply_exec = "workspace-manager undocked-lid-closed"
 
