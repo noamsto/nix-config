@@ -884,7 +884,7 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "narHash": "sha256-W4qT7wbzhBWBTzVYISdWajANCdjx2Fy0H8Wg36Cqmiw=",
+        "narHash": "sha256-O7VCaBtpgbZSPhjtDpUFZMFmZ5Ej0qTJwto8aeTrl/A=",
         "path": "/home/noams/git/noamsto/nix-amd-ai",
         "type": "path"
       },

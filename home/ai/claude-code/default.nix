@@ -115,6 +115,14 @@ in {
           ".bash" = "shellscript";
         };
       };
+      python = {
+        command = "${pkgs.pyright}/bin/pyright-langserver";
+        args = ["--stdio"];
+        extensionToLanguage = {
+          ".py" = "python";
+          ".pyi" = "python";
+        };
+      };
     };
   };
 }
