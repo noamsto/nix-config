@@ -37,7 +37,7 @@ in {
     enable = true;
     enableFastFlowLM = true;
     enableLemonade = true;
-    enableROCm = true;
+    enableROCm = true; # Enable GPU/VRAM utilization
     lemonade.user = "noams";
   };
 
