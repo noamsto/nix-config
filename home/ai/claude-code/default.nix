@@ -85,10 +85,14 @@ in {
   imports = [./mcp-profiles.nix];
 
   # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
-  home.file.".claude/CLAUDE.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
-  home.file.".claude/settings.json".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+  home.file = {
+    ".claude/CLAUDE.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+    ".claude/settings.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+    ".claude/agents".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+  };
 
   programs.claude-code = {
     enable = true;

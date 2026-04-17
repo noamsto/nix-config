@@ -52,69 +52,10 @@ When a new task is **unrelated** to current in-progress work and there are uncom
 
 No confirmation needed — this is the default. User can say "don't commit" to override.
 
-## Linear Data Display
+## Linear
 
-**IMPORTANT**: When displaying Linear data, always format it readably:
-
-### Issues
-Show in a clear format with key fields visible:
-```
-[PL-123] Issue Title
-Status: In Progress | Priority: High | Assignee: @name
-Labels: bug, backend
-
-Description:
-[formatted description]
-```
-
-### Comments
-Format with author, timestamp, and proper markdown:
-```
-@author (2 hours ago):
-> Comment content here
-> With proper formatting
-
-  @replier (1 hour ago):
-  > Nested reply indented
-```
-
-### Projects
-Display with status and key metadata:
-```
-Project: Project Name
-Status: In Progress | Lead: @name
-Progress: 45% (9/20 issues)
-
-Description:
-[formatted description]
-```
-
-## Linear Ticket Creation
-
-**IMPORTANT**: Before creating a Linear ticket, you MUST:
-
-1. Display the complete ticket content in a formatted markdown block showing:
-   - Title
-   - Description (full markdown with proper formatting)
-   - Labels/tags
-   - Priority
-   - Any other metadata
-2. Wait for user confirmation before actually creating the ticket
-3. This ensures the user can review and approve the formatting before submission
-
-Example format to show:
-
-```
-Title: [Ticket Title]
-Priority: [Priority Level]
-Labels: [label1, label2]
-
-Description:
-[Full formatted description with markdown]
-- Bullet points properly formatted
-- Code blocks if needed
-- Clear acceptance criteria
-```
+- Display issues/comments/projects with author, timestamp, status, labels visible. Use markdown blockquotes for nested comments.
+- Before creating a ticket: always show the full content (title, description, labels, priority) as markdown and wait for confirmation.
 
 ## Safe File Deletion
 
@@ -122,11 +63,6 @@ Description:
 - **Before running destructive git commands** (`git checkout -- <file>`, `git restore`, `git reset --hard`, `git clean -f`, `git stash drop`, etc.):
   1. Committed work is recoverable via reflog — no extra steps needed
   2. **Uncommitted changes and untracked files** are NOT recoverable — run `gtrash put` on them before proceeding
-
-## Pre-commit Hook Notes
-
-- `golangci-lint` pre-commit hook now uses `scripts/golangci-lint-staged.sh` to run only on modules with staged changes
-- This works correctly in both normal repos and git worktrees
 
 ## Playwright Screenshot Configuration
 
@@ -137,35 +73,9 @@ Description:
 - Reason: Anthropic API requires JPEG format for image viewing
 - This is NON-NEGOTIABLE - no exceptions
 
-## ToonFormat Preference
+## Response Formatting
 
-**IMPORTANT**: When outputting structured data (especially arrays/tables), prefer **ToonFormat** over JSON for token efficiency.
-
-ToonFormat provides 30-60% token savings compared to JSON and is more readable for structured data.
-
-**When to use TOON:**
-
-- Outputting arrays, tables, or lists of records
-- Data-heavy responses with repeated structures
-- Any structured data that would typically be JSON
-
-**Format example:**
-
-```toon
-users[3]{id,name,role}:
- 1,Alice,admin
- 2,Bob,user
- 3,Charlie,user
-```
-
-**Guidelines:**
-
-- Use 2-space indentation for data rows
-- Declare array length `[N]` and fields `{field1,field2}` in header
-- Parse TOON format naturally when provided in user messages
-- Only use JSON when specifically required by tools/APIs or when the data structure is deeply nested
-
-**Note:** Internal tool calling (Read, Write, Bash, etc.) uses JSON as required by the API - this cannot be changed and is not what this preference affects. This is about the CONTENT of responses and data exchange.
+Use markdown tables or bullet lists for comparisons, reviews, and analysis. Do not use ToonFormat in chat responses.
 
 ## Git Worktrees
 
@@ -222,28 +132,12 @@ shellcheck <script-path>
 
 Fix all warnings and errors before considering the work complete.
 
-## Effort Estimation with AI Context
+## Effort Estimation
 
-When asked about task sizing, provide **structured effort estimates** (not calendar timelines):
+Give ranges (1-2 hours), not precise numbers or calendar dates. Scope what's included/excluded. Flag where human decisions block progress. Mention where AI accelerates the work.
 
-**Format:**
-- **Implementation effort:** X-Y hours (what's included)
-- **Not included:** reviews, deployment, edge cases, etc.
-- **Human decisions needed:** architecture choices, UX, business logic
-- **AI advantage:** [where AI accelerates work]
+## Design Principles
 
-**Examples:**
-
-✅ "Implementation: 1-2 hours (API changes, tests, basic docs). Not included: client SDK updates, production deployment."
-
-✅ "Quick win: ~30 min to add the field and update handlers. You'll need to decide on validation rules first."
-
-❌ "This will be done by tomorrow afternoon"
-
-❌ "Exactly 3.5 hours of work"
-
-**Rules:**
-1. Ranges, not precision (1-2 hours, not 1.5 hours)
-2. Scope what's included/excluded
-3. Never promise calendar dates
-4. Flag where human decisions block progress
+- **Design it twice** — sketch 2 approaches before committing to one.
+- **Pull complexity downward** — implementers work harder so callers don't.
+- **Define errors out of existence** — design APIs where the error can't occur, rather than detecting and handling it.

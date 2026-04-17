@@ -94,15 +94,12 @@
     "defaultMode": "auto"
   },
   "enabledPlugins": {
-    "coding-best-practices@xdg-claude": true,
     "superpowers@superpowers-dev": true,
     "context-efficient-tools@xdg-claude": true,
     "refactoring-agent@xdg-claude": true,
-    "code-review-agent@xdg-claude": true,
     "commit-commands@claude-code-plugins": true,
     "gopls-lsp@claude-plugins-official": true,
     "pg@aiguide": true,
-    "frontend-design@claude-code-plugins": true,
     "frontend-design@claude-plugins-official": true,
     "cc-skills-golang@samber": true,
     "typescript-lsp@claude-plugins-official": true,
@@ -115,27 +112,62 @@
         "source": "github",
         "repo": "samber/cc"
       }
+    },
+    "xdg-claude": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/xdg/xdg-claude.git"
+      }
+    },
+    "superpowers-dev": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/obra/superpowers.git"
+      }
+    },
+    "aiguide": {
+      "source": {
+        "source": "github",
+        "repo": "timescale/pg-aiguide"
+      }
+    },
+    "claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-code"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
     }
   },
   "sandbox": {
     "enabled": false,
     "network": {
-      "allowedDomains": ["*"],
+      "allowedDomains": [
+        "*"
+      ],
       "allowLocalBinding": true
     }
   },
+  "syntaxHighlightingDisabled": false,
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "medium",
+  "tui": "default",
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
   "mcpServers": {
     "factify": {
       "type": "http",
       "url": "https://factify-mcp.factify.workers.dev/mcp"
     }
   },
-  "additionalDirectories": ["~/.claude/plugins/cache"],
-  "syntaxHighlightingDisabled": false,
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
-  "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
+  "additionalDirectories": [
+    "~/.claude/plugins/cache"
+  ],
   "theme": "dark",
-  "tui": "default"
+  "model": "opusplan"
 }
