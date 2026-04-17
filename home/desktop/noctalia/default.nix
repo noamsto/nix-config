@@ -41,6 +41,11 @@
 
   pluginSource = "https://github.com/noctalia-dev/noctalia-plugins";
 
+  # Terminal for transient windows (SSH, ping, app launcher)
+  # foot --  : lightweight, opens, runs command, closes when done
+  # kitty -e : feature-rich but heavier
+  transientTerminal = "foot --";
+
   # Plugins to enable (Noctalia auto-installs from source URL on startup)
   enabledPlugins = [
     # "privacy-indicator" # Removed: webcam detection script burns 450% CPU scanning /proc/*/fd
@@ -213,7 +218,9 @@ in {
       pluginSettings = {
         tailscale = {
           compactMode = true;
-          terminalCommand = "kitty -e";
+          terminalCommand = transientTerminal;
+          defaultPeerAction = "ssh";
+          sshUsername = "noams";
         };
       };
 
@@ -427,7 +434,7 @@ in {
 
         # Launcher terminal command (Vicinae is the primary launcher)
         appLauncher = {
-          terminalCommand = "kitty -e";
+          terminalCommand = transientTerminal;
         };
 
         # Wallpaper settings
