@@ -884,17 +884,13 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1776367403,
-        "narHash": "sha256-F5kHJtePx8J4wVtfCf7YsKdQD8TQKlZkwxp8H2r5KIA=",
-        "owner": "noamsto",
-        "repo": "nix-amd-ai",
-        "rev": "6aac917d1120fc5f69dfb50b2538d48c56c908fd",
-        "type": "github"
+        "narHash": "sha256-W4qT7wbzhBWBTzVYISdWajANCdjx2Fy0H8Wg36Cqmiw=",
+        "path": "/home/noams/git/noamsto/nix-amd-ai",
+        "type": "path"
       },
       "original": {
-        "owner": "noamsto",
-        "repo": "nix-amd-ai",
-        "type": "github"
+        "path": "/home/noams/git/noamsto/nix-amd-ai",
+        "type": "path"
       }
     },
     "nix-flatpak": {
