@@ -16,10 +16,12 @@ in {
       env = {};
     };
 
-    playwright = helpers.mkNpxMcp {
-      package = "playwright-mcp";
-      args = ["--executable-path" "${lib.getExe pkgs.chromium}"];
-      env.PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
+    playwright = {
+      command = lib.getExe pkgs.playwright-mcp;
+      args = ["--executable-path" (lib.getExe pkgs.chromium)];
+      env = {
+        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
+      };
     };
 
     obsidian = helpers.mkNpxMcp {
@@ -36,11 +38,9 @@ in {
       package = "obsidian-mcp";
       extraArgs = obsidianVaults;
     };
-    playwright = helpers.mkNpxWrapper {
-      name = "playwright-mcp-wrapper";
-      package = "playwright-mcp";
-      extraArgs = ["--executable-path" "${lib.getExe pkgs.chromium}"];
-    };
+    playwright = pkgs.writeShellScriptBin "playwright-mcp-wrapper" ''
+      exec ${lib.getExe pkgs.playwright-mcp} --executable-path ${lib.getExe pkgs.chromium} "$@"
+    '';
   };
 
   # Convert a base MCP entry to opencode format (different structure)

@@ -11,6 +11,12 @@
   programs = {
     zoom-us.enable = true;
     chromium.enable = true;
+
+    steam = {
+      enable = true;
+      remotePlay.openFirewall = true;
+      localNetworkGameTransfers.openFirewall = true;
+    };
   };
 
   # Enable Qt system-wide for proper QML module resolution

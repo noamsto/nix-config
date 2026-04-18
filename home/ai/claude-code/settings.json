@@ -169,5 +169,6 @@
     "~/.claude/plugins/cache"
   ],
   "theme": "dark",
-  "editorMode": "vim"
+  "editorMode": "vim",
+  "model": "haiku"
 }

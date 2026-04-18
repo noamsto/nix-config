@@ -51,7 +51,7 @@
     shellcheck
   ];
   personal-packages = with pkgs; [
-    steam
+    # Steam is enabled via programs.steam.enable in nixos/desktop/default.nix
   ];
 in {
   home.packages =
