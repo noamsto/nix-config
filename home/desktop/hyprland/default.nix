@@ -26,6 +26,8 @@
     ./scripts/theme-toggle.nix
     ./scripts/recording-post-processor.nix
     ./scripts/accessibility-tools.nix
+    ./scripts/system-awake.nix
+    ./scripts/system-awake-thermal-guard.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];

@@ -211,6 +211,16 @@ configure_undocked() {
   # re-evaluation which kills this script, so anything after reload is unreliable.
   # The handler's 2s debounce gives reload time to complete.
   if is_lid_closed; then
+    # Honor `system-awake` — if active, skip suspend handler entirely.
+    # eDP-1 is already disabled by the HDM `undocked-lid-closed` profile,
+    # so the display turns off; we just don't want the machine to sleep.
+    if pgrep -f 'systemd-inhibit.*noams-system-awake' >/dev/null 2>&1; then
+      log "Lid closed while undocked, but system-awake active - skipping suspend"
+      log "Reloading Hyprland configuration..."
+      hyprctl reload 2>/dev/null || true
+      return
+    fi
+
     log "Lid closed while undocked - spawning suspend handler"
 
     # Check for stale lock (older than 30 seconds = way past the 2s debounce)

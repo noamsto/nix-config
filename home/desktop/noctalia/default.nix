@@ -311,6 +311,23 @@ in {
               {id = "plugin:privacy-indicator";}
               {id = "DarkMode";}
               {
+                # System-only keep-awake (suspend/lid inhibit, monitor may sleep).
+                # Complements the built-in KeepAwake widget (full inhibit).
+                id = "CustomButton";
+                icon = "coffee";
+                showIcon = true;
+                iconPosition = "left";
+                leftClickExec = "system-awake toggle";
+                rightClickExec = "system-awake off";
+                textCommand = "system-awake label";
+                textIntervalMs = 30000;
+                hideMode = "expandWithOutput";
+                showExecTooltip = false;
+                showTextTooltip = false;
+                generalTooltipText = "System Awake · left: cycle 30m→2h→8h→∞ · right: off";
+                ipcIdentifier = "system-awake";
+              }
+              {
                 id = "NotificationHistory";
                 showUnreadBadge = true;
               }

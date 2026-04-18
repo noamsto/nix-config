@@ -155,7 +155,7 @@
   },
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "tui": "default",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
@@ -169,5 +169,5 @@
     "~/.claude/plugins/cache"
   ],
   "theme": "dark",
-  "model": "opusplan"
+  "editorMode": "vim"
 }
