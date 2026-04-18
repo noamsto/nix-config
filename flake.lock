@@ -701,11 +701,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776373306,
-        "narHash": "sha256-iAJIzHngGZeLIkjzuuWI6VBsYJ1n89a/Esq0m8R1vjs=",
+        "lastModified": 1776454077,
+        "narHash": "sha256-7zSUFWsU0+jlD7WB3YAxQ84Z/iJurA5hKPm8EfEyGJk=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "d401492e2acd4fea42f7705a3c266cea739c9c36",
+        "rev": "565e5349208fe7d0831ef959103c9bafbeac0681",
         "type": "github"
       },
       "original": {
@@ -783,11 +783,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1776432639,
-        "narHash": "sha256-ZvsastkGZt7VDQaA7LrITrJ8SF9gw7XeOWtfkr6h+Ss=",
+        "lastModified": 1776532784,
+        "narHash": "sha256-HV/N2dLZhJr9Uos2+THw1oM6IPK2Uqf1FmZL991/CLs=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "3a91ba52deb4118bee73b197f004a0a8683303ef",
+        "rev": "2eb93b54dbaba46f67c0a5be4479d6daa4bed7e3",
         "type": "github"
       },
       "original": {
@@ -808,11 +808,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1776437995,
-        "narHash": "sha256-wcV5CIe5s2IsSCGJdPqy/Q+gcBSR76JMaIQDNpLXZAk=",
+        "lastModified": 1776523700,
+        "narHash": "sha256-68F6nNwHcuweEv5XWefCGvBujN4n+oCbuq1ZG+S7pCk=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "c4a2f76e29485eaafc90eebec5ef12b50f4dc8a1",
+        "rev": "e69fff4e65dbdf4a87ee4bdeaa4ea0fe156ae8f5",
         "type": "github"
       },
       "original": {
@@ -828,11 +828,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775901136,
-        "narHash": "sha256-5J+54o9YDgAeY1iYuSN7kVt0cTB90x4zO5whqdPg3Tw=",
+        "lastModified": 1776495112,
+        "narHash": "sha256-uQRogOfHgCnzSS9E8kb8Q8wXRR58eoYozXP2xDoF8qs=",
         "owner": "natsukium",
         "repo": "mcp-servers-nix",
-        "rev": "59335c80be7b719df7b6e6473f14424b1e6647df",
+        "rev": "c7c9cfbf2f70fd3ea658dd44d475c5b5217aa746",
         "type": "github"
       },
       "original": {
@@ -884,7 +884,7 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "narHash": "sha256-AP+UGFNVSzp3hA0kwe9FRzk0bbnuO0yl6ejTnQNUFyE=",
+        "narHash": "sha256-SRGsMgb9YL3wRtMd7JXJPcuU6CG1twd/2coW48m+aO4=",
         "path": "/home/noams/git/noamsto/nix-amd-ai",
         "type": "path"
       },
@@ -1678,11 +1678,11 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1775600302,
-        "narHash": "sha256-2fgKImv78CXIcfo1RsY7EI4uMZ84x/MggA5rrusYc7c=",
+        "lastModified": 1776505856,
+        "narHash": "sha256-VbnOijrn4EdYYJwiNQFxQNXECKBa60U66UPxUQAGkBE=",
         "owner": "Lassulus",
         "repo": "wrappers",
-        "rev": "9d8397d8ef1ac35763085f3338589f558128f7db",
+        "rev": "738d4bf81cbf306f6917c540a5b798110e3cf1e8",
         "type": "github"
       },
       "original": {

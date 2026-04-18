@@ -4,12 +4,21 @@
   lib,
   ...
 }: {
-  xdg.configFile = {
-    "nvim".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/lazyVim";
+  xdg.configFile = let
+    lazyVimDir = "${config.home.homeDirectory}/nix-config/home/nvim/lazyVim";
+  in {
+    "nvim/lua".source = config.lib.file.mkOutOfStoreSymlink "${lazyVimDir}/lua";
+    "nvim/lazyvim.json".source = config.lib.file.mkOutOfStoreSymlink "${lazyVimDir}/lazyvim.json";
+    "nvim/lazy-lock.json".source = config.lib.file.mkOutOfStoreSymlink "${lazyVimDir}/lazy-lock.json";
+    "nvim/.neoconf.json".source = config.lib.file.mkOutOfStoreSymlink "${lazyVimDir}/.neoconf.json";
+    "nvim/stylua.toml".source = config.lib.file.mkOutOfStoreSymlink "${lazyVimDir}/stylua.toml";
     "harper-ls/dictionary.txt".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/harper-dictionary.txt";
   };
 
   programs.neovim = {
+    extraLuaConfig = ''
+      require("config.lazy")
+    '';
     withRuby = false;
     extraWrapperArgs = [
       "--suffix"

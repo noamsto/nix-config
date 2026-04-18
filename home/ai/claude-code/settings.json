@@ -155,7 +155,7 @@
   },
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "tui": "default",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
@@ -168,7 +168,6 @@
   "additionalDirectories": [
     "~/.claude/plugins/cache"
   ],
-  "theme": "dark",
-  "editorMode": "vim",
-  "model": "haiku"
+  "theme": "auto",
+  "editorMode": "vim"
 }

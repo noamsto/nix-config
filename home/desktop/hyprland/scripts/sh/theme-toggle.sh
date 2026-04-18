@@ -1114,43 +1114,6 @@ update_yazi() {
   chmod 644 "$yazi_config"
 }
 
-# Update Claude Code theme
-# Note: Only affects new sessions; running sessions won't update until restart
-# In Claude Code: dark theme = no "theme" key, light theme = "theme": "light"
-update_claude_code() {
-  local theme="$1"
-  local config_file="${HOME}/.claude.json"
-  log_debug "Updating Claude Code to $theme"
-
-  if [[ ! -f $config_file ]]; then
-    log_debug "Claude config not found: $config_file"
-    return 0
-  fi
-
-  local tmp_file
-  tmp_file=$(mktemp)
-
-  if [[ $theme == "dark" ]]; then
-    # Dark theme = remove theme key
-    if jq 'del(.theme)' "$config_file" >"$tmp_file" 2>/dev/null; then
-      mv "$tmp_file" "$config_file"
-    else
-      rm -f "$tmp_file"
-      record_failure "claude-code"
-      return 1
-    fi
-  else
-    # Light theme = set theme key
-    if jq --arg theme "$theme" '.theme = $theme' "$config_file" >"$tmp_file" 2>/dev/null; then
-      mv "$tmp_file" "$config_file"
-    else
-      rm -f "$tmp_file"
-      record_failure "claude-code"
-      return 1
-    fi
-  fi
-}
-
 # =============================================================================
 # Service Management
 # =============================================================================
@@ -1214,7 +1177,6 @@ apply_theme_from_noctalia() {
   update_process_compose "$theme" || true
   update_vicinae "$theme" || true
   update_kde_colorscheme "$theme" || true
-  update_claude_code "$theme" || true
   signal_apps
 }
 
@@ -1248,7 +1210,6 @@ apply_theme() {
   update_process_compose "$theme" || true
   update_vicinae "$theme" || true
   update_kde_colorscheme "$theme" || true
-  update_claude_code "$theme" || true
   signal_apps
 }
 
