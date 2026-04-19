@@ -155,7 +155,7 @@
   },
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
+  "effortLevel": "low",
   "tui": "default",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
