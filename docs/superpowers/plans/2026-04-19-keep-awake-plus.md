@@ -26,10 +26,34 @@
 
 The plugin lives in an external Git repo. We develop locally via a symlink into `~/.config/noctalia/plugins/` so Noctalia picks up QML changes without reinstalls.
 
+> **Important repo layout (discovered after Task 5):** Noctalia's plugin manager
+> fetches plugins via `git clone --sparse … && git sparse-checkout set '<id>'`,
+> i.e. it expects each plugin to live in a **subfolder named after its `id`**,
+> with a top-level `registry.json` listing available plugins. So the plugin repo
+> must be:
+>
+> ```
+> repo-root/
+> ├── LICENSE
+> ├── README.md
+> ├── registry.json          # top-level index (Noctalia fetches this first)
+> └── keep-awake-plus/       # subfolder == plugin id
+>     ├── manifest.json
+>     ├── Main.qml
+>     ├── BarWidget.qml
+>     ├── Panel.qml
+>     └── Settings.qml
+> ```
+>
+> The dev-loop symlink therefore points at the **subfolder**, not the repo root:
+> `ln -s ~/Data/git/noctalia-plugin-keep-awake/keep-awake-plus ~/.config/noctalia/plugins/keep-awake-plus`.
+> Tasks 3, 4 below put files at the repo root; Task 5 surfaces the issue and a
+> follow-up restructure moves them into the subfolder + adds `registry.json`.
+
 **Files:**
 - Create (remote): empty GitHub repo `noamsto/noctalia-plugin-keep-awake`
 - Create (local): `~/Data/git/noctalia-plugin-keep-awake/` (initial clone)
-- Create (symlink): `~/.config/noctalia/plugins/keep-awake-plus` → local clone
+- Create (symlink): `~/.config/noctalia/plugins/keep-awake-plus` → local clone (pointed at subfolder after restructure)
 
 - [ ] **Step 1: Create the remote GitHub repo**
 
