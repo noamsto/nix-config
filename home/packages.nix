@@ -19,7 +19,6 @@
     zoom-us
 
     evince # PDF Viewer
-    spotify
 
     vlc
 
@@ -50,7 +49,7 @@
 
     shellcheck
   ];
-  personal-packages = with pkgs; [
+  personal-packages = [
     # Steam is enabled via programs.steam.enable in nixos/desktop/default.nix
   ];
 in {
