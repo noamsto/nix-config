@@ -39,7 +39,7 @@ in {
 
       "$mainMod ALT, L, exec, aegis-lock"
       "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
-      "$mainMod ALT, K, exec, system-awake toggle" # Cycle system-awake: 30m→2h→8h→∞→off (monitor may sleep)
+      "$mainMod ALT, K, exec, system-awake toggle-last" # Re-activate last {duration,scope} combo
 
       # Session/logout menu (Noctalia)
       "$mainMod, Escape, exec, noctalia-ipc sessionMenu toggle"

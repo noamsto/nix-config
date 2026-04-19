@@ -9,7 +9,6 @@
   #   status [--json]
   #   label
   #   toggle-last     (activate last {duration,scope} combo, or off if already on)
-  #   toggle          (legacy: cycle 30m→2h→8h→∞→off in partial scope; kept during plugin rollout)
   #
   # State lives in two files:
   #   $XDG_RUNTIME_DIR/system-awake.state.json  (active session, cleared on reboot)
@@ -332,27 +331,10 @@
       fi
     }
 
-    # Back-compat for the Hyprland bind during plugin rollout. Remove in phase 5.
-    cmd_toggle_legacy() {
-      if is_active; then
-        local label
-        label=$(${pkgs.jq}/bin/jq -r '.duration_label' "$STATE_FILE")
-        case "$label" in
-          "30m") cmd_start  7200 partial ;;  # → 2h
-          "2h")  cmd_start 28800 partial ;;  # → 8h
-          "8h")  cmd_start unlimited partial ;;
-          "∞")   cmd_off ;;
-          *)     cmd_off ;;
-        esac
-      else
-        cmd_start 1800 partial              # off → 30m
-      fi
-    }
-
     # --- Dispatch ----------------------------------------------------------
 
     if (( $# == 0 )); then
-      set -- toggle
+      set -- toggle-last
     fi
 
     cmd="$1"; shift || true
@@ -380,9 +362,8 @@
       status)         cmd_status "''${1:-}" ;;
       label)          cmd_label ;;
       toggle-last)    cmd_toggle_last ;;
-      toggle)         cmd_toggle_legacy ;;
       *)
-        echo "usage: system-awake [start|extend|off|status|label|toggle-last|toggle] [args]" >&2
+        echo "usage: system-awake [start|extend|off|status|label|toggle-last] [args]" >&2
         exit 2
         ;;
     esac
