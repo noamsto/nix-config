@@ -116,8 +116,11 @@
     }
 
     # Start a new inhibit session. Stops any existing session first.
+    # If $3 is "silent" the user-facing notify is suppressed — used by the
+    # plugin when reconfiguring an already-active session so the user doesn't
+    # get a toast per click.
     cmd_start() {
-      local duration="$1" scope="$2"
+      local duration="$1" scope="$2" silent="''${3:-}"
       local label_duration start_epoch end_epoch pid
 
       if [[ "$scope" != "partial" && "$scope" != "full" ]]; then
@@ -167,7 +170,9 @@
 
       write_state "$scope" "$label_duration" "$end_epoch" "$pid" "$start_epoch"
       guard_start
-      notify "weather-clear" "Enabled: $scope · $label_duration"
+      if [[ "$silent" != "silent" ]]; then
+        notify "weather-clear" "Enabled: $scope · $label_duration"
+      fi
     }
 
     # Extend the active session by N seconds. Does NOT update last.json
@@ -232,7 +237,8 @@
     }
 
     cmd_off() {
-      if [[ -f "$STATE_FILE" ]]; then
+      local silent="''${1:-}"
+      if [[ -f "$STATE_FILE" && "$silent" != "silent" ]]; then
         notify "weather-clear-night" "Disabled"
       fi
       cleanup_inactive
@@ -341,24 +347,31 @@
 
     case "$cmd" in
       start)
-        __duration=""; __scope=""
+        __duration=""; __scope=""; __silent=""
         for arg in "$@"; do
           case "$arg" in
             --scope=*) __scope="''${arg#--scope=}" ;;
+            --silent)  __silent="silent" ;;
             *)         __duration="$arg" ;;
           esac
         done
         if [[ -z "$__duration" || -z "$__scope" ]]; then
-          echo "usage: system-awake start <seconds|unlimited> --scope=<partial|full>" >&2
+          echo "usage: system-awake start <seconds|unlimited> --scope=<partial|full> [--silent]" >&2
           exit 2
         fi
-        cmd_start "$__duration" "$__scope"
+        cmd_start "$__duration" "$__scope" "$__silent"
         ;;
       extend)
         [[ $# -ge 1 ]] || { echo "usage: system-awake extend <seconds>" >&2; exit 2; }
         cmd_extend "$1"
         ;;
-      off)            cmd_off ;;
+      off)
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_off "$__silent"
+        ;;
       status)         cmd_status "''${1:-}" ;;
       label)          cmd_label ;;
       toggle-last)    cmd_toggle_last ;;
