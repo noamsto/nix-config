@@ -44,3 +44,11 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
   pattern = { "*.html.j2", "*.jinja", "*.jinja2", "*.j2" },
   command = "setlocal filetype=htmldjango",
 })
+
+-- Disable word wrap for markdown files
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.opt_local.wrap = false
+  end,
+})

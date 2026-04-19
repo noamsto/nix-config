@@ -82,17 +82,17 @@ and the plugin rehydrates from it on next poll.
 
 Two orthogonal dimensions:
 
-| Dimension | Values | Meaning |
-|-----------|--------|---------|
-| Duration  | 30m, 1h, 2h, 4h, 8h, ∞ (unlimited), off | how long the inhibit lasts |
-| Scope     | `partial`, `full` | what the inhibit actually blocks |
+| Dimension | Values                                  | Meaning                          |
+| --------- | --------------------------------------- | -------------------------------- |
+| Duration  | 30m, 1h, 2h, 4h, 8h, ∞ (unlimited), off | how long the inhibit lasts       |
+| Scope     | `partial`, `full`                       | what the inhibit actually blocks |
 
 **Scope semantics:**
 
-| Scope | Blocks suspend | Blocks lid-switch handler | Blocks idle (monitor DPMS, lock) | Mechanism |
-|-------|----------------|---------------------------|----------------------------------|-----------|
-| `partial` | yes | yes | **no** (monitor can go dark) | `systemd-inhibit --what=sleep:handle-lid-switch` |
-| `full`    | yes | yes | **yes**                      | `systemd-inhibit` (same) **plus** Wayland `idle-inhibit` held by the plugin |
+| Scope     | Blocks suspend | Blocks lid-switch handler | Blocks idle (monitor DPMS, lock) | Mechanism                                                                   |
+| --------- | -------------- | ------------------------- | -------------------------------- | --------------------------------------------------------------------------- |
+| `partial` | yes            | yes                       | **no** (monitor can go dark)     | `systemd-inhibit --what=sleep:handle-lid-switch`                            |
+| `full`    | yes            | yes                       | **yes**                          | `systemd-inhibit` (same) **plus** Wayland `idle-inhibit` held by the plugin |
 
 `partial` matches the current `system-awake` behavior. `full` matches what
 Noctalia's built-in `KeepAwake` does today.
@@ -116,12 +116,12 @@ Noctalia's built-in `KeepAwake` does today.
 
 **Interactions:**
 
-| Gesture       | Action                                                              |
-|---------------|---------------------------------------------------------------------|
-| Left click    | Open panel (default). Configurable.                                 |
-| Right click   | Immediate `off`.                                                    |
-| Middle click  | Re-activate last `{duration, scope}` combo from persisted state.    |
-| Scroll up/down | Optional (v2): step to next/prev duration in the configured list.   |
+| Gesture        | Action                                                            |
+| -------------- | ----------------------------------------------------------------- |
+| Left click     | Open panel (default). Configurable.                               |
+| Right click    | Immediate `off`.                                                  |
+| Middle click   | Re-activate last `{duration, scope}` combo from persisted state.  |
+| Scroll up/down | Optional (v2): step to next/prev duration in the configured list. |
 
 ## Panel
 
@@ -154,13 +154,13 @@ Dimensions: `320 × 420` logical px (scaled by `Style.uiScaleRatio`).
 
 Rendered inside Noctalia's plugin-settings dialog. Fields:
 
-| Field                 | Type              | Default                 | Notes                                              |
-|-----------------------|-------------------|-------------------------|----------------------------------------------------|
-| `defaultScope`        | enum partial/full | `partial`               | Scope pre-selected in panel when no active state.  |
-| `durations`           | list<int minutes> | `[30, 60, 120, 240, 480]` plus `∞` | Drives the panel duration buttons.       |
-| `showRemainingText`   | bool              | `true`                  | Hide the text next to the icon if false.           |
-| `activateOnLeftClick` | bool              | `false`                 | `true` swaps left-click (re-activate) and right-click (open panel). |
-| `quickExtendMinutes`  | int               | `30`                    | Amount added by the `+Xm` panel button.            |
+| Field                 | Type              | Default                            | Notes                                                               |
+| --------------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------- |
+| `defaultScope`        | enum partial/full | `partial`                          | Scope pre-selected in panel when no active state.                   |
+| `durations`           | list<int minutes> | `[30, 60, 120, 240, 480]` plus `∞` | Drives the panel duration buttons.                                  |
+| `showRemainingText`   | bool              | `true`                             | Hide the text next to the icon if false.                            |
+| `activateOnLeftClick` | bool              | `false`                            | `true` swaps left-click (re-activate) and right-click (open panel). |
+| `quickExtendMinutes`  | int               | `30`                               | Amount added by the `+Xm` panel button.                             |
 
 Values are also overridable declaratively in
 `home/desktop/noctalia/default.nix` via `pluginSettings.keep-awake-plus = { … };`.
@@ -173,14 +173,14 @@ Hyprland bind and the Noctalia widget are updated together.
 
 ### New command surface
 
-| Subcommand                                     | Effect                                                                                   |
-|------------------------------------------------|------------------------------------------------------------------------------------------|
-| `system-awake start <duration> --scope=<partial\|full>` | Start/restart inhibit for `<duration>` (seconds, or the literal `unlimited`). |
-| `system-awake extend <duration>`               | Extend the active session by `<duration>` seconds. No-op if not active.                   |
-| `system-awake off`                             | Stop inhibit, stop thermal guard, clear state.                                            |
-| `system-awake status [--json]`                 | Print compact status. `--json` returns the state object.                                  |
-| `system-awake label`                           | Compact bar text (unchanged).                                                             |
-| `system-awake toggle-last`                     | Re-activate last persisted `{duration, scope}` from `$XDG_STATE_HOME/keep-awake-plus/last.json`; off if already active. |
+| Subcommand                                              | Effect                                                                                                                  |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `system-awake start <duration> --scope=<partial\|full>` | Start/restart inhibit for `<duration>` (seconds, or the literal `unlimited`).                                           |
+| `system-awake extend <duration>`                        | Extend the active session by `<duration>` seconds. No-op if not active.                                                 |
+| `system-awake off`                                      | Stop inhibit, stop thermal guard, clear state.                                                                          |
+| `system-awake status [--json]`                          | Print compact status. `--json` returns the state object.                                                                |
+| `system-awake label`                                    | Compact bar text (unchanged).                                                                                           |
+| `system-awake toggle-last`                              | Re-activate last persisted `{duration, scope}` from `$XDG_STATE_HOME/keep-awake-plus/last.json`; off if already active. |
 
 ### State file
 
@@ -246,7 +246,7 @@ way it already does for the other 7 plugins — nothing custom needs to happen.
 In `home/desktop/noctalia/default.nix`:
 
 - Remove the `CustomButton` block at lines ~313–329 (`id = "CustomButton"; …
-  leftClickExec = "system-awake toggle"; …`).
+leftClickExec = "system-awake toggle"; …`).
 - Add `{ id = "plugin:keep-awake-plus"; }` in the same position.
 - Add `keep-awake-plus` to the `enabledPlugins` list.
 - Add the new source entry.
