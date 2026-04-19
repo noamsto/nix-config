@@ -40,6 +40,7 @@
   '';
 
   pluginSource = "https://github.com/noctalia-dev/noctalia-plugins";
+  ownPluginSource = "https://github.com/noamsto/noctalia-plugin-keep-awake";
 
   # Terminal for transient windows (SSH, ping, app launcher)
   # foot --  : lightweight, opens, runs command, closes when done
@@ -56,6 +57,7 @@
     "screen-recorder"
     "tailscale"
     "valent-connect"
+    "keep-awake-plus"
   ];
 in {
   imports = [
@@ -207,10 +209,18 @@ in {
             name = "Official Noctalia Plugins";
             url = pluginSource;
           }
+          {
+            enabled = true;
+            name = "Keep Awake+ (noamsto)";
+            url = ownPluginSource;
+          }
         ];
-        states = lib.genAttrs enabledPlugins (_: {
+        states = lib.genAttrs enabledPlugins (name: {
           enabled = true;
-          sourceUrl = pluginSource;
+          sourceUrl =
+            if name == "keep-awake-plus"
+            then ownPluginSource
+            else pluginSource;
         });
       };
 
