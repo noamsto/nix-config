@@ -1,6 +1,6 @@
 # keep-awake-plus — Noctalia plugin design
 
-**Status:** draft · **Owner:** Noam · **Date:** 2026-04-19
+**Status:** implemented · **Owner:** Noam · **Date:** 2026-04-19
 
 Replace the current bar-mounted awake controls (custom `system-awake` button plus
 Noctalia's built-in `KeepAwake`) with a single Noctalia plugin that provides a bar
