@@ -97,9 +97,22 @@
       [[ -n "$(inhibitor_pid)" ]]
     }
 
+    # Wait for any tagged inhibitor processes to actually die.
+    # pgrep returns matches in ascending PID order, so if we race a dying
+    # old process against a newly-spawned one, head -1 would pick the dying
+    # PID. Callers must ensure cleanup is synchronous w.r.t. process death.
+    wait_inhibitor_gone() {
+      local _
+      for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+        pgrep -f "systemd-inhibit.*$TAG" >/dev/null 2>&1 || return 0
+        sleep 0.05
+      done
+    }
+
     cleanup_inactive() {
       rm -f "$STATE_FILE"
       pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
+      wait_inhibitor_gone
       guard_stop
     }
 
@@ -192,8 +205,10 @@
       new_label=$(format_label "$(( new_end - started_epoch ))")
 
       # Terminate old inhibitor process without touching last.json/notification.
+      # Wait for it to actually die so the post-spawn pgrep sees only the new
+      # process(es) — otherwise head -1 would return the dying PID.
       pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
-      sleep 0.1
+      wait_inhibitor_gone
 
       setsid -f ${pkgs.coreutils}/bin/timeout "''${new_duration}s" \
         ${pkgs.systemd}/bin/systemd-inhibit \
@@ -212,6 +227,8 @@
       fi
 
       write_state "$scope" "$new_label" "$new_end" "$pid" "$started_epoch"
+      # Defensive: guard service should already be running, but restart if crashed.
+      guard_start
       notify "weather-clear" "Extended to $new_label"
     }
 

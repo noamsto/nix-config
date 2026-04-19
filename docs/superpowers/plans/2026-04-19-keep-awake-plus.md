@@ -80,7 +80,6 @@ Goal: ship a working, backwards-compatible `system-awake` with the new command s
 
 **Files:**
 - Modify: `/home/noams/nix-config/home/desktop/hyprland/scripts/system-awake.nix` — complete rewrite
-- Create: `/home/noams/nix-config/home/desktop/hyprland/scripts/system-awake.test.sh` — manual smoke-test runner
 
 This is a big single-file rewrite, so it's one task with one commit. Reviewing it diff-style against the old version is easier than staging partial commits.
 
