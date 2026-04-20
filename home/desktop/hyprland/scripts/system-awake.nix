@@ -143,7 +143,9 @@
           sleep infinity >/dev/null 2>&1 &
         write_last -1 "$scope" "∞"
       else
-        if ! [[ "$duration" =~ ^[0-9]+$ ]]; then
+        if ! [[ "$duration" =~ ^[0-9]+$ ]] || (( duration < 1 )); then
+          # Explicitly reject 0: `timeout 0s` in GNU coreutils means "no limit",
+          # which would silently produce an unlimited session instead of erroring.
           echo "error: duration must be a positive integer (seconds) or 'unlimited'" >&2
           exit 2
         fi
