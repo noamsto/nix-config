@@ -321,22 +321,23 @@
     }
 
     cmd_toggle_last() {
+      local silent="''${1:-}"
       if is_active; then
-        cmd_off
+        cmd_off "$silent"
         return 0
       fi
       if [[ ! -f "$LAST_FILE" ]]; then
         # No history — sensible first-time default.
-        cmd_start 1800 partial
+        cmd_start 1800 partial "$silent"
         return 0
       fi
       local seconds scope
       seconds=$(${pkgs.jq}/bin/jq -r '.duration_seconds' "$LAST_FILE")
       scope=$(${pkgs.jq}/bin/jq -r '.scope' "$LAST_FILE")
       if [[ "$seconds" == "-1" ]]; then
-        cmd_start unlimited "$scope"
+        cmd_start unlimited "$scope" "$silent"
       else
-        cmd_start "$seconds" "$scope"
+        cmd_start "$seconds" "$scope" "$silent"
       fi
     }
 
@@ -382,7 +383,13 @@
         ;;
       status)         cmd_status "''${1:-}" ;;
       label)          cmd_label ;;
-      toggle-last)    cmd_toggle_last ;;
+      toggle-last)
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_toggle_last "$__silent"
+        ;;
       *)
         echo "usage: system-awake [start|extend|off|status|label|toggle-last] [args]" >&2
         exit 2
