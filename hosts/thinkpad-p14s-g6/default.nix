@@ -39,7 +39,6 @@ in {
     enableLemonade = true;
     enableROCm = true; # Enable GPU/VRAM utilization
     enableVulkan = true; # Faster decode than ROCm on Strix Point 890M
-    rocmGfxOverride = "11.0.2"; # gfx1150 → gfx1102 fallback (no native gfx1150 in ROCm 6.x)
     lemonade.user = "noams";
   };
 
