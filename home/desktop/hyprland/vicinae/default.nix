@@ -30,6 +30,10 @@
     mkRayCastExtension {
       inherit name;
       src = raycastSrc + "/extensions/${name}";
+      # Electron's postinstall tries to download a prebuilt binary over the network,
+      # which the Nix sandbox blocks. Raycast extensions don't use electron at
+      # runtime — skip the download.
+      env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
     };
 
   vicinaeHqExtensionNames = [
@@ -40,7 +44,8 @@
     "nix"
     "port-killer"
     "process-manager"
-    "systemd"
+    # "systemd" — disabled: pulls usocket which pins node-gyp@7 and fails to build
+    # against Node 24. Install imperatively via the vicinae store if needed.
     "wifi-commander"
   ];
 in {
