@@ -16,7 +16,7 @@
   };
 
   programs.neovim = {
-    extraLuaConfig = ''
+    initLua = ''
       require("config.lazy")
     '';
     withRuby = false;

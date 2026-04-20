@@ -17,7 +17,7 @@ Recent Home Manager versions auto-generate `~/.config/nvim/init.lua` from
 layout (see `home/nvim/default.nix`) symlinks each child individually
 (`nvim/lua`, `nvim/lazyvim.json`, `nvim/lazy-lock.json`, `nvim/.neoconf.json`,
 `nvim/stylua.toml`) and moves the LazyVim bootstrap into
-`programs.neovim.extraLuaConfig`.
+`programs.neovim.initLua`.
 
 **`init.lua` is no longer needed in this repo** — HM writes it to
 `~/.config/nvim/init.lua` itself.
