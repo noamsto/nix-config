@@ -13,6 +13,7 @@ Command-heavy and host-specific reference material lives in skills (loaded on de
 - **`nix-rebuild`** — invoke before running `nh`, `nixos-rebuild`, `home-manager`, `nix flake` / `build` / `develop` / `fmt`, or debugging a failed build. Covers the `git add` gotcha, `just` wrappers, host/config list, binary caches, devshell tooling.
 - **`thinkfan-tuning`** — invoke when editing `hardware.thinkpad.thinkfan`, fan curves, or sensor paths on ThinkPad hosts (gen4/gen5/gen6).
 - **`secure-boot-tpm`** — invoke when touching Lanzaboote, Secure Boot keys, or TPM2 LUKS enrollment on hosts that import `nixos/core/lanzaboote.nix` (currently g5, g6).
+- **`nix-package-authoring`** — invoke when adding a new derivation under `packages/`, using `nurl` / `nix-init` to scaffold, or running `nix-locate` / `,` to find/run something without installing.
 
 If a task matches any of the above, call the skill **before** running commands — the workflow gotchas only live there.
 

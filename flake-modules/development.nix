@@ -26,6 +26,10 @@
         pkgs.statix
         pkgs.shellcheck
 
+        # Package authoring helpers (see nix-package-authoring skill)
+        pkgs.nurl # generate fetcher + hash from a URL
+        pkgs.nix-init # scaffold a full derivation from a URL
+
         # Lightweight development essentials
         pkgs.jq # JSON processing (small and useful)
         pkgs.tokei # Code statistics (lightweight and useful for dev-stats)

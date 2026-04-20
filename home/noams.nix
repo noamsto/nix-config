@@ -15,6 +15,7 @@
       ./nvim
       ./ipython
       ./ai
+      ./nix-tools
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop
