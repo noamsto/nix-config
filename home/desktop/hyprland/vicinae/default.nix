@@ -1,6 +1,7 @@
 {
   inputs,
   config,
+  osConfig,
   pkgs,
   lib,
   ...
@@ -36,6 +37,14 @@
       env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
     };
 
+  # Per-extension install predicates. Missing entries default to true.
+  # The sparseCheckout still fetches all names (keeps the hash stable across
+  # profiles); filtering only gates which extensions get built + symlinked.
+  raycastEnabled = {
+    linear = osConfig.profile == "work";
+  };
+  enabledRaycastNames = builtins.filter (n: raycastEnabled.${n} or true) raycastSources.names;
+
   vicinaeHqExtensionNames = [
     "bluetooth"
     "firefox"
@@ -63,7 +72,7 @@ in {
     };
     extensions =
       map mkVicinaeHqExt vicinaeHqExtensionNames
-      ++ map mkRaycastExt raycastSources.names;
+      ++ map mkRaycastExt enabledRaycastNames;
   };
 
   # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime
