@@ -21,6 +21,10 @@ check:
 update:
     nix flake update
 
+# Refresh vicinae extension pins (vicinae-extensions flake input + raycast rev/hash)
+update-vicinae-extensions:
+    home/desktop/hyprland/vicinae/update-sources.fish
+
 # Enter development shell
 dev:
     nix develop

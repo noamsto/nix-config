@@ -107,6 +107,13 @@
       url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
     };
 
+    # Vicinae extensions monorepo — ~30MB, pulled once and subdir'd per extension.
+    # Bump with `nix flake update vicinae-extensions` to pick up upstream changes.
+    vicinae-extensions = {
+      url = "github:vicinaehq/extensions";
+      flake = false;
+    };
+
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";

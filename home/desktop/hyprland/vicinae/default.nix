@@ -4,7 +4,46 @@
   pkgs,
   lib,
   ...
-}: {
+}: let
+  inherit (inputs.vicinae.packages.${pkgs.system}) mkVicinaeExtension mkRayCastExtension;
+
+  # Vicinaehq monorepo: already pinned via `vicinae-extensions` flake input.
+  # Each subdir has its own package-lock.json, so mkVicinaeExtension builds it cleanly.
+  mkVicinaeHqExt = name:
+    mkVicinaeExtension {
+      pname = "vicinae-ext-${name}";
+      version = "unstable-${inputs.vicinae-extensions.shortRev or "dirty"}";
+      src = inputs.vicinae-extensions + "/extensions/${name}";
+    };
+
+  # Raycast monorepo is ~15GB, so we sparse-checkout only the extensions we use.
+  # `names`, `rev`, and `hash` all live in raycast-sources.nix — edit names there,
+  # then run `just update-vicinae-extensions` to refresh rev/hash.
+  raycastSources = import ./raycast-sources.nix;
+  raycastSrc = pkgs.fetchFromGitHub {
+    owner = "raycast";
+    repo = "extensions";
+    inherit (raycastSources) rev hash;
+    sparseCheckout = map (n: "extensions/${n}") raycastSources.names;
+  };
+  mkRaycastExt = name:
+    mkRayCastExtension {
+      inherit name;
+      src = raycastSrc + "/extensions/${name}";
+    };
+
+  vicinaeHqExtensionNames = [
+    "bluetooth"
+    "firefox"
+    "hypr-keybinds"
+    "it-tools"
+    "nix"
+    "port-killer"
+    "process-manager"
+    "systemd"
+    "wifi-commander"
+  ];
+in {
   imports = [
     inputs.vicinae.homeManagerModules.default
   ];
@@ -17,6 +56,9 @@
       enable = true;
       autoStart = true;
     };
+    extensions =
+      map mkVicinaeHqExt vicinaeHqExtensionNames
+      ++ map mkRaycastExt raycastSources.names;
   };
 
   # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime

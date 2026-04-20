@@ -1396,6 +1396,7 @@
         "systems": "systems_6",
         "treefmt-nix": "treefmt-nix_4",
         "vicinae": "vicinae",
+        "vicinae-extensions": "vicinae-extensions",
         "wrappers": "wrappers",
         "wtc": "wtc",
         "xremap": "xremap",
@@ -1670,6 +1671,22 @@
       "original": {
         "owner": "vicinaehq",
         "repo": "vicinae",
+        "type": "github"
+      }
+    },
+    "vicinae-extensions": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775911073,
+        "narHash": "sha256-Fa5JvMFVwBzbnOjEV2Cer8ak0zF/CDwdHT7+wslL30w=",
+        "owner": "vicinaehq",
+        "repo": "extensions",
+        "rev": "d12bcb134d45dedad1a28a18e1cd8807353338d0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vicinaehq",
+        "repo": "extensions",
         "type": "github"
       }
     },
