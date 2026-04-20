@@ -42,6 +42,21 @@
   pluginSource = "https://github.com/noctalia-dev/noctalia-plugins";
   ownPluginSource = "https://github.com/noamsto/noctalia-plugin-keep-awake";
 
+  # Noctalia keys 3rd-party plugin state as "<6-char-sha256-of-url>:<id>"
+  # (see PluginRegistry.generateCompositeKey). Official plugins get the
+  # plain id. Mirror that here so Home-Manager-generated plugins.json
+  # matches what Noctalia writes at install time — otherwise every
+  # restart re-triggers an install and the widget gets wiped.
+  pluginComposite = name: sourceUrl:
+    if sourceUrl == pluginSource
+    then name
+    else "${builtins.substring 0 6 (builtins.hashString "sha256" sourceUrl)}:${name}";
+
+  pluginSourceFor = name:
+    if name == "keep-awake-plus"
+    then ownPluginSource
+    else pluginSource;
+
   # Terminal for transient windows (SSH, ping, app launcher)
   # foot --  : lightweight, opens, runs command, closes when done
   # kitty -e : feature-rich but heavier
@@ -215,13 +230,16 @@ in {
             url = ownPluginSource;
           }
         ];
-        states = lib.genAttrs enabledPlugins (name: {
-          enabled = true;
-          sourceUrl =
-            if name == "keep-awake-plus"
-            then ownPluginSource
-            else pluginSource;
-        });
+        states = lib.listToAttrs (map (name: let
+            sourceUrl = pluginSourceFor name;
+          in {
+            name = pluginComposite name sourceUrl;
+            value = {
+              enabled = true;
+              inherit sourceUrl;
+            };
+          })
+          enabledPlugins);
       };
 
       # Per-plugin settings (only non-defaults)
@@ -320,7 +338,7 @@ in {
               {id = "plugin:tailscale";}
               {id = "plugin:privacy-indicator";}
               {id = "DarkMode";}
-              {id = "plugin:keep-awake-plus";}
+              {id = "plugin:${pluginComposite "keep-awake-plus" ownPluginSource}";}
               {
                 id = "NotificationHistory";
                 showUnreadBadge = true;
