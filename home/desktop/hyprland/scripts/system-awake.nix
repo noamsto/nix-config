@@ -180,7 +180,7 @@
     # Extend the active session by N seconds. Does NOT update last.json
     # (user's original picked duration is preserved for toggle-last).
     cmd_extend() {
-      local delta="$1"
+      local delta="$1" silent="''${2:-}"
       if ! is_active; then
         echo "error: no active session to extend" >&2
         exit 1
@@ -196,7 +196,7 @@
       started_epoch=$(${pkgs.jq}/bin/jq -r '.started_epoch' "$STATE_FILE")
 
       if [[ "$end_epoch" == "null" ]]; then
-        notify "weather-clear" "Already unlimited"
+        [[ "$silent" != "silent" ]] && notify "weather-clear" "Already unlimited"
         return 0
       fi
 
@@ -235,7 +235,8 @@
       write_state "$scope" "$new_label" "$new_end" "$pid" "$started_epoch"
       # Defensive: guard service should already be running, but restart if crashed.
       guard_start
-      notify "weather-clear" "Extended to $new_label"
+      [[ "$silent" != "silent" ]] && notify "weather-clear" "Extended to $new_label"
+      return 0
     }
 
     cmd_off() {
@@ -364,8 +365,13 @@
         cmd_start "$__duration" "$__scope" "$__silent"
         ;;
       extend)
-        [[ $# -ge 1 ]] || { echo "usage: system-awake extend <seconds>" >&2; exit 2; }
-        cmd_extend "$1"
+        [[ $# -ge 1 ]] || { echo "usage: system-awake extend <seconds> [--silent]" >&2; exit 2; }
+        __delta="$1"; shift
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_extend "$__delta" "$__silent"
         ;;
       off)
         __silent=""
