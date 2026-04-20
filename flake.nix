@@ -200,6 +200,6 @@
     };
 
     # AMD AI: XRT, XDNA plugin, FastFlowLM, Lemonade (NPU + ROCm)
-    nix-amd-ai.url = "path:/home/noams/git/noamsto/nix-amd-ai";
+    nix-amd-ai.url = "github:noamsto/nix-amd-ai";
   };
 }
