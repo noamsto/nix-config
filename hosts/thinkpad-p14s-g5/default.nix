@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }: let
   # Import shared host configuration
@@ -14,7 +15,6 @@ in {
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
-    ../../nixos/core/clamav.nix
     ../../nixos/core/lanzaboote.nix
     ../../nixos/hardware/udev-hwmon.nix
   ];
@@ -53,4 +53,9 @@ in {
   # Also tell NM to use magic-packet WoL when it manages the connection (docked).
   # The udev rule above handles the undocked case; this prevents NM from resetting WoL to disabled.
   networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
+
+  services.sentinelone = {
+    enable = true;
+    sentinelOneManagementTokenPath = config.age.secrets.sentinelone-token.path;
+  };
 }
