@@ -8,28 +8,51 @@
   inherit (lib) mkEnableOption mkOption mkIf types optionalString getExe;
   cfg = config.services.sentinelone;
 
-  # The agent verifies /proc/PID/exe of anything connecting to its control
-  # socket and rejects binaries outside /opt/sentinelone/bin/. Inside the
-  # service's mount namespace that path is a bind-mount from the package, so
-  # we run sentinelctl via nsenter to join that namespace first.
-  sentinelctlWrapper = pkgs.writeShellApplication {
-    name = "sentinelctl";
-    runtimeInputs = [pkgs.procps pkgs.util-linux];
-    text = ''
-      pid=$(pgrep -f 's1-orchestrator' | head -n1)
-      if [ -z "''${pid}" ]; then
-        echo "sentinelone service not running" >&2
-        exit 1
-      fi
-      exec nsenter -m -t "$pid" -- /opt/sentinelone/bin/sentinelctl "$@"
-    '';
-  };
-
+  # Stock .deb layout: /opt/sentinelone has real files (not symlinks into
+  # /nix/store). The agent reads /proc/PID/exe via its eBPF probe and refuses
+  # anything whose canonical path isn't under /opt/sentinelone/bin/ — so the
+  # binaries have to live on the host filesystem, not be bind-mounted or
+  # symlinked from the package.
   initScript = pkgs.writeShellScriptBin "sentinelone-init.sh" ''
+    set -eu
+
+    # One-shot migration from the previous module layout (dataDir was
+    # /var/lib/sentinelone, /opt/sentinelone was a symlink). Preserves the
+    # registered agent UUID and certs instead of re-registering fresh.
+    if [ -d /var/lib/sentinelone ] && [ ! -e ${cfg.dataDir}/configuration/install_config ]; then
+      if [ -L /opt/sentinelone ]; then
+        rm -f /opt/sentinelone
+      fi
+      mv /var/lib/sentinelone ${cfg.dataDir}
+    fi
+
     mkdir -p ${cfg.dataDir}
 
+    # Earlier iterations of this module left bin/ebpfs/ranger as symlinks into
+    # /nix/store; rsync would follow them and fail. Drop them before sync.
+    for sub in bin ebpfs ranger; do
+      if [ -L "${cfg.dataDir}/$sub" ]; then
+        rm -f "${cfg.dataDir}/$sub"
+      fi
+    done
+    mkdir -p ${cfg.dataDir}/bin
+
+    # Refresh binaries from the package on every init (cheap; required after
+    # package upgrades). Real files, not symlinks, so /proc/PID/exe matches.
+    ${pkgs.rsync}/bin/rsync -a --delete \
+      ${cfg.package}/opt/sentinelone/bin/ \
+      ${cfg.dataDir}/bin/
+    ${pkgs.rsync}/bin/rsync -a --delete \
+      ${cfg.package}/opt/sentinelone/ebpfs/ \
+      ${cfg.dataDir}/ebpfs/
+    ${pkgs.rsync}/bin/rsync -a --delete \
+      ${cfg.package}/opt/sentinelone/ranger/ \
+      ${cfg.dataDir}/ranger/
+
     if [ ! -f "${cfg.dataDir}/configuration/install_config" ]; then
-      find "${cfg.package}/opt/sentinelone/" -mindepth 1 -maxdepth 1 ! -name "bin" ! -name "ebpfs" ! -name "ranger" -exec cp -r {} "${cfg.dataDir}/" \;
+      find "${cfg.package}/opt/sentinelone/" -mindepth 1 -maxdepth 1 \
+        ! -name "bin" ! -name "ebpfs" ! -name "ranger" \
+        -exec cp -r {} "${cfg.dataDir}/" \;
 
       cat << EOF > ${cfg.dataDir}/configuration/install_config
     S1_AGENT_MANAGEMENT_TOKEN=$(cat ${cfg.sentinelOneManagementTokenPath})
@@ -55,10 +78,17 @@
         "mgmt_url": $mgmtUrl
     }
     EOF
-
-      chown -R sentinelone:sentinelone ${cfg.dataDir}
-      find ${cfg.dataDir} -group sentinelone -exec chmod 0755 {} +
     fi
+
+    chown -R sentinelone:sentinelone ${cfg.dataDir}
+    find ${cfg.dataDir} -group sentinelone -exec chmod 0755 {} +
+  '';
+
+  # Thin wrapper so `sentinelctl` is in PATH. Exec's the real binary at
+  # /opt/sentinelone/bin/sentinelctl, giving /proc/PID/exe the path the
+  # agent's signature check expects.
+  sentinelctlWrapper = pkgs.writeShellScriptBin "sentinelctl" ''
+    exec ${cfg.dataDir}/bin/sentinelctl "$@"
   '';
 in {
   options.services.sentinelone = {
@@ -92,8 +122,13 @@ in {
 
     dataDir = mkOption {
       type = types.path;
-      description = "Directory in which the agent stores its runtime data.";
-      default = "/var/lib/sentinelone";
+      description = ''
+        Runtime directory for the agent. Must be /opt/sentinelone — the
+        shipped binaries hardcode this path and the agent's signature
+        check rejects anything else.
+      '';
+      default = "/opt/sentinelone";
+      readOnly = true;
     };
   };
 
@@ -108,54 +143,46 @@ in {
 
     environment.systemPackages = [sentinelctlWrapper];
 
-    systemd = {
-      services.sentinelone-init = {
-        wantedBy = ["sentinelone.service"];
-        before = ["sentinelone.service"];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = getExe initScript;
-        };
+    systemd.services.sentinelone-init = {
+      wantedBy = ["sentinelone.service"];
+      before = ["sentinelone.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = getExe initScript;
       };
+    };
 
-      services.sentinelone = {
-        description = "SentinelOne";
-        path = [
-          pkgs.coreutils
-          pkgs.gawk
-          pkgs.zlib
-          pkgs.elfutils
-          pkgs.bash
-        ];
-        unitConfig = {
-          Description = "SentinelOne";
-          After = ["uptrack-prefetch.service" "uptrack.service"];
-          RefuseManualStop = "yes";
-          StartLimitInterval = "90";
-          StartLimitBurst = "4";
-        };
-        serviceConfig = {
-          Type = "exec";
-          ExecStart = "${cfg.package}/bin/sentinelone-agent";
-          WorkingDirectory = "/opt/sentinelone/bin";
-          SyslogIdentifier = "${cfg.dataDir}/log";
-          WatchdogSec = "30s";
-          Restart = "on-failure";
-          RestartSec = "4";
-          MemoryMax = "infinity";
-          ExecStop = "${cfg.package}/bin/sentinelctl control stop";
-          NotifyAccess = "all";
-          KillMode = "process";
-          TasksMax = "infinity";
-          BindPaths = ["${cfg.dataDir}:/opt/sentinelone"];
-          BindReadOnlyPaths = [
-            "${cfg.package}/opt/sentinelone/bin:/opt/sentinelone/bin"
-            "${cfg.package}/opt/sentinelone/ebpfs:/opt/sentinelone/ebpfs"
-            "${cfg.package}/opt/sentinelone/ranger:/opt/sentinelone/ranger"
-          ];
-        };
-        wantedBy = ["multi-user.target"];
+    systemd.services.sentinelone = {
+      description = "SentinelOne";
+      path = [
+        pkgs.coreutils
+        pkgs.gawk
+        pkgs.zlib
+        pkgs.elfutils
+        pkgs.bash
+      ];
+      unitConfig = {
+        Description = "SentinelOne";
+        After = ["uptrack-prefetch.service" "uptrack.service"];
+        RefuseManualStop = "yes";
+        StartLimitInterval = "90";
+        StartLimitBurst = "4";
       };
+      serviceConfig = {
+        Type = "exec";
+        ExecStart = "${cfg.dataDir}/bin/sentinelone-agent";
+        WorkingDirectory = "${cfg.dataDir}/bin";
+        SyslogIdentifier = "${cfg.dataDir}/log";
+        WatchdogSec = "30s";
+        Restart = "on-failure";
+        RestartSec = "4";
+        MemoryMax = "infinity";
+        ExecStop = "${cfg.dataDir}/bin/sentinelctl control stop";
+        NotifyAccess = "all";
+        KillMode = "process";
+        TasksMax = "infinity";
+      };
+      wantedBy = ["multi-user.target"];
     };
   };
 }
