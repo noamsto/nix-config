@@ -7,6 +7,24 @@
 }: let
   inherit (lib) mkEnableOption mkOption mkIf types optionalString getExe;
   cfg = config.services.sentinelone;
+
+  # The agent verifies /proc/PID/exe of anything connecting to its control
+  # socket and rejects binaries outside /opt/sentinelone/bin/. Inside the
+  # service's mount namespace that path is a bind-mount from the package, so
+  # we run sentinelctl via nsenter to join that namespace first.
+  sentinelctlWrapper = pkgs.writeShellApplication {
+    name = "sentinelctl";
+    runtimeInputs = [pkgs.procps pkgs.util-linux];
+    text = ''
+      pid=$(pgrep -f 's1-orchestrator' | head -n1)
+      if [ -z "''${pid}" ]; then
+        echo "sentinelone service not running" >&2
+        exit 1
+      fi
+      exec nsenter -m -t "$pid" -- /opt/sentinelone/bin/sentinelctl "$@"
+    '';
+  };
+
   initScript = pkgs.writeShellScriptBin "sentinelone-init.sh" ''
     mkdir -p ${cfg.dataDir}
 
@@ -88,20 +106,9 @@ in {
     };
     users.groups.sentinelone = {};
 
-    environment.systemPackages = [cfg.package];
+    environment.systemPackages = [sentinelctlWrapper];
 
     systemd = {
-      # Expose /opt/sentinelone on the host so `sentinelctl` works outside the
-      # service's mount namespace. bin/ebpfs/ranger are symlinked into dataDir
-      # because the init copy excludes them (they come from the package).
-      tmpfiles.rules = [
-        "d ${cfg.dataDir} 0755 root root -"
-        "L+ ${cfg.dataDir}/bin - - - - ${cfg.package}/opt/sentinelone/bin"
-        "L+ ${cfg.dataDir}/ebpfs - - - - ${cfg.package}/opt/sentinelone/ebpfs"
-        "L+ ${cfg.dataDir}/ranger - - - - ${cfg.package}/opt/sentinelone/ranger"
-        "L+ /opt/sentinelone - - - - ${cfg.dataDir}"
-      ];
-
       services.sentinelone-init = {
         wantedBy = ["sentinelone.service"];
         before = ["sentinelone.service"];
