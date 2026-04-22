@@ -68,10 +68,13 @@ No confirmation needed — this is the default. User can say "don't commit" to o
 
 **CRITICAL REQUIREMENT**: When using `mcp__playwright__browser_take_screenshot`:
 
-- You MUST ALWAYS set the `type` parameter to `"jpeg"`
-- NEVER use PNG format
-- Reason: Anthropic API requires JPEG format for image viewing
-- This is NON-NEGOTIABLE - no exceptions
+- Default to `type: "png"` for UI screenshots — keeps Hebrew text, thin borders,
+  and progress bars crisp, which is what you almost always want when debugging
+  the UI.
+- Use `type: "jpeg"` only when token cost clearly dominates (very large
+  screenshots, many-image batches).
+- Claude Vision supports `image/jpeg`, `image/png`, `image/gif`, and
+  `image/webp`. AVIF and HEIC are NOT supported.
 
 ## Response Formatting
 
