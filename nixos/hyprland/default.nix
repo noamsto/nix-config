@@ -6,34 +6,19 @@
 }: let
   isHypr = config.desktop.isHyprland;
 
-  # Override hyprland package to only offer the UWSM session to display managers.
-  # The upstream package ships both hyprland.desktop (direct) and hyprland-uwsm.desktop
-  # (UWSM-managed). Display managers like tuigreet/GDM can pick the wrong one, bypassing
-  # UWSM and leaving graphical-session.target inactive — breaking all user services.
-  # We replace both with a single entry that invokes start-hyprland directly via -F flag,
-  # avoiding the desktop file lookup that would require the removed hyprland.desktop.
-  # See: https://github.com/NixOS/nixpkgs/issues/484328
-  # See: https://github.com/NixOS/nixpkgs/issues/471800
+  # Restrict display managers to only show the UWSM session entry.
+  # Upstream ships both hyprland.desktop and hyprland-uwsm.desktop; setting
+  # passthru.providedSessions filters what programs.hyprland symlinks into
+  # services.displayManager.sessionPackages. passthru does not affect the
+  # derivation hash, so the cached upstream build is reused.
+  # PR #508309 (merged 2026-04-09) made hyprland-uwsm.desktop use absolute
+  # uwsm paths, removing the need to rewrite the file ourselves.
   hyprlandUwsmOnly = pkgs.hyprland.overrideAttrs (old: {
     passthru =
       (old.passthru or {})
       // {
         providedSessions = ["hyprland-uwsm"];
       };
-    postInstall =
-      (old.postInstall or "")
-      + ''
-                rm -f $out/share/wayland-sessions/hyprland.desktop
-                rm -f $out/share/wayland-sessions/hyprland-uwsm.desktop
-                cat > $out/share/wayland-sessions/hyprland-uwsm.desktop <<DESKTOP
-        [Desktop Entry]
-        Name=Hyprland (uwsm-managed)
-        Comment=An intelligent dynamic tiling Wayland compositor
-        Exec=uwsm start -e -D Hyprland -F -- $out/bin/start-hyprland
-        Type=Application
-        DesktopNames=Hyprland
-        DESKTOP
-      '';
   });
 in {
   imports = [./gnome-services.nix];
