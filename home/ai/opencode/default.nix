@@ -39,6 +39,13 @@ in {
       lib.mkForce
       (config.lib.file.mkOutOfStoreSymlink
         "${config.home.homeDirectory}/nix-config/home/ai/opencode/opencode.json");
+    # package.json pins runtime npm deps that opencode resolves dynamically
+    # (e.g. provider.<name>.npm). Activation runs `bun install` to populate
+    # ~/.config/opencode/node_modules/.
+    "opencode/package.json".source =
+      lib.mkForce
+      (config.lib.file.mkOutOfStoreSymlink
+        "${config.home.homeDirectory}/nix-config/home/ai/opencode/package.json");
     "opencode/skills".source =
       config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/nix-config/home/ai/opencode/skills";
@@ -58,4 +65,13 @@ in {
       config.lib.file.mkOutOfStoreSymlink
       "${config.home.homeDirectory}/nix-config/home/ai/opencode/oh-my-opencode.json";
   }; # closes xdg.configFile
+
+  # Install the runtime npm deps declared in package.json (Lemonade provider
+  # needs @ai-sdk/openai-compatible at resolve time). Bun reads ./package.json
+  # and writes to ./node_modules/ — no global install.
+  home.activation.opencodeBunInstall = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [ -L "$HOME/.config/opencode/package.json" ]; then
+      run --quiet ${pkgs.bun}/bin/bun install --cwd "$HOME/.config/opencode" --silent || true
+    fi
+  '';
 }
