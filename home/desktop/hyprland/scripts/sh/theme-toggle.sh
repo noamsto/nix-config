@@ -782,8 +782,10 @@ update_noctalia() {
   tmp_file=$(mktemp)
   if jq --argjson dark "$dark_mode" '.colorSchemes.darkMode = $dark' "$gui_settings" >"$tmp_file" 2>/dev/null; then
     mv "$tmp_file" "$gui_settings"
-    # Restart Noctalia to pick up the change
-    systemctl --user restart noctalia-shell.service 2>/dev/null || true
+    # Restart Noctalia so it re-reads settings.json (no systemd unit anymore — upstream
+    # deprecated it; setsid -f detaches the new process from this script's lifetime).
+    pkill -f 'quickshell.*noctalia-shell' 2>/dev/null || true
+    setsid -f noctalia-shell </dev/null >/dev/null 2>&1 || true
   else
     rm -f "$tmp_file"
     record_failure "noctalia"

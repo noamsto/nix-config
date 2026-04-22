@@ -91,11 +91,6 @@ in {
     home.file.".face".source = ./assets/avatar.png;
 
     systemd.user.services = {
-      # Add icon theme environment to Noctalia service for proper icon lookup
-      noctalia-shell.Service.Environment = lib.mkForce [
-        "QS_ICON_THEME=${config.gtk.iconTheme.name}"
-      ];
-
       # Valent daemon - auto-restarts if it crashes (replaces exec-once)
       valent = {
         Unit = {
@@ -114,18 +109,20 @@ in {
       };
 
       # Systemd service to restore wallpaper after Noctalia starts
+      # Bound to graphical-session.target since noctalia-shell.service no longer exists;
+      # the helper script pgrep-waits for noctalia internally.
       noctalia-restore-wallpaper = {
         Unit = {
           Description = "Restore Noctalia wallpaper from saved state";
-          After = ["noctalia-shell.service"];
-          PartOf = ["noctalia-shell.service"];
+          After = ["graphical-session.target"];
+          PartOf = ["graphical-session.target"];
         };
         Service = {
           Type = "oneshot";
           ExecStart = "${restore-wallpaper}/bin/noctalia-restore-wallpaper";
         };
         Install = {
-          WantedBy = ["noctalia-shell.service"];
+          WantedBy = ["graphical-session.target"];
         };
       };
 
@@ -133,8 +130,8 @@ in {
       noctalia-crash-monitor = {
         Unit = {
           Description = "Monitor Noctalia for crashes and log events";
-          After = ["noctalia-shell.service"];
-          PartOf = ["noctalia-shell.service"];
+          After = ["graphical-session.target"];
+          PartOf = ["graphical-session.target"];
         };
         Service = {
           Type = "simple";
@@ -203,7 +200,7 @@ in {
           RestartSec = "2s";
         };
         Install = {
-          WantedBy = ["noctalia-shell.service"];
+          WantedBy = ["graphical-session.target"];
         };
       };
     }; # systemd.user.services
@@ -212,8 +209,9 @@ in {
       enable = true;
       package = noctaliaPackage;
 
-      # Use systemd for auto-start
-      systemd.enable = true;
+      # Auto-start via Hyprland exec-once (upstream deprecated systemd integration:
+      # https://docs.noctalia.dev/getting-started/nixos/#running-the-shell)
+      systemd.enable = false;
 
       # Plugin registry - Noctalia auto-installs enabled plugins from sourceUrl
       plugins = {

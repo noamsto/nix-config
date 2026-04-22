@@ -42,6 +42,9 @@ in {
         "tmux setenv -g XDG_RUNTIME_DIR \"$XDG_RUNTIME_DIR\""
 
         "kitty --single-instance --instance-group=hypr"
+
+        # Noctalia shell (upstream deprecated systemd autostart)
+        "noctalia-shell"
       ];
 
       input = {
