@@ -19,11 +19,9 @@
     # One-shot migration from the previous module layout (dataDir was
     # /var/lib/sentinelone, /opt/sentinelone was a symlink). Preserves the
     # registered agent UUID and certs instead of re-registering fresh.
-    if [ -d /var/lib/sentinelone ] && [ ! -e ${cfg.dataDir}/configuration/install_config ]; then
-      if [ -L /opt/sentinelone ]; then
-        rm -f /opt/sentinelone
-      fi
-      mv /var/lib/sentinelone ${cfg.dataDir}
+    if [ -L /opt/sentinelone ]; then
+      rm -f /opt/sentinelone
+      mv /var/lib/sentinelone /opt/sentinelone
     fi
 
     mkdir -p ${cfg.dataDir}

@@ -156,7 +156,7 @@
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
-  "tui": "fullscreen",
+  "tui": "default",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "mcpServers": {
