@@ -15,8 +15,33 @@
   lib,
   ...
 }: let
-  noctaliaPackage = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
-    calendarSupport = true;
+  # Wrap the upstream noctalia-shell to add calendar support at runtime
+  # instead of using .override { calendarSupport = true; }. The override
+  # would fork the derivation hash and miss noctalia.cachix.org; the
+  # wrapper keeps the upstream hash intact so the cache is hit.
+  upstreamNoctalia = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  calendarTypelibPath = lib.makeSearchPath "lib/girepository-1.0" (with pkgs; [
+    evolution-data-server
+    libical
+    glib.out
+    libsoup_3
+    json-glib
+    gobject-introspection
+  ]);
+  calendarBinPath = lib.makeBinPath [
+    (pkgs.python3.withPackages (pp: [pp.pygobject3]))
+  ];
+  noctaliaPackage = pkgs.symlinkJoin {
+    name = "noctalia-shell-with-calendar";
+    paths = [upstreamNoctalia];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      rm $out/bin/noctalia-shell
+      makeWrapper ${upstreamNoctalia}/bin/noctalia-shell $out/bin/noctalia-shell \
+        --prefix PATH : ${calendarBinPath} \
+        --prefix GI_TYPELIB_PATH : ${calendarTypelibPath}
+    '';
+    inherit (upstreamNoctalia) meta;
   };
 
   # Helper script for Noctalia IPC commands
