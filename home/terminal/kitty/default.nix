@@ -108,7 +108,11 @@ in {
       listen_on = "unix:/tmp/kitty";
       startup_session = "none";
 
-      shell = "${pkgs.fish}/bin/fish -l -c 'TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -s nix-config -c ~/nix-config'";
+      # systemctl start is synchronous and idempotent: it blocks until the
+      # unit is active (creating the server in its own scope), or returns
+      # immediately if already active. Serializes with tmux-startup.service
+      # so the server is never created inside kitty's scope.
+      shell = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config'";
     };
 
     keybindings = {

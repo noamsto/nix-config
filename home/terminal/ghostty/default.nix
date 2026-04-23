@@ -75,7 +75,11 @@ in {
 
       gtk-single-instance = true;
 
-      command = "${pkgs.fish}/bin/fish -l -c 'TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config; or TMUX_TMPDIR=/run/user/(id -u) tmux new -s nix-config -c ~/nix-config'";
+      # systemctl start is synchronous and idempotent: it blocks until the
+      # unit is active (creating the server in its own scope), or returns
+      # immediately if already active. Serializes with tmux-startup.service
+      # so the server is never created inside ghostty's scope.
+      command = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config'";
 
       keybind = [
         "ctrl+equal=increase_font_size:1"
