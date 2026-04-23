@@ -229,16 +229,24 @@ update_gtk_css() {
     return 1
   fi
 
+  # Copy CSS to a destination, handling nix-store source mode (444) by
+  # removing any existing read-only file first and chmod'ing after.
+  _install_css() {
+    local dest="$1"
+    mkdir -p "$(dirname "$dest")"
+    rm -f "$dest"
+    cp "$css_file" "$dest" || return 1
+    chmod 644 "$dest" || return 1
+  }
+
   # Update GTK4 (libadwaita)
-  mkdir -p "${XDG_CONFIG_HOME}/gtk-4.0"
-  cp "$css_file" "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css" || {
+  _install_css "${XDG_CONFIG_HOME}/gtk-4.0/gtk.css" || {
     record_failure "gtk-css"
     return 1
   }
 
   # Update GTK3 (for apps using adw-gtk3 or respecting gtk.css)
-  mkdir -p "${XDG_CONFIG_HOME}/gtk-3.0"
-  cp "$css_file" "${XDG_CONFIG_HOME}/gtk-3.0/gtk.css" || {
+  _install_css "${XDG_CONFIG_HOME}/gtk-3.0/gtk.css" || {
     record_failure "gtk-css"
     return 1
   }

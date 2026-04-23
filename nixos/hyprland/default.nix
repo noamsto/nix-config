@@ -6,20 +6,32 @@
 }: let
   isHypr = config.desktop.isHyprland;
 
-  # Restrict display managers to only show the UWSM session entry.
-  # Upstream ships both hyprland.desktop and hyprland-uwsm.desktop; setting
-  # passthru.providedSessions filters what programs.hyprland symlinks into
-  # services.displayManager.sessionPackages. passthru does not affect the
-  # derivation hash, so the cached upstream build is reused.
-  # PR #508309 (merged 2026-04-09) made hyprland-uwsm.desktop use absolute
-  # uwsm paths, removing the need to rewrite the file ourselves.
-  hyprlandUwsmOnly = pkgs.hyprland.overrideAttrs (old: {
-    passthru =
-      (old.passthru or {})
-      // {
-        providedSessions = ["hyprland-uwsm"];
-      };
-  });
+  # Strip the plain hyprland.desktop so display managers (tuigreet, sddm, gdm)
+  # only offer hyprland-uwsm. symlinkJoin wraps the upstream package without
+  # rebuilding — $out is a tree of symlinks to the real hyprland outputs, and
+  # we remove just the one .desktop symlink. `override` is preserved (and
+  # re-wraps) so programs.hyprland's genFinalPackage keeps working.
+  hyprlandUwsmOnly = let
+    wrap = base:
+      (pkgs.symlinkJoin {
+        name = "hyprland-uwsm-only-${base.version}";
+        # Merge all outputs (out, man) that profiles will try to install;
+        # symlinkJoin only emits $out, so they all land there.
+        paths = map (o: base.${o}) (base.meta.outputsToInstall or ["out"]);
+        postBuild = ''
+          rm -f $out/share/wayland-sessions/hyprland.desktop
+        '';
+        passthru =
+          (base.passthru or {})
+          // {
+            providedSessions = ["hyprland-uwsm"];
+          };
+        meta = base.meta // {outputsToInstall = ["out"];};
+        inherit (base) version;
+      })
+      // {override = args: wrap (base.override args);};
+  in
+    wrap pkgs.hyprland;
 in {
   imports = [./gnome-services.nix];
   config = lib.mkIf isHypr {
@@ -29,16 +41,20 @@ in {
       package = hyprlandUwsmOnly;
     };
 
-    services.greetd = {
-      enable = true;
-      settings = {
-        default_session = {
-          command = "${pkgs.tuigreet}/bin/tuigreet --time --time-format '%I:%M %p | %a • %h %d %Y' --theme border=magenta;text=cyan;prompt=cyan;time=white;action=blue;button=yellow;container=black;input=gray --asterisks --greeting 'Welcome to NixOS' --width 80 --container-padding 2 --prompt-padding 1 --remember --remember-user-session --user-menu";
+    services = {
+      displayManager.defaultSession = "hyprland-uwsm";
+
+      greetd = {
+        enable = true;
+        settings = {
+          default_session = {
+            command = "${pkgs.tuigreet}/bin/tuigreet --time --time-format '%I:%M %p | %a • %h %d %Y' --theme border=magenta;text=cyan;prompt=cyan;time=white;action=blue;button=yellow;container=black;input=gray --asterisks --greeting 'Welcome to NixOS' --width 80 --container-padding 2 --prompt-padding 1 --remember --remember-user-session --user-menu";
+          };
         };
       };
-    };
 
-    services.blueman.enable = true;
+      blueman.enable = true;
+    };
     # PAM service for Noctalia shell (GNOME keyring unlock)
     security.pam.services.noctalia-shell = {
       enableGnomeKeyring = true;

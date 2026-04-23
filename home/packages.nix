@@ -125,10 +125,6 @@ in {
       # github
       gh
 
-      # AI coding tools
-      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.claude-squad
-      happy-coder
-
       # Better system monitoring
       btop
       (writeShellScriptBin "amdgpu_top" ''

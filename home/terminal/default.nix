@@ -22,6 +22,7 @@ in {
   programs.lazytmux = {
     enable = true;
     worktrunk.enable = true;
+    claudeIntegration.enable = true;
     processIcons = {
       houston = "🚀";
     };

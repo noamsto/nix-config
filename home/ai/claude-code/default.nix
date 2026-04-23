@@ -77,8 +77,10 @@
 
   # DISABLE_INSTALLATION_CHECKS: suppress false warnings when running via Nix
   # https://github.com/anthropics/claude-code/issues/8523
+  # DISABLE_UPDATES: block self-update paths on immutable Nix store (>=2.1.118)
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
+    export DISABLE_UPDATES=1
     exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';
 in {

@@ -2,10 +2,10 @@
   # Thermal watchdog that forces suspend if the laptop gets dangerously hot
   # while `system-awake` is active. HDM-profile-aware: the "sustained high
   # temp" trip only fires when undocked + lid closed (i.e. likely in a bag).
-  # The "critical instant" trip fires unconditionally as a last resort.
+  # The "critical" trip fires unconditionally as a last resort.
   #
   # Thresholds:
-  #   - 95 °C instant  → suspend now (any state)
+  #   - 98 °C for 20 s → suspend (any state) — tolerates brief spikes
   #   - 85 °C for 60 s → suspend (only if undocked + lid closed)
   #
   # Started/stopped by the `system-awake` toggle; does not run otherwise.
@@ -15,10 +15,11 @@
 
     TAG="noams-system-awake"
     LOG="/tmp/system-awake-thermal-guard.log"
-    POLL_INTERVAL=10          # seconds
-    BAG_THRESHOLD=85000       # millicelsius
-    BAG_SUSTAIN_TICKS=6       # 6 * 10s = 60s
-    CRITICAL_THRESHOLD=95000  # instant trip, any state
+    POLL_INTERVAL=10               # seconds
+    BAG_THRESHOLD=85000            # millicelsius
+    BAG_SUSTAIN_TICKS=6            # 6 * 10s = 60s
+    CRITICAL_THRESHOLD=98000       # millicelsius
+    CRITICAL_SUSTAIN_TICKS=2       # 2 * 10s = 20s — tolerate brief spikes
 
     log() {
       echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG" >&2
@@ -75,30 +76,40 @@
       ${pkgs.systemd}/bin/systemctl suspend
     }
 
-    log "Thermal guard started (poll=''${POLL_INTERVAL}s, bag=''${BAG_THRESHOLD}mC/60s, critical=''${CRITICAL_THRESHOLD}mC)"
+    log "Thermal guard started (poll=''${POLL_INTERVAL}s, bag=''${BAG_THRESHOLD}mC/60s, critical=''${CRITICAL_THRESHOLD}mC/20s)"
 
-    sustained=0
+    bag_sustained=0
+    crit_sustained=0
     while true; do
       temp=$(max_temp_mC)
       temp_c=$(( temp / 1000 ))
 
       if (( temp >= CRITICAL_THRESHOLD )); then
-        emergency_suspend "critical temperature" "$temp_c"
-        exit 0
+        crit_sustained=$(( crit_sustained + 1 ))
+        log "Critical temp: ''${temp_c}°C (tick $crit_sustained/$CRITICAL_SUSTAIN_TICKS)"
+        if (( crit_sustained >= CRITICAL_SUSTAIN_TICKS )); then
+          emergency_suspend "sustained critical temperature" "$temp_c"
+          exit 0
+        fi
+      else
+        if (( crit_sustained > 0 )); then
+          log "Critical recovered (''${temp_c}°C) — resetting critical counter"
+        fi
+        crit_sustained=0
       fi
 
       if (( temp >= BAG_THRESHOLD )) && is_lid_closed && ! has_external_monitors; then
-        sustained=$(( sustained + 1 ))
-        log "Hot + lid-closed + undocked: ''${temp_c}°C (tick $sustained/$BAG_SUSTAIN_TICKS)"
-        if (( sustained >= BAG_SUSTAIN_TICKS )); then
+        bag_sustained=$(( bag_sustained + 1 ))
+        log "Hot + lid-closed + undocked: ''${temp_c}°C (tick $bag_sustained/$BAG_SUSTAIN_TICKS)"
+        if (( bag_sustained >= BAG_SUSTAIN_TICKS )); then
           emergency_suspend "sustained high temp while undocked+lid-closed" "$temp_c"
           exit 0
         fi
       else
-        if (( sustained > 0 )); then
-          log "Recovered (''${temp_c}°C) — resetting sustain counter"
+        if (( bag_sustained > 0 )); then
+          log "Recovered (''${temp_c}°C) — resetting bag counter"
         fi
-        sustained=0
+        bag_sustained=0
       fi
 
       sleep "$POLL_INTERVAL"

@@ -55,7 +55,7 @@ in {
   networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
 
   services.sentinelone = {
-    enable = true;
+    enable = false;
     sentinelOneManagementTokenPath = config.age.secrets.sentinelone-token.path;
   };
 }
