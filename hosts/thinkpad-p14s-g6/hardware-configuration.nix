@@ -25,10 +25,6 @@
     extraModprobeConfig = ''
       options thinkpad_acpi fan_control=1
     '';
-
-    kernelParams = [
-      "amdgpu.dcdebugmask=0x10" # Fix GPU flickering / panel self-refresh lag
-    ];
   };
 
   # GPU Acceleration — AMD Ryzen AI 300 series iGPU
