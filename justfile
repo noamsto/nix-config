@@ -40,10 +40,12 @@ build HOST="$(hostname)":
 # Switch NixOS system configuration
 switch HOST="$(hostname)":
     nh os switch .#{{HOST}}
+    @just _restart-noctalia
 
 # Switch NixOS system configuration with staged changes only
 switch-staged HOST="$(hostname)":
     nh os switch -S .#{{HOST}}
+    @just _restart-noctalia
 
 # Boot NixOS configuration (apply on next reboot)
 boot HOST="$(hostname)":
@@ -60,6 +62,7 @@ build-with-nom DERIVATION:
 # Switch Home Manager configuration
 home-switch CONFIG="noams@$(hostname)":
     nix run home-manager/master -- switch --flake .#{{CONFIG}}
+    @just _restart-noctalia
 
 # Build Home Manager configuration
 home-build CONFIG="noams@$(hostname)":
@@ -115,6 +118,30 @@ clean-all:
 status:
     @echo "📦 Flake Input Status:"
     nix flake metadata
+
+# Restart noctalia-shell after a rebuild.
+#
+# `nh os switch` flips /run/current-system, leaving the running quickshell with
+# stale references (icon themes, fontconfig, /etc/os-release). Symptom: the
+# Nix distro logo on ControlCenter (useDistroLogo=true) and other
+# dynamically-resolved icons disappear until restart. Upstream acknowledged
+# this in the (now-removed) systemd integration docs and deprecated that path
+# rather than fix it:
+#   https://docs.noctalia.dev/getting-started/nixos/#running-the-shell
+#
+# Wired here rather than a Nix-level hook: NixOS activation runs as root with
+# no graphical session env, and HM activation misses `nh os switch` entirely.
+_restart-noctalia:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pat='quickshell.*noctalia-shell'
+    if ! pgrep -qf "$pat"; then
+        exit 0
+    fi
+    echo "♻️  Restarting noctalia-shell to refresh runtime state..."
+    # setsid -f detaches the new process from just's lifetime
+    pkill -f "$pat" 2>/dev/null || true
+    setsid -f noctalia-shell </dev/null >/dev/null 2>&1 || true
 
 # Check if any staged git changes exist
 check-staged:
