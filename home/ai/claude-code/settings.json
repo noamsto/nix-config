@@ -157,6 +157,8 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
   "tui": "default",
+  "theme": "auto",
+  "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "mcpServers": {
@@ -167,7 +169,5 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ],
-  "theme": "auto",
-  "editorMode": "vim"
+  ]
 }
