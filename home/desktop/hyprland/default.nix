@@ -1,6 +1,8 @@
 {
   pkgs,
   config,
+  lib,
+  osConfig,
   ...
 }: {
   imports = [
@@ -49,6 +51,7 @@
       thunar-volman # Volume manager for thunar
       thunar-archive-plugin # Archive support
       tumbler # Thumbnail service for image previews
+      xfconf # Provides xfconfd D-Bus service so Thunar settings persist
 
       # Dock - now handled by Noctalia
       # nwg-dock-hyprland
@@ -114,31 +117,37 @@
     StartupNotify=true
   '';
 
-  # Thunar settings - xfconf requires xfconfd running, so use config file
-  # These are set when Thunar first runs. User can change in preferences.
-  xdg.configFile."Thunar/thunarrc".text = ''
-    [Configuration]
-    LastView=ThunarDetailsView
-    LastSortColumn=THUNAR_COLUMN_DATE_MODIFIED
-    LastSortOrder=GTK_SORT_DESCENDING
-    MiscThumbnailMode=THUNAR_THUMBNAIL_MODE_ALWAYS
-    MiscShowHidden=FALSE
-    MiscFoldersFirst=TRUE
-    MiscDateStyle=THUNAR_DATE_STYLE_SHORT
-    MiscDateCustomStyle=%Y-%m-%d %H:%M
-    MiscFileSizeInBytes=FALSE
-    MiscSingleClick=FALSE
-  '';
+  # Thunar settings — written to xfconf at HM activation.
+  # Thunar 4.20 reads its preferences from xfconf (channel "thunar").
+  # The legacy thunarrc seed only runs on first launch, so we configure
+  # xfconf directly to make settings deterministic across rebuilds.
+  xfconf.settings.thunar = {
+    "last-view" = "ThunarDetailsView";
+    "last-sort-column" = "THUNAR_COLUMN_DATE_MODIFIED";
+    "last-sort-order" = "GTK_SORT_DESCENDING";
+    "last-show-hidden" = false;
+    "misc-thumbnail-mode" = "THUNAR_THUMBNAIL_MODE_ALWAYS";
+    "misc-folders-first" = true;
+    "misc-date-style" = "THUNAR_DATE_STYLE_SHORT";
+    "misc-date-custom-style" = "%Y-%m-%d %H:%M";
+    "misc-file-size-binary" = false;
+    "misc-single-click" = false;
+  };
 
-  # Sidebar bookmarks (shows in Thunar and other GTK file dialogs)
+  # Sidebar bookmarks (shows in Thunar and other GTK file dialogs).
+  # Data bookmarks only on hosts that mount /home/$USER/Data.
   gtk.gtk3.bookmarks = let
     home = config.home.homeDirectory;
-  in [
-    "file://${home}/Documents"
-    "file://${home}/Downloads"
-    "file://${home}/Pictures"
-    "file://${home}/Videos"
-    "file://${home}/Data Data"
-    "file://${home}/Data/git git"
-  ];
+    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s" "thinkpad-p14s-g5"];
+  in
+    [
+      "file://${home}/Documents"
+      "file://${home}/Downloads"
+      "file://${home}/Pictures"
+      "file://${home}/Videos"
+    ]
+    ++ lib.optionals hasDataMount [
+      "file://${home}/Data Data"
+      "file://${home}/Data/git git"
+    ];
 }

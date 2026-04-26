@@ -35,10 +35,20 @@
 in {
   imports = [./gnome-services.nix];
   config = lib.mkIf isHypr {
-    programs.hyprland = {
-      withUWSM = true;
-      enable = true;
-      package = hyprlandUwsmOnly;
+    programs = {
+      hyprland = {
+        withUWSM = true;
+        enable = true;
+        package = hyprlandUwsmOnly;
+      };
+
+      # ydotool for speech-to-text typing
+      ydotool.enable = true;
+
+      # Register xfconfd as a D-Bus service so Thunar's xfconf settings persist.
+      # Without this, the session bus can't auto-activate xfconfd and Thunar
+      # falls back to in-memory defaults (wrong view, wrong sort order, etc.).
+      xfconf.enable = true;
     };
 
     services = {
@@ -65,9 +75,6 @@ in {
     users.users.${config.username}.extraGroups = ["video" "i2c" "ydotool"];
     hardware.i2c.enable = true;
     boot.kernelModules = ["i2c_dev" "uinput"];
-
-    # ydotool for speech-to-text typing
-    programs.ydotool.enable = true;
 
     environment.systemPackages = with pkgs; [
       pavucontrol
