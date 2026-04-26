@@ -12,8 +12,6 @@
     # Advanced touchpad gesture support
     libinput-gestures
 
-    bottles
-
     # social
     ferdium
     zoom-us
