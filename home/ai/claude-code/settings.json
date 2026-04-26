@@ -173,5 +173,7 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ]
+  ],
+  "theme": "auto",
+  "editorMode": "vim"
 }
