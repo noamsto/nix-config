@@ -37,6 +37,21 @@ inputs: [
     btop = prev.btop.override {rocmSupport = true;};
   })
 
+  # Point profile-sync-daemon's firefox sync at the XDG profile location
+  # ($HOME/.config/mozilla/firefox), matching programs.firefox.configPath.
+  # Firefox 150+ honors XDG natively, but psd's browser script hardcodes the
+  # legacy path. --replace-fail guards against silent breakage on psd updates.
+  (_final: prev: {
+    profile-sync-daemon = prev.profile-sync-daemon.overrideAttrs (old: {
+      postFixup =
+        (old.postFixup or "")
+        + ''
+          substituteInPlace $out/share/psd/browsers/firefox \
+            --replace-fail '.mozilla/firefox' '.config/mozilla/firefox'
+        '';
+    });
+  })
+
   (_final: prev: {
     slack = prev.slack.overrideAttrs (old: {
       installPhase =
