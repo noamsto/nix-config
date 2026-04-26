@@ -68,6 +68,23 @@
     wantedBy = ["suspend.target" "hibernate.target" "hybrid-sleep.target"];
   };
 
+  # Wait for a wlan netdev before starting iwd. Known race: iwd uses
+  # DriverQuirks.DefaultInterface (auto-set by the NixOS module when NM+iwd
+  # is enabled) and attaches only to interfaces present at startup. If the
+  # wifi driver creates wlan0 a moment after iwd starts, iwd logs
+  # "No default interface for wiphy 0" and stays idle until manual restart.
+  systemd.services.iwd.serviceConfig.ExecStartPre =
+    lib.mkIf config.networking.wireless.iwd.enable
+    (pkgs.writeShellScript "iwd-wait-for-wlan" ''
+      for _ in $(seq 50); do
+        for iface in /sys/class/net/wl*; do
+          [[ -e "$iface" ]] && exit 0
+        done
+        sleep 0.1
+      done
+      exit 0
+    '');
+
   services = {
     # DNS service - disable mDNS to avoid conflict with Avahi
     resolved = {
