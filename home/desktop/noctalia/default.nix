@@ -370,7 +370,8 @@ in {
                 id = "Network";
                 displayMode = "onhover";
               }
-              {id = "plugin:valent-connect";}
+              # Disabled — flaky behavior, revisit later (plugin still installed via enabledPlugins)
+              # {id = "plugin:valent-connect";}
               {
                 id = "Bluetooth";
                 displayMode = "onhover";
@@ -397,6 +398,55 @@ in {
                 id = "ControlCenter";
                 useDistroLogo = true;
               }
+            ];
+          };
+        };
+
+        # ControlCenter cards + quick-action shortcuts.
+        # Mirrors Noctalia's runtime defaults so this attrset is the full
+        # source of truth; cards we don't list here would be wiped by Nix.
+        controlCenter = {
+          cards = [
+            {
+              id = "profile-card";
+              enabled = true;
+            }
+            {
+              id = "shortcuts-card";
+              enabled = true;
+            }
+            {
+              id = "audio-card";
+              enabled = true;
+            }
+            {
+              id = "brightness-card";
+              enabled = false;
+            }
+            {
+              id = "weather-card";
+              enabled = true;
+            }
+            {
+              id = "media-sysmon-card";
+              enabled = true;
+            }
+          ];
+          diskPath = "/";
+          position = "close_to_bar_button";
+          shortcuts = {
+            left = [
+              {id = "Network";}
+              {id = "Bluetooth";}
+              {id = "WallpaperSelector";}
+              {id = "NoctaliaPerformance";}
+            ];
+            right = [
+              {id = "Notifications";}
+              {id = "PowerProfile";}
+              # keep-awake-plus supersedes the built-in KeepAwake (richer scope/duration UI)
+              {id = "plugin:${pluginComposite "keep-awake-plus" ownPluginSource}";}
+              {id = "NightLight";}
             ];
           };
         };
