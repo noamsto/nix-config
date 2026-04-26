@@ -134,7 +134,10 @@ status:
 _restart-noctalia:
     #!/usr/bin/env bash
     set -euo pipefail
-    pat='quickshell.*noctalia-shell'
+    # Match by the binary path the noctalia-shell wrapper exec's into.
+    # The wrapper drops its own name on exec, so the cmdline ends up as just
+    # `…/bin/quickshell` with no `noctalia-shell` token to match against.
+    pat='bin/quickshell$'
     if ! pgrep --quiet -f "$pat"; then
         exit 0
     fi
