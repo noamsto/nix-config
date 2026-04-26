@@ -7,7 +7,15 @@
 }: let
   isServer = osConfig.machine.type == "server";
 in {
-  home.sessionPath = ["$HOME/.local/bin"];
+  home = {
+    sessionPath = ["$HOME/.local/bin"];
+    packages = [pkgs.wtc];
+
+    # Workaround for eza upstream bug: theme.yml is silently ignored unless
+    # EZA_CONFIG_DIR is set (src/options/theme.rs returns default config when
+    # the env var is unset, even if theme.yml exists at the default path).
+    sessionVariables.EZA_CONFIG_DIR = "$HOME/.config/eza";
+  };
 
   imports = [
     inputs.lazytmux.homeManagerModules.default
@@ -34,7 +42,40 @@ in {
     };
   };
 
-  home.packages = [pkgs.wtc];
+  # Eza icon overrides matching yazi custom icons (theme-toggle.sh update_yazi)
+  # Schema: filenames/extensions are top-level, each entry is { icon: { glyph: <char> } }
+  xdg.configFile."eza/theme.yml".text = let
+    nixIcon = "󰜗"; # nerd: nf-md-snowflake
+    vaultIcon = "󱒇"; # nerd: nf-md-vault
+    gitIcon = ""; # nerd: nf-fa-git_alt
+    dotfilesIcon = "󰒓"; # nerd: nf-md-cog
+    srcIcon = ""; # nerd: nf-cod-folder_library
+    docsIcon = ""; # nerd: nf-md-book
+    scriptsIcon = ""; # nerd: nf-cod-terminal
+  in ''
+    filenames:
+      nix-config:
+        icon:
+          glyph: "${nixIcon}"
+      vaults:
+        icon:
+          glyph: "${vaultIcon}"
+      git:
+        icon:
+          glyph: "${gitIcon}"
+      dotfiles:
+        icon:
+          glyph: "${dotfilesIcon}"
+      src:
+        icon:
+          glyph: "${srcIcon}"
+      docs:
+        icon:
+          glyph: "${docsIcon}"
+      scripts:
+        icon:
+          glyph: "${scriptsIcon}"
+  '';
 
   programs = {
     yazi = {
@@ -43,7 +84,7 @@ in {
       shellWrapperName = "y";
 
       plugins = {
-        inherit (pkgs.yaziPlugins) mount git;
+        inherit (pkgs.yaziPlugins) mount git full-border;
         gvfs = pkgs.fetchFromGitHub {
           owner = "boydaihungst";
           repo = "gvfs.yazi";
@@ -77,6 +118,7 @@ in {
       initLua = ''
         require("git"):setup()
         require("gvfs"):setup()
+        require("full-border"):setup()
       '';
 
       # Custom keybindings for dragon-drop integration

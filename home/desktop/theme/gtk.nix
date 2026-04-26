@@ -15,8 +15,8 @@
   mkGtkCss = p: ''
     /* ${p.name} colors for GTK4/libadwaita - Generated from config.theme.palette */
 
-    @define-color accent_color ${p.blue};
-    @define-color accent_bg_color ${p.blue};
+    @define-color accent_color ${p.mauve};
+    @define-color accent_bg_color ${p.mauve};
     @define-color accent_fg_color ${p.base};
 
     @define-color destructive_color ${p.red};

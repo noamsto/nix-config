@@ -559,18 +559,18 @@ gui:
   nerdFontsVersion: "3"
   theme:
     activeBorderColor:
-      - '$LIGHT_BLUE'
+      - '$LIGHT_MAUVE'
       - bold
     inactiveBorderColor:
       - '$LIGHT_OVERLAY1'
     optionsTextColor:
-      - '$LIGHT_BLUE'
+      - '$LIGHT_MAUVE'
     selectedLineBgColor:
       - '$LIGHT_SURFACE0'
     cherryPickedCommitBgColor:
       - '$LIGHT_SURFACE1'
     cherryPickedCommitFgColor:
-      - '$LIGHT_BLUE'
+      - '$LIGHT_MAUVE'
     unstagedChangesColor:
       - '$LIGHT_RED'
     defaultFgColor:
@@ -590,7 +590,7 @@ EOF
       return 1
     fi
 
-    local mocha_theme="${LAZYGIT_THEMES_PATH}/mocha/blue.yml"
+    local mocha_theme="${LAZYGIT_THEMES_PATH}/mocha/mauve.yml"
     if [[ -f $mocha_theme ]]; then
       cp "$mocha_theme" "$lazygit_config"
     else
@@ -741,9 +741,9 @@ update_kvantum() {
   log_debug "Updating kvantum to $theme"
 
   if [[ $theme == "light" ]]; then
-    kvantum_theme="catppuccin-latte-blue"
+    kvantum_theme="catppuccin-latte-mauve"
   else
-    kvantum_theme="catppuccin-mocha-blue"
+    kvantum_theme="catppuccin-mocha-mauve"
   fi
 
   local kvantum_config="${XDG_CONFIG_HOME}/Kvantum/kvantum.kvconfig"
@@ -1104,7 +1104,7 @@ update_yazi() {
     yazi_flavor="mocha"
   fi
 
-  yazi_theme_file="${YAZI_THEMES_PATH}/${yazi_flavor}/catppuccin-${yazi_flavor}-blue.toml"
+  yazi_theme_file="${YAZI_THEMES_PATH}/${yazi_flavor}/catppuccin-${yazi_flavor}-mauve.toml"
 
   if [[ ! -f $yazi_theme_file ]]; then
     log_error "Yazi theme file not found: $yazi_theme_file"
@@ -1122,6 +1122,48 @@ update_yazi() {
     return 1
   }
   chmod 644 "$yazi_config"
+
+  # Custom folder/file icons (inject into [icon].files array)
+  # Palette accent colors based on current theme
+  local accent peach sky sapphire green
+  if [[ $theme == "light" ]]; then
+    accent="$LIGHT_MAUVE"
+    peach="$LIGHT_PEACH"
+    sky="$LIGHT_SKY"
+    sapphire="$LIGHT_SAPPHIRE"
+    green="$LIGHT_GREEN"
+  else
+    accent="$DARK_MAUVE"
+    peach="$DARK_PEACH"
+    sky="$DARK_SKY"
+    sapphire="$DARK_SAPPHIRE"
+    green="$DARK_GREEN"
+  fi
+
+  # Nerd Font glyphs - paste actual glyph chars here (variables avoid Unicode loss in editors)
+  local ICON_NIX_CONFIG="󰜗" # nerd: nf-md-snowflake
+  local ICON_VAULTS="󱒇"     # nerd: nf-md-vault
+  local ICON_GIT=""        # nerd: nf-fa-git_alt
+  local ICON_DOTFILES="󰒓"   # nerd: nf-md-cog
+  local ICON_SRC=""        # nerd: nf-cod-folder_library
+  local ICON_DOCS=""       # nerd: nf-md-book
+  local ICON_SCRIPTS=""    # nerd: nf-cod-terminal
+
+  # Yazi schema: [icon].dirs for folders only - leave files/exts to catppuccin defaults
+  local custom_dirs="  { name = \"nix-config\", text = \"$ICON_NIX_CONFIG\", fg = \"$accent\" },
+  { name = \"vaults\", text = \"$ICON_VAULTS\", fg = \"$accent\" },
+  { name = \"git\", text = \"$ICON_GIT\", fg = \"$peach\" },
+  { name = \"dotfiles\", text = \"$ICON_DOTFILES\", fg = \"$accent\" },
+  { name = \"src\", text = \"$ICON_SRC\", fg = \"$sky\" },
+  { name = \"docs\", text = \"$ICON_DOCS\", fg = \"$sapphire\" },
+  { name = \"scripts\", text = \"$ICON_SCRIPTS\", fg = \"$green\" },"
+
+  # Inject [icon].dirs right after [icon] header
+  local tmp_config="${yazi_config}.tmp"
+  awk -v dirs="$custom_dirs" '
+    /^\[icon\]$/ { print; print "dirs = ["; print dirs; print "]"; next }
+    { print }
+  ' "$yazi_config" >"$tmp_config" && mv "$tmp_config" "$yazi_config"
 }
 
 # =============================================================================
