@@ -135,7 +135,7 @@ _restart-noctalia:
     #!/usr/bin/env bash
     set -euo pipefail
     pat='quickshell.*noctalia-shell'
-    if ! pgrep -qf "$pat"; then
+    if ! pgrep --quiet -f "$pat"; then
         exit 0
     fi
     echo "♻️  Restarting noctalia-shell to refresh runtime state..."
