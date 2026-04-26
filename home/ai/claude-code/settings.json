@@ -161,6 +161,10 @@
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
+  "teammateMode": "tmux",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "mcpServers": {
     "factify": {
       "type": "http",
