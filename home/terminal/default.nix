@@ -31,6 +31,7 @@ in {
     enable = true;
     worktrunk.enable = true;
     claudeIntegration.enable = true;
+    persist.enable = true; # Phase 2a soak; restoreMode stays "off" until trusted
     processIcons = {
       houston = "🚀";
     };
