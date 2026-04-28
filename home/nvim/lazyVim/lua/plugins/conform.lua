@@ -23,9 +23,13 @@ return {
     formatters_by_ft = {
       nix = { "alejandra" },
       htmldjango = { "djlint" },
-      ["markdown"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
-      ["markdown.mdx"] = { "markdownlint-cli2", "prettierd", "markdown-toc" },
-      yaml = { "prettierd" },
+      -- Markdown: prettier is the primary formatter (aligns tables, normalises
+      -- whitespace). markdownlint-cli2 is conditional and won't run when there
+      -- are no markdown diagnostics. markdown-toc is conditional on a `<!-- toc -->`
+      -- marker.
+      ["markdown"] = { "prettier", "markdownlint-cli2", "markdown-toc" },
+      ["markdown.mdx"] = { "prettier", "markdownlint-cli2", "markdown-toc" },
+      yaml = { "prettier" },
       go = { "goimports", "gofumpt" },
     },
   },

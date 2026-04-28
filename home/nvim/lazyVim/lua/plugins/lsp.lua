@@ -15,6 +15,9 @@ return {
       },
       harper_ls = {
         mason = false,
+        -- Whitelist filetypes harper attaches to. Markdown is intentionally
+        -- excluded so .md files have no spell/grammar diagnostics.
+        filetypes = { "gitcommit", "git", "text", "plaintex", "typst" },
         settings = {
           ["harper-ls"] = {
             diagnostics = {
