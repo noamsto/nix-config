@@ -37,6 +37,19 @@ inputs: [
     btop = prev.btop.override {rocmSupport = true;};
   })
 
+  # Silence noisy "Did not detect DSR response from terminal" warning that nvim
+  # 0.12.x emits on every startup under tmux (false positive — DSR works, the
+  # 100ms wait just isn't long enough during heavy plugin load).
+  # Upstream fix: https://github.com/neovim/neovim/pull/38699 (NVIM_NOTTYFAST=1)
+  # Tracking issue: https://github.com/neovim/neovim/issues/38648
+  # Drop this overlay once nixpkgs ships nvim with commit 66149ca6, then set
+  # `home.sessionVariables.NVIM_NOTTYFAST = "1"` in home/nvim/default.nix.
+  (_final: prev: {
+    neovim-unwrapped = prev.neovim-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or []) ++ [../overlays/neovim-suppress-dsr-warning.patch];
+    });
+  })
+
   (_final: prev: {
     slack = prev.slack.overrideAttrs (old: {
       installPhase =

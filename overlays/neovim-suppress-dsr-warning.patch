@@ -1,0 +1,32 @@
+Suppress noisy "Did not detect DSR response" warning from defaults.lua.
+
+This is a false positive when running nvim inside tmux: nvim sends OSC 11
++ DSR and waits up to 100ms for the DSR reply. tmux and kitty both support
+DSR, but the 100ms wait is sometimes exceeded during heavy plugin-load
+startup, producing the warning on every nvim launch.
+
+Upstream fix lands in nvim master via PR #38699 (merged 2026-04-24), which
+adds an `NVIM_NOTTYFAST=1` env var and a `'nottyfast'` option to disable
+the bg-detection block entirely. That PR is NOT in 0.12.1.
+
+  - PR:    https://github.com/neovim/neovim/pull/38699
+  - Issue: https://github.com/neovim/neovim/issues/38648
+
+Remove this overlay once nixpkgs ships a neovim containing commit 66149ca6
+(or any later 0.12.x patch release). At that point set
+`home.sessionVariables.NVIM_NOTTYFAST = "1"` instead.
+
+--- a/runtime/lua/vim/_core/defaults.lua
++++ b/runtime/lua/vim/_core/defaults.lua
+@@ -982,9 +982,6 @@
+         -- Don't show the warning when running tests to avoid flakiness.
+         and os.getenv('NVIM_TEST') == nil
+       then
+-        vim.notify(
+-          'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
+-          vim.log.levels.WARN
+-        )
++        -- silenced via overlay; see overlays/neovim-suppress-dsr-warning.patch
+       end
+     end
+
