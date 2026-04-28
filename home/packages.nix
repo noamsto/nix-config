@@ -39,7 +39,7 @@
 
     # Playwright testing dependencies
     playwright-driver
-    firefox
+    # firefox provided by programs.firefox.enable in home/desktop/default.nix
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 
     # Network file system support for Dolphin/file managers

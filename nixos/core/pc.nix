@@ -27,11 +27,18 @@ in {
           };
         };
 
-        # profile-sync-daemon
-        psd = {
-          enable = true;
-          resyncTimer = "10m";
-        };
+        # profile-sync-daemon: removed 2026-04-28.
+        # Reasons: NVMe wear math doesn't justify it (~136 yrs to TBW exhaustion at
+        # firefox's ~12 GB/day), Fedora dropped the package, mainstream Linux
+        # discussion has gone quiet, and v6.50 in nixpkgs collides with HM at boot
+        # by replacing ~/.config/mozilla/firefox/default with a tmpfs symlink that
+        # dangles until the user session brings it up — see journal of 2026-04-28.
+        # Revisit when BOTH conditions hold:
+        #   1. nixpkgs ships psd v7+ (uses fuse-overlayfs, no symlink-at-rest;
+        #      tracking PR https://github.com/NixOS/nixpkgs/pull/500548).
+        #   2. A real benchmark surfaces showing measurable wear or perf benefit on
+        #      modern NVMe — the current pro-psd argument has shifted to "NVMe APST
+        #      idle states" but no one has measured it.
 
         # Disable USB autosuspend for Logitech receivers (Bolt/Unifying)
         # Fixes: external keyboard not waking screen from DPMS off
