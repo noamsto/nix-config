@@ -1,7 +1,7 @@
 {
   pkgs,
   config,
-  self,
+  lib,
   ...
 }: {
   imports = [
@@ -93,12 +93,8 @@
         [ -f /bin/bash ] || ln -s /bin/sh /bin/bash
       '';
     };
-    nixos.tags = [
-      config.desktop.mode
-      config.machine.type
-      config.profile
-      (self.shortRev or self.dirtyShortRev or "unknown")
-    ];
+    nixos.tags = [config.desktop.mode];
+    name = lib.removePrefix "thinkpad-" config.networking.hostName;
     stateVersion = "23.05";
   };
 }
