@@ -123,6 +123,9 @@ in {
       # github
       gh
 
+      # AI agents
+      pi # Terminal-based coding agent (badlogic/pi-mono) from llm-agents.nix
+
       # Better system monitoring
       btop
       (writeShellScriptBin "amdgpu_top" ''

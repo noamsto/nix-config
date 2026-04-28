@@ -279,6 +279,10 @@
       "rounding 0, match:fullscreen true"
       "opacity 0.95, match:fullscreen true"
 
+      # Terminals manage their own background_opacity (crisp glyphs over transparent bg) —
+      # opt them out of the global active/inactive opacity to avoid double-fading.
+      "opacity 1.0 override 1.0 override, match:class ^(kitty|foot|com\\.mitchellh\\.ghostty)$"
+
       # Visual indicator for pinned windows - yellow border (catppuccin mocha)
       "border_color rgb(f9e2af) rgb(f1fa8c), match:pin true"
 

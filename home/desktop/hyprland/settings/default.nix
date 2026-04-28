@@ -97,8 +97,11 @@ in {
 
       decoration = {
         rounding = 10;
-        active_opacity = 1.0;
-        inactive_opacity = 1.0;
+        # Terminals (kitty/foot/ghostty) override these back to 1.0 in window_rule.nix —
+        # they manage their own background_opacity so glyphs stay fully opaque.
+        active_opacity = 0.97;
+        inactive_opacity = 0.92;
+        fullscreen_opacity = 1.0;
 
         blur = {
           enabled = true;

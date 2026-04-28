@@ -154,6 +154,10 @@
     }
   },
   "syntaxHighlightingDisabled": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
   "tui": "default",

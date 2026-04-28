@@ -32,7 +32,6 @@
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
     text = builtins.toJSON {
-      includeCoAuthoredBy = false;
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";

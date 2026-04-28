@@ -112,7 +112,7 @@ in {
       # unit is active (creating the server in its own scope), or returns
       # immediately if already active. Serializes with tmux-startup.service
       # so the server is never created inside kitty's scope.
-      shell = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config'";
+      shell = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach || TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config'";
     };
 
     keybindings = {

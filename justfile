@@ -40,12 +40,12 @@ build HOST="$(hostname)":
 # Switch NixOS system configuration
 switch HOST="$(hostname)":
     nh os switch .#{{HOST}}
-    @just _restart-noctalia
+    @just restart-noctalia
 
 # Switch NixOS system configuration with staged changes only
 switch-staged HOST="$(hostname)":
     nh os switch -S .#{{HOST}}
-    @just _restart-noctalia
+    @just restart-noctalia
 
 # Boot NixOS configuration (apply on next reboot)
 boot HOST="$(hostname)":
@@ -62,7 +62,7 @@ build-with-nom DERIVATION:
 # Switch Home Manager configuration
 home-switch CONFIG="noams@$(hostname)":
     nix run home-manager/master -- switch --flake .#{{CONFIG}}
-    @just _restart-noctalia
+    @just restart-noctalia
 
 # Build Home Manager configuration
 home-build CONFIG="noams@$(hostname)":
@@ -131,7 +131,7 @@ status:
 #
 # Wired here rather than a Nix-level hook: NixOS activation runs as root with
 # no graphical session env, and HM activation misses `nh os switch` entirely.
-_restart-noctalia:
+restart-noctalia:
     #!/usr/bin/env bash
     set -euo pipefail
     # Match by the binary path the noctalia-shell wrapper exec's into.
