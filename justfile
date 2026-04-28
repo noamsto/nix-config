@@ -146,6 +146,27 @@ restart-noctalia:
     pkill -f "$pat" 2>/dev/null || true
     setsid -f noctalia-shell </dev/null >/dev/null 2>&1 || true
 
+# Allow charging to 100% until next reboot / `sudo systemctl restart tlp`
+# (g5 only — fresh-battery fuel-gauge calibration).
+battery-calibrate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "$(hostname)" != "thinkpad-p14s-g5" ]; then
+        echo "❌ battery-calibrate is gated to thinkpad-p14s-g5 (current: $(hostname))" >&2
+        exit 1
+    fi
+    bat=/sys/class/power_supply/BAT0
+    echo "🔋 Current: $(cat $bat/capacity)% — start=$(cat $bat/charge_start_threshold) stop=$(cat $bat/charge_stop_threshold)"
+    echo "→ Raising stop threshold to 100 (runtime only; TLP restores 60/80 on reboot or 'sudo systemctl restart tlp')"
+    echo 100 | sudo tee $bat/charge_stop_threshold > /dev/null
+    echo "✅ stop=$(cat $bat/charge_stop_threshold)"
+    echo ""
+    echo "Calibration cycle:"
+    echo "  1. Charge to 100% (plugged in)."
+    echo "  2. Unplug, use until battery hits ~5% and the laptop warns / suspends."
+    echo "  3. Plug in, charge back to 100%."
+    echo "  4. Restore thresholds: sudo systemctl restart tlp"
+
 # Check if any staged git changes exist
 check-staged:
     #!/usr/bin/env bash
