@@ -26,6 +26,14 @@ Settings are split into two layers. **Never mix them.**
 
 These are **not hard bans** — use compound syntax when genuinely needed (e.g., a subshell `(cd dir && build)`, or a pipe that can't be split). But default to simple commands first.
 
+## Reading Code (skeleton-first)
+
+For files larger than ~300 lines, **structure before content**: run `ast-grep` for signatures, invoke the `context-efficient-tools:code-structure` skill, or `Grep` for the symbol you actually care about — *before* a full `Read`. Pull in the full body of a region only once you know which region matters.
+
+Why: loading whole files burns context and rarely helps; most edits touch one small slice. This is the Dirac CLI insight — harness behavior beats model choice on benchmarks like TerminalBench, and "skeleton-by-default reads" is the single biggest contributor.
+
+Exceptions: short files (<300 lines), config files where every line matters, or genuine whole-file work (security review, top-to-bottom audit).
+
 ## New Work Workflow (factify-inc repos only)
 
 **REQUIRED** for repos under the `factify-inc` GitHub org. Does NOT apply to personal repos.

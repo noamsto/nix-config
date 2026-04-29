@@ -31,6 +31,12 @@
   lazygitThemesPath = "${catppuccin-lazygit}/themes";
   yaziThemesPath = "${catppuccin-yazi}/themes";
 
+  # Absolute icon paths for notify-send. We pass paths instead of names because
+  # noctalia (Qt/quickshell) has no qt5ct/XDG_ICON_THEME hint, so its icon-by-name
+  # lookup falls back to a default theme that doesn't ship `weather-clear`.
+  notifyIconLight = "${pkgs.papirus-icon-theme}/share/icons/Papirus-Light/48x48/status/weather-clear.svg";
+  notifyIconDark = "${pkgs.papirus-icon-theme}/share/icons/Papirus-Dark/48x48/status/weather-clear-night.svg";
+
   # XDG config home for generated theme files
   xdgConfigHome = "${config.xdg.configHome}";
 
@@ -59,6 +65,10 @@
       # Theme source paths (Nix store, read-only) - for apps we don't generate themes for
       export LAZYGIT_THEMES_PATH="${lazygitThemesPath}"
       export YAZI_THEMES_PATH="${yaziThemesPath}"
+
+      # Absolute icon paths for notify-send (Qt-based notification daemon)
+      export NOTIFY_ICON_LIGHT="${notifyIconLight}"
+      export NOTIFY_ICON_DARK="${notifyIconDark}"
 
       # XDG config home (where Nix generates theme files from palette)
       export XDG_CONFIG_HOME="${xdgConfigHome}"

@@ -278,6 +278,13 @@
           end
       end
 
+      # theme-toggle bumps __theme_mode universal; every interactive fish
+      # re-reads its theme file (cheap, local) and repaints the prompt.
+      function __on_theme_mode_change --on-variable __theme_mode
+          __reload_theme $__theme_mode
+          commandline -f repaint
+      end
+
       __reload_theme
     '';
   };

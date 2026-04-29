@@ -118,11 +118,30 @@ failed_to_json() {
   fi
 }
 
-# Record a failed update
+# Record a failed update.
+# Sequential mode appends to FAILED_UPDATES. Parallel mode (FAILED_DIR set)
+# touches a marker file so children in subshells survive the wait barrier.
 record_failure() {
   local component="$1"
-  FAILED_UPDATES+=("$component")
   log_warn "Update failed: $component"
+  if [[ -n ${FAILED_DIR:-} ]]; then
+    : >"$FAILED_DIR/$component" 2>/dev/null || true
+  else
+    FAILED_UPDATES+=("$component")
+  fi
+}
+
+# Collect failures written by parallel children into FAILED_UPDATES, then
+# clean up the temp dir. No-op if not in parallel mode.
+collect_parallel_failures() {
+  [[ -z ${FAILED_DIR:-} || ! -d ${FAILED_DIR:-} ]] && return 0
+  local f
+  for f in "$FAILED_DIR"/*; do
+    [[ -e $f ]] || continue
+    FAILED_UPDATES+=("$(basename "$f")")
+  done
+  rm -rf "$FAILED_DIR"
+  unset FAILED_DIR
 }
 
 # =============================================================================
@@ -453,8 +472,10 @@ update_fish() {
     return 0
   fi
 
-  # Pass theme directly to avoid race condition with state file
-  fish -c "__reload_theme $theme" 2>/dev/null || {
+  # Update colors via universals, then bump __theme_mode so every running
+  # interactive fish receives an --on-variable event and repaints its prompt
+  # (handler in zzz-dynamic-theme.fish).
+  fish -c "__reload_theme $theme; set -U __theme_mode $theme" 2>/dev/null || {
     record_failure "fish"
     return 1
   }
@@ -785,15 +806,13 @@ update_noctalia() {
     return 0
   fi
 
-  # Update darkMode in settings.json
+  # Update darkMode in settings.json. Noctalia's Settings.qml uses
+  # `FileView { watchChanges: true }`, so the running shell auto-reloads
+  # — no kill+respawn needed.
   local tmp_file
   tmp_file=$(mktemp)
   if jq --argjson dark "$dark_mode" '.colorSchemes.darkMode = $dark' "$gui_settings" >"$tmp_file" 2>/dev/null; then
     mv "$tmp_file" "$gui_settings"
-    # Restart Noctalia so it re-reads settings.json (no systemd unit anymore — upstream
-    # deprecated it; setsid -f detaches the new process from this script's lifetime).
-    pkill -f 'quickshell.*noctalia-shell' 2>/dev/null || true
-    setsid -f noctalia-shell </dev/null >/dev/null 2>&1 || true
   else
     rm -f "$tmp_file"
     record_failure "noctalia"
@@ -1199,70 +1218,59 @@ signal_apps() {
 # Main Commands
 # =============================================================================
 
+# Fan out independent updates in parallel; signal_apps must run last because
+# it restarts xdg-desktop-portal-gtk + vicinae, which need the dconf/config
+# writes from update_gtk_theme + update_vicinae to land first.
+#
+# Args: theme + list of update fn names to run.
+_run_updates_parallel() {
+  local theme="$1"
+  shift
+  FAILED_UPDATES=()
+  FAILED_DIR=$(mktemp -d -t theme-toggle.XXXXXX) || {
+    log_warn "mktemp failed; falling back to sequential"
+    local fn
+    for fn in "$@"; do "$fn" "$theme" || true; done
+    signal_apps
+    return 0
+  }
+  export FAILED_DIR
+
+  local fn
+  for fn in "$@"; do
+    "$fn" "$theme" &
+  done
+  wait
+  collect_parallel_failures
+  signal_apps
+}
+
 # Apply theme to all components (excluding Noctalia - used when Noctalia triggers the change)
 apply_theme_from_noctalia() {
   local theme="$1"
-  FAILED_UPDATES=()
-
   log_debug "Applying theme from Noctalia: $theme"
-
-  # Update all components EXCEPT Noctalia (it already changed)
-  update_gtk_theme "$theme" || true
-  update_gtk_css "$theme" || true
-  update_hyprland_borders "$theme" || true
-  update_ghostty "$theme" || true
-  update_kitty "$theme" || true
-  update_foot "$theme" || true
-  update_fish "$theme" || true
-  update_starship "$theme" || true
-  update_k9s "$theme" || true
-  update_lazygit "$theme" || true
-  update_lazydocker "$theme" || true
-  update_btop "$theme" || true
-  update_bat "$theme" || true
-  update_delta "$theme" || true
-  update_fzf "$theme" || true
-  update_yazi "$theme" || true
-  update_tmux "$theme" || true
-  update_kvantum "$theme" || true
-  # NOTE: Noctalia NOT updated here - it triggered this change
-  update_process_compose "$theme" || true
-  update_vicinae "$theme" || true
-  update_kde_colorscheme "$theme" || true
-  signal_apps
+  _run_updates_parallel "$theme" \
+    update_gtk_theme update_gtk_css update_hyprland_borders \
+    update_ghostty update_kitty update_foot \
+    update_fish update_starship update_tmux \
+    update_k9s update_lazygit update_lazydocker \
+    update_btop update_bat update_delta update_fzf \
+    update_yazi update_kvantum update_process_compose \
+    update_vicinae update_kde_colorscheme
 }
 
 # Apply theme to all components (including Noctalia - used for restore/sync)
 apply_theme() {
   local theme="$1"
-  FAILED_UPDATES=()
-
   log_debug "Applying theme: $theme"
-
-  # Update all components (|| true prevents set -e from exiting on failures)
-  update_gtk_theme "$theme" || true
-  update_gtk_css "$theme" || true
-  update_hyprland_borders "$theme" || true
-  update_ghostty "$theme" || true
-  update_kitty "$theme" || true
-  update_foot "$theme" || true
-  update_fish "$theme" || true
-  update_starship "$theme" || true
-  update_k9s "$theme" || true
-  update_lazygit "$theme" || true
-  update_lazydocker "$theme" || true
-  update_btop "$theme" || true
-  update_bat "$theme" || true
-  update_delta "$theme" || true
-  update_fzf "$theme" || true
-  update_yazi "$theme" || true
-  update_tmux "$theme" || true
-  update_kvantum "$theme" || true
-  update_noctalia "$theme" || true
-  update_process_compose "$theme" || true
-  update_vicinae "$theme" || true
-  update_kde_colorscheme "$theme" || true
-  signal_apps
+  _run_updates_parallel "$theme" \
+    update_gtk_theme update_gtk_css update_hyprland_borders \
+    update_ghostty update_kitty update_foot \
+    update_fish update_starship update_tmux \
+    update_k9s update_lazygit update_lazydocker \
+    update_btop update_bat update_delta update_fzf \
+    update_yazi update_kvantum update_noctalia \
+    update_process_compose update_vicinae update_kde_colorscheme
 }
 
 # Toggle between dark and light themes via Noctalia
@@ -1301,7 +1309,13 @@ toggle_theme() {
   # Use apply_theme_from_noctalia to avoid updating Noctalia (prevents cycle)
   apply_theme_from_noctalia "$new_theme"
   write_state "$new_theme" "$(failed_to_json)"
-  notify-send "Theme" "Switched to $new_theme mode (Noctalia not synced)" -i "$([ "$new_theme" = "light" ] && echo weather-clear || echo weather-clear-night)"
+  local fallback_icon
+  if [[ $new_theme == "light" ]]; then
+    fallback_icon="${NOTIFY_ICON_LIGHT:-weather-clear}"
+  else
+    fallback_icon="${NOTIFY_ICON_DARK:-weather-clear-night}"
+  fi
+  notify-send "Theme" "Switched to $new_theme mode (Noctalia not synced)" -i "$fallback_icon"
 }
 
 # Apply theme from Noctalia hook (called when Noctalia dark mode changes)
@@ -1325,9 +1339,9 @@ apply_theme_command() {
   # Notify user
   local icon
   if [[ $theme == "light" ]]; then
-    icon="weather-clear"
+    icon="${NOTIFY_ICON_LIGHT:-weather-clear}"
   else
-    icon="weather-clear-night"
+    icon="${NOTIFY_ICON_DARK:-weather-clear-night}"
   fi
 
   if [[ ${#FAILED_UPDATES[@]} -gt 0 ]]; then
