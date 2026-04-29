@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }: let
   # Import shared host configuration
@@ -15,6 +16,7 @@ in {
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
+    inputs.nix-amd-ai.nixosModules.default
     ../../nixos/core/lanzaboote.nix
     ../../nixos/hardware/udev-hwmon.nix
   ];
@@ -29,6 +31,16 @@ in {
     enable = true;
     generation = "gen5";
   };
+
+  # AMD AI: ROCm + Vulkan llama.cpp inference (no NPU on this host)
+  environment.systemPackages = [
+    pkgs.llama-cpp-rocm
+    pkgs.llama-cpp-vulkan
+    pkgs.rocmPackages.clr
+  ];
+
+  # /dev/kfd (ROCm) needs render group; default users.nix only adds video
+  users.users.noams.extraGroups = ["render"];
 
   # AMD Ryzen 7 PRO 8840HS: 16 cores, 54GB RAM
   nix.settings = {
