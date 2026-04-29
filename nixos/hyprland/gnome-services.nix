@@ -22,10 +22,6 @@ in
       gvfs.enable = true;
     };
 
-    # Required for gnome-online-accounts OAuth to work on NixOS
-    # WebKit sandboxing breaks with NixOS filesystem structure
-    environment.variables.WEBKIT_FORCE_SANDBOX = "0";
-
     programs.seahorse.enable = true;
     security.pam.services = {
       # Enable keyring unlock during actual login process

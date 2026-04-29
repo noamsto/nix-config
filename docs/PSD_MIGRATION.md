@@ -65,5 +65,5 @@ mv ~/.config/mozilla/firefox/default-backup ~/.config/mozilla/firefox/default
 ## Per-host status
 
 - `thinkpad-p14s-g5`: ✅ migrated 2026-04-28
-- `thinkpad-p14s-g6`: ⏳ pending — apply on next login
+- `thinkpad-p14s-g6`: ✅ migrated 2026-04-28
 - `thinkpad-p14s`:    ⏳ pending — apply if still in use; if retired, mark ✅

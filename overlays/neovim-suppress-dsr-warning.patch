@@ -7,7 +7,7 @@ startup, producing the warning on every nvim launch.
 
 Upstream fix lands in nvim master via PR #38699 (merged 2026-04-24), which
 adds an `NVIM_NOTTYFAST=1` env var and a `'nottyfast'` option to disable
-the bg-detection block entirely. That PR is NOT in 0.12.1.
+the bg-detection block entirely. That PR is NOT in 0.12.2.
 
   - PR:    https://github.com/neovim/neovim/pull/38699
   - Issue: https://github.com/neovim/neovim/issues/38648
@@ -18,13 +18,14 @@ Remove this overlay once nixpkgs ships a neovim containing commit 66149ca6
 
 --- a/runtime/lua/vim/_core/defaults.lua
 +++ b/runtime/lua/vim/_core/defaults.lua
-@@ -982,9 +982,6 @@
+@@ -983,11 +983,7 @@
          -- Don't show the warning when running tests to avoid flakiness.
          and os.getenv('NVIM_TEST') == nil
        then
 -        vim.notify(
 -          'defaults.lua: Did not detect DSR response from terminal. This results in a slower startup time.',
--          vim.log.levels.WARN
+-          vim.log.levels.WARN,
+-          { _truncate = true }
 -        )
 +        -- silenced via overlay; see overlays/neovim-suppress-dsr-warning.patch
        end
