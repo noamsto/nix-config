@@ -18,6 +18,7 @@ in {
         "XDG_SESSION_TYPE,wayland"
         "XDG_SESSION_DESKTOP,Hyprland"
         "MOZ_ENABLE_WAYLAND,1"
+        "MOZ_ENABLE_XDG_DIRS,1"
         "GTK_THEME,Adwaita:dark" # theme-toggle updates at runtime
 
         # --disable-accelerated-2d-canvas: AMD Radeon 780M PDF rendering artifacts
