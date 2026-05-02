@@ -177,6 +177,5 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ],
-  "model": "sonnet"
+  ]
 }
