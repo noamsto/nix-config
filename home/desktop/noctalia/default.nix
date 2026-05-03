@@ -166,14 +166,45 @@ in {
               echo "[$(date '+%Y-%m-%d %H:%M:%S.%3N')] [crash-monitor] $*" | tee -a "$LOG"
             }
 
+            # Crash-loop guard: cap restarts per rolling window to avoid busy spawning
+            # if noctalia segfaults immediately (e.g. broken plugin).
+            # Upstream open issue #1323 (settings reset on systemd restart) is why we
+            # relaunch via `hyprctl dispatch exec` rather than a systemd unit.
+            RESTART_COUNT=0
+            WINDOW_START=$(date +%s)
+            MAX_RESTARTS=5
+            WINDOW_SECONDS=60
+
+            # Use `noctalia-shell list` for detection: upstream renamed the binary to
+            # noctalia-qs, so its argv is just "quickshell" with no recognizable suffix
+            # — pgrep regexes can't distinguish it from a hypridle/other quickshell.
+            # `list` walks /run/user/$UID/quickshell/ and reports the actual instance.
+            get_noctalia_pid() {
+              ${noctaliaPackage}/bin/noctalia-shell list 2>/dev/null \
+                | ${pkgs.gawk}/bin/awk '/Process ID:/ {print $3; exit}'
+            }
+
+            relaunch_noctalia() {
+              ${pkgs.hyprland}/bin/hyprctl dispatch exec noctalia-shell >/dev/null 2>&1 \
+                || log "hyprctl dispatch exec noctalia-shell failed"
+            }
+
             log "Crash monitor started"
 
-            # Wait for Noctalia to start
-            while ! ${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' >/dev/null 2>&1; do
-              sleep 0.5
-            done
+            # Self-heal on monitor startup: if noctalia isn't up after Hyprland's
+            # exec-once should have fired, launch it ourselves. Idempotent.
+            sleep 2
+            if [ -z "$(get_noctalia_pid)" ]; then
+              log "Noctalia not running on monitor start — launching"
+              relaunch_noctalia
+            fi
 
-            NOCTALIA_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+            # Wait for Noctalia to appear
+            NOCTALIA_PID=""
+            while [ -z "$NOCTALIA_PID" ]; do
+              sleep 0.5
+              NOCTALIA_PID=$(get_noctalia_pid)
+            done
             log "Monitoring Noctalia (PID: $NOCTALIA_PID)"
 
             # Monitor the process
@@ -207,14 +238,35 @@ in {
                   fi
                 done
 
-                # Wait for Noctalia to restart (if it does)
-                sleep 2
-                NEW_PID=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+                # Crash-loop protection: roll the window every WINDOW_SECONDS
+                NOW=$(date +%s)
+                if [ $((NOW - WINDOW_START)) -ge "$WINDOW_SECONDS" ]; then
+                  WINDOW_START=$NOW
+                  RESTART_COUNT=0
+                fi
+                RESTART_COUNT=$((RESTART_COUNT + 1))
+                if [ "$RESTART_COUNT" -gt "$MAX_RESTARTS" ]; then
+                  log "Crash loop: $RESTART_COUNT restarts within $WINDOW_SECONDS s — giving up (systemd will retry)"
+                  exit 1
+                fi
+
+                log "Relaunching noctalia-shell (attempt #$RESTART_COUNT in window)"
+                relaunch_noctalia
+
+                # Wait up to 30s for new instance to register in /run/user/$UID/quickshell.
+                # Startup can be slow on the first run after boot when QML is JITed.
+                NEW_PID=""
+                for _ in $(${pkgs.coreutils}/bin/seq 1 60); do
+                  sleep 0.5
+                  NEW_PID=$(get_noctalia_pid)
+                  [ -n "$NEW_PID" ] && break
+                done
+
                 if [ -n "$NEW_PID" ]; then
                   log "Noctalia restarted (new PID: $NEW_PID)"
                   NOCTALIA_PID="$NEW_PID"
                 else
-                  log "Noctalia has NOT restarted - monitor exiting"
+                  log "Failed to relaunch noctalia after 30s — monitor exiting"
                   exit 1
                 fi
               fi
