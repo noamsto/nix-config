@@ -56,7 +56,10 @@ in {
       bluetooth = {
         enable = true;
         powerOnBoot = true;
-        settings.General.Experimental = true; # battery reporting + newer BT features
+        settings = {
+          General.Experimental = true; # battery reporting + newer BT features
+          Policy.AutoEnable = true; # re-power adapters after suspend/resume
+        };
       };
       logitech.wireless.enable = true; # solaar
       logitech.wireless.enableGraphical = true;

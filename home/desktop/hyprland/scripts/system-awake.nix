@@ -1,4 +1,55 @@
 {pkgs, ...}: let
+  # Wraps `timeout Ns systemd-inhibit ... sleep infinity`. On natural timer
+  # expiry — and only then — manually triggers suspend if the lid is closed.
+  # workspace-manager.sh skips its lid-close suspend handler whenever our
+  # inhibit is held, and HDM only fires on lid edge transitions, so without
+  # this nothing re-evaluates "lid is still closed" once the inhibit lifts.
+  #
+  # `set -e` is deliberately omitted: we capture `timeout`'s exit code in
+  # `$?` to distinguish natural expiry (rc=124) from external SIGTERM, and
+  # `set -e` would abort before the assignment runs.
+  system-awake-session = pkgs.writeShellScript "system-awake-session" ''
+    #!/usr/bin/env bash
+    set -uo pipefail
+    duration="$1"
+    tag="$2"
+    scope="$3"
+    label="$4"
+    state_file="''${XDG_RUNTIME_DIR:-/tmp}/system-awake.state.json"
+
+    ${pkgs.coreutils}/bin/timeout "''${duration}s" \
+      ${pkgs.systemd}/bin/systemd-inhibit \
+      --what=sleep:handle-lid-switch \
+      --who=hyprland \
+      --why="$tag ($scope $label)" \
+      --mode=block \
+      ${pkgs.coreutils}/bin/sleep infinity
+    rc=$?
+
+    (( rc == 124 )) || exit 0
+    # cmd_off / cmd_extend remove $state_file before pkill, so its absence
+    # signals user-initiated termination racing our natural expiry.
+    [[ -f "$state_file" ]] || exit 0
+
+    lid_closed=0
+    if ${pkgs.glib}/bin/gdbus call --system \
+        --dest org.freedesktop.UPower \
+        --object-path /org/freedesktop/UPower \
+        --method org.freedesktop.DBus.Properties.Get \
+        org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'; then
+      lid_closed=1
+    else
+      for f in /proc/acpi/button/lid/*/state; do
+        [[ -e "$f" ]] || continue
+        ${pkgs.gnugrep}/bin/grep -qi closed "$f" 2>/dev/null && lid_closed=1
+        break
+      done
+    fi
+    if (( lid_closed )); then
+      ${pkgs.systemd}/bin/systemctl suspend || true
+    fi
+  '';
+
   # Keep-awake backend. Cycles of states:
   #   off | {partial,full} × {30m, 1h, 2h, 4h, 8h, unlimited}
   #
@@ -22,6 +73,7 @@
     PERSIST_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/system-awake"
     LAST_FILE="$PERSIST_DIR/last.json"
     TAG="noams-system-awake"
+    WRAPPER_NAME="system-awake-session"
     SCHEMA_VERSION=1
 
     mkdir -p "$PERSIST_DIR"
@@ -108,9 +160,18 @@
       done
     }
 
+    # Order matters: kill the session wrapper first so a natural-expiry
+    # race can't reach its post-cleanup `systemctl suspend`. The wrapper's
+    # argv contains $WRAPPER_NAME but not "systemd-inhibit", so the inhibitor
+    # pattern alone wouldn't match it.
+    kill_session() {
+      pkill -f "$WRAPPER_NAME" 2>/dev/null || true
+      pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
+    }
+
     cleanup_inactive() {
       rm -f "$STATE_FILE"
-      pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
+      kill_session
       wait_inhibitor_gone
       guard_stop
     }
@@ -151,13 +212,7 @@
         fi
         label_duration=$(format_label "$duration")
         end_epoch=$(( start_epoch + duration ))
-        setsid -f ${pkgs.coreutils}/bin/timeout "''${duration}s" \
-          ${pkgs.systemd}/bin/systemd-inhibit \
-          --what=sleep:handle-lid-switch \
-          --who=hyprland \
-          --why="$TAG ($scope $label_duration)" \
-          --mode=block \
-          sleep infinity >/dev/null 2>&1 &
+        setsid -f ${system-awake-session} "$duration" "$TAG" "$scope" "$label_duration" >/dev/null 2>&1 &
         write_last "$duration" "$scope" "$label_duration"
       fi
 
@@ -210,19 +265,14 @@
       fi
       new_label=$(format_label "$(( new_end - started_epoch ))")
 
-      # Terminate old inhibitor process without touching last.json/notification.
-      # Wait for it to actually die so the post-spawn pgrep sees only the new
-      # process(es) — otherwise head -1 would return the dying PID.
-      pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
+      # Wipe state and tear down old session without touching last.json/notification.
+      # Removing the state file before pkill lets the wrapper's post-rc check
+      # detect a concurrent natural expiry and bail out before suspending.
+      rm -f "$STATE_FILE"
+      kill_session
       wait_inhibitor_gone
 
-      setsid -f ${pkgs.coreutils}/bin/timeout "''${new_duration}s" \
-        ${pkgs.systemd}/bin/systemd-inhibit \
-        --what=sleep:handle-lid-switch \
-        --who=hyprland \
-        --why="$TAG ($scope $new_label extended)" \
-        --mode=block \
-        sleep infinity >/dev/null 2>&1 &
+      setsid -f ${system-awake-session} "$new_duration" "$TAG" "$scope" "$new_label extended" >/dev/null 2>&1 &
 
       sleep 0.1
       pid=$(inhibitor_pid)

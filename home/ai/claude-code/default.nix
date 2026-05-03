@@ -82,18 +82,34 @@
     export DISABLE_UPDATES=1
     exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
   '';
+
+  # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/
+  # Per-skill symlinks (rather than one dir-level symlink) so we don't conflict with
+  # upstream-managed entries like tmux-interactive.
+  skillNames =
+    builtins.attrNames
+    (lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./skills));
+  skillSymlinks = lib.listToAttrs (map (name: {
+      name = ".claude/skills/${name}";
+      value.source =
+        config.lib.file.mkOutOfStoreSymlink
+        "${config.home.homeDirectory}/nix-config/home/ai/claude-code/skills/${name}";
+    })
+    skillNames);
 in {
   imports = [./mcp-profiles.nix];
 
   # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
-  home.file = {
-    ".claude/CLAUDE.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
-    ".claude/settings.json".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
-    ".claude/agents".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
-  };
+  home.file =
+    {
+      ".claude/CLAUDE.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+      ".claude/settings.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+      ".claude/agents".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+    }
+    // skillSymlinks;
 
   programs.claude-code = {
     enable = true;
