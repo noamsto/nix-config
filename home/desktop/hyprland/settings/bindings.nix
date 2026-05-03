@@ -35,7 +35,7 @@ in {
       "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
       # "$mainMod, grave, hyprexpo:expo, toggle" # disabled: hyprexpo plugin not loaded
 
-      "$mainMod, V, exec, vicinae vicinae://extensions/vicinae/clipboard/history"
+      "$mainMod, V, exec, vicinae vicinae://launch/clipboard/history"
 
       "$mainMod ALT, L, exec, aegis-lock"
       "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
