@@ -49,6 +49,7 @@
   ];
   personal-packages = [
     # Steam is enabled via programs.steam.enable in nixos/desktop/default.nix
+    pkgs.vinegar # Roblox Studio bootstrapper
   ];
 in {
   home.packages =
