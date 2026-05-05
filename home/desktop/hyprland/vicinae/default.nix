@@ -82,6 +82,13 @@ in {
       keybinding = "default";
       theme.dark.name = "vicinae-dark";
       keybinds = {};
+      launcher_window = {
+        opacity = 0.85;
+        size = {
+          width = 1000;
+          height = 625;
+        };
+      };
       providers = {
         applications.preferences.paths = [
           "${config.home.homeDirectory}/.local/share/applications"
