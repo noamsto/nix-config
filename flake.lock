@@ -874,11 +874,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1777942590,
-        "narHash": "sha256-Igq0u6lweXuEorlXiRkxWPCGozF3Mfftp/LvdwN7oJs=",
+        "lastModified": 1777957920,
+        "narHash": "sha256-dn0XKNPlWpqJVPJ5+Wcv+XOKeLEfs9N9l7N1/7bmBrA=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "e6e4b22e6d9b37187937a0854c28334de404f3bb",
+        "rev": "35e81f3e42f1771329be8d5cdcd1e5e4098a4034",
         "type": "github"
       },
       "original": {
@@ -950,11 +950,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1777953180,
-        "narHash": "sha256-ZFreYnyKwwuZTsViEVgSgRRkj1jlfrtKWl8L5xXaoNI=",
+        "lastModified": 1777957534,
+        "narHash": "sha256-0y1Um6dndTo1gm07693XdSAZhOR5UoP1CpHqX1pz1ow=",
         "owner": "noamsto",
         "repo": "nix-amd-ai",
-        "rev": "3cd0ffd4c95b455ce9cb272961c6bd0a7db8c362",
+        "rev": "47a2fa135ab56823822cee031b970ff69b529015",
         "type": "github"
       },
       "original": {
@@ -1868,11 +1868,11 @@
         "xremap": "xremap_2"
       },
       "locked": {
-        "lastModified": 1777344123,
-        "narHash": "sha256-FORgBEkRc3LOQc23ZFJ8mDvjym9WkCgR97gUBT3tTp0=",
+        "lastModified": 1777956310,
+        "narHash": "sha256-bfJ0d1T75wrPvWiVe19N6jR+EbwqRXCXti5oLQClnXA=",
         "owner": "xremap",
         "repo": "nix-flake",
-        "rev": "69bc1bcdf33da0350cd28b2824b82ccf065a1b4b",
+        "rev": "d537daab3e3263157c0cef94f8a6f9604d4d01a0",
         "type": "github"
       },
       "original": {
@@ -1884,16 +1884,16 @@
     "xremap_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1777213346,
-        "narHash": "sha256-VhIdsBRJzPWhEMZCh9WaWQ3rOZxrKcT3ltpijtYiy0s=",
+        "lastModified": 1777822271,
+        "narHash": "sha256-DwI0y344MLsbz1V2yok2vrFF774xybUrD/g+euF13Nk=",
         "owner": "k0kubun",
         "repo": "xremap",
-        "rev": "37666ae7bff437e2c5fb5d77e7521c28ecbfbdcc",
+        "rev": "89b2bbc306a0983938a23231b4b8e8dc1737d5e0",
         "type": "github"
       },
       "original": {
         "owner": "k0kubun",
-        "ref": "v0.15.3",
+        "ref": "v0.15.5",
         "repo": "xremap",
         "type": "github"
       }
