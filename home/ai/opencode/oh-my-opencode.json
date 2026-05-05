@@ -4,16 +4,18 @@
 
   "agents": {
     "sisyphus": {
-      "model": "opencode/kimi-k2.5",
+      "model": "opencode/kimi-k2.6",
       "fallback_models": [
+        "opencode/kimi-k2.5",
         "opencode/big-pickle",
         "opencode/gemini-3-flash",
         "opencode/gpt-5-nano"
       ]
     },
     "Sisyphus - Ultraworker": {
-      "model": "opencode/kimi-k2.5",
+      "model": "opencode/kimi-k2.6",
       "fallback_models": [
+        "opencode/kimi-k2.5",
         "opencode/big-pickle",
         "opencode/gemini-3-flash",
         "opencode/gpt-5-nano"
@@ -28,6 +30,7 @@
       ]
     },
     "oracle": {
+      "model": "opencode/kimi-k2.5",
       "fallback_models": [
         "opencode/gemini-3-flash",
         "opencode/claude-haiku-4-5",
@@ -35,11 +38,11 @@
       ]
     },
     "prometheus": {
-      "model": "opencode/gpt-5.4",
+      "model": "opencode/kimi-k2.6",
       "fallback_models": [
+        "opencode/gpt-5.4",
         "opencode/big-pickle",
-        "opencode/gemini-3-flash",
-        "opencode/gpt-5-nano"
+        "opencode/gemini-3-flash"
       ]
     },
     "atlas": {
@@ -59,10 +62,18 @@
       ]
     },
     "explore": {
-      "model": "opencode/gemini-3-flash"
+      "model": "opencode/gpt-5-nano",
+      "fallback_models": [
+        "opencode/gemini-3-flash",
+        "opencode/big-pickle"
+      ]
     },
     "librarian": {
-      "model": "opencode/gemini-3-flash"
+      "model": "opencode/big-pickle",
+      "fallback_models": [
+        "opencode/gemini-3-flash",
+        "opencode/kimi-k2.5"
+      ]
     }
   },
 
@@ -117,17 +128,18 @@
       ]
     },
     "writing": {
-      "model": "opencode/gemini-3.1-pro",
+      "model": "opencode/gemini-3-flash",
       "description": "Documentation, prose, technical writing",
       "fallback_models": [
-        "opencode/gemini-3-flash",
+        "opencode/gemini-3.1-pro",
         "opencode/claude-haiku-4-5"
       ]
     },
     "visual-engineering": {
-      "model": "opencode/claude-sonnet-4-6",
+      "model": "opencode/gemini-3.1-pro",
       "description": "Frontend, UI/UX, design, styling, animation. Any task involving UI, UX, CSS, styling, layout, animation, design, or frontend components MUST go here.",
       "fallback_models": [
+        "opencode/claude-sonnet-4-6",
         "opencode/gemini-3-flash",
         "opencode/big-pickle"
       ]

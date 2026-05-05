@@ -167,6 +167,7 @@
   "theme": "auto",
   "editorMode": "vim",
   "teammateMode": "tmux",
+  "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "mcpServers": {
