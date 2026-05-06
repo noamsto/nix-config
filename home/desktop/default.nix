@@ -116,19 +116,22 @@ in {
     firefox = {
       enable = true;
       configPath = ".mozilla/firefox";
-      profiles = {
-        personal = {
-          id = 0;
-          path = "personal";
-          isDefault = true;
-          settings = firefoxCommonSettings;
+      profiles =
+        {
+          personal = {
+            id = 0;
+            path = "personal";
+            isDefault = true;
+            settings = firefoxCommonSettings;
+          };
+        }
+        // lib.optionalAttrs (osConfig.profile == "work") {
+          work = {
+            id = 1;
+            path = "work";
+            settings = firefoxCommonSettings;
+          };
         };
-        work = {
-          id = 1;
-          path = "work";
-          settings = firefoxCommonSettings;
-        };
-      };
     };
 
     chromium = {
