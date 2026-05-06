@@ -4,7 +4,50 @@
   lib,
   osConfig,
   ...
-}: {
+}: let
+  isWork = osConfig.profile == "work";
+
+  # Browser launcher with workspace-focus + per-profile URL routing.
+  # On work hosts: matches work-domain regex → opens via `-P work`,
+  # everything else → `-P personal`. On personal hosts: always personal.
+  firefoxRouter = pkgs.writeShellApplication {
+    name = "firefox-router";
+    runtimeInputs = with pkgs; [jq hyprland];
+    text = ''
+      url="''${1:-}"
+      profile=""
+
+      ${
+        if isWork
+        then ''
+          if [ -n "$url" ]; then
+            case "$url" in
+              *factify.com*|*linear.app*|*notion.so/factify*|*github.com/factify-inc*|*zoom.us*|*slack.com*|*posthog.com*|*sentry.io*)
+                profile="work" ;;
+              *)
+                profile="personal" ;;
+            esac
+          else
+            profile="work"
+          fi
+        ''
+        else ''
+          profile="personal"
+        ''
+      }
+
+      ws=$(hyprctl clients -j | jq -r '.[] | select(.class == "firefox") | .workspace.id' | head -1 || true)
+      if [ -n "$ws" ]; then
+        hyprctl dispatch workspace "$ws"
+        hyprctl dispatch focuswindow "class:firefox"
+      fi
+
+      args=("-P" "$profile")
+      [ -n "$url" ] && args+=("$url")
+      ${lib.getExe pkgs.firefox} "''${args[@]}" &
+    '';
+  };
+in {
   imports = [
     ./gtk.nix
     ./vicinae
@@ -104,18 +147,43 @@
     '';
   };
 
-  # Custom desktop entry for browser URL handler with workspace switching
+  # Default browser handler: workspace-focus + per-profile URL routing.
   xdg.dataFile."applications/firefox-workspace-switch.desktop".text = ''
     [Desktop Entry]
     Type=Application
     Name=Firefox (Workspace Switcher)
-    Exec=${pkgs.bash}/bin/bash ${./scripts/open-browser.sh} %u
+    Exec=${lib.getExe firefoxRouter} %u
     Icon=firefox
     Terminal=false
     MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
     Categories=Network;WebBrowser;
     StartupNotify=true
   '';
+
+  # Explicit per-profile launchers (right-click "Open with…" or app menus).
+  xdg.desktopEntries =
+    {
+      firefox-personal = {
+        name = "Firefox (Personal)";
+        genericName = "Web Browser";
+        exec = "${lib.getExe pkgs.firefox} -P personal %U";
+        icon = "firefox";
+        terminal = false;
+        mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
+        categories = ["Network" "WebBrowser"];
+      };
+    }
+    // lib.optionalAttrs isWork {
+      firefox-work = {
+        name = "Firefox (Work)";
+        genericName = "Web Browser";
+        exec = "${lib.getExe pkgs.firefox} -P work %U";
+        icon = "firefox";
+        terminal = false;
+        mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
+        categories = ["Network" "WebBrowser"];
+      };
+    };
 
   # Thunar settings — written to xfconf at HM activation.
   # Thunar 4.20 reads its preferences from xfconf (channel "thunar").
