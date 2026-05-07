@@ -8,6 +8,13 @@
 }: let
   inherit (inputs.vicinae.packages.${pkgs.system}) mkVicinaeExtension mkRayCastExtension;
 
+  # Keep the launcher's physical-pixel footprint constant across hosts so it
+  # looks the same size regardless of Hyprland scale. Reference is g5 at
+  # scale=2.0 → 1000×625 logical = 2000×1250 physical.
+  scale = builtins.fromJSON (osConfig.laptop-scale or "1.25");
+  launcherWidth = builtins.floor (2000.0 / scale);
+  launcherHeight = builtins.floor (1250.0 / scale);
+
   # Vicinaehq monorepo: already pinned via `vicinae-extensions` flake input.
   # Each subdir has its own package-lock.json, so mkVicinaeExtension builds it cleanly.
   mkVicinaeHqExt = name:
@@ -85,8 +92,8 @@ in {
       launcher_window = {
         opacity = 0.85;
         size = {
-          width = 1000;
-          height = 625;
+          width = launcherWidth;
+          height = launcherHeight;
         };
       };
       providers = {
