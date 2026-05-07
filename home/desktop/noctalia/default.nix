@@ -191,13 +191,11 @@ in {
 
             log "Crash monitor started"
 
-            # Self-heal on monitor startup: if noctalia isn't up after Hyprland's
-            # exec-once should have fired, launch it ourselves. Idempotent.
-            sleep 2
-            if [ -z "$(get_noctalia_pid)" ]; then
-              log "Noctalia not running on monitor start — launching"
-              relaunch_noctalia
-            fi
+            # No self-heal on startup. After `nh os switch`, the new binary's
+            # `noctalia-shell list` filters by its own shell.qml path and can't
+            # see old-generation instances, so a self-heal here would launch a
+            # duplicate while the old bar is still painting. Crashes during
+            # this session are still handled by the monitor loop below.
 
             # Wait for Noctalia to appear
             NOCTALIA_PID=""
