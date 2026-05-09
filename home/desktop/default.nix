@@ -64,12 +64,10 @@
     "network.cookie.cookieBehavior" = 0;
 
     # =======================================================================
-    # THEMING - Follow system color-scheme for Catppuccin adaptive mode
+    # THEMING - Follow system color-scheme for page content
     # =======================================================================
     # -1 = follow system preference (from portal/dconf)
     "layout.css.prefers-color-scheme.content-override" = -1;
-    # Use system theme (allows Catppuccin extension adaptive mode to work)
-    "extensions.activeThemeID" = "default-theme@mozilla.org";
 
     # =======================================================================
     # QUALITY OF LIFE

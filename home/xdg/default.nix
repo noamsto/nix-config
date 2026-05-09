@@ -84,10 +84,14 @@
         "x-scheme-handler/https" = browser;
         "x-scheme-handler/slack" = "slack.desktop";
         "x-scheme-handler/unknown" = browser;
+
+        # Roblox Studio browser-login callback (Vinegar)
+        "x-scheme-handler/roblox-studio-auth" = "org.vinegarhq.Vinegar.desktop";
       };
 
       associations.added = {
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
+        "x-scheme-handler/roblox-studio-auth" = "org.vinegarhq.Vinegar.desktop;";
 
         # Browsers - Firefox with workspace switcher primary, plain Firefox and Brave as fallbacks
         "text/html" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
