@@ -102,6 +102,7 @@ in {
       "**/.devenv"
       "**/.venv"
       ".icon"
+      "**/CLAUDE.local.md"
     ];
   };
 

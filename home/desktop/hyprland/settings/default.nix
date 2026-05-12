@@ -29,6 +29,17 @@ in {
         "WLR_NO_HARDWARE_CURSORS,1"
 
         "QS_ICON_THEME,${iconThemeName}"
+
+        # Force aquamarine to advertise only the linear (0x0) DMA-BUF modifier
+        # for screencast/screencopy buffers. On AMD GFX10+/11, the compositor
+        # otherwise offers only DCC-tiled modifiers
+        # (e.g. 0x20000001046bb04), which Mesa's EGL DMA-BUF import path
+        # cannot consume — gpu-screen-recorder then exhausts modifier
+        # renegotiation and the portal recording aborts with "no more input
+        # formats". Linear screencast buffers cost a small amount of memory
+        # bandwidth but make portal capture reliable.
+        # Drop once Mesa or aquamarine fix EGL import for AMD DCC modifiers.
+        "AQ_NO_MODIFIERS,1"
       ];
 
       exec-once = [
@@ -165,6 +176,12 @@ in {
       gesture = [
         "3, horizontal, workspace"
       ];
+
+      # 0 = every scroll tick is matched against binds and consumed when one
+      # matches. Default 300ms makes consecutive fast scrolls bypass keybind
+      # matching and leak through to the focused app (e.g. browser scrolls
+      # while Super+Ctrl scroll is zooming).
+      binds.scroll_event_delay = 0;
 
       xwayland.force_zero_scaling = true;
       debug.disable_logs = false;

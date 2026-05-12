@@ -132,7 +132,9 @@ in {
 
       # Accessibility tools
       "$mainMod SHIFT, O, exec, normcap" # OCR - select area and copy text
-      "$mainMod, Z, exec, woomer" # Screen zoom (scroll to zoom, drag to pan, Esc to exit)
+      "$mainMod CTRL, 0, exec, zoom-step reset" # Reset zoom (KDE-style)
+      "$mainMod CTRL, mouse_down, exec, zoom-step in" # Zoom in
+      "$mainMod CTRL, mouse_up, exec, zoom-step out" # Zoom out
       "$mainMod SHIFT, A, exec, stt-stream-toggle" # Speech-to-text: real-time VAD streaming
       "$mainMod ALT, A, exec, hyprvoice toggle" # Speech-to-text: batch mode (hyprvoice)
 

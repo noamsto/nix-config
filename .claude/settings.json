@@ -7,5 +7,8 @@
     "linear": {
       "disabled": true
     }
+  },
+  "enabledPlugins": {
+    "cc-skills-golang@samber": false
   }
 }

@@ -6,35 +6,18 @@
   ...
 }: let
   isWork = osConfig.profile == "work";
+  primaryProfile =
+    if isWork
+    then "work"
+    else "personal";
 
-  # Browser launcher with workspace-focus + per-profile URL routing.
-  # On work hosts: matches work-domain regex → opens via `-P work`,
-  # everything else → `-P personal`. On personal hosts: always personal.
+  # Browser launcher with workspace-focus. Always opens in the host's
+  # primary profile (work on work hosts, personal elsewhere).
   firefoxRouter = pkgs.writeShellApplication {
     name = "firefox-router";
     runtimeInputs = with pkgs; [jq hyprland];
     text = ''
       url="''${1:-}"
-      profile=""
-
-      ${
-        if isWork
-        then ''
-          if [ -n "$url" ]; then
-            case "$url" in
-              *factify.com*|*linear.app*|*notion.so/factify*|*github.com/factify-inc*|*zoom.us*|*slack.com*|*posthog.com*|*sentry.io*)
-                profile="work" ;;
-              *)
-                profile="personal" ;;
-            esac
-          else
-            profile="work"
-          fi
-        ''
-        else ''
-          profile="personal"
-        ''
-      }
 
       ws=$(hyprctl clients -j | jq -r '.[] | select(.class == "firefox") | .workspace.id' | head -1 || true)
       if [ -n "$ws" ]; then
@@ -42,7 +25,7 @@
         hyprctl dispatch focuswindow "class:firefox"
       fi
 
-      args=("-P" "$profile")
+      args=("-P" "${primaryProfile}")
       [ -n "$url" ] && args+=("$url")
       ${lib.getExe pkgs.firefox} "''${args[@]}" &
     '';

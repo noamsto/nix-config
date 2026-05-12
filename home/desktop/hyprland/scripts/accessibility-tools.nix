@@ -102,6 +102,62 @@
       exec ${stt-stream-start}/bin/stt-stream-start
     fi
   '';
+
+  # KDE-style screen zoom with smooth easing.
+  # Scroll updates a target; a single bg animator eases cursor:zoom_factor toward it.
+  # Integer state (×1000) gives 0.001× resolution for fluid sub-pixel-feeling steps.
+  zoom-step = pkgs.writeShellScriptBin "zoom-step" ''
+    TARGET="/tmp/hypr-zoom-target"
+    STATE="/tmp/hypr-zoom-current"
+    LOCK="/tmp/hypr-zoom-animator.lock"
+    STEP=500   # 0.50× per scroll tick
+    MIN=1000   # 1.0×
+    MAX=5000   # 5.0×
+
+    if [[ -f $TARGET ]]; then
+      target=$(<"$TARGET")
+    else
+      target=$MIN
+    fi
+
+    case "''${1:-}" in
+      in)    target=$((target + STEP)); ((target > MAX)) && target=$MAX ;;
+      out)   target=$((target - STEP)); ((target < MIN)) && target=$MIN ;;
+      reset) target=$MIN ;;
+      *)     echo "usage: zoom-step in|out|reset" >&2; exit 1 ;;
+    esac
+
+    echo "$target" > "$TARGET"
+
+    # Spawn animator only if not already running (atomic via mkdir).
+    # The animator eases cur toward target at ~60fps and exits when caught up.
+    if ${pkgs.coreutils}/bin/mkdir "$LOCK" 2>/dev/null; then
+      (
+        trap '${pkgs.coreutils}/bin/rmdir "$LOCK"' EXIT
+        while true; do
+          if [[ -f $STATE ]]; then
+            cur=$(<"$STATE")
+          else
+            cur=$MIN
+          fi
+          target=$(<"$TARGET")
+          (( cur == target )) && break
+          diff=$((target - cur))
+          # Ease: ~33% of remaining distance per frame, min step of 1
+          step=$((diff / 3))
+          if (( step == 0 )); then
+            (( diff > 0 )) && step=1 || step=-1
+          fi
+          cur=$((cur + step))
+          echo "$cur" > "$STATE"
+          printf -v val "%d.%03d" $((cur / 1000)) $((cur % 1000))
+          ${pkgs.hyprland}/bin/hyprctl keyword cursor:zoom_factor "$val" >/dev/null
+          ${pkgs.coreutils}/bin/sleep 0.016
+        done
+      ) &
+      disown
+    fi
+  '';
 in {
   home.packages = [
     # OCR tool - select area and copy text
@@ -120,8 +176,8 @@ in {
     pkgs.wtype
     pkgs.wl-clipboard
 
-    # Zoom tool - scroll to zoom, drag to pan
-    pkgs.woomer
+    # Screen zoom helper (KDE-style)
+    zoom-step
   ];
 
   # Hyprvoice configuration
