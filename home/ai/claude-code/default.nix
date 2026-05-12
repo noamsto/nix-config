@@ -10,6 +10,7 @@
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
+  skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
 
   # Hook helpers to reduce repetition in status state machine
   statusCmd = state: {
@@ -42,6 +43,15 @@
           (sessionStartHook "resume" "idle")
           (sessionStartHook "clear" "idle")
           (sessionStartHook "compact" "processing")
+          {
+            matcher = "startup";
+            hooks = [
+              {
+                type = "command";
+                command = "${skill-suggester}/bin/claude-skill-suggester";
+              }
+            ];
+          }
         ];
         UserPromptSubmit = [(statusHook "processing")];
         PreToolUse = [
