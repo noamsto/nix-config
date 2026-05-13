@@ -197,6 +197,12 @@ When adding new features, follow these patterns:
   - Test with both `nh os switch` and `nh home switch` to catch issues
 
 
+## Gotchas
+
+- **profile-sync-daemon was removed 2026-04-28** (commit `75d96c6`). Do **not** re-enable without both: (1) nixpkgs psd v7+ shipping fuse-overlayfs (watch [PR #500548](https://github.com/NixOS/nixpkgs/pull/500548)), and (2) a real wear-or-APST benchmark on modern NVMe. Canonical rationale lives in the comment block in `nixos/core/pc.nix`. Per-host on-disk cleanup (firefox profile symlink + `default-backup/`) still required on first switch — see `pc.nix`.
+
+- **Noctalia 3rd-party plugins use composite keys**. Plugins outside the official `github.com/noctalia-dev/noctalia-plugins` repo are keyed as `<first-6-hex-of-sha256(sourceUrl)>:<manifest-id>` in `plugins.json` (`states` map AND bar widget id). Source: `PluginRegistry.generateCompositeKey` (Noctalia shell). When adding 3rd-party plugins to `home/desktop/noctalia/default.nix`, compute the key with `builtins.substring 0 6 (builtins.hashString "sha256" sourceUrl)`. Reference pattern: `keep-awake-plus`. Wrong key ⇒ infinite reinstall + bar widget orphan-delete loop.
+
 ## Additional Resources
 
 - Run `just help` for command usage
