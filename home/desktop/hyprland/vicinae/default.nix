@@ -6,80 +6,34 @@
   lib,
   ...
 }: let
-  inherit (inputs.vicinae.packages.${pkgs.system}) mkVicinaeExtension mkRayCastExtension;
-
   # Keep the launcher's physical-pixel footprint constant across hosts so it
   # looks the same size regardless of Hyprland scale. Reference is g5 at
   # scale=2.0 → 1000×625 logical = 2000×1250 physical.
   scale = builtins.fromJSON (osConfig.laptop-scale or "1.25");
   launcherWidth = builtins.floor (2000.0 / scale);
   launcherHeight = builtins.floor (1250.0 / scale);
-
-  # Vicinaehq monorepo: already pinned via `vicinae-extensions` flake input.
-  # Each subdir has its own package-lock.json, so mkVicinaeExtension builds it cleanly.
-  mkVicinaeHqExt = name:
-    mkVicinaeExtension {
-      pname = "vicinae-ext-${name}";
-      version = "unstable-${inputs.vicinae-extensions.shortRev or "dirty"}";
-      src = inputs.vicinae-extensions + "/extensions/${name}";
-    };
-
-  # Raycast monorepo is ~15GB, so we sparse-checkout only the extensions we use.
-  # `names`, `rev`, and `hash` all live in raycast-sources.nix — edit names there,
-  # then run `just update-vicinae-extensions` to refresh rev/hash.
-  raycastSources = import ./raycast-sources.nix;
-  raycastSrc = pkgs.fetchFromGitHub {
-    owner = "raycast";
-    repo = "extensions";
-    inherit (raycastSources) rev hash;
-    sparseCheckout = map (n: "extensions/${n}") raycastSources.names;
-  };
-  mkRaycastExt = name:
-    mkRayCastExtension {
-      inherit name;
-      src = raycastSrc + "/extensions/${name}";
-      # Electron's postinstall tries to download a prebuilt binary over the network,
-      # which the Nix sandbox blocks. Raycast extensions don't use electron at
-      # runtime — skip the download.
-      env.ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
-    };
-
-  # Per-extension install predicates. Missing entries default to true.
-  # The sparseCheckout still fetches all names (keeps the hash stable across
-  # profiles); filtering only gates which extensions get built + symlinked.
-  raycastEnabled = {
-    linear = osConfig.profile == "work";
-  };
-  enabledRaycastNames = builtins.filter (n: raycastEnabled.${n} or true) raycastSources.names;
-
-  vicinaeHqExtensionNames = [
-    "bluetooth"
-    "firefox"
-    "hypr-keybinds"
-    "it-tools"
-    "nix"
-    "port-killer"
-    "process-manager"
-    # "systemd" — disabled: pulls usocket which pins node-gyp@7 and fails to build
-    # against Node 24. Install imperatively via the vicinae store if needed.
-    "wifi-commander"
-  ];
 in {
   imports = [
     inputs.vicinae.homeManagerModules.default
   ];
+
   home.packages = with pkgs; [
     libqalculate
   ];
+
   services.vicinae = {
     enable = true;
     systemd = {
       enable = true;
       autoStart = true;
     };
-    extensions =
-      map mkVicinaeHqExt vicinaeHqExtensionNames
-      ++ map mkRaycastExt enabledRaycastNames;
+    # Extensions are installed imperatively via the launcher's Store command.
+    # Building from source in the Nix sandbox kept breaking because upstream
+    # extension tsconfigs use `extends: "../../tsconfig.json"`, which can't
+    # resolve once only the leaf dir is in the sandbox — esbuild then falls
+    # back to classic JSX and emits `React.createElement(...)` with no `React`
+    # in scope. If a specific extension MUST be reproducible/pinned, add it
+    # back here using `inputs.vicinae.packages.${pkgs.system}.mkVicinaeExtension`.
   };
 
   # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime
