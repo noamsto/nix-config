@@ -28,6 +28,11 @@ in {
       package = "obsidian-mcp";
       args = obsidianVaults;
     };
+
+    firefox-devtools = helpers.mkNpxMcp {
+      package = "firefox-devtools-mcp@latest";
+      args = ["--connect-existing" "--marionette-port" "2828"];
+    };
   };
 
   # Wrapper-based MCPs for editable JSON configs (opencode.json, etc.)

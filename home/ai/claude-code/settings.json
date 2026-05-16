@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "skillListingBudgetFraction": 0.02,
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -95,6 +96,7 @@
       "mcp__context7__*",
       "mcp__plugin_pg_pg-aiguide__*",
       "mcp__plugin_claude-code-home-manager_tavily__*",
+      "mcp__firefox-devtools__*",
       "WebFetch",
       "WebSearch"
     ],
@@ -113,7 +115,6 @@
     "lua-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true
   },
-  "skillListingBudgetFraction": 0.02,
   "extraKnownMarketplaces": {
     "samber": {
       "source": {
