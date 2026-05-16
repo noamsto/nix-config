@@ -163,6 +163,21 @@ battery-calibrate:
     echo "  3. Plug in, charge back to 100%."
     echo "  4. Restore thresholds: sudo systemctl restart tlp"
 
+# Rebind hid-multitouch to recover a touchpad that has gone silent (common on AMD ThinkPads post-suspend)
+touchpad-rebind:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    drv=/sys/bus/hid/drivers/hid-multitouch
+    id=$(find "$drv" -mindepth 1 -maxdepth 1 -regextype posix-extended \
+        -regex '.*/[0-9A-F]{4}:[0-9A-F]{4}:[0-9A-F]{4}\.[0-9A-F]+' -printf '%f\n' | head -n1)
+    if [ -z "$id" ]; then
+        echo "❌ No HID device bound to hid-multitouch" >&2
+        exit 1
+    fi
+    echo "♻️  Rebinding $id on hid-multitouch..."
+    sudo sh -c "echo '$id' > '$drv/unbind' && sleep 1 && echo '$id' > '$drv/bind'"
+    echo "✅ Done. Touch the touchpad to verify."
+
 # Check if any staged git changes exist
 check-staged:
     #!/usr/bin/env bash
