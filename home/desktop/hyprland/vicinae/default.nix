@@ -36,8 +36,12 @@ in {
     # back here using `inputs.vicinae.packages.${pkgs.system}.mkVicinaeExtension`.
   };
 
-  # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime
-  home.activation.seedVicinaeConfig = let
+  # Upstream HM module hardcodes KillMode=process: stop only kills the main
+  # binary, orphaning the node extension-manager in the cgroup (observed 7.6G
+  # held). Mixed mode terminates the whole cgroup cleanly.
+  systemd.user.services.vicinae.Service.KillMode = lib.mkForce "mixed";
+
+  home.activation = let
     seedConfig = pkgs.writeText "vicinae-seed-config.json" (builtins.toJSON {
       "$schema" = "https://vicinae.com/schemas/config.json";
       keybinding = "default";
@@ -60,8 +64,17 @@ in {
         clipboard.preferences.monitoring = true;
       };
     });
-  in
-    lib.hm.dag.entryAfter ["writeBoundary"] ''
+  in {
+    # nh home switch sometimes stops vicinae (PartOf=graphical-session.target)
+    # without restarting it, leaving the launcher dead until next reboot.
+    ensureVicinaeRunning = lib.hm.dag.entryAfter ["reloadSystemd"] ''
+      if ! ${pkgs.systemd}/bin/systemctl --user is-active --quiet vicinae.service; then
+        ${pkgs.systemd}/bin/systemctl --user start vicinae.service || true
+      fi
+    '';
+
+    # Seed vicinae config only if it doesn't exist yet; vicinae manages it at runtime
+    seedVicinaeConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
       config_path="${config.xdg.configHome}/vicinae/settings.json"
       if [ ! -f "$config_path" ]; then
         mkdir -p "$(dirname "$config_path")"
@@ -69,4 +82,5 @@ in {
         chmod 644 "$config_path"
       fi
     '';
+  };
 }

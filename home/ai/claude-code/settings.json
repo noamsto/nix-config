@@ -174,7 +174,7 @@
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
-  "teammateMode": "tmux",
+  "teammateMode": "in-process",
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
