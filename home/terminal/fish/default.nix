@@ -424,6 +424,12 @@
         abbr -a !! --position anywhere --function last_history_item
         abbr -a '!$' --position anywhere --function last_command_arg
         abbr -a sc 'sesh connect'
+        abbr -a ws 'wt switch'
+
+        # Upstream worktrunk completions only complete flags for `wt switch` —
+        # extend with dynamic branch/worktree names (incl. remotes & PR branches).
+        complete -c wt -n "__fish_wt_using_subcommand switch" -f -a \
+          "(wt list --branches --remotes --format json 2>/dev/null | jq -r '.[].branch' 2>/dev/null)"
 
         # Sesh completions
         sesh completion fish | source
