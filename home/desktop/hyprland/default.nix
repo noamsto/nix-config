@@ -62,6 +62,7 @@ in {
 
   wayland.windowManager.hyprland = {
     enable = true;
+    configType = "hyprlang";
     # plugins = with pkgs.hyprlandPlugins; [
     #   hyprbars
     #   hyprexpo

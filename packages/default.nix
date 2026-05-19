@@ -1,13 +1,9 @@
 {inputs, ...}: {
   systems = ["x86_64-linux"];
 
-  perSystem = {
-    pkgs,
-    system,
-    ...
-  }: let
+  perSystem = {pkgs, ...}: let
     pkgsUnfree = import inputs.nixpkgs {
-      inherit system;
+      inherit (pkgs.stdenv.hostPlatform) system;
       config.allowUnfree = true;
     };
   in {

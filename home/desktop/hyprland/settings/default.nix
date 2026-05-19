@@ -138,12 +138,10 @@ in {
           range = 100;
           scale = 0.97;
           render_power = 3;
-          ignore_window = true;
           color = "rgba(00000099)";
         };
       };
       dwindle = {
-        pseudotile = true;
         preserve_split = true;
       };
 
@@ -158,7 +156,6 @@ in {
         animate_mouse_windowdragging = false;
 
         vrr = 2;
-        vfr = true;
 
         enable_swallow = true;
         swallow_regex = "^(foot|kitty|com\\.mitchellh\\.ghostty)$";
