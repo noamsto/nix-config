@@ -1,9 +1,20 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   inherit (config.theme) palette;
+
+  # Same tmux attach/create flow as kitty (home/terminal/kitty/default.nix).
+  # Wrapped in a script because foot's main.shell tokenizer doesn't preserve
+  # quoting well enough to pass `fish -l -c '<long pipeline>'` reliably.
+  tmuxLauncher = pkgs.writeShellScript "foot-tmux-launcher" ''
+    exec ${pkgs.fish}/bin/fish -l -c \
+      'systemctl --user start tmux-startup.service && \
+        TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || \
+        TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c $HOME/nix-config'
+  '';
 
   s = color: lib.removePrefix "#" color;
 
@@ -40,42 +51,80 @@
     16=${s p.peach}
     17=${s p.rosewater}
   '';
-in {
-  programs.foot = {
-    enable = true;
-    settings = {
-      main = {
-        font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
-        dpi-aware = "yes";
-      };
 
-      colors-dark = {
-        alpha = "0.9";
-      };
+  footSettings = {
+    main = {
+      font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
+      dpi-aware = "yes";
+      pad = "8x8 center";
+      shell = "${tmuxLauncher}";
+    };
 
-      text-bindings = {
-        "\\x1b[72;6u" = "Control+Shift+h";
-        "\\x1b[74;6u" = "Control+Shift+j";
-        "\\x1b[75;6u" = "Control+Shift+k";
-        "\\x1b[76;6u" = "Control+Shift+l";
+    colors-dark = {
+      alpha = "0.92";
+    };
 
-        "\\x1b[105;5u" = "Control+i";
+    cursor = {
+      style = "beam";
+      blink = "yes";
+    };
 
-        "\\x1b[46;5u" = "Control+period";
-        "\\x1b[44;5u" = "Control+comma";
-        "\\x1b[59;5u" = "Control+semicolon";
+    mouse = {
+      hide-when-typing = "yes";
+    };
 
-        "\\x1b[13;2u" = "Shift+Return";
-      };
+    scrollback = {
+      lines = 10000;
+    };
 
-      mouse = {
-        hide-when-typing = "yes";
-      };
+    text-bindings = {
+      "\\x1b[72;6u" = "Control+Shift+h";
+      "\\x1b[74;6u" = "Control+Shift+j";
+      "\\x1b[75;6u" = "Control+Shift+k";
+      "\\x1b[76;6u" = "Control+Shift+l";
+
+      "\\x1b[105;5u" = "Control+i";
+
+      "\\x1b[46;5u" = "Control+period";
+      "\\x1b[44;5u" = "Control+comma";
+      "\\x1b[59;5u" = "Control+semicolon";
+
+      "\\x1b[13;2u" = "Shift+Return";
     };
   };
 
+  # foot's `include=` directive must live in the default (top-level) section,
+  # before any [section] header. HM's programs.foot.settings is a strict
+  # attrsOf-attrsOf, so we generate foot.ini ourselves and override it.
+  footIni =
+    ''
+      # Default to the dark theme; theme-toggle rewrites this line at runtime
+      # to switch between catppuccin-mocha (dark) and catppuccin-latte (light).
+      include=${config.xdg.configHome}/foot/themes/${palette.dark.name}.ini
+
+    ''
+    + lib.generators.toINI {} footSettings;
+in {
+  programs.foot = {
+    enable = true;
+    # Leave HM's settings empty so its `mkIf (settings != {})` guard skips
+    # generating foot.ini; the override below is the canonical source.
+    settings = {};
+  };
+
   xdg.configFile = {
+    "foot/foot.ini".text = footIni;
     "foot/themes/${palette.dark.name}.ini".text = mkFootTheme palette.dark;
     "foot/themes/${palette.light.name}.ini".text = mkFootTheme palette.light;
+
+    # Pin the preferred terminal for `Terminal=true` .desktop launches (btop,
+    # htop, …). Without this, launchers like vicinae auto-pick across
+    # foot.desktop / foot-server.desktop / footclient.desktop — the server
+    # entry runs `foot --server -e <cmd>`, which daemonizes foot and ignores
+    # the command, so nothing opens.
+    "xdg-terminals.list".text = ''
+      foot.desktop
+      kitty.desktop
+    '';
   };
 }
