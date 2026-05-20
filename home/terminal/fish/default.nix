@@ -323,8 +323,8 @@
         # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
         tss = "tailscale status";
         tsl = "tailscale switch --list"; # profiles; current marked with *
-        tsp = "tailscale switch stellern@gmail.com";
-        tsw = "tailscale switch noam@factify.com";
+        tsp = "tailscale down; tailscale switch stellern@gmail.com; and tailscale up --accept-routes";
+        tsw = "tailscale down; tailscale switch noam@factify.com; and tailscale up --accept-routes";
 
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";
