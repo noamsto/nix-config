@@ -1,20 +1,9 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
   inherit (config.theme) palette;
-
-  # Same tmux attach/create flow as kitty (home/terminal/kitty/default.nix).
-  # Wrapped in a script because foot's main.shell tokenizer doesn't preserve
-  # quoting well enough to pass `fish -l -c '<long pipeline>'` reliably.
-  tmuxLauncher = pkgs.writeShellScript "foot-tmux-launcher" ''
-    exec ${pkgs.fish}/bin/fish -l -c \
-      'systemctl --user start tmux-startup.service && \
-        TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || \
-        TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c $HOME/nix-config'
-  '';
 
   s = color: lib.removePrefix "#" color;
 
@@ -57,7 +46,6 @@
       font = "Fira Code Nerd Font:size=11, Noto Color Emoji:size=11";
       dpi-aware = "yes";
       pad = "8x8 center";
-      shell = "${tmuxLauncher}";
     };
 
     colors-dark = {
