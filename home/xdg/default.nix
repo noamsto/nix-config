@@ -5,8 +5,14 @@
 {
   config,
   pkgs,
+  osConfig,
   ...
-}: {
+}: let
+  primaryBrowser =
+    if osConfig.profile == "work"
+    then "firefox-work.desktop"
+    else "firefox-personal.desktop";
+in {
   home.packages = with pkgs; [
     xdg-utils # provides cli tools such as `xdg-mime` `xdg-open`
     xdg-user-dirs
@@ -20,7 +26,7 @@
     mimeApps = {
       enable = true;
       defaultApplications = let
-        browser = ["firefox-workspace-switch.desktop"];
+        browser = [primaryBrowser];
       in {
         "application/json" = browser;
         "application/pdf" = "org.gnome.Evince.desktop";
@@ -93,11 +99,11 @@
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
         "x-scheme-handler/roblox-studio-auth" = "org.vinegarhq.Vinegar.desktop;";
 
-        # Browsers - Firefox with workspace switcher primary, plain Firefox and Brave as fallbacks
-        "text/html" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
-        "x-scheme-handler/http" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
-        "x-scheme-handler/https" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
-        "application/xhtml+xml" = "firefox-workspace-switch.desktop;firefox.desktop;brave-browser.desktop;";
+        # Browsers - profile-specific Firefox primary, plain Firefox and Brave as fallbacks
+        "text/html" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
+        "x-scheme-handler/http" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
+        "x-scheme-handler/https" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
+        "application/xhtml+xml" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
 
         # Image editing - add GIMP as alternative
         "image/jpeg" = "org.gnome.eog.desktop;gimp.desktop;";

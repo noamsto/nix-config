@@ -6,30 +6,6 @@
   ...
 }: let
   isWork = osConfig.profile == "work";
-  primaryProfile =
-    if isWork
-    then "work"
-    else "personal";
-
-  # Browser launcher with workspace-focus. Always opens in the host's
-  # primary profile (work on work hosts, personal elsewhere).
-  firefoxRouter = pkgs.writeShellApplication {
-    name = "firefox-router";
-    runtimeInputs = with pkgs; [jq hyprland];
-    text = ''
-      url="''${1:-}"
-
-      ws=$(hyprctl clients -j | jq -r '.[] | select(.class == "firefox") | .workspace.id' | head -1 || true)
-      if [ -n "$ws" ]; then
-        hyprctl dispatch workspace "$ws"
-        hyprctl dispatch focuswindow "class:firefox"
-      fi
-
-      args=("-P" "${primaryProfile}")
-      [ -n "$url" ] && args+=("$url")
-      ${lib.getExe pkgs.firefox} "''${args[@]}" &
-    '';
-  };
 in {
   imports = [
     ./gtk.nix
@@ -131,20 +107,9 @@ in {
     '';
   };
 
-  # Default browser handler: workspace-focus + per-profile URL routing.
-  xdg.dataFile."applications/firefox-workspace-switch.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    Name=Firefox (Workspace Switcher)
-    Exec=${lib.getExe firefoxRouter} %u
-    Icon=firefox
-    Terminal=false
-    MimeType=x-scheme-handler/http;x-scheme-handler/https;text/html;application/xhtml+xml;
-    Categories=Network;WebBrowser;
-    StartupNotify=true
-  '';
-
-  # Explicit per-profile launchers (right-click "Open with…" or app menus).
+  # Per-profile launchers (right-click "Open with…" or app menus).
+  # Workspace-follow is handled by Hyprland's misc.focus_on_activate via
+  # the xdg-activation protocol, not a wrapper script.
   xdg.desktopEntries =
     {
       firefox-personal = {

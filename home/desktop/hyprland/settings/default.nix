@@ -162,6 +162,11 @@ in {
 
         layers_hog_keyboard_focus = true;
 
+        # Honor xdg-activation tokens from launchers (walker/vicinae), browsers
+        # opening links, password managers, etc. — switches workspace + focuses
+        # the requesting window instead of dropping the request.
+        focus_on_activate = true;
+
         # Allow a new lockscreen to take over if the previous one crashed
         # (e.g. Noctalia dies during monitor topology change on undock)
         allow_session_lock_restore = true;
