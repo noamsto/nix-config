@@ -320,6 +320,12 @@
         occ = "oc -c";
         ocs = "oc -s";
 
+        # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
+        tss = "tailscale status";
+        tsl = "tailscale switch --list"; # profiles; current marked with *
+        tsp = "tailscale switch personal"; # adjust name to match `tsl` output
+        tsw = "tailscale switch work"; # adjust name to match `tsl` output
+
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";
         gst = "git status";
@@ -428,7 +434,10 @@
 
         # Upstream worktrunk completions only complete flags for `wt switch` —
         # extend with dynamic branch/worktree names (incl. remotes & PR branches).
-        complete -c wt -n "__fish_wt_using_subcommand switch" -f -a \
+        # `wt config shell init` installs a runtime-completion shim at
+        # ~/.config/fish/completions/wt.fish that shadows the vendor completion,
+        # so __fish_wt_using_subcommand is never loaded — use fish's builtin.
+        complete -c wt -n "__fish_seen_subcommand_from switch" -f -a \
           "(wt list --branches --remotes --format json 2>/dev/null | jq -r '.[].branch' 2>/dev/null)"
 
         # Sesh completions

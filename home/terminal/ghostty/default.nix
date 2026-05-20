@@ -79,7 +79,7 @@ in {
       # unit is active (creating the server in its own scope), or returns
       # immediately if already active. Serializes with tmux-startup.service
       # so the server is never created inside ghostty's scope.
-      command = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach; or TMUX_TMPDIR=/run/user/(id -u) tmux new -As nix-config'";
+      command = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config; or TMUX_TMPDIR=/run/user/(id -u) tmux new -As nix-config -c $HOME/nix-config'";
 
       keybind = [
         "ctrl+equal=increase_font_size:1"
