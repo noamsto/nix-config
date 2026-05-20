@@ -437,8 +437,21 @@
         # `wt config shell init` installs a runtime-completion shim at
         # ~/.config/fish/completions/wt.fish that shadows the vendor completion,
         # so __fish_wt_using_subcommand is never loaded — use fish's builtin.
-        complete -c wt -n "__fish_seen_subcommand_from switch" -f -a \
-          "(wt list --branches --remotes --format json 2>/dev/null | jq -r '.[].branch' 2>/dev/null)"
+        #
+        # `pr:` prefix → list open PRs via gh (fast). Otherwise → enumerate
+        # branches via wt list, which is slow in repos with many remotes
+        # (~1.3s in factify/api), so only do it when the user isn't already
+        # narrowing to a PR shortcut.
+        function __wt_switch_complete
+            set -l token (commandline --current-token)
+            if string match -q 'pr:*' -- $token
+                gh pr list --state open --limit 100 --json number,title 2>/dev/null \
+                  | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null
+            else
+                wt list --branches --remotes --format json 2>/dev/null | jq -r '.[].branch' 2>/dev/null
+            end
+        end
+        complete -c wt -n "__fish_seen_subcommand_from switch" -f -a "(__wt_switch_complete)"
 
         # Sesh completions
         sesh completion fish | source
