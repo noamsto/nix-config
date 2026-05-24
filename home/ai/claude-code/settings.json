@@ -157,6 +157,12 @@
         "source": "github",
         "repo": "jezweb/claude-skills"
       }
+    },
+    "marketingskills": {
+      "source": {
+        "source": "github",
+        "repo": "coreyhaines31/marketingskills"
+      }
     }
   },
   "sandbox": {
@@ -170,7 +176,7 @@
   },
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
