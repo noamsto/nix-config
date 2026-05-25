@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   lib,
   osConfig,
@@ -38,7 +39,7 @@ in {
     startupSession = {
       enable = true;
       name = "nix-config";
-      directory = "%h/nix-config";
+      directory = "${config.home.homeDirectory}/nix-config";
       terminal.emulator = "kitty";
     };
   };
