@@ -72,7 +72,13 @@
           (matchedStatusHook "idle_prompt" "done")
         ];
         Stop = [(statusHook "done")];
+        StopFailure = [(statusHook "error")];
         PreCompact = [(statusHook "compacting")];
+        PostCompact = [(statusHook "processing")];
+        PermissionDenied = [(statusHook "denied")];
+        PostToolUseFailure = [(statusHook "error")];
+        Elicitation = [(statusHook "waiting")];
+        ElicitationResult = [(statusHook "processing")];
         SessionEnd = [(statusHook "clear")];
       };
     };
