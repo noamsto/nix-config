@@ -46,7 +46,7 @@ Before implementing or planning any new work:
 
 2. **Create a git worktree** for the work:
    - Use the branch name from Linear (`Cmd+Shift+.` to copy)
-   - Run: `cd "$(wt -yq <branch-name>)"`
+   - Run: `wt switch -c <branch-name>` (worktrunk creates the branch + worktree and navigates there)
 
 This ensures all work is tracked and isolated properly.
 
@@ -90,24 +90,32 @@ Use markdown tables or bullet lists for comparisons, reviews, and analysis. Do n
 
 ## Git Worktrees
 
-When creating or switching to git worktrees, use the `wt` command:
+We use **worktrunk** (the `wt` command) for git worktrees. Shell + tmux integration
+is configured via Nix (`programs.lazytmux.worktrunk.enable`), so `wt` handles
+navigation itself — do **not** wrap it in `cd "$(...)"`.
 
 ```bash
-# Create/switch to worktree and cd to it (no window switch)
-cd "$(wt -yqn <branch-name>)"
+wt switch <branch>      # Switch to worktree (creates the worktree if the branch exists)
+wt switch -c <branch>   # Create new branch + worktree, then switch
+wt switch               # Interactive picker
+wt list                 # List worktrees and their status
+wt remove               # Remove the current worktree (deletes branch if merged)
+wt merge                # Merge the current branch into the target branch
 ```
 
-Flags:
+Useful flags / shortcuts:
 
-- `-y` / `--yes`: Skip confirmation prompts
-- `-q` / `--quiet`: Only output the worktree path (for scripting)
-- `-n` / `--no-switch`: Skip all tmux operations (no window creation/switching)
+- `-y` / `--yes`: Skip approval prompts (scripting/automation)
+- `-b <base>` / `--base`: Base branch for `-c` (defaults to the default branch)
+- `-x <cmd>` / `--execute`: Run a command after switching (e.g. `-x claude`)
+- Branch shortcuts: `^` (default branch), `-` (previous), `@` (current), `pr:{N}`, `mr:{N}`
 
-**Model**: Session = Project, Window = Worktree
+**tmux model**: Session = Project, Window = Worktree
 - One tmux session per repository (e.g., 'nix-config')
 - One window per worktree/branch
-
-This creates the worktree (if needed), switches to its tmux window, and outputs the path for cd.
+- A `post-switch` tmux hook (in `~/.config/worktrunk/config.toml`) owns navigation:
+  it switches to the matching window or creates one. `[switch] cd = false`, so the
+  parent shell is intentionally left where it is — the hook is authoritative.
 
 ## Pull Requests
 
