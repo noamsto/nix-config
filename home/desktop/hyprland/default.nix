@@ -93,6 +93,18 @@ in {
       GRIMBLAST_EDITOR = "satty";
     };
 
+    # Suppress blueman-applet autostart. The applet's PowerManager plugin
+    # toggles the BlueZ adapter around suspend, leaving BT visibly "off"
+    # for ~1 min after resume until blueman reconciles. Noctalia + BlueZ
+    # cover day-to-day BT; blueman-manager (mainMod+SHIFT+B) is kept for
+    # pairing new devices.
+    file.".config/autostart/blueman.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Blueman Applet
+      Hidden=true
+    '';
+
     # Satty configuration for high-quality screenshot editing
     file.".config/satty/config.toml".text = ''
       [general]

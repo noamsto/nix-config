@@ -55,7 +55,6 @@
       gawk # awk for tmux theme variable parsing
       findutils # find for foot theme discovery
       networkmanagerapplet # nm-applet
-      blueman # blueman-applet
       libsForQt5.qtstyleplugin-kvantum # kvantummanager
       jq # JSON state file handling
       fish # fish theme reload
