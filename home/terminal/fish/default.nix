@@ -403,15 +403,6 @@
           end
         end
 
-        function wtc
-          set -l wtc_bin (command -s wtc)
-          if contains -- -i $argv; and set -q TMUX; and command -q tmux
-            command tmux display-popup -E -w 90% -h 90% -d "$PWD" "$wtc_bin $argv"
-          else
-            $wtc_bin $argv
-          end
-        end
-
         if test -f /etc/agenix/work_aliases.fish
           echo "Loading Work Aliases"
           source /etc/agenix/work_aliases.fish

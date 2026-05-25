@@ -1827,11 +1827,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779302191,
-        "narHash": "sha256-cNkxUD+/XlZFPKueM8J+EyiQBltfezHHUcwNzAECFGs=",
+        "lastModified": 1779702422,
+        "narHash": "sha256-03ufdaw9zvl7+P0mISjSzHaKilanOpyqTFcy3H90lUY=",
         "owner": "noamsto",
         "repo": "wtc",
-        "rev": "6810690cf23858a09ced04fa958d5fc965cc4081",
+        "rev": "9a11275032b7201764bcbe3c9e6c9948703b1b74",
         "type": "github"
       },
       "original": {
