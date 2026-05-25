@@ -17,7 +17,12 @@
     type = "command";
     command = "claude-status-update ${state}";
   };
+  statusCmdForce = state: {
+    type = "command";
+    command = "claude-status-update ${state} --force";
+  };
   statusHook = state: {hooks = [(statusCmd state)];};
+  statusHookForce = state: {hooks = [(statusCmdForce state)];};
   matchedStatusHook = matcher: state: {
     inherit matcher;
     hooks = [(statusCmd state)];
@@ -53,7 +58,7 @@
             ];
           }
         ];
-        UserPromptSubmit = [(statusHook "processing")];
+        UserPromptSubmit = [(statusHookForce "processing")];
         PreToolUse = [
           (statusHook "processing")
           {
