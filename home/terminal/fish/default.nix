@@ -423,24 +423,23 @@
         abbr -a sc 'sesh connect'
         abbr -a ws 'wt switch'
 
-        # Upstream worktrunk completions only complete flags for `wt switch` —
-        # extend with dynamic branch/worktree names (incl. remotes & PR branches).
-        # `wt config shell init` installs a runtime-completion shim at
-        # ~/.config/fish/completions/wt.fish that shadows the vendor completion,
-        # so __fish_wt_using_subcommand is never loaded — use fish's builtin.
-        #
-        # `pr:` prefix → list open PRs via gh (fast). Otherwise → enumerate
-        # branches via wt list, which is slow in repos with many remotes
-        # (~1.3s in factify/api), so only do it when the user isn't already
-        # narrowing to a PR shortcut.
+        # Upstream `wt` fish completion (installed at
+        # ~/.config/fish/completions/wt.fish) already enumerates branches in
+        # ~30ms. Extend only `pr:<TAB>` with open PRs via gh, cached 30s
+        # per-repo so Tab cycling doesn't hit the API on every keystroke.
         function __wt_switch_complete
             set -l token (commandline --current-token)
-            if string match -q 'pr:*' -- $token
+            string match -q 'pr:*' -- $token; or return
+            set -l toplevel (git rev-parse --show-toplevel 2>/dev/null)
+            test -n "$toplevel"; or return
+            set -l cache_file "$XDG_RUNTIME_DIR/wt-pr-cache-"(string replace -a / _ -- $toplevel)
+            set -l mtime 0
+            test -f $cache_file; and set mtime (stat -c %Y $cache_file)
+            if test (math (date +%s) - $mtime) -gt 30
                 gh pr list --state open --limit 100 --json number,title 2>/dev/null \
-                  | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null
-            else
-                wt list --branches --remotes --format json 2>/dev/null | jq -r '.[].branch' 2>/dev/null
+                  | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null >$cache_file
             end
+            command cat $cache_file 2>/dev/null
         end
         complete -c wt -n "__fish_seen_subcommand_from switch" -f -a "(__wt_switch_complete)"
 
