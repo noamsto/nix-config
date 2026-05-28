@@ -33,6 +33,9 @@ inputs: [
 
   inputs.mcp-servers-nix.overlays.default
 
+  # Provides `claude-desktop` and `claude-desktop-fhs` (FHS variant for MCP)
+  inputs.claude-desktop.overlays.default
+
   (_final: prev: {
     btop = prev.btop.override {rocmSupport = true;};
   })

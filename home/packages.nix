@@ -16,6 +16,9 @@
     ferdium
     zoom-us
 
+    # Claude Desktop (FHS variant so MCP servers find their interpreters)
+    claude-desktop-fhs
+
     evince # PDF Viewer
 
     vlc

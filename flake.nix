@@ -121,6 +121,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Unofficial Claude Desktop repackage (no official Linux build exists).
+    # Don't follow nixpkgs: keeps the electron closure pinned so routine
+    # nixpkgs bumps don't churn the derivation. electron is substituted from
+    # cache.nixos.org regardless; the only local step is a fast asar repack,
+    # which then re-runs solely when this input is bumped.
+    claude-desktop = {
+      url = "github:aaddrick/claude-desktop-debian";
+    };
+
     # === SPECIALIZED HARDWARE ===
     disko = {
       url = "github:nix-community/disko";
