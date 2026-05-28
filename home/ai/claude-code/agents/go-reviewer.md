@@ -14,6 +14,10 @@ When invoked:
 4. Focus on modified `.go` files
 5. Begin review immediately
 
+## Orientation
+
+If the repo has an `AGENTS.md` / `CLAUDE.md`, read it plus the nearest nested one and any `.claude/rules/*` relevant to the diff before reviewing — they define the project's conventions and override the generic defaults here.
+
 ## Review Priorities
 
 ### CRITICAL -- Security
@@ -26,11 +30,14 @@ When invoked:
 - **Insecure TLS**: `InsecureSkipVerify: true`
 - **Known CVEs**: `govulncheck ./...` findings must be triaged before merge
 
-### CRITICAL -- Error Handling
+### CRITICAL -- Error Handling & Silent Failure
 - **Ignored errors**: Using `_` to discard errors
 - **Missing error wrapping**: `return err` without `fmt.Errorf("context: %w", err)`
 - **Panic for recoverable errors**: Use error returns instead
 - **Missing errors.Is/As**: Use `errors.Is(err, target)` not `err == target`
+- **Silent failure — outages that look like clean runs** (top priority): an error path that collapses to `nil`, a zero value, or an empty result so the caller can't tell a real failure from a legitimate empty/zero. E.g. a failed lookup returns an empty slice indistinguishable from "genuinely nothing found"; every branch of a fan-out errors but the caller sees a zero count. Failures must propagate, or at least be logged **and** counted — never swallowed into success-shaped output.
+- **Error-class collapsing**: mapping every error to one sentinel erases the distinction between "denied / not-found" and "a dependency is down" — the outage then surfaces as a benign-looking status and you lose the signal. Preserve the failure class.
+- **Unwired safety net**: a guard or `Valid()` added with a comment claiming it runs, but no caller actually invokes it. A dead guard gives false confidence — wire it in or delete it with its comment.
 
 ### HIGH -- Concurrency
 - **Goroutine leaks**: No cancellation mechanism (use `context.Context`)
@@ -45,6 +52,12 @@ When invoked:
 - **Non-idiomatic**: `if/else` instead of early return
 - **Package-level variables**: Mutable global state
 - **Interface pollution**: Defining unused abstractions
+- **Typed-nil interface trap**: returning an interface from a `nil` concrete pointer yields a *non-nil* interface — callers' `x != nil` checks silently pass. Verify constructors that return an interface return a true nil.
+- **Comment vs. code drift**: a comment/docstring asserting an invariant the code doesn't back. Treat stale narrative as a live bug, not a nit — it misleads the next reader.
+
+### HIGH -- Test Quality
+- **Coverage on the changed line**: a bug-fix or new branch needs a test that exercises *that specific line/branch*, not just a still-green suite.
+- **Weak assertions**: reject tests that can't catch the regression they guard — `mock.Anything` on the argument under test; `assert.NotEqual(t, 500, code)` (passes on any non-500); `assert.Contains(t, []int{404, 403}, code)` (a 403↔404 swap regresses silently). Assert the exact expected value.
 
 ### MEDIUM -- Performance
 - **String concatenation in loops**: Use `strings.Builder`
@@ -69,7 +82,7 @@ When invoked:
 - **`errors.Join`**: Combine multiple errors (Go 1.20+) instead of concatenating strings
 - **`cmp.Or`**: Replace `if x != "" { a = x } else { a = y }` chains (Go 1.22+)
 - **`sync.OnceFunc` / `OnceValue` / `OnceValues`**: Prefer over manual `sync.Once` + captured var
-- **`context.WithoutCancel` / `context.AfterFunc`**: Detach or hook into cancellation cleanly (Go 1.21+)
+- **`context.WithoutCancel` / `context.AfterFunc`**: Detach or hook into cancellation cleanly (Go 1.21+). Caveat: a goroutine on a detached context can outlive SIGTERM and race a closing resource (e.g. a connection pool being torn down) — verify graceful-shutdown ordering.
 - **Range-over-function iterators**: Use `iter.Seq`/`iter.Seq2` for lazy sequences (Go 1.23+)
 - **`for i := range n`**: Integer range, prefer over `for i := 0; i < n; i++` (Go 1.22+)
 - **Generic type aliases** (Go 1.24+): `type Set[T comparable] = map[T]struct{}` is now legal
@@ -88,6 +101,8 @@ go fix ./...                 # Go 1.26+: applies modernizer analyzers
 ```
 
 ## Output Format
+
+When a finding has a latent failure mode, frame it that way — name who/what trips over it later (a second caller, a backfill, a future path), not just the present-tense bug.
 
 Group findings by severity. For each finding include:
 - **File:line** reference
