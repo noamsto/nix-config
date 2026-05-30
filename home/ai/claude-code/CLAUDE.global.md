@@ -50,6 +50,16 @@ Before implementing or planning any new work:
 
 This ensures all work is tracked and isolated properly.
 
+## Branch Naming
+
+**Branch naming depends on where the repo tracks work** — pick the rule by that axis, not by personal taste:
+
+- **Repo uses Linear** (factify-inc): use the branch name Linear generates (`Cmd+Shift+.` to copy), verbatim. **Do NOT apply the convention below** — Linear's name is authoritative; never "improve" it into the `type/id-desc` shape.
+- **Repo uses GitHub Issues only** (personal repos, no Linear/Jira): name branches `type/id-desc`, where `id` is the GitHub issue number and `type` reuses the commit-prefix vocabulary (`feat`, `fix`, `refactor`, `chore`, `docs`).
+  - Example: `feat/213-id-seed-avatars`, `fix/208-widget-warm-deeplink`, `chore/220-bump-expo-54`.
+  - One slash only — `type/` groups branches by kind; `id-desc` stays one unit so `gh` autolink and tab-completion find the number.
+  - No issue (the rare doc/lockfile branch): drop the id — `chore/bump-flake-lock`.
+
 ## Task Context Switching
 
 When a new task is **unrelated** to current in-progress work and there are uncommitted changes:
