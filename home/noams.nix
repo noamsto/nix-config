@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   osConfig,
   ...
 }: {
@@ -28,7 +29,10 @@
 
   home = {
     inherit (osConfig) username;
-    homeDirectory = "/home/${osConfig.username}";
+    homeDirectory =
+      if pkgs.stdenv.hostPlatform.isDarwin
+      then "/Users/${osConfig.username}"
+      else "/home/${osConfig.username}";
     stateVersion = "23.05";
 
     # NOTE: Chromium-based browser flags (Brave, Chromium, Chrome, Edge, Vivaldi)
@@ -39,8 +43,12 @@
     # including applications started from launchers like Vicinae.
   };
 
-  # FlakeHub authentication (symlink to agenix-managed secret)
-  xdg.configFile."flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink "/run/agenix/noams_flakehub";
+  # FlakeHub authentication (symlink to agenix-managed secret).
+  # Linux only: /run/agenix doesn't exist on darwin — FlakeHub auth there is
+  # handled by `determinate-nixd login`.
+  xdg.configFile = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    "flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink "/run/agenix/noams_flakehub";
+  };
 
   # Let home Manager install and manage itself.
   programs.home-manager.enable = true;
