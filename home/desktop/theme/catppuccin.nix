@@ -43,6 +43,8 @@ in {
   '';
 
   catppuccin = {
+    enable = true;
+    autoEnable = false;
     flavor = "mocha";
 
     brave.enable = true;

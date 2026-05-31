@@ -127,7 +127,9 @@
     # cache.nixos.org regardless; the only local step is a fast asar repack,
     # which then re-runs solely when this input is bumped.
     claude-desktop = {
-      url = "github:aaddrick/claude-desktop-debian";
+      # Pinned: Claude 1.9659.2 broke addTrustedFolder patch (upstream now inlines the guard).
+      # Unpin when https://github.com/aaddrick/claude-desktop-debian/issues/672 is fixed.
+      url = "github:aaddrick/claude-desktop-debian/5dd948e";
     };
 
     # === SPECIALIZED HARDWARE ===

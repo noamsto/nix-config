@@ -11,8 +11,6 @@
     stable.ssm-session-manager-plugin
 
     # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
-    postman # Uses stable for API testing reliability
-    ngrok
     dbeaver-bin
 
     mkcert
