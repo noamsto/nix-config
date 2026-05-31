@@ -11,6 +11,7 @@
         ./flake-modules/development.nix
         ./flake-modules/nixos-systems.nix
         ./flake-modules/home-manager.nix
+        ./flake-modules/darwin-systems.nix
         ./packages
       ];
 
@@ -67,6 +68,24 @@
 
     systems.url = "github:nix-systems/default-linux";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
+    # === macOS (nix-darwin) ===
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # Homebrew taps pinned for nix-homebrew (flake = false: plain source trees)
+    homebrew-core = {
+      url = "github:Homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:Homebrew/homebrew-cask";
+      flake = false;
+    };
 
     # === DEVELOPMENT INFRASTRUCTURE ===
     flake-parts = {
