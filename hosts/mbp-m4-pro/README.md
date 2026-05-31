@@ -39,20 +39,22 @@ nix run nix-darwin -- switch --flake ~/nix-config#mbp-m4-pro
 - Requires sudo for system activation.
 - nix-homebrew installs Homebrew into `/opt/homebrew` on first run (owned by
   `noams`).
-- **Expect build-time failures here that the Linux eval could not catch.** Linux
-  eval only surfaces missing-attribute errors (custom flakes lacking
-  `aarch64-darwin` outputs); Linux-only *nixpkgs* packages (`meta.platforms =
-  linux`) evaluate fine and only fail when actually built on the Mac. This is the
-  deferred "drive to green" loop — for each failure:
+- **The full config already evaluates cleanly on Linux** — the entire darwin
+  system toplevel (`config.system.build.toplevel.drvPath`) instantiates without
+  error, so all Linux-only-package gating and missing-attr issues are resolved.
+  Remaining Mac-side failures, if any, would be genuine *build/realisation*
+  problems (a compiler/SDK missing, a cask issue, an import-from-derivation that
+  needs a real darwin builder) — not the "drive to green" gating loop, which is
+  effectively done.
+- If a new gating gap does appear, the patterns are:
   - **Linux-only nixpkgs package** in a shared `home/` module → wrap it with
     `lib.optionals pkgs.stdenv.hostPlatform.isLinux [ ... ]` (add `pkgs`/`lib` to
     the module args if absent).
-  - **Custom flake input with no darwin output** (`wtc`, `zr`, `lazytmux`, `pi`
-    are already gated; if a new one appears) → gate it the same way, or add
-    `aarch64-darwin` to that flake upstream.
-  - **Config block tied to a gated import** → wrap in
-    `lib.mkIf pkgs.stdenv.hostPlatform.isLinux { ... }` (config-level mkIf only —
-    never condition `imports` on `pkgs`, it causes infinite recursion).
+  - **Linux-only HM sub-module** (e.g. `xdg.mimeApps`) → `lib.mkIf
+    pkgs.stdenv.hostPlatform.isLinux { ... }` so it stays un-enabled off-Linux.
+  - **Config block tied to a gated import** → `lib.mkIf
+    pkgs.stdenv.hostPlatform.isLinux { ... }` (config-level mkIf only — never
+    condition `imports` on `pkgs`, it causes infinite recursion).
   Re-run the switch after each fix.
 
 ## 5. Confirm Claude Desktop
