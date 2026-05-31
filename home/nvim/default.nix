@@ -49,66 +49,67 @@
     withPython3 = true;
     withNodeJs = true;
 
-    extraPackages = with pkgs; [
-      #Basic
-      lua5_1
-      luajit
-      lua51Packages.luarocks
-      luajitPackages.lua-utils-nvim
-      cargo
-      go
-      zig
+    extraPackages = with pkgs;
+      [
+        #Basic
+        lua5_1
+        luajit
+        lua51Packages.luarocks
+        luajitPackages.lua-utils-nvim
+        cargo
+        go
+        zig
 
-      # DB
-      sqlite
+        # DB
+        sqlite
 
-      #-- Misc
-      tree-sitter # common language parser/highlighter
+        #-- Misc
+        tree-sitter # common language parser/highlighter
 
-      # Compilation
-      cmake
-      cmake-language-server
-      checkmake
-      gnumake
-      gcc # c/c++ compiler, required by nvim-treesitter!
-      llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
-      gdb
-      lldb
+        # Compilation
+        cmake
+        cmake-language-server
+        checkmake
+        gnumake
+        gcc # c/c++ compiler, required by nvim-treesitter!
+        llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
+        gdb
+        lldb
 
-      marksman # Markdown
-      hadolint
-      uv
+        marksman # Markdown
+        hadolint
+        uv
 
-      # === ESSENTIAL LSP SERVERS (Better via Nix than Mason) ===
-      rust-analyzer # Rust
-      gopls # Go
-      golangci-lint-langserver # Go linting LSP
-      typescript-language-server # TypeScript/JavaScript
-      yaml-language-server # YAML
-      taplo # TOML
-      bash-language-server
-      statix
-      nil # Nix LSP (nil_ls)
-      alejandra # Nix formatter
+        # === ESSENTIAL LSP SERVERS (Better via Nix than Mason) ===
+        rust-analyzer # Rust
+        gopls # Go
+        golangci-lint-langserver # Go linting LSP
+        typescript-language-server # TypeScript/JavaScript
+        yaml-language-server # YAML
+        taplo # TOML
+        bash-language-server
+        statix
+        nil # Nix LSP (nil_ls)
+        alejandra # Nix formatter
 
-      # === KEY FORMATTERS ===
-      rustfmt # Rust formatting
-      gotools # Go imports and formatting
-      prettier # Web formatting
-      shfmt
+        # === KEY FORMATTERS ===
+        rustfmt # Rust formatting
+        gotools # Go imports and formatting
+        prettier # Web formatting
+        shfmt
 
-      inotify-tools
+        mermaid-cli
 
-      mermaid-cli
+        # for images
+        imagemagick
 
-      # for images
-      imagemagick
+        #pdf preview
+        ghostscript
 
-      #pdf preview
-      ghostscript
-
-      # latex render
-      tectonic
-    ];
+        # latex render
+        tectonic
+      ]
+      # inotify-tools is Linux-only (inotify is a Linux kernel API).
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.inotify-tools];
   };
 }

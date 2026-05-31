@@ -6,6 +6,12 @@
 }: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
   obsidianVaults = ["/home/noams/vaults/personal" "/home/noams/vaults/work"];
+
+  # chromium is Linux-only in nixpkgs. On darwin, omit --executable-path so
+  # playwright-mcp uses its own managed browser. Wrapped in lib.optionals so the
+  # `pkgs.chromium` thunk is never forced off-Linux (it would fail meta checks).
+  playwrightExecArgs =
+    lib.optionals pkgs.stdenv.hostPlatform.isLinux ["--executable-path" (lib.getExe pkgs.chromium)];
 in {
   # Base MCPs - npx-style (avoids embedding deps that collide with cursor-agent)
   # Used by claude-code, amp, cursor (flat attribute)
@@ -18,7 +24,7 @@ in {
 
     playwright = {
       command = lib.getExe pkgs.playwright-mcp;
-      args = ["--executable-path" (lib.getExe pkgs.chromium)];
+      args = playwrightExecArgs;
       env = {
         PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
       };
@@ -44,7 +50,7 @@ in {
       extraArgs = obsidianVaults;
     };
     playwright = pkgs.writeShellScriptBin "playwright-mcp-wrapper" ''
-      exec ${lib.getExe pkgs.playwright-mcp} --executable-path ${lib.getExe pkgs.chromium} "$@"
+      exec ${lib.getExe pkgs.playwright-mcp} ${lib.escapeShellArgs playwrightExecArgs} "$@"
     '';
   };
 

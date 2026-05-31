@@ -37,7 +37,12 @@ inputs: [
   inputs.claude-desktop.overlays.default
 
   (_final: prev: {
-    btop = prev.btop.override {rocmSupport = true;};
+    # rocmSupport pulls rocm-smi (Linux-only). Keep the GPU-enabled btop on
+    # Linux; leave btop untouched on darwin.
+    btop =
+      if prev.stdenv.hostPlatform.isLinux
+      then prev.btop.override {rocmSupport = true;}
+      else prev.btop;
   })
 
   # Silence noisy "Did not detect DSR response from terminal" warning that nvim

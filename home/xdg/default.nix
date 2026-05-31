@@ -4,6 +4,7 @@
 #   https://www.freedesktop.org/wiki/Specifications/
 {
   config,
+  lib,
   pkgs,
   osConfig,
   ...
@@ -12,18 +13,24 @@
     if osConfig.profile == "work"
     then "firefox-work.desktop"
     else "firefox-personal.desktop";
+  inherit (pkgs.stdenv.hostPlatform) isLinux;
 in {
-  home.packages = with pkgs; [
+  # xdg-utils / xdg-user-dirs are freedesktop (Linux) tools.
+  home.packages = lib.optionals isLinux (with pkgs; [
     xdg-utils # provides cli tools such as `xdg-mime` `xdg-open`
     xdg-user-dirs
-  ];
+  ]);
 
+  # xdg.enable / cacheHome are cross-platform. systemDirs, mimeApps and userDirs
+  # are Linux-only HM modules (their meta.platforms is linux-only) — gate each
+  # with mkIf so they stay un-enabled (and thus inert) on darwin.
   xdg = {
     enable = true;
     cacheHome = config.home.homeDirectory + "/.local/cache";
-    systemDirs.data = ["${config.home.homeDirectory}/.local/share/flatpak/exports/share/" "/var/lib/flatpak/exports/share/"];
 
-    mimeApps = {
+    systemDirs.data = lib.mkIf isLinux ["${config.home.homeDirectory}/.local/share/flatpak/exports/share/" "/var/lib/flatpak/exports/share/"];
+
+    mimeApps = lib.mkIf isLinux {
       enable = true;
       defaultApplications = let
         browser = [primaryBrowser];
@@ -116,7 +123,7 @@ in {
       };
     };
 
-    userDirs = {
+    userDirs = lib.mkIf isLinux {
       enable = true;
       createDirectories = true;
       setSessionVariables = true;
