@@ -37,4 +37,14 @@
     profile = "personal";
     laptop-scale = "1.25";
   };
+
+  mbp-m4-pro = {
+    username = "noams";
+    user-full-name = "Noam Stolero";
+    email = "noamstolero@gmail.com";
+    hostname = "mbp-m4-pro";
+    desktop.mode = "none";
+    machine.type = "laptop";
+    profile = "personal";
+  };
 }
