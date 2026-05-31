@@ -44,12 +44,6 @@
       default = "personal";
       description = "Work or Personal";
     };
-    isDarwin = lib.mkOption {
-      type = lib.types.bool;
-      default = pkgs.stdenv.hostPlatform.isDarwin;
-      readOnly = true;
-      description = "True on nix-darwin (macOS) systems";
-    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "noams";
