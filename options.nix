@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   options = {
@@ -43,6 +44,12 @@
       default = "personal";
       description = "Work or Personal";
     };
+    isDarwin = lib.mkOption {
+      type = lib.types.bool;
+      default = pkgs.stdenv.hostPlatform.isDarwin;
+      readOnly = true;
+      description = "True on nix-darwin (macOS) systems";
+    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "noams";
@@ -67,7 +74,10 @@
     };
     flakePath = lib.mkOption {
       type = lib.types.str;
-      default = "/home/${config.username}/nix-config";
+      default =
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "/Users/${config.username}/nix-config"
+        else "/home/${config.username}/nix-config";
       readOnly = true;
     };
   };
