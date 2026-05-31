@@ -21,7 +21,26 @@ in {
   };
 
   # Determinate owns Nix; nix-darwin's nix.* options become inert (by design).
-  determinateNix.enable = true;
+  # Caches go here (not nix.settings, which is inert under Determinate). Only
+  # the cross-platform caches are useful on darwin — the Linux-specific ones
+  # (hyprland, noctalia, nix-amd-ai, vicinae, yazi) are omitted.
+  determinateNix = {
+    enable = true;
+    customSettings = {
+      extra-substituters = [
+        "https://cache.flakehub.com"
+        "https://nix-community.cachix.org"
+        "https://nixpkgs-unfree.cachix.org"
+        "https://claude-code.cachix.org"
+      ];
+      extra-trusted-public-keys = [
+        "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
+        "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
+      ];
+    };
+  };
 
   networking.hostName = host.hostname;
   networking.computerName = host.hostname;
