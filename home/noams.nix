@@ -8,6 +8,11 @@
   imports =
     [
       ./packages.nix
+      # Theme palette (pure color data) — provides config.theme.palette, which
+      # the cross-platform terminal modules (kitty, ghostty, btop, …) consume.
+      # Imported unconditionally so it's available on darwin too; the desktop
+      # tree re-imports the same path (deduped) for its GTK/catppuccin bits.
+      ./desktop/theme/palette.nix
       ./terminal
       ./xdg
       ./git
