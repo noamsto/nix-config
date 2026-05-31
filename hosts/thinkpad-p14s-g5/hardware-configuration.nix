@@ -85,7 +85,7 @@
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        stable.rocmPackages.clr.icd
+        rocmPackages.clr.icd
         # VAAPI drivers for AMD GPU
         mesa
         libva-vdpau-driver

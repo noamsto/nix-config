@@ -37,11 +37,7 @@
     sublime-merge
 
     dragon-drop
-    stable.aider-chat-with-playwright # Uses stable for Playwright compatibility
-    aichat
 
-    # Playwright testing dependencies
-    playwright-driver
     # firefox provided by programs.firefox.enable in home/desktop/default.nix
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 
@@ -95,7 +91,6 @@ in {
       gnupg
 
       # productivity
-      hugo # static site generator
       glow # markdown previewer in terminal
 
       # media and archives - critical missing apps
