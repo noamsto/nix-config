@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   inherit (config.theme) palette;
@@ -92,27 +93,31 @@
 
     ''
     + lib.generators.toINI {} footSettings;
-in {
-  programs.foot = {
-    enable = true;
-    # Leave HM's settings empty so its `mkIf (settings != {})` guard skips
-    # generating foot.ini; the override below is the canonical source.
-    settings = {};
-  };
+in
+  # foot is a Wayland terminal (Linux-only). Skip the whole module on darwin —
+  # mkIf keeps the body (incl. config.theme references) lazy, so it never
+  # evaluates off-Linux.
+  lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    programs.foot = {
+      enable = true;
+      # Leave HM's settings empty so its `mkIf (settings != {})` guard skips
+      # generating foot.ini; the override below is the canonical source.
+      settings = {};
+    };
 
-  xdg.configFile = {
-    "foot/foot.ini".text = footIni;
-    "foot/themes/${palette.dark.name}.ini".text = mkFootTheme palette.dark;
-    "foot/themes/${palette.light.name}.ini".text = mkFootTheme palette.light;
+    xdg.configFile = {
+      "foot/foot.ini".text = footIni;
+      "foot/themes/${palette.dark.name}.ini".text = mkFootTheme palette.dark;
+      "foot/themes/${palette.light.name}.ini".text = mkFootTheme palette.light;
 
-    # Pin the preferred terminal for `Terminal=true` .desktop launches (btop,
-    # htop, …). Without this, launchers like vicinae auto-pick across
-    # foot.desktop / foot-server.desktop / footclient.desktop — the server
-    # entry runs `foot --server -e <cmd>`, which daemonizes foot and ignores
-    # the command, so nothing opens.
-    "xdg-terminals.list".text = ''
-      foot.desktop
-      kitty.desktop
-    '';
-  };
-}
+      # Pin the preferred terminal for `Terminal=true` .desktop launches (btop,
+      # htop, …). Without this, launchers like vicinae auto-pick across
+      # foot.desktop / foot-server.desktop / footclient.desktop — the server
+      # entry runs `foot --server -e <cmd>`, which daemonizes foot and ignores
+      # the command, so nothing opens.
+      "xdg-terminals.list".text = ''
+        foot.desktop
+        kitty.desktop
+      '';
+    };
+  }

@@ -10,7 +10,7 @@
 in {
   home = {
     sessionPath = ["$HOME/.local/bin"];
-    packages = [pkgs.wtc];
+    packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.wtc];
 
     # Workaround for eza upstream bug: theme.yml is silently ignored unless
     # EZA_CONFIG_DIR is set (src/options/theme.rs returns default config when
@@ -18,6 +18,9 @@ in {
     sessionVariables.EZA_CONFIG_DIR = "$HOME/.config/eza";
   };
 
+  # NOTE: imports must stay unconditional — conditioning them on `pkgs`
+  # triggers infinite recursion (pkgs is resolved inside the module fixpoint).
+  # Linux-only effects are gated below via mkIf, and inside ./foot itself.
   imports = [
     inputs.lazytmux.homeManagerModules.default
     ./foot
@@ -28,7 +31,7 @@ in {
     ./btop.nix
     ./lazydocker.nix
   ];
-  programs.lazytmux = {
+  programs.lazytmux = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     enable = true;
     worktrunk.enable = true;
     claudeIntegration.enable = true;
