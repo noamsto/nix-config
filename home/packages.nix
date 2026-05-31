@@ -50,6 +50,28 @@
     # Steam is enabled via programs.steam.enable in nixos/desktop/default.nix
     pkgs.vinegar # Roblox Studio bootstrapper
   ];
+  linux-only = with pkgs; [
+    # syscall / hardware introspection — Linux kernel specific
+    strace
+    ltrace
+    sysstat
+    lm_sensors
+    ethtool
+    pciutils # lspci
+    usbutils # lsusb
+    file-roller # GNOME archive manager
+    zr # custom flake input, Linux-only outputs
+    pi # llm-agents.nix, Linux-only
+    (writeShellScriptBin "amdgpu_top" ''
+      scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+      if [ "$scheme" = "'prefer-light'" ]; then
+        flag="--light"
+      else
+        flag="--dark"
+      fi
+      exec ${amdgpu_top}/bin/amdgpu_top "$flag" "$@"
+    '')
+  ];
 in {
   home.packages =
     (with pkgs; [
@@ -93,25 +115,12 @@ in {
       # productivity
       glow # markdown previewer in terminal
 
-      # media and archives - critical missing apps
-      file-roller # archive manager (GNOME, lightweight)
-
       # system call monitoring
-      strace # system call monitoring
-      ltrace # library call monitoring
       lsof # list open files
-
-      # system tools
-      sysstat
-      lm_sensors # for `sensors` command
-      ethtool
-      pciutils # lspci
-      usbutils # lsusb
 
       lazygit
 
       gtrash
-      zr
       ncdu
       dust
       sd
@@ -122,25 +131,14 @@ in {
       # github
       gh
 
-      # AI agents
-      pi # Terminal-based coding agent (badlogic/pi-mono) from llm-agents.nix
-
       # Better system monitoring
       btop
-      (writeShellScriptBin "amdgpu_top" ''
-        scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
-        if [ "$scheme" = "'prefer-light'" ]; then
-          flag="--light"
-        else
-          flag="--dark"
-        fi
-        exec ${amdgpu_top}/bin/amdgpu_top "$flag" "$@"
-      '')
 
       # === TEXT PROCESSING ===
       # bat available system-wide
       # delta conflicts with diff-so-fancy - using diff-so-fancy via programs.git
     ])
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux linux-only
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     ++ lib.optionals (osConfig.profile != "work") personal-packages;
 }
