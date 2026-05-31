@@ -8,8 +8,10 @@ in {
     inputs.home-manager.darwinModules.home-manager
   ];
 
-  # Custom options (from options.nix)
-  inherit (host) username user-full-name email hostname profile;
+  # Custom options (from options.nix). Mirrors the NixOS hosts: username and
+  # user-full-name ride their options.nix defaults (readOnly), hostname is the
+  # single allowed definition for that readOnly option.
+  inherit (host) hostname email profile;
   desktop.mode = host.desktop.mode;
   machine.type = host.machine.type;
 
