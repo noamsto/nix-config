@@ -1,15 +1,12 @@
+local base = require("config.catppuccin-base")
+
 return {
   {
     "catppuccin/nvim",
     name = "catppuccin",
-    opts = {
-      transparent_background = true,
-      float = {
-        transparent = true, -- enable transparent floating windows
-        solid = false, -- use solid styling for floating windows
-      },
-      show_end_of_buffer = false,
-      term_colors = true,
-    },
+    -- Initial load defaults to the dark (transparent) variant; auto-dark-mode
+    -- re-runs setup() with the correct transparency for the current mode at
+    -- startup and on every toggle.
+    opts = base.opts(true),
   },
 }
