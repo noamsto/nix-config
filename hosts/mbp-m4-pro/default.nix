@@ -72,6 +72,7 @@ in {
     };
     casks = [
       "1password"
+      "1password-cli" # op; cask (not nixpkgs) so desktop-app integration works
       "blender"
       "claude"
       "ferdium"
