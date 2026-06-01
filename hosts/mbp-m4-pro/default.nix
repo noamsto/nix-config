@@ -71,9 +71,18 @@ in {
       cleanup = "uninstall";
     };
     casks = [
+      "1password"
+      "blender"
       "claude"
-      "ghostty"
+      "ferdium"
       "firefox"
+      "ghostty"
+      "losslesscut"
+      "raycast"
+      "vlc"
+      # Casks, not nixpkgs: neither has a reliable aarch64-darwin build.
+      "bambu-studio"
+      "freecad"
     ];
   };
 

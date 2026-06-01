@@ -22,6 +22,9 @@
       ./ipython
       ./ai
       ./nix-tools
+      # Darwin-only config; self-gates with mkIf internally (referencing pkgs in
+      # `imports` would infinite-recurse, so it can't be a lib.optionals guard).
+      ./darwin
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop
