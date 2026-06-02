@@ -203,6 +203,8 @@ When adding new features, follow these patterns:
 
 - **Noctalia 3rd-party plugins use composite keys**. Plugins outside the official `github.com/noctalia-dev/noctalia-plugins` repo are keyed as `<first-6-hex-of-sha256(sourceUrl)>:<manifest-id>` in `plugins.json` (`states` map AND bar widget id). Source: `PluginRegistry.generateCompositeKey` (Noctalia shell). When adding 3rd-party plugins to `home/desktop/noctalia/default.nix`, compute the key with `builtins.substring 0 6 (builtins.hashString "sha256" sourceUrl)`. Wrong key ⇒ infinite reinstall + bar widget orphan-delete loop. (Prior reference pattern `keep-awake-plus` is now upstream — see git history for the composite-key code if needed.)
 
+- **Pin fetchers to a commit SHA, never a branch ref.** A `fetchFromGitHub` (or any fixed-output fetcher) with `rev = "main"`/`"master"` plus a fixed `sha256`/`hash` is a time bomb: the hash matches only until upstream pushes, then every build fails with `hash mismatch in fixed-output derivation`. This bit `gvfs.yazi` and `freecad-mcp` (commits `4d69769`, `0cc4cb6`) — both broke the Mac rebuild. Always pin `rev` to a full 40-char commit; use `nurl <url>` to scaffold `rev` + `hash` together. To find offenders: `grep -rnE 'rev = "(main|master|HEAD)"' --include=*.nix .`.
+
 ## Additional Resources
 
 - Run `just help` for command usage
