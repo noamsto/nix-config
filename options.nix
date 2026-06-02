@@ -7,7 +7,7 @@
   options = {
     desktop = {
       mode = lib.mkOption {
-        type = lib.types.enum ["none" "kde" "hyprland"];
+        type = lib.types.enum ["none" "hyprland"];
         default = "none";
         description = "Desktop mode";
       };

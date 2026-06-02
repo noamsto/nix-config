@@ -60,9 +60,9 @@ User explicitly prefers `nh home switch` (CLAUDE.local.md) for HM iterations —
 
 ## Available configs
 
-**NixOS hosts:** `thinkpad-p14s` (personal), `thinkpad-p14s-g5` (work)
+**NixOS hosts:** `thinkpad-p14s-g5` (work), `thinkpad-p14s-g6` (personal)
 
-**Standalone HM configs:** `noams@thinkpad-p14s`, `noams@thinkpad-p14s-g5`, plus legacy aliases (`noams-hyprland`, `noams-hyprland-work`, `noams-kde`). `nh home` auto-picks the right one.
+**Standalone HM configs:** `noams@thinkpad-p14s-g5`, `noams@thinkpad-p14s-g6`, plus legacy aliases (`noams-hyprland`, `noams-hyprland-work`). `nh home` auto-picks the right one.
 
 ## Debugging failed builds
 
@@ -91,7 +91,7 @@ User explicitly prefers `nh home switch` (CLAUDE.local.md) for HM iterations —
 
 5. **Better build output** — `nom` (nix-output-monitor) is already in the devshell and gives readable tree output:
    ```fish
-   nom build .#nixosConfigurations.thinkpad-p14s.config.system.build.toplevel
+   nom build .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel
    ```
 
 ## Devshell (`nix develop` / `just dev`)

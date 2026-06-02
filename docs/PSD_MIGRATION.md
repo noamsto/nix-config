@@ -66,4 +66,3 @@ mv ~/.config/mozilla/firefox/default-backup ~/.config/mozilla/firefox/default
 
 - `thinkpad-p14s-g5`: ✅ migrated 2026-04-28
 - `thinkpad-p14s-g6`: ✅ migrated 2026-04-28
-- `thinkpad-p14s`:    ⏳ pending — apply if still in use; if retired, mark ✅

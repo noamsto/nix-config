@@ -238,7 +238,6 @@ sudo systemd-cryptenroll \
 | Host | LUKS UUID | Status |
 |------|-----------|--------|
 | thinkpad-p14s-g5 | `8d260438-dcbf-414e-9f49-03b9c86cc8b9` | Configured |
-| thinkpad-p14s | `a93bff25-8164-4b2f-ae87-19311112c84c` | Not yet configured |
 
 ---
 

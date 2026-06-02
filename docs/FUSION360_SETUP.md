@@ -149,7 +149,6 @@ Relevant NixOS configuration:
 ### Hardware Compatibility
 
 Your systems (verified compatible):
-- **thinkpad-p14s**: AMD GPU (amdgpu driver) ✅
 - **thinkpad-p14s-g5**: AMD GPU with flickering fix applied ✅
 
 Both systems use open-source amdgpu drivers with excellent Vulkan support.

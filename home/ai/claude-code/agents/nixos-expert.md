@@ -67,10 +67,10 @@ This is a flake-parts-based NixOS config with:
 
 ```bash
 # Evaluate a specific option value
-nix eval .#nixosConfigurations.thinkpad-p14s.config.services.foo.enable
+nix eval .#nixosConfigurations.thinkpad-p14s-g5.config.services.foo.enable
 
 # Check what's pulling in a package
-nix why-depends .#nixosConfigurations.thinkpad-p14s.config.system.build.toplevel nixpkgs#somepackage
+nix why-depends .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel nixpkgs#somepackage
 
 # Build without switching (test first)
 nh os build .

@@ -53,4 +53,3 @@ ls -la ~/.mozilla/firefox/
 
 - `thinkpad-p14s-g6`: ✅ migrated 2026-04-30
 - `thinkpad-p14s-g5`: ⏳ pending
-- `thinkpad-p14s`:    ⏳ pending — apply if still in use; if retired, mark ✅

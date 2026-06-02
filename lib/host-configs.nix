@@ -5,17 +5,6 @@
     noams = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com";
   };
 
-  thinkpad-p14s = {
-    username = "noams";
-    user-full-name = "Noam Stolero";
-    email = "noamstolero@gmail.com";
-    hostname = "thinkpad-p14s";
-    desktop.mode = "hyprland";
-    machine.type = "laptop";
-    profile = "personal";
-    laptop-scale = "2.0";
-  };
-
   thinkpad-p14s-g5 = {
     username = "noams";
     user-full-name = "Noam Stolero";
