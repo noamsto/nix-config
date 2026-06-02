@@ -19,8 +19,8 @@
   freecad-mcp-addon = pkgs.fetchFromGitHub {
     owner = "neka-nat";
     repo = "freecad-mcp";
-    rev = "main";
-    sha256 = "sha256-st/3ta9HouoTnic+oUBQF/3bpSoARq5U8JxWTcolIbw=";
+    rev = "aae23e561b1384d5949dff20a4fff0caf2b23cd5";
+    sha256 = "sha256-c0AIO62P8+oR3My4iFpFAD98Wpw5wjGITPOjK+WtIMU=";
   };
 in {
   # Generate additional MCP configs (add to base MCPs)
