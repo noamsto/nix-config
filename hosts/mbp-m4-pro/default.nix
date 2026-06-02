@@ -71,7 +71,20 @@ in {
   networking.hostName = host.hostname;
   networking.computerName = host.hostname;
 
-  users.users.${host.username}.home = "/Users/${host.username}";
+  # Fish as the login shell. programs.fish.enable wires up system-wide fish
+  # (completions, /etc/shells). nix-darwin only changes an existing account's
+  # shell for a user in users.knownUsers with a matching uid — uid 501 matches
+  # the pre-existing account, so activation just runs `dscl … UserShell` (no
+  # account recreation). gid 20 = staff. shell resolves to the GC-stable
+  # /run/current-system/sw/bin/fish.
+  programs.fish.enable = true;
+  users.knownUsers = [host.username];
+  users.users.${host.username} = {
+    uid = 501;
+    gid = 20;
+    home = "/Users/${host.username}";
+    shell = pkgs.fish;
+  };
 
   # Declarative Homebrew via nix-homebrew (Apple Silicon prefix /opt/homebrew).
   nix-homebrew = {

@@ -34,6 +34,9 @@ in {
   # Cross-platform: the module gates its Linux systemd / darwin launchd internals.
   programs.lazytmux = {
     enable = true;
+    # macOS: use the otherwise-unused § key (left of 1 on Mac ISO keyboards) as
+    # prefix. Linux keeps the lazytmux default (backtick).
+    prefix = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin "§";
     worktrunk.enable = true;
     claudeIntegration.enable = true;
     persist.enable = true;
