@@ -78,10 +78,13 @@ in {
       # Linux: systemctl start is synchronous + idempotent (server created in its
       # own scope, never inside ghostty's), then point tmux at the
       # $XDG_RUNTIME_DIR socket. darwin: lazytmux's launchd agent already started
-      # the server on the default /tmp socket, so just attach/create.
+      # the server on the default /tmp socket, so just attach/create. GUI-launched
+      # apps inherit launchd's minimal PATH (no nix profile), so prepend the
+      # per-user profile bin — otherwise `tmux` isn't found and the window closes
+      # on launch. The profile path resolves the lazytmux-wrapped tmux.
       command =
         if pkgs.stdenv.hostPlatform.isDarwin
-        then "${pkgs.fish}/bin/fish -l -c 'tmux attach -t nix-config; or tmux new -As nix-config -c $HOME/nix-config'"
+        then "${pkgs.fish}/bin/fish -l -c 'set -gx PATH /etc/profiles/per-user/${config.home.username}/bin $PATH; tmux attach -t nix-config; or tmux new -As nix-config -c $HOME/nix-config'"
         else "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config; or TMUX_TMPDIR=/run/user/(id -u) tmux new -As nix-config -c $HOME/nix-config'";
 
       keybind = [
