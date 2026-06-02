@@ -94,8 +94,8 @@ in {
         gvfs = pkgs.fetchFromGitHub {
           owner = "boydaihungst";
           repo = "gvfs.yazi";
-          rev = "master";
-          sha256 = "sha256-6VNra6WUjDfBdGjCw/6VOAaAgZLF78/4Gj47BOh1Q/0=";
+          rev = "3abc0a258f9d7aeaa453a2d0d6e103c5a305953d";
+          sha256 = "sha256-UHneVJ+YXyDuPrZS+PZbs9n9h+VN5M2QG36FdprBkJc=";
         };
       };
 
