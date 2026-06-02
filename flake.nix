@@ -77,6 +77,13 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
+    # Makes nix-installed .app bundles show up in Spotlight/Launchpad by
+    # replacing their /nix/store symlinks with proper macOS aliases.
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Homebrew taps pinned for nix-homebrew (flake = false: plain source trees)
     homebrew-core = {
       url = "github:Homebrew/homebrew-core";

@@ -6,6 +6,8 @@ in {
     inputs.determinate.darwinModules.default
     inputs.nix-homebrew.darwinModules.nix-homebrew
     inputs.home-manager.darwinModules.home-manager
+    # Aliases nix-darwin's /Applications/Nix Apps so Spotlight/Launchpad index them.
+    inputs.mac-app-util.darwinModules.default
   ];
 
   # Custom options (from options.nix). Mirrors the NixOS hosts: username and
@@ -71,6 +73,9 @@ in {
 
   homebrew = {
     enable = true;
+    # Install casks without the com.apple.quarantine flag, so Gatekeeper doesn't
+    # prompt "X is from the internet, are you sure?" on first launch of each app.
+    caskArgs.no_quarantine = true;
     onActivation = {
       autoUpdate = true;
       upgrade = true;
@@ -124,6 +129,8 @@ in {
     useUserPackages = true;
     backupFileExtension = "bak";
     extraSpecialArgs = {inherit inputs;};
+    # Aliases Home Manager Apps (kitty, …) so Spotlight/Launchpad index them.
+    sharedModules = [inputs.mac-app-util.homeManagerModules.default];
     users.${host.username} = ../../home/noams.nix;
   };
 }
