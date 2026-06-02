@@ -89,9 +89,11 @@ in {
       "losslesscut"
       "raycast"
       "vlc"
-      # Casks, not nixpkgs: neither has a reliable aarch64-darwin build.
+      # Cask, not nixpkgs: no reliable aarch64-darwin build there.
       "bambu-studio"
-      "freecad"
+      # freecad: omitted — the upstream cask is malformed (two `depends_on macos`,
+      # rejected by brew) and nixpkgs has no darwin build. Install the official
+      # .dmg manually; re-add this cask once upstream fixes Casks/f/freecad.rb.
     ];
   };
 
