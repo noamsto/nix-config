@@ -64,7 +64,7 @@
     # === CORE SYSTEM ===
     # Use nixos-unstable for latest packages and features
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
 
     systems.url = "github:nix-systems/default-linux";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
