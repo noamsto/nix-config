@@ -79,10 +79,10 @@
 
     # Makes nix-installed .app bundles show up in Spotlight/Launchpad by
     # replacing their /nix/store symlinks with proper macOS aliases.
-    mac-app-util = {
-      url = "github:hraban/mac-app-util";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # NOTE: do NOT make its nixpkgs follow ours — mac-app-util is a Common Lisp
+    # app and pins a known-good nixpkgs; forcing our unstable nixpkgs breaks its
+    # SBCL/fare-quasiquote build on aarch64-darwin. The extra nixpkgs is the cost.
+    mac-app-util.url = "github:hraban/mac-app-util";
 
     # Homebrew taps pinned for nix-homebrew (flake = false: plain source trees)
     homebrew-core = {
