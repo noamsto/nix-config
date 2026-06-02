@@ -1,4 +1,8 @@
-{inputs, ...}: let
+{
+  inputs,
+  pkgs,
+  ...
+}: let
   host = (import ../../lib/host-configs.nix).mbp-m4-pro;
 in {
   imports = [
@@ -53,6 +57,16 @@ in {
       ];
     };
   };
+
+  # Fonts (mirrors nixos/core/locale.nix). NixOS installs these system-wide via
+  # fonts.packages; darwin needs its own declaration or terminals can't find
+  # "FiraCode Nerd Font". nix-darwin installs these into /Library/Fonts.
+  fonts.packages = with pkgs; [
+    nerd-fonts.fira-code
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.symbols-only
+    nerd-fonts.ubuntu
+  ];
 
   networking.hostName = host.hostname;
   networking.computerName = host.hostname;

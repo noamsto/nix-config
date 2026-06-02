@@ -108,11 +108,15 @@ in {
       listen_on = "unix:/tmp/kitty";
       startup_session = "none";
 
-      # systemctl start is synchronous and idempotent: it blocks until the
-      # unit is active (creating the server in its own scope), or returns
-      # immediately if already active. Serializes with tmux-startup.service
-      # so the server is never created inside kitty's scope.
-      shell = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c $HOME/nix-config'";
+      # Linux: systemctl start is synchronous + idempotent — it blocks until the
+      # unit is active (server created in its own scope) or returns immediately,
+      # so the server is never created inside kitty's scope; point tmux at the
+      # $XDG_RUNTIME_DIR socket. darwin: lazytmux's launchd agent already started
+      # the server on the default /tmp socket, so just attach/create.
+      shell =
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "${pkgs.fish}/bin/fish -l -c 'tmux attach -t nix-config || tmux new -As nix-config -c $HOME/nix-config'"
+        else "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c $HOME/nix-config'";
     };
 
     keybindings = {

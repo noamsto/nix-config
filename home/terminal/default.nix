@@ -31,7 +31,8 @@ in {
     ./btop.nix
     ./lazydocker.nix
   ];
-  programs.lazytmux = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+  # Cross-platform: the module gates its Linux systemd / darwin launchd internals.
+  programs.lazytmux = {
     enable = true;
     worktrunk.enable = true;
     claudeIntegration.enable = true;

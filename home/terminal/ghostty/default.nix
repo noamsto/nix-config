@@ -75,11 +75,14 @@ in {
 
       gtk-single-instance = true;
 
-      # systemctl start is synchronous and idempotent: it blocks until the
-      # unit is active (creating the server in its own scope), or returns
-      # immediately if already active. Serializes with tmux-startup.service
-      # so the server is never created inside ghostty's scope.
-      command = "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config; or TMUX_TMPDIR=/run/user/(id -u) tmux new -As nix-config -c $HOME/nix-config'";
+      # Linux: systemctl start is synchronous + idempotent (server created in its
+      # own scope, never inside ghostty's), then point tmux at the
+      # $XDG_RUNTIME_DIR socket. darwin: lazytmux's launchd agent already started
+      # the server on the default /tmp socket, so just attach/create.
+      command =
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "${pkgs.fish}/bin/fish -l -c 'tmux attach -t nix-config; or tmux new -As nix-config -c $HOME/nix-config'"
+        else "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service; and TMUX_TMPDIR=/run/user/(id -u) tmux attach -t nix-config; or TMUX_TMPDIR=/run/user/(id -u) tmux new -As nix-config -c $HOME/nix-config'";
 
       keybind = [
         "ctrl+equal=increase_font_size:1"
