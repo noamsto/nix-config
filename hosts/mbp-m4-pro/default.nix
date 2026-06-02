@@ -65,6 +65,9 @@ in {
     enableRosetta = true;
     user = host.username;
     mutableTaps = false;
+    # Adopt the pre-existing official-installer Homebrew + its taps, instead of
+    # nix-homebrew refusing to untap homebrew/cask (it has installed casks).
+    autoMigrate = true;
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
