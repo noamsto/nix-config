@@ -29,6 +29,12 @@ in {
   determinateNix = {
     enable = true;
     customSettings = {
+      # An untrusted daemon user has its extra substituters / public keys
+      # silently ignored, so the caches below need this to apply.
+      trusted-users = [
+        "root"
+        host.username
+      ];
       extra-substituters = [
         "https://cache.flakehub.com"
         "https://nix-community.cachix.org"
