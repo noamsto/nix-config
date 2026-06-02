@@ -43,6 +43,10 @@
       else "/home/${osConfig.username}";
     stateVersion = "23.05";
 
+    # HM master labels its release ahead of nixpkgs-unstable, so the version
+    # check warns spuriously on this unstable-tracking setup.
+    enableNixpkgsReleaseCheck = false;
+
     # NOTE: Chromium-based browser flags (Brave, Chromium, Chrome, Edge, Vivaldi)
     # are configured in home/desktop/hyprland/settings/default.nix as Hyprland env variables:
     # - BRAVE_USER_FLAGS
