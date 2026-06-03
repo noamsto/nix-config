@@ -37,6 +37,10 @@ in {
     # macOS: use the otherwise-unused § key (left of 1 on Mac ISO keyboards) as
     # prefix. Linux keeps the lazytmux default (backtick).
     prefix = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin "§";
+    # macOS: launchd-started tmux servers capture a stale $SHELL (/bin/zsh), so
+    # panes open in zsh even though the account shell is fish. Pin default-shell.
+    # Linux propagates the login shell fine, so leave it at the default there.
+    defaultShell = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.getExe pkgs.fish);
     worktrunk.enable = true;
     claudeIntegration.enable = true;
     persist.enable = true;
