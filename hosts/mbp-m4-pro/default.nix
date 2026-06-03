@@ -120,7 +120,9 @@ in {
       "claude"
       "ferdium"
       "firefox"
-      "ghostty"
+      # Tap/hold on Caps Lock (Esc on tap, Hyper ⌘⌃⌥ on hold) for the AeroSpace
+      # WM modifier — see home/darwin/karabiner.nix.
+      "karabiner-elements"
       "losslesscut"
       "raycast"
       "vlc"
