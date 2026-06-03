@@ -9,33 +9,38 @@
     inputs',
     config,
     pkgs,
+    lib,
     ...
   }: {
     devShells.default = pkgs.mkShell {
-      packages = [
-        # Core NixOS configuration tools
-        inputs'.agenix.packages.default
-        inputs'.nixos-anywhere.packages.default
-        config.treefmt.build.wrapper
-        pkgs.git
-        pkgs.nh
-        pkgs.prettier
-        pkgs.fish
-        pkgs.nix-output-monitor
-        pkgs.just
-        pkgs.statix
-        pkgs.shellcheck
+      packages =
+        [
+          # Core NixOS configuration tools
+          inputs'.agenix.packages.default
+          config.treefmt.build.wrapper
+          pkgs.git
+          pkgs.nh
+          pkgs.prettier
+          pkgs.fish
+          pkgs.nix-output-monitor
+          pkgs.just
+          pkgs.statix
+          pkgs.shellcheck
 
-        # Package authoring helpers (see nix-package-authoring skill)
-        pkgs.nurl # generate fetcher + hash from a URL
-        pkgs.nix-init # scaffold a full derivation from a URL
+          # Package authoring helpers (see nix-package-authoring skill)
+          pkgs.nurl # generate fetcher + hash from a URL
+          pkgs.nix-init # scaffold a full derivation from a URL
 
-        # Lightweight development essentials
-        pkgs.jq # JSON processing (small and useful)
-        pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
+          # Lightweight development essentials
+          pkgs.jq # JSON processing (small and useful)
+          pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
 
-        pkgs.home-manager
-      ];
+          pkgs.home-manager
+        ]
+        # Remote NixOS installer — Linux-only, irrelevant on the darwin devShell.
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+          inputs'.nixos-anywhere.packages.default
+        ];
       name = "dots";
       DIRENV_LOG_FORMAT = "";
       shellHook = ''
