@@ -935,6 +935,22 @@
         "type": "github"
       }
     },
+    "homebrew-mediosz": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780158512,
+        "narHash": "sha256-FQjqN6zUKvpF9SowNIuEPB6LP+5Lk+RYz/kIFcE6wc4=",
+        "owner": "mediosz",
+        "repo": "homebrew-tap",
+        "rev": "6b8c8ec7cd966e5ac2d8771caf5e122e06b55e0a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mediosz",
+        "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
     "hyprdynamicmonitors": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -1812,6 +1828,7 @@
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
+        "homebrew-mediosz": "homebrew-mediosz",
         "hyprdynamicmonitors": "hyprdynamicmonitors",
         "lanzaboote": "lanzaboote",
         "lazytmux": "lazytmux",

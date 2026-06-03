@@ -98,14 +98,18 @@ in {
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
+      # mediosz/tap → SwipeAerospace (swipe-to-switch-workspace for AeroSpace).
+      "mediosz/homebrew-tap" = inputs.homebrew-mediosz;
     };
   };
 
   homebrew = {
     enable = true;
-    # Install casks without the com.apple.quarantine flag, so Gatekeeper doesn't
-    # prompt "X is from the internet, are you sure?" on first launch of each app.
-    caskArgs.no_quarantine = true;
+    # NOTE: caskArgs.no_quarantine was removed — Homebrew disabled the
+    # `--[no-]quarantine` switch ("There is no replacement"), so passing it
+    # fails every fresh cask install. Gatekeeper will prompt once per app on
+    # first launch; clear it manually if needed (xattr -d com.apple.quarantine
+    # /Applications/<App>.app, or right-click → Open).
     onActivation = {
       autoUpdate = true;
       upgrade = true;
@@ -124,6 +128,9 @@ in {
       # WM modifier — see home/darwin/karabiner.nix.
       "karabiner-elements"
       "losslesscut"
+      # 3-finger swipe → AeroSpace workspace (parity with Hyprland's gesture
+      # swipe on the ThinkPad). From the mediosz/tap declared above.
+      "mediosz/tap/swipeaerospace"
       "raycast"
       "vlc"
       # Cask, not nixpkgs: no reliable aarch64-darwin build there.

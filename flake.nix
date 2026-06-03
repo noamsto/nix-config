@@ -94,6 +94,11 @@
       url = "github:Homebrew/homebrew-cask";
       flake = false;
     };
+    # Third-party tap for SwipeAerospace (3-finger swipe → AeroSpace workspace).
+    homebrew-mediosz = {
+      url = "github:mediosz/homebrew-tap";
+      flake = false;
+    };
 
     # === DEVELOPMENT INFRASTRUCTURE ===
     flake-parts = {
