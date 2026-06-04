@@ -177,7 +177,10 @@ Write the diff a careful senior engineer *on this codebase* would write — noth
 
 - **Comments earn their place.** Only explain a non-obvious WHY (hidden constraint, invariant, workaround). Never restate what the code does, reference the task/PR/ticket, or name callers. In doubt, delete it.
 - **Match the surrounding code** — naming, error handling, logging, structure. Edit like the file, not like greenfield.
+- **Stay in scope.** Change only what the task needs — no drive-by reformatting, renames, or unrelated "improvements".
 - **No speculative robustness.** No try/catch, null guards, or fallbacks for cases that can't occur on a trusted path — see "Define errors out of existence" above.
 - **No escape hatches** to silence a checker (`as any`, `@ts-ignore`, `# type: ignore`) — fix the type or the call.
 - **Flatten with early returns** instead of deep conditional nesting.
+- **Delete, don't preserve.** When replacing code, remove the old version — no commented-out blocks, dead branches, or compat shims kept "just in case". Git history is the backup.
+- **Clean up scaffolding** — strip debug prints, leftover logging, and placeholder TODOs you introduced before calling it done.
 - **Verify unfamiliar APIs before use** — never guess that an import, method, or option exists.
