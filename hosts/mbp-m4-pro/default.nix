@@ -170,6 +170,14 @@ in {
     touchIdAuth = true;
   };
 
+  # Firefox enters Troubleshoot Mode if Option is held at launch. The AeroSpace
+  # Hyper bind (cmd-alt-b) holds Option as Firefox starts, so disable the key
+  # trigger session-wide. launchctl setenv exposes it to GUI (launchd) apps.
+  launchd.user.agents.firefox-disable-safe-mode-key = {
+    command = "/bin/launchctl setenv MOZ_DISABLE_SAFE_MODE_KEY 1";
+    serviceConfig.RunAtLoad = true;
+  };
+
   # nix-darwin system identity + starter macOS defaults.
   # NOTE: bump stateVersion to the current nix-darwin value if the changelog
   # on the Mac says otherwise; 6 is correct as of this writing.
