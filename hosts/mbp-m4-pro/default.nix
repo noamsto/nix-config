@@ -178,6 +178,17 @@ in {
     serviceConfig.RunAtLoad = true;
   };
 
+  # The SwipeAeroSpace cask registers no login item, so it never auto-starts.
+  # Give it a LaunchAgent mirroring AeroSpace's own (RunAtLoad + KeepAlive) so
+  # the swipe helper comes up at login and stays up.
+  launchd.user.agents.swipeaerospace = {
+    command = "/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace";
+    serviceConfig = {
+      RunAtLoad = true;
+      KeepAlive = true;
+    };
+  };
+
   # nix-darwin system identity + starter macOS defaults.
   # NOTE: bump stateVersion to the current nix-darwin value if the changelog
   # on the Mac says otherwise; 6 is correct as of this writing.
