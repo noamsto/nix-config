@@ -141,6 +141,18 @@ in {
     ];
   };
 
+  # Touch ID for sudo. touchIdAuth adds pam_tid; reattach adds pam_reattach
+  # FIRST so it also works inside tmux/screen (otherwise pam_tid can't reach the
+  # Touch ID prompt from a detached session and silently falls back to password).
+  # nix-darwin manages /etc/pam.d/sudo_local and re-includes it after macOS
+  # updates reset /etc/pam.d/sudo. Note: the first sudo right after a switch
+  # (the switch itself) still uses a password; Touch ID kicks in afterward.
+  security.pam.services.sudo_local = {
+    enable = true;
+    reattach = true;
+    touchIdAuth = true;
+  };
+
   # nix-darwin system identity + starter macOS defaults.
   # NOTE: bump stateVersion to the current nix-darwin value if the changelog
   # on the Mac says otherwise; 6 is correct as of this writing.
