@@ -68,6 +68,23 @@ in {
     nerd-fonts.ubuntu
   ];
 
+  # Essential CLI tools. On NixOS these come from nixos/packages.nix
+  # (environment.systemPackages, "available system-wide"), which darwin doesn't
+  # import — so home/packages.nix omits them and they'd otherwise be missing on
+  # the Mac. Mirror the cross-platform core here. (TODO: factor into a shared
+  # lib/ list imported by both, to prevent drift.)
+  environment.systemPackages = with pkgs; [
+    ripgrep # rg
+    fd
+    jq
+    bat
+    eza
+    fastfetch
+    onefetch
+    nvd
+    wget
+  ];
+
   networking.hostName = host.hostname;
   networking.computerName = host.hostname;
 
