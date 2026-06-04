@@ -47,6 +47,28 @@ lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
               }
             ];
           }
+          {
+            # Language toggle, mirroring the ThinkPad's `grp:win_space_toggle`
+            # (Super+Space). Here Hyper(=⌘⌥)+Space → Ctrl+Space, macOS's built-in
+            # "select previous input source" (toggles between two sources).
+            # Requires a 2nd input source (e.g. Hebrew) added in System Settings.
+            description = "Hyper + Space → switch input source (Ctrl+Space)";
+            manipulators = [
+              {
+                type = "basic";
+                from = {
+                  key_code = "spacebar";
+                  modifiers.mandatory = ["left_command" "left_option"];
+                };
+                to = [
+                  {
+                    key_code = "spacebar";
+                    modifiers = ["left_control"];
+                  }
+                ];
+              }
+            ];
+          }
         ];
       }
     ];
