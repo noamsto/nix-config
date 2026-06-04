@@ -79,6 +79,22 @@ The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`) works differently 
 - **Caches & Nix settings** are managed by **Determinate Nix** via `determinateNix.customSettings` in the host's `default.nix` — *not* `flake.nix:nixConfig`/`lib/caches.nix` (those are the Linux path). Linux-only caches (hyprland, noctalia, vicinae, yazi, etc.) are intentionally omitted on darwin.
 - **Cross-platform gating**: shared `home/` modules that pull Linux-only packages must be gated with `lib.optionals pkgs.stdenv.hostPlatform.isLinux [ ... ]` (package lists) or `lib.mkIf pkgs.stdenv.hostPlatform.isLinux { ... }` (config blocks — never condition `imports` on `pkgs`, it causes infinite recursion).
 
+### `nh` can't find `nix` ("No output from nix --version")
+
+**Symptom:** any `nh darwin …` (or `nh home`/`nh os`) invocation aborts immediately with `Failed to get Nix version output` / `No output from nix --version command`.
+
+**Cause:** Determinate Nix's `nix` binary (`/nix/var/nix/profiles/default/bin/nix`) is added to PATH only by macOS `path_helper` (`/etc/paths.d/nix`), which runs for **login** shells. GUI-launched apps (Claude Code from the Dock/Spotlight) inherit PATH from launchd, which never runs `path_helper`, so neither they nor the direnv devshell they spawn see `nix`. The devshell ships `nh` but intentionally **not** `nix` (Determinate owns it — don't shadow it with a nixpkgs `nix`). Your interactive fish terminal is a login shell, so the bug only appears in GUI-launched / non-login contexts.
+
+**Fix:** the repo's `.envrc` adds the profile bin to PATH on darwin (`PATH_add /nix/var/nix/profiles/default/bin` under an `$OSTYPE == darwin*` guard), so any tool run inside the project's direnv env gets `nix`. If you hit this outside the repo, prepend it manually:
+```fish
+PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin switch .
+```
+(After editing `.envrc` you must re-run `direnv allow`.)
+
+### Activation needs interactive sudo
+
+`nh darwin switch` builds without sudo, then runs `sudo darwin-rebuild activate`. The activation prompts for a password, so it can't complete from a non-interactive/automated shell — run the switch from an interactive terminal (or, in Claude Code, via the `! nh darwin switch ~/nix-config` prompt-prefix). `nh darwin build .` validates the build with no sudo.
+
 ## Available configs
 
 **NixOS hosts:** `thinkpad-p14s-g5` (work), `thinkpad-p14s-g6` (personal)
