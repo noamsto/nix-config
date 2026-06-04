@@ -222,6 +222,15 @@ in {
         # one box per workspace in numeric order (the "1 2" boxed style). It's
         # stored in UserDefaults, not aerospace.toml, so it lives here.
         "bobko.aerospace".displayStyle = "i3Ordered";
+
+        # SwipeAeroSpace (the swipe→workspace cask) keeps its settings in
+        # UserDefaults too. skip-empty jumps over empty workspaces; threshold is
+        # the swipe sensitivity; menuBarExtraIsInserted shows its menu-bar icon.
+        "club.mediosz.SwipeAeroSpace" = {
+          skip-empty = true;
+          threshold = 1.0;
+          menuBarExtraIsInserted = true;
+        };
       };
     };
   };
