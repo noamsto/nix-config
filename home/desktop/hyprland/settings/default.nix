@@ -61,7 +61,7 @@ in {
 
       input = {
         kb_layout = "us,il";
-        kb_options = "grp:win_space_toggle,caps:escape";
+        kb_options = "grp:win_space_toggle";
         follow_mouse = 1;
         accel_profile = "adaptive";
         sensitivity = 0;

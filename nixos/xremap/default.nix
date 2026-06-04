@@ -14,6 +14,23 @@ in {
     userName = config.username;
     watch = true;
     config = {
+      modmap = [
+        {
+          # Caps tapped → Esc (vim); Caps held → Super, the Hyprland $mainMod.
+          # Mirrors the Mac's Karabiner tap/hold so the same finger drives the
+          # WM on both machines (see home/darwin/karabiner.nix). xremap owns
+          # Caps at the evdev layer, so `caps:escape` is dropped from kb_options.
+          name = "caps_escape_super";
+          remap = {
+            CAPSLOCK = {
+              held = "KEY_LEFTMETA";
+              alone = "ESC";
+              alone_timeout_millis = 1000;
+              hold_threshold_millis = 100;
+            };
+          };
+        }
+      ];
       keymap = [
         {
           # Fix Logitech MX keys mini print screen key
@@ -27,12 +44,6 @@ in {
           remap = {
             "SUPER-SHIFT-N" = "KEY_NEXTSONG";
             "SUPER-SHIFT-P" = "KEY_PREVIOUSSONG";
-          };
-        }
-        {
-          name = "caps_escape_control";
-          remap = {
-            CAPSLOCK = "ESC";
           };
         }
       ];
