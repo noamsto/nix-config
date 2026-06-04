@@ -323,8 +323,9 @@
         # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
         tss = "tailscale status";
         tsl = "tailscale switch --list"; # profiles; current marked with *
-        tsp = "tailscale down; tailscale switch stellern@gmail.com; and tailscale up --accept-routes";
-        tsw = "tailscale down; tailscale switch noam@factify.com; and tailscale up --accept-routes";
+        # operator/routing live in nixos/services/tailscale.nix; these only flip per-profile accept-routes
+        tsp = "tailscale switch stellern@gmail.com && tailscale up && tailscale set --accept-routes=false";
+        tsw = "tailscale switch noam@factify.com && tailscale up && tailscale set --accept-routes";
 
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";

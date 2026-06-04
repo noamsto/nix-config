@@ -2,10 +2,11 @@
   # Enable Tailscale VPN service
   services.tailscale = {
     enable = true;
-    # Allow the main user to use tailscale commands (file get, etc.) without sudo
+    # --operator (shared across profiles) lets the user run tailscale without sudo.
+    # --accept-routes is intentionally omitted: it's per-profile and extraSetFlags
+    # isn't profile-aware, so the tsw/tsp abbreviations set it via `tailscale set`.
     extraSetFlags = [
       "--operator=${config.username}"
-      "--accept-routes"
     ];
     useRoutingFeatures = "client";
   };
