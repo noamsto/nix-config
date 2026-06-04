@@ -6,9 +6,11 @@
 # Karabiner-Elements (installed as a brew cask in the host module) provides the
 # one thing nix-darwin's keyboard remap can't: tap-vs-hold on Caps Lock.
 #   Caps tapped → Escape   (vim)
-#   Caps held   → Hyper (⌘⌃⌥)  — the WM-exclusive modifier AeroSpace binds to.
-# Hyper includes Cmd so the combo never leaks into the terminal/tmux, and omits
-# Shift so AeroSpace can still use Shift as a differentiator (see aerospace.nix).
+#   Caps held   → Hyper (⌘⌥)  — the WM-exclusive modifier AeroSpace binds to.
+# Hyper includes Cmd so the combo never leaks into the terminal/tmux, and is only
+# Cmd+Alt (not Ctrl/Shift) so BOTH Ctrl and Shift stay free as differentiators —
+# letting AeroSpace mirror Hyprland exactly: Hyper+Ctrl = move window,
+# Hyper+Shift = cycle/move-to workspace (see aerospace.nix).
 #
 # NOTE: the whole karabiner.json is managed declaratively here. After the first
 # switch you must launch Karabiner-Elements once and grant Input Monitoring /
@@ -27,7 +29,7 @@ lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
         virtual_hid_keyboard.keyboard_type_v2 = "ansi";
         complex_modifications.rules = [
           {
-            description = "Caps Lock → Escape (tap) / Hyper ⌘⌃⌥ (hold)";
+            description = "Caps Lock → Escape (tap) / Hyper ⌘⌥ (hold)";
             manipulators = [
               {
                 type = "basic";
@@ -38,7 +40,7 @@ lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
                 to = [
                   {
                     key_code = "left_command";
-                    modifiers = ["left_control" "left_option"];
+                    modifiers = ["left_option"];
                   }
                 ];
                 to_if_alone = [{key_code = "escape";}];

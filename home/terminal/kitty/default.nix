@@ -81,6 +81,11 @@ in {
       mouse_hide_wait = -1; # hide immediately when typing
       shell_integration = "enabled";
 
+      # macOS: treat both Option keys as Alt/Meta so Option-based bindings (e.g.
+      # tmux's M-H/M-L window switching) reach the app instead of composing
+      # special characters. No-op on Linux.
+      macos_option_as_alt = "yes";
+
       tab_bar_edge = "top";
       tab_bar_style = "powerline";
       tab_powerline_style = "slanted";

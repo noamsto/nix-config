@@ -6,12 +6,13 @@
   # i3/Hyprland-style numbered workspaces, generated rather than spelled out.
   workspaces = map toString (lib.range 1 9);
 
-  # Hyper = Cmd+Ctrl+Alt. Karabiner maps Caps-hold to this combo (Caps-tap = Esc).
+  # Hyper = Cmd+Alt. Karabiner maps Caps-hold to this combo (Caps-tap = Esc).
   # Cmd is included so the combo NEVER reaches the terminal/tmux (which can only
   # bind Alt/Ctrl), giving AeroSpace a conflict-free, WM-exclusive modifier that
-  # behaves like Linux's SUPER. Shift is deliberately left OUT of Hyper so it
-  # stays free as a differentiator for the "move"/"move-to-workspace" variants.
-  hyper = "cmd-ctrl-alt";
+  # behaves like Linux's SUPER. It's only Cmd+Alt (not Ctrl/Shift), so BOTH Ctrl
+  # and Shift stay free — letting us mirror the ThinkPad's Hyprland binds 1:1
+  # (SUPER→Hyper): Ctrl = move window, Shift = cycle / move-to workspace.
+  hyper = "cmd-alt";
 
   focusWorkspace = lib.listToAttrs (map (n: lib.nameValuePair "${hyper}-${n}" "workspace ${n}") workspaces);
   moveToWorkspace = lib.listToAttrs (map (n: lib.nameValuePair "${hyper}-shift-${n}" "move-node-to-workspace ${n}") workspaces);
@@ -39,32 +40,28 @@ in
           };
         };
 
-        # Mirrors the Hyprland binds (home/desktop/hyprland/settings/bindings.nix)
-        # with $mainMod SUPER → Hyper (see the `hyper` let-binding above), so the
-        # muscle memory matches the ThinkPad. Two intentional divergences from the
-        # Linux layout, forced by collapsing SUPER into a Shift-free Hyper:
-        #   move window      Linux: SUPER+Ctrl  → Mac: Hyper+Shift
-        #   workspace prev/next Linux: SUPER+Shift+h/l → Mac: Hyper+[ / Hyper+]
-        # (these get harmonized on the Linux side when ported.)
+        # 1:1 mirror of the Hyprland binds (home/desktop/hyprland/settings/
+        # bindings.nix) with $mainMod SUPER → Hyper, so muscle memory matches the
+        # ThinkPad exactly.
         mode.main.binding =
           {
-            # focus (Hyper + h/j/k/l)
+            # focus — Hyprland: SUPER + h/j/k/l (movefocus)
             "${hyper}-h" = "focus left";
             "${hyper}-j" = "focus down";
             "${hyper}-k" = "focus up";
             "${hyper}-l" = "focus right";
 
-            # move window (Hyper + Shift + h/j/k/l)
-            "${hyper}-shift-h" = "move left";
-            "${hyper}-shift-j" = "move down";
-            "${hyper}-shift-k" = "move up";
-            "${hyper}-shift-l" = "move right";
+            # move window — Hyprland: SUPER + Ctrl + h/j/k/l (movewindow)
+            "${hyper}-ctrl-h" = "move left";
+            "${hyper}-ctrl-j" = "move down";
+            "${hyper}-ctrl-k" = "move up";
+            "${hyper}-ctrl-l" = "move right";
 
-            # cycle workspaces (Hyper + [ / ])
-            "${hyper}-leftSquareBracket" = "workspace --wrap-around prev";
-            "${hyper}-rightSquareBracket" = "workspace --wrap-around next";
+            # cycle workspaces — Hyprland: SUPER + Shift + H/L (workspace m±1)
+            "${hyper}-shift-h" = "workspace --wrap-around prev";
+            "${hyper}-shift-l" = "workspace --wrap-around next";
 
-            # F = fullscreen (gaps), Shift+F = true/native fullscreen
+            # F = fullscreen (gaps), Shift+F = native fullscreen
             "${hyper}-f" = "fullscreen";
             "${hyper}-shift-f" = "macos-native-fullscreen";
 
@@ -85,8 +82,8 @@ in
             "${hyper}-b" = "exec-and-forget open -a Firefox";
             "${hyper}-e" = "exec-and-forget open -a Finder";
           }
-          // focusWorkspace
-          // moveToWorkspace;
+          // focusWorkspace # Hyprland: SUPER + 1-9 (workspace)
+          // moveToWorkspace; # Hyprland: SUPER + Shift + 1-9 (movetoworkspace)
       };
     };
   }
