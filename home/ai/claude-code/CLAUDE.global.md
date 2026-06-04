@@ -170,3 +170,14 @@ Give ranges (1-2 hours), not precise numbers or calendar dates. Scope what's inc
 - **Design it twice** — sketch 2 approaches before committing to one.
 - **Pull complexity downward** — implementers work harder so callers don't.
 - **Define errors out of existence** — design APIs where the error can't occur, rather than detecting and handling it.
+
+## Writing Code (lean by default)
+
+Write the diff a careful senior engineer *on this codebase* would write — nothing extra.
+
+- **Comments earn their place.** Only explain a non-obvious WHY (hidden constraint, invariant, workaround). Never restate what the code does, reference the task/PR/ticket, or name callers. In doubt, delete it.
+- **Match the surrounding code** — naming, error handling, logging, structure. Edit like the file, not like greenfield.
+- **No speculative robustness.** No try/catch, null guards, or fallbacks for cases that can't occur on a trusted path — see "Define errors out of existence" above.
+- **No escape hatches** to silence a checker (`as any`, `@ts-ignore`, `# type: ignore`) — fix the type or the call.
+- **Flatten with early returns** instead of deep conditional nesting.
+- **Verify unfamiliar APIs before use** — never guess that an import, method, or option exists.
