@@ -217,6 +217,11 @@ in {
             type = "standard";
           };
         };
+
+        # AeroSpace's experimental menu-bar workspace indicator. i3Ordered draws
+        # one box per workspace in numeric order (the "1 2" boxed style). It's
+        # stored in UserDefaults, not aerospace.toml, so it lives here.
+        "bobko.aerospace".displayStyle = "i3Ordered";
       };
     };
   };
