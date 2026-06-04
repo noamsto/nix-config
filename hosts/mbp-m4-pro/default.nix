@@ -195,14 +195,28 @@ in {
       dock.autohide = true;
       finder.AppleShowAllExtensions = true;
 
-      # System UI language = English (was Hebrew-first). en-IL keeps Israel
-      # region formatting (dates/currency) with an English interface; Hebrew
-      # stays available as the 2nd language + input source. No typed nix-darwin
-      # option exists for these, hence CustomUserPreferences on the global
-      # domain. NOTE: takes effect after a logout/login (macOS reads it at login).
-      CustomUserPreferences."NSGlobalDomain" = {
-        AppleLanguages = ["en-IL" "he-IL"];
-        AppleLocale = "en_IL";
+      CustomUserPreferences = {
+        # System UI language = English (was Hebrew-first). en-IL keeps Israel
+        # region formatting (dates/currency) with an English interface; Hebrew
+        # stays available as the 2nd language + input source. No typed nix-darwin
+        # option exists for these, hence CustomUserPreferences on the global
+        # domain. NOTE: takes effect after a logout/login (macOS reads it at login).
+        "NSGlobalDomain" = {
+          AppleLanguages = ["en-IL" "he-IL"];
+          AppleLocale = "en_IL";
+        };
+
+        # Free ⌘-Space for Raycast by disabling Spotlight's hotkey (id 64;
+        # parameters = space char, keycode 49, ⌘ mask). Raycast then claims the
+        # combo via its onboarding. Like the languages above, macOS reads symbolic
+        # hotkeys at login, so this needs a logout/login to take effect.
+        "com.apple.symbolichotkeys".AppleSymbolicHotKeys."64" = {
+          enabled = false;
+          value = {
+            parameters = [32 49 1048576];
+            type = "standard";
+          };
+        };
       };
     };
   };
