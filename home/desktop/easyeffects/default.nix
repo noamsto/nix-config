@@ -4,7 +4,12 @@
   osConfig,
   ...
 }: let
-  isGen5 = osConfig.hostname == "thinkpad-p14s-g5";
+  # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
+  # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio
+  useGen5Presets = builtins.elem osConfig.hostname [
+    "thinkpad-p14s-g5"
+    "thinkpad-p14s-g6"
+  ];
 
   thinkpad-p14s-g4-linux = import ./thinkpad-p14s-g4-linux.nix {
     inherit pkgs;
@@ -18,7 +23,7 @@
 
   # Select preset configuration based on hardware generation
   presetConfig =
-    if isGen5
+    if useGen5Presets
     then {
       configFiles = {
         # Gen 5 IRS convolver files
