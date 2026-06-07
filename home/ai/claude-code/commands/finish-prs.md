@@ -99,6 +99,12 @@ Create one task per PR with `TaskCreate`:
 
 ## Step 4: Dispatch
 
+Stamp every PR in the batch on the tmux status bar before spawning (skip silently if the command isn't on PATH). Use the Linear key from the branch name when there is one, else `GH-<N>`:
+
+```bash
+command -v claude-status-update >/dev/null && claude-status-update issue add <ID>
+```
+
 Spawn teammates **in a single message, multiple Agent tool calls in parallel**, up to `--concurrency`. Hold the rest unassigned — idle teammates will claim them.
 
 Each teammate spawn:
@@ -228,11 +234,12 @@ Poll roughly every 3 minutes. **Don't sleep — messages drive the loop.**
 Each iteration:
 
 1. `TaskList` — count completed / in_progress / blocked
-2. If a slot opened AND unassigned tasks remain → spawn the next teammate
-3. BLOCKED teammates → read their note:
+2. When a task flips to completed → `claude-status-update issue done <ID>` for its PR
+3. If a slot opened AND unassigned tasks remain → spawn the next teammate
+4. BLOCKED teammates → read their note:
    - Triable: `SendMessage` with missing context, ask them to retry
    - Hard fail: leave it, surface in report
-4. Silent `in_progress` >15min → `SendMessage` asking for status
+5. Silent `in_progress` >15min → `SendMessage` asking for status
 
 ### Exit when
 
@@ -249,6 +256,12 @@ For each completed teammate: `SendMessage` `{type: "shutdown_request", reason: "
 Leave the team file on disk for audit. Don't `TeamDelete` unless asked.
 
 ## Step 7: Report
+
+Unstamp any ids still left from this run (blocked PRs included — the run is over):
+
+```bash
+command -v claude-status-update >/dev/null && claude-status-update issue done <ID>
+```
 
 ```
 ## Finish-PRs Complete

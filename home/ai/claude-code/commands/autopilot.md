@@ -20,6 +20,13 @@ You are running an autonomous development workflow from Linear ticket to merged-
 2. Present them in a numbered list with title, priority, and labels
 3. Ask which one to work on (or suggest the highest priority one)
 
+Once the ticket is locked in, stamp it on the tmux status bar (skip silently if
+the command isn't on PATH — e.g. outside a lazytmux tmux):
+
+```bash
+command -v claude-status-update >/dev/null && claude-status-update issue add <TICKET-ID>
+```
+
 ## Step 2: Ticket Analysis
 
 Read the ticket description and explore the relevant codebase areas.
@@ -43,7 +50,7 @@ Read the ticket description and explore the relevant codebase areas.
 3. **PR strategy decision:**
    - **Independent PRs off main** (default): when sub-tasks don't touch the same files
    - **Parent branch**: when sub-tasks have file/dependency overlap — sub-PRs target the parent branch, final PR merges parent → main
-4. Process each sub-ticket through Steps 3-9 below
+4. Process each sub-ticket through Steps 3-9 below — `issue add` each sub-ticket as you start it, `issue done` when its PR is green
 5. Present the breakdown plan before starting. Don't ask for approval — just announce what you're doing and proceed.
 
 ## Step 3: Plan
@@ -172,6 +179,12 @@ One last pass after all CI/reviewer fixes are done:
 If this produces changes, commit, push, and do a quick CI re-check (no full loop — just verify it stays green).
 
 ## Step 10: Report
+
+Unstamp the ticket — the work is handed off:
+
+```bash
+command -v claude-status-update >/dev/null && claude-status-update issue done <TICKET-ID>
+```
 
 Present a summary:
 
