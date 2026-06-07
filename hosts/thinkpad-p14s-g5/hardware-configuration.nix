@@ -38,7 +38,7 @@
     kernel.sysctl = {
       "vm.overcommit_memory" = 1;
     };
-    kernelPackages = pkgs.linuxPackages;
+    kernelPackages = pkgs.linuxPackages_latest;
 
     # Enable thinkpad_acpi fan control for thinkfan and battery thresholds
     extraModprobeConfig = ''
