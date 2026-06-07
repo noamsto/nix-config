@@ -34,6 +34,14 @@ Why: loading whole files burns context and rarely helps; most edits touch one sm
 
 Exceptions: short files (<300 lines), config files where every line matters, or genuine whole-file work (security review, top-to-bottom audit).
 
+## Editing Files (read-then-edit, in one beat)
+
+Every `Edit`/`Write` requires a current read of the target. The retry tax — `File has not been read yet` / `File has been modified since read` — is pure waste, so avoid it up front:
+
+- **Read the exact region you're about to edit immediately before editing it.** Don't carry a stale read across many turns: if a build, formatter, linter, codegen, or `git` step ran since your last read of that file, Read it again before the Edit. Skeleton-first still applies to *locating* the region; the freshness rule applies to the *slice you edit*.
+- **After a successful Edit, the file state is current** (the tool says so) — don't re-Read just to confirm. Re-Read only when something external could have touched the file since.
+- **Never batch dependent steps into one parallel tool block.** A single failing call cancels its siblings (`Cancelled: parallel tool call ... errored`) and forces a re-run. Parallelize only mutually independent, read-only calls (e.g. several `Read`/`Grep`); run anything that mutates state, or that a later call depends on, as its own sequential call.
+
 ## New Work Workflow (factify-inc repos only)
 
 **REQUIRED** for repos under the `factify-inc` GitHub org. Does NOT apply to personal repos.
