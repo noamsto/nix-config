@@ -15,10 +15,6 @@ in {
     ./media
     ./utils
     ./settings
-    # Replaced by Noctalia Shell:
-    # ./waybar
-    # ./swaync
-    # ./nwg-dock
     ./scripts/screenshot-utils.nix
     ./scripts/brightness-control.nix
     ./scripts/keyboard-layout.nix
@@ -39,10 +35,6 @@ in {
   wayland.windowManager.hyprland = {
     enable = true;
     configType = "hyprlang";
-    # plugins = with pkgs.hyprlandPlugins; [
-    #   hyprbars
-    #   hyprexpo
-    # ];
     systemd.enable = false;
   };
 
@@ -55,9 +47,6 @@ in {
       thunar-archive-plugin # Archive support
       tumbler # Thumbnail service for image previews
       xfconf # Provides xfconfd D-Bus service so Thunar settings persist
-
-      # Dock - now handled by Noctalia
-      # nwg-dock-hyprland
 
       # XWayland HiDPI support
       xrdb # X resources database for XWayland scaling
