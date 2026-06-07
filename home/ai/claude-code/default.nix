@@ -12,27 +12,6 @@
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
 
-  # Hook helpers to reduce repetition in status state machine
-  statusCmd = state: {
-    type = "command";
-    command = "claude-status-update ${state}";
-  };
-  statusCmdForce = state: {
-    type = "command";
-    command = "claude-status-update ${state} --force";
-  };
-  statusHook = state: {hooks = [(statusCmd state)];};
-  statusHookForce = state: {hooks = [(statusCmdForce state)];};
-  matchedStatusHook = matcher: state: {
-    inherit matcher;
-    hooks = [(statusCmd state)];
-  };
-  # cleanup + transition to a state
-  sessionStartHook = matcher: state: {
-    inherit matcher;
-    hooks = [(statusCmd "cleanup") (statusCmd state)];
-  };
-
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
   nix-settings-json = pkgs.writeTextFile {
@@ -42,12 +21,10 @@
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
+      # Status-state hooks live in the lazytmux CC plugin (loaded via
+      # --plugin-dir in the wrapper below); only personal hooks remain here.
       hooks = {
         SessionStart = [
-          (sessionStartHook "startup" "idle")
-          (sessionStartHook "resume" "idle")
-          (sessionStartHook "clear" "idle")
-          (sessionStartHook "compact" "processing")
           {
             matcher = "startup";
             hooks = [
@@ -58,9 +35,7 @@
             ];
           }
         ];
-        UserPromptSubmit = [(statusHookForce "processing")];
         PreToolUse = [
-          (statusHook "processing")
           {
             matcher = "Bash";
             hooks = [
@@ -71,20 +46,6 @@
             ];
           }
         ];
-        PostToolUse = [(statusHook "processing")];
-        Notification = [
-          (matchedStatusHook "permission_prompt" "waiting")
-          (matchedStatusHook "idle_prompt" "done")
-        ];
-        Stop = [(statusHook "done")];
-        StopFailure = [(statusHook "error")];
-        PreCompact = [(statusHook "compacting")];
-        PostCompact = [(statusHook "processing")];
-        PermissionDenied = [(statusHook "denied")];
-        PostToolUseFailure = [(statusHook "error")];
-        Elicitation = [(statusHook "waiting")];
-        ElicitationResult = [(statusHook "processing")];
-        SessionEnd = [(statusHook "clear")];
       };
     };
   };
@@ -101,7 +62,7 @@
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     export DISABLE_UPDATES=1
-    exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} "$@"
+    exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin "$@"
   '';
 
   # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/
