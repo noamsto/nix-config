@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  lib,
+  pkgs,
+  ...
+}: {
   home.packages = with pkgs; [
     eza
     zoxide
@@ -505,11 +509,18 @@
         end
       '';
 
-      loginShellInit = ''
-        set -gx LANG "en_US.UTF-8"
-        set -gx LANGUAGE "en_US.UTF-8"
-        set -gx LC_ALL "en_US.UTF-8"
-      '';
+      loginShellInit =
+        ''
+          set -gx LANG "en_US.UTF-8"
+          set -gx LANGUAGE "en_US.UTF-8"
+          set -gx LC_ALL "en_US.UTF-8"
+        ''
+        # nix-homebrew installs into /opt/homebrew but touches no PATH; brew
+        # shellenv adds bin/sbin + HOMEBREW_PREFIX/MANPATH so brew-installed
+        # tools (fastlane, etc.) and the brew command itself resolve.
+        + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+          eval (/opt/homebrew/bin/brew shellenv)
+        '';
     };
 
     fzf = {
