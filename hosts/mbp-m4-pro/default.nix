@@ -136,6 +136,11 @@ in {
     };
     brews = [
       "fastlane"
+      # Synthesizes mouse clicks for driving the iOS Simulator (toddl's
+      # `just sim-*` loop / automated UI taps). Quartz-based, macOS-only, and
+      # not in nixpkgs — hence brew. Needs the terminal (kitty) granted
+      # Accessibility permission to actually post events.
+      "cliclick"
     ];
     casks = [
       "1password"
