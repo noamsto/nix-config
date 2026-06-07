@@ -134,6 +134,9 @@ in {
       # their data. Promote to "zap" only once the cask list is complete.
       cleanup = "uninstall";
     };
+    brews = [
+      "fastlane"
+    ];
     casks = [
       "1password"
       "1password-cli" # op; cask (not nixpkgs) so desktop-app integration works
