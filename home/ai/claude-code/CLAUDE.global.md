@@ -128,6 +128,16 @@ Useful flags / shortcuts:
 - `-x <cmd>` / `--execute`: Run a command after switching (e.g. `-x claude`)
 - Branch shortcuts: `^` (default branch), `-` (previous), `@` (current), `pr:{N}`, `mr:{N}`
 
+**The commands and flags listed above are the COMPLETE wt vocabulary — do not invent others.** Every wt action goes through one of the listed subcommands (`switch`, `list`, `remove`, `merge`); there is no bare `wt <branch>` form and no short flags beyond those listed (`-y`, `-b`, `-x`). Flags attach to the subcommand, e.g. `wt switch -c -y <branch>`, never `wt -yqn <branch>`. Red flags — if you catch yourself typing any of these, STOP and use the listed form instead:
+
+| Wrong (invented) | Right |
+|------------------|-------|
+| `wt -yqn <branch>` / `wt <branch>` | `wt switch -c <branch>` (add `-y` to skip prompts) |
+| `wt -q` / `wt -n` (no such flags) | `wt switch -y` |
+| `cd "$(wt ...)"` | just `wt switch <branch>` — the post-switch hook owns navigation |
+
+If you are unsure whether a flag exists, prefer the plain `wt switch <branch>` / `wt switch -c <branch>` form rather than guessing — do NOT spelunk through `wt --help` mid-task.
+
 **tmux model**: Session = Project, Window = Worktree
 - One tmux session per repository (e.g., 'nix-config')
 - One window per worktree/branch
