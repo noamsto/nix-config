@@ -17,6 +17,16 @@ Command-heavy and host-specific reference material lives in skills (loaded on de
 
 If a task matches any of the above, call the skill **before** running commands — the workflow gotchas only live there.
 
+## Reading Code in This Repo
+
+This repo has several large modules — `home/terminal/fish/default.nix` (~545 lines), `home/desktop/noctalia/default.nix` (~640 lines), `home/desktop/hyprland/scripts/sh/theme-toggle.sh` (~1500 lines). **Locate before you load.**
+
+- For any file over ~300 lines, find the target region first: `Grep`/`rg` for the option, attr-set, or function you care about, or run the `context-efficient-tools:code-structure` skill — *then* `Read` only that slice with `offset`/`limit`.
+- Full `Read` is fine for short modules (<300 lines) and the small `default.nix` entry points listed in 'Important Configuration Files'.
+- The directory map and 'Common Patterns' below usually tell you which file owns a feature; jump straight there instead of reading siblings to orient.
+
+Why: most edits here touch one option block or one `lib.optionals` list; loading a whole 600-line module to change three lines wastes the context budget.
+
 ## Architecture Overview
 
 ### Flake-Parts Modular Structure
