@@ -11,6 +11,7 @@
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
   nix-stage-guard = pkgs.writeShellScriptBin "claude-nix-stage-guard" (builtins.readFile ./nix-stage-guard.sh);
+  skeleton-guard = pkgs.writeShellScriptBin "claude-read-skeleton-guard" (builtins.readFile ./skeleton-guard.sh);
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
   git-commit-autostage-guard = pkgs.writeShellScriptBin "claude-git-commit-autostage-guard" (builtins.readFile ./git-commit-autostage-guard.sh);
 
@@ -52,6 +53,15 @@
               {
                 type = "command";
                 command = "${git-commit-autostage-guard}/bin/claude-git-commit-autostage-guard";
+              }
+            ];
+          }
+          {
+            matcher = "Read";
+            hooks = [
+              {
+                type = "command";
+                command = "${skeleton-guard}/bin/claude-read-skeleton-guard";
               }
             ];
           }

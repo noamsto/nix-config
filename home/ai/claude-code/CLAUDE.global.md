@@ -32,7 +32,7 @@ For files larger than ~300 lines, **structure before content**: run `ast-grep` f
 
 Why: loading whole files burns context and rarely helps; most edits touch one small slice. This is the Dirac CLI insight — harness behavior beats model choice on benchmarks like TerminalBench, and "skeleton-by-default reads" is the single biggest contributor.
 
-Exceptions: short files (<300 lines), config files where every line matters, or genuine whole-file work (security review, top-to-bottom audit).
+Exceptions (whole-file work — security review, top-to-bottom audit, config where every line matters): pass an explicit `limit` to `Read` to opt in deliberately. A PreToolUse guard (`claude-read-skeleton-guard`, in the `--settings` overlay) blocks unbounded `Read`s of files >300 lines and tells you to slice; bounded reads (offset/limit) and short files pass through untouched.
 
 ## Editing Files (read-then-edit, in one beat)
 
