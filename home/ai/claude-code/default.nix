@@ -99,7 +99,10 @@
     })
     skillNames);
 in {
-  imports = [./mcp-profiles.nix];
+  imports = [./mcp-profiles.nix inputs.agent-smith.homeManagerModules.default];
+
+  # agent-smith CC plugin engine on PATH; the module self-wraps duckdb/git/gh.
+  programs.agent-smith.enable = true;
 
   # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
   home.file =
