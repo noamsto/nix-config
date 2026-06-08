@@ -148,7 +148,13 @@ devShells.default = pkgs.mkShell {
 **`.envrc`** (default):
 ```bash
 use flake
+# Determinate Nix (macOS) lives in /nix/var/nix/profiles/default/bin and is added
+# to PATH only by login-shell path_helper, which a devshell's PATH rebuild drops.
+# Re-add it after `use flake` so `nix` resolves inside the devshell. No-op on Linux.
+[ "$(uname)" = Darwin ] && PATH_add /nix/var/nix/profiles/default/bin
 ```
+
+The `PATH_add` must come **after** `use flake`: direnv runs the global `direnvrc` before `.envrc`, and `use flake` rebuilds `PATH` from the devshell's inputs (which omit Determinate's `nix`), so anything earlier gets overwritten.
 
 Enhanced variant (only when the repo reads `.env.local`): `dotenv .env.local` guard + pinned `nix-direnv` `source_url` + `watch_file flake.nix flake.lock` + `use flake . --impure`.
 

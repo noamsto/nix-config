@@ -526,6 +526,13 @@
         # tools (fastlane, etc.) and the brew command itself resolve.
         + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
           eval (/opt/homebrew/bin/brew shellenv)
+
+          # Determinate Nix lives at /nix/var/nix/profiles/default/bin, which is
+          # added to PATH only by macOS path_helper (/etc/paths.d/nix) for login
+          # shells. GUI-launched / non-path_helper contexts miss it and `nix`
+          # resolves to the nixpkgs command-not-found stub. Add it explicitly so
+          # `nix` always resolves.
+          fish_add_path /nix/var/nix/profiles/default/bin
         '';
     };
 
