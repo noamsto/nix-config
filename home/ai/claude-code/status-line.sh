@@ -6,7 +6,7 @@ if [[ -z $input ]] || ! echo "$input" | jq empty 2>/dev/null; then
   exit 0
 fi
 
-model='' ctx_size=0 ctx_pct=0 r5_pct='' r5_reset='' r7_pct='' r7_reset=''
+model='' ctx_size=0 ctx_pct=0 r5_pct='' r5_reset='' r7_pct='' r7_reset='' effort=''
 eval "$(echo "$input" | jq -r '
   @sh "model=\(.model.display_name // "Unknown")",
   @sh "ctx_size=\(.context_window.context_window_size // 0)",
@@ -14,7 +14,8 @@ eval "$(echo "$input" | jq -r '
   @sh "r5_pct=\(.rate_limits.five_hour.used_percentage // "")",
   @sh "r5_reset=\(.rate_limits.five_hour.resets_at // "")",
   @sh "r7_pct=\(.rate_limits.seven_day.used_percentage // "")",
-  @sh "r7_reset=\(.rate_limits.seven_day.resets_at // "")"
+  @sh "r7_reset=\(.rate_limits.seven_day.resets_at // "")",
+  @sh "effort=\(.effort.level // "")"
 ')"
 
 R="\033[0m"
@@ -23,6 +24,8 @@ R="\033[0m"
 robot=$(printf '\xF0\x9F\xA4\x96')
 chart=$(printf '\xF0\x9F\x93\x8A')
 zap=$(printf '\xE2\x9A\xA1')
+arrow=$(printf '\xE2\x86\x92')
+brain=$(printf '\xF0\x9F\xA7\xA0')
 
 # Color by threshold
 color_pct() {
@@ -48,8 +51,22 @@ fmt_countdown() {
   ((h > 0)) && echo "${h}h${m}m" || echo "${m}m"
 }
 
+fmt_clock() {
+  printf '%(%H:%M)T' "$1"
+}
+
 # --- Model ---
+# 1M context is the default now, so drop the "(1M context)" display suffix
+model=${model% (1M context)}
 out="\033[1;34m$robot $model$R"
+if [[ -n $effort ]]; then
+  case $effort in
+  medium) eff=med ;;
+  xhigh) eff=xhi ;;
+  *) eff=$effort ;;
+  esac
+  out+=" \033[2m$brain $eff$R"
+fi
 
 # --- Context ---
 ctx_int=${ctx_pct%%.*}
@@ -67,7 +84,7 @@ if [[ -n $r5_pct ]]; then
   r5i=${r5_pct%%.*}
   rc=$(color_pct "$r5i")
   part="${rc}${r5i}%"
-  [[ -n $r5_reset ]] && part+=" ($(fmt_countdown "${r5_reset%%.*}"))"
+  [[ -n $r5_reset ]] && part+=" ($(fmt_countdown "${r5_reset%%.*}") $arrow $(fmt_clock "${r5_reset%%.*}"))"
   part+="$R"
 
   # Show 7d only when >50%
