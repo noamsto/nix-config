@@ -10,6 +10,12 @@
     nix-search-tv
   ];
 
+  # zoxide only ages/decays its DB once the total rank exceeds _ZO_MAXAGE
+  # (default 10000). A focused dev DB never reaches that, so stale dirs (an
+  # old ~/.ssh, /tmp scratch paths) stay frozen near the top forever. Lower
+  # the cap so decay runs and recency actually wins.
+  home.sessionVariables._ZO_MAXAGE = "2000";
+
   # catppuccin.fish disabled — conflicts with dynamic theme switching via theme-toggle
   xdg.configFile = {
     # Fish completions for opencode and oc with caching for speed
