@@ -10,6 +10,7 @@
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
+  nix-stage-guard = pkgs.writeShellScriptBin "claude-nix-stage-guard" (builtins.readFile ./nix-stage-guard.sh);
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
 
   # --settings overlay: ONLY keys that need /nix/store paths.
@@ -42,6 +43,10 @@
               {
                 type = "command";
                 command = "${psql-guard}/bin/claude-psql-guard";
+              }
+              {
+                type = "command";
+                command = "${nix-stage-guard}/bin/claude-nix-stage-guard";
               }
             ];
           }
