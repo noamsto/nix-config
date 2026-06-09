@@ -77,10 +77,11 @@ in
             "${hyper}-up" = "resize height -50";
             "${hyper}-down" = "resize height +50";
 
-            # app launch (Hyprland C=terminal, B=browser, E=file manager)
+            # app launch (Hyprland C=terminal, B=browser, E=file manager, Y=music)
             "${hyper}-c" = "exec-and-forget open -a kitty";
             "${hyper}-b" = "exec-and-forget open -a Firefox";
             "${hyper}-e" = "exec-and-forget open -a Finder";
+            "${hyper}-y" = "exec-and-forget ${lib.getExe pkgs.pear-desktop}";
           }
           // focusWorkspace # Hyprland: SUPER + 1-9 (workspace)
           // moveToWorkspace; # Hyprland: SUPER + Shift + 1-9 (movetoworkspace)
