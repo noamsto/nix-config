@@ -18,10 +18,6 @@ return {
   },
   opts = {
     legacy_commands = false,
-    completion = {
-      blink = true,
-      nvim_cmp = false,
-    },
     picker = {
       name = "snacks.pick",
     },

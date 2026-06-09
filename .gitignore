@@ -1,6 +1,7 @@
 **/.claude/settings.local.json
 .aider*
 result*
+.pre-commit-config.yaml
 .crush/
 .worktrees/
 .sisyphus/

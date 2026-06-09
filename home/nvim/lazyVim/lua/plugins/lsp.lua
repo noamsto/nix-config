@@ -81,6 +81,11 @@ return {
         settings = {
           gopls = {
             buildFlags = { "-tags=integration" },
+            -- Keep gopls from scanning/indexing the generated ogen `oas` packages
+            -- (~171k LOC in the factify mono); speeds up cold workspace loads,
+            -- which we pay repeatedly on worktree switches. Replaces the
+            -- node_modules default filter, so re-list it.
+            ["build.directoryFilters"] = { "-**/node_modules", "-**/oas" },
           },
         },
       },
