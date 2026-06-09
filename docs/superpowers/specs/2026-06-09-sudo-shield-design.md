@@ -56,6 +56,30 @@ root for verification, or tell the user to touch the sensor. Defense-in-depth: t
 socket is per-user (`$XDG_RUNTIME_DIR`, mode 700) with an `SO_PEERCRED`/uid check on
 every connection.
 
+### This is the polkit trust model, minus its machinery
+
+polkit deliberately does **not** trust its authentication agent to assert success.
+`hyprpolkitagent` is only UI + a pipe; the actual credential check runs in a
+**setuid-root helper** (`polkit-agent-helper-1`) that executes the PAM stack as
+root, and a **cookie** issued by `polkitd` binds that check to the one outstanding
+request so a stale or foreign authentication can't be replayed. Security comes from
+*root doing the check*, never from the agent's word.
+
+We get the same guarantee more cheaply because **`sudo` is itself the setuid-root
+PAM application and our module runs inside its transaction**:
+
+- Root verification = `sudo`'s own `pam_unix` (this is `polkit-agent-helper-1`'s role, for free).
+- The cookie problem vanishes — there is exactly one outstanding request (this transaction), and the module relaying the password and the `pam_unix` verifying it are the *same* transaction. Nothing to bind, nothing to replay.
+- The shield = the agent: UI + pipe, no authority.
+
+Why an "agent asserts success" design (e.g. the shield running its own
+`PamContext`) **cannot** be made safe even with a cookie: our module connects *out*
+to the agent's socket, so malware running as the user can replace the agent,
+receive whatever cookie we send, and echo it back with no real authentication →
+root. A cookie only helps when validated by a *root-trusted* component (polkit's
+helper); an untrusted agent holding the cookie is worthless. The credential check
+must live in root's transaction — which is exactly the relay design.
+
 ## Components
 
 1. **Shield shell** — a dedicated Quickshell config (`quickshell -c sudo-shield`),
