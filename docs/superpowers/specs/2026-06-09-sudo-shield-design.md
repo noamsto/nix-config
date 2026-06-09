@@ -159,8 +159,34 @@ Claude Code (unfocused kitty) ── runs ──▶ sudo nixos-rebuild
 **IPC protocol (line-delimited JSON over the socket):**
 
 - hook → shield: `{"event":"pending","pid":<sudo>,"tty":"pts/3","caller":"claude → node → nixos-rebuild","term_pid":<pid>,"focused":bool}`
+- hook → shield: `{"event":"retry","pid":<sudo>,"n":<attempt>,"of":<passwd_tries>}`
 - hook → shield: `{"event":"finished","pid":<sudo>}`
 - shield → hook (reply): `{"action":"password","value":"…"}` | `{"action":"use-fingerprint"}` | `{"action":"cancel"}`
+
+### Retry & wrong-password feedback
+
+sudo retries by calling `pam_authenticate()` again (up to `passwd_tries`, default
+**3**) on the same handle, and **each call re-runs the whole auth stack — so the
+bridge module is re-entered on every retry.** That re-entry *is* the failure
+signal: the module returns before `pam_unix` runs (it sets `PAM_AUTHTOK` and jumps),
+so it never sees the verdict directly — it learns the previous password was wrong by
+being invoked again.
+
+- The module persists an attempt counter with `pam_set_data`/`pam_get_data` (lives
+  across retries within one sudo invocation). No counter → fresh prompt; counter
+  present → emit `retry{n}` so the popup shows "Incorrect password — try again
+  (n/3)".
+- The wrong-password toast therefore lands at the *start of attempt n+1*, after a
+  brief pause — not at the end of attempt n. This is intentional: the module must
+  never verify the password itself (root's `pam_unix` does).
+- After `passwd_tries` exhausted, sudo aborts; the module emits `finished` and the
+  shield dismisses.
+
+**Cancel semantics (v1):** cancel collapses the popup and returns `PAM_IGNORE`; the
+underlying sudo then proceeds to `fprintd`/normal flow (on an unfocused terminal that
+means it waits for a sensor touch). A PAM module cannot cleanly abort the whole sudo;
+truly killing it would mean the shield sending `SIGINT` to the tracked sudo PID —
+deferred as a follow-up lever, separate from the PAM path.
 
 **Caller identity:** the hook/module is a child of `sudo`; `getppid()` → `sudo` pid;
 `/proc/<sudo>/stat` PPID → the caller. Walk ancestors to the nearest known terminal,
@@ -206,6 +232,8 @@ can never lock the user out of `sudo`.
   (no sensor) — each yields the documented branch.
 - **Relay correctness:** wrong password in popup → `pam_unix` denies (no tty
   fallback under `use_first_pass`); correct password → success.
+- **Retry loop:** wrong password emits `retry{n}` and re-prompts up to `passwd_tries`;
+  a correct entry on attempt 2/3 succeeds; exhausting tries aborts and dismisses.
 - **Dismiss paths:** success, failure, cancel, timeout, and sudo killed mid-prompt all
   dismiss the shield.
 - **Socket hardening:** a second user/process cannot drive the socket (`SO_PEERCRED`).
