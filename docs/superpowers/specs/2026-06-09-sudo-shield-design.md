@@ -52,9 +52,28 @@ regression.
 | **Fingerprint** | `fprintd` (**root**, already in the stack) | Works regardless of focus today. The shield only tells you to touch. No new trust path. |
 
 The shield therefore can never *assert* success — it can only carry a password to
-root for verification, or tell the user to touch the sensor. Defense-in-depth: the
-socket is per-user (`$XDG_RUNTIME_DIR`, mode 700) with an `SO_PEERCRED`/uid check on
-every connection.
+root for verification, or tell the user to touch the sensor.
+
+### The socket is a phishing surface — authenticate the *prompter* as root
+
+A per-user socket with a same-uid `SO_PEERCRED` check is **not enough**, and getting
+this wrong is a credential-theft hole. The hook and any user-level malware run as the
+*same* uid, so malware could connect to the shield, send a forged `pending`, and the
+shield would pop a password field and hand the typed password **back over that
+connection — to the malware**. Same-uid proves nothing here.
+
+**Resolution: a prompt may only be requested by a peer with uid 0.** The bridge is a
+`.so` loaded *in* sudo, whose euid is 0 during auth, so it connects to the socket
+**as root without dropping privilege**. The shield checks `SO_PEERCRED` and refuses
+to prompt — or to return a password — unless the peer uid is 0. Malware running as
+the user cannot forge uid 0, and because the password is only ever returned over that
+same root-owned connection, it can only flow back to a real sudo transaction. (Root
+reaches the user-owned socket in `$XDG_RUNTIME_DIR`, mode 700, via `CAP_DAC_OVERRIDE`.)
+
+This is the polkit invariant again: the *prompt authority* is root, not "whoever
+connected." The passive announce path (focused case, no password returned) is lower
+stakes — a forged `pending` there is at worst an annoying fake toast — but it uses
+the same root-peer gate for consistency.
 
 ### This is the polkit trust model, minus its machinery
 
@@ -90,21 +109,36 @@ must live in root's transaction — which is exactly the relay design.
    It is **pure UI + password relay** — it runs no `PamContext` and authenticates
    nothing. Styling borrows the Noctalia MD3 palette only.
 
+   **Focus & window resolution lives here, not in the hook** — the shield runs in
+   the Hyprland session and can call `hyprctl` natively, which a root PAM hook
+   cannot (no session env, no access to the user's compositor socket). The hook/
+   module only sends caller **PIDs** + tty; the shield maps PID → window and decides
+   focused/unfocused, then replies.
+
 2. **Announce hook** — `pam_exec.so` rule in `security.pam.services.{sudo,su}.rules`,
-   `seteuid` to the calling user (same mechanism as `nixos/laptop/pam-lid-check.nix`),
    control **`optional`** so it can never affect the auth outcome. Emits `pending`
-   on entry. Walks `/proc` to identify the caller and resolves the terminal window
-   via `hyprctl clients -j`.
+   (once per sudo PID) and `finished`. Reads `/proc` to collect the caller chain.
+   Connects **as root** (no `seteuid` drop) so the shield's root-peer gate trusts it.
 
-3. **Password-bridge module** — a small **Rust PAM module** (`pam-bindings`),
-   built as a derivation in `packages/`, placed in the `sudo`/`su` auth stack
-   *before* `fprintd`. On the unfocused typed-password branch it sets `PAM_AUTHTOK`
-   and returns a PAM control jump that skips `fprintd` and lands on
-   `pam_unix use_first_pass`. (A `pam_exec` script **cannot** do this — see Rejected
-   Alternatives.)
+3. **Password-bridge module** — a small **Rust PAM module** (`pam-bindings`), built
+   as a derivation in `packages/`, placed in the `sudo`/`su` auth stack **before
+   `lid-check`** (see ordering). Runs in-process as root (euid 0). On the unfocused
+   typed-password branch it sets `PAM_AUTHTOK` and returns `success` so control falls
+   to the **adjacent verifier**. FFI boundary is `catch_unwind`-wrapped — any panic
+   becomes `PAM_IGNORE`; the module must never crash sudo. (A `pam_exec` script
+   **cannot** set the token — see Rejected Alternatives.)
 
-4. **Per-user socket** — `$XDG_RUNTIME_DIR/sudo-shield.sock`. The shield listens
-   (as the user); the hook/module connect (`seteuid` user). `SO_PEERCRED` uid check.
+4. **Adjacent verifier** — a dedicated `pam_unix use_first_pass` line placed
+   immediately after the bridge, reached *only* when the bridge succeeds. `use_first_pass`
+   (not `try_first_pass`) means a wrong relayed token fails **without** a tty-prompt
+   fallback (which would hang an unfocused terminal). Keeps the distro's own
+   `pam_unix` untouched for the normal/focused path.
+
+5. **Per-user socket** — `$XDG_RUNTIME_DIR/sudo-shield.sock`. The shield listens (as
+   the user); the hook/module connect **as root**. The shield enforces
+   `SO_PEERCRED` **uid == 0** before prompting or returning a password (see Trust
+   model). Password buffers are `mlock`ed and zeroized; core dumps disabled; the
+   value is never logged.
 
 ## PAM stack ordering (the brittle part)
 
@@ -116,56 +150,66 @@ Current `sudo`/`su` auth stack (from `pam-lid-check.nix`):
  ....  pam_unix                   (try_first_pass)
 ```
 
-New ordering:
+New ordering — **our pair goes at the very front, before `lid-check`:**
 
 ```
-~11200 pam_exec  sudo-shield-announce   optional         (emit "pending"; never affects auth)
-11300  pam_exec  lid-check              (unchanged)
-~11350 sudo-shield-bridge (Rust .so)    [<jump-over-fprintd-on-success> default=ignore]
-            focused / no window / shield down / timeout → IGNORE  (fall through, normal flow)
-            unfocused + typed password  → set PAM_AUTHTOK, SUCCESS+jump → pam_unix use_first_pass
-            unfocused + "use fingerprint"→ IGNORE → fprintd activates → touch
-11400  fprintd                          (unchanged; reached on the fingerprint/fall-through branch)
- ....  pam_unix                         (must honor use_first_pass for the relayed token)
+~11100 pam_exec  sudo-shield-announce   optional              (emit "pending" once; never affects auth)
+~11150 sudo-shield-bridge (Rust .so)    [success=ok ignore=1 default=ignore]
+            unfocused + typed password   → set PAM_AUTHTOK, return SUCCESS → fall to verifier (next line)
+            focused / no-window / shield-down / timeout / panic → IGNORE → jump +1 over verifier
+            unfocused + "use fingerprint"/ cancel               → IGNORE → jump +1 over verifier
+~11160 pam_unix  use_first_pass         [success=done auth_err=die default=die]   (OUR verifier; reached only on bridge SUCCESS)
+11300  pam_exec  lid-check              (UNCHANGED — its relative jump is undisturbed)
+11400  fprintd                          (UNCHANGED — fingerprint / fall-through branch)
+ ....  pam_unix  try_first_pass         (UNCHANGED — distro's, for the normal/focused path)
 ```
 
-⚠️ **The jump count in the bridge module's control is the single most
-security-critical, install-fragile line in the feature.** It must be derived from
-the **actual generated `/etc/pam.d/sudo`** on each host (gen4/gen5/gen6 may differ),
-and pinned by a test that asserts the generated file matches expectations. If the
-generated stack changes shape, the jump must be re-derived. Prefer expressing the
-target via the NixOS `rules` ordering abstraction over a hardcoded integer where
-possible.
+Two deliberate choices that kill the original fragility:
+
+- **Adjacent verifier, fixed `+1` jump.** The bridge never counts over `fprintd` to
+  reach the distro's `pam_unix`; on success it simply falls to the *next* line (our
+  own `use_first_pass`), and on decline it jumps exactly **1** (over that verifier).
+  The jump no longer depends on how many modules nixpkgs generates downstream.
+- **Front placement preserves `lid-check`.** `lid-check`'s control
+  `[success=ignore default=1 …]` uses a *relative* `default=1` to skip `fprintd`.
+  Inserting anything *between* `lid-check` and `fprintd` would silently retarget that
+  jump onto our module. Placing our pair *before* `lid-check` leaves it byte-for-byte
+  unchanged.
+
+⚠️ Still **pin the generated `/etc/pam.d/sudo` with a test** (gen4/5/6 may differ)
+and prefer the NixOS `rules` ordering abstraction over hardcoded integers. The risk
+is much lower than the original jump-over-`fprintd` scheme, but the verifier must
+remain the *immediate* successor of the bridge for the `+1` to hold.
 
 ## Data flow — unfocused typed-password sequence
 
 ```
 Claude Code (unfocused kitty) ── runs ──▶ sudo nixos-rebuild
                                               │  opens PAM "sudo" transaction
-   announce hook (optional)  ── emit ──▶ shield: show pending + caller line
+   announce hook (root)  ── emit "pending" ──▶ shield: show passive shield + caller line
                                               │
-   bridge module:  walk /proc (PPID→sudo→caller), resolve window via hyprctl
-                   active window == caller window?
-                     yes → IGNORE (normal terminal flow; shield stays passive)
-                     no  → shield: expand popup; BLOCK on socket (≤120s)
-                            ├─ password{pw}     → set PAM_AUTHTOK; SUCCESS+jump → pam_unix verifies
-                            ├─ use-fingerprint  → IGNORE → fprintd activates → touch
+   bridge module (root):  read /proc → caller PIDs + tty; pidfd_open(self)
+        ── connect as ROOT, send {caller pids, tty} + pidfd(SCM_RIGHTS) ──▶ shield
+                              shield verifies peer uid==0, maps PID→window via hyprctl,
+                              decides focused?  and REPLIES:
+                     focused / no-window  → IGNORE (normal terminal flow; shield passive)
+                     unfocused → shield expands popup; module BLOCKS on socket (≤120s)
+                            ├─ password{pw}     → set PAM_AUTHTOK; SUCCESS → fall to verifier
+                            ├─ use-fingerprint  → IGNORE (+1 over verifier) → fprintd → touch
                             ├─ cancel           → shield SIGINTs the sudo pidfd → sudo aborts (≡ Ctrl+C)
                             └─ timeout / error  → IGNORE → normal flow (never killed)
                                               │
    auth result ─────────────────────────────┘  → bridge emits "finished"
-   shield dismiss when ANY of: "finished" received │ tracked sudo PID exits │ timeout
+   shield dismiss when ANY of: "finished" received │ tracked pidfd signals exit │ timeout
 ```
 
-**IPC protocol (line-delimited JSON over the socket):**
+**IPC protocol (line-delimited JSON; every connection gated on `SO_PEERCRED` uid==0):**
 
-- hook → shield: `{"event":"pending","pid":<sudo>,"tty":"pts/3","caller":"claude → node → nixos-rebuild","term_pid":<pid>,"focused":bool}`
-- hook → shield: `{"event":"retry","pid":<sudo>,"n":<attempt>,"of":<passwd_tries>}`
-- hook → shield: `{"event":"finished","pid":<sudo>}`
-- bridge module → shield: a **pidfd** for the sudo process, sent as `SCM_RIGHTS`
-  ancillary data alongside the `pending` line, so cancel can target the exact
-  process (immune to PID reuse).
-- shield → hook (reply): `{"action":"password","value":"…"}` | `{"action":"use-fingerprint"}` | `{"action":"cancel"}`
+- hook/module → shield: `{"event":"pending","pid":<sudo>,"tty":"pts/3","caller_pids":[…],"caller":"claude → node → nixos-rebuild"}` — the **shield** (not the hook) resolves PID→window and focus, because only it can reach `hyprctl`.
+- bridge module → shield: a **pidfd** for the sudo process as `SCM_RIGHTS` ancillary data on the `pending` line — used both for cancel and to learn of sudo's exit (immune to PID reuse).
+- module → shield: `{"event":"retry","pid":<sudo>,"n":<attempt>,"of":<passwd_tries>}`
+- hook/module → shield: `{"event":"finished","pid":<sudo>}`
+- shield → module (reply): `{"action":"focused"}` (→ module returns IGNORE) | `{"action":"password","value":"…"}` | `{"action":"use-fingerprint"}` | `{"action":"cancel"}`
 
 ### Retry & wrong-password feedback
 
@@ -210,27 +254,49 @@ Timeout, a dead shield, or a socket/peer-check failure remain fail-open (return
 `IGNORE`, normal flow) — those must never kill a sudo, since "your sudo died because
 the shield was slow" is worse than falling through.
 
-**Caller identity:** the two hooks see the process tree differently. The *announce
-hook* is a `pam_exec` **child** of sudo, so `getppid()` → sudo pid. The *bridge
-module* is a `.so` loaded **in** sudo, so `getpid()` → sudo pid (this is what it
-`pidfd_open`s for the cancel path) and `getppid()` → the caller. Either way, read
-`/proc/<sudo>/stat` PPID → caller, walk ancestors to the nearest known terminal,
-collect the command chain, map terminal pid → window via `hyprctl clients -j`. `tty`
-comes directly from `PAM_TTY`.
+**Caller identity (split across the root/session boundary):** the root side
+collects *PIDs*, the session side (shield) maps them to a *window*. The *announce
+hook* is a `pam_exec` **child** of sudo (`getppid()` → sudo); the *bridge module* is
+a `.so` **in** sudo (`getpid()` → sudo — what it `pidfd_open`s; `getppid()` → caller).
+The root side reads `/proc/<sudo>/stat` PPID → caller, walks ancestors collecting the
+command chain + terminal PID, and sends those PIDs (plus `PAM_TTY`) to the shield. The
+**shield** then maps the terminal PID → window via `hyprctl clients -j` and decides
+focus — because `hyprctl` needs the user's session, unreachable from a root PAM hook.
 
 ## Fail-open invariants (safety)
 
 The bridge module returns `PAM_IGNORE` (never blocks/denies beyond normal flow) when:
 
-- the caller's window is focused, or no terminal window can be identified;
-- the socket is missing, the shield is not running, or the connection/`SO_PEERCRED` check fails;
-- the wait exceeds the timeout (≤120s).
+- the shield replies `focused`, or no terminal window can be identified;
+- the caller's **stdin is not a tty** (e.g. `echo pw | sudo -S` in a script) — never pop a GUI for non-interactive sudo;
+- the socket is missing, the shield is not running, or the peer/`SO_PEERCRED` handshake fails;
+- the wait exceeds the timeout (≤120s);
+- **anything panics** — the FFI boundary is `catch_unwind`-wrapped and returns `PAM_IGNORE`.
 
 (Explicit **cancel** is the one non-fail-open outcome — it deliberately `SIGINT`s the
 sudo. See *Cancel = real abort*.)
 
-Result: a dead/absent shield degrades to **exactly today's behaviour**. The feature
-can never lock the user out of `sudo`.
+**Crash-safety is the real backstop.** `default=ignore` only fails-open on *return
+codes* — a `SIGSEGV` or uncaught `panic!` would crash the sudo process itself, which
+no control flag can prevent. Hence: Rust, no `unwrap`/`expect`/indexing-panics on the
+auth path, `catch_unwind` at every `extern "C"` entry point, and a fuzz/abort test
+that asserts a deliberately-faulted module still lets `sudo true` through.
+
+Result: a dead/absent/crashing shield or module degrades to **exactly today's
+behaviour**. The feature can never lock the user out of `sudo`.
+
+## Rollout & recovery
+
+Touching the `sudo` PAM stack means a bad switch could deny `sudo` system-wide.
+
+- **First switch on g6 only, with a root shell already open** (`machinectl shell`
+  or a spare TTY logged in as root) so a broken stack can't strand you. Verify the
+  full test matrix, *then* roll out to g5 / p14s.
+- **Rollback path:** the previous NixOS generation is always bootable
+  (`nixos-rebuild ... --rollback`, or pick the prior generation in the boot menu) —
+  the stack reverts wholesale.
+- **Independent escape hatch:** `hyprpolkitagent` + `pkexec` remain untouched, so a
+  root GUI shell is reachable even if `sudo` is wedged.
 
 ## Build phases
 
@@ -243,11 +309,11 @@ can never lock the user out of `sudo`.
 3. **Focus detection + click-to-focus.** Resolve focused vs unfocused; the popup's
    button warps focus to the caller terminal (`hyprctl dispatch focuswindow
    address:…`). Makes unfocused sudo usable *before* any password bridge exists.
-4. **Password bridge (security-critical).** Rust PAM module, `PAM_AUTHTOK` relay,
-   the `fprintd`-skip jump, `use_first_pass`. Gets `find-bugs` + `security-review`,
-   a test pinning the generated `/etc/pam.d/sudo` shape, and an explicit **lock-out
-   recovery test** (sudo still works with the shield/socket killed) on each host
-   generation before enabling.
+4. **Password bridge (security-critical).** Rust PAM module (`catch_unwind`-wrapped),
+   root-peer socket gate, `PAM_AUTHTOK` relay, adjacent `use_first_pass` verifier,
+   front-of-stack ordering. Gets `find-bugs` + `security-review`; must pass the
+   phishing-resistance, crash-safety, lid-check-untouched, and lock-out-recovery
+   gates; rolled out g6-first with a root shell open (see Rollout & recovery).
 
 ## Testing
 
@@ -267,13 +333,31 @@ can never lock the user out of `sudo`.
 - **Cancel kills sudo:** cancel terminates the sudo (non-zero exit, command not run)
   via the pidfd; a recycled PID is never signaled (kill an unrelated process after the
   tracked sudo exits → no stray signal). Timeout does **not** kill.
-- **Socket hardening:** a second user/process cannot drive the socket (`SO_PEERCRED`).
+- **Phishing resistance (gate for phase 4):** a non-root process connecting as the
+  user and sending a forged `pending` gets **no** prompt and **no** password — the
+  shield rejects peer uid != 0.
+- **Crash-safety (gate for phase 4):** a deliberately-faulted bridge (`panic!` /
+  segfault-inducing input) still lets `sudo true` authenticate via the normal flow.
+- **lid-check untouched:** with the lid closed, `fprintd` is still skipped exactly as
+  before — assert `lid-check`'s generated line is byte-identical to pre-feature.
+- **Non-interactive sudo:** `echo pw | sudo -S true` from an unfocused terminal does
+  **not** pop a GUI (stdin-not-a-tty → fail-open).
+- **Socket hardening:** the socket enforces `SO_PEERCRED` uid==0; same-user non-root
+  peers are rejected.
 
 ## Risks & open questions
 
-- **R1 — jump-count fragility (high).** Mitigated by the pinning test + preferring the
-  `rules` ordering abstraction; still the thing most likely to break on a nixpkgs PAM
-  change. Revisit if the generated stack shape changes.
+- **R1 — PAM ordering fragility (now low, was high).** Downgraded by the adjacent
+  `+1` verifier and front-of-stack placement (no counting over `fprintd`, `lid-check`
+  untouched). Residual: the verifier must stay the bridge's immediate successor —
+  pinned by the generated-`/etc/pam.d/sudo` test.
+- **R6 — same-uid socket check is insufficient (critical, mitigated).** A forged
+  `pending` from user-level malware would phish the password. Mitigated by the
+  root-peer (`uid==0`) gate. The whole feature's safety rests on this check being
+  correct — top priority for `security-review`.
+- **R7 — module crash crashes sudo (critical, mitigated).** Control flags can't
+  fail-open a `SIGSEGV`/panic. Mitigated by Rust + `catch_unwind` + the faulted-module
+  test. No `unwrap` on the auth path, ever.
 - **R2 — focus decided once at auth start.** If the user focuses the caller terminal,
   then alt-tabs away mid-prompt, the branch doesn't re-evaluate. Acceptable for v1;
   could add live re-evaluation later.
@@ -285,6 +369,9 @@ can never lock the user out of `sudo`.
   process may `SIGINT` its own setuid-root sudo (target keeps the user's real UID).
   Confirm empirically before relying on it; if blocked, cancel falls back to the
   fail-open path (collapse popup, normal flow) — degraded but safe.
+- **R8 — `su` edge cases.** `su <user>` relays the *target* user's password (popup
+  must label whose), and `su` invoked *by root* breaks the user-signals-sudo cancel
+  assumption. Keep `su` GUI behind the R3 parity gate; announce-only is always safe.
 
 ## Rejected alternatives
 
@@ -294,6 +381,12 @@ can never lock the user out of `sudo`.
 - **Shield runs its own `PamContext` and asserts success (insecure).** Lets a
   user-level process impersonate the shield and escalate. Rejected in favour of
   root-verifies-everything.
+- **Same-uid socket check (`SO_PEERCRED` uid == user) (insecure).** The hook and
+  malware share the uid, so a forged `pending` phishes the password back to the
+  attacker. Rejected in favour of the root-peer (`uid == 0`) gate.
+- **`pam_unix try_first_pass` for the relayed token (hangs).** On a wrong password it
+  falls back to a tty prompt that goes nowhere on an unfocused terminal. Rejected in
+  favour of a dedicated `use_first_pass` verifier line.
 - **Mechanism B — self-contained custom PAM module draws its own GUI.** More
   security-critical hand-written code in the auth path; rejected in favour of a thin
   bridge + separate UI process.
