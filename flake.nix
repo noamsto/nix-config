@@ -142,7 +142,10 @@
     };
 
     noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
+      # Pinned to last v4 rev. v5 is a breaking rewrite (programs.noctalia-shell →
+      # programs.noctalia, JSON→TOML config, plugins/pluginSettings dropped from the
+      # module). Unpin when home/desktop/noctalia is migrated to the v5 schema.
+      url = "github:noctalia-dev/noctalia-shell/5311e14d2000af2f523789c76a3d869dcb42f130";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
