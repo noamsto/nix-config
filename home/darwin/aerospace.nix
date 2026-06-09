@@ -81,7 +81,9 @@ in
             "${hyper}-c" = "exec-and-forget open -a kitty";
             "${hyper}-b" = "exec-and-forget open -a Firefox";
             "${hyper}-e" = "exec-and-forget open -a Finder";
-            "${hyper}-y" = "exec-and-forget ${lib.getExe pkgs.pear-desktop}";
+            # Electron apps must launch as a .app bundle (the raw inner binary
+            # can't find its Helper apps), so `open` the bundle rather than getExe.
+            "${hyper}-y" = "exec-and-forget open ${pkgs.pear-desktop}/Applications/YouTube\\ Music.app";
           }
           // focusWorkspace # Hyprland: SUPER + 1-9 (workspace)
           // moveToWorkspace; # Hyprland: SUPER + Shift + 1-9 (movetoworkspace)
