@@ -79,7 +79,17 @@
     "browser.shell.checkDefaultBrowser" = false;
     "browser.shell.didSkipDefaultBrowserCheckOnFirstRun" = true;
     "browser.aboutConfig.showWarning" = false;
+
+    # Required for userChrome.css to take effect
+    "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
   };
+
+  # Hide the window control buttons (minimize, maximize, close) from the titlebar
+  firefoxUserChrome = ''
+    .titlebar-buttonbox-container {
+      display: none !important;
+    }
+  '';
 in {
   imports =
     [
@@ -121,6 +131,7 @@ in {
             path = "personal";
             isDefault = true;
             settings = firefoxCommonSettings;
+            userChrome = firefoxUserChrome;
           };
         }
         // lib.optionalAttrs (osConfig.profile == "work") {
@@ -128,6 +139,7 @@ in {
             id = 1;
             path = "work";
             settings = firefoxCommonSettings;
+            userChrome = firefoxUserChrome;
           };
         };
     };
