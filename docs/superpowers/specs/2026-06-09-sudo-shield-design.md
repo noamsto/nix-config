@@ -150,7 +150,8 @@ Claude Code (unfocused kitty) ── runs ──▶ sudo nixos-rebuild
                      no  → shield: expand popup; BLOCK on socket (≤120s)
                             ├─ password{pw}     → set PAM_AUTHTOK; SUCCESS+jump → pam_unix verifies
                             ├─ use-fingerprint  → IGNORE → fprintd activates → touch
-                            └─ cancel / timeout → IGNORE → normal flow
+                            ├─ cancel           → shield SIGINTs the sudo pidfd → sudo aborts (≡ Ctrl+C)
+                            └─ timeout / error  → IGNORE → normal flow (never killed)
                                               │
    auth result ─────────────────────────────┘  → bridge emits "finished"
    shield dismiss when ANY of: "finished" received │ tracked sudo PID exits │ timeout
@@ -161,6 +162,9 @@ Claude Code (unfocused kitty) ── runs ──▶ sudo nixos-rebuild
 - hook → shield: `{"event":"pending","pid":<sudo>,"tty":"pts/3","caller":"claude → node → nixos-rebuild","term_pid":<pid>,"focused":bool}`
 - hook → shield: `{"event":"retry","pid":<sudo>,"n":<attempt>,"of":<passwd_tries>}`
 - hook → shield: `{"event":"finished","pid":<sudo>}`
+- bridge module → shield: a **pidfd** for the sudo process, sent as `SCM_RIGHTS`
+  ancillary data alongside the `pending` line, so cancel can target the exact
+  process (immune to PID reuse).
 - shield → hook (reply): `{"action":"password","value":"…"}` | `{"action":"use-fingerprint"}` | `{"action":"cancel"}`
 
 ### Retry & wrong-password feedback
@@ -182,14 +186,35 @@ being invoked again.
 - After `passwd_tries` exhausted, sudo aborts; the module emits `finished` and the
   shield dismisses.
 
-**Cancel semantics (v1):** cancel collapses the popup and returns `PAM_IGNORE`; the
-underlying sudo then proceeds to `fprintd`/normal flow (on an unfocused terminal that
-means it waits for a sensor touch). A PAM module cannot cleanly abort the whole sudo;
-truly killing it would mean the shield sending `SIGINT` to the tracked sudo PID —
-deferred as a follow-up lever, separate from the PAM path.
+### Cancel = real abort
 
-**Caller identity:** the hook/module is a child of `sudo`; `getppid()` → `sudo` pid;
-`/proc/<sudo>/stat` PPID → the caller. Walk ancestors to the nearest known terminal,
+Cancel actually terminates the sudo, rather than falling through to a stuck
+`fprintd` wait. The shield sends `SIGINT` to the sudo process — the programmatic
+equivalent of Ctrl+C: sudo's own handler cancels the PAM conversation and exits
+non-zero, the caller's command never runs.
+
+- **Permission:** sudo is setuid-root (euid 0) but keeps the **invoking user's real
+  UID**; `kill(2)` permits a sender whose UID matches the target's *real* UID, so the
+  user-session shield may signal its own sudo. (Verify empirically in phase 4.)
+- **PID-reuse safety:** the bridge module (`.so` loaded *in* sudo) passes a **pidfd**
+  of itself to the shield via `SCM_RIGHTS`; the shield uses `pidfd_send_signal`, which
+  refers to the exact process and cannot misfire onto a recycled PID. Cheap fallback
+  if pidfd plumbing slips: check `/proc/<pid>/comm == "sudo"` **and** a matching
+  start-time before signaling.
+- **Escalation:** `SIGINT`, then `SIGTERM`→`SIGKILL` if it hasn't exited within ~1s.
+- **The module's socket read is EINTR-aware** so the in-process module unblocks
+  cleanly as sudo tears down.
+
+**Cancel is *not* fail-open.** It is a deliberate user action that kills sudo.
+Timeout, a dead shield, or a socket/peer-check failure remain fail-open (return
+`IGNORE`, normal flow) — those must never kill a sudo, since "your sudo died because
+the shield was slow" is worse than falling through.
+
+**Caller identity:** the two hooks see the process tree differently. The *announce
+hook* is a `pam_exec` **child** of sudo, so `getppid()` → sudo pid. The *bridge
+module* is a `.so` loaded **in** sudo, so `getpid()` → sudo pid (this is what it
+`pidfd_open`s for the cancel path) and `getppid()` → the caller. Either way, read
+`/proc/<sudo>/stat` PPID → caller, walk ancestors to the nearest known terminal,
 collect the command chain, map terminal pid → window via `hyprctl clients -j`. `tty`
 comes directly from `PAM_TTY`.
 
@@ -199,7 +224,10 @@ The bridge module returns `PAM_IGNORE` (never blocks/denies beyond normal flow) 
 
 - the caller's window is focused, or no terminal window can be identified;
 - the socket is missing, the shield is not running, or the connection/`SO_PEERCRED` check fails;
-- the user cancels, or the wait exceeds the timeout (≤120s).
+- the wait exceeds the timeout (≤120s).
+
+(Explicit **cancel** is the one non-fail-open outcome — it deliberately `SIGINT`s the
+sudo. See *Cancel = real abort*.)
 
 Result: a dead/absent shield degrades to **exactly today's behaviour**. The feature
 can never lock the user out of `sudo`.
@@ -236,6 +264,9 @@ can never lock the user out of `sudo`.
   a correct entry on attempt 2/3 succeeds; exhausting tries aborts and dismisses.
 - **Dismiss paths:** success, failure, cancel, timeout, and sudo killed mid-prompt all
   dismiss the shield.
+- **Cancel kills sudo:** cancel terminates the sudo (non-zero exit, command not run)
+  via the pidfd; a recycled PID is never signaled (kill an unrelated process after the
+  tracked sudo exits → no stray signal). Timeout does **not** kill.
 - **Socket hardening:** a second user/process cannot drive the socket (`SO_PEERCRED`).
 
 ## Risks & open questions
@@ -250,6 +281,10 @@ can never lock the user out of `sudo`.
   proves flaky, ship GUI for `sudo` only and keep announce-only for `su`.
 - **R4 — Rust PAM module packaging** in `packages/` (cross-compile/`pam-bindings`
   availability). Validate early in phase 4; fallback is a minimal C module.
+- **R5 — cancel-signal permission unverified.** The design assumes a user-session
+  process may `SIGINT` its own setuid-root sudo (target keeps the user's real UID).
+  Confirm empirically before relying on it; if blocked, cancel falls back to the
+  fail-open path (collapse popup, normal flow) — degraded but safe.
 
 ## Rejected alternatives
 
