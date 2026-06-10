@@ -19,6 +19,7 @@ in {
   # basic configuration of git, please change to your own
   programs.git = {
     enable = true;
+    lfs.enable = true;
 
     signing = {
       format = "ssh";
