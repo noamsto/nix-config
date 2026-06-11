@@ -82,7 +82,7 @@
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     export DISABLE_UPDATES=1
-    exec ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin "$@"
+    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin "$@"
   '';
 
   # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/

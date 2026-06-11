@@ -533,6 +533,12 @@
           # resolves to the nixpkgs command-not-found stub. Add it explicitly so
           # `nix` always resolves.
           fish_add_path /nix/var/nix/profiles/default/bin
+
+          # nix-darwin's system profile holds environment.systemPackages (rg, fd,
+          # jq, …). It's added by set-environment, but the exported
+          # __NIX_DARWIN_SET_ENVIRONMENT_DONE guard makes nested/devshell shells
+          # skip that, dropping it from PATH. Append (HM packages keep priority).
+          fish_add_path --append /run/current-system/sw/bin
         '';
     };
 
