@@ -85,6 +85,13 @@
   # DISABLE_INSTALLATION_CHECKS: suppress false warnings when running via Nix
   # https://github.com/anthropics/claude-code/issues/8523
   # DISABLE_UPDATES: block self-update paths on immutable Nix store (>=2.1.118)
+  #
+  # exec -a claude: set argv[0] so ps/comm/Activity Monitor (and Linux tmux,
+  # which reads /proc/pid/cmdline) show `claude`, not the nix store wrapper.
+  # macOS tmux can't be fixed here: it reads proc_pidpath, which resolves
+  # through every wrapper/symlink to the real Bun binary upstream named
+  # `.claude-wrapped`, ignoring argv[0]. That title is instead rewritten at the
+  # tmux display layer (lazytmux set-titles-string strips `.*-wrapped`).
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     export DISABLE_UPDATES=1
