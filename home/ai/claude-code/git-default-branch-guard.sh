@@ -25,18 +25,34 @@ echo "$command" | grep -qE '(^|\s)git\s+commit(\s|$)' || exit 0
 cwd=$(jq -r '.cwd // empty' <<<"$input" || true)
 cwd=${cwd:-$PWD}
 
-git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+# The Bash tool resets its cwd to the project root before each call, so a
+# worktree commit arrives as `cd <worktree> && git commit …` (or
+# `git -C <worktree> commit …`) while the reported cwd is still the
+# default-branch checkout. Checking that cwd then flags a commit that actually
+# lands in the worktree — the source of the false positives. Resolve the
+# directory the commit truly runs in before reading its branch.
+target=$cwd
+if [[ $command =~ (^|[[:space:]])git[[:space:]]+-C[[:space:]]+(\"[^\"]+\"|\'[^\']+\'|[^[:space:]]+) ]]; then
+  target=${BASH_REMATCH[2]}
+elif [[ $command =~ (^|[;&|][[:space:]]*|[[:space:]])cd[[:space:]]+(\"[^\"]+\"|\'[^\']+\'|[^[:space:];&|]+) ]]; then
+  target=${BASH_REMATCH[2]}
+fi
+target=${target#[\"\']}
+target=${target%[\"\']}
+[[ $target == /* ]] || target=$cwd/$target
+
+git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
 # Detached HEAD isn't a branch commit — leave it alone.
-current=$(git -C "$cwd" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
+current=$(git -C "$target" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
 [[ -n $current ]] || exit 0
 
 # Prefer the remote's advertised default; fall back to main/master.
-default=$(git -C "$cwd" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)
+default=$(git -C "$target" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)
 if [[ -z $default ]]; then
-  if git -C "$cwd" show-ref --verify --quiet refs/heads/main; then
+  if git -C "$target" show-ref --verify --quiet refs/heads/main; then
     default=main
-  elif git -C "$cwd" show-ref --verify --quiet refs/heads/master; then
+  elif git -C "$target" show-ref --verify --quiet refs/heads/master; then
     default=master
   fi
 fi
