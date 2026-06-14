@@ -1288,14 +1288,15 @@
     "nix-amd-ai": {
       "inputs": {
         "flake-parts": "flake-parts_10",
+        "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1780952539,
-        "narHash": "sha256-QA/GSDhOg99VM5vK3Dsx601BxN5CRAE2I+Nfg2mnGVQ=",
+        "lastModified": 1781442633,
+        "narHash": "sha256-MyjOCrerHRlRb0RATUYUXuecZ9xZnzqm577OzheCmIM=",
         "owner": "noamsto",
         "repo": "nix-amd-ai",
-        "rev": "bb4c32a24c18d8d61a29a6a65fbc8f7b872acdf6",
+        "rev": "38e6f7446f3d77196ea6d863c82a1dc577160226",
         "type": "github"
       },
       "original": {
@@ -1305,6 +1306,27 @@
       }
     },
     "nix-darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "nix-amd-ai",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781242433,
+        "narHash": "sha256-bchLZZ3sRn740zyvD2icZSnNoTaanN0nw7l6fjVXO+E=",
+        "owner": "nix-darwin",
+        "repo": "nix-darwin",
+        "rev": "aabb2037edfc0f210723b72cd5f528aab5dd3f0b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-darwin",
+        "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "nix-darwin_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -2051,7 +2073,7 @@
         "mcp-servers-nix": "mcp-servers-nix",
         "mysecrets": "mysecrets",
         "nix-amd-ai": "nix-amd-ai",
-        "nix-darwin": "nix-darwin",
+        "nix-darwin": "nix-darwin_2",
         "nix-flatpak": "nix-flatpak",
         "nix-homebrew": "nix-homebrew",
         "nix-index-database": "nix-index-database",
