@@ -12,9 +12,6 @@ in {
     inputs.home-manager.darwinModules.home-manager
     # Aliases nix-darwin's /Applications/Nix Apps so Spotlight/Launchpad index them.
     inputs.mac-app-util.darwinModules.default
-    # Lemonade AI server (llama.cpp Metal backend). The same flake serves the
-    # AMD NPU/ROCm stack on the ThinkPads via nixosModules.default.
-    inputs.nix-amd-ai.darwinModules.default
   ];
 
   # Custom options (from options.nix). Mirrors the NixOS hosts: username and
@@ -186,11 +183,6 @@ in {
     reattach = true;
     touchIdAuth = true;
   };
-
-  # Lemonade local AI server as a per-user LaunchAgent (lemond on :13305,
-  # OpenAI-compatible API). Backends self-fetch into ~/.cache/lemonade on first
-  # model load, using the llama.cpp Metal backend on this M-series GPU.
-  services.lemonade.enable = true;
 
   # Firefox enters Troubleshoot Mode if Option is held at launch. The AeroSpace
   # Hyper bind (cmd-alt-b) holds Option as Firefox starts, so disable the key
