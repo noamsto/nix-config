@@ -391,129 +391,169 @@
         }
       ];
 
-      interactiveShellInit = ''
-        set fish_greeting
+      interactiveShellInit =
+        ''
+          set fish_greeting
 
-        set -g fish_history_save_max 10000
-        set -g fish_history_max_items 100000
-        set -g fish_history_ignore_space yes
-        set -g fish_history_ignore_duplicates yes
-        set -g fish_history_search_case_sensitive no
+          set -g fish_history_save_max 10000
+          set -g fish_history_max_items 100000
+          set -g fish_history_ignore_space yes
+          set -g fish_history_ignore_duplicates yes
+          set -g fish_history_search_case_sensitive no
 
-        function tmux
-          if test (count $argv) -eq 0
-            # No arguments, use smart attach/create behavior
-            if command tmux has-session 2>/dev/null
-              command tmux attach-session
+          function tmux
+            if test (count $argv) -eq 0
+              # No arguments, use smart attach/create behavior
+              if command tmux has-session 2>/dev/null
+                command tmux attach-session
+              else
+                command tmux new-session
+              end
             else
-              command tmux new-session
-            end
-          else
-            # Arguments provided, pass them through to tmux
-            command tmux $argv
-          end
-        end
-
-        if test -f /etc/agenix/work_aliases.fish
-          echo "Loading Work Aliases"
-          source /etc/agenix/work_aliases.fish
-        end
-
-        if test -f /etc/agenix/host_env.env
-          echo "Loading Host Env"
-          # Fish can source bash-style env files
-          for line in (cat /etc/agenix/host_env.env)
-            if test -n "$line"; and not string match -q '#*' "$line"
-              set -gx (string split '=' -- "$line")
+              # Arguments provided, pass them through to tmux
+              command tmux $argv
             end
           end
-        end
 
-        abbr -a !! --position anywhere --function last_history_item
-        abbr -a '!$' --position anywhere --function last_command_arg
-        abbr -a sc 'sesh connect'
-        abbr -a ws 'wt switch'
+          if test -f /etc/agenix/work_aliases.fish
+            echo "Loading Work Aliases"
+            source /etc/agenix/work_aliases.fish
+          end
 
-        # Upstream `wt` fish completion (installed at
-        # ~/.config/fish/completions/wt.fish) already enumerates branches in
-        # ~30ms. Extend only `pr:<TAB>` with open PRs via gh, cached 30s
-        # per-repo so Tab cycling doesn't hit the API on every keystroke.
-        function __wt_switch_complete
-            set -l token (commandline --current-token)
-            string match -q 'pr:*' -- $token; or return
-            set -l toplevel (git rev-parse --show-toplevel 2>/dev/null)
-            test -n "$toplevel"; or return
-            set -l cache_file "$XDG_RUNTIME_DIR/wt-pr-cache-"(string replace -a / _ -- $toplevel)
-            set -l mtime 0
-            test -f $cache_file; and set mtime (stat -c %Y $cache_file)
-            if test (math (date +%s) - $mtime) -gt 30
-                gh pr list --state open --limit 100 --json number,title 2>/dev/null \
-                  | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null >$cache_file
+          if test -f /etc/agenix/host_env.env
+            echo "Loading Host Env"
+            # Fish can source bash-style env files
+            for line in (cat /etc/agenix/host_env.env)
+              if test -n "$line"; and not string match -q '#*' "$line"
+                set -gx (string split '=' -- "$line")
+              end
             end
-            command cat $cache_file 2>/dev/null
-        end
-        complete -c wt -n "__fish_seen_subcommand_from switch" -f -a "(__wt_switch_complete)"
+          end
 
-        # Sesh completions
-        sesh completion fish | source
+          abbr -a !! --position anywhere --function last_history_item
+          abbr -a '!$' --position anywhere --function last_command_arg
+          abbr -a sc 'sesh connect'
+          abbr -a ws 'wt switch'
 
-        # Worktrunk shell integration (auto-cd + completions)
-        wt config shell init fish | source
+          # Upstream `wt` fish completion (installed at
+          # ~/.config/fish/completions/wt.fish) already enumerates branches in
+          # ~30ms. Extend only `pr:<TAB>` with open PRs via gh, cached 30s
+          # per-repo so Tab cycling doesn't hit the API on every keystroke.
+          function __wt_switch_complete
+              set -l token (commandline --current-token)
+              string match -q 'pr:*' -- $token; or return
+              set -l toplevel (git rev-parse --show-toplevel 2>/dev/null)
+              test -n "$toplevel"; or return
+              set -l cache_file "$XDG_RUNTIME_DIR/wt-pr-cache-"(string replace -a / _ -- $toplevel)
+              set -l mtime 0
+              test -f $cache_file; and set mtime (stat -c %Y $cache_file)
+              if test (math (date +%s) - $mtime) -gt 30
+                  gh pr list --state open --limit 100 --json number,title 2>/dev/null \
+                    | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null >$cache_file
+              end
+              command cat $cache_file 2>/dev/null
+          end
+          complete -c wt -n "__fish_seen_subcommand_from switch" -f -a "(__wt_switch_complete)"
 
-        function last_history_item
-          echo $history[1]
-        end
+          # Sesh completions
+          sesh completion fish | source
 
-        function last_command_arg
-          echo $history[1] | read -lat args
-          echo $args[-1]
-        end
+          # Worktrunk shell integration (auto-cd + completions)
+          wt config shell init fish | source
 
-        fish_vi_key_bindings
+          function last_history_item
+            echo $history[1]
+          end
 
-        # Configure fzf.fish to use Alt+X for variables instead of Ctrl+V (conflicts with paste)
-        # Changed from Ctrl+E (conflicts with end-of-line) and Alt+V (conflicts with vi editor)
-        fzf_configure_bindings --variables=\ex
+          function last_command_arg
+            echo $history[1] | read -lat args
+            echo $args[-1]
+          end
 
-        # Fix C-P and C-N for history navigation (restore after FZF)
-        bind \cp up-or-search
-        bind \cn down-or-search
-        bind -M insert \cp up-or-search
-        bind -M insert \cn down-or-search
+          fish_vi_key_bindings
 
-        # Fix C-F to accept autosuggestions in vi insert and normal mode
-        bind -M insert \cf accept-autosuggestion
-        bind -M default \cf accept-autosuggestion
+          # Configure fzf.fish to use Alt+X for variables instead of Ctrl+V (conflicts with paste)
+          # Changed from Ctrl+E (conflicts with end-of-line) and Alt+V (conflicts with vi editor)
+          fzf_configure_bindings --variables=\ex
 
-        # Add explicit undo bindings for vi mode
-        bind -M insert \c_ undo  # Ctrl+_ in insert mode
-        bind -M default \c_ undo # Ctrl+_ in normal mode
-        bind -M insert \cz undo  # Alternative Ctrl+Z in insert mode
+          # Fix C-P and C-N for history navigation (restore after FZF)
+          bind \cp up-or-search
+          bind \cn down-or-search
+          bind -M insert \cp up-or-search
+          bind -M insert \cn down-or-search
 
-        set -gx fzf_history_opts --tmux 80%,70%
-        set -gx fzf_history_opts $fzf_history_opts --preview-window 'down,50%,wrap'
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'
-        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-j:preview-down'
-        set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down'
-        set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'
+          # Fix C-F to accept autosuggestions in vi insert and normal mode
+          bind -M insert \cf accept-autosuggestion
+          bind -M default \cf accept-autosuggestion
 
-        if set -q fzf_theme_colors
-          set -gx FZF_DEFAULT_OPTS $FZF_DEFAULT_OPTS $fzf_theme_colors
-        end
+          # Add explicit undo bindings for vi mode
+          bind -M insert \c_ undo  # Ctrl+_ in insert mode
+          bind -M default \c_ undo # Ctrl+_ in normal mode
+          bind -M insert \cz undo  # Alternative Ctrl+Z in insert mode
 
-        if set -q BAT_THEME
-          set -gx BAT_THEME $BAT_THEME
-        end
+          set -gx fzf_history_opts --tmux 80%,70%
+          set -gx fzf_history_opts $fzf_history_opts --preview-window 'down,50%,wrap'
+          set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-/:toggle-preview'
+          set -gx fzf_history_opts $fzf_history_opts --bind 'alt-j:preview-down'
+          set -gx fzf_history_opts $fzf_history_opts --bind 'alt-k:preview-up'
+          set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-d:preview-page-down'
+          set -gx fzf_history_opts $fzf_history_opts --bind 'ctrl-u:preview-page-up'
 
-        function history-clean
-          history --merge                              # Merge all sessions
-          history --delete --prefix "cd "              # Remove simple cd commands
-          history --delete --contains "ls "            # Remove simple ls commands
-          history --delete --contains "history "       # Remove history commands themselves
-          echo "History cleaned!"
-        end
-      '';
+          if set -q fzf_theme_colors
+            set -gx FZF_DEFAULT_OPTS $FZF_DEFAULT_OPTS $fzf_theme_colors
+          end
+
+          if set -q BAT_THEME
+            set -gx BAT_THEME $BAT_THEME
+          end
+
+          function history-clean
+            history --merge                              # Merge all sessions
+            history --delete --prefix "cd "              # Remove simple cd commands
+            history --delete --contains "ls "            # Remove simple ls commands
+            history --delete --contains "history "       # Remove history commands themselves
+            echo "History cleaned!"
+          end
+        ''
+        # caffeinate is macOS-only; keep the helper off the Linux hosts.
+        + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+          function __wake_seconds --description 'Convert 90s/30m/2h to seconds'
+            set -l d $argv[1]
+            switch $d
+              case '*h'; math (string trim -r -c h -- $d) x 3600
+              case '*m'; math (string trim -r -c m -- $d) x 60
+              case '*s'; string trim -r -c s -- $d
+              case '*';  echo $d
+            end
+          end
+
+          # Keep the Mac awake. Display stays on by default; `off` lets the
+          # screen sleep while the system stays up. Optional duration: 90s/30m/2h.
+          function wake --description 'Keep the Mac awake (display on by default)'
+            set -l flags -di
+            set -l secs
+            for arg in $argv
+              switch $arg
+                case off; set flags -i
+                case '*'; set secs (__wake_seconds $arg)
+              end
+            end
+            test -n "$secs"; and set -a flags -t $secs
+            caffeinate $flags
+          end
+          complete -c wake -f
+          complete -c wake -n '__fish_is_first_token' -a off -d 'Allow the screen to sleep'
+          complete -c wake -a '30m 1h 2h' -d 'Duration before releasing'
+
+          # caffeinate ships no fish completions; describe its flags.
+          complete -c caffeinate -s d -d 'Prevent the display from sleeping'
+          complete -c caffeinate -s i -d 'Prevent the system from idle sleeping'
+          complete -c caffeinate -s m -d 'Prevent the disk from idle sleeping'
+          complete -c caffeinate -s s -d 'Prevent system sleep (AC power only)'
+          complete -c caffeinate -s u -d 'Declare the user is active'
+          complete -c caffeinate -s t -x -d 'Timeout in seconds'
+          complete -c caffeinate -s w -x -d 'Wait for the given PID to exit'
+        '';
 
       loginShellInit =
         ''
