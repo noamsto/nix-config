@@ -88,7 +88,17 @@
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     export DISABLE_UPDATES=1
-    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin "$@"
+    # D2 diagrams (agent-carousel diagrams.sh): bundle d2's own font so resvg
+    # renders text, and follow the desktop light/dark scheme for the theme.
+    export AGENT_CAROUSEL_D2_FONT="Source Sans 3"
+    export AGENT_CAROUSEL_D2_FONT_DIR="${pkgs.source-sans}/share/fonts/truetype"
+    scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+    if [ "$scheme" = "'prefer-light'" ]; then
+      export AGENT_CAROUSEL_D2_THEME=105
+    else
+      export AGENT_CAROUSEL_D2_THEME=200
+    fi
+    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.agent-carousel}/adapters/claude-code/plugin "$@"
   '';
 
   # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/
