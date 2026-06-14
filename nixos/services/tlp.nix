@@ -29,10 +29,6 @@ in {
         PLATFORM_PROFILE_ON_AC = "performance";
         PLATFORM_PROFILE_ON_BAT = "balanced";
 
-        # NVMe/disk power saving
-        DISK_APM_LEVEL_ON_AC = "254";
-        DISK_APM_LEVEL_ON_BAT = "128";
-
         # WiFi power save on battery
         WIFI_PWR_ON_AC = "off";
         WIFI_PWR_ON_BAT = "on";

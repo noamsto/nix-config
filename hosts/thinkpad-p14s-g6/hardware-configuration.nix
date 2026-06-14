@@ -18,6 +18,10 @@
     # MediaTek mt7925 WiFi needs kernel 6.17+ for out-of-box support
     kernelPackages = pkgs.linuxPackages_latest;
 
+    kernelParams = [
+      "amd_pstate=active" # Ensure amd-pstate EPP driver loads (TLP also sets this at runtime)
+    ];
+
     initrd.availableKernelModules = ["nvme" "xhci_pci" "thunderbolt"];
     kernelModules = ["kvm-amd"];
 
