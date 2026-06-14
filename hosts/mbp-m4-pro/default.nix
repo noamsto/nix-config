@@ -4,6 +4,20 @@
   ...
 }: let
   host = (import ../../lib/host-configs.nix).mbp-m4-pro;
+
+  # Homebrew 6.0 Tap Trust list as a store directory laid out the way brew
+  # expects under HOMEBREW_XDG_CONFIG_HOME (i.e. <dir>/homebrew/trust.json).
+  # Materialising it in the store means it already exists when the `homebrew`
+  # activation step runs — which is before home-manager (postActivation) writes
+  # the interactive ~/.config copy, so the HM file can't be relied on here. brew
+  # bundle only *reads* trust.json (it writes only for `trusted: true` Brewfile
+  # lines, which nix-darwin doesn't emit), so a read-only store path is fine.
+  homebrewTrustConfig = pkgs.runCommand "homebrew-trust-config" {} ''
+    mkdir -p "$out/homebrew"
+    cp ${pkgs.writeText "trust.json" (builtins.toJSON {
+      trustedcasks = ["mediosz/tap/swipeaerospace"];
+    })} "$out/homebrew/trust.json"
+  '';
 in {
   imports = [
     ../../options.nix
@@ -139,6 +153,13 @@ in {
       # Start conservative: "uninstall" removes undeclared casks but keeps
       # their data. Promote to "zap" only once the cask list is complete.
       cleanup = "uninstall";
+      # Homebrew 6.0 Tap Trust blocks loading casks from non-official taps
+      # (here mediosz/tap → swipeaerospace) until trusted, aborting `brew
+      # bundle`. Point brew at the store-baked trust list (always present, no
+      # ordering dependency on home-manager). The activation `brew bundle` runs
+      # under `sudo --set-home env`, so HOMEBREW_XDG_CONFIG_HOME is the knob that
+      # survives the reset env; brew reads <dir>/homebrew/trust.json from it.
+      extraEnv.HOMEBREW_XDG_CONFIG_HOME = "${homebrewTrustConfig}";
     };
     brews = [
       "fastlane"
