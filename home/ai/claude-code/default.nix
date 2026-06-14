@@ -26,7 +26,7 @@
         command = "${claude-statusline}/bin/claude-statusline";
       };
       # Status-state hooks live in the lazytmux CC plugin and image-capture
-      # hooks in the agent-carousel CC plugin (both loaded via --plugin-dir in
+      # hooks in the aeye CC plugin (both loaded via --plugin-dir in
       # the wrapper below); only personal hooks remain here.
       hooks = {
         SessionStart = [
@@ -95,7 +95,17 @@
   claude-wrapper = pkgs.writeShellScriptBin "claude" ''
     export DISABLE_INSTALLATION_CHECKS=1
     export DISABLE_UPDATES=1
-    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin "$@"
+    # D2 diagrams (aeye diagrams.sh): bundle d2's own font so resvg
+    # renders text, and follow the desktop light/dark scheme for the theme.
+    export AEYE_D2_FONT="Source Sans 3"
+    export AEYE_D2_FONT_DIR="${pkgs.source-sans}/share/fonts/truetype"
+    scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+    if [ "$scheme" = "'prefer-light'" ]; then
+      export AEYE_D2_THEME=105
+    else
+      export AEYE_D2_THEME=200
+    fi
+    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin "$@"
   '';
 
   # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/

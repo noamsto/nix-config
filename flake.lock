@@ -18,6 +18,29 @@
         "url": "https://flakehub.com/f/noamsto/aegis-lock/%2A.tar.gz"
       }
     },
+    "aeye": {
+      "inputs": {
+        "flake-parts": "flake-parts_5",
+        "git-hooks-nix": "git-hooks-nix_2",
+        "nixpkgs": [
+          "lazytmux",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781461106,
+        "narHash": "sha256-C86IWhHmwHNRS+nLKZk+st/4I49POYWCJEWUojutzgw=",
+        "owner": "noamsto",
+        "repo": "aeye",
+        "rev": "7cc0464738c1a5dbff22cddfd9ef020d37760186",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noamsto",
+        "repo": "aeye",
+        "type": "github"
+      }
+    },
     "agenix": {
       "inputs": {
         "darwin": "darwin",
@@ -40,29 +63,6 @@
       "original": {
         "owner": "ryantm",
         "repo": "agenix",
-        "type": "github"
-      }
-    },
-    "agent-carousel": {
-      "inputs": {
-        "flake-parts": "flake-parts_5",
-        "git-hooks-nix": "git-hooks-nix_2",
-        "nixpkgs": [
-          "lazytmux",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1781183760,
-        "narHash": "sha256-W1eLv7UPrtz6ymUK9fsP1GDFoKP6Rh01cj5+5wC7ZeU=",
-        "owner": "noamsto",
-        "repo": "agent-carousel",
-        "rev": "220397dcebd03d939130d7e97c835337046607cc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noamsto",
-        "repo": "agent-carousel",
         "type": "github"
       }
     },
@@ -867,7 +867,7 @@
         "gitignore": "gitignore_2",
         "nixpkgs": [
           "lazytmux",
-          "agent-carousel",
+          "aeye",
           "nixpkgs"
         ]
       },
@@ -958,7 +958,7 @@
       "inputs": {
         "nixpkgs": [
           "lazytmux",
-          "agent-carousel",
+          "aeye",
           "git-hooks-nix",
           "nixpkgs"
         ]
@@ -1158,7 +1158,7 @@
     },
     "lazytmux": {
       "inputs": {
-        "agent-carousel": "agent-carousel",
+        "aeye": "aeye",
         "flake-parts": "flake-parts_6",
         "git-hooks-nix": "git-hooks-nix_3",
         "nixpkgs": [
@@ -1167,11 +1167,11 @@
         "tmux-state": "tmux-state"
       },
       "locked": {
-        "lastModified": 1781372354,
-        "narHash": "sha256-F/UzxQfEisFp9iRtBwGybOEfhNlH9NNFVX7q5LgvlLM=",
+        "lastModified": 1781461480,
+        "narHash": "sha256-XImLLQthLu+GfOAz0WPE0HO6h3647nDdhTW7+GR1DqU=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "05f8409963319feada2ba64c1b26337f0050fa60",
+        "rev": "2edb021a98ce7d8988d87ad225ad9e39fd75270b",
         "type": "github"
       },
       "original": {
