@@ -42,21 +42,37 @@ Every `Edit`/`Write` requires a current read of the target. The retry tax — `F
 - **After a successful Edit, the file state is current** (the tool says so) — don't re-Read just to confirm. Re-Read only when something external could have touched the file since.
 - **Never batch dependent steps into one parallel tool block.** A single failing call cancels its siblings (`Cancelled: parallel tool call ... errored`) and forces a re-run. Parallelize only mutually independent, read-only calls (e.g. several `Read`/`Grep`); run anything that mutates state, or that a later call depends on, as its own sequential call.
 
+## Worktree Isolation (all repos)
+
+**Before starting new work, isolate it in its own git worktree** — personal repos included, not just factify-inc. Run `wt switch -c <branch-name>` (worktrunk creates the branch + worktree and navigates there). Never begin new work with a plain in-place `git checkout`/`git switch` on the shared checkout, and never commit directly to the default branch — branch first, always.
+
+**Why:** multiple Claude Code sessions can run against one repo at the same time. A plain in-place checkout means they share a single HEAD and race on branch state — one session commits to `main` while another swaps the branch underneath it, producing stray-main commits and half-finished recoveries. A worktree per branch gives each session its own directory and HEAD, so they can't stomp each other.
+
 ## New Work Workflow (factify-inc repos only)
 
 **REQUIRED** for repos under the `factify-inc` GitHub org. Does NOT apply to personal repos.
 
-Before implementing or planning any new work:
+In addition to the worktree isolation above, before implementing or planning any new work:
 
 1. **Create a Linear ticket** (if one doesn't exist):
    - Follow the "Linear Ticket Creation" guidelines below
    - Get user confirmation before creating
 
-2. **Create a git worktree** for the work:
-   - Use the branch name from Linear (`Cmd+Shift+.` to copy)
-   - Run: `wt switch -c <branch-name>` (worktrunk creates the branch + worktree and navigates there)
+2. Use the branch name from Linear (`Cmd+Shift+.` to copy) as the `<branch-name>` when creating the worktree.
 
 This ensures all work is tracked and isolated properly.
+
+## New Work Workflow (personal GitHub repos)
+
+Applies to every repo NOT under `factify-inc` — i.e. anything whose `origin` remote points at a personal org (`noamsto`, etc.). When unsure which kind a repo is, check the remote org: `factify-inc` → Linear flow above; anything else → this flow.
+
+Before implementing or planning new work, in addition to the worktree isolation above:
+
+1. **Open a GitHub issue only for substantial work** — a new feature, a multi-session effort, or anything you'd want to find/reference later. Use `gh issue create` and get user confirmation first (same as the Linear-ticket rule).
+   - **Skip the issue for trivial changes** — single `fix`/`chore`/`docs`/lockfile edits. Branch directly with no id.
+2. Name the branch per the **Branch Naming** convention below (`type/id-desc`; drop the id when there's no issue), and pass it to `wt switch -c <branch-name>`.
+
+The CLI tooling here (`gh`, `git`, `wt`, tmux) is installed identically on Linux and macOS via Nix, so these steps are the same on both — don't reach for an OS-specific shortcut.
 
 ## Branch Naming
 

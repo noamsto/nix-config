@@ -14,6 +14,7 @@
   skeleton-guard = pkgs.writeShellScriptBin "claude-read-skeleton-guard" (builtins.readFile ./skeleton-guard.sh);
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
   git-commit-autostage-guard = pkgs.writeShellScriptBin "claude-git-commit-autostage-guard" (builtins.readFile ./git-commit-autostage-guard.sh);
+  git-default-branch-guard = pkgs.writeShellScriptBin "claude-git-default-branch-guard" (builtins.readFile ./git-default-branch-guard.sh);
 
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
@@ -24,8 +25,9 @@
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
-      # Status-state hooks live in the lazytmux CC plugin (loaded via
-      # --plugin-dir in the wrapper below); only personal hooks remain here.
+      # Status-state hooks live in the lazytmux CC plugin and image-capture
+      # hooks in the agent-carousel CC plugin (both loaded via --plugin-dir in
+      # the wrapper below); only personal hooks remain here.
       hooks = {
         SessionStart = [
           {
@@ -53,6 +55,10 @@
               {
                 type = "command";
                 command = "${git-commit-autostage-guard}/bin/claude-git-commit-autostage-guard";
+              }
+              {
+                type = "command";
+                command = "${git-default-branch-guard}/bin/claude-git-default-branch-guard";
               }
             ];
           }
