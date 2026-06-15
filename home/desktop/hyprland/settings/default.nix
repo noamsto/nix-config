@@ -26,21 +26,13 @@ in {
         "BRAVE_USER_FLAGS,--disable-accelerated-2d-canvas"
         "CHROMIUM_USER_FLAGS,--disable-accelerated-2d-canvas"
 
-        "WLR_NO_HARDWARE_CURSORS,1"
-
         "QS_ICON_THEME,${iconThemeName}"
-
-        # Force aquamarine to advertise only the linear (0x0) DMA-BUF modifier
-        # for screencast/screencopy buffers. On AMD GFX10+/11, the compositor
-        # otherwise offers only DCC-tiled modifiers
-        # (e.g. 0x20000001046bb04), which Mesa's EGL DMA-BUF import path
-        # cannot consume — gpu-screen-recorder then exhausts modifier
-        # renegotiation and the portal recording aborts with "no more input
-        # formats". Linear screencast buffers cost a small amount of memory
-        # bandwidth but make portal capture reliable.
-        # Drop once Mesa or aquamarine fix EGL import for AMD DCC modifiers.
-        "AQ_NO_MODIFIERS,1"
       ];
+
+      # SW cursors render the cursor into the framebuffer so it is captured by
+      # every screencopy path. WLR_NO_HARDWARE_CURSORS was a wlroots env var and
+      # is a no-op under Hyprland's aquamarine backend — this is the live knob.
+      cursor.no_hardware_cursors = true;
 
       exec-once = [
         "hyprctl setcursor ${cursorName} ${toString pointer.size}"
@@ -189,4 +181,20 @@ in {
       debug.disable_logs = false;
     };
   };
+
+  # Force aquamarine to advertise only the linear (0x0) DMA-BUF modifier for
+  # screencast/screencopy buffers. On AMD GFX10+/11 the compositor otherwise
+  # offers only DCC-tiled modifiers (e.g. 0x20000001046bb04), which Mesa's EGL
+  # DMA-BUF import path cannot consume — gpu-screen-recorder then exhausts
+  # modifier renegotiation and portal recording aborts with "no more input
+  # formats". Linear buffers cost a little memory bandwidth but make portal
+  # capture reliable. Drop once Mesa/aquamarine fix EGL import for AMD DCC.
+  #
+  # MUST live in uwsm's pre-launch env: aquamarine reads AQ_NO_MODIFIERS at
+  # backend init, which happens before Hyprland parses `env =`. Setting it via
+  # `env =` reaches child apps but is too late for the backend, so the recorder
+  # still saw DCC modifiers. uwsm sources this file before launching Hyprland.
+  xdg.configFile."uwsm/env-hyprland".text = ''
+    export AQ_NO_MODIFIERS=1
+  '';
 }
