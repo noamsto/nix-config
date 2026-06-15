@@ -58,6 +58,17 @@ inputs: [
     });
   })
 
+  # Backport "renderer: fix SEGV on monitor disconnect" (hyprwm/Hyprland#15048,
+  # released in v0.55.4) onto the 0.55.3 nixpkgs ships. A queued DRM frame event
+  # fires after a monitor disconnects while m_activeWorkspace is null, and
+  # getViewsForWorkspace derefs ws->m_monitor — reliably crashes on external
+  # monitor unplug. Drop this overlay once nixpkgs ships hyprland >= 0.55.4.
+  (_final: prev: {
+    hyprland = prev.hyprland.overrideAttrs (old: {
+      patches = (old.patches or []) ++ [../overlays/hyprland-fix-monitor-disconnect-segv.patch];
+    });
+  })
+
   (_final: prev: {
     slack = prev.slack.overrideAttrs (old: {
       installPhase =
