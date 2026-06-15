@@ -43,6 +43,9 @@ in {
     defaultShell = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.getExe pkgs.fish);
     worktrunk.enable = true;
     claudeIntegration.enable = true;
+    # Summarize fallback windows (no issue, default branch) into a short title
+    # via `claude -p` instead of showing the raw captured prompt.
+    aiNaming.enable = true;
     # The CC plugin (--plugin-dir in the claude wrapper) ships the same skills
     skills.enable = false;
     persist.enable = true;
