@@ -39,6 +39,9 @@ nix run nix-darwin -- switch --flake ~/nix-config#mbp-m4-pro
 - Requires sudo for system activation.
 - nix-homebrew installs Homebrew into `/opt/homebrew` on first run (owned by
   `noams`).
+- Homebrew 6.0 tap-trust for the non-official `mediosz/tap` (swipeaerospace) is
+  handled declaratively — `homebrew.onActivation.extraEnv.XDG_CONFIG_HOME` points
+  brew at a store-baked `trust.json`. No manual `brew trust` needed.
 - **The full config already evaluates cleanly on Linux** — the entire darwin
   system toplevel (`config.system.build.toplevel.drvPath`) instantiates without
   error, so all Linux-only-package gating and missing-attr issues are resolved.

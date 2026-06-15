@@ -5,13 +5,11 @@
 }: let
   host = (import ../../lib/host-configs.nix).mbp-m4-pro;
 
-  # Homebrew 6.0 Tap Trust list as a store directory laid out the way brew
-  # expects under HOMEBREW_XDG_CONFIG_HOME (i.e. <dir>/homebrew/trust.json).
-  # Materialising it in the store means it already exists when the `homebrew`
-  # activation step runs — which is before home-manager (postActivation) writes
-  # the interactive ~/.config copy, so the HM file can't be relied on here. brew
-  # bundle only *reads* trust.json (it writes only for `trusted: true` Brewfile
-  # lines, which nix-darwin doesn't emit), so a read-only store path is fine.
+  # Homebrew 6.0 Tap Trust list, store-baked so it exists before the `homebrew`
+  # activation step (which runs before home-manager writes ~/.config). brew
+  # locates trust.json via `$XDG_CONFIG_HOME/homebrew/trust.json`, so the dir is
+  # laid out to match. A read-only store path is accepted (verified). See the
+  # XDG_CONFIG_HOME wiring under homebrew.onActivation below.
   homebrewTrustConfig = pkgs.runCommand "homebrew-trust-config" {} ''
     mkdir -p "$out/homebrew"
     cp ${pkgs.writeText "trust.json" (builtins.toJSON {
@@ -142,6 +140,18 @@ in {
 
   homebrew = {
     enable = true;
+    # Declare the taps nix-homebrew manages so the generated Brewfile lists them
+    # and `brew bundle --cleanup` doesn't try to untap them. Without these the
+    # Brewfile has no `tap` lines, so cleanup flags homebrew/cask (its casks
+    # aren't full-path-pinned) for untap; the deprecated `--cleanup` flag then
+    # exits nonzero — failing activation even though nothing is actually removed.
+    # Short brew tap form (what cleanup compares against), mirroring
+    # nix-homebrew.taps above.
+    taps = [
+      "homebrew/core"
+      "homebrew/cask"
+      "mediosz/tap"
+    ];
     # NOTE: caskArgs.no_quarantine was removed — Homebrew disabled the
     # `--[no-]quarantine` switch ("There is no replacement"), so passing it
     # fails every fresh cask install. Gatekeeper will prompt once per app on
@@ -155,11 +165,14 @@ in {
       cleanup = "uninstall";
       # Homebrew 6.0 Tap Trust blocks loading casks from non-official taps
       # (here mediosz/tap → swipeaerospace) until trusted, aborting `brew
-      # bundle`. Point brew at the store-baked trust list (always present, no
-      # ordering dependency on home-manager). The activation `brew bundle` runs
-      # under `sudo --set-home env`, so HOMEBREW_XDG_CONFIG_HOME is the knob that
-      # survives the reset env; brew reads <dir>/homebrew/trust.json from it.
-      extraEnv.HOMEBREW_XDG_CONFIG_HOME = "${homebrewTrustConfig}";
+      # bundle`. brew finds the trust list at `$XDG_CONFIG_HOME/homebrew/
+      # trust.json`, so point XDG_CONFIG_HOME at the store-baked dir. The
+      # activation `brew bundle` runs under `sudo --set-home env`, which strips
+      # the interactive XDG_CONFIG_HOME (=~/.config) — setting it back here is
+      # what makes trust resolve. NOTE: it must be XDG_CONFIG_HOME, *not*
+      # HOMEBREW_XDG_CONFIG_HOME (the latter is ignored by brew — verified).
+      # Scoped to this command, so it doesn't affect the rest of activation.
+      extraEnv.XDG_CONFIG_HOME = "${homebrewTrustConfig}";
     };
     brews = [
       "fastlane"
@@ -174,6 +187,10 @@ in {
       "1password-cli" # op; cask (not nixpkgs) so desktop-app integration works
       "blender"
       "claude"
+      # Hold-Hyper (⌘⌥) + mouse drag to move/resize windows, mirroring
+      # Hyprland's SUPER+drag. AeroSpace is keyboard-only; this fills the gap.
+      # Modifier + auto-start wired below (CustomUserPreferences + LaunchAgent).
+      "easy-move+resize"
       "ferdium"
       "firefox"
       # Tap/hold on Caps Lock (Esc on tap, Hyper ⌘⌃⌥ on hold) for the AeroSpace
@@ -222,6 +239,14 @@ in {
       RunAtLoad = true;
       KeepAlive = true;
     };
+  };
+
+  # Easy Move+Resize registers no login item either. `open -a` by display name
+  # (not the inner binary) survives the cask's self-updates; RunAtLoad-only —
+  # no KeepAlive, since `open` exits immediately once the app is launched.
+  launchd.user.agents.easy-move-resize.serviceConfig = {
+    ProgramArguments = ["/usr/bin/open" "-a" "Easy Move+Resize"];
+    RunAtLoad = true;
   };
 
   # nix-darwin system identity + starter macOS defaults.
@@ -278,6 +303,14 @@ in {
           threshold = 1.0;
           menuBarExtraIsInserted = true;
         };
+
+        # Easy Move+Resize reads its modifier set from this domain at launch
+        # (comma-separated string). CMD,ALT = Hyper, so hold-Hyper + left-drag
+        # moves a window and hold-Hyper + right-drag resizes it. Hyper here is
+        # the same ⌘⌥ as the AeroSpace keyboard binds, but mouse vs key input
+        # means they never collide. Mainly useful on floating windows — dragging
+        # a tiled one just gets re-tiled by AeroSpace on the next layout pass.
+        "org.dmarcotte.Easy-Move-Resize".ModifierFlags = "CMD,ALT";
       };
     };
   };
