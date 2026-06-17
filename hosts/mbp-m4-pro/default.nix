@@ -222,31 +222,33 @@ in {
     touchIdAuth = true;
   };
 
-  # Firefox enters Troubleshoot Mode if Option is held at launch. The AeroSpace
-  # Hyper bind (cmd-alt-b) holds Option as Firefox starts, so disable the key
-  # trigger session-wide. launchctl setenv exposes it to GUI (launchd) apps.
-  launchd.user.agents.firefox-disable-safe-mode-key = {
-    command = "/bin/launchctl setenv MOZ_DISABLE_SAFE_MODE_KEY 1";
-    serviceConfig.RunAtLoad = true;
-  };
-
-  # The SwipeAeroSpace cask registers no login item, so it never auto-starts.
-  # Give it a LaunchAgent mirroring AeroSpace's own (RunAtLoad + KeepAlive) so
-  # the swipe helper comes up at login and stays up.
-  launchd.user.agents.swipeaerospace = {
-    command = "/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace";
-    serviceConfig = {
-      RunAtLoad = true;
-      KeepAlive = true;
+  launchd.user.agents = {
+    # Firefox enters Troubleshoot Mode if Option is held at launch. The AeroSpace
+    # Hyper bind (cmd-alt-b) holds Option as Firefox starts, so disable the key
+    # trigger session-wide. launchctl setenv exposes it to GUI (launchd) apps.
+    firefox-disable-safe-mode-key = {
+      command = "/bin/launchctl setenv MOZ_DISABLE_SAFE_MODE_KEY 1";
+      serviceConfig.RunAtLoad = true;
     };
-  };
 
-  # Easy Move+Resize registers no login item either. `open -a` by display name
-  # (not the inner binary) survives the cask's self-updates; RunAtLoad-only —
-  # no KeepAlive, since `open` exits immediately once the app is launched.
-  launchd.user.agents.easy-move-resize.serviceConfig = {
-    ProgramArguments = ["/usr/bin/open" "-a" "Easy Move+Resize"];
-    RunAtLoad = true;
+    # The SwipeAeroSpace cask registers no login item, so it never auto-starts.
+    # Give it a LaunchAgent mirroring AeroSpace's own (RunAtLoad + KeepAlive) so
+    # the swipe helper comes up at login and stays up.
+    swipeaerospace = {
+      command = "/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace";
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = true;
+      };
+    };
+
+    # Easy Move+Resize registers no login item either. `open -a` by display name
+    # (not the inner binary) survives the cask's self-updates; RunAtLoad-only —
+    # no KeepAlive, since `open` exits immediately once the app is launched.
+    easy-move-resize.serviceConfig = {
+      ProgramArguments = ["/usr/bin/open" "-a" "Easy Move+Resize"];
+      RunAtLoad = true;
+    };
   };
 
   # nix-darwin system identity + starter macOS defaults.

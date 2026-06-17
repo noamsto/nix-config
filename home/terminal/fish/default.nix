@@ -325,6 +325,12 @@
         cr = "claude --resume";
         cf = "claude-frontend";
 
+        # Claude quick commands — haiku, no MCPs, restricted tools.
+        # ALLOW_COMMIT_ON_DEFAULT=1 is inherited by the PreToolUse guard so a
+        # deliberate quick commit on main isn't blocked.
+        cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
+        cpush = ''claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
+
         # OpenCode
         oc = "opencode";
         occ = "oc -c";
