@@ -199,8 +199,9 @@
     }
   },
   "syntaxHighlightingDisabled": false,
+  "feedbackSurveyRate": 0,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
