@@ -5,7 +5,7 @@ argument-hint: "[PR number | URL] [--dry-run] [--yes]"
 
 # PR Review: Multi-Reviewer → One Deduped Review
 
-You take a single PR, run every reviewer that matches the diff, merge their findings so nothing is repeated, and split the result into two streams: **mechanical fixes** become one inline review on the PR; **architectural decisions** are surfaced to the user in chat for a human call. You coordinate and synthesize — the reviewer agents do the reviewing.
+You take a single PR, run every reviewer that matches the diff, merge their findings so nothing is repeated, and split the result into three streams: **mechanical fixes** become one inline review on the PR; **architectural decisions** and **reader-comprehension findings** (code a human would misread — only genuinely ambiguous things) are surfaced to the user in chat for a human call before any posting. You coordinate and synthesize — the reviewer agents do the reviewing.
 
 The downstream consumer of the posted review is often an **agent** (e.g. `/finish-prs`), so the posted findings must be structured, line-anchored, and independently resolvable — not a wall of text.
 
@@ -69,12 +69,26 @@ Tell each reviewer to return findings as a structured list, one finding per item
 - file: <path>
   line: <line number in the new file, or null if not line-local>
   severity: <blocker | should-fix | nit>
-  class: <mechanical | architectural>
+  class: <mechanical | architectural | clarity>
   what: <one sentence: what is wrong>
   fix: <one sentence: the concrete fix, or the decision to make>
 ```
 
-`class: architectural` = a design/contract/layering/duplication decision that has more than one defensible answer. `class: mechanical` = a local, unambiguous fix.
+`class: architectural` = a design/contract/layering/duplication decision that has more than one defensible answer. `class: mechanical` = a local, unambiguous fix. `class: clarity` = code that works but a human reader would misread or stumble over (see Reader Comprehension below).
+
+Also instruct each reviewer to apply the **Reader Comprehension** lens and emit any survivors as `class: clarity` findings:
+
+> **Reader Comprehension — raise only genuinely ambiguous things, not everything.**
+>
+> Default to silence. Raise a clarity finding ONLY when two competent readers *of this language* would genuinely disagree about what the code does or whether it is intentional. This is not a "could it be clearer?" sweep.
+>
+> **Smells to look for (only when genuinely ambiguous):** misleading names (name implies different behavior/type than reality); overloaded return/param semantics (one value meaning several things — `nil` = not-found *and* error *and* default; a bool that's really tri-state); hidden side effects (name/signature implies purity but it mutates an arg/global/disk/db); unstated invariants (correct only because of an ordering/nullness/caller contract written nowhere); surprising control flow (a buried early-return/`break`/fallthrough, or success returned from an error-shaped branch); magic values (a bare timeout/retry-cap/status-code/sentinel with no name/comment); action-at-a-distance (behavior depends on a global/env/earlier mutation with no local signal); comment ⇄ code drift (a comment asserting an invariant the code no longer backs).
+>
+> **The bar (gatekeeper):** a clarity finding survives only if it names the **concrete misread and its cost** — what a careful reader will wrongly conclude, and what breaks downstream. Phrase `what` as the misread, not a defect label: not "unclear name `count`" but "a reader will read `count` as the total and reuse it that way, but it's the remaining count → off-by-one." If you can only say "could be clearer" with no specific misread, it's style — drop it.
+>
+> **Do NOT flag:** idiomatic code that's standard for the language (even if terse); patterns consistent with the surrounding code; meaning recoverable from the immediate context; names that are merely imperfect but still clear; pure formatting. Prefer the few highest-confidence points over an exhaustive list; when unsure, drop it.
+>
+> **Judgment calls:** when you cannot tell whether something is a bug or deliberate, do not silently drop it and do not assert a fix — emit a `clarity` finding whose `fix` states the **open question and both readings** (e.g. "`getUser` returns `nil` on a DB timeout, same as not-found — intentional empty-state fallback, or a swallowed outage? A reader can't tell.").
 
 ---
 
@@ -83,16 +97,17 @@ Tell each reviewer to return findings as a structured list, one finding per item
 In this session, merge all reviewers' findings:
 
 1. **Collapse overlaps** — same `file`+`line`, or the same root cause flagged by two reviewers. Keep the clearest wording; append "(also flagged by `<reviewer>`)".
-2. **Filter to actionable + real** — drop nits, pure style, and "consider…" musings. A survivor must name *what's wrong* **and** *the fix/decision*. If `--yes`/autopilot, keep `should-fix` and `blocker`; drop `nit`.
+2. **Filter to actionable + real** — drop nits, pure style, and "consider…" musings. A survivor must name *what's wrong* **and** *the fix/decision*. A `clarity` finding survives only if it clears the misread+cost bar (Step 4) — apply that bar strictly here too; "could be clearer" with no concrete misread is style, drop it. If `--yes`/autopilot, keep `should-fix` and `blocker`; drop `nit`.
 3. **Split by class:**
    - **mechanical** → candidates for inline PR comments
-   - **architectural** → decision stream (chat only, Step 6)
+   - **architectural** → decision stream (chat only, Step 6 §A)
+   - **clarity** → comprehension stream (chat only, Step 6 §C) — never auto-posted; raised to the user before any posting
 
 ---
 
 ## Step 6: Report in chat + confirm
 
-Print two sections to chat, concise — no walls of text:
+Print these sections to chat, concise — no walls of text:
 
 **A. Architectural decisions (not posted — your call):**
 For each, write a **short human-readable context** the user can decide from quickly:
@@ -106,12 +121,15 @@ These are never posted to the PR. The user decides what to do with each.
 **B. Mechanical findings (to be posted):**
 A tight list — `path:line — what → fix`, severity-ordered. This is the tally that will become the inline review.
 
+**C. Reader comprehension (not posted — raised for your call):**
+Clarity findings that cleared the bar, each as `path:line — the misread & cost → fix or open question`. These are **raised to you here before any posting** — never auto-posted. Keep this list short; if it runs long, the bar wasn't applied strictly enough.
+
 **Gate:**
 - `--dry-run` → stop here. Nothing is posted.
-- `--yes` *and* author is you → post (Step 7) without asking.
-- Otherwise (default, or any non-author PR) → ask: *"Post N mechanical findings as one review on PR #X? [yes / dry-run / edit]"*. Wait for the answer.
+- `--yes` *and* author is you → post mechanical findings (Step 7) without asking. **Clarity findings are never auto-posted** — list them in §C only.
+- Otherwise (default, or any non-author PR) → ask: *"Post N mechanical findings as one review on PR #X? (M reader-comprehension findings in §C — say which, if any, to include.) [yes / dry-run / edit]"*. Wait for the answer. If the user names clarity findings to include, fold them into the posted review as `[clarity]`-tagged comments.
 
-If **no mechanical findings survive triage** → post nothing to the PR; say so in chat (architectural decisions, if any, are still shown in section A).
+If **no mechanical findings survive triage** → post nothing to the PR by default; say so in chat (architectural and reader-comprehension findings, if any, are still shown in §A and §C).
 
 ---
 
@@ -126,11 +144,11 @@ gh api repos/<owner>/<repo>/pulls/<N>/reviews \
   -f 'comments[][path]=...' -F 'comments[][line]=...' -f 'comments[][body]=...'   # repeat per finding
 ```
 
-- `comments[]` ← line-local mechanical findings, each `path` + `line` + a short `body` (`what` + `fix`).
-- `body` ← a one-line tally (`N findings: …`) plus any mechanical finding whose `line` is null (can't anchor) written as `path — what → fix`.
+- `comments[]` ← line-local mechanical findings, each `path` + `line` + a short `body` (`what` + `fix`); plus any clarity findings the user opted to include (Step 6 gate), their `body` prefixed `[clarity]`.
+- `body` ← a one-line tally (`N findings: …`) plus any included finding whose `line` is null (can't anchor) written as `path — what → fix`.
 - `event: COMMENT` — advisory, never `REQUEST_CHANGES`.
 
-Architectural findings are **not** included anywhere in the posted review.
+Architectural findings — and clarity findings the user did not opt to include — are **not** in the posted review.
 
 Echo the posted tally + the review URL to chat.
 
