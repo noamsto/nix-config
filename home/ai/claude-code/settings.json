@@ -198,10 +198,10 @@
       "allowLocalBinding": true
     }
   },
-  "syntaxHighlightingDisabled": false,
   "feedbackSurveyRate": 0,
+  "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",

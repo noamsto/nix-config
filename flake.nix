@@ -176,7 +176,10 @@
     };
 
     lanzaboote = {
-      url = "github:nix-community/lanzaboote/v1.0.0";
+      # Track master until a tag past v1.0.0 ships: v1.0.0 sets the removed
+      # `boot.bootspec.enable`, which current nixpkgs rejects (bootspec is now
+      # always-on). flake.lock pins the exact rev.
+      url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

@@ -21,6 +21,13 @@
     '';
     withRuby = false;
     extraWrapperArgs = [
+      # Skip the DSR/'background' terminal probe that warns (E1568) on every
+      # startup under tmux — the 100ms wait is a false-positive timeout during
+      # heavy plugin load. Must be set before nvim starts; ':set nottyfast' in
+      # config is too late. Added in nvim 0.12.3 (neovim/neovim#38699).
+      "--set"
+      "NVIM_NOTTYFAST"
+      "1"
       "--suffix"
       "LIBRARY_PATH"
       ":"
