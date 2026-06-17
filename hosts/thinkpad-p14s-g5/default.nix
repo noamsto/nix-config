@@ -32,12 +32,16 @@ in {
     generation = "gen5";
   };
 
-  # AMD AI: ROCm + Vulkan llama.cpp inference (no NPU on this host)
-  environment.systemPackages = [
-    pkgs.llama-cpp-rocm
-    pkgs.llama-cpp-vulkan
-    pkgs.rocmPackages.clr
-  ];
+  # AMD AI: Lemonade server with ROCm + Vulkan backends (Radeon 780M, no NPU)
+  hardware.amd-npu = {
+    enable = true;
+    enableNPU = false; # 780M iGPU lacks an XDNA NPU
+    enableFastFlowLM = false; # requires the NPU
+    enableLemonade = true;
+    enableROCm = true; # GPU/VRAM offload
+    enableVulkan = true;
+    lemonade.user = "noams";
+  };
 
   # /dev/kfd (ROCm) needs render group; default users.nix only adds video
   users.users.noams.extraGroups = ["render"];
