@@ -16,6 +16,7 @@ Check the diff against the branch base and remove AI-generated slop introduced i
 - Hallucinated APIs — verify any unfamiliar import, method, or config option actually exists in the dependency.
 - Convention-blind code — compare naming, error handling, and logging against the surrounding file before keeping new patterns.
 - Over-engineering — extra abstraction, options, or indirection beyond what the task requires.
+- Ephemeral scratch files — leftover `PLAN.md`, `SCRATCH.md`, `NOTES.md`, `TODO.md`, etc. added during the session but not part of the deliverable. Delete unless the task explicitly asked for them.
 
 ## Language-Specific Patterns
 
