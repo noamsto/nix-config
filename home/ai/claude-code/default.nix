@@ -15,6 +15,8 @@
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
   git-commit-autostage-guard = pkgs.writeShellScriptBin "claude-git-commit-autostage-guard" (builtins.readFile ./git-commit-autostage-guard.sh);
   git-default-branch-guard = pkgs.writeShellScriptBin "claude-git-default-branch-guard" (builtins.readFile ./git-default-branch-guard.sh);
+  deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
+  deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
 
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
@@ -60,6 +62,10 @@
                 type = "command";
                 command = "${git-default-branch-guard}/bin/claude-git-default-branch-guard";
               }
+              {
+                type = "command";
+                command = "${deslop-guard}/bin/claude-deslop-guard";
+              }
             ];
           }
           {
@@ -68,6 +74,17 @@
               {
                 type = "command";
                 command = "${skeleton-guard}/bin/claude-read-skeleton-guard";
+              }
+            ];
+          }
+        ];
+        PostToolUse = [
+          {
+            matcher = "Skill";
+            hooks = [
+              {
+                type = "command";
+                command = "${deslop-mark}/bin/claude-deslop-mark";
               }
             ];
           }
