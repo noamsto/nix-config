@@ -1167,11 +1167,11 @@
         "tmux-state": "tmux-state"
       },
       "locked": {
-        "lastModified": 1781782082,
-        "narHash": "sha256-FWyVqfLRvPeP7HHXaFwYh5L1IMiLI9Psdh2V1EQ5zVs=",
+        "lastModified": 1781784473,
+        "narHash": "sha256-s9Fdj/F6rb+LsT67o9YTX1Dn0dbSd0naIRMaqhaiqko=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "c3b27cc45962cd0acd062b70cb7577cb5a9c9f3c",
+        "rev": "76509a7bb07bb31e86358c864ae22d9df8082b38",
         "type": "github"
       },
       "original": {
