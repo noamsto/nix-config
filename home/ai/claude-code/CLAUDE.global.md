@@ -218,3 +218,12 @@ Write the diff a careful senior engineer *on this codebase* would write — noth
 - **Delete, don't preserve.** When replacing code, remove the old version — no commented-out blocks, dead branches, or compat shims kept "just in case". Git history is the backup.
 - **Clean up scaffolding** — strip debug prints, leftover logging, and placeholder TODOs you introduced before calling it done.
 - **Verify unfamiliar APIs before use** — never guess that an import, method, or option exists.
+
+## Machine Profile Overlay
+
+Profile-specific instructions (work vs personal) are imported below. Nix
+symlinks the target to `CLAUDE.work.md` or `CLAUDE.personal.md` based on
+`osConfig.profile`, so the import always resolves. Keep machine-bound guidance
+in those files; repo-keyed rules (Linear vs GitHub) stay in this file.
+
+@~/.claude/CLAUDE.profile.md

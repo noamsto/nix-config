@@ -3,6 +3,7 @@
   lib,
   config,
   inputs,
+  osConfig,
   ...
 }: let
   # Shared MCP server definitions
@@ -157,6 +158,10 @@ in {
     {
       ".claude/CLAUDE.md".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+      # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
+      # Always present (work or personal) so the import never silently no-ops.
+      ".claude/CLAUDE.profile.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
       ".claude/settings.json".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
       ".claude/agents".source =
