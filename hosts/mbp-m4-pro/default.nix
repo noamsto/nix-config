@@ -201,6 +201,10 @@ in {
       # swipe on the ThinkPad). From the mediosz/tap declared above.
       "mediosz/tap/swipeaerospace"
       "raycast"
+      # Mesh VPN. GUI/menubar variant (auto-update, browser login, native
+      # daemon). CLI lives inside the bundle and isn't on PATH — symlinked
+      # below so the shared fish abbreviations (tss/tsp/tsw) resolve.
+      "tailscale-app"
       "vlc"
       # Cask, not nixpkgs: no reliable aarch64-darwin build there.
       "bambu-studio"
@@ -250,6 +254,16 @@ in {
       RunAtLoad = true;
     };
   };
+
+  # The tailscale-app cask ships its CLI inside the bundle (capital-T binary),
+  # not on PATH. Symlink it to /usr/local/bin (on macOS's default PATH via
+  # /etc/paths) so the shared fish abbreviations resolve. ln -sf tolerates the
+  # target not existing yet on the very first switch — it resolves once brew
+  # finishes installing the .pkg.
+  system.activationScripts.postActivation.text = ''
+    mkdir -p /usr/local/bin
+    ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale
+  '';
 
   # nix-darwin system identity + starter macOS defaults.
   # NOTE: bump stateVersion to the current nix-darwin value if the changelog
