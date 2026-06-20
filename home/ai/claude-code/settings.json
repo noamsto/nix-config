@@ -119,7 +119,8 @@
     "pyright-lsp@claude-plugins-official": true,
     "agent-smith@agent-smith": true,
     "resolved@resolved": true,
-    "figma@claude-plugins-official": true
+    "figma@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "samber": {
