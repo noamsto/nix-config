@@ -25,11 +25,25 @@ cwd=$(jq -r '.cwd // empty' <<<"$input")
 cwd=${cwd:-$PWD}
 
 git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
-branch=$(git -C "$cwd" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
-[[ -n $branch ]] || exit 0
 
 dir="${TMPDIR:-/tmp}/claude-deslop/$session"
 mkdir -p "$dir"
-# Sanitize the branch (feat/foo -> feat%2Ffoo) so it is a single filename.
-safe=${branch//\//%2F}
-: >"$dir/$safe"
+
+# Mark every branch checked out across this repo's worktrees, not just the
+# session cwd's branch. The skill runs from the session cwd — typically the main
+# checkout on the default branch — while the work being reviewed (and the push
+# that follows) happens in a `wt` worktree on a different branch (#16).
+# deslop-guard resolves the push command's cd/git -C target branch, so marking
+# only the session cwd's branch never matches it. Marking all worktree branches
+# keeps the two in agreement; the per-session sentinel dir bounds the blast
+# radius, and the marker is a forcing function, not proof the cleanup ran.
+#
+# `worktree list --porcelain` emits a `branch refs/heads/<name>` line per
+# worktree (absent for detached HEADs, which deslop-guard also lets through).
+while IFS= read -r line; do
+  [[ $line == "branch refs/heads/"* ]] || continue
+  branch=${line#branch refs/heads/}
+  # Sanitize the branch (feat/foo -> feat%2Ffoo) so it is a single filename.
+  safe=${branch//\//%2F}
+  : >"$dir/$safe"
+done < <(git -C "$cwd" worktree list --porcelain)
