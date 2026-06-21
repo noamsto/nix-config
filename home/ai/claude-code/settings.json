@@ -203,11 +203,10 @@
   "syntaxHighlightingDisabled": false,
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
-  "fastMode": true,
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
-  "teammateMode": "in-process",
+  "teammateMode": "auto",
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
@@ -219,5 +218,6 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ]
+  ],
+  "fastMode": true
 }
