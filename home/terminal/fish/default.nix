@@ -446,7 +446,7 @@
           abbr -a '!$' --position anywhere --function last_command_arg
           abbr -a sc 'sesh connect'
           abbr -a ws 'wt switch'
-          abbr -a wsp 'wt switch pr:'
+          abbr -a wsp --set-cursor 'wt switch pr:%'
 
           # Upstream `wt` fish completion (installed at
           # ~/.config/fish/completions/wt.fish) already enumerates branches in
