@@ -56,6 +56,16 @@ branch=$(git -C "$target" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
 safe=${branch//\//%2F}
 [[ -f "${TMPDIR:-/tmp}/claude-deslop/$session/$safe" ]] && exit 0
 
+# The per-branch sentinel is only recorded for worktrees of the session cwd's
+# repo (deslop-mark). A push from a *different* repo's worktree can never match
+# it, so fall back to the session-level marker: if deslop ran at all this
+# session and the push targets a different repo than the session cwd, allow it.
+# Same-repo pushes keep the strict per-branch requirement above.
+git_common() { git -C "$1" rev-parse --path-format=absolute --git-common-dir 2>/dev/null; }
+if [[ -f "${TMPDIR:-/tmp}/claude-deslop/$session/.ran" && -n $(git_common "$target") && $(git_common "$target") != "$(git_common "$cwd")" ]]; then
+  exit 0
+fi
+
 jq -n --arg branch "$branch" '{
   hookSpecificOutput: {
     hookEventName: "PreToolUse",

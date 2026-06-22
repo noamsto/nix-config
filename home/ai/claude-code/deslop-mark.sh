@@ -29,6 +29,13 @@ git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 dir="${TMPDIR:-/tmp}/claude-deslop/$session"
 mkdir -p "$dir"
 
+# Session-level marker: deslop ran at least once this session. The per-branch
+# loop below only sees worktrees of the session cwd's repo, so a push from a
+# *different* repo's worktree can never get a per-branch sentinel. deslop-guard
+# falls back to this marker for that cross-repo case. A leading-dot name can
+# never collide with a sanitized branch (git forbids refs beginning with '.').
+: >"$dir/.ran"
+
 # Mark every branch checked out across this repo's worktrees, not just the
 # session cwd's branch. The skill runs from the session cwd — typically the main
 # checkout on the default branch — while the work being reviewed (and the push
