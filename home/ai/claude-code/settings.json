@@ -218,6 +218,5 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ],
-  "fastMode": true
+  ]
 }
