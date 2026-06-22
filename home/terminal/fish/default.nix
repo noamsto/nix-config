@@ -206,26 +206,24 @@
               return 1
           end
 
-          # 1. issue (capture number)
           set -l url (gh issue create --assignee @me --title "$title" --body "Dispatched worker task.")
           set -l num (string match -r '/(\d+)$' -- $url)[2]
 
-          # 2. derive branch + its sanitized worktree path (slash -> dash, matches worktrunk's
-          #    {{ repo_path }}-worktrees/{{ branch | sanitize }} template).
+          # path must match worktrunk's {{ repo_path }}-worktrees/{{ branch | sanitize }}
+          # template (slash -> dash) — wt won't tell us where it put the worktree.
           set -l slug (string lower (string replace -ra '[^a-zA-Z0-9]+' '-' $title) | string sub -l 40 | string trim -c -)
           set -l branch "feat/$num-$slug"
           set -l sanitized (string replace -a / - $branch)
           set -l wt_path (git rev-parse --show-toplevel)-worktrees/$sanitized
 
-          # 3. create the worktree. The post-switch tmux hook is DISABLED under CLAUDECODE,
-          #    so this only makes the worktree — we drive tmux ourselves below.
+          # post-switch tmux hook is disabled under CLAUDECODE, so wt only creates the
+          # worktree here — we drive tmux ourselves below.
           wt switch -c $branch -y
 
-          # 4. task file (record the dispatcher's own pane so the worker can signal back)
+          # record the dispatcher's pane so the worker can signal completion back to it
           printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\n' \
               $tier $title $num $TMUX_PANE > $wt_path/WORKER_TASK.md
 
-          # 5. create the worker window ourselves and launch claude in it
           set -l pane (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{pane_id}')
           tmux send-keys -t $pane \
               "claude --model $model --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
