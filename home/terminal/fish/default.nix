@@ -196,6 +196,42 @@
       fish_pager_color_selected_background --background=45475a
     '';
 
+    "fish/functions/dispatch.fish".text = ''
+      function dispatch --description 'Scaffold a worker: issue -> worktree -> task file -> baked claude'
+          set -l tier $argv[1]
+          set -l model $argv[2]
+          set -l title (string join ' ' $argv[3..-1])
+          if not contains -- $tier trivial standard deep
+              echo "usage: dispatch <trivial|standard|deep> <model> <title...>" >&2
+              return 1
+          end
+
+          # 1. issue (capture number)
+          set -l url (gh issue create --assignee @me --title "$title" --body "Dispatched worker task.")
+          set -l num (string match -r '/(\d+)$' -- $url)[2]
+
+          # 2. derive branch + its sanitized worktree path (slash -> dash, matches worktrunk's
+          #    {{ repo_path }}-worktrees/{{ branch | sanitize }} template).
+          set -l slug (string lower (string replace -ra '[^a-zA-Z0-9]+' '-' $title) | string sub -l 40 | string trim -c -)
+          set -l branch "feat/$num-$slug"
+          set -l sanitized (string replace -a / - $branch)
+          set -l wt_path (git rev-parse --show-toplevel)-worktrees/$sanitized
+
+          # 3. create the worktree. The post-switch tmux hook is DISABLED under CLAUDECODE,
+          #    so this only makes the worktree — we drive tmux ourselves below.
+          wt switch -c $branch -y
+
+          # 4. task file (record the dispatcher's own pane so the worker can signal back)
+          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\n' \
+              $tier $title $num $TMUX_PANE > $wt_path/WORKER_TASK.md
+
+          # 5. create the worker window ourselves and launch claude in it
+          set -l pane (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{pane_id}')
+          tmux send-keys -t $pane \
+              "claude --model $model --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+      end
+    '';
+
     "fish/functions/__reload_theme.fish".text = ''
       function __reload_theme
           # Accept theme as argument, or read from state file
