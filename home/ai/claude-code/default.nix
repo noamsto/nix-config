@@ -29,6 +29,19 @@
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
+      # Profile-gated plugins. Deep-merged with (and higher precedence than)
+      # the common set in settings.json, so these are profile-locked: the
+      # /plugin TUI can't toggle them on the wrong machine. Common,
+      # TUI-toggleable plugins stay in settings.json.
+      enabledPlugins =
+        lib.optionalAttrs (osConfig.profile == "work") {
+          "pg@aiguide" = true;
+          "cc-skills-golang@samber" = true;
+          "figma@claude-plugins-official" = true;
+        }
+        // lib.optionalAttrs (osConfig.profile == "personal") {
+          "swift-lsp@claude-plugins-official" = true;
+        };
       # Status-state hooks live in the lazytmux CC plugin and image-capture
       # hooks in the aeye CC plugin (both loaded via --plugin-dir in
       # the wrapper below); only personal hooks remain here.

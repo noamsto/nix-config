@@ -111,16 +111,12 @@
     "refactoring-agent@xdg-claude": true,
     "commit-commands@claude-code-plugins": true,
     "gopls-lsp@claude-plugins-official": true,
-    "pg@aiguide": false,
     "frontend-design@claude-plugins-official": true,
-    "cc-skills-golang@samber": false,
     "typescript-lsp@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "agent-smith@agent-smith": true,
-    "resolved@resolved": true,
-    "figma@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+    "resolved@resolved": true
   },
   "extraKnownMarketplaces": {
     "samber": {

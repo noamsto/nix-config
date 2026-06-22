@@ -7,12 +7,14 @@ Settings are split into two layers. **Never mix them.**
 | Layer | File | Owns | Writable |
 |-------|------|------|----------|
 | `settings.json` | `home/ai/claude-code/settings.json` (symlinked to `~/.claude/settings.json`) | permissions, plugins, theme, sandbox, mcpServers, preferences — everything that's plain JSON | Yes (third-party tools and UI can edit) |
-| `--settings` overlay | Nix-generated via `nix-settings-json` in `home/ai/claude-code/default.nix` | hooks, statusLine — **only** keys that reference `/nix/store` paths | No (read-only, rebuilt by Nix) |
+| `--settings` overlay | Nix-generated via `nix-settings-json` in `home/ai/claude-code/default.nix` | hooks, statusLine (keys that reference `/nix/store` paths), and **profile-gated `enabledPlugins`** | No (read-only, rebuilt by Nix) |
 
 **Rules:**
 - If a setting needs a nix store path → `--settings` overlay (default.nix)
+- If a setting must differ by `osConfig.profile` (work vs personal) → `--settings` overlay, gated with `lib.optionalAttrs`
 - Everything else → `settings.json`
-- Never duplicate keys across the two layers (`--settings` wins and silently shadows `settings.json`)
+- Object-valued keys (`enabledPlugins`, `permissions`, `env`, `mcpServers`, `hooks`) **deep-merge** across the two layers, with the `--settings` overlay winning per-key. So the same top-level key CAN live in both layers — but the keys *inside* it must not overlap unless you intend the overlay to win.
+  - Example: common plugins live in `settings.json` (TUI-toggleable); profile-specific plugins (`figma`/`pg`/`cc-skills-golang` → work, `swift-lsp` → personal) live in the overlay and are **profile-locked** (the `/plugin` TUI can't toggle them, same as hooks).
 - Third-party tools (lazytmux, etc.) should modify `settings.json` — changes appear as git diffs
 - `feedbackSurveyState` and other runtime-mutated keys live in `settings.json`; ignore the noise in diffs
 
