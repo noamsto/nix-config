@@ -27,6 +27,9 @@ Make Slack messages sound like Noam. Two modes, routed by the argument:
    target channel/audience (busy work channel vs. DM vs. casual). When the target
    is unknown, ask which channel/person it's for, or default to the profile's
    most common register and say which you assumed.
+   - **Write in English unless told otherwise.** English is the default for every
+     channel and DM, including 1:1s with Israeli colleagues. Only use Hebrew if
+     Noam explicitly asks, or he's clearly continuing an in-progress Hebrew thread.
 4. **Write it in voice** using the profile's rules and anchors.
 5. **Approve in chat, then send.** Print the drafted message text in this
    conversation and ask Noam to approve or edit. Only after his go-ahead, send it
@@ -50,7 +53,12 @@ and deliberate — only run when asked.
 3. **Bound the sample.** Cap at ~60–100 messages total, spread across channels.
    Weight toward *substantive* messages; skip pure one-liners ("lgtm", "ty",
    ":+1:") that teach nothing about voice.
-4. **Distill** the sample into the profile sections below.
+4. **Distill** the sample into the profile sections below. **Capture his voice in
+   English regardless of the sampled language.** Noam writes some DMs in Hebrew,
+   but the profile must instruct English-by-default output (see the template's
+   language rule). Use Hebrew messages to learn his *tone* — casual, warm, direct —
+   not to make Hebrew an output default. Translate Hebrew anchors to English or
+   prefer English anchors; don't store Hebrew snippets as voice targets.
 5. **Write the profile.** Create `~/.claude/slack-voice/` if needed, then write
    `profile.md` using the template below. Confirm to Noam how many messages and
    which registers fed it.
@@ -73,6 +81,7 @@ Generated: <date> · Sampled: <N> messages
 Registers reached: <e.g. public channels, 1 DM> · Not reached: <e.g. private channels>
 
 ## Rules
+- Language: English by default — every channel and DM, including 1:1s with Israeli colleagues. Hebrew only when Noam explicitly asks or is continuing an in-progress Hebrew thread.
 - Typical length: <e.g. 1–2 short sentences>
 - Emoji: <habits — which, how often, where>
 - Openers / closers: <patterns, or "none — dives straight in">
