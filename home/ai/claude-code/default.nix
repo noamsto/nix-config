@@ -18,6 +18,7 @@
   git-default-branch-guard = pkgs.writeShellScriptBin "claude-git-default-branch-guard" (builtins.readFile ./git-default-branch-guard.sh);
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
+  dispatch-notify = pkgs.writeShellScriptBin "claude-dispatch-notify" (builtins.readFile ./dispatch-notify.sh);
 
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
@@ -86,6 +87,16 @@
               {
                 type = "command";
                 command = "${deslop-mark}/bin/claude-deslop-mark";
+              }
+            ];
+          }
+        ];
+        SessionEnd = [
+          {
+            hooks = [
+              {
+                type = "command";
+                command = "${dispatch-notify}/bin/claude-dispatch-notify";
               }
             ];
           }
