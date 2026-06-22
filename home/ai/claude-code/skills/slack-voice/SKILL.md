@@ -31,6 +31,15 @@ Make Slack messages sound like Noam. Two modes, routed by the argument:
      channel and DM, including 1:1s with Israeli colleagues. Only use Hebrew if
      Noam explicitly asks, or he's clearly continuing an in-progress Hebrew thread.
 4. **Write it in voice** using the profile's rules and anchors.
+   - **Keep it short — this is the most common failure.** Default to 1–2 lines.
+     Match the brevity of the anchors, not the length of these instructions. A
+     draft over ~3 lines must be a genuine status round-up or multi-PR summary;
+     otherwise cut it down — strip throat-clearing, hedging, and restated context,
+     and leave just the one point and the ask.
+   - **Always include the PR link.** If the message is about a PR, review, or
+     change, paste the actual PR URL — his messages almost always lead with it.
+     Never reference a PR by number or name alone. If you don't have the URL, ask
+     for it before drafting rather than omitting it.
 5. **Approve in chat, then send.** Print the drafted message text in this
    conversation and ask Noam to approve or edit. Only after his go-ahead, send it
    with `slack_send_message`. **Never auto-send.** Do not rely on
