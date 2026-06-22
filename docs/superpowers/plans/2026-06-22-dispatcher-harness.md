@@ -321,36 +321,9 @@ git commit -m "feat(claude): add worker orchestrator protocol"
 
 ## Phase 2 — Orchestration shell (allowlist + dispatcher + notification)
 
-### Task 5: per-project risky-tool deny (the base allow already covers workers)
+### Task 5: ~~per-project risky-tool deny~~ — dropped
 
-> **Rev 1 (skeptic finding #3):** the original "add worker-safe entries" task was a no-op — `settings.json:13-15` already grants `Bash(git *)`, `Bash(gh *)`, `Bash(just *)`, which are strict supersets of every entry it proposed. `auto` mode is not gated by adding narrower duplicates. The base allow needs **nothing**. The piece actually missing is the per-project *deny* the plan referenced but never wrote.
-
-**Files:**
-- Modify: a target repo's `.claude/settings.json` (e.g. `toddl`), NOT nix-config.
-
-The nix-config base allow is fine as-is. What protects the worker is each prod-credentialed repo denying the prod-write ops, so `--permission-mode auto` can never auto-grant them.
-
-- [ ] **Step 1: Confirm the base already covers safe ops**
-
-Run: `rg -n '"Bash\((git|gh|just) ' home/ai/claude-code/settings.json`
-Expected: `Bash(git *)`, `Bash(gh *)`, `Bash(just *)` present → no additions to nix-config.
-
-- [ ] **Step 2: Add the deny block to the target repo's `.claude/settings.json`** (`permissions.deny`):
-
-```json
-"Bash(wrangler deploy:*)",
-"Bash(wrangler secret:*)",
-"Bash(* --remote*)"
-```
-
-`deny` wins over `allow`, so even though `Bash(git *)`-style wildcards are broad, these prod-write ops are hard-fenced. (`--remote` is matched as a substring because it appears across `wrangler d1`/`pages`/etc.)
-
-- [ ] **Step 3: Verify JSON validity**
-
-Run: `jq empty <target-repo>/.claude/settings.json`
-Expected: exit 0.
-
-- [ ] **Step 4: Commit** (in the target repo, not nix-config).
+> **Dropped (post-merge):** the original plan had each prod-credentialed repo add a `permissions.deny` for `wrangler deploy`/`secret`/`--remote`. We're not doing it. The base allow (`settings.json:13-15`: `Bash(git *)`, `Bash(gh *)`, `Bash(just *)`) was already fine, and a hard deny — especially the over-broad `Bash(* --remote*)` substring — is more nagging friction than protection for a supervised harness. The prod-write fence now lives only as soft guidance in **WORKER_PROTOCOL.md rule 6** (don't run them; stop and flag), backed by `auto` mode still escalating on genuinely novel commands. If a hard guard is ever wanted, add the deny to the specific repo's `.claude/settings.json` then.
 
 ### Task 6: dispatcher fish function
 

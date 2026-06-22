@@ -27,8 +27,12 @@ if echo "$command" | grep -qE '(^|\s)gh\s+pr\s+create(\s|$)'; then
 fi
 [[ $gated == true ]] || exit 0
 
-# Deliberate override.
+# Deliberate override. Honor it both as a hook-process env var and as an inline
+# prefix in the intercepted command — env vars set inline (`ALLOW_…=1 git push`)
+# reach only the git subprocess, never this hook, so the documented bypass is
+# otherwise unusable from an agent (#25).
 [[ ${ALLOW_PUSH_WITHOUT_DESLOP:-} == 1 ]] && exit 0
+[[ $command =~ (^|[[:space:]])ALLOW_PUSH_WITHOUT_DESLOP=1([[:space:]]|$) ]] && exit 0
 
 session=$(jq -r '.session_id // empty' <<<"$input")
 [[ -n $session ]] || exit 0
