@@ -20,13 +20,19 @@ in {
           # Mirrors the Mac's Karabiner tap/hold so the same finger drives the
           # WM on both machines (see home/darwin/karabiner.nix). xremap owns
           # Caps at the evdev layer, so `caps:escape` is dropped from kb_options.
+          #
+          # hold_threshold_millis = 0 starts Caps in xremap's HoldPreferred
+          # state, so any chorded key resolves to Super instantly (like
+          # Karabiner). A non-zero threshold would make Caps+key within that
+          # window emit Esc+key instead — a lag on every WM combo. A standalone
+          # tap released within alone_timeout_millis still emits Esc.
           name = "caps_escape_super";
           remap = {
             CAPSLOCK = {
               held = "KEY_LEFTMETA";
               alone = "ESC";
               alone_timeout_millis = 1000;
-              hold_threshold_millis = 100;
+              hold_threshold_millis = 0;
             };
           };
         }
