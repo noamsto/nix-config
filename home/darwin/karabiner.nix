@@ -69,6 +69,44 @@ lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
               }
             ];
           }
+          {
+            # MacBook's built-in keyboard is the only one with fn (globe) in the
+            # corner; the external keyboard and both ThinkPads (BIOS Fn/Ctrl swap)
+            # put Ctrl there. Swap fn<->Ctrl on the built-in keyboard ONLY;
+            # `is_built_in_keyboard` keeps external keyboards (already
+            # Ctrl-in-corner) from having their Ctrl turned into fn.
+            description = "Built-in keyboard: swap Fn (corner) and Left Control";
+            manipulators = [
+              {
+                type = "basic";
+                from = {
+                  key_code = "fn";
+                  modifiers.optional = ["any"];
+                };
+                to = [{key_code = "left_control";}];
+                conditions = [
+                  {
+                    type = "device_if";
+                    identifiers = [{is_built_in_keyboard = true;}];
+                  }
+                ];
+              }
+              {
+                type = "basic";
+                from = {
+                  key_code = "left_control";
+                  modifiers.optional = ["any"];
+                };
+                to = [{key_code = "fn";}];
+                conditions = [
+                  {
+                    type = "device_if";
+                    identifiers = [{is_built_in_keyboard = true;}];
+                  }
+                ];
+              }
+            ];
+          }
         ];
       }
     ];
