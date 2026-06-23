@@ -1,11 +1,11 @@
 ---
 name: deslop
-description: Use when reviewing a branch before committing or creating a PR. Checks the diff against main and removes AI-generated slop (unnecessary comments, defensive blocks, casts, style inconsistencies, hallucinated APIs).
+description: Use when reviewing a branch before committing or creating a PR. Checks the changes you're about to push (unpushed commits, or the whole branch when nothing is pushed yet) and removes AI-generated slop (unnecessary comments, defensive blocks, casts, style inconsistencies, hallucinated APIs).
 ---
 
 # Remove AI code slop
 
-Check the diff against the branch base and remove AI-generated slop introduced in the branch.
+Check the changes you're about to push and remove AI-generated slop introduced in them. Scope to the unpushed commits, not the whole branch — so adding a small fix to an already-pushed PR reviews only that fix, not everyone's prior work on the branch.
 
 ## General Focus Areas
 
@@ -50,8 +50,14 @@ Check the diff against the branch base and remove AI-generated slop introduced i
 
 ## Process
 
-1. Identify the branch base (usually `main`, but a stacked branch may have a different parent — check `git log --oneline -20` if unsure).
-2. Get the diff: `git diff <base>...HEAD`
+1. Determine the review base — the changes you're about to push, not the whole branch:
+   ```sh
+   base=$(git rev-parse --verify --quiet '@{push}' \
+       || git rev-parse --verify --quiet '@{upstream}' \
+       || git merge-base main HEAD)
+   ```
+   On an already-pushed branch (e.g. adding a fix to an open PR) this scopes to just your new commits. On a fresh branch with no upstream it falls back to the merge-base with `main`, i.e. the whole branch. For a stacked branch on a non-`main` parent, swap `main` for the real parent (check `git log --oneline -20` if unsure).
+2. Get the diff: `git diff "$base"..HEAD`
 3. Review each changed file for the patterns above.
 4. Remove identified slop while preserving legitimate changes.
 5. **Self-audit pass:** re-read your edits and ask "what still looks obviously AI-generated?" Fix anything that stands out.
