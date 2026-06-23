@@ -230,6 +230,73 @@
       end
     '';
 
+    "fish/functions/crew.fish".text = ''
+      function crew --description 'File-based coordination bus: id/status/msg/roster/inbox/log'
+          set -l sub $argv[1]
+          set -e argv[1]
+
+          # repo-keyed bus dir; --path-format=absolute so main-checkout and worktrees
+          # resolve to a byte-identical path (load-bearing — see #29).
+          set -l common (git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+          if test -z "$common"
+              echo "crew: not in a git repo" >&2
+              return 1
+          end
+          set -l dir "$common/crew"
+          set -l log "$dir/events.jsonl"
+
+          switch $sub
+              case id
+                  set -q CREW_ID; or set -gx CREW_ID (date +%s)-$fish_pid
+                  echo $CREW_ID
+              case status msg
+                  if not set -q CREW_ID
+                      echo "crew: CREW_ID unset (run: set -gx CREW_ID (crew id))" >&2
+                      return 1
+                  end
+                  mkdir -p $dir
+                  set -l line
+                  if test "$sub" = status
+                      # crew status <from> <state> [detail] [pr_url]
+                      set line (jq -nc \
+                          --arg crew "$CREW_ID" --arg from "$argv[1]" --arg state "$argv[2]" \
+                          --arg detail "$argv[3]" --arg pr "$argv[4]" \
+                          '{ts:(now*1000|floor), crew_id:$crew, from:$from, to:("dispatcher:"+$crew),
+                            kind:"status",
+                            body:({state:$state}
+                                  + (if $detail!="" then {detail:$detail} else {} end)
+                                  + (if $pr!="" then {pr_url:$pr} else {} end))}')
+                  else
+                      # crew msg <from> <to> <body>
+                      set line (jq -nc \
+                          --arg crew "$CREW_ID" --arg from "$argv[1]" --arg to "$argv[2]" --arg body "$argv[3]" \
+                          '{ts:(now*1000|floor), crew_id:$crew, from:$from, to:$to, kind:"msg", body:$body}')
+                  end
+                  printf '%s\n' $line >>$log
+              case roster
+                  set -l crew (test -n "$argv[1]"; and echo $argv[1]; or echo $CREW_ID)
+                  test -f $log; or return 0
+                  jq -s --arg crew "$crew" '
+                      map(select(.crew_id==$crew and .kind=="status"))
+                      | group_by(.from) | map(max_by(.ts))
+                      | map({from, state:.body.state, pr_url:.body.pr_url,
+                             age_s:((now - (.ts/1000))|floor)})' $log
+              case inbox
+                  set -l crew (test -n "$argv[2]"; and echo $argv[2]; or echo $CREW_ID)
+                  test -f $log; or return 0
+                  jq -c --arg crew "$crew" --arg me "$argv[1]" \
+                      'select(.crew_id==$crew and (.to==$me or .to=="*"))' $log
+              case log
+                  set -l crew (test -n "$argv[1]"; and echo $argv[1]; or echo $CREW_ID)
+                  test -f $log; or return 0
+                  jq -c --arg crew "$crew" 'select(.crew_id==$crew)' $log
+              case '*'
+                  echo "usage: crew id | status <from> <state> [detail] [pr] | msg <from> <to> <body> | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+                  return 1
+          end
+      end
+    '';
+
     "fish/functions/__reload_theme.fish".text = ''
       function __reload_theme
           # Accept theme as argument, or read from state file
