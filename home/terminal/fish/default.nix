@@ -235,6 +235,15 @@
       end
     '';
 
+    # Start a dispatcher session: an orchestrator that judges tasks into tier+model
+    # and fans them out via `dispatch`. Bakes DISPATCHER_PROTOCOL.md (the judgment
+    # rubric); default model (opus) + full MCP, since the orchestrator needs them.
+    "fish/functions/dispatcher.fish".text = ''
+      function dispatcher --description 'Start a dispatcher session (DISPATCHER_PROTOCOL baked)'
+          claude --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
+      end
+    '';
+
     "fish/functions/crew.fish".text = ''
       function crew --description 'File-based coordination bus: id/status/msg/roster/inbox/log'
           set -l sub $argv[1]
