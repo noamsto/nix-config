@@ -82,5 +82,22 @@ in {
         chmod 644 "$config_path"
       fi
     '';
+
+    # Make Enter open the highlighted Linear issue in the browser. The extension
+    # is installed imperatively via the Vicinae Store, so its bundle isn't
+    # Nix-managed and a Store update wipes the edit; re-apply it every switch.
+    # The script is a no-op if already patched, the extension is absent, or its
+    # layout changed (it never fails the switch). Exit 10 = newly patched, so
+    # restart vicinae to load it.
+    patchVicinaeLinearEnter = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      ext="${config.home.homeDirectory}/.local/share/vicinae/extensions/store.raycast.linear/search-issues.js"
+      if [ -f "$ext" ]; then
+        rc=0
+        ${pkgs.nodejs}/bin/node ${./patch-linear-enter.js} "$ext" || rc=$?
+        if [ "$rc" = "10" ]; then
+          ${pkgs.systemd}/bin/systemctl --user restart vicinae.service || true
+        fi
+      fi
+    '';
   };
 }
