@@ -220,13 +220,18 @@
           # worktree here — we drive tmux ourselves below.
           wt switch -c $branch -y
 
+          # crew bus: one crew_id per dispatcher shell (set -gx persists across
+          # dispatch calls in this shell → all its workers share one crew).
+          crew id >/dev/null
+          set -l crew_dir (git rev-parse --path-format=absolute --git-common-dir)/crew
+
           # record the dispatcher's pane so the worker can signal completion back to it
-          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\n' \
-              $tier $title $num $TMUX_PANE > $wt_path/WORKER_TASK.md
+          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\n' \
+              $tier $title $num $TMUX_PANE $crew_dir $CREW_ID > $wt_path/WORKER_TASK.md
 
           set -l pane (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{pane_id}')
           tmux send-keys -t $pane \
-              "claude --model $model --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+              "claude --model $model --strict-mcp-config --mcp-config ~/.config/claude-code/mcp-worker.json --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
       end
     '';
 
