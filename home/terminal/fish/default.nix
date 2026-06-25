@@ -287,10 +287,12 @@
                       | map({from, state:.body.state, pr_url:.body.pr_url,
                              age_s:((now - (.ts/1000))|floor)})' $log
               case inbox
+                  # messages only — `crew roster` owns status (every status is
+                  # addressed to:dispatcher, so without this the inbox is status spam).
                   set -l crew (test -n "$argv[2]"; and echo $argv[2]; or echo $CREW_ID)
                   test -f $log; or return 0
                   jq -c --arg crew "$crew" --arg me "$argv[1]" \
-                      'select(.crew_id==$crew and (.to==$me or .to=="*"))' $log
+                      'select(.crew_id==$crew and .kind=="msg" and (.to==$me or .to=="*"))' $log
               case log
                   set -l crew (test -n "$argv[1]"; and echo $argv[1]; or echo $CREW_ID)
                   test -f $log; or return 0
