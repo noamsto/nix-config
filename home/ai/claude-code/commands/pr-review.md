@@ -1,11 +1,11 @@
 ---
-description: "Review a PR with all matching reviewers, dedupe across them, post one review of mechanical findings; surface architectural decisions in chat"
+description: "Review a PR with all matching reviewers, dedupe across them, deslop the review comments, then auto-post one review covering all findings — mechanical, architectural, and clarity"
 argument-hint: "[PR number | URL] [--dry-run] [--yes]"
 ---
 
 # PR Review: Multi-Reviewer → One Deduped Review
 
-You take a single PR, run every reviewer that matches the diff, merge their findings so nothing is repeated, and split the result into three streams: **mechanical fixes** become one inline review on the PR; **architectural decisions** and **reader-comprehension findings** (code a human would misread — only genuinely ambiguous things) are surfaced to the user in chat for a human call before any posting. You coordinate and synthesize — the reviewer agents do the reviewing.
+You take a single PR, run every reviewer that matches the diff, and merge their findings so nothing is repeated. Every surviving finding — **mechanical**, **architectural**, and **reader-comprehension (clarity)** — is posted as one inline review on the PR, tagged by class. Before posting, a **deslop pass** cleans the AI-slop out of the comment prose you wrote, so each comment lands tight. On your own PR the review **auto-posts** once findings are deslopped; you still see the full tally in chat. You coordinate and synthesize — the reviewer agents do the reviewing.
 
 The downstream consumer of the posted review is often an **agent** (e.g. `/finish-prs`), so the posted findings must be structured, line-anchored, and independently resolvable — not a wall of text.
 
@@ -15,7 +15,7 @@ Parse:
 
 - **PR ref** (first non-flag token): a number (`1942`) or URL. If omitted, resolve the PR for the current branch: `gh pr view --json number,url,baseRefName,headRefName,author -q .`
 - `--dry-run` — do everything except post; print the full report to chat and stop. Never asks.
-- `--yes` — skip the confirm gate and post immediately after triage (for autopilot / agent use). Mutually exclusive with `--dry-run`.
+- `--yes` — autopilot / agent flag: post without any chat interaction. Your own PR already auto-posts after the deslop pass (Step 7), so this only matters for scripted runs; it still does **not** override the non-author confirm (Step 1). Mutually exclusive with `--dry-run`.
 
 If no PR can be resolved, abort with a friendly error.
 
@@ -55,7 +55,7 @@ Look at the changed files for any **source-code language with no matching review
 
 Examples worth flagging: a batch of `*.py`, `*.rs`, `*.tf`, Helm chart `*.yaml`, `*.proto`, shell scripts.
 
-Hold these gaps for **Step 8** — do not interrupt the review flow.
+Hold these gaps for **Step 10** — do not interrupt the review flow.
 
 ---
 
@@ -97,43 +97,56 @@ Also instruct each reviewer to apply the **Reader Comprehension** lens and emit 
 In this session, merge all reviewers' findings:
 
 1. **Collapse overlaps** — same `file`+`line`, or the same root cause flagged by two reviewers. Keep the clearest wording; append "(also flagged by `<reviewer>`)".
-2. **Filter to actionable + real** — drop nits, pure style, and "consider…" musings. A survivor must name *what's wrong* **and** *the fix/decision*. A `clarity` finding survives only if it clears the misread+cost bar (Step 4) — apply that bar strictly here too; "could be clearer" with no concrete misread is style, drop it. If `--yes`/autopilot, keep `should-fix` and `blocker`; drop `nit`.
-3. **Split by class:**
-   - **mechanical** → candidates for inline PR comments
-   - **architectural** → decision stream (chat only, Step 6 §A)
-   - **clarity** → comprehension stream (chat only, Step 6 §C) — never auto-posted; raised to the user before any posting
+2. **Filter to actionable + real** — drop nits, pure style, and "consider…" musings. A survivor must name *what's wrong* **and** *the fix/decision*. A `clarity` finding survives only if it clears the misread+cost bar (Step 4) — apply that bar strictly here too; "could be clearer" with no concrete misread is style, drop it. An `architectural` finding survives only if it names a real decision **and** a concrete recommendation — a vague "consider refactoring" is not actionable, drop it. Always drop `nit`; keep `should-fix` and `blocker`.
+3. **Tag by class — every class is posted (Step 9):**
+   - **mechanical** → inline comment, no tag
+   - **architectural** → inline comment, body prefixed `[arch]` (state the decision + your recommendation in one or two lines)
+   - **clarity** → inline comment, body prefixed `[clarity]` (state the misread & cost, then the fix or open question)
 
 ---
 
-## Step 6: Report in chat + confirm
+## Step 6: Adversarially verify findings
 
-Print these sections to chat, concise — no walls of text:
+Every surviving finding goes through a verification pass before it can be posted — auto-post has no human gate, so this is the backstop against hallucinations and misreads.
 
-**A. Architectural decisions (not posted — your call):**
-For each, write a **short human-readable context** the user can decide from quickly:
-> **`<file>` — <one-line title>**
-> What: <the tension / why it matters, 1–2 sentences>
-> Options: <the realistic choices>
-> Recommendation: <your call, one line>
+Dispatch **one verifier `Agent` per finding**, all in one message so they run in parallel, each scoped to the finding's file. The verifier's job is to **refute**, not to confirm:
 
-These are never posted to the PR. The user decides what to do with each.
+> You are checking one code-review finding against the actual code. Read the cited file and line plus enough surrounding context. Try to prove the finding **wrong** — the bug can't occur, the API/symbol it names doesn't exist or behaves differently than claimed, the misread it describes isn't real, or its fix is already in place. Reply `real` or `refuted` with a one-sentence reason. **Default to `refuted` when you can't confirm the finding from the code in front of you.**
 
-**B. Mechanical findings (to be posted):**
-A tight list — `path:line — what → fix`, severity-ordered. This is the tally that will become the inline review.
+Drop every `refuted` finding. This is a single verifier per finding (fast, catches the common hallucinations) — it trims false positives, it does not guarantee none. If nothing survives, treat it as the empty case in Step 8.
 
-**C. Reader comprehension (not posted — raised for your call):**
-Clarity findings that cleared the bar, each as `path:line — the misread & cost → fix or open question`. These are **raised to you here before any posting** — never auto-posted. Keep this list short; if it runs long, the bar wasn't applied strictly enough.
+---
+
+## Step 7: Deslop the review comments
+
+Before anything is posted, run a **deslop pass over the comment prose you just wrote** — the `what`/`fix` text of every surviving finding. This is *not* the standalone `deslop` skill (that targets code); it cleans the slop out of **your own review comments** so what lands on the PR is tight.
+
+Strip from each comment body:
+
+- **Hedging and filler** — "It seems that", "you might want to consider", "perhaps", "I think", "in order to".
+- **Preamble and praise padding** — "Great work, but…", "Nice approach. One thing…".
+- **Restating what the code does** at length — the reader has the code in front of them; state only what's wrong and the fix.
+- **Repetition** between `what` and `fix`, or across two comments on the same root cause.
+
+Keep each comment to a crisp `what → fix` (one or two lines), with its `[arch]`/`[clarity]` tag where applicable. If a comment says nothing concrete after deslopping, drop the finding.
+
+---
+
+## Step 8: Report the tally + gate
+
+Print the deslopped findings to chat, concise — severity-ordered, grouped by class, each as `path:line — what → fix` with its `[arch]`/`[clarity]` tag. This is **exactly** what will be posted; no separate decision/comprehension streams anymore.
 
 **Gate:**
-- `--dry-run` → stop here. Nothing is posted.
-- `--yes` *and* author is you → post mechanical findings (Step 7) without asking. **Clarity findings are never auto-posted** — list them in §C only.
-- Otherwise (default, or any non-author PR) → ask: *"Post N mechanical findings as one review on PR #X? (M reader-comprehension findings in §C — say which, if any, to include.) [yes / dry-run / edit]"*. Wait for the answer. If the user names clarity findings to include, fold them into the posted review as `[clarity]`-tagged comments.
 
-If **no mechanical findings survive triage** → post nothing to the PR by default; say so in chat (architectural and reader-comprehension findings, if any, are still shown in §A and §C).
+- `--dry-run` → stop here. Nothing is posted.
+- **Non-author PR** (author ≠ you, from Step 1) → ask before posting, *regardless of `--yes`*: posting a review under your identity on someone else's PR is a distinct act. *"Post N findings as one review on PR #X? [yes / dry-run]"*. Wait for the answer.
+- **Your own PR** → **auto-post** (Step 9) with no confirm. The chat tally is your record.
+
+If **no findings survive triage, verification, + deslop** → post nothing; say so in chat.
 
 ---
 
-## Step 7: Post one review
+## Step 9: Post one review
 
 Single call — one review event, not N comment spams:
 
@@ -144,17 +157,15 @@ gh api repos/<owner>/<repo>/pulls/<N>/reviews \
   -f 'comments[][path]=...' -F 'comments[][line]=...' -f 'comments[][body]=...'   # repeat per finding
 ```
 
-- `comments[]` ← line-local mechanical findings, each `path` + `line` + a short `body` (`what` + `fix`); plus any clarity findings the user opted to include (Step 6 gate), their `body` prefixed `[clarity]`.
-- `body` ← a one-line tally (`N findings: …`) plus any included finding whose `line` is null (can't anchor) written as `path — what → fix`.
+- `comments[]` ← every line-local finding (all classes), each `path` + `line` + the deslopped `body` (`what` + `fix`), prefixed `[arch]`/`[clarity]` per class (mechanical untagged).
+- `body` ← a one-line tally (`N findings: …`) plus any finding whose `line` is null (can't anchor — often architectural) written as `path — [tag] what → fix`.
 - `event: COMMENT` — advisory, never `REQUEST_CHANGES`.
-
-Architectural findings — and clarity findings the user did not opt to include — are **not** in the posted review.
 
 Echo the posted tally + the review URL to chat.
 
 ---
 
-## Step 8: Reviewer-gap suggestion
+## Step 10: Reviewer-gap suggestion
 
 For each gap from Step 3, report it plainly:
 
@@ -165,6 +176,6 @@ Then ask whether to create one. **On yes:**
 1. Write `~/.claude/agents/<x>-reviewer.md`, modeled on `~/.claude/agents/go-reviewer.md`:
    - Frontmatter: `name`, a `description` ending in "Use for all `<lang>` code changes.", `tools: ["Read", "Grep", "Glob", "Bash"]`, `model: sonnet`.
    - Body: a focused `<lang>` reviewer system prompt (idioms, common bugs, the language's lint/vet tooling, the "When invoked" steps pattern).
-2. Offer to run the new reviewer on **this same PR** and fold its findings back through Steps 4–7.
+2. Offer to run the new reviewer on **this same PR** and fold its findings back through Steps 4–9.
 
 Never write an agent file without the user's yes.
