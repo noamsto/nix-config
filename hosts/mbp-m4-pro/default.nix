@@ -4,18 +4,6 @@
   ...
 }: let
   host = (import ../../lib/host-configs.nix).mbp-m4-pro;
-
-  # Homebrew 6.0 Tap Trust list, store-baked so it exists before the `homebrew`
-  # activation step (which runs before home-manager writes ~/.config). brew
-  # locates trust.json via `$XDG_CONFIG_HOME/homebrew/trust.json`, so the dir is
-  # laid out to match. A read-only store path is accepted (verified). See the
-  # XDG_CONFIG_HOME wiring under homebrew.onActivation below.
-  homebrewTrustConfig = pkgs.runCommand "homebrew-trust-config" {} ''
-    mkdir -p "$out/homebrew"
-    cp ${pkgs.writeText "trust.json" (builtins.toJSON {
-      trustedcasks = ["mediosz/tap/swipeaerospace"];
-    })} "$out/homebrew/trust.json"
-  '';
 in {
   imports = [
     ../../options.nix
@@ -165,14 +153,19 @@ in {
       cleanup = "uninstall";
       # Homebrew 6.0 Tap Trust blocks loading casks from non-official taps
       # (here mediosz/tap → swipeaerospace) until trusted, aborting `brew
-      # bundle`. brew finds the trust list at `$XDG_CONFIG_HOME/homebrew/
-      # trust.json`, so point XDG_CONFIG_HOME at the store-baked dir. The
-      # activation `brew bundle` runs under `sudo --set-home env`, which strips
-      # the interactive XDG_CONFIG_HOME (=~/.config) — setting it back here is
-      # what makes trust resolve. NOTE: it must be XDG_CONFIG_HOME, *not*
-      # HOMEBREW_XDG_CONFIG_HOME (the latter is ignored by brew — verified).
-      # Scoped to this command, so it doesn't affect the rest of activation.
-      extraEnv.XDG_CONFIG_HOME = "${homebrewTrustConfig}";
+      # bundle`. Because the generated Brewfile marks every entry `trusted:
+      # true`, `brew bundle` self-grants trust on each run: it *writes*
+      # trust.json and acquires a `trust.json.lock` sibling (Trust.trust! →
+      # with_trust_store_lock, File::CREAT) at `$XDG_CONFIG_HOME/homebrew/`.
+      # That dir must therefore be WRITABLE — a read-only store path fails with
+      # `Permission denied … trust.json.lock`. brew resolves the location only
+      # via XDG_CONFIG_HOME (HOMEBREW_USER_CONFIG_HOME is force-set in bin/brew
+      # and not user-overridable; HOMEBREW_XDG_CONFIG_HOME is ignored), and the
+      # activation `brew bundle` runs as the user via `sudo --user=… --set-home
+      # env`, which strips the interactive XDG_CONFIG_HOME (=~/.config) — so
+      # point it back at the user's real ~/.config. brew mkpaths the dir and
+      # owns trust.json there, shared with interactive `brew bundle`.
+      extraEnv.XDG_CONFIG_HOME = "/Users/${host.username}/.config";
     };
     brews = [
       "fastlane"

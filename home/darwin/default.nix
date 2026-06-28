@@ -14,15 +14,10 @@
   # binds Hyper+Y to launch it, mirroring the Hyprland $mainMod+Y bind.
   home.packages = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin [pkgs.pear-desktop];
 
-  # Homebrew 6.0 Tap Trust: the interactive-shell copy of the trust list, so a
-  # manual `brew`/`brew bundle` (which reads $XDG_CONFIG_HOME/homebrew) also
-  # loads swipeaerospace from the third-party mediosz/tap. The darwin activation
-  # run uses a store-baked copy instead — see hosts/mbp-m4-pro/default.nix for
-  # why (it runs before this file is written). Cask-scoped on purpose:
-  # `trustedcasks` suffices because the tap is a non-git nix store dir, so its
-  # `remote` is blank and `uses_custom_remote?` is false, keeping the per-cask
-  # trust path active.
-  xdg.configFile."homebrew/trust.json" = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    text = builtins.toJSON {trustedcasks = ["mediosz/tap/swipeaerospace"];};
-  };
+  # NOTE: trust.json is no longer managed here. Homebrew 6.0's `brew bundle`
+  # self-grants trust (the Brewfile marks entries `trusted: true`) and *writes*
+  # ~/.config/homebrew/trust.json plus a `.lock` sibling, so a read-only store
+  # symlink at that path would make brew abort with `Permission denied`. brew
+  # owns the file now; activation points XDG_CONFIG_HOME here too — see
+  # hosts/mbp-m4-pro/default.nix.
 }
