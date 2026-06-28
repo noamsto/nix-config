@@ -225,11 +225,25 @@
           crew id >/dev/null
           set -l crew_dir (git rev-parse --path-format=absolute --git-common-dir)/crew
 
-          # record the dispatcher's pane so the worker can signal completion back to it
-          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\n' \
-              $tier $title $num $TMUX_PANE $crew_dir $CREW_ID > $wt_path/WORKER_TASK.md
+          # FleetView-style codename+color, derived from the branch (deterministic).
+          set -l ident (crew identity $branch)
+          set -l agent_name (echo $ident | jq -r .name)
+          set -l agent_color (echo $ident | jq -r .tmux)
 
-          set -l pane (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{pane_id}')
+          # record the dispatcher's pane so the worker can signal completion back to it
+          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
+              $tier $title $num $TMUX_PANE $crew_dir $CREW_ID $agent_name > $wt_path/WORKER_TASK.md
+
+          set -l ids (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{window_id} #{pane_id}' | string split ' ')
+          set -l win $ids[1]
+          set -l pane $ids[2]
+          # Color the worker's window in the status bar; leave the NAME to lazytmux
+          # (its cwd reconciler owns @branch/@issue). @crew_* are stashed for a future
+          # lazytmux format that could render the codename in the bar text.
+          tmux set-window-option -t $win window-status-style "fg=$agent_color"
+          tmux set-window-option -t $win window-status-current-style "fg=$agent_color,bold"
+          tmux set-window-option -t $win @crew_name $agent_name
+          tmux set-window-option -t $win @crew_color $agent_color
           tmux send-keys -t $pane \
               "claude --model $model --strict-mcp-config --mcp-config ~/.config/claude-code/mcp-worker.json --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
       end
@@ -263,6 +277,23 @@
               case id
                   set -q CREW_ID; or set -gx CREW_ID (date +%s)-$fish_pid
                   echo $CREW_ID
+              case identity
+                  # Deterministic codename+color from a branch — zero state, so any
+                  # caller (dispatch, roster) recomputes the same identity. cksum is
+                  # POSIX (portable to macOS, unlike md5sum); idx is 0-based so +1 for
+                  # fish's 1-based arrays. name/color/tmux are aligned by index.
+                  set -l branch $argv[1]
+                  if test -z "$branch"
+                      echo "crew: identity <branch>" >&2
+                      return 1
+                  end
+                  set -l names sage atlas nova ember reef iris amber coral moss slate rust plum lime rose sky onyx
+                  set -l colors green blue magenta orange teal purple yellow salmon olive steel rust plum lime pink sky grey
+                  set -l tmuxc colour71 colour33 colour201 colour208 colour44 colour141 colour220 colour210 colour108 colour110 colour166 colour96 colour154 colour205 colour117 colour244
+                  set -l n (echo -n $branch | cksum | string split ' ')[1]
+                  set -l i (math $n % (count $names) + 1)
+                  jq -nc --arg name $names[$i] --arg color $colors[$i] --arg tmux $tmuxc[$i] \
+                      '{name:$name, color:$color, tmux:$tmux}'
               case status msg
                   if not set -q CREW_ID
                       echo "crew: CREW_ID unset (run: set -gx CREW_ID (crew id))" >&2
@@ -290,11 +321,20 @@
               case roster
                   set -l crew (test -n "$argv[1]"; and echo $argv[1]; or echo $CREW_ID)
                   test -f $log; or return 0
-                  jq -s --arg crew "$crew" '
+                  # latest status per agent (branch-keyed)
+                  set -l base (jq -c -s --arg crew "$crew" '
                       map(select(.crew_id==$crew and .kind=="status"))
                       | group_by(.from) | map(max_by(.ts))
                       | map({from, state:.body.state, pr_url:.body.pr_url,
-                             age_s:((now - (.ts/1000))|floor)})' $log
+                             age_s:((now - (.ts/1000))|floor)})' $log)
+                  # decorate worker rows with their derived codename+color (status lives
+                  # branch-keyed; identity is recomputed, never stored — see `case identity`)
+                  set -l idmap "{}"
+                  for from in (echo $base | jq -r '.[].from | select(startswith("worker:"))')
+                      set -l id (crew identity (string replace -r '^worker:' "" $from))
+                      set idmap (echo $idmap | jq -c --arg k $from --argjson v "$id" '. + {($k): $v}')
+                  end
+                  echo $base | jq --argjson m "$idmap" 'map(. + ($m[.from] // {}))'
               case inbox
                   # messages only — `crew roster` owns status (every status is
                   # addressed to:dispatcher, so without this the inbox is status spam).
@@ -307,7 +347,7 @@
                   test -f $log; or return 0
                   jq -c --arg crew "$crew" 'select(.crew_id==$crew)' $log
               case '*'
-                  echo "usage: crew id | status <from> <state> [detail] [pr] | msg <from> <to> <body> | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+                  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
                   return 1
           end
       end

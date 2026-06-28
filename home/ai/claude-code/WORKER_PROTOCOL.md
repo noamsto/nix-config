@@ -3,7 +3,7 @@
 You are a **worker** session launched by a dispatcher. You own exactly one task, defined in `WORKER_TASK.md` in your worktree. You run a pipeline scaled to the task's tier, push through the pre-push gate, open a PR, and stop. You do not pick up other work.
 
 ## First action
-Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, and `crew_id:`. Export the crew id so the `crew` bus works, and announce yourself:
+Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew_id:`, and `agent_name:` (your FleetView-style codename — use it in human-facing pings). Export the crew id so the `crew` bus works, and announce yourself:
 `set -gx CREW_ID <crew_id>` ; `crew status worker:(git branch --show-current) joined`.
 Use `worker:(git branch --show-current)` as your agent id for all bus calls below.
 
@@ -30,4 +30,4 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 6. **Never** run `wrangler deploy`, `wrangler ... --remote`, or `wrangler secret` on a prod-credentialed box. If a step seems to need one, stop and flag it — don't try to work around it.
 
 ## When done
-Open the PR, then `crew status worker:<branch> pr_open "" <url>` → `crew status worker:<branch> done`. As a human-visible nicety, also ping the dispatcher pane once: read `dispatcher_pane:` and `tmux display-message -t "$dispatcher_pane" -d 4000 "worker done: <branch> — PR <url>"`. Then stop.
+Open the PR, then `crew status worker:<branch> pr_open "" <url>` → `crew status worker:<branch> done`. As a human-visible nicety, also ping the dispatcher pane once: read `dispatcher_pane:` and `tmux display-message -t "$dispatcher_pane" -d 4000 "<agent_name> done: <branch> — PR <url>"`. Then stop.
