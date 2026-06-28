@@ -197,22 +197,53 @@
     '';
 
     "fish/functions/dispatch.fish".text = ''
-      function dispatch --description 'Scaffold a worker: issue -> worktree -> task file -> baked claude'
+      function dispatch --description 'Scaffold a worker: issue/ticket -> worktree -> task file -> baked claude'
           set -l tier $argv[1]
           set -l model $argv[2]
-          set -l title (string join ' ' $argv[3..-1])
           if not contains -- $tier trivial standard deep
-              echo "usage: dispatch <trivial|standard|deep> <model> <title...>" >&2
+              echo "usage: dispatch <trivial|standard|deep> <model> [LINEAR-ID] <title...>" >&2
               return 1
           end
 
-          set -l url (gh issue create --assignee @me --title "$title" --body "Dispatched worker task.")
-          set -l num (string match -r '/(\d+)$' -- $url)[2]
+          # Optional Linear ticket id as the first token after the model (e.g.
+          # ENG-6789). When present we track the work in Linear and skip GitHub
+          # issue creation — the repo's GH issues may be disabled (Linear is the
+          # tracker). Detect by shape so the bare <title...> form still works.
+          set -l linear_id ""
+          set -l rest $argv[3..-1]
+          if string match -qr '^[A-Z]{2,}-[0-9]+$' -- $rest[1]
+              set linear_id $rest[1]
+              set rest $rest[2..-1]
+          end
+          set -l title (string join ' ' $rest)
+          if test -z "$title"
+              echo "usage: dispatch <trivial|standard|deep> <model> [LINEAR-ID] <title...>" >&2
+              return 1
+          end
 
-          # path must match worktrunk's {{ repo_path }}-worktrees/{{ branch | sanitize }}
-          # template (slash -> dash) — wt won't tell us where it put the worktree.
+          # Identity + closes line. Linear mode derives both from the ticket, no
+          # gh call. GitHub mode creates an issue and uses its number — but aborts
+          # cleanly if that fails (e.g. issues disabled) rather than scaffolding a
+          # half-broken worker off an empty number.
+          # Branch path must match worktrunk's {{ repo_path }}-worktrees/{{ branch
+          # | sanitize }} template (slash -> dash) — wt won't tell us where it put
+          # the worktree.
           set -l slug (string lower (string replace -ra '[^a-zA-Z0-9]+' '-' $title) | string sub -l 40 | string trim -c -)
-          set -l branch "feat/$num-$slug"
+          set -l branch
+          set -l closes
+          if test -n "$linear_id"
+              set branch (string lower $linear_id)-$slug
+              set closes "Closes $linear_id"
+          else
+              set -l url (gh issue create --assignee @me --title "$title" --body "Dispatched worker task." 2>/dev/null)
+              set -l num (string match -r '/(\d+)$' -- $url)[2]
+              if test -z "$num"
+                  echo "dispatch: could not create a GitHub issue (issues disabled?). Pass a Linear id, e.g. dispatch $tier $model ENG-1234 $title" >&2
+                  return 1
+              end
+              set branch "feat/$num-$slug"
+              set closes "Closes #$num"
+          end
           set -l sanitized (string replace -a / - $branch)
           set -l wt_path (git rev-parse --show-toplevel)-worktrees/$sanitized
 
@@ -231,9 +262,19 @@
           set -l agent_name (echo $ident | jq -r .name)
           set -l agent_color (echo $ident | jq -r .tmux)
 
-          # record the dispatcher's pane so the worker can signal completion back to it
-          printf 'tier: %s\ntitle: %s\nCloses #%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
-              $tier $title $num $TMUX_PANE $crew_dir $CREW_ID $agent_name > $wt_path/WORKER_TASK.md
+          # Stamp the task file: header fields the worker protocol reads, the
+          # closes line (Linear id or GH #num), and the full task body. The body
+          # comes from $DISPATCH_SPEC — a file the dispatcher writes — because the
+          # worker has no Linear/MCP access and must get the spec inline; it falls
+          # back to just the title when no spec file is given.
+          begin
+              printf 'tier: %s\ntitle: %s\n%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
+                  $tier $title $closes $TMUX_PANE $crew_dir $CREW_ID $agent_name
+              if set -q DISPATCH_SPEC; and test -f "$DISPATCH_SPEC"
+                  printf '\n## Task\n\n'
+                  cat $DISPATCH_SPEC
+              end
+          end > $wt_path/WORKER_TASK.md
 
           set -l ids (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{window_id} #{pane_id}' | string split ' ')
           set -l win $ids[1]

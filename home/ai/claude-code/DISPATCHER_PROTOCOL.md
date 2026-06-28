@@ -19,10 +19,13 @@ Read the task and weigh its actual signals. Do not map mechanically from a label
 ## Scaffold one worker per task
 
 ```
-dispatch <tier> <model> <title…>
+dispatch <tier> <model> [LINEAR-ID] <title…>
 ```
 
-`dispatch` is the dumb mechanism — it creates the issue, worktree, and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
+`dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
+
+- **Tracker.** Pass a **Linear id** (e.g. `ENG-6789`) as the token right after the model for Linear-tracked repos (GitHub issues disabled) — it branches `eng-<n>-<slug>` and stamps `Closes ENG-<n>`, no `gh` call. Omit it on GitHub-issue repos and `dispatch` mints an issue (`feat/<n>-<slug>`, `Closes #<n>`); if issue creation fails it aborts instead of half-scaffolding.
+- **Inline the spec.** The worker has no Linear/MCP access, so it can't read the ticket. Write the full task to a file and export `DISPATCH_SPEC=<file>` before calling `dispatch` — it's appended to `WORKER_TASK.md` under `## Task`. Without it the worker only gets the title.
 
 - **Hand out disjoint work.** Assignment beats locking — never give two workers overlapping files/scope.
 - **Cap fan-out by tier weight, not headcount.** Each worker's real load is multiplicative — it spawns execution subagents *and* a reviewer — so a `deep` worker is far heavier than a `trivial` one. Weight them **`trivial`=1, `standard`=2, `deep`=3** and keep the **sum of active workers' weights ≤ 4**: e.g. up to 4 trivial, or 2 standard, or 1 deep + 1 trivial — but never 2 deep at once. Sum the live roster's weights before dispatching another. (Heuristic, not measured — the binding limit is API rate > CPU-during-builds > your attention; revise once a real run shows which binds first.)

@@ -33,7 +33,7 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 2. **Critics are independent.** Never self-review — the workflow dispatches `spec-critic`/`plan-critic` in fresh contexts. Ingest their verdicts with receiving-code-review discipline: verify the finding, don't perform agreement.
 3. **Revision cap is 2.** The workflow enforces it. If it returns `escalations[]`, surface them verbatim in the PR body under "## Escalated" — do not silently proceed as if clean.
 4. **Push through the gate.** Order before push: code-review gate (standard/deep) → `/deslop` → `git push`. `/deslop` is required by the pre-push guard (for fully unattended runs, `ALLOW_PUSH_WITHOUT_DESLOP=1 git push …` is honored inline). `git push` then triggers the pre-push hook (typecheck/lint/unit/build-num); on failure, fix and re-push, do not bypass.
-5. **PR body must include `Closes #<N>`** (N is in your task file), any escalations, and any unresolved review notes.
+5. **PR body must include the closes line from your task file** (`Closes #<N>` for a GitHub issue, or `Closes ENG-<N>` for a Linear ticket — copy it verbatim), any escalations, and any unresolved review notes.
 6. **Never** run `wrangler deploy`, `wrangler ... --remote`, or `wrangler secret` on a prod-credentialed box. If a step seems to need one, stop and flag it — don't try to work around it.
 
 ## When done
