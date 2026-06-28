@@ -75,9 +75,13 @@ case "$sub" in
     # latest status per agent, decorated with each worker's derived codename
     base=$(jq -c -s --arg crew "$crew" '
       map(select(.crew_id==$crew and .kind=="status"))
-      | group_by(.from) | map(max_by(.ts))
-      | map({from, state:.body.state, pr_url:.body.pr_url,
-             age_s:((now - (.ts/1000))|floor)})' "$log")
+      | group_by(.from) | map(
+          (max_by(.ts)) as $latest
+          | {from: $latest.from,
+             state: $latest.body.state,
+             # carry forward last-known pr_url — the terminal `done` event drops it
+             pr_url: (map(.body.pr_url) | map(select(. != null)) | last),
+             age_s: ((now - ($latest.ts/1000))|floor)})' "$log")
     idmap='{}'
     for from in $(printf '%s' "$base" | jq -r '.[].from | select(startswith("worker:"))'); do
       id=$(_identity "${from#worker:}")
