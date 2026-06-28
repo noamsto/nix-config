@@ -8,9 +8,16 @@ Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew
 Use `worker:(git branch --show-current)` as your agent id for all bus calls below.
 
 ## Pipeline by tier
-- **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics.
-- **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then gate + PR.
-- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then plan + plan-critic), then execute, then gate + PR.
+- **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
+- **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then the code-review gate (one pass), then gate + PR.
+- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then plan + plan-critic), then execute, then the code-review gate (adversarial), then gate + PR.
+
+## Code review gate (standard/deep)
+After implementation is complete and **before** `/deslop` + push (the pre-push build/test gate fires on push, so review and fix first), get an **independent** review of your diff — never review your own work in your own context (same reason the critics run fresh; rule 2).
+- **Dispatch a fresh reviewer subagent** over the branch diff. Pick the agent matching the changed files' language — `go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, etc. If no language agent fits, dispatch a general agent running the `find-bugs` skill.
+- **Scale by tier:** `trivial` skips this entirely. `standard` = one pass. `deep` = adversarial — review, fix, then re-review the fixes once.
+- Ingest findings with **receiving-code-review** discipline: verify each finding before acting, don't perform agreement. Fix the real ones, then re-run the build/test gate.
+- **Cap the review→fix loop at 2.** Anything still unresolved goes in the PR body under "## Review notes" — never silently drop it.
 
 ## Report to the bus (mandatory)
 Append your lifecycle to the crew bus — this is the contract, not optional:
@@ -25,8 +32,8 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 1. **Delegate execution.** For standard/deep, implementation steps run as subagents (subagent-driven-development), capped at 3 concurrent. You orchestrate; you do not hand-write the implementation yourself.
 2. **Critics are independent.** Never self-review — the workflow dispatches `spec-critic`/`plan-critic` in fresh contexts. Ingest their verdicts with receiving-code-review discipline: verify the finding, don't perform agreement.
 3. **Revision cap is 2.** The workflow enforces it. If it returns `escalations[]`, surface them verbatim in the PR body under "## Escalated" — do not silently proceed as if clean.
-4. **Push through the gate.** Before `git push`, run `/deslop` on your branch — the pre-push guard requires it (for fully unattended runs, `ALLOW_PUSH_WITHOUT_DESLOP=1 git push …` is honored inline). `git push` then triggers the pre-push hook (typecheck/lint/unit/build-num); on failure, fix and re-push, do not bypass.
-5. **PR body must include `Closes #<N>`** (N is in your task file) and any escalations.
+4. **Push through the gate.** Order before push: code-review gate (standard/deep) → `/deslop` → `git push`. `/deslop` is required by the pre-push guard (for fully unattended runs, `ALLOW_PUSH_WITHOUT_DESLOP=1 git push …` is honored inline). `git push` then triggers the pre-push hook (typecheck/lint/unit/build-num); on failure, fix and re-push, do not bypass.
+5. **PR body must include `Closes #<N>`** (N is in your task file), any escalations, and any unresolved review notes.
 6. **Never** run `wrangler deploy`, `wrangler ... --remote`, or `wrangler secret` on a prod-credentialed box. If a step seems to need one, stop and flag it — don't try to work around it.
 
 ## When done
