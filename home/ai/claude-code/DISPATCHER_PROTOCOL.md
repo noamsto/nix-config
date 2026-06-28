@@ -31,7 +31,7 @@ dispatch <tier> <model> <title…>
 
 All workers in your shell share one `crew_id`. Check the bus when a worker pings your pane (workers `tmux display-message` you on finish) and before dispatching the next task:
 
-- `crew roster` — every worker's latest state (`working`/`blocked`/`pr_open`/`done`/`failed`) + age. This is your dashboard.
+- `crew roster` — every worker's latest state (`working`/`blocked`/`pr_open`/`done`/`failed`) + age, plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). This is your dashboard; **refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
 - `crew inbox dispatcher:$CREW_ID` — worker **questions** (messages only; status lives in the roster).
 - A worker that's `blocked` has **posted its question and stopped** — workers don't sit polling. So `crew msg` back won't reach it. Act on the block directly: **intervene in the worker's window** (answer live and let it continue) or **re-dispatch** the task with the missing context baked in.
 
