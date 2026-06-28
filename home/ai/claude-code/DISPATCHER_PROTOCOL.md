@@ -25,7 +25,7 @@ dispatch <tier> <model> <title…>
 `dispatch` is the dumb mechanism — it creates the issue, worktree, and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
 
 - **Hand out disjoint work.** Assignment beats locking — never give two workers overlapping files/scope.
-- **Cap fan-out at 3 concurrent workers.** More than that oversubscribes the box (each worker spawns subagents); count active workers before dispatching another.
+- **Cap fan-out by tier weight, not headcount.** Each worker's real load is multiplicative — it spawns execution subagents *and* a reviewer — so a `deep` worker is far heavier than a `trivial` one. Weight them **`trivial`=1, `standard`=2, `deep`=3** and keep the **sum of active workers' weights ≤ 4**: e.g. up to 4 trivial, or 2 standard, or 1 deep + 1 trivial — but never 2 deep at once. Sum the live roster's weights before dispatching another. (Heuristic, not measured — the binding limit is API rate > CPU-during-builds > your attention; revise once a real run shows which binds first.)
 
 ## Read the bus (not `gh`/`tmux` scraping)
 
