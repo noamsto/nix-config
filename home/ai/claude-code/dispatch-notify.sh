@@ -13,8 +13,9 @@ if [[ -n "$pane" ]]; then
   tmux display-message -t "$pane" -d 4000 "worker exited: $branch — check state" 2>/dev/null || true
 fi
 # crew backstop: if the worker died before a terminal status, record `exited`
-# so the roster doesn't strand a `working` entry. Bash hook → inline append
-# (can't call the fish `crew` fn); envelope matches crew.fish byte-for-byte.
+# so the roster doesn't strand a `working` entry. `crew` is a PATH CLI now, but
+# this hook stays self-contained (inline append) to avoid depending on PATH at
+# SessionEnd; envelope matches crew's status event.
 crew_id="$(grep -m1 '^crew_id:' "$cwd/WORKER_TASK.md" | cut -d' ' -f2 || true)"
 if [[ -n "$crew_id" ]]; then
   common="$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)"

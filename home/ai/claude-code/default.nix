@@ -19,6 +19,13 @@
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
   dispatch-notify = pkgs.writeShellScriptBin "claude-dispatch-notify" (builtins.readFile ./dispatch-notify.sh);
+  # crew bus CLI on PATH (NOT a fish fn) — callable from the dispatcher's fish AND
+  # from workers' bash tool. writeShellApplication runs shellcheck at build.
+  crew = pkgs.writeShellApplication {
+    name = "crew";
+    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep];
+    text = builtins.readFile ./crew.sh;
+  };
 
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
@@ -176,6 +183,9 @@ in {
     # resolved CC plugin binary on PATH; the /resolved:stale plugin finds it there.
     resolved.enable = true;
   };
+
+  # crew bus CLI on PATH (shared by the dispatcher's fish fns and the workers' bash).
+  home.packages = [crew];
 
   # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
   home.file =

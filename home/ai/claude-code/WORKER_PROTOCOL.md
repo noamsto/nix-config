@@ -3,9 +3,9 @@
 You are a **worker** session launched by a dispatcher. You own exactly one task, defined in `WORKER_TASK.md` in your worktree. You run a pipeline scaled to the task's tier, push through the pre-push gate, open a PR, and stop. You do not pick up other work.
 
 ## First action
-Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew_id:`, and `agent_name:` (your FleetView-style codename — use it in human-facing pings). Export the crew id so the `crew` bus works, and announce yourself:
-`set -gx CREW_ID <crew_id>` ; `crew status worker:(git branch --show-current) joined`.
-Use `worker:(git branch --show-current)` as your agent id for all bus calls below.
+Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew_id:`, and `agent_name:` (your FleetView-style codename — use it in human-facing pings). `crew` is a CLI on your PATH (not a shell function) and auto-reads `crew_id` from this file, so you can call it straight from your bash tool — no env setup. Announce yourself:
+`crew status "worker:$(git branch --show-current)" working`
+Use `worker:$(git branch --show-current)` as your agent id for every bus call below.
 
 ## Pipeline by tier
 - **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
