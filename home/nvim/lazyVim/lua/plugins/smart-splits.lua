@@ -1,6 +1,22 @@
 return {
   "mrjones2014/smart-splits.nvim",
   lazy = false,
+  init = function()
+    -- KITTY_LISTEN_ON is exported into tmux panes, so force the tmux backend or
+    -- smart-splits may auto-pick kitty and move kitty windows instead of tmux
+    -- panes from inside nvim.
+    vim.g.smart_splits_multiplexer_integration = "tmux"
+  end,
+  opts = {
+    -- At the true outer edge (no nvim split and no tmux pane in that direction),
+    -- cross to the neighbouring kitty window — e.g. the aeye carousel. Same
+    -- primitive as tmux-smart-nav and the aeye viewer; uses $KITTY_LISTEN_ON
+    -- from the pane env (tmux update-environment), not a hardcoded socket.
+    at_edge = function(ctx)
+      local dir = ({ left = "left", right = "right", up = "top", down = "bottom" })[ctx.direction]
+      vim.system({ "kitty", "@", "action", "neighboring_window", dir })
+    end,
+  },
   keys = {
     {
       "<C-Left>",
