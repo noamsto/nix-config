@@ -182,19 +182,32 @@ in {
     };
   };
 
-  # Force aquamarine to advertise only the linear (0x0) DMA-BUF modifier for
-  # screencast/screencopy buffers. On AMD GFX10+/11 the compositor otherwise
-  # offers only DCC-tiled modifiers (e.g. 0x20000001046bb04), which Mesa's EGL
-  # DMA-BUF import path cannot consume — gpu-screen-recorder then exhausts
-  # modifier renegotiation and portal recording aborts with "no more input
-  # formats". Linear buffers cost a little memory bandwidth but make portal
-  # capture reliable. Drop once Mesa/aquamarine fix EGL import for AMD DCC.
+  # AMD DCC screencast workaround — two parts. On AMD GFX10+/11, portal screen
+  # recording (gpu-screen-recorder via xdph) aborts with "no more input formats":
+  # the captured DMA-BUF arrives with a DCC-tiled modifier (e.g. 0x20000001046bb04)
+  # that Mesa's EGL import cannot consume ("failed to create egl image with
+  # modifier"), so gsr renegotiates until the producer runs out of formats.
   #
-  # MUST live in uwsm's pre-launch env: aquamarine reads AQ_NO_MODIFIERS at
-  # backend init, which happens before Hyprland parses `env =`. Setting it via
-  # `env =` reaches child apps but is too late for the backend, so the recorder
-  # still saw DCC modifiers. uwsm sources this file before launching Hyprland.
+  # Part 1: AQ_NO_MODIFIERS=1 makes aquamarine *advertise* the linear (0x0)
+  # modifier for screencast/screencopy buffers. Necessary but NOT sufficient — it
+  # only controls what's offered, not what xdph's gbm actually allocates, which
+  # still picks DCC-tiled buffers.
+  # MUST live in uwsm's pre-launch env: aquamarine reads it at backend init, which
+  # happens before Hyprland parses `env =`. Setting it via `env =` reaches child
+  # apps but is too late for the backend. uwsm sources this file before launch.
   xdg.configFile."uwsm/env-hyprland".text = ''
     export AQ_NO_MODIFIERS=1
+  '';
+
+  # Part 2: AMD_DEBUG=nodcc on the portal backend makes its gbm allocation skip
+  # DCC so gsr can EGL-import the buffer. Scoped to the portal alone (drop-in on
+  # the NixOS-provided user unit) to keep DCC on for the compositor and every
+  # other GL app; verified that restarting only the portal with this fixes it.
+  #
+  # TODO: revisit — drop both parts once Mesa fixes EGL import of AMD DCC
+  # modifiers. Upstream tracking: https://github.com/hyprwm/Hyprland/discussions/14467
+  xdg.configFile."systemd/user/xdg-desktop-portal-hyprland.service.d/nodcc.conf".text = ''
+    [Service]
+    Environment=AMD_DEBUG=nodcc
   '';
 }
