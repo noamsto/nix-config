@@ -566,11 +566,11 @@
               test -f $cache_file; and set mtime (stat -c %Y $cache_file)
               if test (math (date +%s) - $mtime) -gt 30
                   gh pr list --state open --limit 100 --json number,title 2>/dev/null \
-                    | jq -r '.[] | "pr:\(.number)\t\(.title)"' 2>/dev/null >$cache_file
+                    | jq -r 'sort_by(.number) | reverse[] | "pr:\(.number)\t\(.title)"' 2>/dev/null >$cache_file
               end
               command cat $cache_file 2>/dev/null
           end
-          complete -c wt -n "__fish_seen_subcommand_from switch" -f -a "(__wt_switch_complete)"
+          complete -c wt -n "__fish_seen_subcommand_from switch" -f -k -a "(__wt_switch_complete)"
 
           # Sesh completions
           sesh completion fish | source
