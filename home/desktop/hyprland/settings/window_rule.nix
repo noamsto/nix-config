@@ -40,7 +40,6 @@
       # === ENHANCED FLOATING WINDOWS ===
       "float on, match:class ^(pavucontrol)$"
       "float on, match:class ^(nm-connection-editor)$"
-      "float on, match:class ^(blueman-manager)$"
       "float on, match:class ^(file-roller)$"
       "size 700 500, match:class ^(file-roller)$"
       "center on, match:class ^(file-roller)$"
@@ -73,7 +72,6 @@
       # Size dialogs appropriately
       "size 800 600, match:class ^(pavucontrol)$"
       "size 600 500, match:class ^(nm-connection-editor)$"
-      "size 500 600, match:class ^(blueman-manager)$"
 
       # Valent (KDE Connect alternative)
       "float on, match:class ^(ca.andyholmes.Valent)$"
@@ -81,10 +79,6 @@
       "size 800 600, match:class ^(ca.andyholmes.Valent)$"
 
       # Bluetooth pairing dialogs
-      "float on, match:class ^(blueman-agent|blueman-applet)$"
-      "center on, match:class ^(blueman-agent|blueman-applet)$"
-      "dim_around on, match:class ^(blueman-agent|blueman-applet)$"
-
       "float on, match:title ^(Bluetooth)$"
       "center on, match:title ^(Bluetooth)$"
       "dim_around on, match:title ^(Bluetooth)$"

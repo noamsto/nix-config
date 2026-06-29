@@ -62,8 +62,6 @@ in {
           };
         };
       };
-
-      blueman.enable = true;
     };
     # PAM service for Noctalia shell (GNOME keyring unlock)
     security.pam.services.noctalia-shell = {

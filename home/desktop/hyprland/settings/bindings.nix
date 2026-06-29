@@ -100,7 +100,6 @@ in {
       "$mainMod, N, exec, obsidian" # Notes
       "$mainMod, Y, exec, ${youtube-music}" # Music
       "$mainMod SHIFT, V, exec, pavucontrol" # Volume control
-      "$mainMod SHIFT, B, exec, blueman-manager" # Bluetooth
 
       # Quick workspace jumps to organized workflow
       # Note: Use IDs not names - named workspaces create dynamic WS with negative IDs
