@@ -62,6 +62,17 @@ in {
           "/run/current-system/sw/share/applications"
         ];
         clipboard.preferences.monitoring = true;
+        # vicinae 0.22.0's file indexer runs away: it pegs a core and grows its
+        # SQLite index unboundedly (observed 2.8G, ~4 MB/s) regardless of how
+        # few/small the configured roots are — a loop bug, not a volume issue
+        # (narrowing roots to ~3k tiny doc files did not stop it). Keep
+        # autoIndexing off until upstream fixes it. paths/excludedPaths are the
+        # intended scoped set for when it's safe to re-enable.
+        files.preferences = {
+          autoIndexing = false;
+          excludedPaths = ".git;node_modules;result";
+          paths = "~/Documents;~/Desktop;~/vaults;~/notes;~/nix-config";
+        };
       };
     });
   in {
