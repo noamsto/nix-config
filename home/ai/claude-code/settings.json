@@ -202,7 +202,7 @@
   "tui": "fullscreen",
   "theme": "auto",
   "editorMode": "vim",
-  "teammateMode": "auto",
+  "teammateMode": "in-process",
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,

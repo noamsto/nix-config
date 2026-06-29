@@ -81,15 +81,11 @@ Proceed? Any PRs to drop?
 
 **Always pause here.** If `--dry-run`, stop after the table.
 
-## Step 3: Team Setup
+## Step 3: Task Setup
 
-**Pre-flight:** confirm `teammateMode` in `~/.claude/settings.json` is `"in-process"` while [anthropics/claude-code#58724](https://github.com/anthropics/claude-code/issues/58724) is open — `"tmux"` / `"auto"` currently die on spawn with `Error: Input must be provided … --print` because claude-code ≤ 2.1.140 builds the teammate launch line without a prompt arg (verified minimal repro: `.claude-wrapped --agent-id X --agent-name Y --team-name Z --agent-type general-purpose`). When that issue is closed, flip back to `"tmux"` for per-PR pane theater.
+**Pre-flight:** keep `teammateMode` in `~/.claude/settings.json` at `"in-process"` (the upstream default since 2.1.179). Split-pane modes (`"tmux"`/`"auto"`) still crash teammates on spawn — the pane dies with `Error: Input must be provided … --print` (exit 1): CC launches the teammate with a non-TTY stdin, Claude auto-enables `--print`, and no prompt is passed. Confirmed still broken on 2.1.195. The upstream reports ([#27729](https://github.com/anthropics/claude-code/issues/27729) → [#29293](https://github.com/anthropics/claude-code/issues/29293) → [#58724](https://github.com/anthropics/claude-code/issues/58724)) were all bot-closed as duplicates, never fixed — re-test split-pane only after a release explicitly fixes the chain.
 
-Create the team with `TeamCreate`:
-
-- `team_name`: `finish-prs-<YYYYMMDD-HHMM>`
-- `description`: "Shepherding PRs: <repo#N, repo#M, ...>"
-- `agent_type`: `lead`
+Teams are implicit (CC ≥ 2.1.178) — there is no team to create. The shared team is set up the moment you spawn the first named teammate via the Agent tool, provided `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set (it is, in `settings.json`).
 
 Create one task per PR with `TaskCreate`:
 
@@ -110,7 +106,6 @@ Spawn teammates **in a single message, multiple Agent tool calls in parallel**, 
 Each teammate spawn:
 
 - `subagent_type`: `general-purpose`
-- `team_name`: the team you just created
 - `name`: `shepherd-<repo-slug>-<PR>` (e.g., `shepherd-mono-1234`)
 - `prompt`: see template below
 
@@ -253,7 +248,7 @@ Each iteration:
 
 For each completed teammate: `SendMessage` `{type: "shutdown_request", reason: "PR shepherding done"}`.
 
-Leave the team file on disk for audit. Don't `TeamDelete` unless asked.
+The task list persists on disk for audit and session resume — nothing to delete (the team is implicit and ends with the session).
 
 ## Step 7: Report
 
@@ -301,7 +296,7 @@ This command is invocation-driven. To shepherd PRs continuously:
 ## Important Rules
 
 - **Never merge PRs** — same as `/autopilot`
-- **No nested teams** — teammates can't `TeamCreate`
+- **No nested teams** — teammates don't spawn their own teammates
 - **One PR per teammate** — fresh context per PR, less drift
 - **Concurrency cap is real** — >5 simultaneous CI runs against the same repo saturates the runner pool. Default 3 is conservative on purpose.
 - **Default scope is the current repo** — auto-detected via `gh repo view`. Use `--all` for cross-repo, `--repo OWNER/REPO` for an explicit override. Unlike `/autopilot` and `/project-autopilot` (which hard-code `factify-inc/mono`), this command supports any repo. Always pass `--repo` to `gh` commands inside teammate prompts.

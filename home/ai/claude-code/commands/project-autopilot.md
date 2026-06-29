@@ -60,14 +60,11 @@ Wait for user confirmation before continuing. If `--dry-run`, stop here.
 
 Cheap heuristic from ticket body — count distinct deliverables, presence of "and"/"also"/checklists. Mark **L** (large) tickets — those will be broken down by their teammate's `/autopilot` invocation (Step 2 of autopilot covers that).
 
-## Step 4: Team Setup
+## Step 4: Task Setup
 
-**Pre-flight:** confirm `teammateMode` in `~/.claude/settings.json` is `"auto"` or `"tmux"` (not `"in-process"`) so each teammate gets its own tmux pane with live Claude TUI. If unset, default is `auto` which detects tmux automatically.
+**Pre-flight:** keep `teammateMode` in `~/.claude/settings.json` at `"in-process"` (the upstream default since 2.1.179). Split-pane modes (`"tmux"`/`"auto"`) still crash teammates on spawn — the pane dies with `Error: Input must be provided … --print` (exit 1): CC launches the teammate with a non-TTY stdin, Claude auto-enables `--print`, and no prompt is passed. Confirmed still broken on 2.1.195. The upstream reports ([#27729](https://github.com/anthropics/claude-code/issues/27729) → [#29293](https://github.com/anthropics/claude-code/issues/29293) → [#58724](https://github.com/anthropics/claude-code/issues/58724)) were all bot-closed as duplicates, never fixed — re-test split-pane only after a release explicitly fixes the chain.
 
-Create the team with `TeamCreate`:
-- `team_name`: `proj-<linear-project-slug>-<YYYYMMDD-HHMM>`
-- `description`: "Fan-out across <project-name>: tickets <PL-XXX, PL-YYY, ...>"
-- `agent_type`: `lead`
+Teams are implicit (CC ≥ 2.1.178) — there is no team to create. The shared team is set up the moment you spawn the first named teammate via the Agent tool, provided `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set (it is, in `settings.json`).
 
 Create one task per ticket with `TaskCreate`:
 - `subject`: `<TICKET-ID>: <ticket title>`
@@ -80,12 +77,11 @@ Spawn teammates **in a single message, multiple Agent tool calls in parallel**, 
 
 Each teammate spawn:
 - `subagent_type`: `general-purpose`
-- `team_name`: the team you just created
 - `name`: `worker-<TICKET-ID>` (e.g., `worker-PL-344`)
 - `isolation`: omit (worktree is created by `/autopilot` itself, not by the Agent tool)
 - `prompt`: see template below
 
-**What you see:** because `teammateMode` is `auto`/`tmux`, each teammate opens as its own tmux split-pane in your current window, running a live Claude Code TUI you can click into to watch or interrupt. Panes auto-close when the teammate is shut down or the lead exits.
+**What you see:** with `teammateMode: "in-process"`, teammates run inside this session — no separate panes. Use the agents view (`←`, per the footer's "for agents" hint) to switch between the lead and each teammate's live transcript. Split-pane theater stays off until the upstream `--print` spawn crash is fixed (see pre-flight).
 
 ### Teammate prompt template
 
@@ -137,7 +133,7 @@ Each loop iteration:
 
 For each completed teammate: SendMessage with `{type: "shutdown_request", reason: "batch complete"}`.
 
-Once all teammates have responded with shutdown approval, the team is dormant. Leave the team file on disk for audit — don't `TeamDelete` unless the user asks.
+Once all teammates have responded with shutdown approval, the team is dormant. The task list persists on disk for audit and session resume — nothing to delete (the team is implicit and ends with the session).
 
 ## Step 8: Report
 
@@ -167,7 +163,7 @@ Once all teammates have responded with shutdown approval, the team is dormant. L
 ## Important Rules
 
 - **Never merge any PR** — same as `/autopilot`
-- **No nested teams** — teammates cannot `TeamCreate`. If a teammate's ticket is too large, it breaks into sub-tickets via Linear, not into a nested team. The sub-tickets land in this run's task list or a follow-up run.
+- **No nested teams** — teammates don't spawn their own teammates. If a teammate's ticket is too large, it breaks into sub-tickets via Linear, not into a nested team. The sub-tickets land in this run's task list or a follow-up run.
 - **One ticket per teammate** — don't reuse a teammate for a second ticket. A new teammate per ticket = fresh context, less drift.
 - **Worktree isolation is per teammate, not per task** — relies on unique Linear branch names per ticket. If two tickets accidentally share a branch name, abort and surface.
 - **Concurrency cap is real** — `wt switch --create` is filesystem-safe in parallel, but >5 simultaneous CI runs against the same repo may saturate the runner pool. Start small.
