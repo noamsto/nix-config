@@ -13,6 +13,7 @@
       # Imported unconditionally so it's available on darwin too; the desktop
       # tree re-imports the same path (deduped) for its GTK/catppuccin bits.
       ./desktop/theme/palette.nix
+      ./desktop/youtube-music
       ./terminal
       ./xdg
       ./git
