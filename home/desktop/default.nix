@@ -95,6 +95,7 @@ in {
     [
       ./theme
       ./easyeffects
+      ./wireplumber
       ./mpv.nix
       ./kdenlive.nix
       ./obsidian.nix
