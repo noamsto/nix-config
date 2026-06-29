@@ -29,9 +29,9 @@ workspace=6,monitor:{{$right.Name}}
 workspace=7,monitor:{{$right.Name}}
 workspace=8,monitor:{{$right.Name}}
 
-# Workspace 9 - laptop screen (only when lid open)
+# Workspace 9 - laptop screen when lid open, else right monitor (clamshell)
 {{if isLidClosed}}
-workspace=9,name:media
+workspace=9,monitor:{{$right.Name}},name:media
 {{else}}
 workspace=9,monitor:{{$laptop.Name}},name:media
 {{end}}

@@ -169,11 +169,18 @@ configure_docked() {
     fi
   done
 
-  # Laptop screen: workspace 9 (if lid open)
+  # Workspace 9: laptop screen when lid open, else right monitor (clamshell —
+  # laptop screen is disabled, so an unpinned WS 9 would land on an arbitrary
+  # monitor). Must match the WS 9 rule in the docked-*.conf.in templates.
   if ! is_lid_closed; then
     log "Moving workspace 9 to laptop monitor"
     if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
       log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
+    fi
+  else
+    log "Moving workspace 9 to right monitor (clamshell)"
+    if ! hyprctl dispatch moveworkspacetomonitor "9 $right"; then
+      log "WARNING: Failed to move workspace 9 to $right"
     fi
   fi
 
