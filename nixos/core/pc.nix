@@ -20,6 +20,20 @@ in {
           alsa.support32Bit = true;
           pulse.enable = true;
           jack.enable = true;
+          # Stream to AirPlay (RAOP) wifi speakers — they show up as normal
+          # PipeWire sinks. raopOpenFirewall only opens the timing/control ports;
+          # the discover module lives in the package's pipewire.conf.avail and is
+          # NOT loaded unless we activate it here (env.etc drop-ins now assert-fail).
+          # Discovery rides the Avahi mDNS already enabled in networking.nix.
+          raopOpenFirewall = true;
+          extraConfig.pipewire."50-raop" = {
+            "context.modules" = [
+              {
+                name = "libpipewire-module-raop-discover";
+                condition = [{"module.raop" = "!false";}];
+              }
+            ];
+          };
           extraConfig.pipewire."92-webrtc-stable" = {
             "context.properties" = {
               "default.clock.min-quantum" = 512;
