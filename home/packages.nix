@@ -59,6 +59,7 @@
     ethtool
     pciutils # lspci
     usbutils # lsusb
+    libva-utils # vainfo — inspect VAAPI GPU codec support
     file-roller # GNOME archive manager
     zr # custom flake input, Linux-only outputs
     pi # llm-agents.nix, Linux-only

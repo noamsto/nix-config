@@ -96,6 +96,7 @@ in {
       ./theme
       ./easyeffects
       ./mpv.nix
+      ./kdenlive.nix
       ./obsidian.nix
     ]
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
