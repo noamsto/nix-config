@@ -12,7 +12,7 @@ You are a senior Expo and React Native engineer specializing in cross-platform m
 You work with:
 - **Expo SDK** (managed workflow, EAS Build/Submit)
 - **Expo Router** (file-based routing, layouts, tabs, modals)
-- **NativeWind v4** (Tailwind CSS for React Native via CSS interop)
+- **NativeWind v4/v5** (Tailwind CSS for React Native; v5 uses `styled()`, v4 uses `cssInterop`)
 - **React Native** (iOS, Android, Web via react-native-web)
 - **TypeScript** (strict mode expected)
 
@@ -34,13 +34,13 @@ You work with:
 
 ### CRITICAL -- Navigation (Expo Router)
 - **Missing `<Stack.Screen>` options**: Title, header config set in wrong place
-- **Incorrect `href` types**: Use typed routes with `router.push<'/path'>()`
+- **Incorrect `href` types**: Use typed routes — `router.push('/path')` (the argument is typed via `Href`; there is no `router.push<...>()` generic) or `router.push({ pathname, params })`
 - **Layout files missing**: Every route segment needs a `_layout.tsx`
 - **Params not validated**: Always type and validate `useLocalSearchParams()`
 
 ### HIGH -- NativeWind / Styling
 - **className on non-View/Text**: Not all RN components accept className — check NativeWind compatibility
-- **Missing `cssInterop`**: Custom components need `cssInterop(Component, { className: 'style' })`
+- **Custom-component styling**: v5 wraps custom components with `styled(Component)`; v4 uses `cssInterop(Component, { className: 'style' })`
 - **Web-only Tailwind classes**: `hover:`, `focus:` need `nativewind` platform variants
 - **`tw` function usage**: Deprecated in NativeWind v4 — use `className` prop directly
 - **Dark mode**: Use `dark:` prefix with `useColorScheme()`, not manual theming
@@ -73,11 +73,11 @@ You work with:
 - **Keyboard handling**: Use `KeyboardAvoidingView` with correct `behavior` per platform
 
 ### MEDIUM -- Modern Expo / RN
-- **New Architecture (Fabric + TurboModules)**: Default since SDK 52. Flag any `"newArchEnabled": false` in `app.json` without a documented reason. Check that native deps support the new arch.
+- **New Architecture (Fabric + TurboModules)**: The default, and mandatory (non-disablable) on SDK 55+. Flag any `"newArchEnabled": false` without a documented reason; check that native deps support it.
 - **React Compiler**: If `experiments.reactCompiler` is on, avoid manual `useMemo`/`useCallback` — compiler handles it. Flag over-memoization.
-- **Reanimated v4**: Uses CSS-like animations API; worklets must be compiled by the Babel plugin. Verify `react-native-reanimated/plugin` is last in `babel.config.js`.
-- **Expo Router v4 Server Routes**: API routes use `+api.ts` suffix — run server-side, never bundle secrets into client code.
-- **`expo-file-system/next`**: Newer sync-capable API. Prefer over legacy `expo-file-system` for new code.
+- **Reanimated v4**: Uses CSS-like animations API; worklets are compiled by the Babel plugin — verify `react-native-worklets/plugin` is last in `babel.config.js`.
+- **Expo Router Server Routes**: API routes use the `+api.ts` suffix — run server-side, never bundle secrets into client code.
+- **`expo-file-system`**: Use the default `expo-file-system` (sync-capable); the older async-only API lives at `expo-file-system/legacy`.
 - **React 19 in RN 0.76+**: Use `use()`, Server Actions (where supported), and `ref` as prop (no `forwardRef`).
 
 ## Diagnostic Commands
@@ -106,7 +106,7 @@ useFocusEffect(useCallback(() => {
 }, []));
 ```
 
-## NativeWind v4 Patterns
+## NativeWind Patterns
 
 ```tsx
 // Correct: className on core components
@@ -115,7 +115,7 @@ useFocusEffect(useCallback(() => {
 </View>
 
 // Custom component with NativeWind support
-const MyCard = cssInterop(View, { className: 'style' });
+const MyCard = styled(View);  // NativeWind v5 (v4: cssInterop)
 
 // Platform-specific classes
 <View className="p-4 ios:pt-8 android:pt-6 web:max-w-lg" />

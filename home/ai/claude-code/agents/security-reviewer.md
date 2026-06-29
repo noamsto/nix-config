@@ -42,15 +42,17 @@ trivy fs --scanners vuln,secret .
 - Identify high-risk surfaces: authentication, session handling, API endpoints, DB queries, file uploads, payments, webhooks, deserialization
 - Check for external input sinks: `fetch`/`axios` URLs, `exec`/`spawn`, `fs` paths, SQL builders
 
-### 2. OWASP Top 10 Check
-1. **Injection** — Queries parameterized? User input sanitized?
-2. **Broken Auth** — Passwords hashed (bcrypt/argon2)? JWT validated? Sessions secure?
-3. **Sensitive Data** — HTTPS enforced? Secrets in env vars? PII encrypted? Logs sanitized?
-4. **Broken Access** — Auth checked on every route? CORS properly configured? **Dual-write ordering**: when a mutation spans two stores (a DB row + an auth/permission record, or DB + cache), check write ordering and orphan cleanup — a delete that removes one but leaves the other can leave stale access or stale state.
-5. **Misconfiguration** — Default creds changed? Debug mode off in prod? Security headers set?
-6. **XSS** — Output escaped? CSP set? Framework auto-escaping?
-7. **Known Vulnerabilities** — Dependencies up to date?
-8. **Insufficient Logging** — Security events logged? Alerts configured?
+### 2. OWASP Top 10:2025 Check
+1. **Broken Access Control** (includes SSRF) — Auth checked on every route? IDOR / can a user reach another tenant's object? CORS locked down? **Dual-write ordering**: when a mutation spans two stores (a DB row + an auth/permission record, or DB + cache), check write ordering and orphan cleanup — a delete that removes one but leaves the other can leave stale access or stale state.
+2. **Security Misconfiguration** — Default creds changed? Debug mode off in prod? Security headers set? Unused features/ports disabled?
+3. **Software Supply Chain Failures** — Dependencies pinned & audited? Lockfile integrity? CI/build provenance? Actions pinned by SHA?
+4. **Cryptographic Failures** — HTTPS enforced? Secrets in env vars? PII encrypted at rest? Strong algorithms (no homemade crypto)? Logs sanitized?
+5. **Injection** — Queries parameterized? User input validated? (SQLi, command injection, and XSS are injection-class — output escaped, CSP set, framework auto-escaping on.)
+6. **Insecure Design** — Threat-modeled? Abuse cases handled? Secure-by-default flows?
+7. **Authentication Failures** — Passwords hashed (argon2id/bcrypt)? MFA? JWT/session validated and rotated? Credential-stuffing exposure?
+8. **Software or Data Integrity Failures** — Unsigned/unverified updates or deserialization of untrusted data? CI/CD integrity?
+9. **Security Logging & Alerting Failures** — Security events logged AND alerted on? Tamper-resistant?
+10. **Mishandling of Exceptional Conditions** — Errors fail securely (no sensitive detail leaked, no fail-open on the error path)? Edge/exception branches handled?
 
 ### 3. Code Pattern Review
 

@@ -11,7 +11,7 @@ When invoked:
 1. Establish the review scope: use `gh pr view --json baseRefName` for PRs, or `git diff --staged` and `git diff` for local review
 2. Check merge readiness if PR metadata is available — stop if CI is failing or merge conflicts exist
 3. Run the project's canonical typecheck command (`npm/pnpm/yarn/bun run typecheck`) or `tsc --noEmit`
-4. Run `eslint . --ext .ts,.tsx,.js,.jsx` if available
+4. Run `eslint .` if available
 5. Focus on modified files; read surrounding context before commenting
 
 You DO NOT refactor or rewrite code — you report findings only.
@@ -88,7 +88,7 @@ If the repo has an `AGENTS.md` / `CLAUDE.md`, read it and any `.claude/rules/*` 
 ```bash
 npm run typecheck --if-present
 tsc --noEmit
-eslint . --ext .ts,.tsx,.js,.jsx
+eslint .
 npm audit
 ```
 

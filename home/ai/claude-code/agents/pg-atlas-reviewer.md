@@ -31,7 +31,7 @@ These supersede any prior assumption.
 ### 1. Migration safety (CRITICAL on live tables)
 - `ADD COLUMN` with a **constant** default is metadata-only on PG11+ (fast); a **volatile** default rewrites the table.
 - Adding `NOT NULL`: add nullable + default, backfill in batches, then `SET NOT NULL` — unless the constant-default fast path applies.
-- `CREATE INDEX CONCURRENTLY` on large live tables — plain `CREATE INDEX` takes ACCESS EXCLUSIVE.
+- `CREATE INDEX CONCURRENTLY` on large live tables — plain `CREATE INDEX` takes a `SHARE` lock (blocks writes, allows reads) for the whole build.
 - Keep DDL locks short; set `lock_timeout` / `statement_timeout` on migration sessions. Never rename a column in use (add-new → dual-write → migrate reads → drop).
 - **Atlas linearity**: filenames are timestamp-ordered; a new migration whose timestamp predates an applied one, or a stale `atlas.sum`, makes Atlas treat the chain as non-linear (DIRTY after rebase/merge). Verify timestamp ordering AND that `atlas.sum` was regenerated (append-only: one new line, no reorders/deletions).
 - HCL/declarative schema must match the generated migration (no drift).

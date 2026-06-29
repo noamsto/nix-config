@@ -31,7 +31,7 @@ If the repo has an `AGENTS.md` / `CLAUDE.md`, read it plus the nearest nested on
 ### 2. Query Performance
 - Index the columns in `WHERE` / `JOIN` / `ORDER BY`. Run `EXPLAIN QUERY PLAN <stmt>` — flag `SCAN TABLE` on anything non-trivial (want `SEARCH ... USING INDEX`).
 - Composite index column order: equality columns first, then range/sort.
-- Avoid `SELECT *` — fetch only needed columns (D1 has per-query row/size limits and bills by bytes).
+- Avoid `SELECT *` — fetch only needed columns (D1 has per-query row/size limits and bills by **rows** read/written — a wide scan still costs a row read per row).
 - N+1: one query per item in a loop → use a single `IN (...)` query or `db.batch()`.
 - Consider `WITHOUT ROWID` for tables with a non-integer natural PK always queried by that key.
 
@@ -44,7 +44,7 @@ If the repo has an `AGENTS.md` / `CLAUDE.md`, read it plus the nearest nested on
 
 ### 4. Migrations (Cloudflare D1 / wrangler)
 - D1 migrations are versioned SQL files applied with `wrangler d1 migrations apply <db>`. Verify new migrations are additive and linearly ordered.
-- SQLite has **limited `ALTER TABLE`**: add/rename columns is fine; dropping or altering a column in place needs the 12-step table rebuild (`CREATE new`, copy, drop, rename). Flag in-place column changes SQLite can't do directly.
+- SQLite has **limited `ALTER TABLE`**: add/rename columns is fine, and `DROP COLUMN` works *except* on a column that's indexed, `UNIQUE`, part of the PK, or FK-referenced. Altering a column's type/constraints in place still needs the 12-step table rebuild (`CREATE new`, copy, drop, rename). Flag in-place column changes SQLite can't do directly.
 - Adding a `NOT NULL` column requires a `DEFAULT` (or a backfill) — SQLite rejects `NOT NULL` without default on a populated table.
 - No `CREATE INDEX CONCURRENTLY` (that's Postgres). D1 DBs are small and edge-replicated, so index builds are rarely a lock problem — but still avoid gratuitous synchronous rebuilds.
 

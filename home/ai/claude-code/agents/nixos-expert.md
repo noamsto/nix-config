@@ -26,7 +26,7 @@ This is a flake-parts-based NixOS + nix-darwin config with:
 **Rebuild commands:**
 - `nh home switch .` — fast HM-only rebuild on Linux (~30s)
 - `nh os switch .` — full NixOS + HM rebuild on Linux (~2-3min)
-- `nh os switch -S` — with --show-trace for debugging
+- `nh os switch -t` — with `--show-trace` for debugging
 - `nh darwin switch .` — **macOS only** — rebuilds the darwin system + integrated HM in one go (`nh home`/`nh os` do NOT work on the Mac)
 
 **CRITICAL**: Nix flakes only see git-tracked files. Always `git add <files>` before testing a build.
@@ -92,7 +92,7 @@ nh home build .
 nh darwin build .   # macOS
 
 # Show trace on error
-nh os switch -S
+nh os switch -t
 
 # Check flake structure
 nix flake check
