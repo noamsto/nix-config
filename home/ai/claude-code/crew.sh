@@ -69,6 +69,51 @@ case "$sub" in
     fi
     printf '%s\n' "$line" >>"$log"
     ;;
+  reply)
+    # reply <to> <body> — sugar over `msg`; from is dispatcher:<crew> so the
+    # dispatcher needn't reconstruct its own id.
+    crew=$(_crew_id)
+    [ -n "$crew" ] || { echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2; exit 1; }
+    mkdir -p "$dir"
+    line=$(jq -nc --arg crew "$crew" --arg to "${1:-}" --arg body "${2:-}" \
+      '{ts:(now*1000|floor), crew_id:$crew, from:("dispatcher:"+$crew), to:$to, kind:"msg", body:$body}')
+    printf '%s\n' "$line" >>"$log"
+    ;;
+  await)
+    # await <agent> [--timeout S] [--interval S] — block until a msg addressed to
+    # <agent> arrives (ts strictly after the await started), print it, exit 0;
+    # exit 3 on timeout. No LLM tokens burned: this is a held bash call, not a
+    # spin loop. A late reply is never lost — it stays in the durable log for the
+    # next activation.
+    crew=$(_crew_id)
+    [ -n "$crew" ] || { echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2; exit 1; }
+    me="${1:-}"
+    [ -n "$me" ] || { echo "crew: await <agent> [--timeout S] [--interval S]" >&2; exit 1; }
+    shift || true
+    timeout=300
+    interval=2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --timeout) [ -n "${2:-}" ] || { echo "crew: --timeout needs a value" >&2; exit 1; }; timeout="$2"; shift 2 ;;
+        --interval) [ -n "${2:-}" ] || { echo "crew: --interval needs a value" >&2; exit 1; }; interval="$2"; shift 2 ;;
+        *) echo "crew: await: unknown arg '$1'" >&2; exit 1 ;;
+      esac
+    done
+    start=$(jq -nc 'now*1000|floor')
+    deadline=$((start + timeout * 1000))
+    while :; do
+      if [ -f "$log" ]; then
+        ans=$(jq -c --arg crew "$crew" --arg me "$me" --argjson since "$start" \
+          'select(.crew_id==$crew and .kind=="msg" and .to==$me and .ts>$since)' "$log" 2>/dev/null | tail -n1 || true)
+        [ -n "$ans" ] && { printf '%s\n' "$ans"; exit 0; }
+      fi
+      [ "$(jq -nc 'now*1000|floor')" -ge "$deadline" ] && {
+        echo "crew: await timed out after ${timeout}s (no reply to $me)" >&2
+        exit 3
+      }
+      sleep "$interval"
+    done
+    ;;
   roster)
     crew="${1:-$(_crew_id)}"
     [ -f "$log" ] || exit 0
@@ -103,7 +148,7 @@ case "$sub" in
     jq -c --arg crew "$crew" 'select(.crew_id==$crew)' "$log"
     ;;
   *)
-    echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+    echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
     exit 1
     ;;
 esac

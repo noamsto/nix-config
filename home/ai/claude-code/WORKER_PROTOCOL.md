@@ -24,7 +24,16 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 - on start: `crew status worker:<branch> working`
 - on PR open: `crew status worker:<branch> pr_open "" <pr_url>`
 - on finish: `crew status worker:<branch> done`
-- if blocked: `crew status worker:<branch> blocked "<why>"` **and** `crew msg worker:<branch> dispatcher:<crew_id> "<question>"`, then wait/stop — do not spin.
+- if blocked on a question only the dispatcher can answer: post the block, then **await the reply in-band** — don't stop dead:
+  ```
+  crew status worker:<branch> blocked "<why>"
+  crew msg worker:<branch> dispatcher:<crew_id> "<question>"
+  crew await worker:<branch> --timeout 300
+  ```
+  Run `crew await` from your bash tool with a tool timeout above `--timeout` (e.g. 360000ms) so the tool doesn't kill it first. It blocks at **zero token cost** (a held bash call, not a spin loop) and prints the dispatcher's reply.
+  - **reply arrives (exit 0):** re-stamp `crew status worker:<branch> working`, incorporate the answer, resume the pipeline from where you paused.
+  - **times out (exit 3):** re-stamp `crew status worker:<branch> blocked "<why> — awaited 300s, no reply"` and **stop**. Your question stays durable in the bus; the dispatcher answers from the roster (you resume on next activation) or re-dispatches. **Cap block→await cycles at 2** — after a second timeout, `crew status worker:<branch> failed "blocked, no dispatcher reply"` and stop.
+  - **`trivial`/`standard` only:** if the blocker is low-risk, instead pick a safe default on timeout, document it in the PR body under "## Assumptions", and continue. `deep`/security-sensitive must wait for a real answer.
 - if a step hits a **permission prompt you can't resolve** (no human watches your window; `--permission-mode auto` auto-denies): do NOT hang — `crew status worker:<branch> blocked "permission: <what>"`, surface it, stop.
 - on terminal failure (gate won't pass, etc.): `crew status worker:<branch> failed "<why>"`, then stop.
 

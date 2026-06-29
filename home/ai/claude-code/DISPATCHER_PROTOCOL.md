@@ -36,7 +36,7 @@ All workers in your shell share one `crew_id`. Check the bus when a worker pings
 
 - `crew roster` — every worker's latest state (`working`/`blocked`/`pr_open`/`done`/`failed`) + age, plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). This is your dashboard; **refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
 - `crew inbox dispatcher:$CREW_ID` — worker **questions** (messages only; status lives in the roster).
-- A worker that's `blocked` has **posted its question and stopped** — workers don't sit polling. So `crew msg` back won't reach it. Act on the block directly: **intervene in the worker's window** (answer live and let it continue) or **re-dispatch** the task with the missing context baked in.
+- A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in, as before. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation.
 
 ## Rules
 
