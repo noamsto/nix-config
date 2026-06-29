@@ -41,6 +41,10 @@ in {
           };
         };
 
+        # Bridge non-AirPlay wifi speakers (Chromecast/Sonos/UPnP) into AirPlay,
+        # so they join the RAOP sinks above in one PipeWire output list.
+        airconnect.enable = true;
+
         # profile-sync-daemon: removed 2026-04-28.
         # Reasons: NVMe wear math doesn't justify it (~136 yrs to TBW exhaustion at
         # firefox's ~12 GB/day), Fedora dropped the package, mainstream Linux
