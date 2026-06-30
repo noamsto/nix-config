@@ -68,7 +68,7 @@ Supporting cast that stays:
 - `lualine.lua` (snacks doesn't replace statusline)
 - `better-escape.lua`, `smart-splits.lua`, `spider.lua`
 - `gitisings.lua` (gitsigns)
-- `obsidian.lua`, `resolved.lua` (own plugin), `stubs.lua`
+- `resolved.lua` (own plugin), `stubs.lua`
 - `lazyvim.plugins.extras.ui.treesitter-context`, `util.mini-hipatterns`
 
 ## After the cut
