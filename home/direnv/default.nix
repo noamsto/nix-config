@@ -20,6 +20,14 @@
         global = {
           hide_env_diff = true;
         };
+        # Auto-trust every .envrc under the factify tree so each new git
+        # worktree (mono-worktrees/*, .worktrees/*) loads the devshell
+        # without a manual `direnv allow` — otherwise the shared but
+        # path-keyed approval is missing and tools like semgrep that only
+        # live in the devshell vanish from PATH.
+        whitelist = {
+          prefix = ["/home/noams/Data/git/factify"];
+        };
       };
     };
   };
