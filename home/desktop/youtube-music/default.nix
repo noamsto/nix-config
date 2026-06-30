@@ -18,12 +18,17 @@
   # (portal/OS) reports dark, Latte when light. Wrapping each whole flavor file
   # in @media is valid here — neither file has @charset/@import.
   ytmCatppuccinTheme = pkgs.runCommand "catppuccin-auto.css" {} ''
+    logoB64="$(base64 -w0 ${./logo-latte.svg})"
     {
       echo '@media (prefers-color-scheme: dark) {'
       cat ${ytmSrc}/src/mocha.css
       echo '}'
       echo '@media (prefers-color-scheme: light) {'
       cat ${ytmSrc}/src/latte.css
+      # Upstream leaves the nav logo as YT's dark-mode asset (white "Music"
+      # wordmark), invisible on Latte's light background. Swap in a Latte variant
+      # whose wordmark is recolored to --ctp-text; the red play button is intact.
+      echo 'ytmusic-logo img.logo { content: url("data:image/svg+xml;base64,'"$logoB64"'") !important; }'
       echo '}'
     } > "$out"
   '';
