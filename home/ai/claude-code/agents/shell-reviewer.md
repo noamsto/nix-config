@@ -1,6 +1,6 @@
 ---
 name: shell-reviewer
-description: Expert bash/shell script reviewer specializing in quoting, word-splitting, exit-code handling, and POSIX/bash portability pitfalls. Use for all shell script code changes.
+description: Expert bash/shell script reviewer specializing in quoting, word-splitting, exit-code handling, and POSIX/bash plus macOS/BSD portability pitfalls. Use for all shell script code changes.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---
@@ -35,11 +35,25 @@ If the repo has an `AGENTS.md` / `CLAUDE.md`, read it plus the nearest nested on
 - **Comment vs. code drift**: a comment asserting an invariant the code doesn't back. Treat stale narrative as a live bug, not a nit
 
 ### HIGH -- Robustness
-- **Race conditions on shared state**: Read-modify-write of cache/state files without `flock` or atomic `mv`; non-atomic writes readers can observe half-written
+- **Race conditions on shared state**: Read-modify-write of cache/state files without a lock or atomic `mv`; non-atomic writes readers can observe half-written. Note `flock` is Linux-only (see portability below) — a portable lock is an atomic `mkdir` lockdir released on `trap … EXIT`
 - **TTL / staleness logic**: Off-by-one or unit errors in `stat`-mtime age math; TTL branches that retry-storm during persistent failure
 - **Signal/cleanup handling**: Background daemons or long loops without `trap` cleanup; orphaned lockfiles on `SIGTERM`
 - **`read` without `-r`**: backslash mangling
 - **`cd` without failure check**: subsequent commands run in the wrong directory — use `cd ... || exit` or subshell scoping
+
+### HIGH -- Cross-platform portability (Linux ↔ macOS/BSD)
+
+Only when the script can run on macOS (a Nix flake targeting `*-darwin`, a dotfile/CI step shared across machines). These pass silently on Linux and only break at runtime on macOS, so review is the catch — a Linux CI won't fail.
+
+- **Linux-only binaries** — absent on a macOS PATH even via nixpkgs (util-linux, `meta.platforms = linux`): `flock`, `setsid`, `taskset`, `ionice`, `chrt`, `nsenter`, `unshare`. Portable substitutes: atomic `mkdir` lockdir for `flock`; `( nohup … & )` for `setsid`. (Some repos gate these with a `macos-portability` pre-commit denylist — still flag them; the grep can't see the GNU-flag drift below.)
+- **GNU vs BSD flag drift** — the judgment calls a denylist can't make. A GNU-first call with a BSD fallback is fine (e.g. `stat -c %Y "$f" 2>/dev/null || stat -f %m "$f"`); an *unguarded* GNU-only flag on a darwin-bound script is a HIGH finding:
+  - `stat -c` (GNU) vs `stat -f` (BSD)
+  - `date -d` / `--date` (GNU) vs `date -v` / `-j` (BSD)
+  - `sed -i` (GNU) vs `sed -i ''` (BSD needs the backup-suffix arg)
+  - `readlink -f` (GNU) — BSD differs; prefer `realpath` or a resolve loop
+  - `grep -P` (PCRE) — GNU-only
+  - `base64 -w0` (GNU) — BSD `base64` has no `-w`
+  - `tac` (GNU) → `tail -r` (BSD)
 
 ### HIGH -- Test Quality
 - **Coverage on the changed branch**: a bug-fix needs a test (bats or equivalent) exercising *that branch* — not just a still-green suite
