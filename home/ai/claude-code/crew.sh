@@ -1,4 +1,4 @@
-# File-based coordination bus: id | identity | status | msg | roster | inbox | log
+# File-based coordination bus: id | identity | status | msg | watch | roster | inbox | log
 # A real CLI on PATH (not a fish fn) so BOTH the dispatcher (fish) and workers
 # (their bash tool) can call it. Pure jq + append; the log is the state.
 
@@ -114,6 +114,53 @@ case "$sub" in
       sleep "$interval"
     done
     ;;
+  watch)
+    # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
+    # any worker event qualifies (a status whose state is in --states, or a msg to
+    # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0; exit 3 on
+    # timeout (no stdout, no cursor — the caller re-arms with the cursor it already
+    # holds). Zero-token held poll, like `await`. The caller-threaded cursor (not
+    # start=now) is load-bearing: events landing while the dispatcher acts on a
+    # batch must not be skipped. Strict `>` matches `await` (same same-ms edge).
+    crew=$(_crew_id)
+    [ -n "$crew" ] || { echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2; exit 1; }
+    since=0
+    states="blocked,pr_open,done,failed"
+    timeout=110
+    interval=2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --since) [ -n "${2:-}" ] || { echo "crew: --since needs a value" >&2; exit 1; }; since="$2"; shift 2 ;;
+        --states) [ -n "${2:-}" ] || { echo "crew: --states needs a value" >&2; exit 1; }; states="$2"; shift 2 ;;
+        --timeout) [ -n "${2:-}" ] || { echo "crew: --timeout needs a value" >&2; exit 1; }; timeout="$2"; shift 2 ;;
+        --interval) [ -n "${2:-}" ] || { echo "crew: --interval needs a value" >&2; exit 1; }; interval="$2"; shift 2 ;;
+        *) echo "crew: watch: unknown arg '$1'" >&2; exit 1 ;;
+      esac
+    done
+    case "$since" in '' | *[!0-9]*) echo "crew: --since must be an integer ms timestamp" >&2; exit 1 ;; esac
+    statesjson=$(printf '%s' "$states" | jq -Rc 'split(",") | map(select(length>0))')
+    [ "$statesjson" = "[]" ] && { echo "crew: --states must be non-empty" >&2; exit 1; }
+    me="dispatcher:$crew"
+    start=$(jq -nc 'now*1000|floor')
+    deadline=$((start + timeout * 1000))
+    while :; do
+      if [ -f "$log" ]; then
+        batch=$(jq -c -s --arg crew "$crew" --arg me "$me" --argjson since "$since" --argjson states "$statesjson" '
+          map(select(.crew_id==$crew and .ts>$since
+                and ( (.kind=="status" and (.body.state as $s | $states | index($s)))
+                      or (.kind=="msg" and (.to==$me or .to=="*")) )))
+          | sort_by(.ts)
+          | select(length>0)
+          | {cursor:(.[-1].ts), events:.}' "$log" 2>/dev/null || true)
+        [ -n "$batch" ] && { printf '%s\n' "$batch"; exit 0; }
+      fi
+      [ "$(jq -nc 'now*1000|floor')" -ge "$deadline" ] && {
+        echo "crew: watch timed out after ${timeout}s (no events > $since)" >&2
+        exit 3
+      }
+      sleep "$interval"
+    done
+    ;;
   roster)
     crew="${1:-$(_crew_id)}"
     [ -f "$log" ] || exit 0
@@ -148,7 +195,7 @@ case "$sub" in
     jq -c --arg crew "$crew" 'select(.crew_id==$crew)' "$log"
     ;;
   *)
-    echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+    echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
     exit 1
     ;;
 esac

@@ -32,11 +32,23 @@ dispatch <tier> <model> [LINEAR-ID] <title…>
 
 ## Read the bus (not `gh`/`tmux` scraping)
 
-All workers in your shell share one `crew_id`. Check the bus when a worker pings your pane (workers `tmux display-message` you on finish) and before dispatching the next task:
+All workers in your shell share one `crew_id`. **Block on the bus instead of polling it** — `crew watch` is a held, zero-token call that returns the instant any worker needs you:
 
-- `crew roster` — every worker's latest state (`working`/`blocked`/`pr_open`/`done`/`failed`) + age, plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). This is your dashboard; **refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
-- `crew inbox dispatcher:$CREW_ID` — worker **questions** (messages only; status lives in the roster).
-- A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in, as before. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation.
+```
+cur=0
+loop:
+  out = crew watch --since $cur --timeout 110     # run with a Bash tool timeout ≥ 120000ms
+  exit 0 → cur = (out | .cursor); handle each of out.events (reply / dispatch next / intervene); re-loop
+  exit 3 → re-loop with the SAME cur (a timeout never advances the cursor)
+```
+
+`crew watch` wakes on any worker `status` in `blocked`/`pr_open`/`done`/`failed` (not `working` heartbeats) or any question `msg` to you, returning `{"cursor":<ts>,"events":[…]}`. Thread `cur` across calls so an event landing while you act on a batch is never skipped. The terminal states (`done`/`pr_open`/`failed`) free fan-out budget, so the same wakeup tells you when to dispatch the next queued task. To take a brand-new task while parked in `watch`, the human interrupts (Esc).
+
+Two reads remain for detail:
+
+- `crew roster` — at-a-glance dashboard: every worker's latest state + age, plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). **Refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
+- `crew inbox dispatcher:$CREW_ID` — worker **questions** in full (messages only; status lives in the roster).
+- A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation.
 
 ## Rules
 
