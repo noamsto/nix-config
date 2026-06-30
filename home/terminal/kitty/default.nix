@@ -53,11 +53,6 @@
 in {
   programs.kitty = {
     enable = true;
-    # Opt the aeye carousel into kitty-pane mode. Scoped to kitty (not a global
-    # session var) so other terminals keep auto-detecting; the kitty-launched
-    # shell carries it, and tmux's `update-environment AEYE_HOST` (lazytmux)
-    # threads it into the session env where the reconcile hook can see it.
-    environment.AEYE_HOST = "kitty";
     # Default dark theme - ensures kitty starts themed before theme-toggle runs.
     # theme-toggle replaces this include line at runtime with the saved preference.
     extraConfig = ''
