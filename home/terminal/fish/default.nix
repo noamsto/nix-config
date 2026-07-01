@@ -201,21 +201,31 @@
           set -l tier $argv[1]
           set -l model $argv[2]
           if not contains -- $tier trivial standard deep
-              echo "usage: dispatch <trivial|standard|deep> <model> [--mcp <profile>] [LINEAR-ID] <title...>" >&2
+              echo "usage: dispatch <trivial|standard|deep> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title...>" >&2
               return 1
           end
 
           # Leading options before the free-form title, order-independent:
+          #   --agent <claude|codex>  worker engine (default claude). Codex takes
+          #                    a codex model (gpt-5-codex…) in the <model> slot.
           #   --mcp <profile>  layer an extra MCP profile onto the worker's base
           #                    stack (cad -> freecad, analytics -> posthog).
           #   <LINEAR-ID>      e.g. ENG-6789 — track in Linear, skip GitHub issue
           #                    creation (the repo's GH issues may be disabled).
           # Detect the id by shape so the bare <title...> form still works.
+          set -l agent claude
           set -l linear_id ""
           set -l mcp_profile ""
           set -l rest $argv[3..-1]
           while test (count $rest) -gt 0
-              if test "$rest[1]" = --mcp
+              if test "$rest[1]" = --agent
+                  set agent $rest[2]
+                  if not contains -- $agent claude codex
+                      echo "dispatch: --agent must be claude or codex" >&2
+                      return 1
+                  end
+                  set rest $rest[3..-1]
+              else if test "$rest[1]" = --mcp
                   set mcp_profile $rest[2]
                   if test -z "$mcp_profile"
                       echo "dispatch: --mcp needs a profile (cad, analytics)" >&2
@@ -228,6 +238,14 @@
               else
                   break
               end
+          end
+
+          # --mcp maps to Claude's --mcp-config JSON; codex uses its own
+          # ~/.codex config, a different mechanism. Reject the combo rather than
+          # silently dropping the profile.
+          if test "$agent" = codex; and test -n "$mcp_profile"
+              echo "dispatch: --mcp is claude-only; codex uses ~/.codex config" >&2
+              return 1
           end
 
           # Map the profile to its generated config, additive on top of the base
@@ -255,7 +273,7 @@
 
           set -l title (string join ' ' $rest)
           if test -z "$title"
-              echo "usage: dispatch <trivial|standard|deep> <model> [--mcp <profile>] [LINEAR-ID] <title...>" >&2
+              echo "usage: dispatch <trivial|standard|deep> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title...>" >&2
               return 1
           end
 
@@ -328,8 +346,19 @@
           tmux set-window-option -t $win pane-border-style "bg=#{@thm_bg},fg=$agent_color"
           tmux set-window-option -t $win pane-active-border-style "bg=#{@thm_bg},fg=$agent_color,bold"
           tmux set-window-option -t $win pane-border-format " #[bold]#{@crew_name}#[nobold] "
-          tmux send-keys -t $pane \
-              "claude --name $agent_name --model $model $mcp_flag --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+          # Codex has no --append-system-prompt-file, so it reads the (engine-
+          # agnostic) protocol via the seed prompt. Full-access is the parity of
+          # claude's --permission-mode auto — a worker must write the crew bus in
+          # the main .git, spawn sibling worktrees, and push, none of which a
+          # codex workspace sandbox would allow. Codex has no --name either; the
+          # codename still rides the pane border set above.
+          if test "$agent" = codex
+              tmux send-keys -t $pane \
+                  "codex -m $model --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.'" Enter
+          else
+              tmux send-keys -t $pane \
+                  "claude --name $agent_name --model $model $mcp_flag --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+          end
       end
     '';
 

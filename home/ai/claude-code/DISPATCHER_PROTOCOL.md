@@ -19,13 +19,14 @@ Read the task and weigh its actual signals. Do not map mechanically from a label
 ## Scaffold one worker per task
 
 ```
-dispatch <tier> <model> [--mcp <profile>] [LINEAR-ID] <title…>
+dispatch <tier> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title…>
 ```
 
 `dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
 
 - **Tracker.** Pass a **Linear id** (e.g. `ENG-6789`) as the token right after the model for Linear-tracked repos (GitHub issues disabled) — it branches `eng-<n>-<slug>` and stamps `Closes ENG-<n>`, no `gh` call. Omit it on GitHub-issue repos and `dispatch` mints an issue (`feat/<n>-<slug>`, `Closes #<n>`); if issue creation fails it aborts instead of half-scaffolding.
-- **MCP.** Workers inherit the full base MCP stack by default (context7, playwright, obsidian, firefox-devtools) — browser work needs no flag. Add `--mcp <profile>` to layer on an extra profile: `cad` (freecad) or `analytics` (posthog, work only). Unknown/ungenerated profile aborts before launch.
+- **Engine.** Default `claude`. Pass `--agent codex` to run the worker on the OpenAI Codex CLI instead — same crew-bus contract, but the `<model>` slot must then be a **codex** model (`gpt-5-codex`…), not a claude one. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine.
+- **MCP.** Claude workers inherit the full base MCP stack by default (context7, playwright, obsidian, firefox-devtools) — browser work needs no flag. Add `--mcp <profile>` to layer on an extra profile: `cad` (freecad) or `analytics` (posthog, work only). Unknown/ungenerated profile aborts before launch. `--mcp` is claude-only (codex uses its own `~/.codex` config).
 - **Inline the spec.** The worker has no Linear access, so it can't read the ticket. Write the full task to a file and export `DISPATCH_SPEC=<file>` before calling `dispatch` — it's appended to `WORKER_TASK.md` under `## Task`. Without it the worker only gets the title.
 
 - **Hand out disjoint work.** Assignment beats locking — never give two workers overlapping files/scope.
