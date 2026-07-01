@@ -33,13 +33,6 @@ in {
         };
       };
 
-      # Worker profile: NO MCP servers — paired with `--strict-mcp-config` so a fanned-out
-      # worker doesn't spawn the full base stack (playwright/chromium, firefox, context7…).
-      # The `crew` bus is a fish function, so it stays available regardless.
-      "claude-code/mcp-worker.json".text = builtins.toJSON {
-        mcpServers = {};
-      };
-
       # FreeCAD MCP for CAD modeling
       "claude-code/mcp-freecad.json".text = builtins.toJSON {
         mcpServers = {
