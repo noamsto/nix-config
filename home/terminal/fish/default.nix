@@ -279,15 +279,19 @@
           set -l ids (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{window_id} #{pane_id}' | string split ' ')
           set -l win $ids[1]
           set -l pane $ids[2]
-          # Color the worker's window in the status bar; leave the NAME to lazytmux
-          # (its cwd reconciler owns @branch/@issue). @crew_* are stashed for a future
-          # lazytmux format that could render the codename in the bar text.
-          tmux set-window-option -t $win window-status-style "fg=$agent_color"
-          tmux set-window-option -t $win window-status-current-style "fg=$agent_color,bold"
+          # Identity surfaces: the codename rides the worker's pane border (always
+          # visible when its window is focused) and the CC prompt box via
+          # `claude --name` below. lazytmux still owns the tab TEXT (@branch/@issue);
+          # @crew_* also tint the status-bar tab: lazytmux's status-format[1] reads
+          # @crew_color directly. The old window-status-style here was a dead no-op —
+          # that format paints each tab's fg inline, so it never consulted the option.
           tmux set-window-option -t $win @crew_name $agent_name
           tmux set-window-option -t $win @crew_color $agent_color
+          tmux set-window-option -t $win pane-border-style "bg=#{@thm_bg},fg=$agent_color"
+          tmux set-window-option -t $win pane-active-border-style "bg=#{@thm_bg},fg=$agent_color,bold"
+          tmux set-window-option -t $win pane-border-format " #[bold]#{@crew_name}#[nobold] "
           tmux send-keys -t $pane \
-              "claude --model $model --strict-mcp-config --mcp-config ~/.config/claude-code/mcp-worker.json --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+              "claude --name $agent_name --model $model --strict-mcp-config --mcp-config ~/.config/claude-code/mcp-worker.json --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
       end
     '';
 
@@ -296,7 +300,15 @@
     # rubric); default model (opus) + full MCP, since the orchestrator needs them.
     "fish/functions/dispatcher.fish".text = ''
       function dispatcher --description 'Start a dispatcher session (DISPATCHER_PROTOCOL baked)'
-          claude --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
+          # Give the orchestrator window a fixed identity (accent border + name) so it
+          # stands out from the per-branch worker windows it spawns. Guarded on $TMUX
+          # since the dispatcher can be launched outside a tmux pane.
+          if set -q TMUX
+              tmux set-window-option pane-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
+              tmux set-window-option pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve},bold"
+              tmux set-window-option pane-border-format " #[bold]dispatcher#[nobold] "
+          end
+          claude --name dispatcher --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
       end
     '';
 
