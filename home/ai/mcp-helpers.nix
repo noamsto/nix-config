@@ -19,7 +19,7 @@
 
   # Create a wrapper script for npx-based MCP servers
   # This allows editable JSON configs while ensuring npx is in PATH
-  # Usage: mkNpxWrapper { name = "obsidian-mcp"; package = "obsidian-mcp"; extraArgs = ["/path/to/vault"]; }
+  # Usage: mkNpxWrapper { name = "playwright-mcp"; package = "playwright-mcp"; extraArgs = ["--headless"]; }
   mkNpxWrapper = {
     name,
     package,

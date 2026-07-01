@@ -20,7 +20,6 @@ in {
     context7-mcp
     # playwright-mcp has bundled chromium, no need to add separately
     # MCP wrappers for editable JSON configs (ensures npx is in PATH)
-    mcpServers.wrappers.obsidian
     mcpServers.wrappers.playwright
   ];
 

@@ -5,7 +5,6 @@
   lib,
 }: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
-  obsidianVaults = ["/home/noams/vaults/personal" "/home/noams/vaults/work"];
 
   # chromium is Linux-only in nixpkgs. On darwin, omit --executable-path so
   # playwright-mcp uses its own managed browser. Wrapped in lib.optionals so the
@@ -30,11 +29,6 @@ in {
       };
     };
 
-    obsidian = helpers.mkNpxMcp {
-      package = "obsidian-mcp";
-      args = obsidianVaults;
-    };
-
     firefox-devtools = helpers.mkNpxMcp {
       package = "firefox-devtools-mcp@latest";
       args = ["--connect-existing" "--marionette-port" "2828"];
@@ -44,11 +38,6 @@ in {
   # Wrapper-based MCPs for editable JSON configs (opencode.json, etc.)
   # These provide simple command names that work when the wrapper is in PATH
   wrappers = {
-    obsidian = helpers.mkNpxWrapper {
-      name = "obsidian-mcp-wrapper";
-      package = "obsidian-mcp";
-      extraArgs = obsidianVaults;
-    };
     playwright = pkgs.writeShellScriptBin "playwright-mcp-wrapper" ''
       exec ${lib.getExe pkgs.playwright-mcp} ${lib.escapeShellArgs playwrightExecArgs} "$@"
     '';
