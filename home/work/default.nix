@@ -13,6 +13,9 @@
     # chromium moved to programs.chromium in home/desktop/default.nix for commandLineArgs
     dbeaver-bin
 
+    argocd # Argo CD CLI (auth/login; argonaut reads its ~/.config/argocd config)
+    argonaut # keyboard-first terminal UI for Argo CD
+
     mkcert
     nss.tools
   ];

@@ -141,6 +141,12 @@
       url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
     };
 
+    # Argo CD terminal UI. nixpkgs lags upstream, so track the flake directly.
+    argonaut = {
+      url = "github:darksworm/argonaut";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     noctalia = {
       # Pinned to last v4 rev. v5 is a breaking rewrite (programs.noctalia-shell →
       # programs.noctalia, JSON→TOML config, plugins/pluginSettings dropped from the
