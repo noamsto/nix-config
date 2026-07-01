@@ -214,5 +214,6 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ]
+  ],
+  "skipWorkflowUsageWarning": true
 }
