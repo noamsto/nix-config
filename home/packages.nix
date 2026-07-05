@@ -132,6 +132,9 @@ in {
       # github
       gh
 
+      # Linear from the CLI (branch → issue, PRs); also powers lazytmux enrich
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.linear-cli
+
       # Better system monitoring
       btop
 
