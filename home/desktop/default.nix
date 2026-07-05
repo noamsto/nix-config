@@ -40,6 +40,10 @@
     "browser.compactmode.show" = true;
     "browser.uidensity" = 1;
     "browser.tabs.groups.enabled" = true;
+    # Smart Tab Groups: local ML suggests tabs for a group + auto-names it.
+    # Engine (smart.enabled) and runtime (browser.ml.enable) default on; optin
+    # is the model-download gate, normally flipped by the in-UI prompt.
+    "browser.tabs.groups.smart.optin" = true;
 
     # =======================================================================
     # WAYLAND & DISPLAY
