@@ -9,19 +9,10 @@
   mcpAliases =
     {
       claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";
-      claude-cad = "claude --mcp-config ~/.config/claude-code/mcp-freecad.json";
     }
     // lib.optionalAttrs (osConfig.profile == "work") {
       claude-analytics = "claude --mcp-config ~/.config/claude-code/mcp-posthog.json";
     };
-
-  # FreeCAD MCP addon source
-  freecad-mcp-addon = pkgs.fetchFromGitHub {
-    owner = "neka-nat";
-    repo = "freecad-mcp";
-    rev = "aae23e561b1384d5949dff20a4fff0caf2b23cd5";
-    sha256 = "sha256-c0AIO62P8+oR3My4iFpFAD98Wpw5wjGITPOjK+WtIMU=";
-  };
 in {
   # Generate additional MCP configs (add to base MCPs)
   xdg.configFile =
@@ -30,16 +21,6 @@ in {
       "claude-code/mcp-playwright.json".text = builtins.toJSON {
         mcpServers = {
           inherit (mcpServers.base) playwright;
-        };
-      };
-
-      # FreeCAD MCP for CAD modeling
-      "claude-code/mcp-freecad.json".text = builtins.toJSON {
-        mcpServers = {
-          freecad = mcpServers.helpers.mkUvxMcp {
-            package = "freecad-mcp";
-            args = ["--only-text-feedback"]; # Reduce token usage
-          };
         };
       };
     }
@@ -58,9 +39,6 @@ in {
         };
       };
     };
-
-  # Install FreeCAD MCP addon
-  home.file.".local/share/FreeCAD/Mod/FreeCADMCP".source = "${freecad-mcp-addon}/addon/FreeCADMCP";
 
   # Shell aliases (adds to base, allows project .mcp.json)
   programs.fish.shellAliases = mcpAliases;
