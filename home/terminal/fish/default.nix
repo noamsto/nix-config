@@ -383,6 +383,12 @@
               tmux set-window-option pane-border-style "bg=#{@thm_bg},fg=#{@thm_mauve}"
               tmux set-window-option pane-active-border-style "bg=#{@thm_bg},fg=#{@thm_mauve},bold"
               tmux set-window-option pane-border-format " #[bold]dispatcher#[nobold] "
+              # Same @crew_* window options `dispatch` stamps on workers, so lazytmux
+              # renders the orchestrator's badge too. Fixed mauve-ish palette colour
+              # (theme-independent, like the worker colourNNN codes) keeps it distinct
+              # from the hashed worker colours.
+              tmux set-window-option @crew_name dispatcher
+              tmux set-window-option @crew_color colour141
           end
           claude --name dispatcher --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
       end

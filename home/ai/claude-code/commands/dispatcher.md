@@ -11,6 +11,13 @@ the `crew` bus — you never implement, gate, or open PRs yourself.
 `dispatch`/`crew` are fish functions; invoke them as `fish -c '…'` (autoloaded from
 `~/.config/fish/functions`).
 
+First, tag this window so lazytmux shows the dispatcher badge (the `dispatcher`
+launcher does this automatically; the in-session path must do it once):
+
+```
+tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color colour141
+```
+
 **Argument:** `$ARGUMENTS`
 
 - If non-empty: treat it as the first task — judge its tier + model per the protocol's
