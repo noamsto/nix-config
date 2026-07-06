@@ -644,6 +644,7 @@
           abbr -a '!$' --position anywhere --function last_command_arg
           abbr -a sc 'sesh connect'
           abbr -a ws 'wt switch'
+          abbr -a wsc --set-cursor 'wt switch -c %'
           abbr -a wsp --set-cursor 'wt switch pr:%'
 
           # Upstream `wt` fish completion (installed at
