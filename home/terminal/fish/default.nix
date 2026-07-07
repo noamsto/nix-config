@@ -396,9 +396,10 @@
               # Same @crew_* window options `dispatch` stamps on workers, so lazytmux
               # renders the orchestrator's badge too. Fixed mauve-ish palette colour
               # (theme-independent, like the worker colourNNN codes) keeps it distinct
-              # from the hashed worker colours.
+              # from the hashed worker colours; colour99 clears contrast on both
+              # Catppuccin themes (the old colour141 washed out on Latte).
               tmux set-window-option @crew_name dispatcher
-              tmux set-window-option @crew_color colour141
+              tmux set-window-option @crew_color colour99
           end
           claude --name dispatcher --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
       end

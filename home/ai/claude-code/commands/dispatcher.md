@@ -15,7 +15,7 @@ First, tag this window so lazytmux shows the dispatcher badge (the `dispatcher`
 launcher does this automatically; the in-session path must do it once):
 
 ```
-tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color colour141
+tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color colour99
 ```
 
 **Argument:** `$ARGUMENTS`
