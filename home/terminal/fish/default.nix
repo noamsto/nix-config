@@ -816,7 +816,7 @@
       enable = true;
       enableFishIntegration = true;
       defaultOptions = ["--height 45% --tmux='80%,60%'"];
-      fileWidgetOptions = [
+      fileWidget.options = [
         "--preview '${pkgs.bat}/bin/bat -n --color=always {}'"
         "--bind 'ctrl-/:change-preview-window(down|hidden|)'"
       ];
