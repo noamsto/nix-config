@@ -240,6 +240,16 @@
               end
           end
 
+          # Codex is a work-only engine (no personal OpenAI account) — the package
+          # and its worker profile aren't installed off the work profile (see
+          # home/ai/default.nix). Reject here, before scaffolding a worktree, so
+          # the failure is a clear message rather than `codex: command not found`
+          # after the issue/branch already exist.
+          if test "$agent" = codex; and test "${osConfig.profile}" != work
+              echo "dispatch: --agent codex is work-profile only (no personal codex account)" >&2
+              return 1
+          end
+
           # Codex gets the base MCP stack via its nix-generated `--profile worker`
           # (see codex/default.nix), so parity for the common tools is automatic.
           # The additive --mcp profiles (analytics) are still claude-only — reject

@@ -32,7 +32,7 @@ flowchart TD
 ## Three orthogonal levers
 
 - **Tier = pipeline depth (who reviews).** Driven by risk/ambiguity/blast-radius, not size. A one-line security change is still `standard`/`deep`.
-- **Engine = who implements.** Claude by default; codex `gpt-5.5` for large mechanical work, wide sweeps, or a deliberate second-engine perspective.
+- **Engine = who implements.** Claude by default; codex `gpt-5.5` (work profile only) for large mechanical work, wide sweeps, or a deliberate second-engine perspective.
 - **Model/effort = how strong / how hard it thinks.** Claude picks opus/sonnet/haiku by tier; codex is always `gpt-5.5` with reasoning effort scaled by tier (deep→high, standard→medium, trivial→low).
 
 ## MCP is no longer a routing factor
