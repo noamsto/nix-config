@@ -1255,16 +1255,16 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "nixpkgs-tmux36": "nixpkgs-tmux36",
         "prdash": "prdash",
+        "tmux-fork": "tmux-fork",
         "tmux-state": "tmux-state"
       },
       "locked": {
-        "lastModified": 1783418523,
-        "narHash": "sha256-r7Dc/4loYR6X4wccHtRcXFtQPRtxPv1HiBGdgGkfzC4=",
+        "lastModified": 1783522658,
+        "narHash": "sha256-Yzt28NwEFc8yDCoQ+j9RhJ9JsXLoP6BlcmubCKC61W4=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "016364f92930ecdfa95c14d769a7f1d7c5c71fe7",
+        "rev": "df3bb383aa3bfa59fa894ffc3bb07b588be86d5a",
         "type": "github"
       },
       "original": {
@@ -1864,22 +1864,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-tmux36": {
-      "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      }
-    },
     "nixpkgs_10": {
       "locked": {
         "lastModified": 1767892417,
@@ -2448,6 +2432,23 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default-linux",
+        "type": "github"
+      }
+    },
+    "tmux-fork": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783497267,
+        "narHash": "sha256-eDtRG5qGtHp0RbQOEXv4terrnD2xz/qEbbmon1x5Zow=",
+        "owner": "noamsto",
+        "repo": "tmux",
+        "rev": "38731e4ae5525b5ad9a996631a0cd61b06c47f1f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noamsto",
+        "ref": "fix/popup-overlay-flicker",
+        "repo": "tmux",
         "type": "github"
       }
     },
