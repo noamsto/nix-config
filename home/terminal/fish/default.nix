@@ -401,7 +401,14 @@
               tmux set-window-option @crew_name dispatcher
               tmux set-window-option @crew_color colour99
           end
-          claude --name dispatcher --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
+          # Suffix the first task onto the session name so the /resume picker shows
+          # `dispatcher: <task>` instead of a wall of identical `dispatcher` entries.
+          # Bare launches stay `dispatcher`. The same $argv still seeds the first prompt.
+          set -l session_name dispatcher
+          if set -q argv[1]
+              set session_name "dispatcher: $argv"
+          end
+          claude --name $session_name --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
       end
     '';
 
