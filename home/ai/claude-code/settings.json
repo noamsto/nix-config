@@ -200,6 +200,7 @@
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
   "theme": "auto",
   "editorMode": "vim",
   "teammateMode": "in-process",
@@ -214,6 +215,5 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ],
-  "skipWorkflowUsageWarning": true
+  ]
 }
