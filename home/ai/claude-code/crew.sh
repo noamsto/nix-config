@@ -196,18 +196,20 @@ watch)
   # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
   # any worker event qualifies (a status whose state is in --states, or a msg to
   # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0; exit 3 on
-  # timeout (no stdout, no cursor — the caller re-arms with the cursor it already
-  # holds). Zero-token held poll, like `await`. The caller-threaded cursor (not
-  # start=now) is load-bearing: events landing while the dispatcher acts on a
-  # batch must not be skipped. Strict `>` matches `await` (same same-ms edge).
+  # timeout (no stdout). Default --timeout is a finite long park (3300s / 55min):
+  # an indefinite watch is rejected, because a reaped indefinite watch is
+  # undetectable. When --since is omitted the cursor is self-seeded from
+  # dispatcher.cursor (see below) so a stale caller cursor can't re-deliver.
+  # Zero-token held poll, like `await`. Strict `>` matches `await` (same-ms edge).
   crew=$(_crew_id)
   [ -n "$crew" ] || {
     echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
     exit 1
   }
+  mkdir -p "$dir"
   since=0
   states="blocked,pr_open,done,failed"
-  timeout=110
+  timeout=3300
   interval=2
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -254,6 +256,15 @@ watch)
     exit 1
     ;;
   esac
+  case "$timeout" in '' | *[!0-9]*)
+    echo "crew: --timeout must be a positive integer number of seconds" >&2
+    exit 1
+    ;;
+  esac
+  [ "$timeout" -gt 0 ] || {
+    echo "crew: --timeout must be > 0 (indefinite watch unsupported: a reaped watch would be undetectable)" >&2
+    exit 1
+  }
   statesjson=$(printf '%s' "$states" | jq -Rc 'split(",") | map(select(length>0))')
   [ "$statesjson" = "[]" ] && {
     echo "crew: --states must be non-empty" >&2
