@@ -208,6 +208,7 @@ watch)
   }
   mkdir -p "$dir"
   since=0
+  since_explicit=0
   states="blocked,pr_open,done,failed"
   timeout=3300
   interval=2
@@ -219,6 +220,7 @@ watch)
         exit 1
       }
       since="$2"
+      since_explicit=1
       shift 2
       ;;
     --states)
@@ -270,6 +272,12 @@ watch)
     echo "crew: --states must be non-empty" >&2
     exit 1
   }
+  cursor_file="$dir/dispatcher.cursor"
+  if [ "$since_explicit" = 0 ]; then
+    seed=$(cat "$cursor_file" 2>/dev/null || true)
+    case "$seed" in '' | *[!0-9]*) seed=0 ;; esac
+    since="$seed"
+  fi
   me="dispatcher:$crew"
   start=$(jq -nc 'now*1000|floor')
   deadline=$((start + timeout * 1000))
@@ -284,6 +292,10 @@ watch)
           | {cursor:(.[-1].ts), events:.}' "$log" 2>/dev/null || true)
       [ -n "$batch" ] && {
         printf '%s\n' "$batch"
+        last=$(printf '%s' "$batch" | jq -r '.cursor')
+        tmp=$(mktemp "$dir/.cursor.XXXXXX")
+        printf '%s\n' "$last" >"$tmp"
+        mv -f "$tmp" "$cursor_file"
         exit 0
       }
     fi
