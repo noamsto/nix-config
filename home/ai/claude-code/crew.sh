@@ -23,6 +23,36 @@ _identity() { # $1=branch -> {name,color,tmux}; cksum is POSIX (portable to macO
     '{name:$name, color:$color, tmux:$tmux}'
 }
 
+# _lock_acquire <lockdir> <owner_pid> — atomic mkdir gate with dead-PID reclaim.
+# mkdir is atomic on POSIX, so it is the ONLY gate: exactly one caller wins.
+# Returns 0 (acquired; owner_pid written inside for liveness) or 1 (held by a
+# DIFFERENT live PID, or lost the reclaim race). If the held owner equals the
+# requested owner, returns 0 idempotently — re-running /dispatcher in the same
+# session (same session-stable PID) is a no-op success, not a refusal. rm -rf
+# here is safe — the lock dir is transient coordination state, never user data.
+_lock_acquire() {
+  local ld="$1" owner="$2" held
+  if mkdir "$ld" 2>/dev/null; then
+    printf '%s\n' "$owner" >"$ld/pid"
+    return 0
+  fi
+  held=$(cat "$ld/pid" 2>/dev/null || true)
+  if [ "$held" = "$owner" ]; then
+    return 0 # idempotent: this same owner already holds it
+  fi
+  if [ -n "$held" ] && kill -0 "$held" 2>/dev/null; then
+    return 1
+  fi
+  rm -rf "$ld" # stale (owner PID dead/empty) — reclaim through the same mkdir gate
+  if mkdir "$ld" 2>/dev/null; then
+    printf '%s\n' "$owner" >"$ld/pid"
+    return 0
+  fi
+  return 1
+}
+
+_lock_release() { rm -rf "$1"; }
+
 # Resolve the crew id: env wins; else read it from WORKER_TASK.md at the repo
 # root, so a worker just calls `crew status …` with no env prefix to remember.
 _crew_id() {
