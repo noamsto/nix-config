@@ -192,6 +192,27 @@ await)
     sleep "$interval"
   done
   ;;
+lock-role | unlock-role)
+  # dispatcher role lock (R6.1): acquired at dispatcher startup, held for its
+  # lifetime, recording the dispatcher's long-lived PID (default the caller's,
+  # $PPID) — NOT this short-lived crew process. Released on clean shutdown; a
+  # killed dispatcher's stale lock is reclaimed by the next startup's mkdir gate.
+  crew=$(_crew_id)
+  [ -n "$crew" ] || {
+    echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
+    exit 1
+  }
+  mkdir -p "$dir"
+  rlock="$dir/dispatcher.lock.d"
+  if [ "$sub" = lock-role ]; then
+    _lock_acquire "$rlock" "${1:-$PPID}" || {
+      echo "crew: a dispatcher already holds this repo's crew bus (dispatcher.lock.d)" >&2
+      exit 1
+    }
+  else
+    _lock_release "$rlock"
+  fi
+  ;;
 watch)
   # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
   # any worker event qualifies (a status whose state is in --states, or a msg to
@@ -346,7 +367,7 @@ log)
   jq -c --arg crew "$crew" 'select(.crew_id==$crew)' "$log"
   ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | lock-role [pid] | unlock-role | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
   exit 1
   ;;
 esac
