@@ -278,6 +278,12 @@ watch)
     case "$seed" in '' | *[!0-9]*) seed=0 ;; esac
     since="$seed"
   fi
+  wlock="$dir/dispatcher.watch.lock.d"
+  _lock_acquire "$wlock" "$$" || {
+    echo "crew: another dispatcher watch is already running for this crew (dispatcher.watch.lock.d)" >&2
+    exit 1
+  }
+  trap '_lock_release "$wlock"' EXIT
   me="dispatcher:$crew"
   start=$(jq -nc 'now*1000|floor')
   deadline=$((start + timeout * 1000))
