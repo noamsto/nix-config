@@ -110,7 +110,12 @@ back to its caller anyway, and delivery is now explicit.
 - **Per-crew watch cursor:** `$dir/dispatcher.cursor` →
   `$dir/crews/<crew_id>/cursor`. Core correctness fix — without it two
   concurrent dispatchers clobber one cursor and steal each other's `crew watch`
-  events.
+  events. (`DISPATCHER_PROTOCOL.md:64` already *claims* a "per-crew cursor
+  file" — this change makes the code match the doc.)
+- **Per-crew watch lock:** `$dir/dispatcher.watch.lock.d` →
+  `$dir/crews/<crew_id>/watch.lock.d`. Second single-crew assumption: the watch
+  lock's error already says "for this crew", but the path is per-repo, so a
+  second dispatcher's `crew watch` is wrongly refused. Per-crew path fixes it.
 - **`lock-role`/`unlock-role` → `register`/`deregister`, non-exclusive.**
   `register` `mkdir`s `.git/crew/crews/<crew_id>/` and writes the dispatcher
   `pid`; stale entries (dead pid) are pruned, never refused. The "a dispatcher
@@ -128,10 +133,11 @@ back to its caller anyway, and delivery is now explicit.
     <crew_id_A>/
       pid                 # dispatcher A's long-lived PID (stale-reclaim)
       cursor              # A's watch cursor
+      watch.lock.d/       # A's watch singleton (one watch per crew)
     <crew_id_B>/ ...
 ```
 
-Removed: `dispatcher.lock.d/`, `dispatcher.cursor`.
+Removed: `dispatcher.lock.d/`, `dispatcher.cursor`, `dispatcher.watch.lock.d/`.
 
 ### 4. Doc / launcher updates
 
