@@ -275,11 +275,43 @@ roster)
   ;;
 inbox)
   # messages only — `roster` owns status (every status is addressed to the
-  # dispatcher, so without this the inbox is status spam).
-  crew="${2:-$(_crew_id)}"
+  # dispatcher, so without this the inbox is status spam). `--since TS` is a
+  # non-blocking single pass (no loop, unlike watch/await): return only msgs
+  # strictly newer than TS. Omitting it returns all msgs to the agent, unchanged.
+  me="${1:-}"
+  shift || true
+  crew=""
+  since=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+    --since)
+      [ -n "${2:-}" ] || {
+        echo "crew: --since needs a value" >&2
+        exit 1
+      }
+      since="$2"
+      shift 2
+      ;;
+    *)
+      crew="$1"
+      shift
+      ;;
+    esac
+  done
+  crew="${crew:-$(_crew_id)}"
   [ -f "$log" ] || exit 0
-  jq -c --arg crew "$crew" --arg me "${1:-}" \
-    'select(.crew_id==$crew and .kind=="msg" and (.to==$me or .to=="*"))' "$log"
+  if [ -n "$since" ]; then
+    case "$since" in '' | *[!0-9]*)
+      echo "crew: --since must be an integer ms timestamp" >&2
+      exit 1
+      ;;
+    esac
+    jq -c --arg crew "$crew" --arg me "$me" --argjson since "$since" \
+      'select(.crew_id==$crew and .kind=="msg" and (.to==$me or .to=="*") and .ts>$since)' "$log"
+  else
+    jq -c --arg crew "$crew" --arg me "$me" \
+      'select(.crew_id==$crew and .kind=="msg" and (.to==$me or .to=="*"))' "$log"
+  fi
   ;;
 log)
   crew="${1:-$(_crew_id)}"
@@ -287,7 +319,7 @@ log)
   jq -c --arg crew "$crew" 'select(.crew_id==$crew)' "$log"
   ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] | log [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew]" >&2
   exit 1
   ;;
 esac
