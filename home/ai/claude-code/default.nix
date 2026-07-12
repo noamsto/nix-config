@@ -45,10 +45,36 @@
           "pg@aiguide" = true;
           "cc-skills-golang@samber" = true;
           "figma@claude-plugins-official" = true;
+          "pr-reviewers@factify-pr-reviewers" = true;
         }
         // lib.optionalAttrs (osConfig.profile == "personal") {
           "swift-lsp@claude-plugins-official" = true;
         };
+      # Marketplace for the work-only pr-reviewers plugin above. Common
+      # marketplaces (samber, aiguide, claude-plugins-official, etc.) live in
+      # settings.json; this one is profile-gated alongside its plugin.
+      extraKnownMarketplaces =
+        lib.optionalAttrs (osConfig.profile == "work") {
+          "factify-pr-reviewers" = {
+            source = {
+              source = "github";
+              repo = "factify-inc/claude-pr-reviewers";
+            };
+          };
+        };
+      # Read-only codex MCP for cross-model PR review (work profile only —
+      # codex isn't installed off the work profile). Never approves/writes.
+      mcpServers =
+        lib.optionalAttrs (osConfig.profile == "work") {
+          codex = {
+            command = "codex";
+            args = ["mcp-server" "-c" ''sandbox_mode="read-only"'' "-c" ''approval_policy="never"'' "-c" ''model_reasoning_effort="high"''];
+          };
+        };
+      # Allow-lists the codex MCP tools above so an auto-mode worker's
+      # reviewer subagent isn't denied. Union'd with settings.json's allow list.
+      permissions.allow =
+        lib.optionals (osConfig.profile == "work") ["mcp__codex__*"];
       # Status-state hooks live in the lazytmux CC plugin and image-capture
       # hooks in the aeye CC plugin (both loaded via --plugin-dir in
       # the wrapper below); only personal hooks remain here.
