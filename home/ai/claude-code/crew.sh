@@ -192,25 +192,24 @@ await)
     sleep "$interval"
   done
   ;;
-lock-role | unlock-role)
-  # dispatcher role lock (R6.1): acquired at dispatcher startup, held for its
-  # lifetime, recording the dispatcher's long-lived PID (default the caller's,
-  # $PPID) — NOT this short-lived crew process. Released on clean shutdown; a
-  # killed dispatcher's stale lock is reclaimed by the next startup's mkdir gate.
+register | deregister)
+  # Per-crew registration (was an exclusive per-repo role lock). N crews may
+  # share a repo: each is identified by its crew_id, so there is no
+  # cross-crew contention and registration never refuses. The crew dir records
+  # the dispatcher's long-lived PID (default $PPID) for stale reclaim, and
+  # holds that crew's watch cursor + watch lock. Crew ids are unique by
+  # construction (timestamp-pid), so re-registering a live crew is a no-op.
   crew=$(_crew_id)
   [ -n "$crew" ] || {
     echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
     exit 1
   }
-  mkdir -p "$dir"
-  rlock="$dir/dispatcher.lock.d"
-  if [ "$sub" = lock-role ]; then
-    _lock_acquire "$rlock" "${1:-$PPID}" || {
-      echo "crew: a dispatcher already holds this repo's crew bus (dispatcher.lock.d)" >&2
-      exit 1
-    }
+  cdir="$dir/crews/$crew"
+  if [ "$sub" = register ]; then
+    mkdir -p "$cdir"
+    printf '%s\n' "${1:-$PPID}" >"$cdir/pid"
   else
-    _lock_release "$rlock"
+    rm -rf "$cdir"
   fi
   ;;
 watch)
@@ -220,7 +219,7 @@ watch)
   # timeout (no stdout). Default --timeout is a finite long park (3300s / 55min):
   # an indefinite watch is rejected, because a reaped indefinite watch is
   # undetectable. When --since is omitted the cursor is self-seeded from
-  # dispatcher.cursor (see below) so a stale caller cursor can't re-deliver.
+  # the crew's cursor file (see below) so a stale caller cursor can't re-deliver.
   # Zero-token held poll, like `await`. Strict `>` matches `await` (same-ms edge).
   crew=$(_crew_id)
   [ -n "$crew" ] || {
@@ -293,15 +292,17 @@ watch)
     echo "crew: --states must be non-empty" >&2
     exit 1
   }
-  cursor_file="$dir/dispatcher.cursor"
+  cdir="$dir/crews/$crew"
+  mkdir -p "$cdir"
+  cursor_file="$cdir/cursor"
   if [ "$since_explicit" = 0 ]; then
     seed=$(cat "$cursor_file" 2>/dev/null || true)
     case "$seed" in '' | *[!0-9]*) seed=0 ;; esac
     since="$seed"
   fi
-  wlock="$dir/dispatcher.watch.lock.d"
+  wlock="$cdir/watch.lock.d"
   _lock_acquire "$wlock" "$$" || {
-    echo "crew: another dispatcher watch is already running for this crew (dispatcher.watch.lock.d)" >&2
+    echo "crew: another watch is already running for this crew ($crew)" >&2
     exit 1
   }
   trap '_lock_release "$wlock"' EXIT
@@ -415,7 +416,7 @@ report)
       ] | @tsv' "$log"
   ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | lock-role [pid] | unlock-role | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew] | report [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew] | report [crew]" >&2
   exit 1
   ;;
 esac
