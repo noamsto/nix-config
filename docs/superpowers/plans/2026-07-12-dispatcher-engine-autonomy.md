@@ -509,6 +509,6 @@ Add/update the dispatcher-harness project memory with: engine-autonomy + logging
 ## Findings
 
 _(Phase 0 tasks append here.)_
-- F-FABLE:
-- F-MCP:
-- F-PLUGIN:
+- F-FABLE: **available** — `claude --model claude-fable-5 -p "reply with the single word: ok"` returned `ok` (exit 0). Fable rung ships as written; no unverified marker in Task 1.
+- F-MCP: prefix=`mcp__codex__*` (server named `codex`; the `codex-reviewer` agent's toolset uses `mcp__codex__codex`), connected=yes (`claude mcp list` → `codex … ✔ Connected` with the read-only args). Temp user-scope registration removed; durable entry lands in `settings.json` at Task 6.
+- F-PLUGIN: marketplace=`factify-inc/claude-pr-reviewers`, plugin=`pr-reviewers@factify-pr-reviewers`, reviewer-agent=`codex-reviewer` (reuse — tools include `mcp__codex__codex`, reconciles codex findings vs prior claude findings, read-only).
