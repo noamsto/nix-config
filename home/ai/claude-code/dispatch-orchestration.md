@@ -21,7 +21,7 @@ flowchart TD
     CODEX --> GM["codex · standard → model map"]
     CODEX --> GL["codex · trivial → model map"]
 
-    OPUS --> D[["dispatch &lt;tier&gt; &lt;model&gt; [--agent codex] [id] &lt;title&gt;"]]
+    OPUS --> D[["dispatch &lt;tier&gt; &lt;model&gt; [--agent claude|codex] [id] &lt;title&gt;"]]
     SONNET --> D
     HAIKU --> D
     GH --> D

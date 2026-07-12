@@ -62,17 +62,10 @@
             };
           };
         };
-      # Read-only codex MCP for cross-model PR review (work profile only —
-      # codex isn't installed off the work profile). Never approves/writes.
-      mcpServers =
-        lib.optionalAttrs (osConfig.profile == "work") {
-          codex = {
-            command = "codex";
-            args = ["mcp-server" "-c" ''sandbox_mode="read-only"'' "-c" ''approval_policy="never"'' "-c" ''model_reasoning_effort="high"''];
-          };
-        };
-      # Allow-lists the codex MCP tools above so an auto-mode worker's
-      # reviewer subagent isn't denied. Union'd with settings.json's allow list.
+      # Allow-lists the codex MCP tools (registered via `dispatch`'s
+      # --mcp-config, not this overlay — --settings doesn't register
+      # mcpServers) so an auto-mode worker's reviewer subagent isn't denied.
+      # Union'd with settings.json's allow list.
       permissions.allow =
         lib.optionals (osConfig.profile == "work") ["mcp__codex__*"];
       # Status-state hooks live in the lazytmux CC plugin and image-capture

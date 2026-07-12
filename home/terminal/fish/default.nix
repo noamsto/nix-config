@@ -376,6 +376,14 @@
           # --profile worker layers the base MCP stack (codex/default.nix). Tier
           # scales reasoning effort the way it scales claude's pipeline depth —
           # codex defers tool schemas, so the base stack is ~free either way.
+          # Deep claude workers get the read-only codex MCP for cross-model
+          # review via --mcp-config (the honored path; --settings can't register
+          # mcpServers). Work profile only — mcp-codex.json is generated work-gated
+          # in claude-code/mcp-profiles.nix, and codex exists only on the work profile.
+          set -l xreview_mcp
+          if test "${osConfig.profile}" = work -a "$agent" = claude -a "$tier" = deep
+              set xreview_mcp --mcp-config "$HOME/.config/claude-code/mcp-codex.json"
+          end
           if test "$agent" = codex
               set -l codex_effort medium
               switch $tier
@@ -388,7 +396,7 @@
                   "codex --profile worker -m $model -c model_reasoning_effort=$codex_effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.'" Enter
           else
               tmux send-keys -t $pane \
-                  "claude --name $agent_name --model $model $mcp_flag --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+                  "claude --name $agent_name --model $model $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
           end
       end
     '';

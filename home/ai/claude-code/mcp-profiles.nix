@@ -38,6 +38,18 @@ in {
           };
         };
       };
+
+      # Codex MCP (read-only) for deep-tier claude→codex cross-model review.
+      # Injected into deep claude workers via `dispatch` --mcp-config (the honored
+      # registration path; --settings does not register mcpServers).
+      "claude-code/mcp-codex.json".text = builtins.toJSON {
+        mcpServers = {
+          codex = {
+            command = "codex";
+            args = ["mcp-server" "-c" ''sandbox_mode="read-only"'' "-c" ''approval_policy="never"'' "-c" ''model_reasoning_effort="high"''];
+          };
+        };
+      };
     };
 
   # Shell aliases (adds to base, allows project .mcp.json)
