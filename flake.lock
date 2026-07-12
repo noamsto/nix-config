@@ -1191,11 +1191,11 @@
         "tmux-state": "tmux-state"
       },
       "locked": {
-        "lastModified": 1783693624,
-        "narHash": "sha256-SuQCFZwIW3X0lzccdlIAvZgFlPGYmod/qrLuRVSe4Co=",
+        "lastModified": 1783882307,
+        "narHash": "sha256-cz5/X+Qw+R3AALjVwFCpiXPTS/tLcO/dCUHfHsYXX/g=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "14c3bcdb08f9c6c8d8ee0d7bec65afeda57dfbcb",
+        "rev": "b1ee565b6b260fa7728bd6e340f37303bcc2ee06",
         "type": "github"
       },
       "original": {
