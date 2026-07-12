@@ -322,6 +322,18 @@
           set -q CREW_ID; or set -gx CREW_ID (crew id)
           set -l crew_dir (git rev-parse --path-format=absolute --git-common-dir)/crew
 
+          # Log the dispatch decision to the crew bus for later `crew report`.
+          # dispatch may run before the worker's first `crew status`, so create
+          # the dir here (crew status does its own mkdir; dispatch does not).
+          set -l dispatch_shape ""
+          set -q DISPATCH_SHAPE; and set dispatch_shape "$DISPATCH_SHAPE"
+          mkdir -p $crew_dir
+          jq -nc --arg crew "$CREW_ID" --arg branch "$branch" \
+              --arg engine "$agent" --arg model "$model" --arg tier "$tier" \
+              --arg shape "$dispatch_shape" \
+              '{ts:(now*1000|floor), crew_id:$crew, kind:"dispatch", branch:$branch, engine:$engine, model:$model, tier:$tier, shape:$shape}' \
+              >> $crew_dir/events.jsonl
+
           # FleetView-style codename+color, derived from the branch (deterministic).
           set -l ident (crew identity $branch)
           set -l agent_name (echo $ident | jq -r .name)
