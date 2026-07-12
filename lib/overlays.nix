@@ -47,6 +47,24 @@ inputs: [
   })
 
   (_final: prev: {
+    # catppuccin 2.5.0's build-time checks import its matplotlib extra (a
+    # check-only optional-dep, never propagated to runtime), which crashes on
+    # matplotlib 3.11 — it dropped the internal `matplotlib.style.core`. We only
+    # consume the pygments extra, so skip the checks until catppuccin supports
+    # matplotlib 3.11. Applied via pythonPackagesExtensions so python313.withPackages sees it.
+    pythonPackagesExtensions =
+      prev.pythonPackagesExtensions
+      ++ [
+        (_pyfinal: pyprev: {
+          catppuccin = pyprev.catppuccin.overridePythonAttrs (_: {
+            doCheck = false;
+            dontUsePythonImportsCheck = true;
+          });
+        })
+      ];
+  })
+
+  (_final: prev: {
     slack = prev.slack.overrideAttrs (old: {
       installPhase =
         (old.installPhase or "")
