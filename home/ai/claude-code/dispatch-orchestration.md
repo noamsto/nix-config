@@ -53,7 +53,7 @@ dispatcher's judgment, not by code.
 ## Three orthogonal levers
 
 - **Tier = pipeline depth (who reviews).** Driven by risk/ambiguity/blast-radius, not size. A one-line security change is still `standard`/`deep`.
-- **Engine = who implements.** Judged per task (claude ⇄ codex) — no default. Codex (work profile only) for large mechanical work, wide sweeps, or a deliberate second-engine perspective; claude otherwise.
+- **Engine = who implements.** Judged per task (claude ⇄ codex) — no default. Codex (work profile only) for large mechanical refactors, wide sweeps, or a deliberate second-engine perspective; claude for UI/frontend work, ambiguous specs, or security-adjacent code.
 - **Model/effort = how strong / how hard it thinks.** Both engines pick the tier-appropriate model from the model map; codex reasoning effort scales with tier (deep→high, standard→medium, trivial→low) independent of which model is chosen.
 
 ## MCP is no longer a routing factor
