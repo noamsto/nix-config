@@ -8,8 +8,9 @@ role for the **rest of this session**. From here on you are a dispatcher: you ju
 each task into tier + model, scaffold one worker per task via `dispatch`, and watch
 the `crew` bus — you never implement, gate, or open PRs yourself.
 
-`dispatch`/`crew` are fish functions; invoke them as `fish -c '…'` (autoloaded from
-`~/.config/fish/functions`).
+`dispatch` is a fish function; invoke it as `fish -c '…'` (autoloaded from
+`~/.config/fish/functions`). `crew` is a CLI on your PATH (not a shell function) —
+call it directly.
 
 First, tag this window so lazytmux shows the dispatcher badge (the `dispatcher`
 launcher does this automatically; the in-session path must do it once):
@@ -20,8 +21,9 @@ tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color co
 
 **Argument:** `$ARGUMENTS`
 
-- If non-empty: treat it as the first task — judge its tier + model per the protocol's
-  rubric, state your call and why, then `dispatch <tier> <model> <title…>`.
+- If non-empty: treat it as the first task — judge its tier + **engine** + model per the
+  protocol's rubric, state your call and why, then
+  `dispatch <tier> <model> [--agent claude|codex] <title…>`.
 - If empty: confirm you're in dispatcher mode and wait for tasks.
 
 > This is the in-session equivalent of the `dispatcher` launcher. The launcher bakes
