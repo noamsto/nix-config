@@ -322,6 +322,18 @@
           set -q CREW_ID; or set -gx CREW_ID (crew id)
           set -l crew_dir (git rev-parse --path-format=absolute --git-common-dir)/crew
 
+          # Log the dispatch decision to the crew bus for later `crew report`.
+          # dispatch may run before the worker's first `crew status`, so create
+          # the dir here (crew status does its own mkdir; dispatch does not).
+          set -l dispatch_shape ""
+          set -q DISPATCH_SHAPE; and set dispatch_shape "$DISPATCH_SHAPE"
+          mkdir -p $crew_dir
+          jq -nc --arg crew "$CREW_ID" --arg branch "$branch" \
+              --arg engine "$agent" --arg model "$model" --arg tier "$tier" \
+              --arg shape "$dispatch_shape" \
+              '{ts:(now*1000|floor), crew_id:$crew, kind:"dispatch", branch:$branch, engine:$engine, model:$model, tier:$tier, shape:$shape}' \
+              >> $crew_dir/events.jsonl
+
           # FleetView-style codename+color, derived from the branch (deterministic).
           set -l ident (crew identity $branch)
           set -l agent_name (echo $ident | jq -r .name)
@@ -364,6 +376,14 @@
           # --profile worker layers the base MCP stack (codex/default.nix). Tier
           # scales reasoning effort the way it scales claude's pipeline depth —
           # codex defers tool schemas, so the base stack is ~free either way.
+          # Deep claude workers get the read-only codex MCP for cross-model
+          # review via --mcp-config (the honored path; --settings can't register
+          # mcpServers). Work profile only — mcp-codex.json is generated work-gated
+          # in claude-code/mcp-profiles.nix, and codex exists only on the work profile.
+          set -l xreview_mcp
+          if test "${osConfig.profile}" = work -a "$agent" = claude -a "$tier" = deep
+              set xreview_mcp --mcp-config "$HOME/.config/claude-code/mcp-codex.json"
+          end
           if test "$agent" = codex
               set -l codex_effort medium
               switch $tier
@@ -376,7 +396,7 @@
                   "codex --profile worker -m $model -c model_reasoning_effort=$codex_effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.'" Enter
           else
               tmux send-keys -t $pane \
-                  "claude --name $agent_name --model $model $mcp_flag --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+                  "claude --name $agent_name --model $model $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
           end
       end
     '';
@@ -566,8 +586,10 @@
           # Claude quick commands — haiku, no MCPs, restricted tools.
           # ALLOW_COMMIT_ON_DEFAULT=1 is inherited by the PreToolUse guard so a
           # deliberate quick commit on main isn't blocked.
-          cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
-          cpush = ''claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
+          # Low effort + stable cached prefix keep these snappy; cco stays at
+          # medium so the commit message still reasons over the diff.
+          cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --effort medium --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
+          cpush = ''claude --model haiku --effort low --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
 
           # OpenCode
           oc = "opencode";

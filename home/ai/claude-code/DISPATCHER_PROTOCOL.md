@@ -10,13 +10,27 @@ Read the task and weigh its actual signals. Do not map mechanically from a label
 
 | Signal | tier | model |
 |---|---|---|
-| Underspecified / ambiguous, architectural, security-sensitive, wide blast radius, needs the spec→crit→plan judgment loop | `deep` | **opus** |
-| Bounded, clear shape, a few files, low ambiguity | `standard` | **sonnet** |
-| Mechanical, single-file, lockfile/docs/rename, no design judgment | `trivial` | **sonnet** (or **haiku** if truly trivial) |
+| Underspecified / ambiguous, architectural, security-sensitive, wide blast radius, needs the spec→crit→plan judgment loop | `deep` | per model map — opus, ↑Fable to escalate |
+| Bounded, clear shape, a few files, low ambiguity | `standard` | per model map — sonnet |
+| Mechanical, single-file, lockfile/docs/rename, no design judgment | `trivial` | per model map — sonnet\|haiku |
 
 **Tier and model control different things — don't conflate them.** Tier sets the worker's *pipeline depth*: `trivial` runs **no critics** (implement → gate → PR), `standard` adds a plan-critic, `deep` adds spec + plan critics. Model sets how strong the orchestrator/implementer is. So "small but risky" means **raise the tier**, not just the model: a security-critical change is `standard`/`deep` even if it's only a few lines — bumping the model alone ships it *smarter but still unreviewed*. Across `trivial`/`standard` the model is often the same (`sonnet`); the tier is what decides whether anything reviews the work. When genuinely on the fence, pick the cheaper tier/model and say why — a worker can escalate via the bus.
 
-**Then pick the engine — a third, orthogonal lever.** Default `claude` (opus/sonnet/haiku per the table). Reach for **codex `gpt-5.5`** (`--agent codex gpt-5.5`, work profile only) when the task shape suits a strong non-Claude implementer: large mechanical refactors, wide-but-shallow sweeps across many files, or when you deliberately want a second-engine perspective on a hard problem. UI/frontend work leans Claude by habit, but MCP is no longer a reason to route: both engines defer tool schemas, and codex workers get the same base stack via `--profile worker`, so the browser tools are there when needed and free until used. Codex's reasoning effort scales with tier automatically (deep→high, standard→medium, trivial→low), the same way tier scales claude's pipeline depth.
+**Engine is a third, co-equal lever — judge it, don't default it.** Every task
+resolves to `{tier, engine, model}`. Weigh **claude** and **codex** as equal
+candidates by task fit, not as default-plus-exception:
+- claude leans: UI/frontend, nuanced reasoning, ambiguous/underspecified work.
+- codex leans: large mechanical refactors, wide-but-shallow multi-file sweeps,
+  or a deliberate second-engine perspective on a hard problem.
+- Neutral fit → pick either and say why; a worker can escalate via the bus.
+
+Pick the **model** from the model map in `dispatch-orchestration.md` for the tier
+and engine you chose — that table is the only place model versions live. Codex
+effort scales with tier automatically (deep→high, standard→medium, trivial→low).
+
+**Profile constraint:** codex is work-profile only — `dispatch` aborts
+`--agent codex` off the work profile. On a personal-profile host the engine
+lever collapses to claude-only; co-equal routing applies on the work profile.
 
 ## Scaffold one worker per task
 
@@ -27,7 +41,7 @@ dispatch <tier> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <ti
 `dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
 
 - **Tracker.** Pass a **Linear id** (e.g. `ENG-6789`) as the token right after the model for Linear-tracked repos (GitHub issues disabled) — it branches `eng-<n>-<slug>` and stamps `Closes ENG-<n>`, no `gh` call. Omit it on GitHub-issue repos and `dispatch` mints an issue (`feat/<n>-<slug>`, `Closes #<n>`); if issue creation fails it aborts instead of half-scaffolding.
-- **Engine.** Default `claude`. Pass `--agent codex` to run the worker on the OpenAI Codex CLI instead — same crew-bus contract, but the `<model>` slot must then be a **codex** model (`gpt-5.5`), not a claude one. Codex is **work profile only** (no personal OpenAI account) — it isn't installed off the work profile, and `dispatch` rejects `--agent codex` there before scaffolding. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine, and additionally maps to codex's reasoning effort (deep→high, standard→medium, trivial→low).
+- **Engine.** Pass `--agent claude` or `--agent codex` per the judgment call above — same crew-bus contract either way. The `<model>` slot must match the engine: a claude model for `--agent claude`, a codex model for `--agent codex` (model map in `dispatch-orchestration.md`). Codex is **work profile only** (no personal OpenAI account) — it isn't installed off the work profile, and `dispatch` rejects `--agent codex` there before scaffolding. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine, and additionally maps to codex's reasoning effort (deep→high, standard→medium, trivial→low).
 - **MCP.** Both engines inherit the full base MCP stack by default (context7, playwright, firefox-devtools) — browser work needs no flag. Claude gets it from settings.json; codex gets it from the nix-generated `--profile worker` (both defer tool schemas, so it's ~free until used). Add `--mcp <profile>` to layer on an extra profile: `analytics` (posthog, work only). Unknown/ungenerated profile aborts before launch. `--mcp` is claude-only — codex's additive profiles aren't wired, its base stack already comes from `--profile worker`.
 - **Inline the spec.** The worker has no Linear access, so it can't read the ticket. Write the full task to a file and export `DISPATCH_SPEC=<file>` before calling `dispatch` — it's appended to `WORKER_TASK.md` under `## Task`. Without it the worker only gets the title.
 
