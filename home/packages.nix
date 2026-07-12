@@ -25,7 +25,11 @@
 
     # 3D modeling and animation
     blender
-    freecad
+    # unstable's gdal 3.13.1 fails a zarr sharding test in its check phase,
+    # breaking the whole gdal→pdal→vtk→freecad chain. Pin to stable (gdal 3.12.4,
+    # same freecad 1.1.1) until the fix lands on unstable.
+    # https://github.com/NixOS/nixpkgs/pull/540826
+    stable.freecad
 
     # Video editing
     kdePackages.kdenlive

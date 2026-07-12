@@ -53,15 +53,14 @@
       # Marketplace for the work-only pr-reviewers plugin above. Common
       # marketplaces (samber, aiguide, claude-plugins-official, etc.) live in
       # settings.json; this one is profile-gated alongside its plugin.
-      extraKnownMarketplaces =
-        lib.optionalAttrs (osConfig.profile == "work") {
-          "factify-pr-reviewers" = {
-            source = {
-              source = "github";
-              repo = "factify-inc/claude-pr-reviewers";
-            };
+      extraKnownMarketplaces = lib.optionalAttrs (osConfig.profile == "work") {
+        "factify-pr-reviewers" = {
+          source = {
+            source = "github";
+            repo = "factify-inc/claude-pr-reviewers";
           };
         };
+      };
       # Allow-lists the codex MCP tools (registered via `dispatch`'s
       # --mcp-config, not this overlay — --settings doesn't register
       # mcpServers) so an auto-mode worker's reviewer subagent isn't denied.
@@ -160,21 +159,27 @@
   # through every wrapper/symlink to the real Bun binary upstream named
   # `.claude-wrapped`, ignoring argv[0]. That title is instead rewritten at the
   # tmux display layer (lazytmux set-titles-string strips `.*-wrapped`).
-  claude-wrapper = pkgs.writeShellScriptBin "claude" ''
-    export DISABLE_INSTALLATION_CHECKS=1
-    export DISABLE_UPDATES=1
-    # D2 diagrams (aeye diagrams.sh): bundle d2's own font so resvg
-    # renders text, and follow the desktop light/dark scheme for the theme.
-    export AEYE_D2_FONT="Source Sans 3"
-    export AEYE_D2_FONT_DIR="${pkgs.source-sans}/share/fonts/truetype"
-    scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
-    if [ "$scheme" = "'prefer-light'" ]; then
-      export AEYE_D2_THEME=105
-    else
-      export AEYE_D2_THEME=200
-    fi
-    exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin "$@"
-  '';
+  claude-wrapper =
+    pkgs.writeShellScriptBin "claude" ''
+      export DISABLE_INSTALLATION_CHECKS=1
+      export DISABLE_UPDATES=1
+      # D2 diagrams (aeye diagrams.sh): bundle d2's own font so resvg
+      # renders text, and follow the desktop light/dark scheme for the theme.
+      export AEYE_D2_FONT="Source Sans 3"
+      export AEYE_D2_FONT_DIR="${pkgs.source-sans}/share/fonts/truetype"
+      scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+      if [ "$scheme" = "'prefer-light'" ]; then
+        export AEYE_D2_THEME=105
+      else
+        export AEYE_D2_THEME=200
+      fi
+      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin "$@"
+    ''
+    # writeShellScriptBin carries no version, so the HM claude-code module can't
+    # detect that the wrapped package is >=2.1.157 and falls back to the legacy
+    # --plugin-dir wrapper (with an eval warning). Expose the upstream version so
+    # the module uses persistent personal plugins for the managed MCP/LSP config.
+    // {inherit (pkgs.claude-code) version;};
 
   # Auto-discover skill directories under ./skills and symlink each into ~/.claude/skills/
   # Per-skill symlinks (rather than one dir-level symlink) so we don't conflict with
