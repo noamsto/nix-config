@@ -36,17 +36,56 @@ dispatch <tier> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <ti
 
 ## Read the bus (not `gh`/`tmux` scraping)
 
-All workers in your shell share one `crew_id`. **Block on the bus instead of polling it** — `crew watch` is a held, zero-token call that returns the instant any worker needs you:
+All workers in your shell share one `crew_id`. **Arm `crew watch` as a background
+Bash call** (`run_in_background`) — a held, zero-token poll that returns the instant
+any worker needs you. Because it's backgrounded, your LLM loop stays **free**: the
+human can add a task or ask a question with **no Esc**, and the watch keeps running.
+(A background Bash task is not bound by the foreground tool timeout; `crew watch`'s
+own `--timeout` is the real bound.)
 
-```
-cur=0
-loop:
-  out = crew watch --since $cur --timeout 110     # run with a Bash tool timeout ≥ 120000ms
-  exit 0 → cur = (out | .cursor); handle each of out.events (reply / dispatch next / intervene); re-loop
-  exit 3 → re-loop with the SAME cur (a timeout never advances the cursor)
-```
+**The loop is event-driven, not a foreground spin:**
 
-`crew watch` wakes on any worker `status` in `blocked`/`pr_open`/`done`/`failed` (not `working` heartbeats) or any question `msg` to you, returning `{"cursor":<ts>,"events":[…]}`. Thread `cur` across calls so an event landing while you act on a batch is never skipped. The terminal states (`done`/`pr_open`/`failed`) free fan-out budget, so the same wakeup tells you when to dispatch the next queued task. To take a brand-new task while parked in `watch`, the human interrupts (Esc).
+1. **Arm** exactly one `crew watch` as a `run_in_background` call. **Do NOT pass
+   `--since`** — `watch` self-seeds from its per-crew cursor file, so a stale
+   post-compaction cursor can't re-deliver already-handled events (double-dispatch).
+   Record the returned background-task id as your **arm-token**.
+2. **On the watch-completion notification**, read the task's output file:
+   - non-empty stdout → a batch: parse `{"cursor":<ts>,"events":[…]}` and handle the
+     **entire `events[]` in ONE turn** (reply / dispatch next / intervene). **Never
+     one-turn-per-event.**
+   - empty stdout (exit 3, the timeout marker) → nothing to handle.
+3. **Re-arm exactly one** new `crew watch`, recording its new arm-token. On the
+   exit-3 path this re-arm is **near-silent**: one tool call, zero prose.
+
+**INV-1 — exactly one outstanding watch: never two, never zero.**
+- Re-arm **only** inside a watch-completion handler turn, and only if your recorded
+  arm-token is absent/terminal. This is **token-based, not list-based**: do NOT
+  "check the background-task list before arming" — between the list check and the arm
+  a completion can land and you'd arm a *second* watch (the B1 race).
+- A **human turn must not re-arm** while a completion for the current token is
+  pending-but-unhandled — arming in a human turn is a **NO-OP**. The single re-arm
+  happens later, in the completion handler.
+- **Never zero:** a reaped/SIGKILLed watch still delivers a completion notification,
+  which re-invokes the handler → you re-arm within one park interval. No external
+  supervisor is needed (G4 self-heal).
+
+**Park length — chosen only at re-arm (never in a human turn).**
+Partition the roster: `working`+`blocked` = **ACTIVE**; `pr_open`+`done`+`failed` =
+**TERMINAL / budget-freeing**. At re-arm:
+- **ACTIVE** roster → `--timeout 270`: a sub-TTL cache-warm heartbeat (270, not 300 —
+  the prompt-cache TTL margin is load-bearing).
+- **DRAINED** roster (nothing active) → `--timeout 3300`: bounds dark time, accepts
+  cache-cold since nothing is in flight.
+A DRAINED→ACTIVE transition from a human adding a task happens in a human turn, so it
+does **not** wake the outstanding 3300s park — deliberate: the new worker first posts
+`working` (which `watch` does not match), so nothing needs the park woken until that
+worker blocks/finishes, at which point the exit-0 wake fires immediately. Costs only
+cache-warmth, never responsiveness.
+
+`crew watch` wakes on any worker `status` in `blocked`/`pr_open`/`done`/`failed`
+(not `working` heartbeats) or any question `msg` to you, returning
+`{"cursor":<ts>,"events":[…]}`. The terminal states (`done`/`pr_open`/`failed`) free
+fan-out budget, so the same wakeup tells you when to dispatch the next queued task.
 
 Two reads remain for detail:
 

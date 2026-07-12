@@ -23,6 +23,36 @@ _identity() { # $1=branch -> {name,color,tmux}; cksum is POSIX (portable to macO
     '{name:$name, color:$color, tmux:$tmux}'
 }
 
+# _lock_acquire <lockdir> <owner_pid> — atomic mkdir gate with dead-PID reclaim.
+# mkdir is atomic on POSIX, so it is the ONLY gate: exactly one caller wins.
+# Returns 0 (acquired; owner_pid written inside for liveness) or 1 (held by a
+# DIFFERENT live PID, or lost the reclaim race). If the held owner equals the
+# requested owner, returns 0 idempotently — re-running /dispatcher in the same
+# session (same session-stable PID) is a no-op success, not a refusal. rm -rf
+# here is safe — the lock dir is transient coordination state, never user data.
+_lock_acquire() {
+  local ld="$1" owner="$2" held
+  if mkdir "$ld" 2>/dev/null; then
+    printf '%s\n' "$owner" >"$ld/pid"
+    return 0
+  fi
+  held=$(cat "$ld/pid" 2>/dev/null || true)
+  if [ "$held" = "$owner" ]; then
+    return 0 # idempotent: this same owner already holds it
+  fi
+  if [ -n "$held" ] && kill -0 "$held" 2>/dev/null; then
+    return 1
+  fi
+  rm -rf "$ld" # stale (owner PID dead/empty) — reclaim through the same mkdir gate
+  if mkdir "$ld" 2>/dev/null; then
+    printf '%s\n' "$owner" >"$ld/pid"
+    return 0
+  fi
+  return 1
+}
+
+_lock_release() { rm -rf "$1"; }
+
 # Resolve the crew id: env wins; else read it from WORKER_TASK.md at the repo
 # root, so a worker just calls `crew status …` with no env prefix to remember.
 _crew_id() {
@@ -162,22 +192,46 @@ await)
     sleep "$interval"
   done
   ;;
-watch)
-  # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
-  # any worker event qualifies (a status whose state is in --states, or a msg to
-  # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0; exit 3 on
-  # timeout (no stdout, no cursor — the caller re-arms with the cursor it already
-  # holds). Zero-token held poll, like `await`. The caller-threaded cursor (not
-  # start=now) is load-bearing: events landing while the dispatcher acts on a
-  # batch must not be skipped. Strict `>` matches `await` (same same-ms edge).
+lock-role | unlock-role)
+  # dispatcher role lock (R6.1): acquired at dispatcher startup, held for its
+  # lifetime, recording the dispatcher's long-lived PID (default the caller's,
+  # $PPID) — NOT this short-lived crew process. Released on clean shutdown; a
+  # killed dispatcher's stale lock is reclaimed by the next startup's mkdir gate.
   crew=$(_crew_id)
   [ -n "$crew" ] || {
     echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
     exit 1
   }
+  mkdir -p "$dir"
+  rlock="$dir/dispatcher.lock.d"
+  if [ "$sub" = lock-role ]; then
+    _lock_acquire "$rlock" "${1:-$PPID}" || {
+      echo "crew: a dispatcher already holds this repo's crew bus (dispatcher.lock.d)" >&2
+      exit 1
+    }
+  else
+    _lock_release "$rlock"
+  fi
+  ;;
+watch)
+  # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
+  # any worker event qualifies (a status whose state is in --states, or a msg to
+  # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0; exit 3 on
+  # timeout (no stdout). Default --timeout is a finite long park (3300s / 55min):
+  # an indefinite watch is rejected, because a reaped indefinite watch is
+  # undetectable. When --since is omitted the cursor is self-seeded from
+  # dispatcher.cursor (see below) so a stale caller cursor can't re-deliver.
+  # Zero-token held poll, like `await`. Strict `>` matches `await` (same-ms edge).
+  crew=$(_crew_id)
+  [ -n "$crew" ] || {
+    echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
+    exit 1
+  }
+  mkdir -p "$dir"
   since=0
+  since_explicit=0
   states="blocked,pr_open,done,failed"
-  timeout=110
+  timeout=3300
   interval=2
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -187,6 +241,7 @@ watch)
         exit 1
       }
       since="$2"
+      since_explicit=1
       shift 2
       ;;
     --states)
@@ -224,11 +279,32 @@ watch)
     exit 1
     ;;
   esac
+  case "$timeout" in '' | *[!0-9]*)
+    echo "crew: --timeout must be a positive integer number of seconds" >&2
+    exit 1
+    ;;
+  esac
+  [ "$timeout" -gt 0 ] || {
+    echo "crew: --timeout must be > 0 (indefinite watch unsupported: a reaped watch would be undetectable)" >&2
+    exit 1
+  }
   statesjson=$(printf '%s' "$states" | jq -Rc 'split(",") | map(select(length>0))')
   [ "$statesjson" = "[]" ] && {
     echo "crew: --states must be non-empty" >&2
     exit 1
   }
+  cursor_file="$dir/dispatcher.cursor"
+  if [ "$since_explicit" = 0 ]; then
+    seed=$(cat "$cursor_file" 2>/dev/null || true)
+    case "$seed" in '' | *[!0-9]*) seed=0 ;; esac
+    since="$seed"
+  fi
+  wlock="$dir/dispatcher.watch.lock.d"
+  _lock_acquire "$wlock" "$$" || {
+    echo "crew: another dispatcher watch is already running for this crew (dispatcher.watch.lock.d)" >&2
+    exit 1
+  }
+  trap '_lock_release "$wlock"' EXIT
   me="dispatcher:$crew"
   start=$(jq -nc 'now*1000|floor')
   deadline=$((start + timeout * 1000))
@@ -243,6 +319,10 @@ watch)
           | {cursor:(.[-1].ts), events:.}' "$log" 2>/dev/null || true)
       [ -n "$batch" ] && {
         printf '%s\n' "$batch"
+        last=$(printf '%s' "$batch" | jq -r '.cursor')
+        tmp=$(mktemp "$dir/.cursor.XXXXXX")
+        printf '%s\n' "$last" >"$tmp"
+        mv -f "$tmp" "$cursor_file"
         exit 0
       }
     fi
@@ -319,7 +399,7 @@ log)
   jq -c --arg crew "$crew" 'select(.crew_id==$crew)' "$log"
   ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | lock-role [pid] | unlock-role | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew]" >&2
   exit 1
   ;;
 esac
