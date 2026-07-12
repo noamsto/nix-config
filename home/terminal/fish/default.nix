@@ -546,8 +546,10 @@
           # Claude quick commands — haiku, no MCPs, restricted tools.
           # ALLOW_COMMIT_ON_DEFAULT=1 is inherited by the PreToolUse guard so a
           # deliberate quick commit on main isn't blocked.
-          cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
-          cpush = ''claude --model haiku --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
+          # Low effort + stable cached prefix keep these snappy; cco stays at
+          # medium so the commit message still reasons over the diff.
+          cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --effort medium --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
+          cpush = ''claude --model haiku --effort low --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
 
           # OpenCode
           oc = "opencode";
