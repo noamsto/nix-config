@@ -25,8 +25,10 @@ candidates by task fit, not as default-plus-exception:
 - Neutral fit → pick either and say why; a worker can escalate via the bus.
 
 Pick the **model** from the model map in `dispatch-orchestration.md` for the tier
-and engine you chose — that table is the only place model versions live. Codex
-effort scales with tier automatically (deep→high, standard→medium, trivial→low).
+and engine you chose — that table is the only place model versions live. `--effort`
+is a separate REQUIRED flag on `dispatch`, judged independently from tier — it sets
+the reasoning effort passed to whichever engine you picked (claude or codex), it is
+not derived from tier.
 
 **Profile constraint:** codex is work-profile only — `dispatch` aborts
 `--agent codex` off the work profile. On a personal-profile host the engine
@@ -35,13 +37,13 @@ lever collapses to claude-only; co-equal routing applies on the work profile.
 ## Scaffold one worker per task
 
 ```
-dispatch <tier> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title…>
+dispatch <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title…>
 ```
 
-`dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model you judged.
+`dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model + effort you judged.
 
 - **Tracker.** Pass a **Linear id** (e.g. `ENG-6789`) as the token right after the model for Linear-tracked repos (GitHub issues disabled) — it branches `eng-<n>-<slug>` and stamps `Closes ENG-<n>`, no `gh` call. Omit it on GitHub-issue repos and `dispatch` mints an issue (`feat/<n>-<slug>`, `Closes #<n>`); if issue creation fails it aborts instead of half-scaffolding.
-- **Engine.** Pass `--agent claude` or `--agent codex` per the judgment call above — same crew-bus contract either way. The `<model>` slot must match the engine: a claude model for `--agent claude`, a codex model for `--agent codex` (model map in `dispatch-orchestration.md`). Codex is **work profile only** (no personal OpenAI account) — it isn't installed off the work profile, and `dispatch` rejects `--agent codex` there before scaffolding. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine, and additionally maps to codex's reasoning effort (deep→high, standard→medium, trivial→low).
+- **Engine.** Pass `--agent claude` or `--agent codex` per the judgment call above — same crew-bus contract either way. The `<model>` slot must match the engine: a claude model for `--agent claude`, a codex model for `--agent codex` (model map in `dispatch-orchestration.md`). Codex is **work profile only** (no personal OpenAI account) — it isn't installed off the work profile, and `dispatch` rejects `--agent codex` there before scaffolding. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine; `--effort` (required, judged independently from tier) sets the reasoning effort passed to whichever engine you picked.
 - **MCP.** Both engines inherit the full base MCP stack by default (context7, playwright, firefox-devtools) — browser work needs no flag. Claude gets it from settings.json; codex gets it from the nix-generated `--profile worker` (both defer tool schemas, so it's ~free until used). Add `--mcp <profile>` to layer on an extra profile: `analytics` (posthog, work only). Unknown/ungenerated profile aborts before launch. `--mcp` is claude-only — codex's additive profiles aren't wired, its base stack already comes from `--profile worker`.
 - **Inline the spec.** The worker has no Linear access, so it can't read the ticket. Write the full task to a file and export `DISPATCH_SPEC=<file>` before calling `dispatch` — it's appended to `WORKER_TASK.md` under `## Task`. Without it the worker only gets the title.
 

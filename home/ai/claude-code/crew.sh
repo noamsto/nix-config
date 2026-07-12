@@ -196,9 +196,11 @@ register | deregister)
   # Per-crew registration (was an exclusive per-repo role lock). N crews may
   # share a repo: each is identified by its crew_id, so there is no
   # cross-crew contention and registration never refuses. The crew dir records
-  # the dispatcher's long-lived PID (default $PPID) for stale reclaim, and
-  # holds that crew's watch cursor + watch lock. Crew ids are unique by
-  # construction (timestamp-pid), so re-registering a live crew is a no-op.
+  # the dispatcher's long-lived PID (default $PPID), recorded for a future
+  # stale-cleanup command (nothing reclaims automatically today), and holds
+  # that crew's watch cursor + watch lock. Crew ids are unique by construction
+  # (timestamp-pid), so re-registering a live crew is idempotent (re-mkdir -p,
+  # pid rewritten).
   crew=$(_crew_id)
   [ -n "$crew" ] || {
     echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2

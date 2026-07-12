@@ -86,6 +86,10 @@ back to its caller anyway, and delivery is now explicit.
   `runtimeInputs = [ gh git worktrunk tmux jq gnused coreutils crew ]`),
   installed on PATH exactly like `crew`. The Nix heredoc in
   `home/terminal/fish/default.nix` is deleted.
+- **Deviation from this spec:** the implementation omits `worktrunk` from
+  `runtimeInputs` — there is no `pkgs.worktrunk`; `wt` comes from
+  `programs.lazytmux.worktrunk.enable` and resolves from the ambient session
+  PATH, which `writeShellApplication` preserves.
 - **macOS compatibility:** `writeShellApplication` pins bash to nixpkgs bash
   5.x (not macOS system bash 3.2), and the declared `gnused`/`coreutils`
   runtime inputs put GNU `sed`/`date`/`mktemp` on PATH ahead of BSD userland.
@@ -117,9 +121,12 @@ back to its caller anyway, and delivery is now explicit.
   lock's error already says "for this crew", but the path is per-repo, so a
   second dispatcher's `crew watch` is wrongly refused. Per-crew path fixes it.
 - **`lock-role`/`unlock-role` → `register`/`deregister`, non-exclusive.**
-  `register` `mkdir`s `.git/crew/crews/<crew_id>/` and writes the dispatcher
-  `pid`; stale entries (dead pid) are pruned, never refused. The "a dispatcher
-  already holds this repo's crew bus" refusal is deleted.
+  `register` `mkdir -p`s `.git/crew/crews/<crew_id>/` and writes the dispatcher
+  `pid`, never refusing; re-registering a live crew is idempotent. Crew ids are
+  unique by construction (timestamp-pid), so there is no reclaim logic — a
+  stale (dead-pid) entry is simply left in place, recorded for a future
+  stale-cleanup command. The "a dispatcher already holds this repo's crew bus"
+  refusal is deleted.
 - No new `crew` flag: in-session dispatchers reach crew-scoped commands
   (`watch`, `inbox`, `send`, `report`) via the `CREW_ID=<id> crew …` env
   prefix, already supported by `_crew_id`.
@@ -131,7 +138,7 @@ back to its caller anyway, and delivery is now explicit.
   events.jsonl            # unchanged — already filtered by crew_id
   crews/
     <crew_id_A>/
-      pid                 # dispatcher A's long-lived PID (stale-reclaim)
+      pid                 # dispatcher A's long-lived PID (for a future stale-cleanup command)
       cursor              # A's watch cursor
       watch.lock.d/       # A's watch singleton (one watch per crew)
     <crew_id_B>/ ...
@@ -159,8 +166,10 @@ Removed: `dispatcher.lock.d/`, `dispatcher.cursor`, `dispatcher.watch.lock.d/`.
 - `dispatch` in GitHub mode when `gh issue create` fails (issues disabled):
   abort before scaffolding a worktree — same behavior as today, with the
   "pass a Linear id" hint.
-- `crew register` is idempotent; re-registering an existing live crew is a
-  no-op, a stale (dead-pid) entry is reclaimed.
+- `crew register` is idempotent; re-registering an existing live crew re-runs
+  `mkdir -p` and rewrites `pid`. Crew ids are unique by construction
+  (timestamp-pid), so there is no reclaim logic — a stale (dead-pid) entry is
+  left in place, recorded for a future stale-cleanup command.
 
 ## Testing
 
