@@ -16,6 +16,15 @@ Use `worker:$(git branch --show-current)` as your agent id for every bus call be
 After implementation is complete and **before** `/deslop` + push (the pre-push build/test gate fires on push, so review and fix first), get an **independent** review of your diff — never review your own work in your own context (same reason the critics run fresh; rule 2).
 - **Dispatch a fresh reviewer subagent** over the branch diff. Pick the agent matching the changed files' language — `go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, etc. If no language agent fits, dispatch a general agent running the `find-bugs` skill.
 - **Scale by tier:** `trivial` skips this entirely. `standard` = one pass. `deep` = adversarial — review, fix, then re-review the fixes once.
+- **Deep tier — cross-model review (work profile, claude implementers):** in
+  addition to the language-matched reviewer, dispatch a **codex-diverse**
+  reviewer subagent (reuse/adapt the `pr-reviewers` `codex-reviewer` agent) that
+  carries the `mcp__codex__*` tools and drives the read-only `codex` MCP server,
+  then reconcile its findings against the same-model pass (both / codex-only /
+  claude-only). This is a **should, not a blocker**: if the codex MCP server is
+  unavailable, you are a codex implementer (codex→claude is not yet supported),
+  or you are off the work profile, fall back to same-engine adversarial review
+  and proceed — never stall the gate on a missing diverse engine.
 - Ingest findings with **receiving-code-review** discipline: verify each finding before acting, don't perform agreement. Fix the real ones, then re-run the build/test gate.
 - **Cap the review→fix loop at 2.** Anything still unresolved goes in the PR body under "## Review notes" — never silently drop it.
 
