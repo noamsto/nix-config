@@ -224,25 +224,21 @@
               set session_name "dispatcher: $argv"
           end
           # Mint + export the crew id once at launch (mirrors `dispatch`), so
-          # `crew lock-role` has an id and claude + every child `dispatch` inherit
+          # `crew register` has an id and claude + every child `dispatch` inherit
           # the SAME crew. `crew id` needs no git repo (handled before crew.sh's
           # repo check).
           set -q CREW_ID; or set -gx CREW_ID (crew id)
-          # Acquire the repo's dispatcher role lock ONLY inside a git repo — the
-          # crew bus is repo-keyed, so a no-repo launch can't use the bus and must
-          # not hard-fail. $fish_pid is this interactive shell; it blocks on the
-          # foreground claude below, so its liveness tracks the whole session.
+          # Register this crew in the repo bus (non-exclusive — N crews per repo).
+          # $fish_pid is this interactive shell; it blocks on the foreground claude
+          # below, so its liveness tracks the whole session (stale-reclaim key).
           if git rev-parse --git-common-dir >/dev/null 2>&1
-              if not crew lock-role $fish_pid
-                  echo "dispatcher: another dispatcher already holds this repo's crew bus" >&2
-                  return 1
-              end
+              crew register $fish_pid
           end
           claude --name $session_name --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
-          # claude exited (line above is a child launch, not exec) — release the
-          # role lock so the next dispatcher can take the bus. Guarded the same way.
+          # claude exited (line above is a child launch, not exec) — deregister so
+          # the crew bus doesn't accumulate stale entries. Guarded the same way.
           if git rev-parse --git-common-dir >/dev/null 2>&1
-              crew unlock-role
+              crew deregister
           end
       end
     '';

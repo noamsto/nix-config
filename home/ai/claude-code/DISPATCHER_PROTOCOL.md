@@ -50,7 +50,10 @@ dispatch <tier> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <ti
 
 ## Read the bus (not `gh`/`tmux` scraping)
 
-All workers in your shell share one `crew_id`. **Arm `crew watch` as a background
+Each dispatcher owns one `crew_id`; several dispatchers (crews) may share a repo.
+Launcher sessions inherit `$CREW_ID` from the environment; an in-session `/dispatcher`
+passes `--crew-id $CREW_ID` to `dispatch` and prefixes `CREW_ID=$CREW_ID` on `crew` reads.
+**Arm `crew watch` as a background
 Bash call** (`run_in_background`) — a held, zero-token poll that returns the instant
 any worker needs you. Because it's backgrounded, your LLM loop stays **free**: the
 human can add a task or ask a question with **no Esc**, and the watch keeps running.
