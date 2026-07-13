@@ -7,7 +7,7 @@
 # this file is only the function body (see crew.sh for the same pattern).
 
 usage() {
-  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--crew-id <id>] [LINEAR-ID] <title...>" >&2
+  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
 }
 
 tier="${1:-}"
@@ -25,11 +25,13 @@ esac
 }
 shift 2
 
-# Leading options before the free-form title, order-independent. LINEAR-ID is
-# detected by shape so the bare <title...> form still works.
+# Leading options before the free-form title, order-independent. A LINEAR-ID or
+# a GitHub issue number (#N / N) is detected by shape so the bare <title...>
+# form still works.
 agent=claude
 effort=""
 linear_id=""
+gh_issue=""
 mcp_profile=""
 crew_id_flag=""
 while [ $# -gt 0 ]; do
@@ -75,6 +77,9 @@ while [ $# -gt 0 ]; do
   *)
     if printf '%s' "$1" | grep -Eq '^[A-Z]{2,}-[0-9]+$'; then
       linear_id="$1"
+      shift
+    elif printf '%s' "$1" | grep -Eq '^#?[0-9]+$'; then
+      gh_issue="${1#\#}"
       shift
     else
       break
@@ -137,12 +142,16 @@ title="$*"
 # slug: lowercase, non-alnum -> single dash, first 40 chars, strip edge dashes.
 slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | cut -c1-40 | sed -E 's/^-+//; s/-+$//')
 
-# Identity + closes line. Linear mode derives both from the ticket (no gh).
-# GitHub mode mints an issue and aborts cleanly if that fails (issues disabled)
-# rather than scaffolding a half-broken worker off an empty number.
+# Identity + closes line. Linear mode derives both from the ticket (no gh); a
+# passed GitHub issue number reuses that issue (no gh call). Otherwise GitHub
+# mode mints an issue and aborts cleanly if that fails (issues disabled) rather
+# than scaffolding a half-broken worker off an empty number.
 if [ -n "$linear_id" ]; then
   branch="$(printf '%s' "$linear_id" | tr '[:upper:]' '[:lower:]')-$slug"
   closes="Closes $linear_id"
+elif [ -n "$gh_issue" ]; then
+  branch="feat/$gh_issue-$slug"
+  closes="Closes #$gh_issue"
 else
   url=$(gh issue create --assignee @me --title "$title" --body "Dispatched worker task." 2>/dev/null || true)
   num=$(printf '%s' "$url" | sed -nE 's#.*/([0-9]+)$#\1#p')
