@@ -23,7 +23,7 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 # Formats Read renders whole, plus lockfiles and minified/generated files where a
 # windowed read is useless -> allow. grep -I treats binary (images/PDFs) as no-match.
 case "${file_path,,}" in
-  *.ipynb | *.lock | *.lockb | package-lock.json | *.min.js | *.min.css) exit 0 ;;
+*.ipynb | *.lock | *.lockb | package-lock.json | *.min.js | *.min.css) exit 0 ;;
 esac
 grep -qI '' "$file_path" || exit 0
 

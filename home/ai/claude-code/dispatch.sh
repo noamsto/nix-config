@@ -13,11 +13,11 @@ usage() {
 tier="${1:-}"
 model="${2:-}"
 case "$tier" in
-  trivial | standard | deep) ;;
-  *)
-    usage
-    exit 1
-    ;;
+trivial | standard | deep) ;;
+*)
+  usage
+  exit 1
+  ;;
 esac
 [ -n "$model" ] || {
   usage
@@ -34,52 +34,52 @@ mcp_profile=""
 crew_id_flag=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --agent)
-      agent="${2:-}"
-      case "$agent" in
-        claude | codex) ;;
-        *)
-          echo "dispatch: --agent must be claude or codex" >&2
-          exit 1
-          ;;
-      esac
-      shift 2
-      ;;
-    --effort)
-      effort="${2:-}"
-      case "$effort" in
-        low | medium | high | xhigh) ;;
-        *)
-          echo "dispatch: --effort must be low, medium, high, or xhigh" >&2
-          exit 1
-          ;;
-      esac
-      shift 2
-      ;;
-    --mcp)
-      mcp_profile="${2:-}"
-      [ -n "$mcp_profile" ] || {
-        echo "dispatch: --mcp needs a profile (analytics)" >&2
-        exit 1
-      }
-      shift 2
-      ;;
-    --crew-id)
-      crew_id_flag="${2:-}"
-      [ -n "$crew_id_flag" ] || {
-        echo "dispatch: --crew-id needs a value" >&2
-        exit 1
-      }
-      shift 2
-      ;;
+  --agent)
+    agent="${2:-}"
+    case "$agent" in
+    claude | codex) ;;
     *)
-      if printf '%s' "$1" | grep -Eq '^[A-Z]{2,}-[0-9]+$'; then
-        linear_id="$1"
-        shift
-      else
-        break
-      fi
+      echo "dispatch: --agent must be claude or codex" >&2
+      exit 1
       ;;
+    esac
+    shift 2
+    ;;
+  --effort)
+    effort="${2:-}"
+    case "$effort" in
+    low | medium | high | xhigh) ;;
+    *)
+      echo "dispatch: --effort must be low, medium, high, or xhigh" >&2
+      exit 1
+      ;;
+    esac
+    shift 2
+    ;;
+  --mcp)
+    mcp_profile="${2:-}"
+    [ -n "$mcp_profile" ] || {
+      echo "dispatch: --mcp needs a profile (analytics)" >&2
+      exit 1
+    }
+    shift 2
+    ;;
+  --crew-id)
+    crew_id_flag="${2:-}"
+    [ -n "$crew_id_flag" ] || {
+      echo "dispatch: --crew-id needs a value" >&2
+      exit 1
+    }
+    shift 2
+    ;;
+  *)
+    if printf '%s' "$1" | grep -Eq '^[A-Z]{2,}-[0-9]+$'; then
+      linear_id="$1"
+      shift
+    else
+      break
+    fi
+    ;;
   esac
 done
 
@@ -92,7 +92,7 @@ done
 # $CREW_ID from the claude process env; in-session dispatchers pass --crew-id.
 crew_id="${crew_id_flag:-${CREW_ID:-}}"
 [ -n "$crew_id" ] || {
-  echo "dispatch: no crew id — pass --crew-id <id> (in-session) or run under a launcher/registered dispatcher (\$CREW_ID)" >&2
+  echo 'dispatch: no crew id — pass --crew-id <id> (in-session) or run under a launcher/registered dispatcher ($CREW_ID)' >&2
   exit 1
 }
 
@@ -114,11 +114,11 @@ fi
 mcp_flag=""
 if [ -n "$mcp_profile" ]; then
   case "$mcp_profile" in
-    analytics) mcp_file="$HOME/.config/claude-code/mcp-posthog.json" ;;
-    *)
-      echo "dispatch: unknown --mcp profile '$mcp_profile' (valid: analytics)" >&2
-      exit 1
-      ;;
+  analytics) mcp_file="$HOME/.config/claude-code/mcp-posthog.json" ;;
+  *)
+    echo "dispatch: unknown --mcp profile '$mcp_profile' (valid: analytics)" >&2
+    exit 1
+    ;;
   esac
   [ -f "$mcp_file" ] || {
     echo "dispatch: --mcp $mcp_profile config not found at $mcp_file" >&2
