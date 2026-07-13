@@ -71,6 +71,11 @@ in
       launchd.enable = true;
 
       settings = {
+        # v2 only changes the persistent-workspaces default (inferred → empty);
+        # we don't set that option, so this is a no-op opt-in that silences the
+        # "config-version = 1 is outdated" reload warning.
+        config-version = 2;
+
         default-root-container-layout = "tiles";
         default-root-container-orientation = "auto";
 
