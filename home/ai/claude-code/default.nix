@@ -27,6 +27,16 @@
     text = builtins.readFile ./crew.sh;
   };
 
+  # native dispatch on PATH (was a fish autoload fn needing `fish -c`).
+  # writeShellApplication pins nixpkgs bash + runs shellcheck at build.
+  # `wt` (worktrunk) resolves from the interactive session PATH — runtimeInputs
+  # are prepended, ambient PATH is preserved.
+  dispatch = pkgs.writeShellApplication {
+    name = "dispatch";
+    runtimeInputs = [pkgs.gh pkgs.git pkgs.jq pkgs.gnused pkgs.coreutils pkgs.tmux crew];
+    text = builtins.readFile ./dispatch.sh;
+  };
+
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
   nix-settings-json = pkgs.writeTextFile {
@@ -209,7 +219,8 @@ in {
   };
 
   # crew bus CLI on PATH (shared by the dispatcher's fish fns and the workers' bash).
-  home.packages = [crew];
+  home.packages = [crew dispatch];
+  home.sessionVariables.DISPATCH_PROFILE = osConfig.profile;
 
   # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
   home.file =

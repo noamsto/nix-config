@@ -196,211 +196,6 @@
       fish_pager_color_selected_background --background=45475a
     '';
 
-    "fish/functions/dispatch.fish".text = ''
-      function dispatch --description 'Scaffold a worker: issue/ticket -> worktree -> task file -> baked claude'
-          set -l tier $argv[1]
-          set -l model $argv[2]
-          if not contains -- $tier trivial standard deep
-              echo "usage: dispatch <trivial|standard|deep> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title...>" >&2
-              return 1
-          end
-
-          # Leading options before the free-form title, order-independent:
-          #   --agent <claude|codex>  worker engine (default claude). Codex takes
-          #                    a codex model (gpt-5.5) in the <model> slot.
-          #   --mcp <profile>  layer an extra MCP profile onto the worker's base
-          #                    stack (analytics -> posthog). Claude-only.
-          #   <LINEAR-ID>      e.g. ENG-6789 — track in Linear, skip GitHub issue
-          #                    creation (the repo's GH issues may be disabled).
-          # Detect the id by shape so the bare <title...> form still works.
-          set -l agent claude
-          set -l linear_id ""
-          set -l mcp_profile ""
-          set -l rest $argv[3..-1]
-          while test (count $rest) -gt 0
-              if test "$rest[1]" = --agent
-                  set agent $rest[2]
-                  if not contains -- $agent claude codex
-                      echo "dispatch: --agent must be claude or codex" >&2
-                      return 1
-                  end
-                  set rest $rest[3..-1]
-              else if test "$rest[1]" = --mcp
-                  set mcp_profile $rest[2]
-                  if test -z "$mcp_profile"
-                      echo "dispatch: --mcp needs a profile (analytics)" >&2
-                      return 1
-                  end
-                  set rest $rest[3..-1]
-              else if string match -qr '^[A-Z]{2,}-[0-9]+$' -- $rest[1]
-                  set linear_id $rest[1]
-                  set rest $rest[2..-1]
-              else
-                  break
-              end
-          end
-
-          # Codex is a work-only engine (no personal OpenAI account) — the package
-          # and its worker profile aren't installed off the work profile (see
-          # home/ai/default.nix). Reject here, before scaffolding a worktree, so
-          # the failure is a clear message rather than `codex: command not found`
-          # after the issue/branch already exist.
-          if test "$agent" = codex; and test "${osConfig.profile}" != work
-              echo "dispatch: --agent codex is work-profile only (no personal codex account)" >&2
-              return 1
-          end
-
-          # Codex gets the base MCP stack via its nix-generated `--profile worker`
-          # (see codex/default.nix), so parity for the common tools is automatic.
-          # The additive --mcp profiles (analytics) are still claude-only — reject
-          # the combo rather than silently dropping the profile.
-          if test "$agent" = codex; and test -n "$mcp_profile"
-              echo "dispatch: --mcp is claude-only; codex base MCP comes from --profile worker" >&2
-              return 1
-          end
-
-          # Map the profile to its generated config, additive on top of the base
-          # MCP stack. Abort if unknown or (e.g. analytics on a personal machine)
-          # the config wasn't generated — a missing --mcp-config would only fail
-          # later inside the worker.
-          set -l mcp_flag
-          if test -n "$mcp_profile"
-              set -l mcp_file
-              switch $mcp_profile
-                  case analytics
-                      set mcp_file ~/.config/claude-code/mcp-posthog.json
-                  case '*'
-                      echo "dispatch: unknown --mcp profile '$mcp_profile' (valid: analytics)" >&2
-                      return 1
-              end
-              if not test -f "$mcp_file"
-                  echo "dispatch: --mcp $mcp_profile config not found at $mcp_file" >&2
-                  return 1
-              end
-              set mcp_flag --mcp-config $mcp_file
-          end
-
-          set -l title (string join ' ' $rest)
-          if test -z "$title"
-              echo "usage: dispatch <trivial|standard|deep> <model> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title...>" >&2
-              return 1
-          end
-
-          # Identity + closes line. Linear mode derives both from the ticket, no
-          # gh call. GitHub mode creates an issue and uses its number — but aborts
-          # cleanly if that fails (e.g. issues disabled) rather than scaffolding a
-          # half-broken worker off an empty number.
-          # Branch path must match worktrunk's {{ repo_path }}-worktrees/{{ branch
-          # | sanitize }} template (slash -> dash) — wt won't tell us where it put
-          # the worktree.
-          set -l slug (string lower (string replace -ra '[^a-zA-Z0-9]+' '-' $title) | string sub -l 40 | string trim -c -)
-          set -l branch
-          set -l closes
-          if test -n "$linear_id"
-              set branch (string lower $linear_id)-$slug
-              set closes "Closes $linear_id"
-          else
-              set -l url (gh issue create --assignee @me --title "$title" --body "Dispatched worker task." 2>/dev/null)
-              set -l num (string match -r '/(\d+)$' -- $url)[2]
-              if test -z "$num"
-                  echo "dispatch: could not create a GitHub issue (issues disabled?). Pass a Linear id, e.g. dispatch $tier $model ENG-1234 $title" >&2
-                  return 1
-              end
-              set branch "feat/$num-$slug"
-              set closes "Closes #$num"
-          end
-          set -l sanitized (string replace -a / - $branch)
-          set -l wt_path (git rev-parse --show-toplevel)-worktrees/$sanitized
-
-          # post-switch tmux hook is disabled under CLAUDECODE, so wt only creates the
-          # worktree here — we drive tmux ourselves below.
-          wt switch -c $branch -y
-
-          # crew bus: one crew_id per dispatcher shell (set -gx persists across
-          # dispatch calls in this shell → all its workers share one crew). crew is
-          # a PATH CLI now, so mint+export here (it can't set our env as a side effect).
-          set -q CREW_ID; or set -gx CREW_ID (crew id)
-          set -l crew_dir (git rev-parse --path-format=absolute --git-common-dir)/crew
-
-          # Log the dispatch decision to the crew bus for later `crew report`.
-          # dispatch may run before the worker's first `crew status`, so create
-          # the dir here (crew status does its own mkdir; dispatch does not).
-          set -l dispatch_shape ""
-          set -q DISPATCH_SHAPE; and set dispatch_shape "$DISPATCH_SHAPE"
-          mkdir -p $crew_dir
-          jq -nc --arg crew "$CREW_ID" --arg branch "$branch" \
-              --arg engine "$agent" --arg model "$model" --arg tier "$tier" \
-              --arg shape "$dispatch_shape" \
-              '{ts:(now*1000|floor), crew_id:$crew, kind:"dispatch", branch:$branch, engine:$engine, model:$model, tier:$tier, shape:$shape}' \
-              >> $crew_dir/events.jsonl
-
-          # FleetView-style codename+color, derived from the branch (deterministic).
-          set -l ident (crew identity $branch)
-          set -l agent_name (echo $ident | jq -r .name)
-          set -l agent_color (echo $ident | jq -r .tmux)
-
-          # Stamp the task file: header fields the worker protocol reads, the
-          # closes line (Linear id or GH #num), and the full task body. The body
-          # comes from $DISPATCH_SPEC — a file the dispatcher writes — because the
-          # worker has no Linear access and must get the spec inline; it falls
-          # back to just the title when no spec file is given.
-          begin
-              printf 'tier: %s\ntitle: %s\n%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
-                  $tier $title $closes $TMUX_PANE $crew_dir $CREW_ID $agent_name
-              if set -q DISPATCH_SPEC; and test -f "$DISPATCH_SPEC"
-                  printf '\n## Task\n\n'
-                  cat $DISPATCH_SPEC
-              end
-          end > $wt_path/WORKER_TASK.md
-
-          set -l ids (tmux new-window -d -c $wt_path -n $sanitized -P -F '#{window_id} #{pane_id}' | string split ' ')
-          set -l win $ids[1]
-          set -l pane $ids[2]
-          # Identity surfaces: the codename rides the worker's pane border (always
-          # visible when its window is focused) and the CC prompt box via
-          # `claude --name` below. lazytmux still owns the tab TEXT (@branch/@issue);
-          # @crew_* also tint the status-bar tab: lazytmux's status-format[1] reads
-          # @crew_color directly. The old window-status-style here was a dead no-op —
-          # that format paints each tab's fg inline, so it never consulted the option.
-          tmux set-window-option -t $win @crew_name $agent_name
-          tmux set-window-option -t $win @crew_color $agent_color
-          tmux set-window-option -t $win pane-border-style "bg=#{@thm_bg},fg=$agent_color"
-          tmux set-window-option -t $win pane-active-border-style "bg=#{@thm_bg},fg=$agent_color,bold"
-          tmux set-window-option -t $win pane-border-format " #[bold]#{@crew_name}#[nobold] "
-          # Codex has no --append-system-prompt-file, so it reads the (engine-
-          # agnostic) protocol via the seed prompt. Full-access is the parity of
-          # claude's --permission-mode auto — a worker must write the crew bus in
-          # the main .git, spawn sibling worktrees, and push, none of which a
-          # codex workspace sandbox would allow. Codex has no --name either; the
-          # codename still rides the pane border set above.
-          # --profile worker layers the base MCP stack (codex/default.nix). Tier
-          # scales reasoning effort the way it scales claude's pipeline depth —
-          # codex defers tool schemas, so the base stack is ~free either way.
-          # Deep claude workers get the read-only codex MCP for cross-model
-          # review via --mcp-config (the honored path; --settings can't register
-          # mcpServers). Work profile only — mcp-codex.json is generated work-gated
-          # in claude-code/mcp-profiles.nix, and codex exists only on the work profile.
-          set -l xreview_mcp
-          if test "${osConfig.profile}" = work -a "$agent" = claude -a "$tier" = deep
-              set xreview_mcp --mcp-config "$HOME/.config/claude-code/mcp-codex.json"
-          end
-          if test "$agent" = codex
-              set -l codex_effort medium
-              switch $tier
-                  case deep
-                      set codex_effort high
-                  case trivial
-                      set codex_effort low
-              end
-              tmux send-keys -t $pane \
-                  "codex --profile worker -m $model -c model_reasoning_effort=$codex_effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.'" Enter
-          else
-              tmux send-keys -t $pane \
-                  "claude --name $agent_name --model $model $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
-          end
-      end
-    '';
-
     # Start a dispatcher session: an orchestrator that judges tasks into tier+model
     # and fans them out via `dispatch`. Bakes DISPATCHER_PROTOCOL.md (the judgment
     # rubric); default model (opus) + full MCP, since the orchestrator needs them.
@@ -429,25 +224,21 @@
               set session_name "dispatcher: $argv"
           end
           # Mint + export the crew id once at launch (mirrors `dispatch`), so
-          # `crew lock-role` has an id and claude + every child `dispatch` inherit
+          # `crew register` has an id and claude + every child `dispatch` inherit
           # the SAME crew. `crew id` needs no git repo (handled before crew.sh's
           # repo check).
           set -q CREW_ID; or set -gx CREW_ID (crew id)
-          # Acquire the repo's dispatcher role lock ONLY inside a git repo — the
-          # crew bus is repo-keyed, so a no-repo launch can't use the bus and must
-          # not hard-fail. $fish_pid is this interactive shell; it blocks on the
-          # foreground claude below, so its liveness tracks the whole session.
+          # Register this crew in the repo bus (non-exclusive — N crews per repo).
+          # $fish_pid is this interactive shell; it blocks on the foreground claude
+          # below, so its liveness tracks the whole session (stale-reclaim key).
           if git rev-parse --git-common-dir >/dev/null 2>&1
-              if not crew lock-role $fish_pid
-                  echo "dispatcher: another dispatcher already holds this repo's crew bus" >&2
-                  return 1
-              end
+              crew register $fish_pid
           end
           claude --name $session_name --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
-          # claude exited (line above is a child launch, not exec) — release the
-          # role lock so the next dispatcher can take the bus. Guarded the same way.
+          # claude exited (line above is a child launch, not exec) — deregister so
+          # the crew bus doesn't accumulate stale entries. Guarded the same way.
           if git rev-parse --git-common-dir >/dev/null 2>&1
-              crew unlock-role
+              crew deregister
           end
       end
     '';

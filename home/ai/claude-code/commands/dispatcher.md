@@ -3,33 +3,33 @@ description: "Promote this running session into a dispatcher (judges tasks → t
 argument-hint: "[first task]"
 ---
 
-**First, claim the dispatcher role lock (plain bash — NOT `fish -c`):**
+**First, mint a crew id and register this dispatcher, in one Bash call (plain bash — NOT `fish -c`):**
 
 ```
-crew lock-role $PPID
+export CREW_ID=$(crew id); crew register $PPID; echo "crew id: $CREW_ID"
 ```
 
-Run this **bare** in the Bash tool (no `|| …` wrapper) so `$PPID` is the long-lived
-`claude` process AND a refusal surfaces as a **failed tool call** (crew.sh prints the
-holder message on stderr and exits 1). If it **refuses** — a live dispatcher already
-holds this repo's crew bus — **STOP**: do NOT adopt the dispatcher role; read the live
-holder PID from `.git/crew/dispatcher.lock.d/pid` and tell the human. Do not wrap the
-command so it "succeeds anyway" — the non-zero exit is the stop signal.
+Registration is **non-exclusive** — several crews can share a repo. `crew register`
+records `$PPID` (the long-lived `claude` process) under `.git/crew/crews/<crew_id>/`,
+recorded for a future stale-cleanup command (nothing reclaims automatically today);
+it never refuses, and re-registering a live crew is idempotent.
 
-On success you hold the role lock for the rest of this session. Unlike the baked
-`dispatcher` launcher, this path has **no clean `unlock-role`**: the lock is freed
-automatically when this claude session ends (the recorded PID dies → the next
-dispatcher startup reclaims the stale lock through the same mkdir gate). This
-stale-reclaim asymmetry is deliberate — the baked launcher is the sturdier path.
+**Note the literal crew id printed above.** The Claude Code Bash tool does not persist
+environment across separate tool calls — every later Bash call is a fresh shell, so
+`$CREW_ID` will be empty even though this call exported it. From here on, substitute
+the literal id you noted (e.g. `1720800000-12345`) everywhere you'd otherwise write
+`$CREW_ID` — do not rely on the variable surviving.
 
 Read `~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md` now and adopt that
 role for the **rest of this session**. From here on you are a dispatcher: you judge
-each task into tier + model, scaffold one worker per task via `dispatch`, and watch
-the `crew` bus — you never implement, gate, or open PRs yourself.
+each task into tier + engine + model + effort, scaffold one worker per task via
+`dispatch`, and watch the `crew` bus — you never implement, gate, or open PRs yourself.
 
-`dispatch` is a fish function; invoke it as `fish -c '…'` (autoloaded from
-`~/.config/fish/functions`). `crew` is a CLI on your PATH (not a shell function) —
-call it directly.
+`dispatch` and `crew` are both CLIs on your PATH — call them **directly** (no `fish -c`).
+Because each Bash tool call is a fresh shell, pass the literal crew id you noted, not
+`$CREW_ID`: `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> …`
+— e.g. `dispatch --crew-id 1720800000-12345 standard sonnet --effort medium …` — and
+prefix crew reads with `CREW_ID=<id> crew …` — e.g. `CREW_ID=1720800000-12345 crew status …`.
 
 First, tag this window so lazytmux shows the dispatcher badge (the `dispatcher`
 launcher does this automatically; the in-session path must do it once):
@@ -40,9 +40,10 @@ tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color co
 
 **Argument:** `$ARGUMENTS`
 
-- If non-empty: treat it as the first task — judge its tier + **engine** + model per the
-  protocol's rubric, state your call and why, then
-  `dispatch <tier> <model> [--agent claude|codex] <title…>`.
+- If non-empty: treat it as the first task — judge its tier + **engine** + model + effort
+  per the protocol's rubric, state your call and why, then
+  `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] <title…>`
+  (substituting the literal crew id you noted for `<id>`).
 - If empty: confirm you're in dispatcher mode and wait for tasks.
 
 > This is the in-session equivalent of the `dispatcher` launcher. The launcher bakes
