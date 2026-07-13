@@ -17,6 +17,7 @@ Orchestrate plan (and optional spec) writing with adversarial critic gates using
 Run these as sequential Agent calls:
 
 1. **Draft plan** — spawn an agent with the `superpowers:writing-plans` skill to produce a bite-sized implementation plan. Prompt: `"Write a bite-sized implementation plan using writing-plans discipline.\n\nTASK:\n<task>"`
+   - **Per-step implement-model tag.** The worker executes plan steps on **sonnet by default**. A genuinely high-risk step (subtle concurrency, security-sensitive, wide-blast refactor) may carry an inline `implement: opus` tag so the worker spawns *that* step's subagent on opus. No tag = sonnet. Tell the drafting agent to add it **sparingly** — most steps stay untagged. Example step line: `- [ ] **Step 3: rework the token-refresh lock** (implement: opus)`.
 
 2. **Critique** — spawn a fresh `plan-critic` agent to adversarially review the draft. Expect structured output with `verdict` (`accept` / `revise` / `reject`) and `blocking[]` findings.
 

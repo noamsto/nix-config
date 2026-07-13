@@ -9,11 +9,11 @@ Use `worker:$(git branch --show-current)` as your agent id for every bus call be
 
 ## Pipeline by tier
 - **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
-- **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then the code-review gate (one pass), then gate + PR.
-- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then plan + plan-critic), then execute, then the code-review gate (adversarial), then gate + PR.
+- **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then the **fast deterministic gate** (build+vet+lint+unit on changed packages, looped to green), then the code-review gate (one pass), then `/deslop` + push + PR.
+- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then plan + plan-critic), then execute, then the **fast deterministic gate**, then the code-review gate (one parallel review batch, reconciled once, then a **conditional** second re-review), then `/deslop` + push + PR.
 
 ## Checkpoint-peek (standard/deep)
-At each pipeline **seam** — after spec, after plan, after execute, after review, **before** sinking cost into the next stage — do a non-blocking peek for a dispatcher stop/redirect directive:
+At each pipeline **seam** — after spec, after plan, after execute, after the fast gate, after review, **before** sinking cost into the next stage — do a non-blocking peek for a dispatcher stop/redirect directive:
 ```
 crew inbox "worker:$(git branch --show-current)" --since <seen-cursor>
 ```
@@ -23,20 +23,25 @@ This is a single pass, not a held wait (unlike `crew await`): empty output ⇒ n
 - **On a directive:** apply **receiving-code-review** discipline — verify the instruction before acting, don't perform agreement. Then redirect the pipeline, or on a "stop" wind down cleanly and stamp `crew status "worker:$(git branch --show-current)" <state>` appropriately (e.g. `failed "stopped by dispatcher"`).
 - **Latency is honest, not instant:** a redirect surfaces only at the *next* seam, so its latency is the remaining time in the current stage. A redirect posted mid-`execute` (the longest stage for deep workers) is not seen until execute finishes. **The peek is NOT a kill switch** — for a hard abort the dispatcher uses `tmux kill-window` (→ SessionEnd `exited`), which stays the reliable stop.
 
+## Fast deterministic gate (standard/deep)
+After `execute` and **before** any model reviewer sees the diff, run the cheap deterministic checks and loop the worker to green. A test settles deterministically what a reviewer would otherwise re-litigate probabilistically (the "AC2 would fail if run" churn), and it moves any build/test failure *ahead* of the expensive review instead of after it.
+
+- **Discover the command from the repo — never assume a language.** This protocol serves any repo (Go today, others tomorrow), so do not hardcode `go test`. Read the repo's own conventions to find its build + vet/lint + unit commands: a `justfile`/`Makefile` target, `package.json` scripts, the pre-commit / CI config (`.pre-commit-config*`, `.github/workflows`, `treefmt`, `nix flake check`), or a project `verify` skill if one exists.
+- **Scope to changed packages.** Get the changed files with `git diff --name-only <base>...HEAD` (base = the branch's merge-base with the default branch), map each to its module/package, and run build + vet/lint + unit scoped to just those — not the whole repo.
+- **Loop to green here, cheaply.** On failure, fix (delegate to a subagent per rule 1) and re-run the scoped gate until green. This deterministic loop is **separate from and independent of** the review→fix loop (whose cap is 2, below) — it has no cap of its own.
+- If the change has **no runnable build/test surface** (a docs- or protocol-only diff), say so explicitly and fall through to the review gate — do not invent a command.
+
 ## Code review gate (standard/deep)
-After implementation is complete and **before** `/deslop` + push (the pre-push build/test gate fires on push, so review and fix first), get an **independent** review of your diff — never review your own work in your own context (same reason the critics run fresh; rule 2).
-- **Dispatch a fresh reviewer subagent** over the branch diff. Pick the agent matching the changed files' language — `go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, etc. If no language agent fits, dispatch a general agent running the `find-bugs` skill.
-- **Scale by tier:** `trivial` skips this entirely. `standard` = one pass. `deep` = adversarial — review, fix, then re-review the fixes once.
-- **Deep tier — cross-model review (work profile, claude implementers):** in
-  addition to the language-matched reviewer, dispatch a **codex-diverse**
-  reviewer subagent (reuse/adapt the `pr-reviewers` `codex-reviewer` agent) that
-  carries the `mcp__codex__*` tools and drives the read-only `codex` MCP server,
-  then reconcile its findings against the same-model pass (both / codex-only /
-  claude-only). This is a **should, not a blocker**: if the codex MCP server is
-  unavailable, you are a codex implementer (codex→claude is not yet supported),
-  or you are off the work profile, fall back to same-engine adversarial review
-  and proceed — never stall the gate on a missing diverse engine.
-- Ingest findings with **receiving-code-review** discipline: verify each finding before acting, don't perform agreement. Fix the real ones, then re-run the build/test gate.
+After the fast deterministic gate is green and **before** `/deslop` + push, get an **independent** review of your diff — never review your own work in your own context (same reason the critics run fresh; rule 2).
+- **Dispatch the review as a single parallel batch** — one message, concurrent subagents — then reconcile once. Do not run reviewers serially.
+  - **Language reviewer** — the agent matching the changed files' language (`go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, …). If none fits, a general agent running the `find-bugs` skill.
+  - **Targeted test-runner** — a subagent that runs the change's acceptance-criteria / behavior-specific tests and reports pass/fail; its result feeds the reconcile as deterministic evidence.
+  - **codex-diverse reviewer (deep tier, work profile, claude implementers only)** — a `codex-diverse` subagent (reuse/adapt the `pr-reviewers` `codex-reviewer`) that carries the `mcp__codex__*` tools and drives the read-only `codex` MCP server. This is a **should, not a blocker**: if the codex MCP server is unavailable, you are a codex implementer (codex→claude is not yet supported), or you are off the work profile, drop it and fall back to same-engine review — never stall the gate on a missing diverse engine.
+  - **Security reviewer (conditional, both tiers)** — include a `security-reviewer` subagent **only if** the diff touches an auth, crypto, input-parsing, SQL, or network path. Conservative trigger: when in doubt, include it. Otherwise skip it.
+- **Reconcile once.** Merge findings across the batch (both / language-only / codex-only / security), de-duplicated and checked against the test-runner's deterministic result. Ingest with **receiving-code-review** discipline: verify each finding before acting, don't perform agreement. Fix the real ones (delegate per rule 1), then re-run the **fast deterministic gate**.
+- **Scale the re-review by tier:**
+  - `standard` — one pass. No second review.
+  - `deep` — **conditional** second re-review. After the fix + a green fast deterministic gate, run the second review pass **only if** the first pass produced **HIGH-severity** findings that were **non-trivially fixed** (the fix changed real logic — not a comment, rename, or doc tweak). If there were no HIGH findings, or they were only trivially fixed, or the fast gate is not green, **skip** the second pass and proceed to `/deslop` + push. This conditional only ever *removes* the second pass — the review→fix loop is still capped at 2 (never a third).
 - **Cap the review→fix loop at 2.** Anything still unresolved goes in the PR body under "## Review notes" — never silently drop it.
 
 ## Report to the bus (mandatory)
@@ -59,7 +64,7 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 - on terminal failure (gate won't pass, etc.): `crew status worker:<branch> failed "<why>"`, then stop.
 
 ## Rules
-1. **Delegate execution.** For standard/deep, implementation steps run as subagents (subagent-driven-development), capped at 3 concurrent. You orchestrate; you do not hand-write the implementation yourself.
+1. **Delegate execution — opus plans, sonnet implements.** The worker session (opus on deep) does spec / plan / reconcile / judging. For standard/deep, implementation steps run as subagents (subagent-driven-development), capped at 3 concurrent — and for **claude** workers those execute subagents run on **sonnet by default**, spawned with the Agent tool's `model: sonnet`. Escalate an individual step to opus **only** when the plan tags it `implement: opus` (a high-risk step — see the plan schema in `spec-plan-critic`). You orchestrate; you do not hand-write the implementation yourself. (Codex workers scale reasoning effort by tier instead — this model split is claude-specific.)
 2. **Critics are independent.** Never self-review — the workflow dispatches `spec-critic`/`plan-critic` in fresh contexts. Ingest their verdicts with receiving-code-review discipline: verify the finding, don't perform agreement.
 3. **Revision cap is 2.** The workflow enforces it. If it returns `escalations[]`, surface them verbatim in the PR body under "## Escalated" — do not silently proceed as if clean.
 4. **Push through the gate.** Order before push: code-review gate (standard/deep) → `/deslop` → `git push`. `/deslop` is required by the pre-push guard (for fully unattended runs, `ALLOW_PUSH_WITHOUT_DESLOP=1 git push …` is honored inline). `git push` then triggers the pre-push hook (typecheck/lint/unit/build-num); on failure, fix and re-push, do not bypass.
