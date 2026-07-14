@@ -129,7 +129,15 @@ The default `ansi.StringWidth` / `ansi.Truncate` / `ansi.Cut` are **already grap
 - ❌ `len(s)`, `utf8.RuneCountInString(s)`, `runewidth.RuneWidth` summed in a loop, or the `*Wc` variants (`ansi.StringWidthWc`, `ansi.TruncateWc`) — these count a grapheme cluster as several cells.
 - ✅ the default `ansi.*` functions (or `rivo/uniseg.StringWidth` directly).
 
-**Irreducible residual:** the *terminal emulator* has the final say on how many cells an emoji occupies, and terminals disagree (font, Unicode version, VS16 presentation) — so no client-side measurement is universally correct. For load-bearing columns, reserve a cell of slack or keep emoji out of width-critical slots. Terminal-side convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still only partially adopted.
+**Irreducible residual — the border-misalignment bug.** The *terminal* has the final say on how many cells a glyph paints, and it disagrees with lipgloss on two specific classes:
+
+- **VS16 emoji** (`❤️ ⚠️ ✔️ ▶️ ☑️` — a base char + U+FE0F) and **flags** (`🇮🇱`, regional-indicator pairs): lipgloss/grapheme width = **2**, but a `wcwidth`-based layer paints **1**.
+- **`tmux` is the usual culprit** — it re-lays the grid with its own `wcwidth`, so a box that lipgloss built self-consistently at width `w` shows a right border shifted 1 column left on every line containing such a glyph. (Verified: a lipgloss box with an `❤️` title measures a perfect `w` on every line, yet renders ragged inside tmux.)
+
+Confirm it: view the same content outside tmux — if it aligns, tmux's width model is the cause. Mitigations, in order:
+1. **Strip VS16** (`strings.ReplaceAll(s, "️", "")`) from title/body *source* before rendering — drops lipgloss's count to 1, matching the terminal, so the border aligns (cost: monochrome text-presentation glyph). Verified fix; doesn't help flags.
+2. **Keep VS16/flag emoji out of load-bearing bordered content**, or reserve a cell of slack.
+3. Terminal-side convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still only partially adopted — and tmux is the weak link.
 
 ## Notes
 
