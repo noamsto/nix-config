@@ -341,11 +341,16 @@ roster)
   [ -f "$log" ] || exit 0
   # latest status per agent, decorated with each worker's derived codename
   base=$(jq -c -s --arg crew "$crew" '
-      map(select(.crew_id==$crew and .kind=="status"))
+      # title lives on the dispatch event (keyed by branch); join it per worker.
+      # last wins on re-dispatch. missing (pre-title dispatch events) -> null.
+      (map(select(.crew_id==$crew and .kind=="dispatch"))
+        | map({key:("worker:"+.branch), value:(.title // null)}) | from_entries) as $titles
+      | map(select(.crew_id==$crew and .kind=="status"))
       | group_by(.from) | map(
           (max_by(.ts)) as $latest
           | {from: $latest.from,
              state: $latest.body.state,
+             title: ($titles[$latest.from] // null),
              # carry forward last-known pr_url — the terminal `done` event drops it
              pr_url: (map(.body.pr_url) | map(select(. != null)) | last),
              age_s: ((now - ($latest.ts/1000))|floor)})' "$log")

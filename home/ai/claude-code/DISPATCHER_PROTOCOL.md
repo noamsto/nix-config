@@ -73,6 +73,9 @@ own `--timeout` is the real bound.)
      **entire `events[]` in ONE turn** (reply / dispatch next / intervene). **Never
      one-turn-per-event.**
    - empty stdout (exit 3, the timeout marker) → nothing to handle.
+   - **On a non-empty batch, re-render the roster diagram** (see "Roster diagram"
+     below) so the carousel tracks the state change. Skip it on the exit-3 path —
+     nothing changed.
 3. **Re-arm exactly one** new `crew watch`, recording its new arm-token. On the
    exit-3 path this re-arm is **near-silent**: one tool call, zero prose.
 
@@ -108,9 +111,37 @@ fan-out budget, so the same wakeup tells you when to dispatch the next queued ta
 
 Two reads remain for detail:
 
-- `crew roster` — at-a-glance dashboard: every worker's latest state + age, plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). **Refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
+- `crew roster` — at-a-glance dashboard: every worker's latest state + age, its `title` (the task, joined from the dispatch event), plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). **Refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
 - `crew inbox dispatcher:$CREW_ID` — worker **questions** in full (messages only; status lives in the roster).
 - A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation.
+
+## Roster diagram
+
+Keep a live picture of the crew in the aeye carousel. Whenever the roster changes
+— after a non-empty `crew watch` batch, and right after you `dispatch` a new worker
+— regenerate it from `crew roster` and write **D2** to
+`/tmp/claude-status/images/diagrams/src/roster.d2` (always the **same path** — it
+overwrites and the carousel updates in place). One node per worker; **you** are the
+root. This is a read-only mirror of the bus — never let drawing it delay a reply to a
+blocked worker.
+
+Per-worker node: fill with the worker's roster `color` (a plain color name D2
+accepts), label `"<codename>\n<title>\n<state> · <age>s"`. Draw a `PR` node and an
+edge to it for any worker in `pr_open`/`done` (label it with the `pr_url`). Escape a
+literal `$` in any label as `\$`, and use only plain quoted labels with `\n` — never
+`|md`/`|markdown` blocks (the rasterizer paints them blank and suppresses the whole
+diagram). Skeleton:
+
+```d2
+title: "Crew roster" {near: top-center}
+dispatcher: "dispatcher" {style.bold: true}
+sage: "sage\nfix the widget\nworking · 42s" {style.fill: green}
+atlas: "atlas\nbump flake.lock\npr_open · 8s" {style.fill: blue}
+pr: "PR" {shape: page}
+dispatcher -> sage
+dispatcher -> atlas
+atlas -> pr: "#124"
+```
 
 ## Rules
 
