@@ -129,15 +129,16 @@ The default `ansi.StringWidth` / `ansi.Truncate` / `ansi.Cut` are **already grap
 - ❌ `len(s)`, `utf8.RuneCountInString(s)`, `runewidth.RuneWidth` summed in a loop, or the `*Wc` variants (`ansi.StringWidthWc`, `ansi.TruncateWc`) — these count a grapheme cluster as several cells.
 - ✅ the default `ansi.*` functions (or `rivo/uniseg.StringWidth` directly).
 
-**Irreducible residual — the border-misalignment bug.** The *terminal* has the final say on how many cells a glyph paints, and it disagrees with lipgloss on two specific classes:
+**Irreducible residual — the border-misalignment bug.** lipgloss commits to a width from its Unicode table; the *terminal* has the final say on what it actually paints, and the two can disagree by 1 cell — shifting a bordered box's right edge on that line. But the disagreement is narrower than "all emoji," and it is **font/terminal-specific — measure your own stack, don't assume:**
 
-- **VS16 emoji** (`❤️ ⚠️ ✔️ ▶️ ☑️` — a base char + U+FE0F) and **flags** (`🇮🇱`, regional-indicator pairs): lipgloss/grapheme width = **2**, but a `wcwidth`-based layer paints **1**.
-- **`tmux` is the usual culprit** — it re-lays the grid with its own `wcwidth`, so a box that lipgloss built self-consistently at width `w` shows a right border shifted 1 column left on every line containing such a glyph. (Verified: a lipgloss box with an `❤️` title measures a perfect `w` on every line, yet renders ragged inside tmux.)
+- On a modern stack (kitty + tmux built with utf8proc + `variation-selector-always-wide on`), most emoji **agree at 2 and align** — verified: `❤️ ⚠️ ✔️`, flags (`🇮🇱`), ZWJ family (`👨‍👩‍👧`), CJK all rendered flush.
+- The residual is **VS16 emoji whose base is a text-default dingbat** (`✍️` U+270D, `✂️`, `✒️`, `✏️`): lipgloss says 2, but if the terminal **font has no wide color glyph** it paints a monochrome text glyph at **1** → 1-cell drift. Font-coverage-dependent, so it varies by machine.
+- On **older/simpler stacks** (or tmux without utf8proc / VS16-wide off) the split is wider — plain wcwidth paints `❤️` and flags at 1 too.
 
-Confirm it: view the same content outside tmux — if it aligns, tmux's width model is the cause. Mitigations, in order:
-1. **Strip VS16** (`strings.ReplaceAll(s, "️", "")`) from title/body *source* before rendering — drops lipgloss's count to 1, matching the terminal, so the border aligns (cost: monochrome text-presentation glyph). Verified fix; doesn't help flags.
-2. **Keep VS16/flag emoji out of load-bearing bordered content**, or reserve a cell of slack.
-3. Terminal-side convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still only partially adopted — and tmux is the weak link.
+Confirm on *your* stack: render the suspect glyphs in a bordered box (or a padded-then-marker row) and see which right edges drift; don't theorize. Mitigations, in order:
+1. **Strip VS16** (`strings.ReplaceAll(s, "️", "")`) from title/body *source* before rendering — drops lipgloss's count to 1, matching a text-presentation terminal, so the border aligns (cost: monochrome glyph). Verified fix; doesn't help flags.
+2. **Keep ambiguous-width glyphs out of load-bearing bordered content**, or reserve a cell of slack.
+3. Terminal-side: a `symbol_map`/better emoji font can give the missing wide glyph; true convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still rare — and tmux often can't negotiate it (reports 2027 unsupported).
 
 ## Notes
 
