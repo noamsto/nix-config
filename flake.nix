@@ -135,10 +135,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # === APPLICATION PACKAGES ===
-    # Pinned versions for stability - update quarterly
     vicinae = {
-      url = "github:vicinaehq/vicinae"; # Pinned to stable release (Nov 6, 2025)
+      url = "github:vicinaehq/vicinae";
     };
 
     # Argo CD terminal UI. nixpkgs lags upstream, so track the flake directly.

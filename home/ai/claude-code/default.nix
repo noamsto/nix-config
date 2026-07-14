@@ -218,29 +218,31 @@ in {
     resolved.enable = true;
   };
 
-  # crew bus CLI on PATH (shared by the dispatcher's fish fns and the workers' bash).
-  home.packages = [crew dispatch];
-  home.sessionVariables.DISPATCH_PROFILE = osConfig.profile;
+  home = {
+    # crew bus CLI on PATH (shared by the dispatcher's fish fns and the workers' bash).
+    packages = [crew dispatch];
+    sessionVariables.DISPATCH_PROFILE = osConfig.profile;
 
-  # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
-  home.file =
-    {
-      ".claude/CLAUDE.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
-      # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
-      # Always present (work or personal) so the import never silently no-ops.
-      ".claude/CLAUDE.profile.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
-      ".claude/settings.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
-      ".claude/agents".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
-      ".claude/commands".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";
-      ".claude/workflows".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/workflows";
-    }
-    // skillSymlinks;
+    # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
+    file =
+      {
+        ".claude/CLAUDE.md".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+        # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
+        # Always present (work or personal) so the import never silently no-ops.
+        ".claude/CLAUDE.profile.md".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
+        ".claude/settings.json".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+        ".claude/agents".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+        ".claude/commands".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";
+        ".claude/workflows".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/workflows";
+      }
+      // skillSymlinks;
+  };
 
   programs.claude-code = {
     enable = true;
