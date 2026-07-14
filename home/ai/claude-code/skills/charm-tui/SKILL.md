@@ -135,10 +135,11 @@ The default `ansi.StringWidth` / `ansi.Truncate` / `ansi.Cut` are **already grap
 - The residual is **VS16 emoji whose base is a text-default dingbat** (`✍️` U+270D, `✂️`, `✒️`, `✏️`): lipgloss says 2, but if the terminal **font has no wide color glyph** it paints a monochrome text glyph at **1** → 1-cell drift. Font-coverage-dependent, so it varies by machine.
 - On **older/simpler stacks** (or tmux without utf8proc / VS16-wide off) the split is wider — plain wcwidth paints `❤️` and flags at 1 too.
 
-Confirm on *your* stack: render the suspect glyphs in a bordered box (or a padded-then-marker row) and see which right edges drift; don't theorize. Mitigations, in order:
-1. **Strip VS16** (`strings.ReplaceAll(s, "️", "")`) from title/body *source* before rendering — drops lipgloss's count to 1, matching a text-presentation terminal, so the border aligns (cost: monochrome glyph). Verified fix; doesn't help flags.
-2. **Keep ambiguous-width glyphs out of load-bearing bordered content**, or reserve a cell of slack.
-3. Terminal-side is mostly a dead end: kitty `symbol_map` changes the *font*, not the cell width (won't move the border); `narrow_symbols` only forces glyphs *narrower*; tmux `codepoint-widths "U+270D=2"` can force a specific codepoint wide but is per-glyph whack-a-mole. The purpose-built fix — kitty's text-sizing protocol (OSC 66) — works kitty-direct but **tmux upstream declined to support it** (issue #4461, closed "very little chance"), and Mode 2027 negotiation is likewise unavailable through tmux. So inside tmux there is no robust protocol fix; strip-VS16 (option 1) is the reliable lever.
+Confirm on *your* stack: render the suspect glyphs in a bordered box (or a padded-then-marker row) and see which right edges drift; don't theorize. Mitigations, in order — and **the honest default is #1**:
+1. **Do nothing.** It's a 1-cell cosmetic drift on rare text-default dingbat emoji; every "fix" below is a hack against a terminal-side residual and can cost more than it saves.
+2. **Guarded VS16 strip** — only if border integrity in a panel genuinely matters. A *blind* `strings.ReplaceAll(s, "️", "")` is NOT sensible: VS16 is structurally embedded in ZWJ sequences, so blind stripping **corrupts** composed emoji (verified: 🏳️‍🌈 → white-flag + rainbow, 🏳️‍⚧️, ❤️‍🔥, ⛹️‍♀️ all break). Strip only a VS16 that is not adjacent to `U+200D`; accept that it also makes standalone glyphs monochrome. It mutates user content — a smell.
+3. **`tmux codepoint-widths "U+270D=2,…"`** — force specific codepoints wide (keeps color), but per-glyph whack-a-mole you'll extend forever.
+4. Terminal protocol route is a **dead end** inside tmux: kitty `symbol_map` changes the *font* not the width; `narrow_symbols` only forces *narrower*; kitty's text-sizing protocol (OSC 66) works kitty-direct but **tmux upstream declined it** (issue #4461, closed "very little chance"), and Mode 2027 negotiation is unavailable through tmux.
 
 ## Notes
 
