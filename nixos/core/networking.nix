@@ -7,7 +7,10 @@
   networking = {
     firewall = {
       enable = true;
-      trustedInterfaces = ["docker0"];
+      # br-+ wildcard covers docker0 plus every user-defined/k3d bridge
+      # (br-<id>), so containers on custom networks can reach the resolved
+      # stub listener on 172.17.0.1 (see services.resolved below).
+      trustedInterfaces = ["docker0" "br-+"];
 
       # Valent/KDE Connect ports for device communication
       allowedTCPPortRanges = [
@@ -92,6 +95,14 @@
       settings.Resolve = {
         LLMNR = false;
         MulticastDNS = false;
+        # Answer on the docker0 gateway too, not just 127.0.0.53. Docker hands
+        # containers a bridge gateway as their nameserver (loopback stubs aren't
+        # reachable from a container netns), so without this k3d/container DNS
+        # times out. Paired with the daemon `dns` setting that points every
+        # container at 172.17.0.1. Bound with IP_FREEBIND, so it works before
+        # docker0 exists. Split-DNS (tailnet ~ts.net, .lan) is preserved since
+        # queries still flow through this resolved instance.
+        DNSStubListenerExtra = "172.17.0.1";
       };
     };
 
