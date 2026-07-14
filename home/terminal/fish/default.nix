@@ -624,6 +624,15 @@
           set -gx LANGUAGE "en_US.UTF-8"
           set -gx LC_ALL "en_US.UTF-8"
         ''
+        # SSH login shells don't inherit the TMUX_TMPDIR that the kitty launcher
+        # and tmux-startup.service pin to the runtime dir, so a bare `tmux` would
+        # hit the default /tmp socket and miss the real server. Match them (but
+        # leave an inherited value alone, e.g. inside a pane).
+        + lib.optionalString pkgs.stdenv.hostPlatform.isLinux ''
+          if not set -q TMUX_TMPDIR; and test -d /run/user/(id -u)
+              set -gx TMUX_TMPDIR /run/user/(id -u)
+          end
+        ''
         # nix-homebrew installs into /opt/homebrew but touches no PATH; brew
         # shellenv adds bin/sbin + HOMEBREW_PREFIX/MANPATH so brew-installed
         # tools (fastlane, etc.) and the brew command itself resolve.
