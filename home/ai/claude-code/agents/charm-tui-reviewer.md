@@ -41,6 +41,9 @@ Frame each finding by its **latent failure mode**: who trips over it (a long tit
 - **Expensive renderer rebuilt in `View()`** (e.g. glamour `NewTermRenderer` per frame), or a viewport reconstructed on `WindowSizeMsg` instead of resized.
 - **Byte arithmetic on rune-indexed input** — `textinput.Position()` is rune-indexed; byte scans slice multibyte input mid-rune.
 - **Hardcoded footer/help hint labels** that don't derive from the keymap constants (lie after a rebind).
+- **Join-axis confusion** — `JoinHorizontal(lipgloss.Left, …)` or `JoinVertical(lipgloss.Top, …)`. Horizontal wants `Top`/`Bottom`, vertical wants `Left`/`Right`; the wrong axis silently mis-aligns unequal blocks. Statically confirmable.
+- **Emoji/CJK width** — even `ansi.StringWidth` approximates for grapheme clusters; flag column math on emoji/CJK-heavy data and recommend testing with real samples.
+- **Snapshot tests missing a forced color profile** — golden tests that don't `SetColorProfile` capture color-stripped output (stdout isn't a TTY under `go test`), so they won't catch color/highlight regressions.
 
 ## Static vs runtime — do not over-claim
 

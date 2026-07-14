@@ -29,7 +29,7 @@ Style.Width(W)  ─────────────── W cells total ─�
 | 1 | Border bleed / early wrap (the "−N tax") | Inner size = outer − `style.GetHorizontalFrameSize()` / `GetVerticalFrameSize()`. Measure sibling widgets with `lipgloss.Height/Width(rendered)` — **never** hand-subtract `w-2`/`w-4`. |
 | 2 | `Width/Height` pad but don't clip | Pair every `Width`/`Height` with `MaxWidth`/`MaxHeight`, or `ansi.Truncate` the content yourself. |
 | 3 | Untruncated variable-width string | `ansi.Truncate(s, innerW, "…")` every string you don't control (titles, labels, paths). **Never auto-wrap inside a bordered panel** — truncate or pan. |
-| 4 | `len()` for column math | Display cells ≠ bytes. Use `lipgloss.Width` / `ansi.StringWidth`, never `len()`. |
+| 4 | `len()` for column math | Display cells ≠ bytes. Use `lipgloss.Width` / `ansi.StringWidth`, never `len()`. Caveat: even these approximate for emoji ZWJ sequences and combining marks (grapheme clusters) — CJK/emoji-heavy content still misaligns; test with real emoji/CJK. |
 | 5 | ANSI style bleed | One style layer per span: render the **plain** string once with the bg style; never nest a `.Render()`-ed span inside another background. Strip non-SGR escapes (cursor/OSC/bracketed-paste) from captured pty/tmux content before framing — they corrupt the border. If you slice reset codes by hand, match **both** `\x1b[0m` and `\x1b[m` (v2 emits the short form). |
 | 6 | Unclamped derived dimension | `max(0, …)` every subtraction before it reaches a style, viewport, or `strings.Repeat` — terminals can be 1 column wide. |
 | 7 | Chrome height not reserved | Subtract footer/header height **once** (measured with `lipgloss.Height`), pass an explicit `Height` into every child; don't let a `JoinVertical` child size itself. |
@@ -103,6 +103,9 @@ func (m Model) View() string {
 - **Don't rebuild per frame.** Memoize expensive renderers (glamour `NewTermRenderer`) by wrap-width — `View()` runs every keystroke. On `WindowSizeMsg`, **resize** a viewport, don't reconstruct it.
 - **Rune vs byte indexing (caret/token math).** `textinput.Position()` is rune-indexed; convert at byte-scan boundaries or a multibyte prefix (Hebrew, emoji) slices mid-rune and misplaces the caret. Distinct from trap 4 (that's display *width*; this is string *indexing*).
 - **Footer/help hints from the keymap.** Derive hint labels from the same key constants the handler binds — a hardcoded `i:idle` lies the moment the binding moves to `s`.
+- **Color vanishes in tests / pipes.** Lipgloss auto-detects the color profile and **strips all color when stdout isn't a TTY** (CI, pipes, snapshot tests) and downsamples on a plain linux tty / over SSH. For deterministic golden tests, force it: `lipgloss.SetColorProfile(termenv.TrueColor)` (v1). Don't force it in the app — let it degrade.
+- **Join-axis confusion.** `JoinHorizontal` takes a *vertical* position (`Top`/`Bottom`/0–1); `JoinVertical` takes a *horizontal* one (`Left`/`Right`). Passing `Left` to `JoinHorizontal` (or `Top` to `JoinVertical`) silently mis-aligns blocks of unequal size.
+- **Center with `Place`, not math.** `lipgloss.Place(w, h, lipgloss.Center, lipgloss.Center, content)` fills a known box with whitespace around content — prefer it over hand-rolled centering (and it pairs with fixed-edge overlay anchoring).
 
 ## The truncation import (get this exact — it is the #1 hallucination)
 
