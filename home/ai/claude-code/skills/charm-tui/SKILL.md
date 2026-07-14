@@ -30,7 +30,7 @@ Style.Width(W)  ─────────────── W cells total ─�
 | 2 | `Width/Height` pad but don't clip | Pair every `Width`/`Height` with `MaxWidth`/`MaxHeight`, or `ansi.Truncate` the content yourself. |
 | 3 | Untruncated variable-width string | `ansi.Truncate(s, innerW, "…")` every string you don't control (titles, labels, paths). **Never auto-wrap inside a bordered panel** — truncate or pan. |
 | 4 | `len()` for column math | Display cells ≠ bytes. Use `lipgloss.Width` / `ansi.StringWidth`, never `len()`. |
-| 5 | ANSI style bleed | One style layer per span: render the **plain** string once with the bg style; never nest a `.Render()`-ed span inside another background. Strip non-SGR escapes from captured/foreign content before framing. |
+| 5 | ANSI style bleed | One style layer per span: render the **plain** string once with the bg style; never nest a `.Render()`-ed span inside another background. Strip non-SGR escapes (cursor/OSC/bracketed-paste) from captured pty/tmux content before framing — they corrupt the border. If you slice reset codes by hand, match **both** `\x1b[0m` and `\x1b[m` (v2 emits the short form). |
 | 6 | Unclamped derived dimension | `max(0, …)` every subtraction before it reaches a style, viewport, or `strings.Repeat` — terminals can be 1 column wide. |
 | 7 | Chrome height not reserved | Subtract footer/header height **once** (measured with `lipgloss.Height`), pass an explicit `Height` into every child; don't let a `JoinVertical` child size itself. |
 | 8 | Magic-number drift | Derive a shared dimension (gutter width, inner height) from one helper/const — never re-literal it in a second render path. |
@@ -94,6 +94,15 @@ func (m Model) View() string {
 - A `.Render()`-ed string passed as input to another `.Render()` that sets a background.
 - Two render paths that both hardcode the same spacing/gutter.
 - The same "height − footer − border" arithmetic copy-pasted in 3 places.
+
+## More gotchas (beyond the core ten)
+
+- **Blank / wrong-size screen.** Guard `if m.width == 0 { return "" }` — the first frame arrives before any `WindowSizeMsg`. And let Bubble Tea own the controlling TTY: don't `tea.WithOutput(os.Stderr)`, it misroutes the size queries and the program never learns its dimensions (renders blank in a tmux popup).
+- **Overlay / modal anchoring.** Anchor a floating layer to a **fixed edge** (e.g. top at `h/5`), not to a vertical center that shifts every time the content grows — a centered overlay jumps around by height.
+- **Wrap vs pan is a per-pane decision.** Never both wrap *and* truncate the same content. When full lines matter (diffs, tables), disable wrapping and pan horizontally (`ansi.Cut`, viewport `SetHorizontalStep`); only the narrow quick-view wraps.
+- **Don't rebuild per frame.** Memoize expensive renderers (glamour `NewTermRenderer`) by wrap-width — `View()` runs every keystroke. On `WindowSizeMsg`, **resize** a viewport, don't reconstruct it.
+- **Rune vs byte indexing (caret/token math).** `textinput.Position()` is rune-indexed; convert at byte-scan boundaries or a multibyte prefix (Hebrew, emoji) slices mid-rune and misplaces the caret. Distinct from trap 4 (that's display *width*; this is string *indexing*).
+- **Footer/help hints from the keymap.** Derive hint labels from the same key constants the handler binds — a hardcoded `i:idle` lies the moment the binding moves to `s`.
 
 ## The truncation import (get this exact — it is the #1 hallucination)
 

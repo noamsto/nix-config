@@ -33,6 +33,15 @@ Frame each finding by its **latent failure mode**: who trips over it (a long tit
 
 **Always flag `lipgloss.Truncate`** — it does not exist; the code will not compile. The correct call is `ansi.Truncate`.
 
+## Also watch for (beyond the ten)
+
+- **Blank/wrong-size render** — a `View()` with no `if m.width == 0 { return "" }` guard, or a `tea.WithOutput(os.Stderr)` that misroutes size queries.
+- **Overlay/modal anchored to a moving center** instead of a fixed edge (jumps by content height).
+- **Wrap *and* truncate the same content** — pick one; wide content (diffs/tables) should pan, not wrap.
+- **Expensive renderer rebuilt in `View()`** (e.g. glamour `NewTermRenderer` per frame), or a viewport reconstructed on `WindowSizeMsg` instead of resized.
+- **Byte arithmetic on rune-indexed input** — `textinput.Position()` is rune-indexed; byte scans slice multibyte input mid-rune.
+- **Hardcoded footer/help hint labels** that don't derive from the keymap constants (lie after a rebind).
+
 ## Static vs runtime — do not over-claim
 
 You read source, not rendered pixels. Be honest about the boundary:
