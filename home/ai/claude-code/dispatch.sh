@@ -179,8 +179,8 @@ mkdir -p "$crew_dir"
 dispatch_shape="${DISPATCH_SHAPE:-}"
 jq -nc --arg crew "$crew_id" --arg branch "$branch" \
   --arg engine "$agent" --arg model "$model" --arg tier "$tier" --arg effort "$effort" \
-  --arg shape "$dispatch_shape" \
-  '{ts:(now*1000|floor), crew_id:$crew, kind:"dispatch", branch:$branch, engine:$engine, model:$model, tier:$tier, effort:$effort, shape:$shape}' \
+  --arg shape "$dispatch_shape" --arg title "$title" \
+  '{ts:(now*1000|floor), crew_id:$crew, kind:"dispatch", branch:$branch, engine:$engine, model:$model, tier:$tier, effort:$effort, shape:$shape, title:$title}' \
   >>"$crew_dir/events.jsonl"
 
 # FleetView-style codename+color, derived from the branch (deterministic).
