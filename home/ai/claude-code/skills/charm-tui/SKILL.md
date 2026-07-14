@@ -29,7 +29,7 @@ Style.Width(W)  ─────────────── W cells total ─�
 | 1 | Border bleed / early wrap (the "−N tax") | Inner size = outer − `style.GetHorizontalFrameSize()` / `GetVerticalFrameSize()`. Measure sibling widgets with `lipgloss.Height/Width(rendered)` — **never** hand-subtract `w-2`/`w-4`. |
 | 2 | `Width/Height` pad but don't clip | Pair every `Width`/`Height` with `MaxWidth`/`MaxHeight`, or `ansi.Truncate` the content yourself. |
 | 3 | Untruncated variable-width string | `ansi.Truncate(s, innerW, "…")` every string you don't control (titles, labels, paths). **Never auto-wrap inside a bordered panel** — truncate or pan. |
-| 4 | `len()` for column math | Display cells ≠ bytes. Use `lipgloss.Width` / `ansi.StringWidth`, never `len()`. Caveat: even these approximate for emoji ZWJ sequences and combining marks (grapheme clusters) — CJK/emoji-heavy content still misaligns; test with real emoji/CJK. |
+| 4 | `len()` for column math | Display cells ≠ bytes. Use `lipgloss.Width` / `ansi.StringWidth`, never `len()`. For emoji/CJK there's a real fix — see the width note below. |
 | 5 | ANSI style bleed | One style layer per span: render the **plain** string once with the bg style; never nest a `.Render()`-ed span inside another background. Strip non-SGR escapes (cursor/OSC/bracketed-paste) from captured pty/tmux content before framing — they corrupt the border. If you slice reset codes by hand, match **both** `\x1b[0m` and `\x1b[m` (v2 emits the short form). |
 | 6 | Unclamped derived dimension | `max(0, …)` every subtraction before it reaches a style, viewport, or `strings.Repeat` — terminals can be 1 column wide. |
 | 7 | Chrome height not reserved | Subtract footer/header height **once** (measured with `lipgloss.Height`), pass an explicit `Height` into every child; don't let a `JoinVertical` child size itself. |
@@ -121,6 +121,15 @@ ansi.Wrap(s, limit, "")        // wrap when you deliberately want wrapping
 ```
 
 `lipgloss.Width` / `lipgloss.Height` measure already-rendered blocks (for reserving chrome). Legacy stacks may use `github.com/muesli/reflow/truncate` instead — but never a bare `lipgloss.Truncate`; it does not exist.
+
+## Emoji & CJK width — the real fix
+
+The default `ansi.StringWidth` / `ansi.Truncate` / `ansi.Cut` are **already grapheme-cluster-aware** (they use `GraphemeWidth` + `FirstGraphemeCluster`), so they measure ZWJ emoji and combining marks correctly. They *are* the fix — you don't need anything extra. What breaks alignment is reaching for a per-rune path instead:
+
+- ❌ `len(s)`, `utf8.RuneCountInString(s)`, `runewidth.RuneWidth` summed in a loop, or the `*Wc` variants (`ansi.StringWidthWc`, `ansi.TruncateWc`) — these count a grapheme cluster as several cells.
+- ✅ the default `ansi.*` functions (or `rivo/uniseg.StringWidth` directly).
+
+**Irreducible residual:** the *terminal emulator* has the final say on how many cells an emoji occupies, and terminals disagree (font, Unicode version, VS16 presentation) — so no client-side measurement is universally correct. For load-bearing columns, reserve a cell of slack or keep emoji out of width-critical slots. Terminal-side convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still only partially adopted.
 
 ## Notes
 

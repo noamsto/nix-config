@@ -42,7 +42,7 @@ Frame each finding by its **latent failure mode**: who trips over it (a long tit
 - **Byte arithmetic on rune-indexed input** — `textinput.Position()` is rune-indexed; byte scans slice multibyte input mid-rune.
 - **Hardcoded footer/help hint labels** that don't derive from the keymap constants (lie after a rebind).
 - **Join-axis confusion** — `JoinHorizontal(lipgloss.Left, …)` or `JoinVertical(lipgloss.Top, …)`. Horizontal wants `Top`/`Bottom`, vertical wants `Left`/`Right`; the wrong axis silently mis-aligns unequal blocks. Statically confirmable.
-- **Emoji/CJK width** — even `ansi.StringWidth` approximates for grapheme clusters; flag column math on emoji/CJK-heavy data and recommend testing with real samples.
+- **Emoji/CJK width** — the default `ansi.StringWidth`/`ansi.Truncate` are grapheme-cluster-aware and correct; flag the per-rune path instead (`len`, `utf8.RuneCountInString`, `runewidth.RuneWidth` sums, or the `*Wc` variants) on emoji/CJK data. Residual misalignment is terminal disagreement — recommend testing with real samples.
 - **Snapshot tests missing a forced color profile** — golden tests that don't `SetColorProfile` capture color-stripped output (stdout isn't a TTY under `go test`), so they won't catch color/highlight regressions.
 
 ## Static vs runtime — do not over-claim
