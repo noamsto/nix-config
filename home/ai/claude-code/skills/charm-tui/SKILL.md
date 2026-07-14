@@ -138,7 +138,7 @@ The default `ansi.StringWidth` / `ansi.Truncate` / `ansi.Cut` are **already grap
 Confirm on *your* stack: render the suspect glyphs in a bordered box (or a padded-then-marker row) and see which right edges drift; don't theorize. Mitigations, in order:
 1. **Strip VS16** (`strings.ReplaceAll(s, "️", "")`) from title/body *source* before rendering — drops lipgloss's count to 1, matching a text-presentation terminal, so the border aligns (cost: monochrome glyph). Verified fix; doesn't help flags.
 2. **Keep ambiguous-width glyphs out of load-bearing bordered content**, or reserve a cell of slack.
-3. Terminal-side: a `symbol_map`/better emoji font can give the missing wide glyph; true convergence is the grapheme-clustering mode (Unicode "Mode 2027"), still rare — and tmux often can't negotiate it (reports 2027 unsupported).
+3. Terminal-side is mostly a dead end: kitty `symbol_map` changes the *font*, not the cell width (won't move the border); `narrow_symbols` only forces glyphs *narrower*; tmux `codepoint-widths "U+270D=2"` can force a specific codepoint wide but is per-glyph whack-a-mole. The purpose-built fix — kitty's text-sizing protocol (OSC 66) — works kitty-direct but **tmux upstream declined to support it** (issue #4461, closed "very little chance"), and Mode 2027 negotiation is likewise unavailable through tmux. So inside tmux there is no robust protocol fix; strip-VS16 (option 1) is the reliable lever.
 
 ## Notes
 
