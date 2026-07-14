@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  osConfig,
   ...
 }: let
   brightnessctl = lib.getExe pkgs.brightnessctl;
@@ -64,6 +65,9 @@ in {
           on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch dpms off 2>/dev/null || true";
           on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
         }
+      ]
+      # In server mode the box must stay awake for SSH/tmux — drop idle suspend.
+      ++ lib.optionals (!(osConfig.machine.serverMode or false)) [
         # Suspend (long delay)
         {
           timeout = 1800; # 30 minutes

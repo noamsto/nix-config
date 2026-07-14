@@ -38,6 +38,16 @@
         default = config.machine.type == "laptop" || config.machine.type == "desktop";
         readOnly = true;
       };
+      serverMode = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Run this host as an always-on headless server: disable autonomous
+          suspend (lid-close fallback timer and idle suspend) so SSH/tmux
+          sessions survive a closed lid. Thermal emergency suspend stays active.
+          Flip back to false to restore normal laptop power behavior.
+        '';
+      };
     };
     profile = lib.mkOption {
       type = lib.types.enum ["personal" "work"];

@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.machine) isLaptop;
+  inherit (config.machine) isLaptop serverMode;
 
   lidCheckScript = pkgs.writeShellScript "lid-suspend-fallback" ''
     # If lid is open, nothing to do
@@ -23,7 +23,7 @@
     ${pkgs.systemd}/bin/systemctl suspend
   '';
 in {
-  config = lib.mkIf isLaptop {
+  config = lib.mkIf (isLaptop && !serverMode) {
     systemd.services.lid-suspend-fallback = {
       description = "Suspend when lid is closed and Hyprland is not running";
       serviceConfig = {
