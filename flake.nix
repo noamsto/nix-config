@@ -160,17 +160,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Unofficial Claude Desktop repackage (no official Linux build exists).
-    # Don't follow nixpkgs: keeps the electron closure pinned so routine
-    # nixpkgs bumps don't churn the derivation. electron is substituted from
-    # cache.nixos.org regardless; the only local step is a fast asar repack,
-    # which then re-runs solely when this input is bumped.
     claude-desktop = {
-      # Pinned: d2ce046 (Claude Desktop 1.12603.1) fails the #649 `--add-dir`
-      # .asar patch — its regex now matches twice and the build aborts. Upstream
-      # bug, unfixed: https://github.com/aaddrick/claude-desktop-debian/issues/718
-      # Unpin (drop the rev) once #718 is resolved.
-      url = "github:aaddrick/claude-desktop-debian/3a013797926057145625c6d9ae9ec5f3b8d23c43";
+      url = "github:aaddrick/claude-desktop-debian";
     };
 
     # === SPECIALIZED HARDWARE ===
