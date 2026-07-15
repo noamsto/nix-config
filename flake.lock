@@ -997,7 +997,7 @@
         "flake-compat": "flake-compat_6",
         "nixpkgs": [
           "lazytmux",
-          "tmux-state",
+          "tmux-remux",
           "nixpkgs"
         ]
       },
@@ -1162,14 +1162,14 @@
         ],
         "prdash": "prdash",
         "tmux-fork": "tmux-fork",
-        "tmux-state": "tmux-state"
+        "tmux-remux": "tmux-remux"
       },
       "locked": {
-        "lastModified": 1784021418,
-        "narHash": "sha256-ZYLOEsF+Ep0Lv/PT5aJ2Ip0mG7fs//tit6cQRCgffzo=",
+        "lastModified": 1784111662,
+        "narHash": "sha256-AITFXl96afOT+ZgzbKJjRkAj3NFa/eN3kWwEGYgdacE=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "ee4974e25a63739557150d5be4a129c71792bf05",
+        "rev": "b9bfcea5062161e29a872c2592ffbc6ede45e25e",
         "type": "github"
       },
       "original": {
@@ -2406,7 +2406,7 @@
         "type": "github"
       }
     },
-    "tmux-state": {
+    "tmux-remux": {
       "inputs": {
         "flake-parts": "flake-parts_8",
         "git-hooks-nix": "git-hooks-nix_5",
@@ -2416,16 +2416,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1783691899,
-        "narHash": "sha256-Q/2WFfGebw6Oy8OGea5iwBAX9UiwolVzR/sojOzBeCY=",
+        "lastModified": 1784111507,
+        "narHash": "sha256-DRELhLNCIwBGk6JNu14luL8K88u/vOUOCNgqeb45ZDk=",
         "owner": "noamsto",
-        "repo": "tmux-state",
-        "rev": "85638178527318565a6e8265fd7486bb12fe6514",
+        "repo": "tmux-remux",
+        "rev": "3e437a2ba28fc5cdcb1cf40a4557fe2e005c4a0a",
         "type": "github"
       },
       "original": {
         "owner": "noamsto",
-        "repo": "tmux-state",
+        "repo": "tmux-remux",
         "type": "github"
       }
     },

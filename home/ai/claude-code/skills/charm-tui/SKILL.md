@@ -7,7 +7,7 @@ description: Use when writing or editing a Bubble Tea / Lipgloss terminal UI in 
 
 ## Overview
 
-Bubble Tea/Lipgloss make the same ten layout mistakes easy to write and hard to see. This skill is the antidote list, grounded in the recurring bugs across Noam's own TUIs (prdash, wtc, tmux-state) plus upstream gh-dash.
+Bubble Tea/Lipgloss make the same ten layout mistakes easy to write and hard to see. This skill is the antidote list, grounded in the recurring bugs across Noam's own TUIs (prdash, wtc, tmux-remux) plus upstream gh-dash.
 
 **The one root cause behind most of them:** `lipgloss.Style.Width(W)` and `.Height(H)` set the size of the box *including* its own border and padding, and they only **pad up** to that size — they never clip. So content sized to the outer width overflows, and the border gets pushed off-screen. Everything below follows from taking that seriously.
 
