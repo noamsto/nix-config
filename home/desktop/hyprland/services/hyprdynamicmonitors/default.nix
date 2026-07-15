@@ -11,7 +11,17 @@
     runtimeInputs = with pkgs; [
       glib # provides gdbus for lid state checking
     ];
-    text = builtins.readFile ./scripts/workspace-manager.sh;
+    # In server mode the box stays awake with the lid closed — skip the
+    # undocked-lid-closed suspend handler (mirrors the system-awake guard).
+    text =
+      ''
+        readonly SERVER_MODE=${
+          if osConfig.machine.serverMode or false
+          then "1"
+          else "0"
+        }
+      ''
+      + builtins.readFile ./scripts/workspace-manager.sh;
   };
 
   # Get laptop scale from host config (defaults to 1.25)

@@ -218,6 +218,14 @@ configure_undocked() {
   # re-evaluation which kills this script, so anything after reload is unreliable.
   # The handler's 2s debounce gives reload time to complete.
   if is_lid_closed; then
+    # Server mode: headless always-on host, never suspend on lid close.
+    if [ "${SERVER_MODE:-0}" = "1" ]; then
+      log "Lid closed while undocked, but server mode active - skipping suspend"
+      log "Reloading Hyprland configuration..."
+      hyprctl reload 2>/dev/null || true
+      return
+    fi
+
     # Honor `system-awake` — if active, skip suspend handler entirely.
     # eDP-1 is already disabled by the HDM `undocked-lid-closed` profile,
     # so the display turns off; we just don't want the machine to sleep.
