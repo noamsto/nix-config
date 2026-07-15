@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  inherit (config.machine) isLaptop;
+  inherit (config.machine) isLaptop serverMode;
   inherit (config.machine) isPC;
 in {
   config = lib.mkIf isPC {
@@ -66,7 +66,7 @@ in {
       }
       // lib.optionalAttrs isLaptop {
         upower.enable = true;
-        fprintd.enable = true;
+        fprintd.enable = !serverMode; # headless server: no sensor to authenticate against
       };
 
     hardware = {

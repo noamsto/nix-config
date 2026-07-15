@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  inherit (config.machine) isLaptop;
+  inherit (config.machine) isLaptop serverMode;
 
   # Skip fprintd when lid is closed (clamshell mode)
   # Avoids waiting for unreachable fingerprint sensor
@@ -29,7 +29,7 @@
   # TTY/GUI: Ctrl+C doesn't work, need finite tries for fallback
   noCtrlCFprintdArgs = ["timeout=-1" "max-tries=3"];
 in {
-  config = lib.mkIf isLaptop {
+  config = lib.mkIf (isLaptop && !serverMode) {
     security.pam.services =
       lib.genAttrs
       ["login" "sudo" "su" "polkit-1"]
