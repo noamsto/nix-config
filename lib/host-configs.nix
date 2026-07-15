@@ -23,6 +23,10 @@
     hostname = "thinkpad-p14s-g6";
     desktop.mode = "hyprland";
     machine.type = "laptop";
+    # Temporarily running g6 as an always-on headless server (SSH/tmux).
+    # Set back to false to restore normal laptop suspend behavior. Read by both
+    # the NixOS host and standalone HM so `nh os`/`nh home` stay in sync.
+    machine.serverMode = true;
     profile = "personal";
     laptop-scale = "1.25";
   };

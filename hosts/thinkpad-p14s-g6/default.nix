@@ -25,10 +25,7 @@ in {
   inherit (hostConfig) hostname email profile laptop-scale;
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
-
-  # Temporarily running g6 as an always-on headless server (SSH/tmux).
-  # Set back to false to restore normal laptop suspend behavior.
-  machine.serverMode = true;
+  machine.serverMode = hostConfig.machine.serverMode;
 
   # Thinkfan configuration
   hardware.thinkpad.thinkfan = {
