@@ -1,11 +1,11 @@
 ---
 description: "Review a PR with all matching reviewers, dedupe across them, deslop the review comments, then auto-post one review covering all findings — mechanical, architectural, and clarity"
-argument-hint: "[PR number | URL] [--dry-run] [--yes]"
+argument-hint: "[PR number | URL] [--fast|--full] [--dry-run] [--yes]"
 ---
 
 # PR Review: Multi-Reviewer → One Deduped Review
 
-You take a single PR, run every reviewer that matches the diff, and merge their findings so nothing is repeated. Every surviving finding — **mechanical**, **architectural**, and **reader-comprehension (clarity)** — is posted as one inline review on the PR, tagged by class. Before posting, a **deslop pass** cleans the AI-slop out of the comment prose you wrote, so each comment lands tight. On your own PR the review **auto-posts** once findings are deslopped; you still see the full tally in chat. You coordinate and synthesize — the reviewer agents do the reviewing.
+You take a single PR, size up how involved it is, then review it on the lane that fits (Step 4). A **complex** PR gets the full treatment: every reviewer that matches the diff runs as its own agent and their findings are merged so nothing is repeated. A **simple** PR skips the fan-out — you review it inline yourself, applying the one matched reviewer's rubric — but still goes through the same verify → deslop → post tail. Every surviving finding — **mechanical**, **architectural**, and **reader-comprehension (clarity)** — is posted as one inline review on the PR, tagged by class. Before posting, a **deslop pass** cleans the AI-slop out of the comment prose you wrote, so each comment lands tight. On your own PR the review **auto-posts** once findings are deslopped; you still see the full tally in chat. You coordinate and synthesize.
 
 The downstream consumer of the posted review is often an **agent** (e.g. `/finish-prs`), so the posted findings must be structured, line-anchored, and independently resolvable — not a wall of text.
 
@@ -14,6 +14,8 @@ The downstream consumer of the posted review is often an **agent** (e.g. `/finis
 Parse:
 
 - **PR ref** (first non-flag token): a number (`1942`) or URL. If omitted, resolve the PR for the current branch: `gh pr view --json number,url,baseRefName,headRefName,author -q .`
+- `--fast` — skip the complexity judgment (Step 4) and force the **inline** lane. Requires exactly one matched reviewer; if two or more match, load each matched rubric and review inline. Mutually exclusive with `--full`.
+- `--full` — skip the complexity judgment and force the **fan-out** lane (dispatch matched reviewer agents), even for a tiny diff. Mutually exclusive with `--fast`.
 - `--dry-run` — do everything except post; print the full report to chat and stop. Never asks.
 - `--yes` — autopilot / agent flag: post without any chat interaction. Your own PR already auto-posts after the deslop pass (Step 7), so this only matters for scripted runs; it still does **not** override the non-author confirm (Step 1). Mutually exclusive with `--dry-run`.
 
@@ -59,11 +61,33 @@ Hold these gaps for **Step 10** — do not interrupt the review flow.
 
 ---
 
-## Step 4: Dispatch matched reviewers (parallel)
+## Step 4: Judge complexity, then produce findings
 
-Dispatch one `Agent` call **per matched reviewer, directly from this session** (not via a meta-agent — meta-agents fall back to weak inline review). Send all the calls in one message so they run concurrently. Scope each reviewer to its own file subset.
+This is the only step the complexity tier changes. Everything downstream (Steps 5–10) is identical on both lanes. First pick the lane, then produce the structured findings that Step 5 consumes.
 
-Tell each reviewer to return findings as a structured list, one finding per item:
+### 4a. Pick the lane
+
+If `--fast` or `--full` was passed, honor it and skip the judgment. Otherwise judge the diff and print a one-line verdict + reason (e.g. `SIMPLE — 2 files, 40 lines, single Go reviewer, no risk surface → inline lane`).
+
+The PR is **SIMPLE** (→ inline lane) only when **all three** gates hold:
+
+1. **Exactly one** reviewer matched in Step 2. (Zero matched → there is no rubric to apply; never go inline — fall through to Step 2's stop / Step 10 gap report. Two or more → COMPLEX.)
+2. **Small diff** — roughly **≤5 changed files** and **≤150 changed lines**.
+3. **No architectural or risk surface** — no new module boundary, contract/layering change, or non-trivial duplication, and nothing touching auth, migrations/schema, concurrency, crypto, or secrets.
+
+Any gate that fails → **COMPLEX** (→ fan-out lane). The size numbers are the ceiling; the fuzzy criteria in gate 3 can only *push toward* COMPLEX, never rescue a big or multi-reviewer diff into SIMPLE — so the only real judgment call is whether an already-small, single-language diff is nonetheless risky. When unsure, choose COMPLEX.
+
+### 4b. Inline lane (SIMPLE)
+
+No agent dispatch. **Read the matched reviewer's agent file** (`~/.claude/agents/<reviewer>.md`) and review the diff **yourself, in this session**, applying that agent's system prompt as your rubric plus the **Reader Comprehension** lens below. Produce findings in the exact structured format below. Then go to Step 5 (its cross-reviewer dedupe is a no-op with a single source — just triage).
+
+### 4c. Fan-out lane (COMPLEX)
+
+Dispatch one `Agent` call **per matched reviewer, directly from this session** (not via a meta-agent — meta-agents fall back to weak inline review). Send all the calls in one message so they run concurrently. Scope each reviewer to its own file subset, and instruct each with the findings format and the Reader Comprehension lens below.
+
+### Findings format (both lanes)
+
+Return findings as a structured list, one finding per item:
 
 ```
 - file: <path>
@@ -76,7 +100,7 @@ Tell each reviewer to return findings as a structured list, one finding per item
 
 `class: architectural` = a design/contract/layering/duplication decision that has more than one defensible answer. `class: mechanical` = a local, unambiguous fix. `class: clarity` = code that works but a human reader would misread or stumble over (see Reader Comprehension below).
 
-Also instruct each reviewer to apply the **Reader Comprehension** lens and emit any survivors as `class: clarity` findings:
+Apply — or on the fan-out lane instruct each reviewer to apply — the **Reader Comprehension** lens, emitting any survivors as `class: clarity` findings:
 
 > **Reader Comprehension — raise only genuinely ambiguous things, not everything.**
 >
