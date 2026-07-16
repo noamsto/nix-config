@@ -50,6 +50,12 @@ in {
     skills.enable = false;
     persist.enable = true;
     persist.restoreMode = "auto";
+    # Nested-tmux-over-ssh promotion: a `tmux` launched inside an ssh session
+    # (from within local tmux) becomes a first-class local session on the
+    # initiating machine. Only enable for hosts where root is you — a peer with
+    # root there can reach the reverse-forwarded socket. Both thinkpads qualify.
+    remote.enable = true;
+    remote.trustedHosts = ["tp-g6"];
     processIcons = {
       houston = "🚀";
     };
