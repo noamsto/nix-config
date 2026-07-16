@@ -10,7 +10,16 @@ Use `worker:$(git branch --show-current)` as your agent id for every bus call be
 ## Pipeline by tier
 - **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
 - **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then the **fast deterministic gate** (build+vet+lint+unit on changed packages, looped to green), then the code-review gate (one pass), then `/deslop` + push + PR.
-- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then plan + plan-critic), then execute, then the **fast deterministic gate**, then the code-review gate (one parallel review batch, reconciled once, then a **conditional** second re-review), then `/deslop` + push + PR.
+- **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then — see **Orchestration consult** — an optional Fable decomposition seeds plan + plan-critic), then execute, then the **fast deterministic gate**, then the code-review gate (one parallel review batch, reconciled once, then a **conditional** second re-review), then `/deslop` + push + PR.
+
+## Orchestration consult (deep only)
+Before the plan phase, decide **once** whether to bring Fable in to decompose the task. This decision is made in the worktree (where the code is), never at dispatch time.
+
+1. **Survey (cheap, in-worktree).** Scan the task against the repo: how many modules/packages it plausibly touches, and its blast radius (shared interfaces, cross-cutting seams). Emit a single boolean — *does this need a stronger decomposition than an opus plan alone?* Keep it cheap: a few `Grep`/`Glob` passes, no subagent.
+2. **If it trips, consult Fable.** Spawn an **ephemeral** subagent with the Agent tool, `model: fable`, running in this worktree. Prompt it to read `WORKER_TASK.md` and the relevant code and write `DECOMPOSITION.md` at the worktree root using this exact structure — `components` (each a stable id + one-line + `boundaries` may/​must-not-touch + `risk` tag), `ordering` (dependency order, `∥` for parallel-safe), `interfaces` (contracts that must stay stable across the split). It authors the **decomposition, not the plan** — no plan-schema step tags. `DECOMPOSITION.md` must **not** name its author (the plan-critic reads it author-less; rule 2 discipline).
+3. **Fallback — a should, not a blocker.** If Fable refuses, times out, or is unavailable, drop the consult and proceed on the plain `writing-plans` path — **byte-identical to a non-consulted deep worker**. Never fail the worker on a missing consult (same rule as the codex-diverse reviewer, "Code review gate").
+4. **Seed the plan.** When `DECOMPOSITION.md` exists, the `spec-plan-critic` plan phase consumes it as a hard constraint and `plan-critic` checks conformance (see that skill/agent). You do not hand-author the plan.
+5. **False-negative recovery.** If the survey did **not** trip (no consult) and the plain-path plan then **exhausts the revision cap** (rule 3) without an accepted plan, that is the signal the survey missed a genuinely complex task: run the consult **once now** and re-plan from the resulting `DECOMPOSITION.md`. This is a single explicit attempt **beyond** the cap (total stays finite: cap + 1). A worker that **already** consulted and still exhausts the cap surfaces `escalations[]` as today — no extra attempt. If the recovery consult itself refuses or times out, surface `escalations[]` and stop — do not re-loop the plain path that already exhausted the cap.
 
 ## Checkpoint-peek (standard/deep)
 At each pipeline **seam** — after spec, after plan, after execute, after the fast gate, after review, **before** sinking cost into the next stage — do a non-blocking peek for a dispatcher stop/redirect directive:
@@ -72,4 +81,12 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 6. **Never** run `wrangler deploy`, `wrangler ... --remote`, or `wrangler secret` on a prod-credentialed box. If a step seems to need one, stop and flag it — don't try to work around it.
 
 ## When done
-Open the PR, then `crew status worker:<branch> pr_open "" <url>` → `crew status worker:<branch> done`. As a human-visible nicety, also ping the dispatcher pane once: read `dispatcher_pane:` and `tmux display-message -t "$dispatcher_pane" -d 4000 "<agent_name> done: <branch> — PR <url>"`. Then stop.
+Open the PR, then `crew status worker:<branch> pr_open "" <url>` → `crew status worker:<branch> done`. As a human-visible nicety, also ping the dispatcher pane once: read `dispatcher_pane:` and `tmux display-message -t "$dispatcher_pane" -d 4000 "<agent_name> done: <branch> — PR <url>"`.
+
+- **Deep workers — emit outcome metrics (consulted or not).** Before you stop, append a metrics record to the bus so the consult can be evaluated against a baseline:
+  ```
+  crew msg "worker:$(git branch --show-current)" "metrics:$CREW_ID" '{"consulted":<true|false>,"plan_critic_first_pass":"<accept|revise|reject>","rework_count":<int>,"review_high":<int>}'
+  ```
+  (`$CREW_ID` is the `crew_id:` from `WORKER_TASK.md`.) `consulted` is whether the Fable consult ran; `plan_critic_first_pass` is the plan-critic's verdict on the **first** plan draft; `rework_count` is how many execute-stage fixes the gates forced; `review_high` is HIGH-severity review-gate findings. This is a plain `msg` to a synthetic sink — it does **not** wake the dispatcher (its `watch`/`inbox` filter `to==dispatcher:<crew>`/`*`, never `metrics:<crew>`). **Every deep worker emits this**, so non-consulted deep workers form the baseline.
+
+Then stop.
