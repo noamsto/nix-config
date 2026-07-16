@@ -16,6 +16,8 @@ Read the task and weigh its actual signals. Do not map mechanically from a label
 
 **Tier and model control different things — don't conflate them.** Tier sets the worker's *pipeline depth*: `trivial` runs **no critics** (implement → gate → PR), `standard` adds a plan-critic, `deep` adds spec + plan critics. Model sets how strong the orchestrator/implementer is. So "small but risky" means **raise the tier**, not just the model: a security-critical change is `standard`/`deep` even if it's only a few lines — bumping the model alone ships it *smarter but still unreviewed*. Across `trivial`/`standard` the model is often the same (`sonnet`); the tier is what decides whether anything reviews the work. When genuinely on the fence, pick the cheaper tier/model and say why — a worker can escalate via the bus. A task whose **decomposition** is the hard part (many interacting components, subtle split) is a `deep` signal too — the deep worker decides in its worktree whether to bring Fable in to decompose it (see `WORKER_PROTOCOL.md` → "Orchestration consult"); you do not make that call.
 
+**Plan-depth is a fourth lever — decouple it from tier.** Tier sets *review* rigor; whether the worker runs a *pre-implementation plan phase* is a separate judgement. When you inline a spec (`DISPATCH_SPEC`) that already contains **all four** of — root cause/mechanism, an explicit file list, a named approach, and acceptance criteria — you have already done the plan phase yourself; pass `--plan provided` so the worker treats the doc as its plan of record and skips `spec-plan-critic`. If the task still needs design work the doc doesn't settle, pass `--plan required` (the default). This is independent of tier: a `standard` + `--plan provided` task still gets a full standard *review*; it just isn't re-planned. Do **not** drop to `trivial` to skip planning — `trivial` also drops the review gate. `--plan` is judged like `--effort`: by the doc you wrote, not by the tier.
+
 **Engine is a third, co-equal lever — judge it, don't default it.** Every task
 resolves to `{tier, engine, model}`. Weigh **claude** and **codex** as equal
 candidates by task fit, not as default-plus-exception:
@@ -37,10 +39,10 @@ lever collapses to claude-only; co-equal routing applies on the work profile.
 ## Scaffold one worker per task
 
 ```
-dispatch <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [LINEAR-ID] <title…>
+dispatch <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--plan provided|required] [LINEAR-ID] <title…>
 ```
 
-`dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model + effort you judged.
+`dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, plan, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model + effort you judged.
 
 - **Tracker.** Pass a **Linear id** (e.g. `ENG-6789`) as the token right after the model for Linear-tracked repos (GitHub issues disabled) — it branches `eng-<n>-<slug>` and stamps `Closes ENG-<n>`, no `gh` call. On GitHub-issue repos, pass an **existing issue number** (`#42` or `42`) to reuse it — it branches `feat/42-<slug>` and stamps `Closes #42`, no `gh` call. Omit the tracker entirely and `dispatch` mints a fresh issue (`feat/<n>-<slug>`, `Closes #<n>`); if issue creation fails it aborts instead of half-scaffolding.
 - **Engine.** Pass `--agent claude` or `--agent codex` per the judgment call above — same crew-bus contract either way. The `<model>` slot must match the engine: a claude model for `--agent claude`, a codex model for `--agent codex` (model map in `dispatch-orchestration.md`). Codex is **work profile only** (no personal OpenAI account) — it isn't installed off the work profile, and `dispatch` rejects `--agent codex` there before scaffolding. Codex needs a one-time `codex login`. Tier still sets pipeline depth regardless of engine; `--effort` (required, judged independently from tier) sets the reasoning effort passed to whichever engine you picked.

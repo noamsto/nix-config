@@ -7,7 +7,7 @@
 # this file is only the function body (see crew.sh for the same pattern).
 
 usage() {
-  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
+  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--plan provided|required] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
 }
 
 tier="${1:-}"
@@ -34,6 +34,7 @@ linear_id=""
 gh_issue=""
 mcp_profile=""
 crew_id_flag=""
+plan_val="required"
 while [ $# -gt 0 ]; do
   case "$1" in
   --agent)
@@ -72,6 +73,17 @@ while [ $# -gt 0 ]; do
       echo "dispatch: --crew-id needs a value" >&2
       exit 1
     }
+    shift 2
+    ;;
+  --plan)
+    plan_val="${2:-}"
+    case "$plan_val" in
+    provided | required) ;;
+    *)
+      echo "dispatch: --plan must be provided or required" >&2
+      exit 1
+      ;;
+    esac
     shift 2
     ;;
   *)
@@ -191,8 +203,8 @@ agent_color=$(printf '%s' "$ident" | jq -r .tmux)
 # Stamp the task file: header fields the worker protocol reads, the closes
 # line, and the full task body from $DISPATCH_SPEC (falls back to the title).
 {
-  printf 'tier: %s\neffort: %s\ntitle: %s\n%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
-    "$tier" "$effort" "$title" "$closes" "${TMUX_PANE:-}" "$crew_dir" "$crew_id" "$agent_name"
+  printf 'tier: %s\neffort: %s\nplan: %s\ntitle: %s\n%s\ndispatcher_pane: %s\ncrew_dir: %s\ncrew_id: %s\nagent_name: %s\n' \
+    "$tier" "$effort" "$plan_val" "$title" "$closes" "${TMUX_PANE:-}" "$crew_dir" "$crew_id" "$agent_name"
   if [ -n "${DISPATCH_SPEC:-}" ] && [ -f "${DISPATCH_SPEC:-}" ]; then
     printf '\n## Task\n\n'
     cat "$DISPATCH_SPEC"
@@ -216,10 +228,19 @@ if [ "$profile" = work ] && [ "$agent" = claude ] && [ "$tier" = deep ]; then
   xreview_mcp="--mcp-config $HOME/.config/claude-code/mcp-codex.json"
 fi
 
+# When the dispatcher already wrote the plan into the task doc, say so in the
+# launch prompt. A launch-prompt (user-turn) instruction is a "direct request",
+# which satisfies using-superpowers' own escape hatch — so the worker skips the
+# plan phase instead of re-deriving it.
+plan_note=""
+if [ "$plan_val" = provided ]; then
+  plan_note=" The task doc is your plan of record — extract the steps and implement; do not re-plan or re-critique it."
+fi
+
 if [ "$agent" = codex ]; then
   tmux send-keys -t "$pane" \
-    "codex --profile worker -m $model -c model_reasoning_effort=$effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.'" Enter
+    "codex --profile worker -m $model -c model_reasoning_effort=$effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
 else
   tmux send-keys -t "$pane" \
-    "claude --name $agent_name --model $model --effort $effort $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.'" Enter
+    "claude --name $agent_name --model $model --effort $effort $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
 fi

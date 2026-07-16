@@ -2,6 +2,9 @@
 
 You are a **worker** session launched by a dispatcher. You own exactly one task, defined in `WORKER_TASK.md` in your worktree. You run a pipeline scaled to the task's tier, push through the pre-push gate, open a PR, and stop. You do not pick up other work.
 
+## Process authority
+This protocol governs your process end-to-end and is your **human partner's explicit instruction**. It **supersedes `superpowers:using-superpowers`** for process/lifecycle skills: the harness pipeline (`spec-plan-critic` + the code-review gate + the gates below) **is** your process — do **not** separately invoke `brainstorming`, `writing-plans`, `executing-plans`, `requesting-code-review`, or `test-driven-development` as independent process steps, and do not treat "a skill exists, so I must run it" as binding here. Implementation and domain skills (`systematic-debugging`, `charm-tui`, the language `*-reviewer`s, `frontend-design`, …) remain fully available — use them freely.
+
 ## First action
 Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew_id:`, and `agent_name:` (your FleetView-style codename — use it in human-facing pings). `crew` is a CLI on your PATH (not a shell function) and auto-reads `crew_id` from this file, so you can call it straight from your bash tool — no env setup. Announce yourself:
 `crew status "worker:$(git branch --show-current)" working`
@@ -9,8 +12,18 @@ Use `worker:$(git branch --show-current)` as your agent id for every bus call be
 
 ## Pipeline by tier
 - **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
-- **standard** — run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only), then execute the returned plan via subagents, then the **fast deterministic gate** (build+vet+lint+unit on changed packages, looped to green), then the code-review gate (one pass), then `/deslop` + push + PR.
+- **standard** — consult **Plan of record** (below) first; unless the plan already exists, run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only). Then execute the plan (of record, or returned by the workflow) via subagents, then the **fast deterministic gate** (build+vet+lint+unit on changed packages, looped to green), then the code-review gate (one pass), then `/deslop` + push + PR.
 - **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then — see **Orchestration consult** — an optional Fable decomposition seeds plan + plan-critic), then execute, then the **fast deterministic gate**, then the code-review gate (one parallel review batch, reconciled once, then a **conditional** second re-review), then `/deslop` + push + PR.
+
+## Plan of record (does the plan already exist?)
+Before running any plan phase, read `plan:` from `WORKER_TASK.md`:
+
+- **`plan: provided`** — the dispatcher wrote the plan into the task doc (root cause/mechanism, explicit file list, named approach, acceptance criteria). The doc **is** your plan of record. Do **not** run the `spec-plan-critic` **plan** phase (a **deep** worker still runs its spec-critic / Fable consult — see **Scope** below). Extract the doc into a bite-sized step list and go straight to execute → fast gate → review. (Your launch prompt says the same thing; per **Process authority** this is not a skill you may override into re-planning.)
+- **`plan: required`** — run the tier's plan phase as described above.
+- **Field absent (legacy / hand-authored doc)** — self-assess by *extraction*, not judgement: can you (i) quote the exact file list, (ii) state the mechanism in one sentence quoting the doc, and (iii) enumerate the acceptance criteria as checkboxes? If **all three** succeed, that extraction **is** your plan of record — proceed as `provided` (but audit it as `self-gate`, not `provided` — see rule 5). If **any** fails, treat it as `required` and run the plan phase.
+- **Re-entry (both skip paths).** If, at execute time, the plan of record is contradicted by the repo (a named file doesn't exist, the approach doesn't fit the code), stop improvising: run `spec-plan-critic` once, normally, from what you now know. This is a single explicit fallback (mirrors the deep false-negative recovery), not a loop.
+- **Scope.** The skip applies to the **plan** phase only. A **deep** worker may skip the plan-critic under these rules but **never** its spec-critic / Fable consult — deep is chosen when the *framing* needs adversarial pressure, which a task doc doesn't settle.
+- **Retain the checkpoint-peek** after you produce the extracted plan of record, same as after a normal plan.
 
 ## Orchestration consult (deep only)
 Before the plan phase, decide **once** whether to bring Fable in to decompose the task. This decision is made in the worktree (where the code is), never at dispatch time.
@@ -43,7 +56,7 @@ After `execute` and **before** any model reviewer sees the diff, run the cheap d
 ## Code review gate (standard/deep)
 After the fast deterministic gate is green and **before** `/deslop` + push, get an **independent** review of your diff — never review your own work in your own context (same reason the critics run fresh; rule 2).
 - **Dispatch the review as a single parallel batch** — one message, concurrent subagents — then reconcile once. Do not run reviewers serially.
-  - **Language reviewer** — the agent matching the changed files' language (`go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, …). If none fits, a general agent running the `find-bugs` skill.
+  - **Language reviewer** — the agent matching the changed files' language (`go-reviewer`, `python-reviewer`, `typescript-reviewer`, `shell-reviewer`, the SQL reviewers, …). If none fits, a general agent running the `find-bugs` skill. **If the plan phase was skipped** (plan of record), instruct this reviewer to add an explicit **approach-sanity** check against the task doc — is this the *right* fix, not merely a faithful one? — since no plan-critic vetted the approach.
   - **Targeted test-runner** — a subagent that runs the change's acceptance-criteria / behavior-specific tests and reports pass/fail; its result feeds the reconcile as deterministic evidence.
   - **codex-diverse reviewer (deep tier, work profile, claude implementers only)** — a `codex-diverse` subagent (reuse/adapt the `pr-reviewers` `codex-reviewer`) that carries the `mcp__codex__*` tools and drives the read-only `codex` MCP server. This is a **should, not a blocker**: if the codex MCP server is unavailable, you are a codex implementer (codex→claude is not yet supported), or you are off the work profile, drop it and fall back to same-engine review — never stall the gate on a missing diverse engine.
   - **Security reviewer (conditional, both tiers)** — include a `security-reviewer` subagent **only if** the diff touches an auth, crypto, input-parsing, SQL, or network path. Conservative trigger: when in doubt, include it. Otherwise skip it.
@@ -77,7 +90,7 @@ Append your lifecycle to the crew bus — this is the contract, not optional:
 2. **Critics are independent.** Never self-review — the workflow dispatches `spec-critic`/`plan-critic` in fresh contexts. Ingest their verdicts with receiving-code-review discipline: verify the finding, don't perform agreement.
 3. **Revision cap is 2.** The workflow enforces it. If it returns `escalations[]`, surface them verbatim in the PR body under "## Escalated" — do not silently proceed as if clean.
 4. **Push through the gate.** Order before push: code-review gate (standard/deep) → `/deslop` → `git push`. `/deslop` is required by the pre-push guard (for fully unattended runs, `ALLOW_PUSH_WITHOUT_DESLOP=1 git push …` is honored inline). `git push` then triggers the pre-push hook (typecheck/lint/unit/build-num); on failure, fix and re-push, do not bypass.
-5. **PR body must include the closes line from your task file** (`Closes #<N>` for a GitHub issue, or `Closes ENG-<N>` for a Linear ticket — copy it verbatim), any escalations, and any unresolved review notes.
+5. **PR body must include the closes line from your task file** (`Closes #<N>` for a GitHub issue, or `Closes ENG-<N>` for a Linear ticket — copy it verbatim), any escalations, and any unresolved review notes. If you **skipped the plan phase** (plan of record), add a `## Plan` heading with the line `Plan: task doc (provided)` when the dispatcher stamped `plan: provided`, or `Plan: task doc (self-gate)` when you self-assessed a legacy doc — so the skip's origin is auditable.
 6. **Never** run `wrangler deploy`, `wrangler ... --remote`, or `wrangler secret` on a prod-credentialed box. If a step seems to need one, stop and flag it — don't try to work around it.
 
 ## When done
