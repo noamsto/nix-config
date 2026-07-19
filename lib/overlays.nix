@@ -34,6 +34,10 @@ inputs: [
 
   inputs.mcp-servers-nix.overlays.default
 
+  # Firefox add-ons built through *this* repo's pkgs, so `allowUnfree` applies
+  # (the flake's own `packages` output can't see it — 1Password is unfree).
+  inputs.firefox-addons.overlays.default
+
   # Provides `claude-desktop` and `claude-desktop-fhs` (FHS variant for MCP)
   inputs.claude-desktop.overlays.default
 

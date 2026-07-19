@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   osConfig,
   lib,
   pkgs,
@@ -160,7 +159,7 @@ in {
             path = "automation";
             settings = firefoxCommonSettings // {"marionette.port" = 2828;};
             extensions.packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-              inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}.onepassword-password-manager
+              pkgs.firefox-addons.onepassword-password-manager
             ];
           };
         }
