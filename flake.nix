@@ -226,6 +226,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Packaged Firefox add-ons (rycee/nur-expressions) for declarative,
+    # per-profile extension installs — used by the marionette automation profile.
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-flatpak.url = "github:gmodena/nix-flatpak";
 
     wrappers.url = "github:Lassulus/wrappers";

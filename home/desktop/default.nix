@@ -1,6 +1,9 @@
 {
+  config,
+  inputs,
   osConfig,
   lib,
+  pkgs,
   ...
 }: let
   firefoxCommonSettings = {
@@ -94,6 +97,14 @@
       display: none !important;
     }
   '';
+
+  # Launch the dedicated automation profile with Marionette active so the
+  # firefox-devtools MCP can attach on port 2828 (see home/ai/mcp-servers.nix).
+  # Marionette only turns on with the --marionette flag, so a profile alone
+  # can't enable it — this wrapper is the entry point.
+  firefox-marionette = pkgs.writeShellScriptBin "firefox-marionette" ''
+    exec ${config.programs.firefox.finalPackage}/bin/firefox -P automation --marionette "$@"
+  '';
 in {
   imports =
     [
@@ -139,6 +150,19 @@ in {
             settings = firefoxCommonSettings;
             userChrome = firefoxUserChrome;
           };
+
+          # Dedicated automation profile driven by `firefox-marionette`. Pins the
+          # Marionette port to match the firefox-devtools MCP. 1Password is
+          # declared here so a freshly-created profile is login-ready; the addon
+          # set is Linux-only, so guard the darwin build.
+          automation = {
+            id = 2;
+            path = "automation";
+            settings = firefoxCommonSettings // {"marionette.port" = 2828;};
+            extensions.packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+              inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}.onepassword-password-manager
+            ];
+          };
         }
         // lib.optionalAttrs (osConfig.profile == "work") {
           work = {
@@ -157,4 +181,6 @@ in {
       ];
     };
   };
+
+  home.packages = [firefox-marionette];
 }
