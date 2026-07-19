@@ -127,8 +127,12 @@ overwrites and the carousel updates in place). One node per worker; **you** are 
 root. This is a read-only mirror of the bus — never let drawing it delay a reply to a
 blocked worker.
 
-Per-worker node: fill with the worker's roster `color` (a plain color name D2
-accepts), label `"<codename>\n<title>\n<state> · <age>s"`. Draw a `PR` node and an
+Per-worker node: **outline** it with the worker's roster `color` on the *stroke*
+(`{style: {stroke: <color>; stroke-width: 3}}`, a plain color name D2 accepts) —
+not the fill. A hand-set fill bakes in one theme's assumption and the label can
+land light-on-light; a colored border keeps the node on the theme's own
+fill+label (always readable) while still tying it to its tmux window color. Label
+`"<codename>\n<title>\n<state> · <age>s"`. Draw a `PR` node and an
 edge to it for any worker in `pr_open`/`done` (label it with the `pr_url`). Escape a
 literal `$` in any label as `\$`, and use only plain quoted labels with `\n` — never
 `|md`/`|markdown` blocks (the rasterizer paints them blank and suppresses the whole
@@ -137,8 +141,8 @@ diagram). Skeleton:
 ```d2
 title: "Crew roster" {near: top-center}
 dispatcher: "dispatcher" {style.bold: true}
-sage: "sage\nfix the widget\nworking · 42s" {style.fill: green}
-atlas: "atlas\nbump flake.lock\npr_open · 8s" {style.fill: blue}
+sage: "sage\nfix the widget\nworking · 42s" {style: {stroke: green; stroke-width: 3}}
+atlas: "atlas\nbump flake.lock\npr_open · 8s" {style: {stroke: blue; stroke-width: 3}}
 pr: "PR" {shape: page}
 dispatcher -> sage
 dispatcher -> atlas
