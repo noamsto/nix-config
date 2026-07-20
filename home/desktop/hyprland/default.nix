@@ -116,7 +116,7 @@ in {
       firefox-marionette = {
         name = "Firefox (Marionette)";
         genericName = "Web Browser";
-        exec = "${lib.getExe pkgs.firefox} -P automation --marionette %U";
+        exec = "${lib.getExe pkgs.firefox} -P automation --marionette --remote-debugging-port=9222 %U";
         icon = "firefox";
         terminal = false;
         categories = ["Network" "WebBrowser"];

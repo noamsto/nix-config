@@ -102,7 +102,7 @@
   # Marionette only turns on with the --marionette flag, so a profile alone
   # can't enable it — this wrapper is the entry point.
   firefox-marionette = pkgs.writeShellScriptBin "firefox-marionette" ''
-    exec ${config.programs.firefox.finalPackage}/bin/firefox -P automation --marionette "$@"
+    exec ${config.programs.firefox.finalPackage}/bin/firefox -P automation --marionette --remote-debugging-port=9222 "$@"
   '';
 in {
   imports =
