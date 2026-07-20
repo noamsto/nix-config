@@ -42,6 +42,11 @@ in {
     # Linux propagates the login shell fine, so leave it at the default there.
     defaultShell = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.getExe pkgs.fish);
     worktrunk.enable = true;
+    # Consolidate every repo's worktrees under one external root instead of a
+    # visible `<repo>-worktrees` sibling that doubles up the git folder listing.
+    # Org-nested (<org>/<repo>) so same-named repos across orgs can't collide.
+    # Non-nested, so the watchman/fsevents concern (see lazytmux) doesn't apply.
+    worktrunk.worktreePath = "${config.home.homeDirectory}/Data/git/.worktrees/{{ repo_path | dirname | basename }}/{{ repo_path | basename }}/{{ branch | sanitize }}";
     claudeIntegration.enable = true;
     # Summarize fallback windows (no issue, default branch) into a short title
     # via `claude -p` instead of showing the raw captured prompt.
