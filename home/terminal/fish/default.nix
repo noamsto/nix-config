@@ -215,6 +215,10 @@
               # Catppuccin themes (the old colour141 washed out on Latte).
               tmux set-window-option @crew_name dispatcher
               tmux set-window-option @crew_color colour99
+              # No tmux event fires on a user-option set, and lazytmux's per-tick
+              # poll only runs for the session a client is viewing — so kick a
+              # reflow now, else the badge won't render if you tab away at launch.
+              tmux-reflow-windows (tmux display-message -p -t "$TMUX_PANE" '#{session_name}') (tmux display-message -p -t "$TMUX_PANE" '#{window_width}')
           end
           # Suffix the first task onto the session name so the /resume picker shows
           # `dispatcher: <task>` instead of a wall of identical `dispatcher` entries.

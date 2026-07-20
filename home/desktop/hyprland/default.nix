@@ -110,6 +110,17 @@ in {
         mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
         categories = ["Network" "WebBrowser"];
       };
+
+      # Automation profile with Marionette active for the firefox-devtools MCP.
+      # No mimeType: it's a launcher entry, not a default-browser handler.
+      firefox-marionette = {
+        name = "Firefox (Marionette)";
+        genericName = "Web Browser";
+        exec = "${lib.getExe pkgs.firefox} -P automation --marionette %U";
+        icon = "firefox";
+        terminal = false;
+        categories = ["Network" "WebBrowser"];
+      };
     }
     // lib.optionalAttrs isWork {
       firefox-work = {

@@ -31,11 +31,23 @@ Because each Bash tool call is a fresh shell, pass the literal crew id you noted
 — e.g. `dispatch --crew-id 1720800000-12345 standard sonnet --effort medium …` — and
 prefix crew reads with `CREW_ID=<id> crew …` — e.g. `CREW_ID=1720800000-12345 crew status …`.
 
-First, tag this window so lazytmux shows the dispatcher badge (the `dispatcher`
-launcher does this automatically; the in-session path must do it once):
+First, tag this window so lazytmux shows the dispatcher badge, then force a
+reflow so it renders. Two things bite here:
+
+- **Target `-t "$TMUX_PANE"`, never a bare `set-window-option`.** A bare stamp
+  hits the session's *active* window, which is often not this session's window
+  (you may not be the focused window, or another window is active) — the badge
+  then lands on the wrong window, possibly in another session. `$TMUX_PANE` is
+  Claude's own pane, so it always resolves to *this* window.
+- **The stamp alone won't render.** No tmux event fires on a user-option set,
+  and lazytmux's per-tick poll only runs for the session a client is *currently
+  viewing* — so kick a reflow explicitly, else the badge won't show until you
+  next switch to this window.
 
 ```
-tmux set-window-option @crew_name dispatcher \; set-window-option @crew_color colour99
+tmux set-window-option -t "$TMUX_PANE" @crew_name dispatcher
+tmux set-window-option -t "$TMUX_PANE" @crew_color colour99
+tmux-reflow-windows "$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}')" "$(tmux display-message -p -t "$TMUX_PANE" '#{window_width}')"
 ```
 
 **Argument:** `$ARGUMENTS`
