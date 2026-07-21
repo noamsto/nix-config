@@ -249,6 +249,15 @@ in {
       ProgramArguments = ["/usr/bin/open" "-a" "Easy Move+Resize"];
       RunAtLoad = true;
     };
+
+    # KeepingYouAwake's own "Start at Login" uses SMAppService (macOS 13+), which
+    # can't be set declaratively via `defaults`. Drive it from a LaunchAgent
+    # instead — same `open -a` + RunAtLoad-only pattern as easy-move-resize. It
+    # comes up caffeinating because ActivateOnLaunch is set below.
+    keepingyouawake.serviceConfig = {
+      ProgramArguments = ["/usr/bin/open" "-a" "KeepingYouAwake"];
+      RunAtLoad = true;
+    };
   };
 
   # The tailscale-app cask ships its CLI inside the bundle (capital-T binary),
@@ -323,6 +332,14 @@ in {
         # means they never collide. Mainly useful on floating windows — dragging
         # a tiled one just gets re-tiled by AeroSpace on the next layout pass.
         "org.dmarcotte.Easy-Move-Resize".ModifierFlags = "CMD,ALT";
+
+        # KeepingYouAwake starts caffeinating as soon as it launches, so the
+        # login-item LaunchAgent above yields an always-awake session with a
+        # filled menu-bar cup — replacing a hand-run `caffeinate`. Quirk from
+        # its source (NSUserDefaults+KYAKeys): the whole reverse-DNS string is
+        # the *key name*, stored inside the app's own domain — hence the domain
+        # prefix repeats as domain and key.
+        "info.marcel-dierkes.KeepingYouAwake"."info.marcel-dierkes.KeepingYouAwake.ActivateOnLaunch" = true;
       };
     };
   };
