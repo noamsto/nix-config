@@ -237,18 +237,9 @@
 
     wrappers.url = "github:Lassulus/wrappers";
 
-    # aeye (carousel binary + the Claude Code diagram/image plugin) is consumed
-    # via lazytmux. Pin it directly here and make lazytmux follow, so an aeye bump
-    # is one `nix flake update aeye` in this repo instead of a lazytmux round-trip.
-    aeye = {
-      url = "github:noamsto/aeye";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     lazytmux = {
       url = "github:noamsto/lazytmux";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.aeye.follows = "aeye";
     };
 
     # agent-smith CC plugin engine (extractor/analyst/applier binaries); the
