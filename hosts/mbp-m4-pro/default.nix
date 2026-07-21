@@ -189,6 +189,10 @@ in {
       # Tap/hold on Caps Lock (Esc on tap, Hyper ⌘⌃⌥ on hold) for the AeroSpace
       # WM modifier — see home/darwin/karabiner.nix.
       "karabiner-elements"
+      # Menu-bar caffeinate wrapper: coffee-cup icon toggles sleep prevention
+      # (filled = active), replacing a hand-run `caffeinate`. Option-click for
+      # timed sessions. Start-at-login + activate-on-battery via its own menu.
+      "keepingyouawake"
       "losslesscut"
       # 3-finger swipe → AeroSpace workspace (parity with Hyprland's gesture
       # swipe on the ThinkPad). From the mediosz/tap declared above.
