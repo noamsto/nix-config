@@ -7,7 +7,7 @@
 # this file is only the function body (see crew.sh for the same pattern).
 
 usage() {
-  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] [--mcp <profile>] [--plan provided|required] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
+  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex|cursor] [--mcp <profile>] [--plan provided|required] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
 }
 
 tier="${1:-}"
@@ -40,9 +40,9 @@ while [ $# -gt 0 ]; do
   --agent)
     agent="${2:-}"
     case "$agent" in
-    claude | codex) ;;
+    claude | codex | cursor) ;;
     *)
-      echo "dispatch: --agent must be claude or codex" >&2
+      echo "dispatch: --agent must be claude, codex, or cursor" >&2
       exit 1
       ;;
     esac
@@ -123,8 +123,12 @@ if [ "$agent" = codex ] && [ "$profile" != work ]; then
   echo "dispatch: --agent codex is work-profile only (no personal codex account)" >&2
   exit 1
 fi
-if [ "$agent" = codex ] && [ -n "$mcp_profile" ]; then
-  echo "dispatch: --mcp is claude-only; codex base MCP comes from --profile worker" >&2
+if [ "$agent" = cursor ] && [ "$profile" != work ]; then
+  echo "dispatch: --agent cursor is work-profile only" >&2
+  exit 1
+fi
+if [ "$agent" != claude ] && [ -n "$mcp_profile" ]; then
+  echo "dispatch: --mcp is claude-only; codex/cursor base MCP comes from their own profile" >&2
   exit 1
 fi
 
@@ -240,6 +244,13 @@ fi
 if [ "$agent" = codex ]; then
   tmux send-keys -t "$pane" \
     "codex --profile worker -m $model -c model_reasoning_effort=$effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
+elif [ "$agent" = cursor ]; then
+  # cursor-agent has no reasoning-effort flag — effort is encoded in the model
+  # id ($model, e.g. claude-opus-4-8-high); composer-2.5 has no effort variants.
+  # -p (headless) with --force/--trust/--approve-mcps runs unattended (codex
+  # bypass analog); base MCP is the shared ~/.cursor/mcp.json.
+  tmux send-keys -t "$pane" \
+    "cursor-agent -p --force --trust --approve-mcps --output-format text --model $model 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
 else
   tmux send-keys -t "$pane" \
     "claude --name $agent_name --model $model --effort $effort $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter

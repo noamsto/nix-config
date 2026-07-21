@@ -35,13 +35,13 @@ First, tag this window so lazytmux shows the dispatcher badge, then force a
 reflow so it renders. Two things bite here:
 
 - **Target `-t "$TMUX_PANE"`, never a bare `set-window-option`.** A bare stamp
-  hits the session's *active* window, which is often not this session's window
+  hits the session's _active_ window, which is often not this session's window
   (you may not be the focused window, or another window is active) — the badge
   then lands on the wrong window, possibly in another session. `$TMUX_PANE` is
-  Claude's own pane, so it always resolves to *this* window.
+  Claude's own pane, so it always resolves to _this_ window.
 - **The stamp alone won't render.** No tmux event fires on a user-option set,
-  and lazytmux's per-tick poll only runs for the session a client is *currently
-  viewing* — so kick a reflow explicitly, else the badge won't show until you
+  and lazytmux's per-tick poll only runs for the session a client is _currently
+  viewing_ — so kick a reflow explicitly, else the badge won't show until you
   next switch to this window.
 
 ```
@@ -54,7 +54,7 @@ tmux-reflow-windows "$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}'
 
 - If non-empty: treat it as the first task — judge its tier + **engine** + model + effort
   per the protocol's rubric, state your call and why, then
-  `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex] <title…>`
+  `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex|cursor] <title…>`
   (substituting the literal crew id you noted for `<id>`).
 - If empty: confirm you're in dispatcher mode and wait for tasks.
 
