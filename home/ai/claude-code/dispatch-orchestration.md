@@ -81,6 +81,6 @@ All engines defer MCP tool schemas, so the base stack (context7, playwright, fir
 
 - **Claude** — deferred by default via tool-search (haiku is the one eager exception).
 - **Codex** — schemas deferred (baked-in `always_defer_mcp_tools`; measured ~0 token cost), browsers launch lazily on first use, and the base stack is provisioned from the same `mcp-servers.nix` source via the nix-generated `--profile worker`.
-- **Cursor** — base stack comes from the single shared `~/.cursor/mcp.json` (same `mcp-servers.nix` source); there's no per-invocation MCP-config flag, so there's no separate worker profile. The dispatch launch passes `--approve-mcps` for headless auto-approval.
+- **Cursor** — base stack comes from the single shared `~/.cursor/mcp.json` (same `mcp-servers.nix` source); there's no per-invocation MCP-config flag, so there's no separate worker profile. The dispatch launch passes `--approve-mcps` for headless auto-approval. Codebase **indexing is disabled** (`--disable-indexing --disable-codebase-ref`, `CURSOR_CLI_INDEXED_GREP=0`): on a large monorepo cursor-agent's retrieval/indexing pass hangs at startup with no output (#103); disabling it is parity with claude/codex (read + grep, no semantic index).
 
 The additive `--mcp analytics` (posthog, work) profile stays claude-only — for codex _and_ cursor `--mcp` is rejected; their base MCP comes from their own profile. `cad`/freecad was dropped.

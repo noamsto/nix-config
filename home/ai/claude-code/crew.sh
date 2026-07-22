@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# File-based coordination bus: id | identity | status | msg | watch | roster | inbox | log
+# File-based coordination bus: id | identity | status | msg | watch | roster | inbox | stall-watch | log
 # A real CLI on PATH (not a fish fn) so BOTH the dispatcher (fish) and workers
 # (their bash tool) can call it. Pure jq + append; the log is the state. The
 # shebang + `set -euo pipefail` are prepended by writeShellApplication, so this
@@ -422,8 +422,123 @@ report)
         (if ($start != null and $last != null) then (($last.ts - $start) / 1000 | floor | tostring) else "—" end)
       ] | @tsv' "$log"
   ;;
+stall-watch)
+  # stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S]
+  # A detached liveness watchdog `dispatch` spawns per worker. The crew bus is
+  # blind to a hung worker: a worker posts `working` once at launch then nothing
+  # until a terminal state, so sticky `working` + climbing age is
+  # indistinguishable from a slow-but-live worker — and the SessionEnd `exited`
+  # backstop only fires when a session actually ENDS, which a wedged agent never
+  # does (e.g. cursor-agent choking on codebase indexing, #103). This automates
+  # the manual `tmux capture-pane` that confirmed that stall: sample the pane's
+  # visible output; if it doesn't change for --stall seconds within the startup
+  # --window and the worker hasn't reached a non-`working` state, post `failed`
+  # so `crew watch` wakes the dispatcher to recover. Windowed to the startup
+  # phase (where the observed hang lives) so a long, legitimately-quiet execute
+  # stage later isn't killed. Engine-agnostic. CREW_STALL_SAMPLE_CMD overrides
+  # the pane sampler (its stdout is the "output", its exit code is pane liveness)
+  # so the loop is testable without tmux.
+  branch="${1:-}"
+  shift || true
+  [ -n "$branch" ] || {
+    echo "crew: stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S]" >&2
+    exit 1
+  }
+  crew=$(_crew_id)
+  [ -n "$crew" ] || {
+    echo "crew: CREW_ID unset and no WORKER_TASK.md crew_id" >&2
+    exit 1
+  }
+  pane=""
+  grace=45
+  stall=300
+  window=900
+  interval=15
+  while [ $# -gt 0 ]; do
+    case "$1" in
+    --pane)
+      pane="${2:-}"
+      shift 2
+      ;;
+    --grace)
+      grace="${2:-}"
+      shift 2
+      ;;
+    --stall)
+      stall="${2:-}"
+      shift 2
+      ;;
+    --window)
+      window="${2:-}"
+      shift 2
+      ;;
+    --interval)
+      interval="${2:-}"
+      shift 2
+      ;;
+    *)
+      echo "crew: stall-watch: unknown arg '$1'" >&2
+      exit 1
+      ;;
+    esac
+  done
+  [ -n "$pane" ] || {
+    echo "crew: stall-watch needs --pane <id>" >&2
+    exit 1
+  }
+  me="worker:$branch"
+  # Sample the pane: print a hash of its visible output, return non-zero when the
+  # pane is gone (worker ended — the `exited` backstop owns that case).
+  _sample() {
+    local out
+    if [ -n "${CREW_STALL_SAMPLE_CMD:-}" ]; then
+      out=$(eval "$CREW_STALL_SAMPLE_CMD" 2>/dev/null) || return 1
+    else
+      out=$(tmux capture-pane -p -t "$pane" 2>/dev/null) || return 1
+    fi
+    printf '%s' "$out" | cksum
+  }
+  # The worker proved it's alive once its latest status is anything past the
+  # launch `working` heartbeat (progress, a deliberate `blocked` pause, or a
+  # terminal state) — stop watching then.
+  _progressed() {
+    local st
+    [ -f "$log" ] || return 1
+    st=$(jq -r --arg c "$crew" --arg m "$me" \
+      'select(.crew_id==$c and .kind=="status" and .from==$m) | .body.state' "$log" 2>/dev/null | tail -1 || true)
+    case "$st" in
+    "" | working) return 1 ;;
+    *) return 0 ;;
+    esac
+  }
+  start=$(date +%s)
+  sleep "$grace"
+  _progressed && exit 0
+  last_hash=$(_sample) || exit 0
+  last_change=$(date +%s)
+  while :; do
+    now=$(date +%s)
+    [ $((now - start)) -ge "$window" ] && exit 0
+    if [ $((now - last_change)) -ge "$stall" ]; then
+      mkdir -p "$dir"
+      line=$(jq -nc --arg crew "$crew" --arg from "$me" \
+        --arg detail "stalled: no output for ${stall}s (suspected startup/indexing hang)" \
+        '{ts:(now*1000|floor), crew_id:$crew, from:$from, to:("dispatcher:"+$crew),
+            kind:"status", body:{state:"failed", detail:$detail}}')
+      printf '%s\n' "$line" >>"$log"
+      exit 0
+    fi
+    sleep "$interval"
+    _progressed && exit 0
+    cur=$(_sample) || exit 0
+    [ "$cur" != "$last_hash" ] && {
+      last_hash="$cur"
+      last_change=$(date +%s)
+    }
+  done
+  ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | log [crew] | report [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S] | log [crew] | report [crew]" >&2
   exit 1
   ;;
 esac

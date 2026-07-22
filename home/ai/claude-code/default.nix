@@ -23,7 +23,7 @@
   # from workers' bash tool. writeShellApplication runs shellcheck at build.
   crew = pkgs.writeShellApplication {
     name = "crew";
-    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep];
+    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep pkgs.tmux];
     text = builtins.readFile ./crew.sh;
   };
 

@@ -131,6 +131,14 @@ Partition the roster: `working`+`blocked` = **ACTIVE**; `pr_open`+`done`+`failed
 `{"cursor":<ts>,"events":[…]}`. The terminal states (`done`/`pr_open`/`failed`) free
 fan-out budget, so the same wakeup tells you when to dispatch the next queued task.
 
+A `failed` whose detail starts with `stalled:` is **watchdog-emitted**, not
+self-reported: `dispatch` spawns a per-worker liveness watchdog (`crew
+stall-watch`) that flips a worker to `failed` if its tmux pane produces no output
+through the startup window — catching a hung agent that would otherwise sit in
+`working` forever (e.g. cursor-agent choking on indexing, #103). Treat it like
+any other `failed`: recover per rule 4 (re-dispatch smaller / stronger, intervene,
+or drop) — the stalled window is still open, so kill it before re-dispatching.
+
 Two reads remain for detail:
 
 - `crew roster` — at-a-glance dashboard: every worker's latest state + age, its `title` (the task, joined from the dispatch event), plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). **Refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
