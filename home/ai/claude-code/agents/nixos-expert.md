@@ -61,6 +61,7 @@ The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`, built via `flake-m
 - **Missing `lib.optionals`**: Conditional package lists should use `lib.optionals (condition) [...]`
 - **Import cycles**: Circular module imports cause cryptic errors
 - **Infinite recursion**: Often from `config` referencing itself without `mkDefault`/`mkForce`
+- **Store path baked into a long-lived process**: a wrapper arg, service `ExecStart`, or startup-read config that hardcodes a `/nix/store` path won't take effect on an already-running process after `switch` — the tmux server, agent sessions, and daemons don't restart. Prefer a rebuild-stable path the switch repoints (profile symlink, HM `xdg.configFile`, or PATH) and rely on runtime resolution. Exec-time shell-outs self-heal; startup-parsed config needs a restart.
 
 ### HIGH -- Structure
 - **Wrong file for packages**: System packages → `nixos/packages.nix`; user packages → `home/packages.nix`
