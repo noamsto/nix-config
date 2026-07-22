@@ -422,6 +422,69 @@ report)
         (if ($start != null and $last != null) then (($last.ts - $start) / 1000 | floor | tostring) else "—" end)
       ] | @tsv' "$log"
   ;;
+rate)
+  # Sweep this repo's bus into the global ratings store. One record per RUN
+  # (a run = a dispatch + the branch events until the next dispatch on that
+  # branch). Append-only; readers fold last-wins by run_id. No crew filter —
+  # ratings are cross-run/cross-crew evidence.
+  [ -f "$log" ] || exit 0
+  repo=$(git config --get remote.origin.url 2>/dev/null |
+    sed -E 's#(git@|https://)([^/:]+)[/:]##; s#\.git$##' || true)
+  repo="${repo:-$(basename "$(git rev-parse --show-toplevel)")}"
+  records=$(jq -s --arg repo "$repo" '
+    (map(select(.kind=="dispatch"))) as $disp
+    | [ ($disp | map(.branch) | unique)[] as $b
+        | ($disp | map(select(.branch==$b)) | sort_by(.ts)) as $runs
+        | range(0; ($runs|length)) as $i
+        | $runs[$i] as $d
+        | ($d.ts) as $t0
+        | (if $i+1 < ($runs|length) then $runs[$i+1].ts else 9999999999999 end) as $t1
+        | (map(select(
+              .kind!="dispatch"
+              and (((.from // "") | ltrimstr("worker:")) == $b)
+              and .ts >= $t0 and .ts < $t1))) as $ev
+        | ($ev | map(select(.kind=="status"))) as $st
+        | ($st | sort_by(.ts) | (.[-1] // null)) as $last
+        | ($last.body.state) as $ls
+        | ($st | map(.body.pr_url) | map(select(.!=null)) | last) as $pr
+        | ($st | map(select(.body.state=="pr_open")) | sort_by(.ts) | (.[0] // null)) as $propen
+        | ($st | map(select(.body.state=="blocked")) | length) as $blocked
+        | ($ev | map(select(.kind=="msg" and ((.to // "") | startswith("metrics:"))))
+               | sort_by(.ts) | (.[-1] // null)
+               | if . == null then null else (.body | fromjson) end) as $m
+        | {
+            run_id: ($repo + ":" + $b + ":" + ($t0|tostring)),
+            repo: $repo, branch: $b,
+            engine: $d.engine, model: $d.model, tier: $d.tier,
+            effort: $d.effort, title: $d.title,
+            reached_pr: ($propen != null),
+            pr_url: $pr,
+            time_to_pr_ms: (if $propen != null then ($propen.ts - $t0) else null end),
+            outcome: (
+              if $pr != null then "pr_open"
+              elif $ls == "failed" then "failed"
+              elif $ls == "done" then "failed"
+              else "incomplete" end),
+            rework_count: ($m.rework_count // null),
+            review_high: ($m.review_high // null),
+            review_mode: ($m.review_mode // null),
+            plan_critic_first_pass: ($m.plan_critic_first_pass // null),
+            consulted: (if $m == null then null else $m.consulted end),
+            blocked_count: $blocked,
+            reported_ok: (($m != null) and ($ls != null)),
+            swept_at: (now*1000|floor)
+          } ]' "$log")
+  store_dir="${XDG_DATA_HOME:-$HOME/.local/share}/crew"
+  store="$store_dir/ratings.jsonl"
+  mkdir -p "$store_dir"
+  lockd="$store_dir/ratings.lock.d"
+  if ! _lock_acquire "$lockd" "$$"; then
+    echo "crew: ratings store busy" >&2
+    exit 1
+  fi
+  trap '_lock_release "$lockd"' EXIT
+  printf '%s' "$records" | jq -c '.[]' >>"$store"
+  ;;
 stall-watch)
   # stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S]
   # A detached liveness watchdog `dispatch` spawns per worker. The crew bus is
@@ -538,7 +601,7 @@ stall-watch)
   done
   ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S] | log [crew] | report [crew]" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S] | log [crew] | report [crew] | rate" >&2
   exit 1
   ;;
 esac
