@@ -13,7 +13,7 @@ flowchart TD
 
     ENG -->|"large mechanical refactor, wide sweep, 2nd-engine perspective"| CODEX["Codex"]
     ENG -->|"UI/frontend, ambiguous spec, security-adjacent"| CLAUDE["Claude"]
-    ENG -->|"Composer models, distinct 3rd perspective on deep tasks"| CURSOR["Cursor"]
+    ENG -->|"Grok 4.5 (or Composer), distinct 3rd perspective on deep tasks"| CURSOR["Cursor"]
 
     CLAUDE --> OPUS["opus — deep"]
     CLAUDE --> SONNET["sonnet — standard/trivial"]
@@ -41,20 +41,24 @@ new model ships.
 
 | Tier       | claude ladder                                                                                                                                                                                                                                                            | codex ladder      | cursor ladder           |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ----------------------- |
-| `deep`     | **opus** — escalate to **`claude-fable-5`** only for a genuinely hard, well-specified, long-horizon task where opus is demonstrably not enough (≈2× opus cost, refusal-classifier risk on security-adjacent code, minutes-long turns; most expensive lever, used rarely) | **`gpt-5.6`**     | **`composer-2.5`**      |
-| `standard` | **sonnet**                                                                                                                                                                                                                                                               | **`gpt-5.5`**     | **`composer-2.5`**      |
-| `trivial`  | **sonnet** (or **haiku** if truly trivial)                                                                                                                                                                                                                               | current light gpt | **`composer-2.5-fast`** |
+| `deep`     | **opus** — escalate to **`claude-fable-5`** only for a genuinely hard, well-specified, long-horizon task where opus is demonstrably not enough (≈2× opus cost, refusal-classifier risk on security-adjacent code, minutes-long turns; most expensive lever, used rarely) | **`gpt-5.6`**     | **`cursor-grok-4.5-high`**        |
+| `standard` | **sonnet**                                                                                                                                                                                                                                                               | **`gpt-5.5`**     | **`cursor-grok-4.5-medium-fast`** |
+| `trivial`  | **sonnet** (or **haiku** if truly trivial)                                                                                                                                                                                                                               | current light gpt | **`cursor-grok-4.5-low-fast`**    |
 
 Codex reasoning effort still scales with tier automatically (deep→high,
 standard→medium, trivial→low), independent of which gpt model is chosen.
 Cursor has **no reasoning-effort flag** — effort is baked into the model id
-suffix (`claude-opus-4-8-high`, `gpt-5.6-sol-xhigh`, …), and `composer-2.5` has
-no effort variants, so `dispatch`'s `--effort` is accepted-and-ignored for
-cursor. `--model` is free (a cursor worker can front `gpt-5.6-sol-*` or an
-effort-suffixed `claude-opus-4-8-*`), but **Composer is the default
-distinct-implementer** — that's the point of reaching for cursor.
-`dispatch` does not validate the model slot — the map is enforced by the
-dispatcher's judgment, not by code.
+suffix and `dispatch`'s `--effort` is accepted-and-ignored for cursor. Grok
+exposes both an effort suffix (`-low`/`-medium`/`-high`) and a throughput
+suffix (`-fast`), so the dispatcher expresses effort by _picking the id_: the
+standard/trivial rows use `-fast` for cheap, high-throughput turns; `deep` drops
+`-fast` for the fuller pass. **Grok 4.5 is the default cursor distinct-implementer**
+— a genuinely non-Claude perspective, which is the point of reaching for cursor.
+`--model` is free, so a cursor worker can still front **`composer-2.5`** /
+**`composer-2.5-fast`** (no effort variants) as an alternative, or an
+effort-suffixed `claude-opus-4-8-*` / `gpt-5.6-sol-*`. `dispatch` does not
+validate the model slot — the map is enforced by the dispatcher's judgment, not
+by code.
 
 **Worker-session model vs execute-subagent model (claude).** The `<model>` in the map above is the **worker session** model — it does spec / plan / reconcile / judging (opus on deep). The worker's **execute subagents default to sonnet**, escalating a single step to opus only when the plan tags it `implement: opus`. So a deep claude worker is opus-orchestrated but sonnet-implemented by default. See `WORKER_PROTOCOL.md` rule 1 (and the fast deterministic gate + parallel review gate it now describes). Codex workers scale reasoning effort by tier instead — the split is claude-specific.
 
@@ -68,7 +72,7 @@ It rides `crew msg` (no `crew.sh` change) and never wakes the dispatcher. Consul
 ## Three orthogonal levers
 
 - **Tier = pipeline depth (who reviews).** Driven by risk/ambiguity/blast-radius, not size. A one-line security change is still `standard`/`deep`.
-- **Engine = who implements.** Judged per task (claude ⇄ codex ⇄ cursor) — no default. Codex (work profile only) for large mechanical refactors, wide sweeps, or a deliberate second-engine perspective; cursor (work profile only) for Composer-model work or a distinct third-engine perspective on deep tasks; claude for UI/frontend work, ambiguous specs, or security-adjacent code. Soft rule: don't front Claude _through_ cursor when the point is an independent third perspective — a cursor-fronted sonnet isn't independent review of a claude worker; use `composer-2.5` (or a non-Claude cursor model) for that.
+- **Engine = who implements.** Judged per task (claude ⇄ codex ⇄ cursor) — no default, and **on neutral fit rotate to the least-recently-dispatched engine** rather than drifting back to claude (see `DISPATCHER_PROTOCOL.md` engine lever). Codex (work profile only) for large mechanical refactors, wide sweeps, or a deliberate second-engine perspective; cursor (work profile only) for a distinct third-engine perspective on deep tasks — default it to **Grok 4.5** (`cursor-grok-4.5-*`), genuinely non-Claude; Composer stays available as an alternative; claude for UI/frontend work, security-adjacent code, or _genuinely_ underspecified work (mild ambiguity alone isn't a claude ticket). Soft rule: don't front Claude _through_ cursor when the point is an independent third perspective — a cursor-fronted sonnet isn't independent review of a claude worker; use a Grok (or Composer) model for that.
 - **Model/effort = how strong / how hard it thinks.** All engines pick the tier-appropriate model from the model map; codex reasoning effort scales with tier (deep→high, standard→medium, trivial→low) independent of which model is chosen, while cursor folds effort into the model id (no separate knob).
 
 ## MCP is no longer a routing factor

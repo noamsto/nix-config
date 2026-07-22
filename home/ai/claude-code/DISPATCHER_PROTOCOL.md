@@ -23,14 +23,24 @@ resolves to `{tier, engine, model}`. Weigh **claude**, **codex**, and **cursor**
 (the last two work-profile only) as equal candidates by task fit, not as
 default-plus-exception:
 
-- claude leans: UI/frontend, nuanced reasoning, ambiguous/underspecified work.
+- claude leans: UI/frontend work, security-adjacent code, and **genuinely**
+  underspecified work that needs design judgement mid-flight. "Mildly ambiguous"
+  is not a claude ticket — most tasks have _some_ ambiguity; only route here when
+  the ambiguity is the hard part. You are a claude session, so watch for
+  self-similarity bias: do not let "claude is what I am" become "claude is the fit."
 - codex leans: large mechanical refactors, wide-but-shallow multi-file sweeps,
   or a deliberate second-engine perspective on a hard problem.
-- cursor leans: Composer-model work, or a distinct third-engine perspective on a
-  deep task. Don't front a Claude model through cursor when the point is an
-  independent perspective — a cursor-fronted sonnet isn't independent of a claude
-  worker; use `composer-2.5` (or another non-Claude cursor model) for that.
-- Neutral fit → pick either and say why; a worker can escalate via the bus.
+- cursor leans: a distinct third-engine perspective on a deep task — default it
+  to **Grok 4.5** (`cursor-grok-4.5-*`, genuinely non-Claude); Composer stays
+  available as an alternative. Don't front a Claude model through cursor when the
+  point is an independent perspective — a cursor-fronted sonnet isn't independent
+  of a claude worker; use a Grok (or Composer) model for that.
+- **Neutral fit → rotate, don't default.** When two-plus engines fit equally,
+  pick the **least-recently-dispatched** one (skim recent `kind:"dispatch"`
+  events: `crew log <crew> | jq 'select(.kind=="dispatch")|.engine'`, or the
+  current `crew roster`). The engines are peers; a passive "pick either" always
+  drifts back to claude. Say which you picked and why; a worker can escalate via
+  the bus.
 
 Pick the **model** from the model map in `dispatch-orchestration.md` for the tier
 and engine you chose — that table is the only place model versions live. `--effort`
