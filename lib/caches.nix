@@ -11,6 +11,7 @@
     "https://nix-amd-ai.cachix.org"
     "https://wtc.cachix.org"
     "https://noctalia.cachix.org"
+    "https://lazytmux.cachix.org"
   ];
 
   # Extra substituters - lower priority
@@ -39,6 +40,7 @@
     "nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4X9A7pvaBmhQ="
     "wtc.cachix.org-1:rXr2jpSoAtqezDz8xK/gPMjH2Rgyda0zOErfk3N5WnI="
     "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+    "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
   ];
 
   # Keys for extra substituters
