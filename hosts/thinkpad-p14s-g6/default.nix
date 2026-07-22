@@ -44,8 +44,14 @@ in {
     lemonade.user = "noams";
   };
 
-  # Add user to video/render groups for NPU access
-  users.users.noams.extraGroups = ["video" "render"];
+  users.users.noams = {
+    # Add user to video/render groups for NPU access
+    extraGroups = ["video" "render"];
+    # Allow SSH in from mbp-m4-pro (g6 runs headless)
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02 noams@nwms-MacBook-Pro.local"
+    ];
+  };
 
   # lztmux remote promotion: keep the forwarded TMUX_PANE / LZTMUX_OUTER env
   # through sshd so a `tmux` launched here (from a local tmux over ssh) can be
