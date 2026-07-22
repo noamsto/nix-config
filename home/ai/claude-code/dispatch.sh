@@ -179,14 +179,19 @@ else
   closes="Closes #$num"
 fi
 
-# Branch path must match worktrunk's {{ repo_path }}-worktrees/{{ branch |
-# sanitize }} template (slash -> dash) — wt won't tell us where it put it.
 sanitized="${branch//\//-}"
-wt_path="$(git rev-parse --show-toplevel)-worktrees/$sanitized"
 
 # post-switch tmux hook is disabled under CLAUDECODE, so wt only creates the
 # worktree here — we drive tmux ourselves below.
 wt switch -c "$branch" -y
+
+# Ask git where worktrunk actually placed the worktree — its path template is
+# user-configurable, so reconstructing it here drifts the moment that changes.
+wt_path="$(git worktree list --porcelain | awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p; exit}')"
+if [ -z "$wt_path" ]; then
+  echo "dispatch: could not locate worktree for branch $branch" >&2
+  exit 1
+fi
 
 crew_dir="$(git rev-parse --path-format=absolute --git-common-dir)/crew"
 mkdir -p "$crew_dir"
