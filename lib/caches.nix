@@ -21,6 +21,7 @@
     "https://yazi.cachix.org"
 
     "https://numtide.cachix.org"
+    "https://lazytmux.cachix.org"
   ];
 
   # Keys for primary substituters
@@ -50,6 +51,7 @@
     "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
 
     "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+    "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
   ];
 
   # FlakeHub Cache uses JWT auth + public key signing
