@@ -92,12 +92,12 @@ own `--timeout` is the real bound.)
    - non-empty stdout → a batch: parse `{"cursor":<ts>,"events":[…]}` and handle the
      **entire `events[]` in ONE turn** (reply / dispatch next / intervene). **Never
      one-turn-per-event.**
-   - empty stdout (exit 3, the timeout marker) → nothing to handle.
+   - empty stdout (the park expired; still exit 0) → nothing to handle.
    - **On a non-empty batch, re-render the roster diagram** (see "Roster diagram"
-     below) so the carousel tracks the state change. Skip it on the exit-3 path —
-     nothing changed.
+     below) so the carousel tracks the state change. Skip it on the empty-stdout
+     path — nothing changed.
 3. **Re-arm exactly one** new `crew watch`, recording its new arm-token. On the
-   exit-3 path this re-arm is **near-silent**: one tool call, zero prose.
+   empty-stdout path this re-arm is **near-silent**: one tool call, zero prose.
 
 **INV-1 — exactly one outstanding watch: never two, never zero.**
 

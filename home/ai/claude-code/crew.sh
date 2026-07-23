@@ -133,8 +133,9 @@ reply)
   ;;
 await)
   # await <agent> [--timeout S] [--interval S] — block until a msg addressed to
-  # <agent> arrives (ts strictly after the await started), print it, exit 0;
-  # exit 3 on timeout. No LLM tokens burned: this is a held bash call, not a
+  # <agent> arrives (ts strictly after the await started), print it, exit 0.
+  # A timeout also exits 0: empty stdout, not the exit code, is the marker.
+  # No LLM tokens burned: this is a held bash call, not a
   # spin loop. A late reply is never lost — it stays in the durable log for the
   # next activation.
   crew=$(_crew_id)
@@ -186,8 +187,8 @@ await)
       }
     fi
     [ "$(jq -nc 'now*1000|floor')" -ge "$deadline" ] && {
-      echo "crew: await timed out after ${timeout}s (no reply to $me)" >&2
-      exit 3
+      echo "crew: await ended after ${timeout}s — no reply to $me yet" >&2
+      exit 0
     }
     sleep "$interval"
   done
@@ -217,8 +218,9 @@ register | deregister)
 watch)
   # watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] — block until
   # any worker event qualifies (a status whose state is in --states, or a msg to
-  # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0; exit 3 on
-  # timeout (no stdout). Default --timeout is a finite long park (3300s / 55min):
+  # the dispatcher), print {"cursor":TS,"events":[…]} and exit 0. An expired park
+  # also exits 0 (empty stdout is the marker) so it isn't reported as a failed
+  # background command. Default --timeout is a finite long park (3300s / 55min):
   # an indefinite watch is rejected, because a reaped indefinite watch is
   # undetectable. When --since is omitted the cursor is self-seeded from
   # the crew's cursor file (see below) so a stale caller cursor can't re-deliver.
@@ -330,8 +332,8 @@ watch)
       }
     fi
     [ "$(jq -nc 'now*1000|floor')" -ge "$deadline" ] && {
-      echo "crew: watch timed out after ${timeout}s (no events > $since)" >&2
-      exit 3
+      echo "crew: watch park ended after ${timeout}s — no new events (cursor $since)" >&2
+      exit 0
     }
     sleep "$interval"
   done
