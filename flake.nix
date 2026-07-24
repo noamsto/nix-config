@@ -221,7 +221,9 @@
     };
 
     llm-agents = {
-      url = "github:numtide/llm-agents.nix/";
+      # TEMP: pinned to PR #7159 (claude-code 2.1.219) until it merges.
+      # Revert to "github:numtide/llm-agents.nix/" + `nix flake update llm-agents` on merge.
+      url = "github:numtide/llm-agents.nix/1ccdbcbc92180cd999314ef70904dce08fc1c887";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
