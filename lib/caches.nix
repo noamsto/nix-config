@@ -7,7 +7,6 @@
     "https://cache.flakehub.com"
     "https://hyprland.cachix.org"
     "https://vicinae.cachix.org"
-    "https://claude-code.cachix.org"
     "https://nix-amd-ai.cachix.org"
     "https://wtc.cachix.org"
     "https://noctalia.cachix.org"
@@ -20,8 +19,8 @@
     "https://nix-community.cachix.org"
     "https://yazi.cachix.org"
 
-    "https://numtide.cachix.org"
-    "https://lazytmux.cachix.org"
+    # llm-agents.nix publishes here, NOT numtide.cachix.org
+    "https://cache.numtide.com"
   ];
 
   # Keys for primary substituters
@@ -37,7 +36,6 @@
     "cache.flakehub.com-10:2GqeNlIp6AKp4EF2MVbE1kBOp9iBSyo0UPR9KoR0o1Y="
     "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     "vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc="
-    "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
     "nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4X9A7pvaBmhQ="
     "wtc.cachix.org-1:rXr2jpSoAtqezDz8xK/gPMjH2Rgyda0zOErfk3N5WnI="
     "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
@@ -50,8 +48,7 @@
     "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
     "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
 
-    "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
-    "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
+    "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
   ];
 
   # FlakeHub Cache uses JWT auth + public key signing
