@@ -1,5 +1,19 @@
 # Cursor dispatch engine: indexing stall + bus stall detector (#103)
 
+> **Correction (2026-07-26).** Part A below is misdiagnosed — indexing was never
+> the cause. `cursor-agent -p --output-format text` prints *only* the final
+> message, so a cursor worker emits nothing to its pane for the entire task, and
+> the Part B watchdog (which infers liveness from pane output) then failed every
+> cursor worker at grace+stall. Evidence: on the `eng-7531` dispatch the worker
+> posted a healthy `working` **18s** after launch — it launched, read the
+> protocol, and started work — and the watchdog still posted `stalled: no output
+> for 300s` eight minutes later. The `cursor-retrieval: tracing to …` line that
+> anchored the original diagnosis comes from the in-process `file_service` NAPI
+> module, not the `crepectl` indexed-grep path that `CURSOR_CLI_INDEXED_GREP=0`
+> gates, and it only appears under the mono devshell env — noise, not a stall.
+> The flags are real and are kept (skips a merkle index build, parity with
+> claude/codex), but the actual fix is `--output-format stream-json | jq`.
+
 ## Problem
 
 `dispatch --agent cursor` on a large monorepo (`factify/mono`) hangs at startup:

@@ -494,15 +494,17 @@ stall-watch)
   # until a terminal state, so sticky `working` + climbing age is
   # indistinguishable from a slow-but-live worker — and the SessionEnd `exited`
   # backstop only fires when a session actually ENDS, which a wedged agent never
-  # does (e.g. cursor-agent choking on codebase indexing, #103). This automates
-  # the manual `tmux capture-pane` that confirmed that stall: sample the pane's
-  # visible output; if it doesn't change for --stall seconds within the startup
-  # --window and the worker hasn't reached a non-`working` state, post `failed`
-  # so `crew watch` wakes the dispatcher to recover. Windowed to the startup
-  # phase (where the observed hang lives) so a long, legitimately-quiet execute
-  # stage later isn't killed. Engine-agnostic. CREW_STALL_SAMPLE_CMD overrides
-  # the pane sampler (its stdout is the "output", its exit code is pane liveness)
-  # so the loop is testable without tmux.
+  # does (#103). This automates the manual `tmux capture-pane` that confirmed
+  # that stall: sample the pane's visible output; if it doesn't change for
+  # --stall seconds within the startup --window and the worker hasn't reached a
+  # non-`working` state, post `failed` so `crew watch` wakes the dispatcher to
+  # recover. Windowed to the startup phase (where the observed hang lives) so a
+  # long, legitimately-quiet execute stage later isn't killed. Engine-agnostic,
+  # but it assumes the engine streams to its pane — an engine that buffers until
+  # completion looks stalled from here and gets failed on every real task, which
+  # is exactly what `--output-format text` did to cursor workers.
+  # CREW_STALL_SAMPLE_CMD overrides the pane sampler (its stdout is the "output",
+  # its exit code is pane liveness) so the loop is testable without tmux.
   branch="${1:-}"
   shift || true
   [ -n "$branch" ] || {

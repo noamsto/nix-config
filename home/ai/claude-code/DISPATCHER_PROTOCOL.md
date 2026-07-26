@@ -135,9 +135,14 @@ A `failed` whose detail starts with `stalled:` is **watchdog-emitted**, not
 self-reported: `dispatch` spawns a per-worker liveness watchdog (`crew
 stall-watch`) that flips a worker to `failed` if its tmux pane produces no output
 through the startup window — catching a hung agent that would otherwise sit in
-`working` forever (e.g. cursor-agent choking on indexing, #103). Treat it like
-any other `failed`: recover per rule 4 (re-dispatch smaller / stronger, intervene,
-or drop) — the stalled window is still open, so kill it before re-dispatching.
+`working` forever (#103). Treat it like any other `failed`: recover per rule 4
+(re-dispatch smaller / stronger, intervene, or drop) — the stalled window is
+still open, so kill it before re-dispatching.
+
+It infers liveness from **pane output**, so it only tells the truth for an engine
+that streams. A `stalled:` on a worker that also posted a healthy `working`
+seconds earlier warrants a `tmux capture-pane` before you kill anything — that
+combination is a buffered output format, not a wedge.
 
 Two reads remain for detail:
 
