@@ -7,6 +7,10 @@
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
   tomlFormat = pkgs.formats.toml {};
 
+  worker-config = tomlFormat.generate "codex-worker.config.toml" {
+    mcp_servers = mcpServers.base;
+  };
+
   aeye-plugin = "${inputs.lazytmux.inputs.aeye}/adapters/codex/plugin";
   aeye-version = (lib.importJSON "${aeye-plugin}/.codex-plugin/plugin.json").version;
   aeye-cache = ".codex/plugins/cache/aeye/aeye";
@@ -24,9 +28,15 @@ in {
     # from the single mcp-servers.nix source. Cheap by construction: codex defers
     # tool schemas and browsers launch lazily, so the servers cost ~nothing until
     # a task actually uses one.
-    file.".codex/worker.config.toml".source = tomlFormat.generate "codex-worker.config.toml" {
-      mcp_servers = mcpServers.base;
-    };
+    #
+    # Writable copy, not a `home.file` symlink: codex writes TUI config changes
+    # back to the topmost layer, so a store symlink fails it — "failed to persist
+    # config at /nix/store/…". Wiped on each switch, which is fine: dispatch
+    # passes model and effort as explicit flags.
+    activation.codexWorkerProfile = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run rm -f "$HOME/.codex/worker.config.toml"
+      run install -Dm644 ${worker-config} "$HOME/.codex/worker.config.toml"
+    '';
 
     # aeye's Codex adapter — the counterpart to the `--plugin-dir` the claude
     # wrapper passes. Codex has no such flag and loads plugins only from a real
