@@ -270,5 +270,22 @@
 
     # AMD AI: XRT, XDNA plugin, FastFlowLM, Lemonade (NPU + ROCm)
     nix-amd-ai.url = "github:noamsto/nix-amd-ai";
+
+    # Declarative Agent Skills catalog -> per-harness skill dirs (see
+    # home/ai/agent-skills). Pins the upstream skill repos below so a skill set
+    # only moves when the lockfile does.
+    agent-skills-nix = {
+      url = "github:Kyure-A/agent-skills-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Skill source. Upstream lands ~5 commits/day and reshuffles bucket folders,
+    # so `nix flake update mattpocock-skills` is a deliberate act: a renamed or
+    # moved skill fails the build against the allowlist rather than silently
+    # vanishing from ~/.claude/skills.
+    mattpocock-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
   };
 }

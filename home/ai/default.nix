@@ -5,6 +5,7 @@
 }: {
   imports =
     [
+      ./agent-skills
       ./amp
       ./claude-code
       ./cursor

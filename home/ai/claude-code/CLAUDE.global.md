@@ -28,6 +28,19 @@ Settings are split into two layers. **Never mix them.**
 
 These are **not hard bans** — use compound syntax when genuinely needed (e.g., a subshell `(cd dir && build)`, or a pipe that can't be split). But default to simple commands first.
 
+## Skill Precedence
+
+Two superpowers skills are superseded by better ones installed via
+`home/ai/agent-skills`. `enabledPlugins` is plugin-granularity — it can't
+disable a single skill inside a plugin — so precedence is asserted here instead.
+
+- **Debugging** — use `diagnosing-bugs`, not `superpowers:systematic-debugging`.
+  It builds a tight, red-capable feedback loop *before* forming any hypothesis;
+  no such loop, no theorising.
+- **Authoring or editing a skill** — use `writing-great-skills`, not
+  `superpowers:writing-skills`. It is user-invoked upstream, so type it; the
+  banned alternative is the half that needs stating.
+
 ## Reading Code (skeleton-first)
 
 For files larger than ~300 lines, **structure before content**: run `ast-grep` for signatures, invoke the `context-efficient-tools:code-structure` skill, or `Grep` for the symbol you actually care about — *before* a full `Read`. Pull in the full body of a region only once you know which region matters.
