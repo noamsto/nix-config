@@ -11,9 +11,19 @@
 # Latte (light) and Mocha (dark): each clears ~2.5:1 contrast (most >3:1) on
 # either base, so the badge lazytmux tints doesn't wash out when the theme flips.
 # The old bright/pale set (colour44/141/220/154/117…) was dark-mode-only.
-_names=(sage atlas nova ember reef iris amber coral moss slate rust plum lime rose sky onyx)
-_colors=(green blue magenta orange teal purple yellow salmon olive steel rust plum lime pink sky grey)
-_tmuxc=(colour28 colour32 colour127 colour130 colour30 colour98 colour136 colour167 colour100 colour67 colour166 colour96 colour64 colour162 colour25 colour244)
+#
+# 32 slots, not 16: identity is `cksum % pool`, so collisions follow the birthday
+# bound — at 16 a 4-worker crew collided about half the time (one run put #158,
+# #164 and #221 all on "sage"). 32 roughly halves it; `roster` still disambiguates
+# whatever slips through, because no stateless hash can guarantee uniqueness.
+# The 16 added codes were picked by measured WCAG contrast against both bases
+# (worst added: 2.86 mocha / 2.88 latte — above the 2.54 floor of the original 16).
+_names=(sage atlas nova ember reef iris amber coral moss slate rust plum lime rose sky onyx
+  pine lagoon indigo fern bronze violet khaki ash brick mauve tan crimson fuchsia blush orchid cobalt)
+_colors=(green blue magenta orange teal purple yellow salmon olive steel rust plum lime pink sky grey
+  seagreen darkcyan indigo forestgreen darkgoldenrod mediumpurple darkkhaki dimgrey indianred palevioletred peru crimson mediumvioletred hotpink orchid royalblue)
+_tmuxc=(colour28 colour32 colour127 colour130 colour30 colour98 colour136 colour167 colour100 colour67 colour166 colour96 colour64 colour162 colour25 colour244
+  colour29 colour31 colour61 colour65 colour94 colour97 colour101 colour102 colour131 colour132 colour137 colour160 colour163 colour168 colour169 colour68)
 
 _identity() { # $1=branch -> {name,color,tmux}; cksum is POSIX (portable to macOS)
   local n i
@@ -104,6 +114,29 @@ status | msg)
   mkdir -p "$dir"
   if [ "$sub" = status ]; then
     # status <from> <state> [detail] [pr_url]
+    # Reject an unknown state: the log IS the state, and a junk value is silently
+    # absorbed by every reader (`{"state":""}` reached the log once and rendered as
+    # a blank roster row). Fail loudly at the writer instead.
+    case "${2:-}" in
+    working | blocked | pr_open | done | failed | exited) ;;
+    *)
+      echo "crew: status state must be one of working|blocked|pr_open|done|failed|exited (got '${2:-}')" >&2
+      exit 1
+      ;;
+    esac
+    # Terminal states are posted once. A worker that re-announces `pr_open`/`done`
+    # (seen: the same pr_open+done pair 4s apart) wakes `watch` twice with an
+    # identical batch, so the dispatcher handles the same completion again.
+    case "${2:-}" in
+    pr_open | done | failed | exited)
+      if [ -f "$log" ]; then
+        prev=$(jq -r --arg c "$crew" --arg m "${1:-}" \
+          'select(.crew_id==$c and .kind=="status" and .from==$m)
+             | "\(.body.state)\t\(.body.pr_url // "")"' "$log" 2>/dev/null | tail -1 || true)
+        [ "$prev" = "${2:-}"$'\t'"${4:-}" ] && exit 0
+      fi
+      ;;
+    esac
     line=$(jq -nc --arg crew "$crew" --arg from "${1:-}" --arg state "${2:-}" \
       --arg detail "${3:-}" --arg pr "${4:-}" \
       '{ts:(now*1000|floor), crew_id:$crew, from:$from, to:("dispatcher:"+$crew),
@@ -355,13 +388,62 @@ roster)
              title: ($titles[$latest.from] // null),
              # carry forward last-known pr_url — the terminal `done` event drops it
              pr_url: (map(.body.pr_url) | map(select(. != null)) | last),
+             # last state that was NOT the exited backstop, so a spurious exited
+             # can be resolved back to what the worker itself last reported.
+             prev_state: (map(select(.body.state != "exited")) | max_by(.ts) | .body.state),
              age_s: ((now - ($latest.ts/1000))|floor)})' "$log")
+  # Resolve a false `exited`. SessionEnd fires for more than the worker's own session
+  # (a subagent ending, a human closing an auxiliary pane), and the hook sees only a
+  # cwd — it cannot tell those apart, nor wait to find out: the worker's real
+  # SessionEnd blocks on its own hooks, so probing liveness there deadlocks. Deciding
+  # here is race-free because it runs long after the fact. Keyed on the worktree PATH,
+  # NOT the window name — lazytmux renames worker windows to decorated labels
+  # ("󰊤 #164 🧠 …"), so dispatch's `-n "$sanitized"` is long gone by read time.
+  live=$(tmux list-panes -a -F '#{pane_current_command} #{pane_current_path}' 2>/dev/null || true)
+  resolved='[]'
+  while IFS= read -r row; do
+    [ -n "$row" ] || continue
+    st=$(printf '%s' "$row" | jq -r '.state')
+    branch=$(printf '%s' "$row" | jq -r '.from | sub("^worker:";"")')
+    if [ "$st" = exited ] && [ -n "$branch" ]; then
+      # awk reads to EOF on purpose: an early `exit` SIGPIPEs git under pipefail.
+      wtpath=$(git worktree list --porcelain |
+        awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p}')
+      if [ -n "$wtpath" ]; then
+        while IFS= read -r pane; do
+          case "$pane" in
+          "claude $wtpath"* | "codex $wtpath"* | "cursor-agent $wtpath"*)
+            row=$(printf '%s' "$row" | jq -c '.state = (.prev_state // "working") | .exit_suspect = true')
+            break
+            ;;
+          esac
+        done <<PANES
+$live
+PANES
+      fi
+    fi
+    resolved=$(printf '%s' "$resolved" | jq -c --argjson r "$row" '. + [$r]')
+  done <<EOF
+$(printf '%s' "$base" | jq -c '.[]')
+EOF
   idmap='{}'
-  for from in $(printf '%s' "$base" | jq -r '.[].from | select(startswith("worker:"))'); do
+  for from in $(printf '%s' "$resolved" | jq -r '.[].from | select(startswith("worker:"))'); do
     id=$(_identity "${from#worker:}")
     idmap=$(printf '%s' "$idmap" | jq -c --arg k "$from" --argjson v "$id" '. + {($k): $v}')
   done
-  printf '%s' "$base" | jq --argjson m "$idmap" 'map(. + ($m[.from] // {}))'
+  # Disambiguate colliding codenames. identity is a stateless hash, so two live
+  # workers can legitimately land on the same name; suffix the issue/ticket token
+  # from the branch (feat/207-… -> sage·207, eng-6789-… -> sage·eng-6789) so
+  # "coral is blocked" stays a unique referent. Only collisions are suffixed.
+  # prev_state is internal to the resolve step above — drop it unless it explains
+  # a row the reader would otherwise mistrust.
+  printf '%s' "$resolved" | jq --argjson m "$idmap" '
+      map(. + ($m[.from] // {}))
+      | (map(select(.name != null) | .name) | group_by(.) | map(select(length > 1) | .[0])) as $dupes
+      | map(if (.name as $n | $dupes | index($n))
+            then .name = (.name + "·" + ((.from | capture("worker:(?:[a-z]+/)?(?<id>[A-Za-z]+-[0-9]+|[0-9]+)") | .id) // (.from | sub("^worker:";""))))
+            else . end)
+      | map(if .exit_suspect then . else del(.prev_state) end)'
   ;;
 inbox)
   # messages only — `roster` owns status (every status is addressed to the
