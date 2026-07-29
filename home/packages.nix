@@ -30,6 +30,11 @@
     # same freecad 1.1.1) until the fix lands on unstable.
     # https://github.com/NixOS/nixpkgs/pull/540826
     stable.freecad
+    # Native, not flatpak: GTK4 hands SVG icon decoding to glycin, which
+    # re-spawns via `flatpak-spawn --sandbox`. On NixOS that nested sandbox
+    # mounts the host root (no /usr/bin/prlimit), so the loader exits 1 and GTK
+    # aborts before the window opens. https://github.com/flatpak/flatpak/issues/5973
+    bambu-studio
 
     # Video editing
     kdePackages.kdenlive

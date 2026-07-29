@@ -29,7 +29,6 @@
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop
-      ./flatpak.nix
     ]
     ++ lib.optionals (osConfig.profile == "work") [
       ./kubernetes
