@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   inputs,
@@ -20,6 +21,12 @@ in {
     # worker engine (`dispatch … --agent codex …`). Auth is out of band — run
     # `codex login` once; there's no secret to manage in Nix.
     packages = [pkgs.codex];
+
+    # Global instructions — codex's only machine-wide channel, read ahead of any
+    # project AGENTS.md. Out-of-store symlink so it stays editable, pointing at
+    # the file claude imports and cursor loads as a rule.
+    file.".codex/AGENTS.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
 
     # Worker MCP profile. `dispatch … --agent codex` launches with
     # `--profile worker`, which layers this file on top of the hand-managed

@@ -228,6 +228,11 @@ in {
       {
         ".claude/CLAUDE.md".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+        # Engine-neutral conventions imported by CLAUDE.global.md via
+        # @~/.claude/AGENTS.shared.md. The same file backs ~/.codex/AGENTS.md
+        # and ~/.cursor/rules (see ../codex, ../cursor) — one source, three engines.
+        ".claude/AGENTS.shared.md".source =
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
         # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
         # Always present (work or personal) so the import never silently no-ops.
         ".claude/CLAUDE.profile.md".source =
