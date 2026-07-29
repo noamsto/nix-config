@@ -47,7 +47,9 @@ and engine you chose — that table is the only place model versions live. `--ef
 is a separate REQUIRED flag on `dispatch`, judged independently from tier — it sets
 the reasoning effort passed to whichever engine you picked (claude/codex; cursor
 folds effort into the model id, so `--effort` is accepted-and-ignored there), it is
-not derived from tier.
+not derived from tier. Ladder: `low|medium|high|xhigh|max` on both engines, plus
+codex-only `ultra` (auto task delegation, `gpt-5.6-sol`/`-terra`) — `dispatch`
+rejects `ultra` for claude.
 
 **Profile constraint:** codex and cursor are both work-profile only — `dispatch`
 aborts `--agent codex` / `--agent cursor` off the work profile. On a
@@ -57,7 +59,7 @@ applies on the work profile.
 ## Scaffold one worker per task
 
 ```
-dispatch <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex|cursor] [--mcp <profile>] [--plan provided|required] [LINEAR-ID] <title…>
+dispatch <tier> <model> --effort <low|medium|high|xhigh|max|ultra> [--agent claude|codex|cursor] [--mcp <profile>] [--plan provided|required] [LINEAR-ID] <title…>
 ```
 
 `dispatch` is the dumb mechanism — it creates the worktree and tmux window, stamps `WORKER_TASK.md` (tier, plan, crew_id, dispatcher_pane, closes line, task body), and launches the worker with `WORKER_PROTOCOL.md` baked. You supply the tier + model + effort you judged.
@@ -148,7 +150,7 @@ Two reads remain for detail:
 
 - `crew roster` — at-a-glance dashboard: every worker's latest state + age, its `title` (the task, joined from the dispatch event), plus a `name`/`color` codename derived from its branch (FleetView-style — `dispatch` colors the matching tmux window the same). **Refer to workers by codename** (e.g. "sage is blocked, atlas opened a PR") so it tracks the colored windows.
 - `crew inbox dispatcher:$CREW_ID` — worker **questions** in full (messages only; status lives in the roster).
-- A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation.
+- A worker that's `blocked` has posted its question and is **awaiting your reply in-band** (a bounded ~300s wait). Answer promptly with `crew reply worker:<branch> "<answer>"` — it resumes in place, no tmux, no re-dispatch. Check `age_s` in the roster: if the wait already elapsed (stale `blocked`), the worker has stopped — then **intervene in its window** or **re-dispatch** with the context baked in. A reply you post after it stopped isn't lost (durable in the log); the worker picks it up on its next activation. A directive you post **immediately after `dispatch`**, before the worker is up, isn't lost either — every worker drains its inbox unbounded before starting its pipeline (`WORKER_PROTOCOL.md` → First action), so post-scaffold scoping notes land.
 
 ## Roster diagram
 

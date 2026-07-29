@@ -27,7 +27,7 @@ each task into tier + engine + model + effort, scaffold one worker per task via
 
 `dispatch` and `crew` are both CLIs on your PATH — call them **directly** (no `fish -c`).
 Because each Bash tool call is a fresh shell, pass the literal crew id you noted, not
-`$CREW_ID`: `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> …`
+`$CREW_ID`: `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh|max|ultra> …`
 — e.g. `dispatch --crew-id 1720800000-12345 standard sonnet --effort medium …` — and
 prefix crew reads with `CREW_ID=<id> crew …` — e.g. `CREW_ID=1720800000-12345 crew status …`.
 
@@ -54,7 +54,7 @@ tmux-reflow-windows "$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}'
 
 - If non-empty: treat it as the first task — judge its tier + **engine** + model + effort
   per the protocol's rubric, state your call and why, then
-  `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh> [--agent claude|codex|cursor] <title…>`
+  `dispatch --crew-id <id> <tier> <model> --effort <low|medium|high|xhigh|max|ultra> [--agent claude|codex|cursor] <title…>`
   (substituting the literal crew id you noted for `<id>`).
 - If empty: confirm you're in dispatcher mode and wait for tasks.
 

@@ -7,7 +7,7 @@
 # this file is only the function body (see crew.sh for the same pattern).
 
 usage() {
-  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh> [--agent claude|codex|cursor] [--mcp <profile>] [--plan provided|required] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
+  echo "usage: dispatch <trivial|standard|deep> <model> --effort <low|medium|high|xhigh|max|ultra> [--agent claude|codex|cursor] [--mcp <profile>] [--plan provided|required] [--crew-id <id>] [LINEAR-ID|#N] <title...>" >&2
 }
 
 tier="${1:-}"
@@ -51,9 +51,9 @@ while [ $# -gt 0 ]; do
   --effort)
     effort="${2:-}"
     case "$effort" in
-    low | medium | high | xhigh) ;;
+    low | medium | high | xhigh | max | ultra) ;;
     *)
-      echo "dispatch: --effort must be low, medium, high, or xhigh" >&2
+      echo "dispatch: --effort must be low, medium, high, xhigh, max, or ultra" >&2
       exit 1
       ;;
     esac
@@ -125,6 +125,12 @@ if [ "$agent" = codex ] && [ "$profile" != work ]; then
 fi
 if [ "$agent" = cursor ] && [ "$profile" != work ]; then
   echo "dispatch: --agent cursor is work-profile only" >&2
+  exit 1
+fi
+# claude's --effort tops out at max; rejecting `ultra` here fails before the
+# worktree and pane exist, instead of at worker launch.
+if [ "$agent" = claude ] && [ "$effort" = ultra ]; then
+  echo "dispatch: --effort ultra is codex-only; claude tops out at max" >&2
   exit 1
 fi
 if [ "$agent" != claude ] && [ -n "$mcp_profile" ]; then

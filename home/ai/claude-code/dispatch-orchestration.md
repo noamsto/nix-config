@@ -41,12 +41,22 @@ new model ships.
 
 | Tier       | claude ladder                                                                                                                                                                                                                                                            | codex ladder      | cursor ladder           |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ----------------------- |
-| `deep`     | **opus** — escalate to **`claude-fable-5`** only for a genuinely hard, well-specified, long-horizon task where opus is demonstrably not enough (≈2× opus cost, refusal-classifier risk on security-adjacent code, minutes-long turns; most expensive lever, used rarely) | **`gpt-5.6`**     | **`cursor-grok-4.5-high`**        |
-| `standard` | **sonnet**                                                                                                                                                                                                                                                               | **`gpt-5.5`**     | **`cursor-grok-4.5-medium-fast`** |
-| `trivial`  | **sonnet** (or **haiku** if truly trivial)                                                                                                                                                                                                                               | current light gpt | **`cursor-grok-4.5-low-fast`**    |
+| `deep`     | **opus** — escalate to **`claude-fable-5`** only for a genuinely hard, well-specified, long-horizon task where opus is demonstrably not enough (≈2× opus cost, refusal-classifier risk on security-adjacent code, minutes-long turns; most expensive lever, used rarely) | **`gpt-5.6-sol`**   | **`cursor-grok-4.5-high`**        |
+| `standard` | **sonnet**                                                                                                                                                                                                                                                               | **`gpt-5.6-terra`** | **`cursor-grok-4.5-medium-fast`** |
+| `trivial`  | **sonnet** (or **haiku** if truly trivial)                                                                                                                                                                                                                               | **`gpt-5.6-luna`**  | **`cursor-grok-4.5-low-fast`**    |
+
+Codex model ids carry a **variant suffix** — the 5.6 family ships as
+`-sol` (frontier) / `-terra` (balanced everyday) / `-luna` (fast + affordable),
+and there is **no bare `gpt-5.6`** — dispatching one dies on a 400, "model is not
+supported when using Codex with a ChatGPT account". Authoritative list for this
+account is `jq -r '.models[].slug' ~/.codex/models_cache.json` (also `gpt-5.5`,
+`gpt-5.4`, `gpt-5.4-mini` — previous generations, no longer a rung here).
 
 Codex reasoning effort still scales with tier automatically (deep→high,
-standard→medium, trivial→low), independent of which gpt model is chosen.
+standard→medium, trivial→low), independent of which gpt model is chosen. Above
+`xhigh` the ladder continues with `max` (both engines) and codex-only `ultra`
+(maximum reasoning with automatic task delegation) — `ultra` exists on `-sol` /
+`-terra` only, `-luna` caps at `max`.
 Cursor has **no reasoning-effort flag** — effort is baked into the model id
 suffix and `dispatch`'s `--effort` is accepted-and-ignored for cursor. Grok
 exposes both an effort suffix (`-low`/`-medium`/`-high`) and a throughput

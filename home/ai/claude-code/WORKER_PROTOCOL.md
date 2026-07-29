@@ -12,9 +12,24 @@ Read `WORKER_TASK.md`. It stamps `tier:`, `dispatcher_pane:`, `crew_dir:`, `crew
 `crew status "worker:$(git branch --show-current)" working`
 Use `worker:$(git branch --show-current)` as your agent id for every bus call below.
 
+**Then drain the bus once, unbounded, before any pipeline work:**
+
+```
+seen=$(jq -n 'now*1000|floor')
+crew inbox "worker:$(git branch --show-current)"
+```
+
+The dispatcher can post a scoping note or a redirect in the gap between
+`dispatch` and your startup. Those messages are older than any cursor you
+initialize, so no `--since` peek will ever return them — this unbounded read is
+the only one that sees them. If it returns messages, handle them with the
+**receiving-code-review** discipline (verify before acting) and set `seen` to the
+max `.ts` of what you read; if it returns nothing, keep the `seen` you just
+captured. Every later read is `--since $seen` per **Checkpoint-peek**.
+
 ## Pipeline by tier
 
-- **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review.
+- **trivial** — implement directly, run the gate, open the PR. No spec, no plan, no critics, no review. You still peek once before push — with no seams at all you are a worker the dispatcher cannot redirect.
 - **standard** — consult **Plan of record** (below) first; unless the plan already exists, run the `spec-plan-critic` workflow with `{ tier: 'standard', ... }` (plan + plan-critic only). Then execute the plan (of record, or returned by the workflow) via subagents, then the **fast deterministic gate** (build+vet+lint+unit on changed packages, looped to green), then the code-review gate (one pass), then `/deslop` + push + PR.
 - **deep** — run `spec-plan-critic` with `{ tier: 'deep', ... }` (spec + spec-critic, then — see **Orchestration consult** — an optional Fable decomposition seeds plan + plan-critic), then execute, then the **fast deterministic gate**, then the code-review gate (one parallel review batch, reconciled once, then a **conditional** second re-review), then `/deslop` + push + PR.
 
@@ -39,9 +54,9 @@ Before the plan phase, decide **once** whether to bring Fable in to decompose th
 4. **Seed the plan.** When `DECOMPOSITION.md` exists, the `spec-plan-critic` plan phase consumes it as a hard constraint and `plan-critic` checks conformance (see that skill/agent). You do not hand-author the plan.
 5. **False-negative recovery.** If the survey did **not** trip (no consult) and the plain-path plan then **exhausts the revision cap** (rule 3) without an accepted plan, that is the signal the survey missed a genuinely complex task: run the consult **once now** and re-plan from the resulting `DECOMPOSITION.md`. This is a single explicit attempt **beyond** the cap (total stays finite: cap + 1). A worker that **already** consulted and still exhausts the cap surfaces `escalations[]` as today — no extra attempt. If the recovery consult itself refuses or times out, surface `escalations[]` and stop — do not re-loop the plain path that already exhausted the cap.
 
-## Checkpoint-peek (standard/deep)
+## Checkpoint-peek (all tiers)
 
-At each pipeline **seam** — after spec, after plan, after execute, after the fast gate, after review, **before** sinking cost into the next stage — do a non-blocking peek for a dispatcher stop/redirect directive:
+At each pipeline **seam** — after spec, after plan, after execute, after the fast gate, after review, and on **trivial** the single pre-push seam — **before** sinking cost into the next stage, do a non-blocking peek for a dispatcher stop/redirect directive:
 
 ```
 crew inbox "worker:$(git branch --show-current)" --since <seen-cursor>
@@ -49,7 +64,7 @@ crew inbox "worker:$(git branch --show-current)" --since <seen-cursor>
 
 This is a single pass, not a held wait (unlike `crew await`): empty output ⇒ no directive ⇒ proceed to the next stage.
 
-- **Seen-cursor:** initialize it once at start to the current ms: `seen=$(jq -n 'now*1000|floor')`. After a peek (or await) returns messages you **read and handled**, advance `seen` to the max `.ts` of _those_ messages only — `seen=$(printf '%s\n' "$msgs" | jq -s 'map(.ts) | max')` — never to an unrelated max. A peek returning nothing does not move the cursor.
+- **Seen-cursor:** already initialized by the **First action** drain (never re-initialize it to `now` here — that re-opens the pre-start blind spot). After a peek (or await) returns messages you **read and handled**, advance `seen` to the max `.ts` of _those_ messages only — `seen=$(printf '%s\n' "$msgs" | jq -s 'map(.ts) | max')` — never to an unrelated max. A peek returning nothing does not move the cursor.
 - **On a directive:** apply **receiving-code-review** discipline — verify the instruction before acting, don't perform agreement. Then redirect the pipeline, or on a "stop" wind down cleanly and stamp `crew status "worker:$(git branch --show-current)" <state>` appropriately (e.g. `failed "stopped by dispatcher"`).
 - **Latency is honest, not instant:** a redirect surfaces only at the _next_ seam, so its latency is the remaining time in the current stage. A redirect posted mid-`execute` (the longest stage for deep workers) is not seen until execute finishes. **The peek is NOT a kill switch** — for a hard abort the dispatcher uses `tmux kill-window` (→ SessionEnd `exited`), which stays the reliable stop.
 
