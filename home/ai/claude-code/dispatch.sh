@@ -187,7 +187,10 @@ wt switch -c "$branch" -y
 
 # Ask git where worktrunk actually placed the worktree — its path template is
 # user-configurable, so reconstructing it here drifts the moment that changes.
-wt_path="$(git worktree list --porcelain | awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p; exit}')"
+# awk must read to EOF: an early `exit` closes the pipe while git still has
+# blocks to write, and the resulting SIGPIPE (141) trips pipefail + errexit,
+# killing dispatch silently right after `wt switch` created the worktree.
+wt_path="$(git worktree list --porcelain | awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p}')"
 if [ -z "$wt_path" ]; then
   echo "dispatch: could not locate worktree for branch $branch" >&2
   exit 1
