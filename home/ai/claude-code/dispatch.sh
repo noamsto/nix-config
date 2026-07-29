@@ -261,24 +261,18 @@ if [ "$agent" = codex ]; then
 elif [ "$agent" = cursor ]; then
   # cursor-agent has no reasoning-effort flag — effort is encoded in the model
   # id ($model, e.g. claude-opus-4-8-high); composer-2.5 has no effort variants.
-  # -p (headless) with --force/--trust/--approve-mcps runs unattended (codex
-  # bypass analog); base MCP is the shared ~/.cursor/mcp.json.
+  # A bare prompt argument (no -p) seeds and auto-submits cursor's own TUI;
+  # --force/--trust/--approve-mcps make it unattended (codex bypass analog); base
+  # MCP is the shared ~/.cursor/mcp.json. Headless -p is wrong for a worker: the
+  # watchdog below reads pane output as liveness and -p prints nothing until the
+  # task ends (#103/#111), while the TUI repaints as it works.
   #
   # Indexing OFF: parity with claude/codex (read + grep, no semantic index) and
   # it skips a merkle index build over a large monorepo. Not a stall fix — the
   # `cursor-retrieval` line these were meant to suppress comes from the in-process
   # file_service module, not the indexed-grep path.
-  #
-  # stream-json, not text (the real #103): `--output-format text` prints only the
-  # final message, so a running cursor worker emits nothing to its pane for the
-  # whole task — indistinguishable from a wedge, which made the stall watchdog
-  # below fail every cursor worker at grace+stall. jq needs -j (dots share a line)
-  # and --unbuffered (flush per event, not per block).
-  # tn tolerates schema drift: cursor-agent self-updates, and a jq error here
-  # would kill the pipe and silence the pane — the very failure being fixed.
-  cursor_fmt='def tn: (.tool_call // {}) | to_entries | map(select(.key | endswith("ToolCall"))) | (.[0].key // "tool") | sub("ToolCall$"; ""); if .type == "thinking" and .subtype == "delta" then "." elif .type == "tool_call" and .subtype == "started" then "\n→ \(tn)" elif .type == "assistant" then "\n\(.message.content[] | select(.type == "text") | .text)" elif .type == "result" then "\n[\(.subtype) \((.duration_ms / 1000) | floor)s out=\(.usage.outputTokens)]\n" else empty end'
   tmux send-keys -t "$pane" \
-    "CURSOR_CLI_INDEXED_GREP=0 cursor-agent -p --force --trust --approve-mcps --disable-indexing --disable-codebase-ref --output-format stream-json --model $model 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}' | jq -j --unbuffered '$cursor_fmt'" Enter
+    "CURSOR_CLI_INDEXED_GREP=0 cursor-agent --force --trust --approve-mcps --disable-indexing --disable-codebase-ref --model $model 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
 else
   tmux send-keys -t "$pane" \
     "claude --name $agent_name --model $model --effort $effort $mcp_flag $xreview_mcp --append-system-prompt-file ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md --permission-mode auto 'Read WORKER_TASK.md and run it end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
@@ -287,10 +281,10 @@ fi
 # Detached stall watchdog (#103): a wedged worker sits in `working` with no
 # output and never ends, so neither the bus nor the SessionEnd `exited` backstop
 # notices. Pane output is only a valid liveness signal for an engine that streams
-# — every engine launched above must, which is why cursor goes through
-# stream-json. This watches the pane's output and, if it goes silent through the
-# startup window, posts `failed` so the dispatcher's `crew watch` wakes to
-# recover. Engine-agnostic. nohup detaches it
+# — every engine launched above must, which is why all three run their own TUI
+# rather than a buffered headless mode. This watches the pane's output and, if it
+# goes silent through the startup window, posts `failed` so the dispatcher's
+# `crew watch` wakes to recover. Engine-agnostic. nohup detaches it
 # so it outlives this short-lived dispatch process; it self-exits on progress, a
 # terminal state, or a vanished pane.
 CREW_ID="$crew_id" nohup crew stall-watch "$branch" --pane "$pane" >/dev/null 2>&1 &
