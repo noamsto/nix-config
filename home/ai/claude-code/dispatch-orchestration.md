@@ -35,9 +35,11 @@ flowchart TD
 ## Model map (single source of truth)
 
 The dispatcher picks the tier-appropriate model for the chosen engine from this
-table. This is the ONLY place concrete model versions appear — prose elsewhere
-says "the tier-appropriate model from the model map". Bump this one table when a
-new model ships.
+table. This table is the only place concrete **worker** model versions appear —
+prose elsewhere says "the tier-appropriate model from the model map".
+Orchestrator (dispatcher-session) defaults live in "Orchestrator engines" below;
+consult-roster versions live in `WORKER_PROTOCOL.md` → "Orchestration consult".
+Bump the matching table when a new model ships.
 
 | Tier       | claude ladder                                                                                                                                                                                                                                                            | codex ladder      | cursor ladder           |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ----------------------- |
@@ -57,6 +59,11 @@ standard→medium, trivial→low), independent of which gpt model is chosen. Abo
 `xhigh` the ladder continues with `max` (both engines) and codex-only `ultra`
 (maximum reasoning with automatic task delegation) — `ultra` exists on `-sol` /
 `-terra` only, `-luna` caps at `max`.
+
+Both codex launch paths (`dispatch` workers and the `dispatcher --agent codex`
+orchestrator) pin `service_tier="default"` — the interactive `/fast` toggle
+persists locally and would otherwise leak into unattended runs, burning ChatGPT
+credits at 2.5x for latency nobody is watching.
 Cursor has **no reasoning-effort flag** — effort is baked into the model id
 suffix and `dispatch`'s `--effort` is accepted-and-ignored for cursor. Grok
 exposes both an effort suffix (`-low`/`-medium`/`-high`) and a throughput
@@ -75,9 +82,26 @@ by code.
 **Shape-tag vocabulary.** The outcome log's `shape` field is a closed set:
 `mechanical`, `ui`, `ambiguous`, `security`, `wide`.
 
-**Orchestration consult (worker-side, deep).** Decomposition help from Fable is decided **in the worker's worktree** at the plan seam, not by the dispatcher — the dispatcher's only lever is tiering the task `deep` (its existing "architectural / wide-blast" signal). See `WORKER_PROTOCOL.md` → "Orchestration consult". Every deep worker emits an outcome-metrics record to the bus at finish:
-`crew msg worker:<branch> metrics:<crew_id> '{"consulted":…,"plan_critic_first_pass":…,"rework_count":…,"review_high":…}'`.
-It rides `crew msg` (no `crew.sh` change) and never wakes the dispatcher. Consulted vs non-consulted deep workers are the A/B for whether the Fable lever pays — the counterfactual #86's oracle gate needs. Read it offline: `crew log <crew> | jq 'select(.to|startswith("metrics:"))'`.
+**Orchestration consult (worker-side, deep).** Decomposition help from a top-tier consultant — **fable** (default), **gpt-5.6-sol** via the read-only codex MCP, or **cursor-grok-4.5-high** via a `cursor-agent -p` one-shot — is decided **in the worker's worktree** at the plan seam (whether *and* which), not by the dispatcher — the dispatcher's only lever is tiering the task `deep` (its existing "architectural / wide-blast" signal). Codex/cursor consults are work-profile only. See `WORKER_PROTOCOL.md` → "Orchestration consult". Every deep worker emits an outcome-metrics record to the bus at finish:
+`crew msg worker:<branch> metrics:<crew_id> '{"consulted":…,"consult_engine":…,"plan_critic_first_pass":…,"rework_count":…,"review_high":…}'`.
+It rides `crew msg` (no `crew.sh` change) and never wakes the dispatcher. Consulted vs non-consulted deep workers are the A/B for whether the consult lever pays — `consult_engine` splits it by consultant — the counterfactual #86's oracle gate needs. Read it offline: `crew log <crew> | jq 'select(.to|startswith("metrics:"))'`.
+
+## Orchestrator engines (dispatcher session)
+
+The dispatcher itself can run on any engine — `dispatcher --agent claude|codex|cursor`
+(work-profile gated, same as workers). Orchestrator defaults — bump this table when a
+model ships:
+
+| engine | model | effort |
+| ------ | ----- | ------ |
+| claude | opus (settings default) | settings default |
+| codex | **gpt-5.6-sol** | **high** — not xhigh: blocked workers wait on a bounded ~300s in-band window |
+| cursor | **kimi-k3-high** | fixed in the model id (no knob; `--model` overrides: composer-2.5, cursor-grok-4.5-*) |
+
+claude bakes `DISPATCHER_PROTOCOL.md` as a system prompt; codex/cursor inject it as
+the first prompt (neither CLI has an append-system-prompt flag). The judging rubric
+is identical across engines; the crew-watch park primitive is not — see
+`DISPATCHER_PROTOCOL.md` → "Read the bus".
 
 ## Three orthogonal levers
 

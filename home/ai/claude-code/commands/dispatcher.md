@@ -61,3 +61,7 @@ tmux-reflow-windows "$(tmux display-message -p -t "$TMUX_PANE" '#{session_name}'
 > This is the in-session equivalent of the `dispatcher` launcher. The launcher bakes
 > the protocol as a system prompt (sturdier across compaction); this command loads it
 > into context. For a long fan-out, prefer restarting with `dispatcher`.
+
+> Codex/cursor dispatchers are launcher-only: `dispatcher --agent codex|cursor`
+> (work profile) injects the protocol as the session's first prompt. This command
+> promotes only claude sessions — it can only ever run inside one.

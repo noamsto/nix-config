@@ -88,10 +88,13 @@ stays single-sourced in one protocol file. The watch-loop section splits per eng
   arm-token discipline as written. cursor-agent's shell tool has the same
   background-with-completion-notification primitive, so the loop ports verbatim.
 - **codex** — no background-notify primitive, but also no short foreground tool timeout:
-  the park is a **blocking** `crew watch --timeout 270` foreground call in a loop
-  (`--timeout 3300` when the roster is drained, same partition rule). Human input typed
-  during the park queues in the TUI and is delivered when the turn ends. INV-1 is vacuous
-  for a foreground call (it cannot double-arm), so the arm-token machinery does not apply.
+  the park is a **blocking** `crew watch --timeout 270` foreground call in a loop. Human
+  input typed during the park queues in the TUI and is delivered when the turn ends.
+  INV-1 is vacuous for a foreground call (it cannot double-arm), so the arm-token
+  machinery does not apply. **Amended at final review:** codex parks at 270 even when
+  drained — the park *is* the turn, so the 3300s drained park would leave the human
+  queued behind a foreground call for ~55 minutes exactly when their input is the only
+  thing that can arrive.
 
 Also generalized:
 

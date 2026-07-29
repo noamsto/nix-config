@@ -256,8 +256,11 @@ if [ "$plan_val" = provided ]; then
 fi
 
 if [ "$agent" = codex ]; then
+  # service_tier pinned: the interactive /fast toggle persists locally and would
+  # otherwise leak into unattended workers, burning ChatGPT credits at 2.5x for
+  # latency nobody is watching.
   tmux send-keys -t "$pane" \
-    "codex --profile worker -m $model -c model_reasoning_effort=$effort --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
+    "codex --profile worker -m $model -c model_reasoning_effort=$effort -c service_tier=default --dangerously-bypass-approvals-and-sandbox 'Read ~/nix-config/home/ai/claude-code/WORKER_PROTOCOL.md and WORKER_TASK.md, then run the task end-to-end. Push when pre-push passes; open a PR.${plan_note}'" Enter
 elif [ "$agent" = cursor ]; then
   # cursor-agent has no reasoning-effort flag — effort is encoded in the model
   # id ($model, e.g. claude-opus-4-8-high); composer-2.5 has no effort variants.

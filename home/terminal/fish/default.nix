@@ -196,11 +196,54 @@
       fish_pager_color_selected_background --background=45475a
     '';
 
-    # Start a dispatcher session: an orchestrator that judges tasks into tier+model
-    # and fans them out via `dispatch`. Bakes DISPATCHER_PROTOCOL.md (the judgment
-    # rubric); default model (opus) + full MCP, since the orchestrator needs them.
+    # Start a dispatcher session: an orchestrator that judges tasks into
+    # tier+engine+model and fans them out via `dispatch`. --agent picks the
+    # orchestrator engine: claude (default — opus + full MCP, protocol baked as
+    # system prompt) or codex/cursor (work-profile only; protocol injected as the
+    # first prompt — neither CLI has an append-system-prompt flag).
     "fish/functions/dispatcher.fish".text = ''
-      function dispatcher --description 'Start a dispatcher session (DISPATCHER_PROTOCOL baked)'
+      function dispatcher --description 'Start a dispatcher session (DISPATCHER_PROTOCOL baked; --agent claude|codex|cursor)'
+          # Parse flags out of $argv; the rest is the first task. The historical
+          # bare `dispatcher <task>` form is unchanged — all flags are optional and
+          # order-independent.
+          set -l agent claude
+          set -l model ""
+          set -l effort ""
+          set -l task
+          set -l i 1
+          while test $i -le (count $argv)
+              switch $argv[$i]
+                  case --agent
+                      set i (math $i + 1)
+                      set agent $argv[$i]
+                  case --model
+                      set i (math $i + 1)
+                      set model $argv[$i]
+                  case --effort
+                      set i (math $i + 1)
+                      set effort $argv[$i]
+                  case '*'
+                      set -a task $argv[$i]
+              end
+              set i (math $i + 1)
+          end
+
+          # Validate before touching tmux or the crew bus. codex/cursor are
+          # work-profile only — mirrors the gate in dispatch.sh ($DISPATCH_PROFILE is
+          # set from osConfig.profile by home-manager).
+          if not contains -- $agent claude codex cursor
+              echo "dispatcher: --agent must be claude, codex, or cursor" >&2
+              return 1
+          end
+          if test "$agent" != claude; and test "$DISPATCH_PROFILE" != work
+              echo "dispatcher: --agent $agent is work-profile only" >&2
+              return 1
+          end
+          if test -n "$effort"; and not contains -- $effort low medium high xhigh max ultra
+              echo "dispatcher: --effort must be low, medium, high, xhigh, max, or ultra" >&2
+              return 1
+          end
+
           # Give the orchestrator window a fixed identity (accent border + name) so it
           # stands out from the per-branch worker windows it spawns. Guarded on $TMUX
           # since the dispatcher can be launched outside a tmux pane.
@@ -220,27 +263,69 @@
               # reflow now, else the badge won't render if you tab away at launch.
               tmux-reflow-windows (tmux display-message -p -t "$TMUX_PANE" '#{session_name}') (tmux display-message -p -t "$TMUX_PANE" '#{window_width}')
           end
+
           # Suffix the first task onto the session name so the /resume picker shows
-          # `dispatcher: <task>` instead of a wall of identical `dispatcher` entries.
-          # Bare launches stay `dispatcher`. The same $argv still seeds the first prompt.
+          # `dispatcher: <task>` instead of a wall of identical `dispatcher` entries
+          # (claude only — codex/cursor have no launch-time name flag).
           set -l session_name dispatcher
-          if set -q argv[1]
-              set session_name "dispatcher: $argv"
+          if set -q task[1]
+              set session_name "dispatcher: $task"
           end
+
           # Mint + export the crew id once at launch (mirrors `dispatch`), so
-          # `crew register` has an id and claude + every child `dispatch` inherit
-          # the SAME crew. `crew id` needs no git repo (handled before crew.sh's
-          # repo check).
+          # `crew register` has an id and the launched agent + every child `dispatch`
+          # inherit the SAME crew. `crew id` needs no git repo (handled before
+          # crew.sh's repo check).
           set -q CREW_ID; or set -gx CREW_ID (crew id)
           # Register this crew in the repo bus (non-exclusive — N crews per repo).
-          # $fish_pid is this interactive shell; it blocks on the foreground claude
+          # $fish_pid is this interactive shell; it blocks on the foreground agent
           # below, so its liveness tracks the whole session (stale-reclaim key).
           if git rev-parse --git-common-dir >/dev/null 2>&1
               crew register $fish_pid
           end
-          claude --name $session_name --append-system-prompt-file ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md $argv
-          # claude exited (line above is a child launch, not exec) — deregister so
-          # the crew bus doesn't accumulate stale entries. Guarded the same way.
+
+          set -l protocol ~/nix-config/home/ai/claude-code/DISPATCHER_PROTOCOL.md
+          switch $agent
+              case claude
+                  set -l claude_args --name "$session_name" --append-system-prompt-file $protocol
+                  test -z "$model"; or set -a claude_args --model $model
+                  test -z "$effort"; or set -a claude_args --effort $effort
+                  claude $claude_args $task
+              case codex cursor
+                  # Neither CLI has --append-system-prompt-file — inject the protocol
+                  # as the first prompt (the same pattern dispatch.sh uses for
+                  # codex/cursor workers).
+                  set -l prompt "Read $protocol and adopt the dispatcher role for the rest of this session: judge each task into tier + engine + model + effort per the rubric, scaffold one worker per task via dispatch, and run the crew-watch loop per YOUR engine's section of the protocol (you are a $agent dispatcher). CREW_ID is already exported in this environment, so dispatch and crew calls inherit it."
+                  if set -q task[1]
+                      set prompt "$prompt First task: $task"
+                  end
+                  if test $agent = codex
+                      # --profile worker layers the nix-generated base MCP stack.
+                      # Effort high, not xhigh: blocked workers wait on a bounded
+                      # ~300s in-band window; xhigh turns would let blocks go stale.
+                      set -l codex_model gpt-5.6-sol
+                      set -l codex_effort high
+                      test -z "$model"; or set codex_model $model
+                      test -z "$effort"; or set codex_effort $effort
+                      # service_tier pinned: the interactive /fast toggle persists
+                      # locally and would otherwise leak into the unattended
+                      # dispatcher, burning ChatGPT credits at 2.5x.
+                      codex --profile worker -m $codex_model -c "model_reasoning_effort=\"$codex_effort\"" -c "service_tier=\"default\"" --dangerously-bypass-approvals-and-sandbox "$prompt"
+                  else
+                      # kimi-k3-high: third-family model, strong agentic tool use; the
+                      # dispatcher's value is judgment, not turn speed. --effort is
+                      # accepted-and-ignored (effort lives in the cursor model id).
+                      set -l cursor_model kimi-k3-high
+                      test -z "$model"; or set cursor_model $model
+                      if test -n "$effort"
+                          echo "dispatcher: --effort is ignored for cursor (effort lives in the model id)" >&2
+                      end
+                      cursor-agent --model $cursor_model --force --trust --approve-mcps --disable-indexing --disable-codebase-ref "$prompt"
+                  end
+          end
+
+          # Agent exited (the launches above are child launches, not exec) —
+          # deregister so the crew bus doesn't accumulate stale entries.
           if git rev-parse --git-common-dir >/dev/null 2>&1
               crew deregister
           end
