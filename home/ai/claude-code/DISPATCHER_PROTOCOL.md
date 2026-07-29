@@ -155,8 +155,13 @@ Two reads remain for detail:
 Keep a live picture of the crew in the aeye carousel. Whenever the roster changes
 — after a non-empty `crew watch` batch, and right after you `dispatch` a new worker
 — regenerate it from `crew roster` and write **D2** to
-`/tmp/claude-status/images/diagrams/src/roster.d2` (always the **same path** — it
-overwrites and the carousel updates in place). One node per worker; **you** are the
+`/tmp/claude-status/images/diagrams/src/roster-$CREW_ID.d2` (always the **same path
+for this crew** — it overwrites and the carousel updates in place). The `$CREW_ID`
+suffix is load-bearing: `/tmp/claude-status/` is machine-global, so a bare
+`roster.d2` is one file every dispatcher on the box shares, and a second crew
+overwriting it between your Write and the render hook's re-read lands _its_ roster
+in _your_ carousel. The cost is one stale render set per finished crew in the
+diagrams dir. One node per worker; **you** are the
 root. This is a read-only mirror of the bus — never let drawing it delay a reply to a
 blocked worker.
 
