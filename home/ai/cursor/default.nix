@@ -3,9 +3,12 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+
+  aeye-cursor = "${inputs.lazytmux.inputs.aeye}/adapters/cursor";
 in {
   home = {
     # Cursor CLI (`cursor-agent`). Used both interactively and as an alternate
@@ -33,5 +36,19 @@ in {
       ".cursor/rules/shared-conventions.mdc".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
     };
+
+    # aeye's Cursor adapter (noamsto/aeye#169): merge its hook entries into
+    # ~/.cursor/hooks.json. Runs on EVERY activation, unlike the marker-guarded
+    # codex blocks — install.sh strips prior aeye entries (matched on
+    # /adapters/cursor/scripts/ in the command) and re-appends pointing at the
+    # current store path, so an aeye bump never leaves dangling hook commands.
+    # Unrelated user entries are preserved; a malformed hooks.json fails the
+    # merge loudly instead of clobbering. install.sh also links the
+    # aeye-diagrams / aeye-image-gallery skills into ~/.cursor/skills.
+    # Hooks find `aeye` + `resvg` on PATH via lazytmux's carouselDiagramTools.
+    # PATH is pinned for the activation env, which doesn't guarantee jq.
+    activation.aeyeCursorHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run env PATH="${lib.makeBinPath [pkgs.jq pkgs.coreutils]}:$PATH" ${aeye-cursor}/install.sh
+    '';
   };
 }
