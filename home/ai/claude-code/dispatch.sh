@@ -193,9 +193,14 @@ fi
 
 sanitized="${branch//\//-}"
 
-# post-switch tmux hook is disabled under CLAUDECODE, so wt only creates the
-# worktree here — we drive tmux ourselves below.
-wt switch -c "$branch" -y
+# Blank worktrunk's post-switch *tmux* hook for this one call: we drive tmux
+# ourselves below, and the hook would otherwise open a second, undecorated shell
+# window at the same worktree (#123). Its own `$CLAUDECODE` guard only covers a
+# Claude-launched dispatcher, and setting CLAUDECODE here would leak Claude's
+# identity into a codex/cursor worker. Scoped to `tmux`, so the devshell hook
+# still runs — it materializes .pre-commit-config.yaml, without which the worker
+# cannot commit at all.
+wt switch -c "$branch" -y --config-set 'post-switch.tmux=""'
 
 # Ask git where worktrunk actually placed the worktree — its path template is
 # user-configurable, so reconstructing it here drifts the moment that changes.
