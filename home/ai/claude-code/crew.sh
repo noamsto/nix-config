@@ -686,8 +686,148 @@ stall-watch)
     }
   done
   ;;
+reap)
+  # Reclaim window + worktree for workers whose PR has landed. No crew filter:
+  # the workers worth reaping are precisely the ones from earlier dispatcher
+  # sessions, so scoping to the current crew id would skip every real candidate.
+  #
+  # The PR — not elapsed time — is the gate. A worker sits in `done` for as long
+  # as its PR takes to merge, answering review comments and fixing CI the whole
+  # time; a time-based sweep would delete live work.
+  quiet=""
+  dry=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+    --quiet) quiet=1 ;;
+    --dry-run) dry=1 ;;
+    *)
+      echo "crew: reap takes --quiet and --dry-run (got '$1')" >&2
+      exit 1
+      ;;
+    esac
+    shift
+  done
+  [ -f "$log" ] || exit 0
+  # say: outcomes, always. note: kept-worker bookkeeping, silenced under --quiet
+  # so the dispatch call site stays silent unless something actually happened.
+  say() { echo "crew reap: $1"; }
+  note() { [ -n "$quiet" ] || echo "crew reap: $1"; }
+  # gh reads PR state; wt owns the worktree layout, so it does the removal and
+  # resolves from the ambient session PATH (same as in dispatch) — hence checked.
+  for tool in gh wt; do
+    command -v "$tool" >/dev/null || {
+      note "needs $tool"
+      exit 0
+    }
+  done
+
+  # Latest status per worker across every crew; keep the terminal `done` ones.
+  # pr_url is carried forward because the `done` event itself drops it (same
+  # reason roster does this).
+  candidates=$(jq -s -r '
+      map(select(.kind=="status" and ((.from // "") | startswith("worker:"))))
+      | group_by(.from) | map(
+          (max_by(.ts)) as $latest
+          | {branch: ($latest.from | sub("^worker:";"")),
+             state: $latest.body.state,
+             pr_url: (map(.body.pr_url) | map(select(. != null)) | last)})
+      | map(select(.state == "done"))
+      | .[] | [.branch, (.pr_url // "-")] | @tsv' "$log")
+  [ -n "$candidates" ] || {
+    note "nothing done to reap"
+    exit 0
+  }
+
+  # Panes running an engine, to tell "finished worker" from "someone is in there
+  # right now". Same path-keyed idiom as roster: window names are rewritten by
+  # lazytmux, so the worktree path is the only stable handle.
+  live=$(tmux list-panes -a -F '#{pane_current_command} #{pane_current_path}' 2>/dev/null || true)
+
+  reaped=0
+  while IFS=$'\t' read -r branch pr; do
+    [ -n "$branch" ] || continue
+    wtpath=$(git worktree list --porcelain |
+      awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p}')
+    [ -n "$wtpath" ] && [ -d "$wtpath" ] || continue
+
+    if [ "$pr" = "-" ]; then
+      note "keeping $branch — done but no PR on the bus"
+      continue
+    fi
+    pr_state=$(gh pr view "$pr" --json state --jq .state 2>/dev/null || true)
+    case "$pr_state" in
+    MERGED | CLOSED) ;;
+    "")
+      note "keeping $branch — could not read PR state ($pr)"
+      continue
+      ;;
+    *)
+      note "keeping $branch — PR $pr_state"
+      continue
+      ;;
+    esac
+
+    case "$live" in
+    *"claude $wtpath"* | *"codex $wtpath"* | *"cursor-agent $wtpath"*)
+      note "keeping $branch — an engine is still running there"
+      continue
+      ;;
+    esac
+    # Never remove the worktree the caller is standing in — it would leave the
+    # invoking shell (or dispatch itself) on a path that no longer exists.
+    case "$PWD/" in
+    "$wtpath"/*)
+      note "keeping $branch — it is the current worktree"
+      continue
+      ;;
+    esac
+
+    # Check for leftover work BEFORE touching anything. `wt remove` refuses a
+    # dirty worktree on its own, but discovering that only after trashing the
+    # task doc below would strip a worktree that then survives.
+    dirt=$(git -C "$wtpath" status --porcelain | grep -v '^?? WORKER_TASK\.md$' || true)
+    if [ -n "$dirt" ]; then
+      note "keeping $branch — uncommitted changes"
+      continue
+    fi
+
+    if [ -n "$dry" ]; then
+      say "would reap $branch ($pr_state) @ $wtpath"
+      continue
+    fi
+
+    # The task doc is dispatch's own artifact, but it is untracked — left in
+    # place it reads as uncommitted work and `wt remove` refuses the worktree.
+    # gtrash so a post-mortem can still recover it.
+    if [ -f "$wtpath/WORKER_TASK.md" ]; then
+      gtrash put "$wtpath/WORKER_TASK.md" >/dev/null 2>&1 || true
+    fi
+    # Kill the window ourselves rather than leaning on worktrunk's post-remove
+    # hook: that hook short-circuits under $CLAUDECODE, so relying on it would
+    # make cleanup work for codex/cursor dispatchers only (#123 in reverse).
+    for wid in $(tmux list-windows -a -F '#{window_id} #{pane_current_path} #{@worktree}' 2>/dev/null |
+      awk -v p="$wtpath" '$2 == p || $3 == p {print $1}'); do
+      tmux kill-window -t "$wid" 2>/dev/null || true
+    done
+    # No -f: work is never deleted just because a PR merged — wt refuses a dirty
+    # worktree, backing up the pre-check above. Branch deletion is wt's call: it
+    # keeps unmerged ones. --no-hooks because the window is already gone.
+    if wt remove --foreground --no-hooks "$branch" >/dev/null 2>&1; then
+      reaped=$((reaped + 1))
+      say "reaped $branch ($pr_state)"
+      jq -nc --arg branch "$branch" --arg pr "$pr" --arg pr_state "$pr_state" --arg wt "$wtpath" \
+        '{ts:(now*1000|floor), kind:"reap", branch:$branch, pr:$pr, pr_state:$pr_state, worktree:$wt}' \
+        >>"$log"
+    else
+      say "keeping $branch — wt remove failed"
+    fi
+  done <<EOF
+$candidates
+EOF
+  [ -n "$dry" ] || [ "$reaped" -gt 0 ] || note "nothing reclaimed"
+  ;;
 *)
-  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S] | log [crew] | report [crew] | rate" >&2
+  echo "usage: crew id | identity <branch> | status <from> <state> [detail] [pr] | msg <from> <to> <body> | reply <to> <body> | await <agent> [--timeout S] [--interval S] | register [pid] | deregister | watch [--since TS] [--states a,b,c] [--timeout S] [--interval S] | roster [crew] | inbox <agent> [crew] [--since TS] | stall-watch <branch> --pane <id> [--grace S] [--stall S] [--window S] [--interval S] | log [crew] | report [crew] | rate | reap [--quiet] [--dry-run]" >&2
   exit 1
   ;;
 esac

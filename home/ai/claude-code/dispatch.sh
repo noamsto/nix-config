@@ -161,6 +161,12 @@ title="$*"
   exit 1
 }
 
+# Reclaim workers whose PR already landed, before adding another one. Cheapest
+# possible cleanup schedule: no daemon, no timer, and it runs exactly when the
+# worktree/window count is about to grow. Non-fatal by construction — a dispatch
+# must never fail because cleanup of unrelated, already-merged work failed.
+crew reap --quiet || true
+
 # slug: lowercase, non-alnum -> single dash, first 40 chars, strip edge dashes.
 slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | cut -c1-40 | sed -E 's/^-+//; s/-+$//')
 

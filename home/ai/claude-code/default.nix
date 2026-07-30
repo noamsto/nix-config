@@ -23,7 +23,9 @@
   # from workers' bash tool. writeShellApplication runs shellcheck at build.
   crew = pkgs.writeShellApplication {
     name = "crew";
-    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep pkgs.tmux];
+    # gh + gtrash are for `reap` (PR state, and trashing the worker task doc);
+    # `wt` stays ambient, as in dispatch.
+    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep pkgs.tmux pkgs.gh pkgs.gtrash];
     text = builtins.readFile ./crew.sh;
   };
 
