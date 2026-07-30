@@ -190,10 +190,6 @@ check-staged:
         echo "💡 Tip: Use 'git add <files>' to stage changes before building"
     fi
 
-# Verify a dispatched worker gets exactly one tmux window (needs a live tmux)
-test-dispatch-window:
-    ./home/ai/claude-code/tests/dispatch-window.sh
-
 # =============================================================================
 # Help & Documentation
 # =============================================================================

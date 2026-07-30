@@ -12,9 +12,10 @@
 in {
   home = {
     # Cursor CLI (`cursor-agent`). Used both interactively and as an alternate
-    # work-profile `dispatch` worker engine (`dispatch … --agent cursor …`, gated
-    # in dispatch.sh). Auth is out of band — run `cursor-agent login` once; there's
-    # no secret to manage in Nix.
+    # work-profile `dispatch` worker engine (`dispatch … --agent cursor …`). The
+    # work-profile gate lives in the dispatcher flake, keyed on the
+    # `programs.dispatcher.profile` this repo sets. Auth is out of band — run
+    # `cursor-agent login` once; there's no secret to manage in Nix.
     packages = [pkgs.cursor-agent];
 
     file = {

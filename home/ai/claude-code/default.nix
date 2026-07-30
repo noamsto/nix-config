@@ -18,26 +18,6 @@
   git-default-branch-guard = pkgs.writeShellScriptBin "claude-git-default-branch-guard" (builtins.readFile ./git-default-branch-guard.sh);
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
-  dispatch-notify = pkgs.writeShellScriptBin "claude-dispatch-notify" (builtins.readFile ./dispatch-notify.sh);
-  # crew bus CLI on PATH (NOT a fish fn) — callable from the dispatcher's fish AND
-  # from workers' bash tool. writeShellApplication runs shellcheck at build.
-  crew = pkgs.writeShellApplication {
-    name = "crew";
-    # gh + gtrash are for `reap` (PR state, and trashing the worker task doc);
-    # `wt` stays ambient, as in dispatch.
-    runtimeInputs = [pkgs.git pkgs.jq pkgs.coreutils pkgs.gnugrep pkgs.tmux pkgs.gh pkgs.gtrash];
-    text = builtins.readFile ./crew.sh;
-  };
-
-  # native dispatch on PATH (was a fish autoload fn needing `fish -c`).
-  # writeShellApplication pins nixpkgs bash + runs shellcheck at build.
-  # `wt` (worktrunk) resolves from the interactive session PATH — runtimeInputs
-  # are prepended, ambient PATH is preserved.
-  dispatch = pkgs.writeShellApplication {
-    name = "dispatch";
-    runtimeInputs = [pkgs.gh pkgs.git pkgs.jq pkgs.gnused pkgs.coreutils pkgs.tmux crew];
-    text = builtins.readFile ./dispatch.sh;
-  };
 
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
@@ -141,16 +121,9 @@
             ];
           }
         ];
-        SessionEnd = [
-          {
-            hooks = [
-              {
-                type = "command";
-                command = "${dispatch-notify}/bin/claude-dispatch-notify";
-              }
-            ];
-          }
-        ];
+        # SessionEnd dispatch-notify now ships in the dispatcher plugin's own
+        # hooks.json (loaded via --plugin-dir below), so it is no longer wired
+        # here.
       };
     };
   };
@@ -185,7 +158,7 @@
       else
         export AEYE_D2_THEME=200
       fi
-      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin "$@"
+      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy
@@ -211,6 +184,7 @@ in {
     ./mcp-profiles.nix
     inputs.agent-smith.homeManagerModules.default
     inputs.resolved.homeManagerModules.default
+    inputs.dispatcher.homeManagerModules.default
   ];
 
   programs = {
@@ -218,13 +192,17 @@ in {
     agent-smith.enable = true;
     # resolved CC plugin binary on PATH; the /resolved:stale plugin finds it there.
     resolved.enable = true;
+    # crew + dispatch + dispatcher on PATH, DISPATCH_PROFILE and
+    # DISPATCHER_PROTOCOL_DIR exported, cursor rule/commands written, and the
+    # codex plugin installed. The claude plugin dir is passed in the wrapper
+    # below. `profile` gates the codex/cursor engines to the work machine.
+    dispatcher = {
+      enable = true;
+      inherit (osConfig) profile;
+    };
   };
 
   home = {
-    # crew bus CLI on PATH (shared by the dispatcher's fish fns and the workers' bash).
-    packages = [crew dispatch];
-    sessionVariables.DISPATCH_PROFILE = osConfig.profile;
-
     # Out-of-store symlinks so Claude (and third-party tools) can edit at runtime
     file =
       {
@@ -245,8 +223,9 @@ in {
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
         ".claude/commands".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";
-        ".claude/workflows".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/workflows";
+        # No `.claude/workflows` symlink: spec-plan-critic.js was the only
+        # workflow and it moved to the dispatcher plugin. Git does not track an
+        # empty directory, so pointing at one would dangle on a fresh clone.
       }
       // skillSymlinks;
   };
