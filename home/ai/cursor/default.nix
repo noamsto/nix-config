@@ -4,11 +4,28 @@
   pkgs,
   lib,
   inputs,
+  osConfig,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   aeye-cursor = "${inputs.lazytmux.inputs.aeye}/adapters/cursor";
+
+  # cursor-agent's mcp.json has no documented env-var interpolation in headers,
+  # so posthog goes through mcp-remote (which expands ${...} in args) — same
+  # shape as the claude/amp analytics profiles.
+  cursorPosthog = mcpServers.helpers.mkNpxMcp {
+    package = "mcp-remote@latest";
+    args = [
+      "https://mcp.posthog.com/mcp"
+      "--header"
+      "Authorization: Bearer \${POSTHOG_PERSONAL_API_KEY}"
+    ];
+  };
+
+  cursorWorkMcp =
+    lib.mapAttrs (_: mcpServers.toCursor) (builtins.removeAttrs mcpServers.remote ["posthog"])
+    // {posthog = cursorPosthog;};
 in {
   home = {
     # Cursor CLI (`cursor-agent`). Used both interactively and as an alternate
@@ -26,7 +43,12 @@ in {
       # the launch passes --approve-mcps for headless auto-approval).
       # Note: Cursor uses ~/.cursor (not ~/.config/cursor) for its config
       ".cursor/mcp.json".text = builtins.toJSON {
-        mcpServers = mcpServers.base;
+        mcpServers =
+          mcpServers.base
+          # Work-profile remotes for parity with claude's connector/plugin MCPs.
+          # OAuth (linear, notion, slack, fireflies, figma, groundcover) is
+          # approved per-server on first use.
+          // lib.optionalAttrs (osConfig.profile == "work") cursorWorkMcp;
       };
 
       # Global instructions. `~/.cursor/rules/*.mdc` is cursor's user-level rule

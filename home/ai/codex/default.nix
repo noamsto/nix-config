@@ -8,8 +8,15 @@
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
   tomlFormat = pkgs.formats.toml {};
 
+  # This whole module is work-only (gated in home/ai/default.nix), so the
+  # remote MCPs — all work tools — ride along ungated. OAuth logins happen
+  # interactively (`codex mcp login <name>`); workers reuse the stored tokens.
+  codexRemoteMcp = lib.mapAttrs (_: mcpServers.toCodex) mcpServers.remote;
+  codexMcpSnippet = name:
+    tomlFormat.generate "codex-mcp-${name}.toml" {mcp_servers.${name} = codexRemoteMcp.${name};};
+
   worker-config = tomlFormat.generate "codex-worker.config.toml" {
-    mcp_servers = mcpServers.base;
+    mcp_servers = mcpServers.base // codexRemoteMcp;
   };
 
   aeye-plugin = "${inputs.lazytmux.inputs.aeye}/adapters/codex/plugin";
@@ -44,6 +51,25 @@ in {
       codexWorkerProfile = lib.hm.dag.entryAfter ["writeBoundary"] ''
         run rm -f "$HOME/.codex/worker.config.toml"
         run install -Dm644 ${worker-config} "$HOME/.codex/worker.config.toml"
+      '';
+
+      # Interactive codex reads only ~/.codex/config.toml (profiles layer on
+      # top), so MCP parity for interactive sessions means merging the same
+      # mcp_servers into the hand-managed file. Append-only, one grep-guarded
+      # stanza per server: codex rewrites this file when persisting TUI state,
+      # so a marker-block replace would fight it. To pick up a changed server
+      # definition, `codex mcp remove <name>` and switch again.
+      codexMcpServers = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        config="$HOME/.codex/config.toml"
+        run mkdir -p "$HOME/.codex"
+        if [ ! -f "$config" ]; then
+          run install -Dm644 /dev/null "$config"
+        fi
+        ${lib.concatMapStringsSep "\n" (name: ''
+          if ! grep -q '^\[mcp_servers\.${name}\]' "$config"; then
+            run sh -c 'printf "\n" >> "$2" && cat "$1" >> "$2"' sh ${codexMcpSnippet name} "$config"
+          fi
+        '') (builtins.attrNames codexRemoteMcp)}
       '';
 
       # Keep modal editing enabled without taking ownership of config.toml: Codex
