@@ -58,6 +58,13 @@ in {
       # as ~/.codex/AGENTS.md. Out-of-store to stay editable without a rebuild.
       ".cursor/rules/shared-conventions.mdc".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+
+      # Same reviewer/specialist agents as Claude Code / Codex. Cursor docs also
+      # read ~/.claude/agents, but the CLI only reliably discovers project-level
+      # agents; user-level ~/.cursor/agents still helps the IDE and keeps the
+      # three harnesses on one source of truth.
+      ".cursor/agents".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
     };
 
     # aeye's Cursor adapter (noamsto/aeye#169): merge its hook entries into

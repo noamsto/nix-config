@@ -219,6 +219,8 @@ in {
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
         ".claude/settings.json".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+        # Mirrored to ~/.cursor/agents and ~/.codex/agents from those modules —
+        # one source tree for all three harnesses.
         ".claude/agents".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
         ".claude/commands".source =

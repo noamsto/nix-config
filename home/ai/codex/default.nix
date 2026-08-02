@@ -32,8 +32,15 @@ in {
     # Global instructions — codex's only machine-wide channel, read ahead of any
     # project AGENTS.md. Out-of-store symlink so it stays editable, pointing at
     # the file claude imports and cursor loads as a rule.
-    file.".codex/AGENTS.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+    file = {
+      ".codex/AGENTS.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+
+      # Same reviewer/specialist agents as Claude Code / Cursor (one tree under
+      # home/ai/claude-code/agents). Codex loads ~/.codex/agents for user scope.
+      ".codex/agents".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+    };
 
     # Worker MCP profile. `dispatch … --agent codex` launches with
     # `--profile worker`, which layers this file on top of the hand-managed
