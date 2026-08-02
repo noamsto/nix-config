@@ -48,8 +48,27 @@ in {
     # aeye-diagrams / aeye-image-gallery skills into ~/.cursor/skills.
     # Hooks find `aeye` + `resvg` on PATH via lazytmux's carouselDiagramTools.
     # PATH is pinned for the activation env, which doesn't guarantee jq.
-    activation.aeyeCursorHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      run env PATH="${lib.makeBinPath [pkgs.jq pkgs.coreutils]}:$PATH" ${aeye-cursor}/install.sh
-    '';
+    activation = {
+      aeyeCursorHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        run env PATH="${lib.makeBinPath [pkgs.jq pkgs.coreutils]}:$PATH" ${aeye-cursor}/install.sh
+      '';
+
+      # Cursor Agent follows XDG_CONFIG_HOME when it is set. Merge this one
+      # setting so the CLI can retain every other user-managed preference.
+      cursorAgentVimMode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/cursor"
+        config="$config_dir/cli-config.json"
+        run mkdir -p "$config_dir"
+        if [ -f "$config" ]; then
+          run ${pkgs.jq}/bin/jq '(.version //= 1) | .editor.vimMode = true' "$config" > "$config.tmp"
+          run mv "$config.tmp" "$config"
+        else
+          run install -Dm644 ${pkgs.writeText "cursor-agent-cli-config.json" (builtins.toJSON {
+          version = 1;
+          editor.vimMode = true;
+        })} "$config"
+        fi
+      '';
+    };
   };
 }
