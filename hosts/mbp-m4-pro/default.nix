@@ -128,6 +128,8 @@ in {
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
       # mediosz/tap → SwipeAerospace (swipe-to-switch-workspace for AeroSpace).
       "mediosz/homebrew-tap" = inputs.homebrew-mediosz;
+      # nikitabobko/tap → AeroSpace itself.
+      "nikitabobko/homebrew-tap" = inputs.homebrew-nikitabobko;
     };
   };
 
@@ -144,6 +146,7 @@ in {
       "homebrew/core"
       "homebrew/cask"
       "mediosz/tap"
+      "nikitabobko/tap"
     ];
     # NOTE: caskArgs.no_quarantine was removed — Homebrew disabled the
     # `--[no-]quarantine` switch ("There is no replacement"), so passing it
@@ -198,10 +201,24 @@ in {
       # (filled = active), replacing a hand-run `caffeinate`. Option-click for
       # timed sessions. Start-at-login + activate-on-battery via its own menu.
       "keepingyouawake"
+      # CANONICAL TCC RATIONALE (kitty + aerospace below): macOS identifies an
+      # app by path + signing identity, and the nixpkgs bundles are ad-hoc signed
+      # (no Team ID) run straight out of /nix/store — so the identity IS the
+      # hashed store path, and every version bump reads as a brand-new app whose
+      # permissions must be granted again. Casks are Developer ID-signed under a
+      # fixed /Applications path, so grants survive upgrades. Config still comes
+      # from Nix. For kitty this covers every CLI tool run inside it, since the
+      # terminal is their TCC principal (Accessibility for cliclick, Automation,
+      # Full Disk Access).
+      "kitty"
       "losslesscut"
       # 3-finger swipe → AeroSpace workspace (parity with Hyprland's gesture
       # swipe on the ThinkPad). From the mediosz/tap declared above.
       "mediosz/tap/swipeaerospace"
+      # Cask for the TCC reason above; here it's the Accessibility grant, plus
+      # the Automation one the float-center osascript needs. The LaunchAgent
+      # below owns startup, config stays in home/darwin/aerospace.nix.
+      "nikitabobko/tap/aerospace"
       "raycast"
       # Mesh VPN. GUI/menubar variant (auto-update, browser login, native
       # daemon). CLI lives inside the bundle and isn't on PATH — symlinked
@@ -236,9 +253,21 @@ in {
       serviceConfig.RunAtLoad = true;
     };
 
+    # Startup for the AeroSpace cask. The Home Manager module's own agent is off
+    # (programs.aerospace.launchd.enable = false) because it hardcodes the
+    # store-path binary; this points at the stable /Applications bundle instead.
+    # The inner binary, not `open -a`: KeepAlive needs a process to supervise.
+    aerospace = {
+      command = "/Applications/AeroSpace.app/Contents/MacOS/AeroSpace";
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = true;
+      };
+    };
+
     # The SwipeAeroSpace cask registers no login item, so it never auto-starts.
-    # Give it a LaunchAgent mirroring AeroSpace's own (RunAtLoad + KeepAlive) so
-    # the swipe helper comes up at login and stays up.
+    # Give it a LaunchAgent mirroring AeroSpace's (RunAtLoad + KeepAlive) so the
+    # swipe helper comes up at login and stays up.
     swipeaerospace = {
       command = "/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace";
       serviceConfig = {
@@ -357,7 +386,9 @@ in {
     useUserPackages = true;
     backupFileExtension = "bak";
     extraSpecialArgs = {inherit inputs;};
-    # Aliases Home Manager Apps (kitty, …) so Spotlight/Launchpad index them.
+    # Aliases Home Manager Apps (YouTube Music, …) so Spotlight/Launchpad index
+    # them. No help for TCC: the trampoline only launches the store binary, and
+    # that's the process macOS records permissions against.
     sharedModules = [inputs.mac-app-util.homeManagerModules.default];
     users.${host.username} = ../../home/noams.nix;
   };

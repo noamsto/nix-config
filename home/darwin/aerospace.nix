@@ -67,8 +67,13 @@ in
   lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     programs.aerospace = {
       enable = true;
-      # launchd owns startup; the HM module ignores AeroSpace's own start-at-login.
-      launchd.enable = true;
+      # The binary comes from the Homebrew cask so its TCC grants survive version
+      # bumps — rationale in hosts/mbp-m4-pro. Config stays here.
+      package = null;
+      # The module's agent would hardcode the store-path binary; hosts/mbp-m4-pro
+      # declares one against /Applications instead. The toml still gets
+      # start-at-login = false, so launchd remains the only starter.
+      launchd.enable = false;
 
       settings = {
         # v2 only changes the persistent-workspaces default (inferred → empty);
@@ -181,4 +186,17 @@ in
         inactive_color = "0xff6c7086";
       };
     };
+
+    # The module only wires its reload-on-change hook when its own LaunchAgent is
+    # enabled, so re-add the reload. Activation-wide rather than an onChange on
+    # the toml, whose home.file key the module derives from xdg.configHome and
+    # isn't ours to reproduce; reload-config is idempotent. Absolute path because
+    # activation doesn't inherit the interactive PATH, and the probe skips the
+    # reload before brew has installed the cask.
+    home.activation.aerospaceReloadConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
+      aerospace=/Applications/AeroSpace.app/Contents/MacOS/aerospace
+      if $aerospace list-modes --current >/dev/null 2>&1; then
+        run $aerospace reload-config
+      fi
+    '';
   }

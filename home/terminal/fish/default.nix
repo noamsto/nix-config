@@ -534,6 +534,11 @@
         ''
         # caffeinate is macOS-only; keep the helper off the Linux hosts.
         + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+          # Casks drop completions here (aerospace ships fish ones), and nothing
+          # else puts it on the path — nix fish only knows the nix profile, and
+          # brew's shellenv isn't sourced. Appended, so nixpkgs completions win.
+          set -a fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
+
           function __wake_seconds --description 'Convert 90s/30m/2h to seconds'
             set -l d $argv[1]
             switch $d

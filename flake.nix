@@ -102,6 +102,11 @@
       url = "github:mediosz/homebrew-tap";
       flake = false;
     };
+    # Upstream tap for AeroSpace itself (Developer ID-signed build).
+    homebrew-nikitabobko = {
+      url = "github:nikitabobko/homebrew-tap";
+      flake = false;
+    };
 
     # === DEVELOPMENT INFRASTRUCTURE ===
     flake-parts = {

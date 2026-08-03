@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   config,
   ...
 }: let
@@ -53,6 +54,10 @@
 in {
   programs.kitty = {
     enable = true;
+    # darwin takes the binary from the Homebrew cask so its TCC grants survive
+    # version bumps — rationale in hosts/mbp-m4-pro. The cask's `binary` stanza
+    # keeps kitty/kitten on PATH. Linux has no TCC, so it stays on nixpkgs.
+    package = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin null;
     # Default dark theme - ensures kitty starts themed before theme-toggle runs.
     # theme-toggle replaces this include line at runtime with the saved preference.
     extraConfig = ''
