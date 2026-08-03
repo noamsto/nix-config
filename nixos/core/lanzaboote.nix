@@ -19,6 +19,10 @@
     };
   };
 
+  # udev rules putting /dev/tpmrm0 in the tss group, so user services can
+  # unseal TPM credentials (e.g. keyring-tpm-unlock) without root
+  security.tpm2.enable = true;
+
   environment.systemPackages = with pkgs; [
     sbctl # Secure boot key management
     tpm2-tools # TPM utilities

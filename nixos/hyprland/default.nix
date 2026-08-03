@@ -33,7 +33,7 @@
   in
     wrap pkgs.hyprland;
 in {
-  imports = [./gnome-services.nix];
+  imports = [./gnome-services.nix ./keyring-tpm-unlock.nix];
   config = lib.mkIf isHypr {
     programs = {
       hyprland = {
