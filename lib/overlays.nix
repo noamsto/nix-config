@@ -81,4 +81,14 @@ inputs: [
         '';
     });
   })
+
+  # nixpkgs bumped python3Packages.zxing-cpp to 3.0.2; normcap 0.6.0 still
+  # pins ==2.3.0 in pyproject.toml. Same relax pattern nixpkgs already uses
+  # for jeepney/shiboken6 — drop once upstream loosens the pin / nixpkgs
+  # adds this to pythonRelaxDeps.
+  (_final: prev: {
+    normcap = prev.normcap.overrideAttrs (old: {
+      pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["zxing-cpp"];
+    });
+  })
 ]

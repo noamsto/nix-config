@@ -17,7 +17,6 @@ in {
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
     inputs.nix-amd-ai.nixosModules.default
-    inputs.lazytmux.nixosModules.default
     ../../nixos/core/lanzaboote.nix
     ../../nixos/hardware/udev-hwmon.nix
   ];
@@ -52,12 +51,6 @@ in {
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02 noams@nwms-MacBook-Pro.local"
     ];
   };
-
-  # lztmux remote promotion: keep the forwarded TMUX_PANE / LZTMUX_OUTER env
-  # through sshd so a `tmux` launched here (from a local tmux over ssh) can be
-  # promoted into a local session on the initiating laptop. home-manager can't
-  # set sshd options, hence the companion nixosModule imported above.
-  programs.lazytmux.remoteAcceptEnv = true;
 
   # Btrfs swapfile for hibernate support
   # After install, run: sudo btrfs filesystem mkswapfile --size 32G /swap/swapfile
