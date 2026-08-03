@@ -53,8 +53,18 @@ in {
     aiNaming.enable = true;
     # The CC plugin (--plugin-dir in the claude wrapper) ships the same skills
     skills.enable = false;
-    persist.enable = true;
-    persist.restoreMode = "auto";
+    persist = {
+      enable = true;
+      restoreMode = "auto";
+      # Opt-in: mutates ~/.codex/config.toml and needs a one-time `/hooks` →
+      # "Trust all" in an interactive codex session (trust hash isn't declarable).
+      resumeCodex = true;
+    };
+    # Native Codex status hooks → claude-status-update (same trust step as above).
+    # Prefer these over the agent-detect scraper for processing→idle transitions.
+    codexStatus.enable = true;
+    # Cursor Agent CLI status hooks → same status files (agent-detect stays backfill).
+    cursorStatus.enable = true;
     # Nested-tmux-over-ssh promotion: a `tmux` launched inside an ssh session
     # (from within local tmux) becomes a first-class local session on the
     # initiating machine. Only enable for hosts where root is you — a peer with
