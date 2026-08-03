@@ -7,10 +7,101 @@
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
 
   # chromium is Linux-only in nixpkgs. On darwin, omit --executable-path so
-  # playwright-mcp uses its own managed browser. Wrapped in lib.optionals so the
-  # `pkgs.chromium` thunk is never forced off-Linux (it would fail meta checks).
-  playwrightExecArgs =
-    lib.optionals pkgs.stdenv.hostPlatform.isLinux ["--executable-path" (lib.getExe pkgs.chromium)];
+  # playwright-mcp uses its own managed browser. The automation wrapper (and
+  # any pkgs.chromium reference) must stay inside the Linux branch so darwin
+  # eval never forces the chromium thunk (meta checks fail off-Linux).
+  playwright =
+    if pkgs.stdenv.hostPlatform.isLinux
+    then let
+      # Persistent profile + 1Password extension for easy logins. Spec:
+      # docs/superpowers/specs/2026-08-03-playwright-1password-autofill-design.md
+      playwrightMcpAutomation = pkgs.writeShellApplication {
+        name = "playwright-mcp-automation";
+        runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.jq];
+        text = ''
+          cache_home="''${XDG_CACHE_HOME:-$HOME/.cache}"
+          user_data_dir="$cache_home/playwright-mcp-automation"
+          nm_dir="$user_data_dir/NativeMessagingHosts"
+          config_path="$user_data_dir/mcp-config.json"
+          ext_root="$HOME/.config/chromium/Default/Extensions/aeblfdkhhhdcdjpifhhbdiojplfjncoa"
+          chromium_bin="${lib.getExe pkgs.chromium}"
+          mcp_bin="${lib.getExe pkgs.playwright-mcp}"
+
+          mkdir -p "$nm_dir"
+
+          jq -n '{
+            name: "com.1password.1password",
+            description: "1Password BrowserSupport",
+            path: "/run/wrappers/bin/1Password-BrowserSupport",
+            type: "stdio",
+            allowed_origins: [
+              "chrome-extension://hjlinigoblmkhjejkmbegnoaljkphmgo/",
+              "chrome-extension://bkpbhnjcbehoklfkljkkbbmipaphipgl/",
+              "chrome-extension://gejiddohjgogedgjnonbofjigllpkmbf/",
+              "chrome-extension://khgocmkkpikpnmmkgmdnfckapcdkgfaf/",
+              "chrome-extension://aeblfdkhhhdcdjpifhhbdiojplfjncoa/",
+              "chrome-extension://dppgmdbiimibapkepcbdbmkaabgiofem/"
+            ]
+          }' >"$nm_dir/com.1password.1password.json"
+
+          ext_dir=""
+          if [[ -d "$ext_root" ]]; then
+            ext_dir="$(find "$ext_root" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1 || true)"
+          fi
+
+          if [[ -n "$ext_dir" && -f "$ext_dir/manifest.json" ]]; then
+            jq -n \
+              --arg userDataDir "$user_data_dir" \
+              --arg executablePath "$chromium_bin" \
+              --arg ext "$ext_dir" \
+              '{
+                browser: {
+                  browserName: "chromium",
+                  userDataDir: $userDataDir,
+                  launchOptions: {
+                    executablePath: $executablePath,
+                    headless: false,
+                    ignoreDefaultArgs: ["--disable-extensions"],
+                    args: [
+                      ("--disable-extensions-except=" + $ext),
+                      ("--load-extension=" + $ext)
+                    ]
+                  }
+                }
+              }' >"$config_path"
+          else
+            jq -n \
+              --arg userDataDir "$user_data_dir" \
+              --arg executablePath "$chromium_bin" \
+              '{
+                browser: {
+                  browserName: "chromium",
+                  userDataDir: $userDataDir,
+                  launchOptions: {
+                    executablePath: $executablePath,
+                    headless: false
+                  }
+                }
+              }' >"$config_path"
+          fi
+
+          exec "$mcp_bin" --config "$config_path" "$@"
+        '';
+      };
+    in {
+      command = lib.getExe playwrightMcpAutomation;
+      args = [];
+      env = {
+        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
+      };
+    }
+    else {
+      command = lib.getExe pkgs.playwright-mcp;
+      args = [];
+      env = {
+        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
+      };
+    };
 in {
   # Base MCPs - npx-style (avoids embedding deps that collide with cursor-agent)
   # Used by claude-code, amp, cursor (flat attribute)
@@ -21,13 +112,7 @@ in {
       env = {};
     };
 
-    playwright = {
-      command = lib.getExe pkgs.playwright-mcp;
-      args = playwrightExecArgs;
-      env = {
-        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
-      };
-    };
+    inherit playwright;
 
     firefox-devtools = helpers.mkNpxMcp {
       package = "firefox-devtools-mcp@latest";
@@ -39,7 +124,7 @@ in {
   # These provide simple command names that work when the wrapper is in PATH
   wrappers = {
     playwright = pkgs.writeShellScriptBin "playwright-mcp-wrapper" ''
-      exec ${lib.getExe pkgs.playwright-mcp} ${lib.escapeShellArgs playwrightExecArgs} "$@"
+      exec ${playwright.command} ${lib.escapeShellArgs playwright.args} "$@"
     '';
   };
 
