@@ -93,6 +93,26 @@ in {
     };
   };
 
+  # nix.gc.* is inert under Determinate for the same reason as nix.settings
+  # above, and determinate-nixd ships no collector of its own — nothing prunes
+  # the store unless it is scheduled here. Runs as root so the system profile's
+  # generations go too; launchd coalesces runs missed while asleep to the next
+  # wake, unlike cron.
+  launchd.daemons.nix-gc = {
+    command = "/nix/var/nix/profiles/default/bin/nix-collect-garbage --delete-older-than 30d";
+    serviceConfig = {
+      StartCalendarInterval = [
+        {
+          Weekday = 0;
+          Hour = 3;
+          Minute = 30;
+        }
+      ];
+      StandardOutPath = "/var/log/nix-gc.log";
+      StandardErrorPath = "/var/log/nix-gc.log";
+    };
+  };
+
   # Fonts (mirrors nixos/core/locale.nix). NixOS installs these system-wide via
   # fonts.packages; darwin needs its own declaration or terminals can't find
   # "FiraCode Nerd Font". nix-darwin installs these into /Library/Fonts.
