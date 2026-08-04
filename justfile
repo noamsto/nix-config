@@ -51,6 +51,76 @@ boot HOST="$(hostname)":
 build-with-nom DERIVATION:
     nom build ".#{{DERIVATION}}"
 
+# Push paths a remote host would otherwise build or download for itself
+seed-host SSH_HOST CONFIG:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+
+    # Both trees must be identical, not just same-commit: a dirty tree changes
+    # the derivation hashes, and the remote's .drv paths then don't resolve here
+    if ! git diff --quiet HEAD || [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "❌ local tree is dirty - commit first, or derivations won't match" >&2
+        exit 1
+    fi
+    localRev=$(git rev-parse HEAD)
+    remoteRev=$(ssh "{{SSH_HOST}}" 'git -C ~/nix-config status --porcelain --untracked-files=no | grep -q . && echo dirty || git -C ~/nix-config rev-parse HEAD')
+    if [ "$remoteRev" = "dirty" ]; then
+        echo "❌ {{SSH_HOST}}:~/nix-config has uncommitted changes" >&2
+        exit 1
+    fi
+    if [ "$localRev" != "$remoteRev" ]; then
+        echo "❌ rev mismatch: local ${localRev:0:8} vs {{SSH_HOST}} ${remoteRev:0:8}" >&2
+        echo "   Both hosts must be on the same commit to share derivations." >&2
+        exit 1
+    fi
+
+    echo "🔍 Asking {{SSH_HOST}} what it needs..."
+    ssh "{{SSH_HOST}}" "cd ~/nix-config && nix build --dry-run .#nixosConfigurations.{{CONFIG}}.config.system.build.toplevel" 2>&1 \
+        | tr -d ' ' > "$tmp/dry"
+    awk '/willbebuilt:/{f=1;next} /willbefetched/{f=0} f' "$tmp/dry" | grep '^/nix/store' > "$tmp/tobuild" || true
+    awk '/willbefetched/{f=1;next} f' "$tmp/dry" | grep '^/nix/store' > "$tmp/tofetch" || true
+    if [ ! -s "$tmp/tobuild" ] && [ ! -s "$tmp/tofetch" ]; then
+        echo "✅ {{SSH_HOST}} has everything already"
+        exit 0
+    fi
+    echo "   $(wc -l < "$tmp/tobuild") to build, $(wc -l < "$tmp/tofetch") to fetch"
+
+    # Instantiate locally so the remote's .drv paths resolve here
+    nix path-info --derivation ".#nixosConfigurations.{{CONFIG}}.config.system.build.toplevel" >/dev/null
+
+    # stdin: store paths -> stdout: only those already realised on this host
+    keepLocal() {
+        sort -u > "$tmp/cand"
+        [ -s "$tmp/cand" ] || return 0
+        xargs -r -a "$tmp/cand" nix-store --check-validity --print-invalid > "$tmp/bad"
+        grep -Fxv -f "$tmp/bad" "$tmp/cand" || true
+    }
+
+    xargs -r -a "$tmp/tobuild" nix-store -q --outputs | keepLocal > "$tmp/seeds"
+    keepLocal < "$tmp/tofetch" > "$tmp/direct"
+    if [ ! -s "$tmp/seeds" ] && [ ! -s "$tmp/direct" ]; then
+        echo "ℹ️  Nothing here that {{SSH_HOST}} needs"
+        exit 0
+    fi
+
+    # Paths it would BUILD: no cache has them, so they must come from us. Their
+    # deps usually are cacheable, hence --substitute-on-destination.
+    if [ -s "$tmp/seeds" ]; then
+        echo "🚀 $(wc -l < "$tmp/seeds") built outputs → {{SSH_HOST}}"
+        xargs -r -a "$tmp/seeds" nix copy --to "ssh://{{SSH_HOST}}" --no-check-sigs --substitute-on-destination
+    fi
+
+    # Paths it would FETCH: it *can* substitute these, so -s is deliberately
+    # omitted - when the remote's downlink is slower than this link, taking them
+    # from us is the whole point.
+    if [ -s "$tmp/direct" ]; then
+        echo "🚀 $(wc -l < "$tmp/direct") fetchable paths → {{SSH_HOST}}"
+        xargs -r -a "$tmp/direct" nix copy --to "ssh://{{SSH_HOST}}" --no-check-sigs
+    fi
+    echo "✅ Seeded {{SSH_HOST}}"
+
 # =============================================================================
 # Home Manager
 # =============================================================================

@@ -1,20 +1,5 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: let
+{inputs, ...}: let
   caches = import ../../lib/caches.nix;
-
-  # Post-build hook to push to FlakeHub Cache
-  # Only runs if auth exists, never fails the build
-  flakehubPushHook = pkgs.writeShellScript "flakehub-push-hook" ''
-    set -f  # disable globbing
-    AUTH_FILE="''${HOME:-/root}/.config/flakehub/auth"
-    if [ -f "$AUTH_FILE" ] || [ -L "$AUTH_FILE" ]; then
-      ${pkgs.fh}/bin/fh cache push $OUT_PATHS >/dev/null 2>&1 || true
-    fi
-    exit 0
-  '';
 in {
   imports = [
     inputs.determinate.nixosModules.default
@@ -46,8 +31,9 @@ in {
 
       download-buffer-size = 128 * 1024 * 1024; # 128 MiB
 
-      # Push builds to FlakeHub Cache (if authenticated)
-      post-build-hook = flakehubPushHook;
+      # No post-build-hook: FlakeHub Cache only accepts pushes from trusted CI
+      # runners, so a laptop has nowhere to push. Use `just seed-host` to share
+      # locally-built paths between hosts instead.
 
       # Use shared cache configuration from lib/caches.nix
       inherit (caches) substituters;
