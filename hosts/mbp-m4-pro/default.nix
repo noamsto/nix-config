@@ -4,6 +4,36 @@
   ...
 }: let
   host = (import ../../lib/host-configs.nix).mbp-m4-pro;
+
+  # SwipeAeroSpace connects to AeroSpace's control socket once at startup and
+  # never reconnects, so an AeroSpace restart leaves it running but deaf and
+  # swipes silently do nothing. Nothing recovers it: KeepAlive sees a healthy
+  # process and no gesture triggers a reconnect. Exit when the socket inode
+  # changes so KeepAlive relaunches us against the new AeroSpace.
+  swipeaerospaceSupervisor = pkgs.writeShellScript "swipeaerospace-supervisor" ''
+    sock=/tmp/bobko.aerospace-${host.username}.sock
+
+    # Absolute path: BSD stat takes -f as a format, GNU coreutils takes it as
+    # --file-system. A coreutils stat on PATH would fail here, and an unreadable
+    # inode compares unequal — restarting the helper every 5s forever.
+    until [ -S "$sock" ]; do sleep 1; done
+    ino=$(/usr/bin/stat -f %i "$sock")
+
+    /Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace &
+    pid=$!
+
+    while kill -0 "$pid" 2>/dev/null; do
+      sleep 5
+      # Unreadable means AeroSpace is mid-restart; wait for the rebind rather
+      # than treating the gap itself as a change.
+      cur=$(/usr/bin/stat -f %i "$sock" 2>/dev/null) || continue
+      if [ "$cur" != "$ino" ]; then
+        kill "$pid"
+        break
+      fi
+    done
+    wait "$pid"
+  '';
 in {
   imports = [
     ../../options.nix
@@ -267,9 +297,10 @@ in {
 
     # The SwipeAeroSpace cask registers no login item, so it never auto-starts.
     # Give it a LaunchAgent mirroring AeroSpace's (RunAtLoad + KeepAlive) so the
-    # swipe helper comes up at login and stays up.
+    # swipe helper comes up at login and stays up. The supervisor wrapper also
+    # brings it back when AeroSpace restarts.
     swipeaerospace = {
-      command = "/Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace";
+      command = "${swipeaerospaceSupervisor}";
       serviceConfig = {
         RunAtLoad = true;
         KeepAlive = true;
