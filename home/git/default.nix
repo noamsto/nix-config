@@ -15,6 +15,7 @@ in {
   xdg.configFile."git/allowed_signers".text = ''
     noam@factify.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKd4OIEupUNYzTppiP4zy9XLpBz/zzCYmWklC0YXrHPh
     noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC
+    noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02
   '';
   # basic configuration of git, please change to your own
   programs.git = {
