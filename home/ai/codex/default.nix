@@ -11,7 +11,9 @@
   # This whole module is work-only (gated in home/ai/default.nix), so the
   # remote MCPs — all work tools — ride along ungated. OAuth logins happen
   # interactively (`codex mcp login <name>`); workers reuse the stored tokens.
-  codexRemoteMcp = lib.mapAttrs (_: mcpServers.toCodex) mcpServers.remote;
+  codexRemoteMcp =
+    lib.mapAttrs (_: mcpServers.toCodex)
+    (removeAttrs mcpServers.remote mcpServers.codexUnsupported);
   codexMcpSnippet = name:
     tomlFormat.generate "codex-mcp-${name}.toml" {mcp_servers.${name} = codexRemoteMcp.${name};};
 

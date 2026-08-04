@@ -136,15 +136,7 @@ in {
     notion.url = "https://mcp.notion.com/mcp";
     fireflies.url = "https://api.fireflies.ai/mcp";
     figma.url = "https://mcp.figma.com/mcp";
-    slack = {
-      url = "https://mcp.slack.com/mcp";
-      # mcp.slack.com rejects dynamic client registration (pre-registered
-      # confidential clients only). Borrow the client_id from Slack's official
-      # MCP plugin (slackapi/slack-mcp-plugin) so `codex mcp login slack` runs
-      # PKCE as that client; if Slack rotates it, copy the current value from
-      # that repo. Cursor-agent is a partner client and OAuthes without this.
-      codexOauthClientId = "1601185624273.8899143856786";
-    };
+    slack.url = "https://mcp.slack.com/mcp";
     groundcover = {
       url = "https://mcp.groundcover.com/api/mcp";
       headers = {
@@ -168,8 +160,7 @@ in {
   toCodex = server:
     {inherit (server) url;}
     // lib.optionalAttrs (server ? headers) {http_headers = server.headers;}
-    // lib.optionalAttrs (server ? bearerTokenEnvVar) {bearer_token_env_var = server.bearerTokenEnvVar;}
-    // lib.optionalAttrs (server ? codexOauthClientId) {oauth.client_id = server.codexOauthClientId;};
+    // lib.optionalAttrs (server ? bearerTokenEnvVar) {bearer_token_env_var = server.bearerTokenEnvVar;};
 
   # Convert a base MCP entry to opencode format (different structure)
   toOpencode = server: {
@@ -181,6 +172,11 @@ in {
 
   # MCPs provided natively by claude.ai — exclude from Claude Code
   claudeAiProvided = ["linear"];
+
+  # mcp.slack.com rejects dynamic client registration (pre-registered
+  # confidential clients only), so `codex mcp login slack` can't complete.
+  # Cursor-agent is a partner client and OAuths fine.
+  codexUnsupported = ["slack"];
 
   # Re-export helpers for use in tool-specific configs
   inherit helpers;
