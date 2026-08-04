@@ -8,6 +8,10 @@
 # trust posture as the TPM2 LUKS enrollment) and unsealed here at session start.
 # If unsealing fails (e.g. PCR change after a firmware update), the unit fails
 # and the keyring falls back to prompting once per session, as before.
+#
+# The blob lives outside the flake on purpose: only the TPM that sealed it can
+# unseal it, so tracking it would put a password-derived artifact in git history
+# in exchange for no reproducibility.
 {
   pkgs,
   lib,
@@ -16,11 +20,11 @@
 }: let
   inherit (config.desktop) isHyprland;
   credName = "noams-login-keyring";
-  hostCred = ../../hosts/${config.hostname}/${credName}.cred;
+  credDir = "/var/lib/gnome-keyring-tpm";
 
   unlockScript = pkgs.writeShellScript "gnome-keyring-tpm-unlock" ''
     set -eu
-    cred=/etc/${credName}.cred
+    cred=${credDir}/${credName}.cred
     [ -r "$cred" ] || exit 0
     export GNOME_KEYRING_CONTROL="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
     pw=$(${pkgs.systemd}/bin/systemd-creds decrypt --name=${credName} --tpm2-device=auto "$cred" -)
@@ -31,10 +35,9 @@ in
     # tss grants /dev/tpmrm0 access so the user service can unseal without root
     users.users.${config.username}.extraGroups = ["tss"];
 
-    # Hosts without a sealed blob skip silently (script exits 0 on missing file)
-    environment.etc = lib.optionalAttrs (builtins.pathExists hostCred) {
-      "${credName}.cred".source = hostCred;
-    };
+    # `just keyring-seal` writes the blob here; hosts without one skip silently
+    # (the script exits 0 on a missing file)
+    systemd.tmpfiles.rules = ["d ${credDir} 0755 root root -"];
 
     systemd.user.services.gnome-keyring-tpm-unlock = {
       description = "Unlock GNOME login keyring from TPM-sealed password";
