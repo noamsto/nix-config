@@ -10,12 +10,11 @@
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
+  sharedGuards = import ../agent-hooks {inherit pkgs;};
+
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
-  nix-stage-guard = pkgs.writeShellScriptBin "claude-nix-stage-guard" (builtins.readFile ./nix-stage-guard.sh);
   skeleton-guard = pkgs.writeShellScriptBin "claude-read-skeleton-guard" (builtins.readFile ./skeleton-guard.sh);
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
-  git-commit-autostage-guard = pkgs.writeShellScriptBin "claude-git-commit-autostage-guard" (builtins.readFile ./git-commit-autostage-guard.sh);
-  git-default-branch-guard = pkgs.writeShellScriptBin "claude-git-default-branch-guard" (builtins.readFile ./git-default-branch-guard.sh);
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
 
@@ -84,15 +83,15 @@
               }
               {
                 type = "command";
-                command = "${nix-stage-guard}/bin/claude-nix-stage-guard";
+                command = "${sharedGuards.nix-stage-guard}/bin/agent-nix-stage-guard";
               }
               {
                 type = "command";
-                command = "${git-commit-autostage-guard}/bin/claude-git-commit-autostage-guard";
+                command = "${sharedGuards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard";
               }
               {
                 type = "command";
-                command = "${git-default-branch-guard}/bin/claude-git-default-branch-guard";
+                command = "${sharedGuards.git-default-branch-guard}/bin/agent-git-default-branch-guard";
               }
               {
                 type = "command";

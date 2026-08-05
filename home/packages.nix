@@ -67,7 +67,6 @@
     libva-utils # vainfo — inspect VAAPI GPU codec support
     file-roller # GNOME archive manager
     zr # custom flake input, Linux-only outputs
-    pi # llm-agents.nix, Linux-only
     (writeShellScriptBin "amdgpu_top" ''
       scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
       if [ "$scheme" = "'prefer-light'" ]; then
