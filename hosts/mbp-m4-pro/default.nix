@@ -138,12 +138,9 @@ in {
     onefetch
     nvd
     wget
-    # iOS debug bridge companion daemon — drives iOS Simulator programmatically
-    # (idb_companion binary + idb CLI shim). nixpkgs ships the prebuilt
-    # universal binary (v1.1.8) for both x86_64-darwin and aarch64-darwin.
-    # The Python gRPC client (fb-idb on PyPI) is not in nixpkgs; install it
-    # imperatively: pipx install fb-idb
-    idb-companion
+    # No idb-companion: facebook/idb has cut no release since v1.1.8 (Aug 2022),
+    # and that build lists zero targets against iOS 26.3 simulators. Simulator
+    # automation goes through home/darwin/xcodebuildmcp.nix instead.
   ];
 
   networking.hostName = host.hostname;

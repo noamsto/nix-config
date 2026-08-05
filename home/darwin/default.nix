@@ -7,6 +7,7 @@
     ./aerospace.nix
     ./karabiner.nix
     ./nh.nix
+    ./xcodebuildmcp.nix
   ];
 
   # GUI apps not covered by Homebrew casks. pear-desktop (Electron YouTube Music
