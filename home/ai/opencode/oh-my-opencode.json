@@ -153,6 +153,8 @@
     "tdd": true
   },
 
+  "disabled_mcps": ["figma:figma", "nango-docs"],
+
   "tmux": {
     "enabled": false,
     "layout": "main-vertical",
