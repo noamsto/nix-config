@@ -67,7 +67,8 @@ in {
     cursorStatus.enable = true;
     # Control-mode bridge: ssh hosts the session picker (`prefix + s`) probes
     # for remote tmux sessions; Enter opens a live-bridged local window.
-    remote.hosts = ["tp-g6"];
+    # mbp is skipped on the Mac itself — a host never bridges into itself.
+    remote.hosts = ["tp-g6"] ++ lib.optional (osConfig.hostname != "mbp-m4-pro") "mbp";
     processIcons = {
       houston = "🚀";
     };
