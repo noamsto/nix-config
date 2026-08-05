@@ -132,6 +132,12 @@ If you are unsure whether a flag exists, prefer the plain `wt switch <branch>` /
 
 ## Pull Requests
 
+**Finishing a branch means push + PR — do it without asking.** Work is isolated
+in a worktree and reviewed on the PR, so an unpushed branch is unfinished work,
+not a safe default. Don't stop at "want me to open a PR?" — open it and say so.
+Ask only when the change is genuinely undecided (spike, or you want a direction
+picked before it's public).
+
 When creating PRs, assign to me:
 
 ```bash
