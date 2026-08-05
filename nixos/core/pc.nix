@@ -65,7 +65,13 @@ in {
         '';
       }
       // lib.optionalAttrs isLaptop {
-        upower.enable = true;
+        upower = {
+          enable = true;
+          # Clean shutdown instead of HybridSleep — no hibernate needed.
+          # 5% leaves enough headroom for a clean poweroff under load.
+          percentageAction = 5;
+          criticalPowerAction = "PowerOff";
+        };
         fprintd.enable = !serverMode; # headless server: no sensor to authenticate against
       };
 
