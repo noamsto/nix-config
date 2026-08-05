@@ -17,6 +17,7 @@
     # flake's `systems` (for the darwin devShell) doesn't try to build them on macOS.
     packages =
       {
+        gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

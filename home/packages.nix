@@ -140,6 +140,7 @@ in {
 
       # github
       gh
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.gh-repo-defaults
 
       # Linear from the CLI (branch → issue, PRs); also powers lazytmux enrich
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.linear-cli

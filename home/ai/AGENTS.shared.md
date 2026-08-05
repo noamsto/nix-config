@@ -55,6 +55,13 @@ Before implementing or planning new work, in addition to the worktree isolation 
 
 The CLI tooling here (`gh`, `git`, `wt`, tmux) is installed identically on Linux and macOS via Nix, so these steps are the same on both — don't reach for an OS-specific shortcut.
 
+**After `gh repo create`, run `gh-repo-defaults <owner/repo>`.** GitHub has no
+account-level default for merge settings, so a fresh repo starts with
+merge-commit enabled and no branch cleanup. The command applies the house
+settings — squash-only merges, delete branch on merge, auto-merge — and is
+idempotent. `gh-repo-defaults --check --all` reports drift across every owned
+repo; `--all` without `--check` fixes it.
+
 ## Branch Naming
 
 **Branch naming depends on where the repo tracks work** — pick the rule by that axis, not by personal taste:
