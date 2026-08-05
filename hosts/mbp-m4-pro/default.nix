@@ -349,13 +349,19 @@ in {
   };
 
   # The tailscale-app cask ships its CLI inside the bundle (capital-T binary),
-  # not on PATH. Symlink it to /usr/local/bin (on macOS's default PATH via
-  # /etc/paths) so the shared fish abbreviations resolve. ln -sf tolerates the
-  # target not existing yet on the very first switch — it resolves once brew
-  # finishes installing the .pkg.
+  # not on PATH. Put it on /usr/local/bin (on macOS's default PATH via
+  # /etc/paths) so the shared fish abbreviations resolve.
+  #
+  # A symlink doesn't work: the binary derives Bundle.main from the path it was
+  # invoked through, so it looks for Info.plist next to /usr/local/bin/tailscale
+  # and dies with "bundleIdentifier is unknown to the registry". A wrapper
+  # exec'ing the real path keeps that lookup inside the bundle.
+  # rm -f first: a bare `>` would follow an old symlink into the app bundle.
   system.activationScripts.postActivation.text = ''
     mkdir -p /usr/local/bin
-    ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale
+    rm -f /usr/local/bin/tailscale
+    printf '#!/bin/sh\nexec "/Applications/Tailscale.app/Contents/MacOS/Tailscale" "$@"\n' > /usr/local/bin/tailscale
+    chmod +x /usr/local/bin/tailscale
   '';
 
   # nix-darwin system identity + starter macOS defaults.
