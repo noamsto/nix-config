@@ -76,6 +76,10 @@ in {
       name = "nix-config";
       directory = "${config.home.homeDirectory}/nix-config";
       terminal.emulator = "kitty";
+      # A serverMode host is reached over ssh with no graphical login, so the
+      # default graphical-session.target gating never fires and no tmux server
+      # exists for the remote bridge to reach. Bind to default.target instead.
+      headless = osConfig.machine.serverMode or false;
     };
   };
 
