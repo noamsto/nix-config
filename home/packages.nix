@@ -25,11 +25,7 @@
 
     # 3D modeling and animation
     blender
-    # unstable's gdal 3.13.1 fails a zarr sharding test in its check phase,
-    # breaking the whole gdal→pdal→vtk→freecad chain. Pin to stable (gdal 3.12.4,
-    # same freecad 1.1.1) until the fix lands on unstable.
-    # https://github.com/NixOS/nixpkgs/pull/540826
-    stable.freecad
+    freecad
     # Native, not flatpak: GTK4 hands SVG icon decoding to glycin, which
     # re-spawns via `flatpak-spawn --sandbox`. On NixOS that nested sandbox
     # mounts the host root (no /usr/bin/prlimit), so the loader exits 1 and GTK
