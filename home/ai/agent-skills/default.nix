@@ -46,10 +46,10 @@
       # design-it-twice parallel-subagent pattern.
       "codebase-design"
       "grilling"
-      # User-invoked upstream (disable-model-invocation), so it can't shadow
-      # superpowers:writing-skills by precedence — CLAUDE.global.md bans that
-      # one instead, and this is reached by typing it.
-      "writing-great-skills"
+      # Writing any agent-facing document — a skill, AGENTS.md, CLAUDE.md.
+      # Model-invoked, so it shadows superpowers:writing-skills by the
+      # precedence asserted in CLAUDE.global.md.
+      "writing-for-agents"
     ];
 
     # `link` is load-bearing: it renders as per-file home.file symlinks, while

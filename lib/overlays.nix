@@ -91,19 +91,4 @@ inputs: [
       pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["zxing-cpp"];
     });
   })
-
-  # glaze is 8.0.0 on unstable, but hyprland 0.56.1 asks for `glaze 7...<8`, so
-  # find_package misses and CMake falls back to a git clone the sandbox blocks.
-  # Backport of https://github.com/NixOS/nixpkgs/pull/549253 — drop it once that
-  # reaches nixos-unstable, at which point --replace-fail starts erroring.
-  (_final: prev: {
-    hyprland = prev.hyprland.overrideAttrs (old: {
-      postPatch =
-        ''
-          substituteInPlace CMakeLists.txt start/CMakeLists.txt hyprpm/CMakeLists.txt \
-            --replace-fail "glaze 7...<8" "glaze"
-        ''
-        + (old.postPatch or "");
-    });
-  })
 ]

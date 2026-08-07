@@ -148,8 +148,11 @@
     };
 
     # Argo CD terminal UI. nixpkgs lags upstream, so track the flake directly.
+    # Held at the last rev whose test suite passes: 2.18.0 (#266) broke
+    # TestEventsCommand_Off_ClosesPaneAndStopsAutoOpen, which fails the package
+    # build. Unpin once upstream is green again.
     argonaut = {
-      url = "github:darksworm/argonaut";
+      url = "github:darksworm/argonaut/4caae2c0e29c5ada8c840af6718bdcf3eeb57baa";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

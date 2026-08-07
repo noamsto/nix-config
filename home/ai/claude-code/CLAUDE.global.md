@@ -40,9 +40,10 @@ disable a single skill inside a plugin — so precedence is asserted here instea
 - **Debugging** — use `diagnosing-bugs`, not `superpowers:systematic-debugging`.
   It builds a tight, red-capable feedback loop *before* forming any hypothesis;
   no such loop, no theorising.
-- **Authoring or editing a skill** — use `writing-great-skills`, not
-  `superpowers:writing-skills`. It is user-invoked upstream, so type it; the
-  banned alternative is the half that needs stating.
+- **Authoring or editing a skill, `AGENTS.md`, or `CLAUDE.md`** — use
+  `writing-for-agents`, not `superpowers:writing-skills`. It treats every
+  agent-facing document as one writing problem, and covers the two instruction
+  files the alternative doesn't.
 
 ## Reading Code (skeleton-first)
 
