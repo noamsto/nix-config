@@ -11,14 +11,14 @@
   catppuccin-lazygit = pkgs.fetchFromGitHub {
     owner = "catppuccin";
     repo = "lazygit";
-    rev = "v2.0.0";
-    sha256 = "sha256-gM0HplHhcpvtpmIVdlX/p59h0v+ihKEidS1imqPYlBg=";
+    rev = "v2.3.0";
+    sha256 = "sha256-dwCRILNi2Qo8X0Y9ESnx2IjU1kSi4iOfcz5CoM2vSHY=";
   };
   catppuccin-yazi = pkgs.fetchFromGitHub {
     owner = "catppuccin";
     repo = "yazi";
-    rev = "fc69d6472d29b823c4980d23186c9c120a0ad32c";
-    sha256 = "sha256-Og33IGS9pTim6LEH33CO102wpGnPomiperFbqfgrJjw=";
+    rev = "baaf5d1c9427b836fbefd126aa855f9eab7a9d0d";
+    sha256 = "sha256-L6SApM07CSQk0znEsFP8WaxW+ZHcindXo612r1XcwIg=";
   };
 in {
   # Core runtime tools every platform's updaters need. kitty is deliberately
