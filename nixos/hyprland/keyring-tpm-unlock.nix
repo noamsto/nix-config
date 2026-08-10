@@ -40,13 +40,24 @@ in
       # `just keyring-seal` writes the blob here
       tmpfiles.rules = ["d ${credDir} 0755 root root -"];
 
-      # Globbed rather than a literal uid: uids are allocated at activation time,
-      # so the flake can't name one. The control socket is the trigger because it
-      # only exists once the daemon is listening.
-      paths.gnome-keyring-tpm-unlock = {
-        description = "Watch for a GNOME keyring daemon to unlock";
-        wantedBy = ["multi-user.target"];
-        pathConfig.PathExistsGlob = "/run/user/*/keyring/control";
+      # Instantiated per uid off user@.service, whose %i is the uid, because the
+      # flake can't name one: uids are allocated at activation time. The path has
+      # to be literal — inotify is armed by walking the pattern's real prefix, so
+      # a glob mid-path can only watch /run/user itself and never sees the socket
+      # appear two levels down.
+      services."user@" = {
+        overrideStrategy = "asDropin";
+        wants = ["gnome-keyring-tpm-unlock@%i.path"];
+      };
+
+      # The control socket is the trigger because it only exists once the daemon
+      # is listening, which is the earliest an unlock can land
+      paths."gnome-keyring-tpm-unlock@" = {
+        description = "Watch for uid %i's GNOME keyring daemon to unlock";
+        pathConfig = {
+          PathExists = "/run/user/%i/keyring/control";
+          Unit = "gnome-keyring-tpm-unlock.service";
+        };
       };
 
       services.gnome-keyring-tpm-unlock = {
