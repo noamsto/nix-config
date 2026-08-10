@@ -163,8 +163,8 @@ keyring-seal:
     read -rsp "🔑 Login password: " pw; echo
     sudo install -d -m 0755 "$(dirname "$out")"
     printf %s "$pw" | sudo systemd-creds encrypt --with-key=tpm2 --tpm2-device=auto --tpm2-pcrs=7 --name="$cred_name" - "$out"
-    # Readable by the user because the unlock unit runs as them, not root
-    sudo chmod 0444 "$out"
+    # Root-only: PID 1 reads it, the unlock unit never sees the ciphertext
+    sudo chmod 0400 "$out"
     echo "✅ Sealed to $out — relogin to activate"
 
 # =============================================================================

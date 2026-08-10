@@ -9,6 +9,11 @@
 # If unsealing fails (e.g. PCR change after a firmware update), the unit fails
 # and the keyring falls back to prompting once per session, as before.
 #
+# A user unit cannot do the unsealing itself: since systemd 261 an unprivileged
+# `systemd-creds decrypt` is brokered by io.systemd.Credentials, behind a polkit
+# action that is auth_admin_keep even for active sessions, so a unit with no
+# polkit agent can only ever fail it.
+#
 # The blob lives outside the flake on purpose: only the TPM that sealed it can
 # unseal it, so tracking it would put a password-derived artifact in git history
 # in exchange for no reproducibility.
@@ -21,31 +26,40 @@
   inherit (config.desktop) isHyprland;
   credName = "noams-login-keyring";
   credDir = "/var/lib/gnome-keyring-tpm";
+  credFile = "${credDir}/${credName}.cred";
 
   unlockScript = pkgs.writeShellScript "gnome-keyring-tpm-unlock" ''
     set -eu
-    cred=${credDir}/${credName}.cred
-    [ -r "$cred" ] || exit 0
-    export GNOME_KEYRING_CONTROL="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
-    pw=$(${pkgs.systemd}/bin/systemd-creds decrypt --name=${credName} --tpm2-device=auto "$cred" -)
-    printf %s "$pw" | ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --unlock
+    export GNOME_KEYRING_CONTROL="/run/user/$(id -u)/keyring"
+    ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --unlock \
+      < "$CREDENTIALS_DIRECTORY/${credName}"
   '';
 in
   lib.mkIf (isHyprland && config.security.tpm2.enable) {
-    # tss grants /dev/tpmrm0 access so the user service can unseal without root
-    users.users.${config.username}.extraGroups = ["tss"];
+    systemd = {
+      # `just keyring-seal` writes the blob here
+      tmpfiles.rules = ["d ${credDir} 0755 root root -"];
 
-    # `just keyring-seal` writes the blob here; hosts without one skip silently
-    # (the script exits 0 on a missing file)
-    systemd.tmpfiles.rules = ["d ${credDir} 0755 root root -"];
+      # Globbed rather than a literal uid: uids are allocated at activation time,
+      # so the flake can't name one. The control socket is the trigger because it
+      # only exists once the daemon is listening.
+      paths.gnome-keyring-tpm-unlock = {
+        description = "Watch for a GNOME keyring daemon to unlock";
+        wantedBy = ["multi-user.target"];
+        pathConfig.PathExistsGlob = "/run/user/*/keyring/control";
+      };
 
-    systemd.user.services.gnome-keyring-tpm-unlock = {
-      description = "Unlock GNOME login keyring from TPM-sealed password";
-      wantedBy = ["graphical-session.target"];
-      after = ["graphical-session-pre.target"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = unlockScript;
+      services.gnome-keyring-tpm-unlock = {
+        description = "Unlock GNOME login keyring from TPM-sealed password";
+        # LoadCredentialEncrypted= is fatal on a missing source file, so hosts
+        # with no sealed blob need to skip the unit rather than fail it
+        unitConfig.ConditionPathExists = credFile;
+        serviceConfig = {
+          Type = "oneshot";
+          User = config.username;
+          LoadCredentialEncrypted = "${credName}:${credFile}";
+          ExecStart = unlockScript;
+        };
       };
     };
   }

@@ -19,8 +19,8 @@
     };
   };
 
-  # udev rules putting /dev/tpmrm0 in the tss group, so user services can
-  # unseal TPM credentials (e.g. keyring-tpm-unlock) without root
+  # keyring-tpm-unlock.nix also gates on this flag, so turning it off takes
+  # keyring auto-unlock with it
   security.tpm2.enable = true;
 
   environment.systemPackages = with pkgs; [
