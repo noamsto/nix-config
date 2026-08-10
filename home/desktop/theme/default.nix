@@ -1,6 +1,5 @@
 {...}: {
   imports = [
-    ./palette.nix # Provides config.theme.palette.{dark,light}
     ./catppuccin.nix
     ./gtk.nix
   ];

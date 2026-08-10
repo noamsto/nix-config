@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   pkgs,
   ...
@@ -346,6 +347,25 @@ in {
       ProgramArguments = ["/usr/bin/open" "-a" "KeepingYouAwake"];
       RunAtLoad = true;
     };
+
+    # Follow macOS Light/Dark: the watched global-prefs plist is rewritten on
+    # every appearance change, firing this agent. RunAtLoad themes apps at login.
+    # The script self-debounces, so unrelated global-pref writes are cheap no-ops.
+    theme-watch = let
+      inherit (config.home-manager.users.${host.username}.home) homeDirectory;
+    in {
+      serviceConfig = {
+        ProgramArguments = [
+          "${config.home-manager.users.${host.username}.programs.theme-toggle.package}/bin/theme-apply-macos"
+        ];
+        WatchPaths = ["${homeDirectory}/Library/Preferences/.GlobalPreferences.plist"];
+        RunAtLoad = true;
+        # Not /tmp: it is world-writable, and launchd opens these without O_EXCL,
+        # so a pre-created symlink there would redirect the agent's output.
+        StandardErrorPath = "${homeDirectory}/Library/Logs/theme-watch.err.log";
+        StandardOutPath = "${homeDirectory}/Library/Logs/theme-watch.out.log";
+      };
+    };
   };
 
   # The tailscale-app cask ships its CLI inside the bundle (capital-T binary),
@@ -377,7 +397,6 @@ in {
         KeyRepeat = 2;
         InitialKeyRepeat = 15;
         AppleShowAllExtensions = true;
-        AppleInterfaceStyle = "Dark";
       };
       dock.autohide = true;
       finder.AppleShowAllExtensions = true;
