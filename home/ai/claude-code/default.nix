@@ -181,6 +181,7 @@
 in {
   imports = [
     ./mcp-profiles.nix
+    ./session-archive.nix
     inputs.agent-smith.homeManagerModules.default
     inputs.resolved.homeManagerModules.default
     inputs.dispatcher.homeManagerModules.default
