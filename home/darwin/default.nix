@@ -7,6 +7,7 @@
     ./aerospace.nix
     ./karabiner.nix
     ./nh.nix
+    ./nix-access-tokens.nix
     ./theme
     ./xcodebuildmcp.nix
   ];
