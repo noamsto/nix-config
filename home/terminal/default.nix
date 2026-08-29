@@ -67,8 +67,12 @@ in {
     cursorStatus.enable = true;
     # Control-mode bridge: ssh hosts the session picker (`prefix + s`) probes
     # for remote tmux sessions; Enter opens a live-bridged local window.
-    # mbp is skipped on the Mac itself — a host never bridges into itself.
-    remote.hosts = ["tp-g6"] ++ lib.optional (osConfig.hostname != "mbp-m4-pro") "mbp";
+    # A host never bridges into itself. The alias is a MagicDNS name sharing no
+    # text with the hostname it reaches (`tp-g6` → `thinkpad-p14s-g6`), so the
+    # gate is spelled out per host until noamsto/lazytmux#387 lands.
+    remote.hosts =
+      lib.optional (osConfig.hostname != "thinkpad-p14s-g6") "tp-g6"
+      ++ lib.optional (osConfig.hostname != "mbp-m4-pro") "mbp";
     processIcons = {
       houston = "🚀";
     };
