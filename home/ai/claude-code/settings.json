@@ -215,5 +215,10 @@
   },
   "additionalDirectories": [
     "~/.claude/plugins/cache"
-  ]
+  ],
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "medium"
+    }
+  }
 }
