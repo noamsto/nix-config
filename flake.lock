@@ -1345,11 +1345,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1786523762,
-        "narHash": "sha256-k8Vrqeo/ntIiLc5V4WnD4GwgAGudnZO2xp3kuyeipiI=",
+        "lastModified": 1788024988,
+        "narHash": "sha256-QtOrRh+oVLhjesaKjBbbaFLrVZBILZpGQ5ceO/yvcus=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "5756a54b35a564ebf6e45abed5ffc9008f7e59de",
+        "rev": "4560a9a4ac82e748e8d0949b4f69f2b13bef779b",
         "type": "github"
       },
       "original": {
@@ -2670,17 +2670,17 @@
     "tmux-upstream_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1785864192,
-        "narHash": "sha256-I8Mt2QVErCDuEpg453mH6Jqc9TM4nYok/68GpUpM1NQ=",
+        "lastModified": 1786095221,
+        "narHash": "sha256-BpBUaeKOiYED0r09wi1FJiEoiaV2tQFG69qBGM9NjVs=",
         "owner": "tmux",
         "repo": "tmux",
-        "rev": "d5afb67a81d8a30379e0d4186ec4b968244393bf",
+        "rev": "851c5a933d4838c32ad06c248b2ba975d106149c",
         "type": "github"
       },
       "original": {
         "owner": "tmux",
         "repo": "tmux",
-        "rev": "d5afb67a81d8a30379e0d4186ec4b968244393bf",
+        "rev": "851c5a933d4838c32ad06c248b2ba975d106149c",
         "type": "github"
       }
     },
