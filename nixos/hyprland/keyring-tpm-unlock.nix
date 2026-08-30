@@ -28,11 +28,65 @@
   credDir = "/var/lib/gnome-keyring-tpm";
   credFile = "${credDir}/${credName}.cred";
 
-  unlockScript = pkgs.writeShellScript "gnome-keyring-tpm-unlock" ''
-    set -eu
-    export GNOME_KEYRING_CONTROL="/run/user/$(id -u)/keyring"
-    ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --unlock \
-      < "$CREDENTIALS_DIRECTORY/${credName}"
+  # gnome-keyring-daemon --unlock cannot do this: it never hands off to a running
+  # daemon (discover_other_daemon is reached only on the --start/--replace paths),
+  # so it becomes a daemon itself — and gkd_control_listen unlinks the existing
+  # control socket before binding, destroying the session's. Speak the control
+  # protocol instead, the same GKD_CONTROL_OP_UNLOCK pam_gnome_keyring sends on
+  # screen unlock. This only ever connects, so it cannot take the socket over.
+  unlockScript = pkgs.writeScript "gnome-keyring-tpm-unlock" ''
+    #!${pkgs.python3}/bin/python3
+    import os
+    import socket
+    import struct
+    import sys
+    import time
+
+    OP_UNLOCK = 1
+    RESULTS = {0: "ok", 1: "denied", 2: "failed", 3: "no daemon"}
+
+    uid = sys.argv[1]
+    # user@.service instantiates this for every session that starts, greetd's
+    # greeter among them, and the sealed password only opens this user's vault
+    if uid != str(os.getuid()):
+        sys.exit(0)
+
+    control = "/run/user/{}/keyring/control".format(uid)
+    with open(os.path.join(os.environ["CREDENTIALS_DIRECTORY"], "${credName}"), "rb") as f:
+        password = f.read()
+
+
+    def unlock():
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            s.settimeout(10)
+            s.connect(control)
+            s.sendall(b"\0")  # credentials byte; the server checks SO_PEERCRED
+            s.sendall(struct.pack(">III", 12 + len(password), OP_UNLOCK, len(password)))
+            s.sendall(password)
+            head = b""
+            while len(head) < 8:
+                chunk = s.recv(8 - len(head))
+                if not chunk:
+                    raise EOFError("daemon closed the connection")
+                head += chunk
+        return struct.unpack(">II", head)[1]
+
+
+    # The path unit fires on the socket, but a daemon still initialising its
+    # pkcs11 layer answers denied, so a single shot races login. Retry until it
+    # takes; a genuinely wrong password just burns the window and then fails.
+    deadline = time.monotonic() + 60
+    result = None
+    while True:
+        try:
+            result = unlock()
+            if result == 0:
+                sys.exit(0)
+        except (OSError, EOFError) as err:
+            result = err
+        if time.monotonic() >= deadline:
+            sys.exit("keyring unlock failed: {}".format(RESULTS.get(result, result)))
+        time.sleep(0.5)
   '';
 in
   lib.mkIf (isHyprland && config.security.tpm2.enable) {
@@ -56,20 +110,30 @@ in
         description = "Watch for uid %i's GNOME keyring daemon to unlock";
         pathConfig = {
           PathExists = "/run/user/%i/keyring/control";
-          Unit = "gnome-keyring-tpm-unlock.service";
+          Unit = "gnome-keyring-tpm-unlock@%i.service";
         };
       };
 
-      services.gnome-keyring-tpm-unlock = {
-        description = "Unlock GNOME login keyring from TPM-sealed password";
-        # LoadCredentialEncrypted= is fatal on a missing source file, so hosts
-        # with no sealed blob need to skip the unit rather than fail it
-        unitConfig.ConditionPathExists = credFile;
+      services."gnome-keyring-tpm-unlock@" = {
+        description = "Unlock uid %i's GNOME login keyring from TPM-sealed password";
+        unitConfig = {
+          # LoadCredentialEncrypted= is fatal on a missing source file, so hosts
+          # with no sealed blob need to skip the unit rather than fail it
+          ConditionPathExists = credFile;
+          # Ties the unit's lifetime to the session so RemainAfterExit= below
+          # releases on logout, re-arming the path for the next login
+          BindsTo = "user@%i.service";
+          After = "user@%i.service";
+        };
         serviceConfig = {
           Type = "oneshot";
+          # PathExists= re-triggers as soon as the triggered unit goes inactive
+          # and the socket is still there; without this the oneshot re-fires
+          # until it trips the start rate limit, which fails the path unit too
+          RemainAfterExit = true;
           User = config.username;
           LoadCredentialEncrypted = "${credName}:${credFile}";
-          ExecStart = unlockScript;
+          ExecStart = "${unlockScript} %i";
         };
       };
     };
