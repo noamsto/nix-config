@@ -86,10 +86,11 @@ in {
         };
       };
       logitech.wireless.enable = true; # solaar
-      logitech.wireless.enableGraphical = true;
     };
 
     programs = {
+      solaar.enable = true;
+
       # Fan and thermal control
       coolercontrol.enable = true;
     };
