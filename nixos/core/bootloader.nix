@@ -10,7 +10,7 @@
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 12;
+        configurationLimit = 4; # 512 MiB ESP holds ~5 Lanzaboote generations at ~88 MiB each
         consoleMode = "auto";
       };
       efi.canTouchEfiVariables = true;
