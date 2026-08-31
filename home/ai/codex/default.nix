@@ -86,7 +86,7 @@ in {
         ${lib.concatMapStringsSep "\n" (name: ''
           if grep -q '^\[mcp_servers\.${name}\]' "$config"; then
             tmp="$(mktemp)"
-            run awk '
+            run ${pkgs.gawk}/bin/awk '
               BEGIN {prefix = "[mcp_servers.${name}"; section = prefix "]"}
               $0 == section || index($0, prefix ".") == 1 {skip = 1; next}
               skip && /^\[/ {skip = 0}
