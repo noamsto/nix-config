@@ -99,6 +99,16 @@ in {
     # Profile picture for Noctalia (symlinked to ~/.face)
     home.file.".face".source = ./assets/avatar.png;
 
+    # The valent package ships its own XDG autostart entry, whose generated
+    # app-…@autostart.service wins the ca.andyholmes.Valent bus name and leaves
+    # the unit below exiting 1 and restarting every 3s for the whole session.
+    # Hide it so that unit is the only starter.
+    home.file.".config/autostart/ca.andyholmes.Valent-autostart.desktop".text = ''
+      [Desktop Entry]
+      Type=Application
+      Hidden=true
+    '';
+
     systemd.user.services = {
       # Valent daemon - auto-restarts if it crashes (replaces exec-once)
       valent = {
