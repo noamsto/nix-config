@@ -660,6 +660,18 @@ update_tmux() {
     return 0
   fi
 
+  # A loaded palette already on the wanted flavor needs no work — that is every
+  # `restore` after a rebuild. Worth the early exit: the reload below clears the
+  # palette first and only gets it back if the server accepts the config.
+  if [[ $($tmux_cmd show-options -gv @catppuccin_flavor 2>/dev/null) == "$tmux_flavor" ]] &&
+    [[ -n $($tmux_cmd show-options -gv @thm_bg 2>/dev/null) ]]; then
+    log_debug "tmux already on $tmux_flavor, keeping the loaded palette"
+    return 0
+  fi
+
+  # The flavor files set the palette with `set -ogq`, which refuses to overwrite
+  # an option that already holds a value — clearing it is the only way a second
+  # flavor ever loads.
   local var
   for var in $($tmux_cmd show-options -g 2>/dev/null | awk '$1 ~ /^@thm_/ {print $1}' | sort -u); do
     $tmux_cmd set -gu "$var" 2>/dev/null || true
@@ -670,16 +682,28 @@ update_tmux() {
     return 1
   }
 
-  $tmux_cmd source-file ~/.config/tmux/tmux.conf 2>/dev/null || true
+  local src_err
+  if src_err=$($tmux_cmd source-file "$HOME/.config/tmux/tmux.conf" 2>&1); then
+    return 0
+  fi
 
-  local thm_mauve thm_green thm_bg thm_overlay_1
-  thm_mauve=$($tmux_cmd show-options -gv @thm_mauve 2>/dev/null | tr -d '"')
-  thm_green=$($tmux_cmd show-options -gv @thm_green 2>/dev/null | tr -d '"')
-  thm_bg=$($tmux_cmd show-options -gv @thm_bg 2>/dev/null | tr -d '"')
-  thm_overlay_1=$($tmux_cmd show-options -gv @thm_overlay_1 2>/dev/null | tr -d '"')
+  # tmux parses a config as one unit, so a single command the running server
+  # does not know discards every line in the file — including the plugin
+  # run-shells that reload the palette cleared above, which leaves every
+  # `#{@thm_*}` in the status format expanding to nothing. A server that
+  # outlived the rebuild generating the config is enough to land here (new
+  # tmux and new config, old running binary), so replay the theme plugins the
+  # config would have run rather than leave the status bar and window names
+  # colorless until the server restarts.
+  log_warn "tmux rejected its config, loading the palette directly: $src_err"
+  local plugin
+  while read -r plugin; do
+    $tmux_cmd run-shell "$plugin" 2>/dev/null || true
+  done < <(grep -oE '[^" ]+/(catppuccin\.tmux|bin/tmux-apply-theme-colors)' \
+    "$HOME/.config/tmux/tmux.conf" 2>/dev/null)
 
-  if [[ -n $thm_mauve && -n $thm_green && -n $thm_bg && -n $thm_overlay_1 ]]; then
-    $tmux_cmd setw -g pane-border-format \
-      "#{?#{&&:#{pane_active},#{&&:#{>:#{window_panes},1},#{==:#{window_zoomed_flag},0}}},#[fg=${thm_mauve}]━━ #[fg=${thm_green}]●#[fg=${thm_mauve}] ━━,#[bg=${thm_bg},fg=${thm_overlay_1}]━━━━━}"
+  if [[ -z $($tmux_cmd show-options -gv @thm_bg 2>/dev/null) ]]; then
+    record_failure "tmux"
+    return 1
   fi
 }
