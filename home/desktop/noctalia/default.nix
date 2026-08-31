@@ -90,24 +90,26 @@ in {
   ];
 
   config = {
-    # Add helper scripts to PATH
-    # gpu-screen-recorder is required by the screen-recorder plugin
-    # gnome-calendar is used to add Google Calendar accounts to evolution-data-server
-    # glib.bin provides gdbus, required by valent-connect plugin for D-Bus queries
-    home.packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.gnome-calendar pkgs.gnome-control-center pkgs.glib.bin];
+    home = {
+      # Add helper scripts to PATH
+      # gpu-screen-recorder is required by the screen-recorder plugin
+      # gnome-calendar is used to add Google Calendar accounts to evolution-data-server
+      # glib.bin provides gdbus, required by valent-connect plugin for D-Bus queries
+      packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.gnome-calendar pkgs.gnome-control-center pkgs.glib.bin];
 
-    # Profile picture for Noctalia (symlinked to ~/.face)
-    home.file.".face".source = ./assets/avatar.png;
+      # Profile picture for Noctalia (symlinked to ~/.face)
+      file.".face".source = ./assets/avatar.png;
 
-    # The valent package ships its own XDG autostart entry, whose generated
-    # app-…@autostart.service wins the ca.andyholmes.Valent bus name and leaves
-    # the unit below exiting 1 and restarting every 3s for the whole session.
-    # Hide it so that unit is the only starter.
-    home.file.".config/autostart/ca.andyholmes.Valent-autostart.desktop".text = ''
-      [Desktop Entry]
-      Type=Application
-      Hidden=true
-    '';
+      # The valent package ships its own XDG autostart entry, whose generated
+      # app-…@autostart.service wins the ca.andyholmes.Valent bus name and leaves
+      # the unit below exiting 1 and restarting every 3s for the whole session.
+      # Hide it so that unit is the only starter.
+      file.".config/autostart/ca.andyholmes.Valent-autostart.desktop".text = ''
+        [Desktop Entry]
+        Type=Application
+        Hidden=true
+      '';
+    };
 
     systemd.user.services = {
       # Valent daemon - auto-restarts if it crashes (replaces exec-once)

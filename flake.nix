@@ -144,7 +144,7 @@
     };
 
     vicinae = {
-      url = "github:vicinaehq/vicinae";
+      url = "github:vicinaehq/vicinae/v0.27.5";
     };
 
     # Argo CD terminal UI. nixpkgs lags upstream, so track the flake directly.
