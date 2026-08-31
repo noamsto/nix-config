@@ -14,8 +14,13 @@
   codexRemoteMcp =
     lib.mapAttrs (_: mcpServers.toCodex)
     (removeAttrs mcpServers.remote mcpServers.codexUnsupported);
+  codexLocalMcp = {
+    context7 = mcpServers.base.context7 // {command = "context7-mcp";};
+    playwright = mcpServers.base.playwright // {command = "playwright-mcp-wrapper";};
+  };
+  codexInteractiveMcp = codexLocalMcp // codexRemoteMcp;
   codexMcpSnippet = name:
-    tomlFormat.generate "codex-mcp-${name}.toml" {mcp_servers.${name} = codexRemoteMcp.${name};};
+    tomlFormat.generate "codex-mcp-${name}.toml" {mcp_servers.${name} = codexInteractiveMcp.${name};};
 
   worker-config = tomlFormat.generate "codex-worker.config.toml" {
     mcp_servers = mcpServers.base // codexRemoteMcp;
@@ -29,7 +34,11 @@ in {
     # OpenAI Codex CLI. Used both interactively and as an alternate `dispatch`
     # worker engine (`dispatch … --agent codex …`). Auth is out of band — run
     # `codex login` once; there's no secret to manage in Nix.
-    packages = [pkgs.codex];
+    packages = [
+      pkgs.codex
+      pkgs.context7-mcp
+      mcpServers.wrappers.playwright
+    ];
 
     # Global instructions — codex's only machine-wide channel, read ahead of any
     # project AGENTS.md. Out-of-store symlink so it stays editable, pointing at
@@ -64,16 +73,29 @@ in {
 
       # Interactive codex reads only ~/.codex/config.toml (profiles layer on
       # top), so MCP parity for interactive sessions means merging the same
-      # mcp_servers into the hand-managed file. Append-only, one grep-guarded
-      # stanza per server: codex rewrites this file when persisting TUI state,
-      # so a marker-block replace would fight it. To pick up a changed server
-      # definition, `codex mcp remove <name>` and switch again.
+      # mcp_servers into the hand-managed file. Local Nix-owned stanzas use
+      # profile commands and are replaced on each switch so garbage collection
+      # cannot leave a dead store path behind. Remote entries stay append-only
+      # so Codex's OAuth and user-managed settings remain untouched.
       codexMcpServers = lib.hm.dag.entryAfter ["writeBoundary"] ''
         config="$HOME/.codex/config.toml"
         run mkdir -p "$HOME/.codex"
         if [ ! -f "$config" ]; then
           run install -Dm644 /dev/null "$config"
         fi
+        ${lib.concatMapStringsSep "\n" (name: ''
+          if grep -q '^\[mcp_servers\.${name}\]' "$config"; then
+            tmp="$(mktemp)"
+            run awk '
+              BEGIN {prefix = "[mcp_servers.${name}"; section = prefix "]"}
+              $0 == section || index($0, prefix ".") == 1 {skip = 1; next}
+              skip && /^\[/ {skip = 0}
+              !skip {print}
+            ' "$config" >"$tmp"
+            run mv "$tmp" "$config"
+          fi
+          run sh -c 'printf "\n" >> "$2" && cat "$1" >> "$2"' sh ${codexMcpSnippet name} "$config"
+        '') (builtins.attrNames codexLocalMcp)}
         ${lib.concatMapStringsSep "\n" (name: ''
           if ! grep -q '^\[mcp_servers\.${name}\]' "$config"; then
             run sh -c 'printf "\n" >> "$2" && cat "$1" >> "$2"' sh ${codexMcpSnippet name} "$config"
