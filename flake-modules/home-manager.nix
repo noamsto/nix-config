@@ -20,6 +20,7 @@ in {
     # Default configs for nh auto-detection (username@hostname)
     "noams@thinkpad-p14s-g5" = mkHomeConfig hostConfigs.thinkpad-p14s-g5;
     "noams@thinkpad-p14s-g6" = mkHomeConfig hostConfigs.thinkpad-p14s-g6;
+    "noams@halo" = mkHomeConfig hostConfigs.halo;
 
     # Fallback for nh auto-detection (username only, defaults to personal)
     noams = mkHomeConfig hostConfigs.thinkpad-p14s-g6;

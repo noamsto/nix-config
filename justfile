@@ -144,6 +144,37 @@ install-host host ip:
     nix run github:nix-community/nixos-anywhere -- \
         --flake .#{{host}} --target-host root@{{ip}}
 
+# First install of a host that has never booted (see install-host to reinstall)
+bootstrap-host host ip key luks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # key:  pre-seeded /etc/ssh/ssh_host_ed25519_key (private) for this host
+    # luks: file containing the LUKS passphrase — never commit this
+    if [ ! -f "hosts/{{host}}/disko.nix" ]; then
+        echo "❌ hosts/{{host}}/disko.nix does not exist." >&2
+        echo "   nixos-anywhere needs a disko layout to partition the target." >&2
+        echo "   Hosts with one: $(ls -d hosts/*/disko.nix | xargs -n1 dirname | xargs -n1 basename | tr '\n' ' ')" >&2
+        exit 1
+    fi
+    for f in "{{key}}" "{{luks}}"; do
+        if [ ! -f "$f" ]; then echo "❌ no such file: $f" >&2; exit 1; fi
+    done
+    # agenix decrypts with the host key at activation, so it must already be in
+    # place the first time the system activates — hence --extra-files rather
+    # than copying it afterwards. nixos-anywhere makes copied files root-owned;
+    # the 0600 mode has to come from the staging tree.
+    staging=$(mktemp -d)
+    trap 'rm -rf "$staging"' EXIT
+    install -Dm600 "{{key}}" "$staging/etc/ssh/ssh_host_ed25519_key"
+    ssh-keygen -y -f "{{key}}" > "$staging/etc/ssh/ssh_host_ed25519_key.pub"
+    chmod 644 "$staging/etc/ssh/ssh_host_ed25519_key.pub"
+    nix run github:nix-community/nixos-anywhere -- \
+        --flake .#{{host}} \
+        --target-host root@{{ip}} \
+        --extra-files "$staging" \
+        --disk-encryption-keys /tmp/disk.key "{{luks}}" \
+        --generate-hardware-config nixos-generate-config hosts/{{host}}/hardware-configuration.nix
+
 # =============================================================================
 # Home Manager
 # =============================================================================

@@ -31,6 +31,18 @@
     laptop-scale = "1.25";
   };
 
+  halo = {
+    username = "noams";
+    user-full-name = "Noam Stolero";
+    email = "noamstolero@gmail.com";
+    hostname = "halo";
+    desktop.mode = "none";
+    # "desktop" not "server": nixos/core/pc.nix gates pipewire (alsa.support32Bit,
+    # needed by Steam) and bluetooth (controller) behind machine.isPC.
+    machine.type = "desktop";
+    profile = "personal";
+  };
+
   mbp-m4-pro = {
     username = "noams";
     user-full-name = "Noam Stolero";

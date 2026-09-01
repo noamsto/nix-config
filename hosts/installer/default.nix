@@ -29,12 +29,12 @@
         autoconnect = true;
       };
       wifi = {
-        ssid = net.ssid;
+        inherit (net) ssid;
         mode = "infrastructure";
       };
       wifi-security = {
         key-mgmt = "wpa-psk";
-        psk = net.psk;
+        inherit (net) psk;
       };
       ipv4.method = "auto";
       ipv6.method = "auto";

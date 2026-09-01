@@ -10,7 +10,7 @@ in {
   ];
   services.xremap = {
     # View keys scan codes here: https://github.com/emberian/evdev/blob/1d020f11b283b0648427a2844b6b980f1a268221/src/scancodes.rs#L26-L572
-    enable = isPC;
+    enable = isPC && config.desktop.isEnabled;
     userName = config.username;
     watch = true;
     config = {
