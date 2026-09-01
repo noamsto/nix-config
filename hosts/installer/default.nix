@@ -20,6 +20,9 @@
   # Keyed by index rather than SSID so the generated
   # /run/NetworkManager/system-connections/<key>.nmconnection filename stays
   # safe regardless of spaces or slashes in the SSID.
+  #
+  # These profiles carry no credential; they only tell NetworkManager which
+  # networks to autoconnect. iwd holds the keys.
   mkWifiProfile = i: net: {
     name = "wifi-${toString i}";
     value = {
@@ -32,9 +35,14 @@
         inherit (net) ssid;
         mode = "infrastructure";
       };
+      # The key itself lives in iwd's store (nixos/core/iwd-known-networks.nix),
+      # because NM forwards a profile `psk` to iwd as a *passphrase* and would
+      # PBKDF2 the PMK a second time. psk-flags=4 is
+      # NM_SETTING_SECRET_FLAG_NOT_REQUIRED: it marks the profile as complete
+      # without a secret, rather than merely missing one.
       wifi-security = {
         key-mgmt = "wpa-psk";
-        inherit (net) psk;
+        psk-flags = 4;
       };
       ipv4.method = "auto";
       ipv6.method = "auto";
@@ -44,6 +52,7 @@ in {
   imports = [
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
     ../../nixos/core/nice-looking-console.nix
+    ../../nixos/core/iwd-known-networks.nix
   ];
 
   # Real hosts pick this up from their generated hardware-configuration.nix;
@@ -52,8 +61,18 @@ in {
 
   networking = {
     hostName = "installer";
-    networkmanager.ensureProfiles.profiles =
-      builtins.listToAttrs (lib.imap0 mkWifiProfile networks);
+
+    # Match every real host in this repo. The installer previously used the
+    # nixpkgs default (wpa_supplicant), and that divergence is what let a
+    # credential work here and fail after install: the two backends consume a
+    # PSK differently. An installer that does not match the systems it installs
+    # cannot catch this class of bug.
+    networkmanager = {
+      wifi.backend = "iwd";
+      ensureProfiles.profiles =
+        builtins.listToAttrs (lib.imap0 mkWifiProfile networks);
+    };
+    wireless.iwd.enable = true;
   };
 
   # installation-device.nix leaves root with an empty password, which sshd
