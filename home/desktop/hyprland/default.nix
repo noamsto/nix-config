@@ -21,7 +21,6 @@ in {
     ./scripts/volume-control.nix
     ./scripts/sounds.nix
     ./scripts/window-resize.nix
-    ./scripts/toggle-floating.nix
     ./scripts/sesh-launcher.nix
     ./scripts/theme-toggle.nix
     ./scripts/recording-post-processor.nix

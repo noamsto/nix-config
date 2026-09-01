@@ -36,8 +36,31 @@ in {
     hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 0 })) -- true fullscreen
     hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
     hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
-    -- Smart toggle floating: tiled→float+resize+center, floating→just unfloat
-    hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("toggle-floating"))
+    -- Smart toggle floating: tiled -> float + resize 65% + center;
+    -- floating -> just unfloat and let the tiling layout size it. In-process,
+    -- so no subprocess/jq on the keypress. hl.dsp.window.resize takes numbers
+    -- (no percent form), so compute pixels from the focused monitor's logical
+    -- size (physical / scale).
+    hl.bind(mainMod .. " + T", function()
+      local w = hl.get_active_window()
+      if not w then
+        return
+      end
+      local wasFloating = w.floating
+
+      hl.dispatch(hl.dsp.window.float({ action = "toggle" }))
+
+      if not wasFloating then
+        local m = hl.get_active_monitor()
+        if m then
+          hl.dispatch(hl.dsp.window.resize({
+            x = math.floor(m.width / m.scale * 0.65),
+            y = math.floor(m.height / m.scale * 0.65),
+          }))
+        end
+        hl.dispatch(hl.dsp.window.center())
+      end
+    end)
     hl.bind(mainMod .. " + SHIFT + T", hl.dsp.window.center())
 
     -- === CLIPBOARD / VICINAE ===
@@ -122,9 +145,6 @@ in {
 
     -- === ACCESSIBILITY ===
     hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
-    hl.bind(mainMod .. " + CTRL + 0", hl.dsp.exec_cmd("zoom-step reset"))
-    hl.bind(mainMod .. " + CTRL + mouse_down", hl.dsp.exec_cmd("zoom-step in"))
-    hl.bind(mainMod .. " + CTRL + mouse_up", hl.dsp.exec_cmd("zoom-step out"))
     hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("stt-stream-toggle"))
     hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("hyprvoice toggle"))
 
@@ -154,5 +174,60 @@ in {
     hl.bind(mainMod .. " + right", hl.dsp.window.resize({ x = 20, y = 0, relative = true }), { repeating = true })
     hl.bind(mainMod .. " + up", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true })
     hl.bind(mainMod .. " + down", hl.dsp.window.resize({ x = 0, y = 20, relative = true }), { repeating = true })
+  '';
+
+  # KDE-style screen zoom with smooth easing, in-process. Replaces the zoom-step
+  # script, which spawned an hyprctl per animation frame (~60/s) plus a mkdir
+  # lock and two /tmp state files. A single hl.timer eases cursor:zoom_factor
+  # toward the target and disables itself once it arrives. current/target persist
+  # as module upvalues across keypresses (no /tmp state).
+  wayland.windowManager.hyprland.extraLuaFiles."zoom".content = ''
+    local MIN, MAX, STEP = 1.0, 5.0, 0.5
+    local FRAME_MS = 16
+
+    local current, target = MIN, MIN
+    local timer = nil
+
+    local function tick()
+      local diff = target - current
+      -- Close enough: snap, apply, and stand the timer down.
+      if math.abs(diff) < 0.001 then
+        current = target
+        hl.config({ cursor = { zoom_factor = current } })
+        if timer then
+          timer:set_enabled(false)
+        end
+        return
+      end
+      -- Ease ~33% of the remaining distance per frame.
+      current = current + diff / 3
+      hl.config({ cursor = { zoom_factor = current } })
+    end
+
+    local function zoom(action)
+      if action == "in" then
+        target = math.min(target + STEP, MAX)
+      elseif action == "out" then
+        target = math.max(target - STEP, MIN)
+      else
+        target = MIN
+      end
+
+      if not timer then
+        timer = hl.timer(tick, { timeout = FRAME_MS, type = "repeat" })
+      else
+        timer:set_enabled(true)
+      end
+    end
+
+    hl.bind("SUPER + CTRL + mouse_down", function()
+      zoom("in")
+    end)
+    hl.bind("SUPER + CTRL + mouse_up", function()
+      zoom("out")
+    end)
+    hl.bind("SUPER + CTRL + 0", function()
+      zoom("reset")
+    end)
   '';
 }
