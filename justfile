@@ -122,6 +122,29 @@ seed-host SSH_HOST CONFIG:
     echo "✅ Seeded {{SSH_HOST}}"
 
 # =============================================================================
+# Bare-Metal Provisioning
+# =============================================================================
+
+# Build the generic installer ISO (contains wifi credentials — keep private)
+iso:
+    nix build .#nixosConfigurations.installer.config.system.build.isoImage
+    @echo "ISO: $(realpath result/iso/*.iso)"
+    @echo "Write it with: sudo dd if=$(realpath result/iso/*.iso) of=/dev/sdX bs=4M status=progress oflag=sync"
+
+# Install a host remotely over ssh from a booted installer ISO
+install-host host ip:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f "hosts/{{host}}/disko.nix" ]; then
+        echo "❌ hosts/{{host}}/disko.nix does not exist." >&2
+        echo "   nixos-anywhere needs a disko layout to partition the target." >&2
+        echo "   Hosts with one: $(ls -d hosts/*/disko.nix | xargs -n1 dirname | xargs -n1 basename | tr '\n' ' ')" >&2
+        exit 1
+    fi
+    nix run github:nix-community/nixos-anywhere -- \
+        --flake .#{{host}} --target-host root@{{ip}}
+
+# =============================================================================
 # Home Manager
 # =============================================================================
 

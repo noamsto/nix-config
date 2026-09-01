@@ -1442,11 +1442,11 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1788164972,
-        "narHash": "sha256-kyOUs/yWTC/rTknSivOrFSRkgElIdCRCl5o8ZimiZOo=",
+        "lastModified": 1788252548,
+        "narHash": "sha256-lFK83saT6TKfqPNncFUenW78+llwtaoroS1amQqi7Xg=",
         "ref": "refs/heads/main",
-        "rev": "800840bb62a4a29d5dbd3179c643c7faf3678c32",
-        "revCount": 58,
+        "rev": "e05e2aa21d957638905a598dda53bd83d70399b9",
+        "revCount": 59,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
       },

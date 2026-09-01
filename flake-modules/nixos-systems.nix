@@ -15,6 +15,7 @@ in {
     nixosConfigurations = {
       thinkpad-p14s-g5 = mkSystem ../hosts/thinkpad-p14s-g5;
       thinkpad-p14s-g6 = mkSystem ../hosts/thinkpad-p14s-g6;
+      installer = mkSystem ../hosts/installer;
     };
   };
 }
