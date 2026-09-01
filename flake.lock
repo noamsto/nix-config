@@ -1345,11 +1345,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1788246837,
-        "narHash": "sha256-6AMXZuzXo185bK0ZKINSFIJ5QV0jnGG5rjSu6p1Qv4g=",
+        "lastModified": 1788267272,
+        "narHash": "sha256-H733cfD59CojW7s+QNypUuM2Ba1f7XzhVUPk1Xsbwt0=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "4106b757a839fea703ee19c7efe0361e3b6687f1",
+        "rev": "f2fdc86c8a28c5a02b5656e92fa1d72a0362561a",
         "type": "github"
       },
       "original": {
