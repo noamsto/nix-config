@@ -49,6 +49,15 @@ is_lid_closed() {
     org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"
 }
 
+# Report the running Noctalia shell's PID, empty if not running.
+# Noctalia execs quickshell, so its argv is just "quickshell" with no
+# recognizable suffix — a pgrep regex can't distinguish it from any other
+# quickshell instance. `noctalia-shell list` walks /run/user/$UID/quickshell/
+# and reports the real instance, matching the noctalia-crash-monitor service.
+get_noctalia_pid() {
+  noctalia-shell list 2>/dev/null | awk '/Process ID:/ {print $3; exit}'
+}
+
 # Resolve monitor identifier to actual Hyprland monitor name
 # Handles: "left", "right", "laptop", or direct monitor names (eDP-1, DP-1, etc.)
 resolve_monitor() {
@@ -202,7 +211,7 @@ configure_undocked() {
   hyprctl monitors -j 2>/dev/null | jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' >>"$LOG_FILE" 2>&1 || log "  (failed to get monitors)"
 
   # Check Noctalia status
-  noctalia_pid=$(pgrep -f 'quickshell.*noctalia-shell' | head -1 || true)
+  noctalia_pid=$(get_noctalia_pid)
   if [ -n "$noctalia_pid" ]; then
     log "Noctalia running (PID: $noctalia_pid)"
   else
@@ -277,6 +286,10 @@ configure_undocked() {
           org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'
       }
 
+      get_noctalia_pid() {
+        noctalia-shell list 2>/dev/null | awk '/Process ID:/ {print \$3; exit}'
+      }
+
       has_external_monitors() {
         for status_file in /sys/class/drm/card*/status; do
           if [ -f \"\$status_file\" ]; then
@@ -310,7 +323,7 @@ configure_undocked() {
       done
 
       # Check Noctalia before lock
-      noctalia_pid=\$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+      noctalia_pid=\$(get_noctalia_pid)
       if [ -n \"\$noctalia_pid\" ]; then
         log \"Noctalia running before lock (PID: \$noctalia_pid)\"
       else
@@ -327,7 +340,7 @@ configure_undocked() {
 
       # Check Noctalia after lock
       sleep 0.5
-      noctalia_pid=\$(pgrep -f 'quickshell.*noctalia-shell' | head -1)
+      noctalia_pid=\$(get_noctalia_pid)
       if [ -n \"\$noctalia_pid\" ]; then
         log \"Noctalia still running after lock (PID: \$noctalia_pid)\"
       else
