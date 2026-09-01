@@ -158,7 +158,7 @@ configure_docked() {
   # Left monitor: workspaces 1-4
   for ws in {1..4}; do
     log "Moving workspace $ws to left monitor"
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $left"; then
+    if ! hyprctl dispatch "hl.dsp.workspace.move({ workspace = $ws, monitor = \"$left\" })"; then
       log "WARNING: Failed to move workspace $ws to $left"
     fi
   done
@@ -166,7 +166,7 @@ configure_docked() {
   # Right monitor: workspaces 5-8
   for ws in {5..8}; do
     log "Moving workspace $ws to right monitor"
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $right"; then
+    if ! hyprctl dispatch "hl.dsp.workspace.move({ workspace = $ws, monitor = \"$right\" })"; then
       log "WARNING: Failed to move workspace $ws to $right"
     fi
   done
@@ -176,12 +176,12 @@ configure_docked() {
   # monitor). Must match the WS 9 rule in the docked-*.lua.in templates.
   if ! is_lid_closed; then
     log "Moving workspace 9 to laptop monitor"
-    if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
+    if ! hyprctl dispatch "hl.dsp.workspace.move({ workspace = 9, monitor = \"$LAPTOP_MONITOR\" })"; then
       log "WARNING: Failed to move workspace 9 to $LAPTOP_MONITOR"
     fi
   else
     log "Moving workspace 9 to right monitor (clamshell)"
-    if ! hyprctl dispatch moveworkspacetomonitor "9 $right"; then
+    if ! hyprctl dispatch "hl.dsp.workspace.move({ workspace = 9, monitor = \"$right\" })"; then
       log "WARNING: Failed to move workspace 9 to $right"
     fi
   fi
@@ -214,7 +214,7 @@ configure_undocked() {
   # Without resetting the display pipeline here, suspend+resume leaves eDP-1
   # in a broken state (black screen on lid open after resume).
   log "Turning DPMS on (unconditional on undock)..."
-  hyprctl dispatch dpms on 2>/dev/null || true
+  hyprctl dispatch 'hl.dsp.dpms({ action = "on" })' 2>/dev/null || true
 
   # Spawn suspend handler BEFORE reload — hyprctl reload triggers HDM
   # re-evaluation which kills this script, so anything after reload is unreliable.
@@ -360,7 +360,7 @@ configure_undocked() {
 
   # Lid is open - move all workspaces to laptop
   for ws in {1..9}; do
-    if ! hyprctl dispatch moveworkspacetomonitor "$ws $LAPTOP_MONITOR"; then
+    if ! hyprctl dispatch "hl.dsp.workspace.move({ workspace = $ws, monitor = \"$LAPTOP_MONITOR\" })"; then
       log "WARNING: Failed to move workspace $ws to $LAPTOP_MONITOR"
     fi
   done

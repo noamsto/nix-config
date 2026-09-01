@@ -62,8 +62,8 @@ in {
         # Turn off displays (conservative delay)
         {
           timeout = 360; # 1 minute after lock
-          on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch dpms off 2>/dev/null || true";
-          on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true";
+          on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"off\" })' 2>/dev/null || true";
+          on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })' 2>/dev/null || true";
         }
       ]
       # In server mode the box must stay awake for SSH/tmux — drop idle suspend.

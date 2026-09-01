@@ -81,7 +81,7 @@ in {
 
               if [ "$status" = "disconnected" ] && [ "$connector_name" != "Writeback-1" ]; then
                 log "  Disabling phantom: $connector_name"
-                ${pkgs.hyprland}/bin/hyprctl keyword monitor "$connector_name,disable" 2>/dev/null || true
+                ${pkgs.hyprland}/bin/hyprctl eval "hl.monitor({ output = \"$connector_name\", disabled = true })" 2>/dev/null || true
               fi
             fi
           done
@@ -114,7 +114,7 @@ in {
             log "Lid closed with external monitors present, skipping eDP-1 enable"
           else
             log "Enabling eDP-1 before DPMS on (lid open or no other monitors)..."
-            ${pkgs.hyprland}/bin/hyprctl keyword monitor "eDP-1,preferred,auto,${config.laptop-scale}" 2>/dev/null || true
+            ${pkgs.hyprland}/bin/hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "preferred", position = "auto", scale = ${config.laptop-scale} })' 2>/dev/null || true
           fi
 
           sleep 0.3
@@ -125,7 +125,7 @@ in {
 
           # Turn displays on
           log "Turning DPMS on..."
-          ${pkgs.hyprland}/bin/hyprctl dispatch dpms on 2>/dev/null || true
+          ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "on" })' 2>/dev/null || true
 
           sleep 0.2
 

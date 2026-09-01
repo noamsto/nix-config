@@ -16,27 +16,27 @@
       "grow")
         if [[ "$IS_PSEUDO" == "true" ]]; then
           # Pseudo: width inverted, height normal, auto-centers
-          hyprctl dispatch resizeactive -$AMOUNT $AMOUNT
+          hyprctl dispatch "hl.dsp.window.resize({ x = -$AMOUNT, y = $AMOUNT, relative = true })"
         elif [[ "$IS_FLOATING" == "true" ]]; then
           # Floating window: resize bigger then recenter
-          hyprctl dispatch resizeactive $AMOUNT $AMOUNT
-          hyprctl dispatch centerwindow
+          hyprctl dispatch "hl.dsp.window.resize({ x = $AMOUNT, y = $AMOUNT, relative = true })"
+          hyprctl dispatch 'hl.dsp.window.center()'
         else
           # Tiled: shrink container to make window appear bigger
-          hyprctl dispatch resizeactive -$AMOUNT -$AMOUNT
+          hyprctl dispatch "hl.dsp.window.resize({ x = -$AMOUNT, y = -$AMOUNT, relative = true })"
         fi
         ;;
       "shrink")
         if [[ "$IS_PSEUDO" == "true" ]]; then
           # Pseudo: width inverted, height normal, auto-centers
-          hyprctl dispatch resizeactive $AMOUNT -$AMOUNT
+          hyprctl dispatch "hl.dsp.window.resize({ x = $AMOUNT, y = -$AMOUNT, relative = true })"
         elif [[ "$IS_FLOATING" == "true" ]]; then
           # Floating window: resize smaller then recenter
-          hyprctl dispatch resizeactive -$AMOUNT -$AMOUNT
-          hyprctl dispatch centerwindow
+          hyprctl dispatch "hl.dsp.window.resize({ x = -$AMOUNT, y = -$AMOUNT, relative = true })"
+          hyprctl dispatch 'hl.dsp.window.center()'
         else
           # Tiled: grow container to make window appear smaller
-          hyprctl dispatch resizeactive $AMOUNT $AMOUNT
+          hyprctl dispatch "hl.dsp.window.resize({ x = $AMOUNT, y = $AMOUNT, relative = true })"
         fi
         ;;
       *)

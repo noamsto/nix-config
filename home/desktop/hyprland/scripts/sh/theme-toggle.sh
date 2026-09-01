@@ -68,7 +68,7 @@ EOF
   fi
 
   # Update environment for new processes (Hyprland + systemd user)
-  hyprctl keyword env GTK_THEME,"$gtk_theme_variant" >/dev/null 2>&1 || true
+  hyprctl eval "hl.env(\"GTK_THEME\", \"$gtk_theme_variant\")" >/dev/null 2>&1 || true
   systemctl --user set-environment GTK_THEME="$gtk_theme_variant" 2>/dev/null || true
 
   # Update GTK3/4 settings.ini for apps that read it directly (e.g. Thunar)
@@ -215,13 +215,13 @@ update_hyprland_borders() {
 
   while [[ $retry -lt $max_retries && $success == false ]]; do
     if [[ $theme == "light" ]]; then
-      if hyprctl keyword general:col.active_border "rgba(${LATTE_BLUE}ee) rgba(${LATTE_LAVENDER}ee) 45deg" >/dev/null 2>&1; then
-        hyprctl keyword general:col.inactive_border "rgba(${LATTE_LAVENDER}40)" >/dev/null 2>&1
+      if hyprctl eval "hl.config({ general = { [\"col.active_border\"] = { colors = {\"rgba(${LATTE_BLUE}ee)\", \"rgba(${LATTE_LAVENDER}ee)\"}, angle = 45 } } })" >/dev/null 2>&1; then
+        hyprctl eval "hl.config({ general = { [\"col.inactive_border\"] = \"rgba(${LATTE_LAVENDER}40)\" } })" >/dev/null 2>&1
         success=true
       fi
     else
-      if hyprctl keyword general:col.active_border "rgba(${MOCHA_BLUE}ee) rgba(${MOCHA_LAVENDER}ee) 45deg" >/dev/null 2>&1; then
-        hyprctl keyword general:col.inactive_border "rgba(${MOCHA_LAVENDER}40)" >/dev/null 2>&1
+      if hyprctl eval "hl.config({ general = { [\"col.active_border\"] = { colors = {\"rgba(${MOCHA_BLUE}ee)\", \"rgba(${MOCHA_LAVENDER}ee)\"}, angle = 45 } } })" >/dev/null 2>&1; then
+        hyprctl eval "hl.config({ general = { [\"col.inactive_border\"] = \"rgba(${MOCHA_LAVENDER}40)\" } })" >/dev/null 2>&1
         success=true
       fi
     fi

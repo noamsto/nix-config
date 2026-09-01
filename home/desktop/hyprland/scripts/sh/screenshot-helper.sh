@@ -49,9 +49,9 @@ SCALE_FACTOR="${SCALE_FACTOR:-1.0}"
 case "$TYPE" in
 "area")
   # Quick area screenshot with scaling
-  hyprctl keyword animation "fadeOut,0,0,default"
+  hyprctl eval 'hl.animation({ leaf = "fadeOut", enabled = false })'
   grimblast --notify --scale "$SCALE_FACTOR" copysave area
-  hyprctl keyword animation "fadeOut,1,4,default"
+  hyprctl eval 'hl.animation({ leaf = "fadeOut", enabled = true, speed = 4, bezier = "default" })'
   ;;
 "output")
   # Full output screenshot with scaling
@@ -63,9 +63,9 @@ case "$TYPE" in
   ;;
 "edit-area")
   # Screenshot area and edit with satty
-  hyprctl keyword animation "fadeOut,0,0,default"
+  hyprctl eval 'hl.animation({ leaf = "fadeOut", enabled = false })'
   GRIMBLAST_EDITOR=satty grimblast --scale "$SCALE_FACTOR" edit area
-  hyprctl keyword animation "fadeOut,1,4,default"
+  hyprctl eval 'hl.animation({ leaf = "fadeOut", enabled = true, speed = 4, bezier = "default" })'
   ;;
 "edit-output")
   # Screenshot full output and edit with satty

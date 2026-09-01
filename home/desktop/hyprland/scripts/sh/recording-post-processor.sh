@@ -55,7 +55,7 @@ HELPER
   chmod +x "$helper"
 
   # Launch via hyprctl so it runs in the compositor session
-  hyprctl dispatch exec "$helper"
+  hyprctl dispatch "hl.dsp.exec_cmd(\"$helper\")"
 
   # Wait for the user to make a choice (timeout after 60s)
   local waited=0

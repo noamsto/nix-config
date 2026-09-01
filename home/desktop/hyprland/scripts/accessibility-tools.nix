@@ -151,7 +151,7 @@
           cur=$((cur + step))
           echo "$cur" > "$STATE"
           printf -v val "%d.%03d" $((cur / 1000)) $((cur % 1000))
-          ${pkgs.hyprland}/bin/hyprctl keyword cursor:zoom_factor "$val" >/dev/null
+          ${pkgs.hyprland}/bin/hyprctl eval "hl.config({ cursor = { zoom_factor = $val } })" >/dev/null
           ${pkgs.coreutils}/bin/sleep 0.016
         done
       ) &

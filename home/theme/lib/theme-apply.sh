@@ -602,7 +602,7 @@ update_bat() {
 
   if [[ ${THEME_APPLY_PLATFORM:-linux} == "linux" ]]; then
     systemctl --user set-environment BAT_THEME="$bat_theme" 2>/dev/null || true
-    hyprctl keyword env BAT_THEME,"$bat_theme" >/dev/null 2>&1 || true
+    hyprctl eval "hl.env(\"BAT_THEME\", \"$bat_theme\")" >/dev/null 2>&1 || true
   fi
 }
 
@@ -628,7 +628,7 @@ update_fzf() {
 
   if [[ ${THEME_APPLY_PLATFORM:-linux} == "linux" ]]; then
     systemctl --user set-environment FZF_DEFAULT_OPTS_THEME="--color=$fzf_colors" 2>/dev/null || true
-    hyprctl keyword env FZF_DEFAULT_OPTS_THEME,"--color=$fzf_colors" >/dev/null 2>&1 || true
+    hyprctl eval "hl.env(\"FZF_DEFAULT_OPTS_THEME\", \"--color=$fzf_colors\")" >/dev/null 2>&1 || true
   fi
 }
 

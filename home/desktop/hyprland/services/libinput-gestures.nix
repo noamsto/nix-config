@@ -33,14 +33,14 @@
 
     # === 4-FINGER GESTURES ===
     # Application launcher
-    gesture swipe up 4 hyprctl dispatch exec "vicinae vicinae://toggle"
+    gesture swipe up 4 hyprctl dispatch 'hl.dsp.exec_cmd("vicinae vicinae://toggle")'
 
     # Show all windows (hyprexpo overview) - disabled: hyprexpo plugin not loaded
     # gesture swipe down 4 hyprctl dispatch hyprexpo:expo toggle
 
     # Move window to adjacent non-empty workspace (r = relative, skips empty)
-    gesture swipe left 4 hyprctl dispatch movetoworkspace r-1
-    gesture swipe right 4 hyprctl dispatch movetoworkspace r+1
+    gesture swipe left 4 hyprctl dispatch 'hl.dsp.window.move({ workspace = "r-1" })'
+    gesture swipe right 4 hyprctl dispatch 'hl.dsp.window.move({ workspace = "r+1" })'
 
     # === PINCH GESTURES ===
     # Optional: Window opacity control with pinch

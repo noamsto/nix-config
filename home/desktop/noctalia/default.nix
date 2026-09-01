@@ -181,8 +181,8 @@ in {
             }
 
             relaunch_noctalia() {
-              ${pkgs.hyprland}/bin/hyprctl dispatch exec noctalia-shell >/dev/null 2>&1 \
-                || log "hyprctl dispatch exec noctalia-shell failed"
+              ${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.exec_cmd("noctalia-shell")' >/dev/null 2>&1 \
+                || log "noctalia-shell relaunch failed"
             }
 
             log "Crash monitor started"
