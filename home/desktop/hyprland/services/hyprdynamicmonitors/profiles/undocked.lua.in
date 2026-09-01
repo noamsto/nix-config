@@ -1,0 +1,20 @@
+-- Undocked - laptop only with dynamic lid handling
+-- Template handles both lid open (normal use) and lid closed (triggers suspend via script)
+-- Uses .MonitorsByTag for gen5/gen6 compatibility
+-- Rendered by hyprdynamicmonitors; required from startup.lua (Hyprland has no hl.source()).
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+
+-- Laptop screen configuration - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
+hl.monitor({ output = "{{$laptop.Name}}", mode = "preferred", position = "0x0", scale = @laptopScale@ })
+
+-- Named workspaces on laptop
+hl.workspace_rule({ workspace = 1, monitor = "{{$laptop.Name}}", default = true, default_name = "dev" })
+hl.workspace_rule({ workspace = 2, monitor = "{{$laptop.Name}}", default_name = "web" })
+hl.workspace_rule({ workspace = 3, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 4, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 5, monitor = "{{$laptop.Name}}", default_name = "comms" })
+hl.workspace_rule({ workspace = 6, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 7, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 8, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 9, monitor = "{{$laptop.Name}}", default_name = "media" })

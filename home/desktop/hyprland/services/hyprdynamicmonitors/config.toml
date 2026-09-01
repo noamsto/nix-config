@@ -1,5 +1,5 @@
 [general]
-destination = "$HOME/.config/hypr/monitors.conf"
+destination = "$HOME/.config/hypr/monitors.lua"
 
 # Power events configuration - use line_power_AC (not ACAD) for ThinkPad
 [power_events]
@@ -29,7 +29,7 @@ object_path = "/org/freedesktop/UPower/devices/line_power_AC"
 # short-circuits with "Template content unchanged, skipping write" and the
 # suspend handler never runs.
 [profiles.undocked_lid_closed]
-config_file = "profiles/undocked-lid-closed.conf"
+config_file = "profiles/undocked-lid-closed.lua"
 config_file_type = "template"
 post_apply_exec = "workspace-manager undocked-lid-closed"
 
@@ -41,7 +41,7 @@ monitor_tag = "laptop"
 
 # Undocked with lid open - normal laptop usage
 [profiles.undocked]
-config_file = "profiles/undocked.conf"
+config_file = "profiles/undocked.lua"
 config_file_type = "template"
 post_apply_exec = "workspace-manager undocked"
 
@@ -53,7 +53,7 @@ monitor_tag = "laptop"
 
 # Docked at home - Samsung monitors (template handles lid state)
 [profiles.docked_home]
-config_file = "profiles/docked-home.conf"
+config_file = "profiles/docked-home.lua"
 config_file_type = "template"
 post_apply_exec = "workspace-manager docked left right"
 
@@ -70,7 +70,7 @@ monitor_tag = "laptop"
 
 # Docked at office - Dell monitors (template handles lid state)
 [profiles.docked_office]
-config_file = "profiles/docked-office.conf"
+config_file = "profiles/docked-office.lua"
 config_file_type = "template"
 post_apply_exec = "workspace-manager docked left right"
 

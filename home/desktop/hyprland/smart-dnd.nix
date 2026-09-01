@@ -36,11 +36,9 @@ in {
   };
 
   # Add keybindings for manual control
-  wayland.windowManager.hyprland.settings = {
-    bind = [
-      # Manual override toggle
-      "SUPER SHIFT, F1, exec, ${smart-dnd-audio}/bin/smart-dnd-audio override"
-      "SUPER SHIFT, F2, exec, ${smart-dnd-audio}/bin/smart-dnd-audio unoverride"
-    ];
-  };
+  wayland.windowManager.hyprland.extraLuaFiles."smart-dnd".content = ''
+    -- Manual override toggle
+    hl.bind("SUPER + SHIFT + F1", hl.dsp.exec_cmd("${smart-dnd-audio}/bin/smart-dnd-audio override"))
+    hl.bind("SUPER + SHIFT + F2", hl.dsp.exec_cmd("${smart-dnd-audio}/bin/smart-dnd-audio unoverride"))
+  '';
 }

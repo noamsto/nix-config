@@ -13,163 +13,146 @@
   browser = "${lib.getExe pkgs.firefox} -P ${primaryProfile}";
   youtube-music = "${lib.getExe pkgs.pear-desktop}";
 
+  # Run a program only if it's not already running
   runOnce = program: let
-    progName = builtins.baseNameOf program;
-    # Always use -f flag for reliable detection across all program types
+    progName = baseNameOf program;
   in "pgrep -f ${progName} || ${program}";
-  # Kill and restart a program in background with disown
 in {
-  wayland.windowManager.hyprland.settings = {
-    "$mainMod" = "SUPER";
-    bind = [
-      "$mainMod, C, exec, ${terminal} --single-instance --instance-group=hypr"
-      "$mainMod, E, exec, ${fileManager}"
-      "$mainMod, B, exec, ${browser}"
-      "$mainMod, F, fullscreen, 1" # Fullscreen with gaps (focus mode)
-      "$mainMod SHIFT, F, fullscreen, 0" # True fullscreen (no gaps)
-      "$mainMod, Q, killactive" # Changed from C to Q for quit/close window
+  wayland.windowManager.hyprland.extraLuaFiles."bindings".content = ''
+    local mainMod = "SUPER"
 
-      # Toggle pseudo (no auto-resize - pseudo maintains floating dimensions)
-      "$mainMod, P, pseudo"
+    -- === APPLICATION LAUNCHERS ===
+    hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("${terminal} --single-instance --instance-group=hypr"))
+    hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("${fileManager}"))
+    hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("${browser}"))
+    hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("sesh-launcher"))
+    hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("obsidian"))
+    hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("${youtube-music}"))
+    hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("pavucontrol"))
 
-      "$mainMod, R, layoutmsg, togglesplit"
+    -- === WINDOW MANAGEMENT ===
+    hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+    hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))       -- maximize (with gaps)
+    hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 0 })) -- true fullscreen
+    hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+    hl.bind(mainMod .. " + R", hl.dsp.layout("togglesplit"))
+    -- Smart toggle floating: tiled→float+resize+center, floating→just unfloat
+    hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("toggle-floating"))
+    hl.bind(mainMod .. " + SHIFT + T", hl.dsp.window.center())
 
-      # Smart toggle floating: tiled→float+resize+center, floating→just unfloat
-      "$mainMod, T, exec, toggle-floating"
+    -- === CLIPBOARD / VICINAE ===
+    hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("vicinae vicinae://launch/clipboard/history"))
+    hl.bind("ALT + SPACE", hl.dsp.exec_cmd("vicinae vicinae://toggle"))
 
-      "$mainMod SHIFT, T, centerwindow" # Center the current window (useful for floating windows)
+    -- === SYSTEM ===
+    hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("aegis-lock"))
+    hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("theme-toggle toggle"))
+    hl.bind(mainMod .. " + ALT + K", hl.dsp.exec_cmd("system-awake toggle-last"))
+    -- Session/logout menu (Noctalia)
+    hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("noctalia-ipc sessionMenu toggle"))
 
-      "$mainMod, V, exec, vicinae vicinae://launch/clipboard/history"
+    -- === FOCUS MOVEMENT (SUPER+hjkl) ===
+    hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
+    hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
+    hl.bind(mainMod .. " + K", hl.dsp.focus({ direction = "up" }))
+    hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
 
-      "$mainMod ALT, L, exec, aegis-lock"
-      "$mainMod ALT, T, exec, theme-toggle toggle" # Toggle dark/light theme
-      "$mainMod ALT, K, exec, system-awake toggle-last" # Re-activate last {duration,scope} combo
+    -- === WORKSPACE SWITCHING (SUPER+[1-9]) ===
+    hl.bind(mainMod .. " + 1", hl.dsp.focus({ workspace = 1 }))
+    hl.bind(mainMod .. " + 2", hl.dsp.focus({ workspace = 2 }))
+    hl.bind(mainMod .. " + 3", hl.dsp.focus({ workspace = 3 }))
+    hl.bind(mainMod .. " + 4", hl.dsp.focus({ workspace = 4 }))
+    hl.bind(mainMod .. " + 5", hl.dsp.focus({ workspace = 5 }))
+    hl.bind(mainMod .. " + 6", hl.dsp.focus({ workspace = 6 }))
+    hl.bind(mainMod .. " + 7", hl.dsp.focus({ workspace = 7 }))
+    hl.bind(mainMod .. " + 8", hl.dsp.focus({ workspace = 8 }))
+    hl.bind(mainMod .. " + 9", hl.dsp.focus({ workspace = 9 }))
 
-      # Session/logout menu (Noctalia)
-      "$mainMod, Escape, exec, noctalia-ipc sessionMenu toggle"
+    -- Quick workspace shortcuts
+    hl.bind(mainMod .. " + D", hl.dsp.focus({ workspace = 1 })) -- Development (kitty)
+    hl.bind(mainMod .. " + W", hl.dsp.focus({ workspace = 2 })) -- Web (browsers)
 
-      # Move focus with SUPER+hjkl (using SUPER+ALT+L for right to avoid conflict with lock)
-      "$mainMod, H, movefocus, l"
-      "$mainMod, L, movefocus, r"
-      "$mainMod, K, movefocus, u"
-      "$mainMod, J, movefocus, d"
+    -- Cycle through windows (Tab)
+    hl.bind(mainMod .. " + Tab", hl.dsp.window.cycle_next())
+    hl.bind(mainMod .. " + Tab", hl.dsp.window.bring_to_top())
+    hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.window.cycle_next({ next = false }))
+    hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.window.bring_to_top())
 
-      # Switch workspaces with mainMod + [0-9]
-      "$mainMod, 1, workspace, 1"
-      "$mainMod, 2, workspace, 2"
-      "$mainMod, 3, workspace, 3"
-      "$mainMod, 4, workspace, 4"
-      "$mainMod, 5, workspace, 5"
-      "$mainMod, 6, workspace, 6"
-      "$mainMod, 7, workspace, 7"
-      "$mainMod, 8, workspace, 8"
-      "$mainMod, 9, workspace, 9"
+    -- Scroll through non-empty workspaces on current monitor
+    hl.bind(mainMod .. " + SHIFT + L", hl.dsp.focus({ workspace = "m+1" }))
+    hl.bind(mainMod .. " + SHIFT + H", hl.dsp.focus({ workspace = "m-1" }))
+    hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "m+1" }))
+    hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "m-1" }))
 
-      # to switch between windows in a floating workspace
-      "$mainMod, Tab, cyclenext," # change focus to another window
-      "$mainMod, Tab, bringactivetotop," # bring it to the top
-      "$mainMod SHIFT, Tab, cyclenext, prev" # change focus to previous window
-      "$mainMod SHIFT, Tab, bringactivetotop," # bring it to the top
+    -- Special workspace (scratchpad)
+    hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
+    hl.bind(mainMod .. " + M", hl.dsp.window.move({ workspace = "special:magic" }))
 
-      # Move active window to a workspace with mainMod + SHIFT + [0-9]
-      "$mainMod SHIFT, 1, movetoworkspace, 1"
-      "$mainMod SHIFT, 2, movetoworkspace, 2"
-      "$mainMod SHIFT, 3, movetoworkspace, 3"
-      "$mainMod SHIFT, 4, movetoworkspace, 4"
-      "$mainMod SHIFT, 5, movetoworkspace, 5"
-      "$mainMod SHIFT, 6, movetoworkspace, 6"
-      "$mainMod SHIFT, 7, movetoworkspace, 7"
-      "$mainMod SHIFT, 8, movetoworkspace, 8"
-      "$mainMod SHIFT, 9, movetoworkspace, 9"
+    -- === MOVE WINDOW TO WORKSPACE (SUPER+SHIFT+[1-9]) ===
+    hl.bind(mainMod .. " + SHIFT + 1", hl.dsp.window.move({ workspace = 1 }))
+    hl.bind(mainMod .. " + SHIFT + 2", hl.dsp.window.move({ workspace = 2 }))
+    hl.bind(mainMod .. " + SHIFT + 3", hl.dsp.window.move({ workspace = 3 }))
+    hl.bind(mainMod .. " + SHIFT + 4", hl.dsp.window.move({ workspace = 4 }))
+    hl.bind(mainMod .. " + SHIFT + 5", hl.dsp.window.move({ workspace = 5 }))
+    hl.bind(mainMod .. " + SHIFT + 6", hl.dsp.window.move({ workspace = 6 }))
+    hl.bind(mainMod .. " + SHIFT + 7", hl.dsp.window.move({ workspace = 7 }))
+    hl.bind(mainMod .. " + SHIFT + 8", hl.dsp.window.move({ workspace = 8 }))
+    hl.bind(mainMod .. " + SHIFT + 9", hl.dsp.window.move({ workspace = 9 }))
+    hl.bind(mainMod .. " + SHIFT + D", hl.dsp.window.move({ workspace = 1 }))
+    hl.bind(mainMod .. " + SHIFT + W", hl.dsp.window.move({ workspace = 2 }))
 
-      # Scroll through non-empty workspaces on current monitor (m = monitor, skips empty)
-      "$mainMod SHIFT, L, workspace, m+1"
-      "$mainMod SHIFT, H, workspace, m-1"
-      "$mainMod, mouse_down, workspace, m+1"
-      "$mainMod, mouse_up, workspace, m-1"
+    -- === WINDOW POSITION (SUPER+CTRL+hjkl) ===
+    hl.bind(mainMod .. " + CTRL + H", hl.dsp.window.move({ direction = "left" }))
+    hl.bind(mainMod .. " + CTRL + L", hl.dsp.window.move({ direction = "right" }))
+    hl.bind(mainMod .. " + CTRL + K", hl.dsp.window.move({ direction = "up" }))
+    hl.bind(mainMod .. " + CTRL + J", hl.dsp.window.move({ direction = "down" }))
 
-      # Example special workspace (scratchpad)down
-      "$mainMod, S, togglespecialworkspace, magic"
-      "$mainMod, M, movetoworkspace, special:magic"
+    -- Move window between monitors
+    hl.bind(mainMod .. " + CTRL + SHIFT + H", hl.dsp.window.move({ monitor = "l" }))
+    hl.bind(mainMod .. " + CTRL + SHIFT + L", hl.dsp.window.move({ monitor = "r" }))
 
-      "$ALT, SPACE, exec, vicinae vicinae://toggle"
+    -- === QUICK RESIZE ===
+    hl.bind(mainMod .. " + equal", hl.dsp.exec_cmd("window-resize grow"))
+    hl.bind(mainMod .. " + minus", hl.dsp.exec_cmd("window-resize shrink"))
 
-      # === PRODUCTIVITY SHORTCUTS ===
-      # Quick application access
-      "$mainMod, A, exec, sesh-launcher" # Tmux session launcher
-      "$mainMod, N, exec, obsidian" # Notes
-      "$mainMod, Y, exec, ${youtube-music}" # Music
-      "$mainMod SHIFT, V, exec, pavucontrol" # Volume control
+    -- === SCREENSHOTS ===
+    -- Print is remapped from SUPER+SHIFT+S via xremap
+    hl.bind("Print", hl.dsp.exec_cmd("grimblast-satty"))
+    hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("screenshot-menu"))
 
-      # Quick workspace jumps to organized workflow
-      # Note: Use IDs not names - named workspaces create dynamic WS with negative IDs
-      "$mainMod, D, workspace, 1" # Development (kitty) - same as Super+1
-      "$mainMod SHIFT, D, movetoworkspace, 1" # Move to dev workspace
-      "$mainMod, W, workspace, 2" # Web (browsers) - same as Super+2
-      "$mainMod SHIFT, W, movetoworkspace, 2" # Move to web workspace
+    -- === ACCESSIBILITY ===
+    hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
+    hl.bind(mainMod .. " + CTRL + 0", hl.dsp.exec_cmd("zoom-step reset"))
+    hl.bind(mainMod .. " + CTRL + mouse_down", hl.dsp.exec_cmd("zoom-step in"))
+    hl.bind(mainMod .. " + CTRL + mouse_up", hl.dsp.exec_cmd("zoom-step out"))
+    hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("stt-stream-toggle"))
+    hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("hyprvoice toggle"))
 
-      # Window management helpers
-      "$mainMod CTRL, H, movewindow, l" # Move window left
-      "$mainMod CTRL, L, movewindow, r" # Move window right
-      "$mainMod CTRL, K, movewindow, u" # Move window up
-      "$mainMod CTRL, J, movewindow, d" # Move window down
+    -- Media: launch YTM if not running
+    hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce youtube-music}"))
 
-      # Move window between monitors
-      "$mainMod CTRL SHIFT, H, movewindow, mon:l" # Move window to left monitor
-      "$mainMod CTRL SHIFT, L, movewindow, mon:r" # Move window to right monitor
+    -- === MOUSE BINDS ===
+    hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+    hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+    hl.bind(mainMod .. " + ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
-      # Quick resize shortcuts (smart: works for both floating and tiled/pseudo)
-      "$mainMod, equal, exec, window-resize grow"
-      "$mainMod, minus, exec, window-resize shrink"
+    -- === MEDIA / VOLUME (locked — work on lockscreen) ===
+    hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+    hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
+    hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
+    hl.bind("XF86AudioMute", hl.dsp.exec_cmd("volume-control --toggle"), { locked = true })
+    hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("volume-control --toggle-mic"), { locked = true })
 
-      ", XF86AudioPlay, exec, ${runOnce youtube-music}"
+    -- === VOLUME / BRIGHTNESS (locked + repeating) ===
+    hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("volume-control --inc"), { locked = true, repeating = true })
+    hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("volume-control --dec"), { locked = true, repeating = true })
+    hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightness-control --inc"), { locked = true, repeating = true })
+    hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightness-control --dec"), { locked = true, repeating = true })
 
-      # Screenshot modes
-      ", Print, exec, grimblast-satty" # screenshot with frozen screen and satty editor (mapped from SUPER+SHIFT+S via xremap)
-      "ALT SHIFT, S, exec, screenshot-menu" # screenshot menu with vicinae
-
-      # Accessibility tools
-      "$mainMod SHIFT, O, exec, normcap" # OCR - select area and copy text
-      "$mainMod CTRL, 0, exec, zoom-step reset" # Reset zoom (KDE-style)
-      "$mainMod CTRL, mouse_down, exec, zoom-step in" # Zoom in
-      "$mainMod CTRL, mouse_up, exec, zoom-step out" # Zoom out
-      "$mainMod SHIFT, A, exec, stt-stream-toggle" # Speech-to-text: real-time VAD streaming
-      "$mainMod ALT, A, exec, hyprvoice toggle" # Speech-to-text: batch mode (hyprvoice)
-
-      # Screen recording is handled by Noctalia's ScreenRecorder widget
-      # GIF conversion available via post-processor after recording completes
-    ];
-    bindm = [
-      # Move/resize windows with mainMod + LMB/RMB and dragging
-      "$mainMod, mouse:272, movewindow"
-      "$mainMod, mouse:273, resizewindow"
-      "$mainMod ALT, mouse:272, resizewindow"
-    ];
-
-    bindl = [
-      # media controls
-      ", XF86AudioPlay, exec, playerctl play-pause"
-      ", XF86AudioPrev, exec, playerctl previous"
-      ", XF86AudioNext, exec, playerctl next"
-
-      # volume with swaync notifications - updated to use new script options
-      ", XF86AudioMute, exec, volume-control --toggle"
-      ", XF86AudioMicMute, exec, volume-control --toggle-mic"
-    ];
-    bindle = [
-      # volume with swaync notifications - updated to use new script options
-      ", XF86AudioRaiseVolume, exec, volume-control --inc"
-      ", XF86AudioLowerVolume, exec, volume-control --dec"
-
-      # backlight - updated to use new script options
-      ", XF86MonBrightnessUp, exec, brightness-control --inc"
-      ", XF86MonBrightnessDown, exec, brightness-control --dec"
-
-      # Resize windows
-      "$mainMod, left, resizeactive, -20 0"
-      "$mainMod, right, resizeactive, 20 0"
-      "$mainMod, up, resizeactive, 0 -20"
-      "$mainMod, down, resizeactive, 0 20"
-    ];
-  };
+    -- === WINDOW RESIZE (arrow keys, repeating) ===
+    hl.bind(mainMod .. " + left", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), { repeating = true })
+    hl.bind(mainMod .. " + right", hl.dsp.window.resize({ x = 20, y = 0, relative = true }), { repeating = true })
+    hl.bind(mainMod .. " + up", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true })
+    hl.bind(mainMod .. " + down", hl.dsp.window.resize({ x = 0, y = 20, relative = true }), { repeating = true })
+  '';
 }

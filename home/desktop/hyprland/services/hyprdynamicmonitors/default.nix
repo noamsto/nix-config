@@ -33,8 +33,8 @@
     src = ./profiles;
     buildPhase = ''
       mkdir -p $out
-      # Process template files (.conf.in -> .conf)
-      for file in $src/*.conf.in; do
+      # Process template files (.lua.in -> .lua)
+      for file in $src/*.lua.in; do
         if [ -f "$file" ]; then
           filename=$(basename "$file")
           output="$out/''${filename%.in}"
