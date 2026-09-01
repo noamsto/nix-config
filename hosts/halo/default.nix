@@ -52,6 +52,21 @@ in {
     '';
   };
 
+  # Weights are large files that get partially rewritten (resumed downloads,
+  # in-place quantization), which CoW shatters into thousands of extents and
+  # slows every mmap load. The flag only takes on files created after it is
+  # set, so it has to land before anything writes into the subvolume.
+  systemd.services.models-nodatacow = {
+    description = "Disable btrfs CoW on /var/lib/models";
+    wantedBy = ["multi-user.target"];
+    unitConfig.RequiresMountsFor = "/var/lib/models";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/models";
+    };
+  };
+
   users.users.noams.openssh.authorizedKeys.keys = [
     sshPublicKeys.noams
   ];
