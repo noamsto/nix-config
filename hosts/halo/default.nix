@@ -22,6 +22,7 @@ in {
     inputs.nixos-hardware.nixosModules.common-pc-ssd
     ../../nixos/core/lanzaboote.nix
     ../../nixos/core/iwd-known-networks.nix
+    inputs.nix-amd-ai.nixosModules.default
   ];
 
   inherit (hostConfig) hostname email profile;
@@ -38,19 +39,78 @@ in {
     # file during the install, which would silently delete this. `cryptroot`
     # is the name disko gives the LUKS device.
     initrd.luks.devices.cryptroot.crypttabExtraOpts = ["tpm2-device=auto"];
-
-    # The GPU draws from the GTT window, not a fixed BIOS VRAM carve-out, so
-    # the BIOS UMA is set to its minimum. ttm defaults pages_limit to
-    # totalram/2, which would cap the GPU at 64 GiB of the 128 GiB.
-    # pages = GiB * 262144.
-    #
-    # Deliberately no amdgpu.gttsize: ROCm#5595 warns against setting it
-    # together with pages_limit, and pages_limit alone is measured sufficient
-    # on a 128 GB Halo (nix-amd-ai README, "GPU memory headroom").
-    extraModprobeConfig = ''
-      options ttm pages_limit=25165824 page_pool_size=25165824
-    '';
   };
+
+  hardware.amd-npu = {
+    enable = true;
+    gpuTarget = "gfx1151"; # Strix Halo; the module default is gfx1150 (Strix Point)
+    enableROCm = true;
+    enableVulkan = true;
+    enableLemonade = true;
+
+    # On deliberately, both here and by default: halo is the only npu5 (rev 0x11)
+    # host, and nix-amd-ai's Halo checklist has npu5-on-FLM-1.0.3 as an unfilled
+    # cell - 0.9.43 is confirmed, 1.0.3 is not. Turning these off would skip the
+    # one measurement this box exists to provide.
+    enableNPU = true;
+    enableFastFlowLM = true;
+
+    # The GPU draws from the GTT window, not a fixed BIOS VRAM carve-out, so the
+    # BIOS UMA is set to its minimum. ttm defaults pages_limit to totalram/2,
+    # which would cap the GPU at 64 GiB of the 128 GiB.
+    #
+    # Deliberately no amdgpu.gttsize: ROCm#5595 warns against setting it together
+    # with pages_limit, and pages_limit alone is measured sufficient on a 128 GB
+    # Halo (nix-amd-ai README, "GPU memory headroom").
+    gpuMemory = {
+      ttmSizeGiB = 96;
+      pagePoolSizeGiB = 96;
+    };
+
+    lemonade = {
+      user = "noams";
+      # Headless: skips the Tauri shell's Rust + npm build entirely.
+      desktopApp.enable = false;
+
+      # Reachable from the ThinkPads. Safe only because the port stays out of
+      # allowedTCPPorts and tailscale0 is a trusted interface
+      # (nixos/services/tailscale.nix), so the tailnet reaches it and the LAN
+      # does not. Binding tailscale0's address directly would instead race
+      # tailscaled at boot. The endpoint is unauthenticated; lemond reads
+      # LEMONADE_API_KEY if the firewall ever stops being enough.
+      host = "0.0.0.0";
+      # A non-loopback host with no origins makes browsers on other machines
+      # get a 403, so every name the ThinkPads might use is listed.
+      allowedOrigins = [
+        "http://halo:13305"
+        "http://halo.tail68e513.ts.net:13305"
+        "http://100.92.49.55:13305"
+      ];
+
+      # Deliberately short. g6's 16-model set is entirely imperative and
+      # undocumented; most of it exists because g6 is RAM-constrained, which
+      # halo is not. Grow this once the pair is trusted.
+      # pruneUnlistedModels already defaults false, so hand-pulled models used
+      # for benchmarking survive a rebuild.
+      models = [
+        "Qwen3.5-4B-GGUF" # 3.58 GB, for cheap tasks
+        "Qwen3-Coder-30B-A3B-Instruct-GGUF" # 18.6 GB, proven on g6
+      ];
+      # Without this both caches land in ~/.cache on @home, which is
+      # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.
+      cacheDir = "/var/lib/models";
+    };
+  };
+
+  # disko creates the subvolumes as root:root. Split by consumer: lemond's two
+  # caches, and the plain GGUFs ds4-server reads. They inherit the parent's
+  # nodatacow flag.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/models 0755 noams users -"
+    "d /var/lib/models/hf 0755 noams users -"
+    "d /var/lib/models/lemonade 0755 noams users -"
+    "d /var/lib/models/gguf 0755 noams users -"
+  ];
 
   # Weights are large files that get partially rewritten (resumed downloads,
   # in-place quantization), which CoW shatters into thousands of extents and
@@ -67,9 +127,13 @@ in {
     };
   };
 
-  users.users.noams.openssh.authorizedKeys.keys = [
-    sshPublicKeys.noams
-  ];
+  users.users.noams = {
+    # lemond's unit sets no SupplementaryGroups, unlike ds4-server's.
+    extraGroups = ["video" "render"];
+    openssh.authorizedKeys.keys = [
+      sshPublicKeys.noams
+    ];
+  };
 
   # Ryzen AI Max+ 395: 16 cores / 32 threads.
   nix.settings = {

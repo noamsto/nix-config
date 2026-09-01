@@ -61,12 +61,21 @@ In `hosts/halo/default.nix`:
 
 ```nix
   # disko creates these as root:root; the subvolumes exist so large files stay
-  # uncompressed and out of any snapshot policy.
+  # uncompressed and out of any snapshot policy. The models subdirectories are
+  # split by consumer: lemond's two caches (Task 2b) and the plain GGUFs
+  # ds4-server reads (Task 4b).
   systemd.tmpfiles.rules = [
-    "d /var/lib/models 0755 lemonade lemonade -"
+    "d /var/lib/models 0755 noams users -"
+    "d /var/lib/models/hf 0755 noams users -"
+    "d /var/lib/models/lemonade 0755 noams users -"
+    "d /var/lib/models/gguf 0755 noams users -"
     "d /var/lib/games 0755 noams users -"
   ];
 ```
+
+`/var/lib/models` carries the btrfs `nodatacow` flag (`chattr +C`, PR #192), and
+new subdirectories inherit it — so these are created with CoW already off, which
+is what keeps large weights from fragmenting.
 
 Use whatever user `hardware.amd-npu.lemonade.user` is set to in Task 2 — if that is `noams`, use `noams users` for both lines rather than inventing a `lemonade` user.
 
@@ -181,6 +190,174 @@ git commit -m "feat(halo): serve inference via hardware.amd-npu"
 
 ---
 
+## Task 2b: Redirect lemond's caches onto the models subvolume
+
+**Files:**
+- Modify (upstream, `nix-amd-ai`): `modules/amd-npu.nix`, `flake.nix`
+- Modify: `flake.lock`, `hosts/halo/default.nix`
+
+`lemond` runs as a normal user and inherits the default HuggingFace cache
+location, so weights land in `~/.cache/*` regardless of who owns
+`/var/lib/models`. On g6 that is **147 GB in `~/.cache/huggingface` plus 9.9 GB
+in `~/.cache/lemonade`**. On halo `/home` is `compress=zstd` and CoW — the two
+things `@models` exists to avoid.
+
+Fix it upstream, not with a local unit override. The module owns the `lemond`
+unit; poking `systemd.services.lemond.environment` from `hosts/halo/` would
+break silently if upstream renamed anything, and g6 wants the same option.
+
+- [ ] **Step 1: Branch in the existing nix-amd-ai clone**
+
+The repo is already cloned at `/home/noams/git/noamsto/nix-amd-ai` (note: not
+under `~/Data/git`, where nix-config lives). Its worktrees go in
+`nix-amd-ai-worktrees/`.
+
+```bash
+cd /home/noams/git/noamsto/nix-amd-ai
+wt switch -c feat/lemonade-cache-dir
+```
+
+Read `AGENTS.md` there before committing — that repo is squash-only with
+`squash_message = COMMIT_MESSAGES`, and requires `Co-authored-by:` trailers in
+branch commits (not the PR body) for carried work. Its bring-up notes for this
+chip are in `docs/` — see the Strix Halo (gfx1151) checklist added in #99.
+
+- [ ] **Step 2: Determine the real env var names**
+
+Do not guess these. `HF_HOME` is standard for `huggingface_hub`, and the
+`lemond` launcher contains a `LEMONADE_CACHE_D…` string next to a
+`/.cache/lemonade` default, but the launcher is stripped and the spelling was
+not confirmable from it. Confirm both against upstream before writing the
+option:
+
+```bash
+rg -n 'LEMONADE_CACHE|HF_HOME|HF_HUB_CACHE' $(nix eval --raw .#lemonade.src)
+```
+
+Expected: the exact variable names lemonade reads. If `LEMONADE_CACHE_DIR` is
+not what it is called, use the name you found in Step 3 — do not ship the
+guess.
+
+- [ ] **Step 3: Write the failing check**
+
+In `flake.nix`, beside the existing `module-eval-*` checks, add one that sets
+the option that does not exist yet:
+
+```nix
+            module-eval-cachedir =
+              (inputs.nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  inputs.self.nixosModules.default
+                  {
+                    boot.loader.grub.enable = false;
+                    fileSystems."/" = {
+                      device = "/dev/sda1";
+                      fsType = "ext4";
+                    };
+                    hardware.amd-npu = {
+                      enable = true;
+                      enableLemonade = true;
+                      lemonade.user = "testuser";
+                      lemonade.cacheDir = "/var/lib/models";
+                    };
+                    users.users.testuser = {
+                      isNormalUser = true;
+                      extraGroups = ["video" "render"];
+                    };
+                  }
+                ];
+              }).config.system.build.etc;
+```
+
+- [ ] **Step 4: Run the check to verify it fails**
+
+```bash
+nix build .#checks.x86_64-linux.module-eval-cachedir
+```
+
+Expected: FAIL — `The option 'hardware.amd-npu.lemonade.cacheDir' does not exist`.
+
+- [ ] **Step 5: Add the option**
+
+In `modules/amd-npu.nix`, inside the `lemonade` option block:
+
+```nix
+      cacheDir = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/models";
+        description = ''
+          Root for lemond's model caches, pointing `HF_HOME` and lemonade's own
+          cache at a dedicated location instead of the service user's home.
+
+          A host with a subvolume tuned for weights (uncompressed, nodatacow)
+          needs this: lemond runs as a normal user and would otherwise fill
+          `~/.cache` — 157 GB on a host that has been serving for a while.
+
+          A runtime path, deliberately a string so it is not copied into the Nix
+          store. The directory and its `hf`/`lemonade` subdirectories must exist
+          and be writable by `user`; the unit does not create them, since it is
+          typically a mountpoint the host manages.
+        '';
+      };
+```
+
+- [ ] **Step 6: Wire it into the unit**
+
+In the `systemd.services.lemond.environment` attrset, alongside the other
+`optionalAttrs` blocks:
+
+```nix
+        // optionalAttrs (cfg.lemonade.cacheDir != null) {
+          HF_HOME = "${cfg.lemonade.cacheDir}/hf";
+          LEMONADE_CACHE_DIR = "${cfg.lemonade.cacheDir}/lemonade";
+        }
+```
+
+Substitute whatever Step 2 established if the names differ.
+
+- [ ] **Step 7: Run the check to verify it passes**
+
+```bash
+nix build .#checks.x86_64-linux.module-eval-cachedir
+nix flake check
+```
+
+Expected: both succeed, and no existing check regresses.
+
+- [ ] **Step 8: Commit and open the PR**
+
+```bash
+git add modules/amd-npu.nix flake.nix
+git commit -m "feat(lemonade): add cacheDir to relocate model caches off \$HOME"
+git push -u origin feat/lemonade-cache-dir
+gh pr create --assignee @me --title "feat(lemonade): add cacheDir to relocate model caches off \$HOME" --body "..."
+```
+
+- [ ] **Step 9: Bump the lock here and set the option**
+
+Once that PR merges, back in `nix-config`:
+
+```bash
+nix flake update nix-amd-ai
+```
+
+Then in `hosts/halo/default.nix`, inside the `lemonade` block from Task 2:
+
+```nix
+      cacheDir = "/var/lib/models";
+```
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add flake.lock hosts/halo/default.nix
+git commit -m "feat(halo): keep model caches on the models subvolume"
+```
+
+---
+
 ## Task 3: Expose inference on the tailnet
 
 **Files:** Modify `hosts/halo/default.nix`
@@ -200,6 +377,13 @@ The module warns if `host` is non-loopback while `allowedOrigins` is empty — b
 ```
 
 Replace the second origin with halo's actual Tailscale IP once known (`tailscale ip -4` on the host). Binding `0.0.0.0` is safe here only because the firewall is closed by default and `tailscale0` is a trusted interface (`nixos/services/tailscale.nix`) — **do not add a `networking.firewall.allowedTCPPorts` entry for 13305**, which would expose it to the LAN.
+
+The firewall is the *only* thing in front of an otherwise unauthenticated
+endpoint. If that ever stops being enough — a device you do not control joins
+the tailnet, or a subnet route is added — `lemond` reads `LEMONADE_API_KEY` and
+`LEMONADE_ADMIN_API_KEY`, so a key can be supplied through agenix without
+redesigning the exposure. Not needed for the first deploy; noted so the option
+is known.
 
 - [ ] **Step 2: Verify no eval warning**
 
@@ -267,16 +451,98 @@ Add the larger models you actually intend to serve once Task 8's benchmarks tell
 ```bash
 sudo nixos-rebuild switch --flake .#halo
 systemctl status lemond-models
-ls -la /var/lib/models
+ls -la /var/lib/models/hf
+du -sh /home/noams/.cache/huggingface 2>/dev/null
 ```
 
-Expected: the unit succeeded and the model is on disk under the models subvolume.
+Expected: the unit succeeded, the model is under `/var/lib/models/hf`, and the
+home cache is absent or unchanged. **This expectation only holds once Task 2b is
+done** — without the redirect `lemond` writes to `~/.cache/huggingface` no matter
+who owns the subvolume, and the models land on the compressed CoW `@home`
+instead. If you see the home cache growing, stop and finish Task 2b.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add hosts/halo/default.nix
 git commit -m "feat(halo): declare the served model set"
+```
+
+---
+
+## Task 4b: Serve DeepSeek-V4-Flash via ds4-server
+
+**Files:** Modify `hosts/halo/default.nix`
+
+`hardware.amd-npu.ds4` is a sibling of `lemonade`, not nested under it, so this
+is a second independent server. `pkgs.ds4` already defaults to
+`gpuTarget = "gfx1151"` — it was built for this chip — and the unit sets its own
+`SupplementaryGroups = ["video" "render"]`, so no user change is needed beyond
+what Task 2 already did for `lemond`.
+
+Defaults do not collide: `lemond` listens on 13305, `ds4-server` on 8000.
+
+- [ ] **Step 1: Fetch the GGUF first**
+
+Nothing provisions `ds4.model`. `lemonade.models` has the `lemond-models`
+reconcile unit; `ds4` has no equivalent, so an enabled unit with a missing file
+restart-loops every 5 s. Fetch it before enabling anything, onto the subvolume:
+
+```bash
+ssh halo
+cd /var/lib/models/gguf
+curl -L -o DeepSeek-V4-Flash.gguf '<release URL for the quant you want>'
+ls -lh /var/lib/models/gguf/DeepSeek-V4-Flash.gguf
+```
+
+Expected: the file exists and is non-zero. Pick the quant that fits the 96 GiB
+GTT window with context to spare.
+
+- [ ] **Step 2: Enable the unit**
+
+In `hosts/halo/default.nix`, inside `hardware.amd-npu`, as a sibling of the
+`lemonade` block:
+
+```nix
+    ds4 = {
+      enable = true;
+      user = "noams";
+      model = "/var/lib/models/gguf/DeepSeek-V4-Flash.gguf";
+      host = "0.0.0.0";
+      # SSD-streaming KV lands in the unit's StateDirectory (/var/lib/ds4),
+      # which is on the compressed root subvolume, not @models.
+      extraArgs = ["--ssd-streaming" "--kv-disk-dir" "/var/lib/ds4/server-kv"];
+    };
+```
+
+Leave `port` unset — 8000 is the default and does not clash with lemond.
+
+- [ ] **Step 3: Switch and verify**
+
+```bash
+sudo nixos-rebuild switch --flake .#halo
+systemctl status ds4-server
+curl -s http://halo:8000/v1/models
+```
+
+Expected: the unit is `active (running)` and the endpoint lists the model. If it
+is restart-looping, check `journalctl -u ds4-server` for a missing-model path
+before anything else.
+
+- [ ] **Step 4: Confirm it is not reachable from the LAN**
+
+```bash
+curl -s --max-time 5 http://<halo-lan-ip>:8000/v1/models
+```
+
+Expected: timeout. Port 8000 must never enter `allowedTCPPorts`, same rule as
+13305 in Task 3.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add hosts/halo/default.nix
+git commit -m "feat(halo): serve DeepSeek-V4-Flash via ds4-server"
 ```
 
 ---
