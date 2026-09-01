@@ -5,3 +5,6 @@ result*
 .crush/
 .worktrees/
 .sisyphus/
+
+# subagent-driven-development scratch (progress ledger)
+.superpowers/

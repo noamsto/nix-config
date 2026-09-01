@@ -144,7 +144,7 @@ systemctl --user status hyprdynamicmonitors.service
 journalctl --user -u hyprdynamicmonitors.service -f
 
 # Check current profile
-ls -la ~/.config/hypr/monitors.conf
+ls -la ~/.config/hypr/monitors.lua
 
 # Check lid state
 cat /proc/acpi/button/lid/LID/state

@@ -1,9 +1,10 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- hdm: laptop={{$laptop.Name}}
 -- Undocked - laptop only with dynamic lid handling
 -- Template handles both lid open (normal use) and lid closed (triggers suspend via script)
 -- Uses .MonitorsByTag for gen5/gen6 compatibility
 -- Rendered by hyprdynamicmonitors; required from startup.lua (Hyprland has no hl.source()).
-
-{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- The `-- hdm:` header above is parsed by workspace-manager.sh — keep it first.
 
 -- Laptop screen configuration - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
 hl.monitor({ output = "{{$laptop.Name}}", mode = "preferred", position = "0x0", scale = @laptopScale@ })

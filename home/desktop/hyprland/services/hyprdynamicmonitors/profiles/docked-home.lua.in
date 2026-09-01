@@ -1,11 +1,12 @@
+{{- $left := index .MonitorsByTag "left" -}}
+{{- $right := index .MonitorsByTag "right" -}}
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- hdm: left={{$left.Name}} right={{$right.Name}} laptop={{$laptop.Name}}
 -- Docked at home - Samsung monitors with dynamic lid handling
 -- Template automatically enables/disables laptop screen based on lid state
 -- Uses .MonitorsByTag for gen5/gen6 compatibility
 -- Rendered by hyprdynamicmonitors; required from startup.lua (Hyprland has no hl.source()).
-
-{{- $left := index .MonitorsByTag "left" -}}
-{{- $right := index .MonitorsByTag "right" -}}
-{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- The `-- hdm:` header above is parsed by workspace-manager.sh — keep it first.
 
 -- Samsung monitors (always enabled when docked at home)
 hl.monitor({ output = "{{$left.Name}}", mode = "2560x1440@60", position = "0x0", scale = 1.0 })

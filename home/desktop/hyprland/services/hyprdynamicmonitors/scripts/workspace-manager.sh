@@ -83,49 +83,39 @@ resolve_monitor() {
   esac
 }
 
-# Resolve left/right monitor from the newly-written monitors.conf.
-# HDM writes monitors.conf before running post_apply_exec, so the file has
-# correct positions even before hyprctl reload applies them to Hyprland.
-# Format: monitor=NAME,RESxRES@RATE,XxY,SCALE  or  monitor=NAME,disable
-resolve_monitor_from_conf() {
+# Resolve a tagged monitor from the HDM-rendered profile.
+# HDM writes monitors.lua before running post_apply_exec, so its header is
+# authoritative even before `hyprctl reload` applies the layout to Hyprland —
+# querying Hyprland here would return the OLD arrangement.
+# Header format (first line): -- hdm: left=DP-8 right=DP-7 laptop=eDP-1
+resolve_monitor_from_profile() {
   local identifier="$1"
-  local conf="$HOME/.config/hypr/monitors.conf"
+  local profile="$HOME/.config/hypr/monitors.lua"
 
+  # Already a concrete output name (e.g. DP-8, eDP-1).
   if [[ $identifier == *-* ]]; then
     echo "$identifier"
     return 0
   fi
 
-  if [ ! -f "$conf" ]; then
-    log "WARNING: monitors.conf not found, falling back to Hyprland query"
+  [ "$identifier" = "eDP" ] && identifier="laptop"
+
+  if [ ! -f "$profile" ]; then
+    log "WARNING: monitors.lua not found, falling back to Hyprland query"
     resolve_monitor "$identifier"
     return
   fi
 
-  case "$identifier" in
-  "left")
-    # Non-disabled monitor at x=0
-    awk -F',' '/^monitor=/ && $2 != "disable" {
-      name=$1; sub(/^monitor=/, "", name)
-      split($3, pos, "x"); x=pos[1]+0
-      if (x == 0) { print name; exit }
-    }' "$conf" 2>/dev/null
-    ;;
-  "right")
-    # Non-disabled monitor with highest x
-    awk -F',' '/^monitor=/ && $2 != "disable" {
-      name=$1; sub(/^monitor=/, "", name)
-      split($3, pos, "x"); x=pos[1]+0
-      if (x > maxX) { maxX=x; maxName=name }
-    } END { if (maxName) print maxName }' "$conf" 2>/dev/null
-    ;;
-  "laptop" | "eDP")
-    echo "eDP-1"
-    ;;
-  *)
-    echo "$identifier"
-    ;;
-  esac
+  local name
+  name=$(sed -n "s/^-- hdm:.*\\b${identifier}=\\([^ ]*\\).*/\\1/p" "$profile" | head -1)
+
+  if [ -z "$name" ]; then
+    log "WARNING: tag '$identifier' absent from monitors.lua header, falling back to Hyprland query"
+    resolve_monitor "$identifier"
+    return
+  fi
+
+  echo "$name"
 }
 
 # Configure dual monitor docked setup
@@ -133,8 +123,8 @@ configure_docked() {
   local left_identifier="$1"
   local right_identifier="$2"
 
-  # Resolve from monitors.conf, NOT from Hyprland's current state.
-  # workspace-manager runs immediately after HDM writes monitors.conf but
+  # Resolve from monitors.lua, NOT from Hyprland's current state.
+  # workspace-manager runs immediately after HDM writes monitors.lua but
   # BEFORE hyprctl reload applies those positions to Hyprland. Querying
   # Hyprland here would return the OLD (pre-reload) positions, causing
   # workspaces to land on the wrong monitors.
@@ -143,8 +133,8 @@ configure_docked() {
   # re-evaluation which kills this script, so anything after reload is unreliable.
   local left
   local right
-  left=$(resolve_monitor_from_conf "$left_identifier")
-  right=$(resolve_monitor_from_conf "$right_identifier")
+  left=$(resolve_monitor_from_profile "$left_identifier")
+  right=$(resolve_monitor_from_profile "$right_identifier")
 
   if [ -z "$left" ] || [ -z "$right" ]; then
     log "ERROR: Failed to resolve monitors - left='$left', right='$right'"
@@ -171,7 +161,7 @@ configure_docked() {
 
   # Workspace 9: laptop screen when lid open, else right monitor (clamshell —
   # laptop screen is disabled, so an unpinned WS 9 would land on an arbitrary
-  # monitor). Must match the WS 9 rule in the docked-*.conf.in templates.
+  # monitor). Must match the WS 9 rule in the docked-*.lua.in templates.
   if ! is_lid_closed; then
     log "Moving workspace 9 to laptop monitor"
     if ! hyprctl dispatch moveworkspacetomonitor "9 $LAPTOP_MONITOR"; then
