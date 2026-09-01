@@ -100,14 +100,26 @@ resolve_monitor_from_profile() {
 
   [ "$identifier" = "eDP" ] && identifier="laptop"
 
+  # Only these tags are emitted by the profile templates. Validating here keeps
+  # the sed interpolation below provably literal, and documents the contract.
+  case "$identifier" in
+  laptop | left | right) ;;
+  *)
+    log "WARNING: unknown monitor tag '$identifier', falling back to Hyprland query"
+    resolve_monitor "$identifier"
+    return
+    ;;
+  esac
+
   if [ ! -f "$profile" ]; then
     log "WARNING: monitors.lua not found, falling back to Hyprland query"
     resolve_monitor "$identifier"
     return
   fi
 
+  # Quit at the header line so a single sed does the whole job.
   local name
-  name=$(sed -n "s/^-- hdm:.*\\b${identifier}=\\([^ ]*\\).*/\\1/p" "$profile" | head -1)
+  name=$(sed -n "/^-- hdm:/{s/.*\\b${identifier}=\\([^ ]*\\).*/\\1/p;q}" "$profile")
 
   if [ -z "$name" ]; then
     log "WARNING: tag '$identifier' absent from monitors.lua header, falling back to Hyprland query"
