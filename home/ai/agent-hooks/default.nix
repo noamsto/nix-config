@@ -21,4 +21,8 @@
   git-commit-autostage-guard =
     pkgs.writeShellScriptBin "agent-git-commit-autostage-guard"
     (builtins.readFile ./git-commit-autostage-guard.sh);
+
+  secret-read-guard =
+    pkgs.writeShellScriptBin "agent-secret-read-guard"
+    (builtins.readFile ./secret-read-guard.sh);
 }

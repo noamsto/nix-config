@@ -97,6 +97,10 @@
                 type = "command";
                 command = "${deslop-guard}/bin/claude-deslop-guard";
               }
+              {
+                type = "command";
+                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
+              }
             ];
           }
           {
@@ -105,6 +109,19 @@
               {
                 type = "command";
                 command = "${skeleton-guard}/bin/claude-read-skeleton-guard";
+              }
+              {
+                type = "command";
+                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
+              }
+            ];
+          }
+          {
+            matcher = "Grep";
+            hooks = [
+              {
+                type = "command";
+                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
               }
             ];
           }
