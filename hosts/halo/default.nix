@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   inputs,
   ...
@@ -70,8 +71,8 @@ in {
     # tensor alloc failed: out of memory` — it refuses to spend its own
     # reserve, so 96 really means 91.2 GiB usable against an 80.76 GiB model
     # plus ~10 GiB of mappings. Measured identical with lemond stopped, so this
-    # is a sizing floor, not contention. 104 leaves ~19 GiB outside the pool,
-    # enough for lemond's ~11 GiB resident set alongside it.
+    # is a sizing floor, not contention. 104 is sized for ds4 alone — see the
+    # ds4-server override below for why the two servers never share the box.
     gpuMemory = {
       ttmSizeGiB = 104;
       pagePoolSizeGiB = 104;
@@ -111,9 +112,10 @@ in {
       cacheDir = "/var/lib/models";
     };
 
-    # A second, independent server: ds4 is antirez's DeepSeek-V4-only engine,
-    # not a generic GGUF runner, and its ROCm backend targets gfx1151 alone.
-    # Sibling of lemonade, so either can fail without taking the other down.
+    # A second server: ds4 is antirez's DeepSeek-V4-only engine, not a generic
+    # GGUF runner, and its ROCm backend targets gfx1151 alone. A sibling of
+    # lemonade rather than a child, so neither unit's failure touches the other
+    # — though they do contend for memory, hence the override below.
     ds4 = {
       enable = true;
       user = "noams";
@@ -126,9 +128,9 @@ in {
       # Same posture as lemond: reachable on the tailnet, dropped on the LAN
       # because 8000 stays out of allowedTCPPorts.
       host = "0.0.0.0";
-      # ctx left at the engine default on purpose. The model is 80.76 GiB in a
-      # 96 GiB pool, and the measured run had ~4.8 GiB free before ds4 degraded
-      # itself to q8 kernels - there is no room to buy context with.
+      # ctx left at the engine default (32768). At 104 GiB the model loads with
+      # fp16 kernels retained, so there is headroom now — but nothing has
+      # measured what raising it costs, so it stays where the engine puts it.
       #
       # No --ssd-streaming either: that exists for models too large for GTT, and
       # this one fits. Adding it would trade memory bandwidth for NVMe reads to
@@ -136,29 +138,49 @@ in {
     };
   };
 
-  # disko creates the subvolumes as root:root. Split by consumer: lemond's two
-  # caches, and the plain GGUFs ds4-server reads. They inherit the parent's
-  # nodatacow flag.
-  systemd.tmpfiles.rules = [
-    "d /var/lib/models 0755 noams users -"
-    "d /var/lib/models/hf 0755 noams users -"
-    "d /var/lib/models/lemonade 0755 noams users -"
-    "d /var/lib/models/gguf 0755 noams users -"
-  ];
+  systemd = {
+    services = {
+      # lemond is the default: it is what the ThinkPads point at all day, and it
+      # holds a 4B model in ~11 GiB. ds4 holds 80.76 GiB. Both loaded leaves
+      # nothing for page cache on a 123 GiB box and the machine thrashes —
+      # measured, lemond fell from 53 tok/s to 0.11 and then both endpoints
+      # stopped answering entirely. Stopping lemond returns ds4 to a 1.3 s
+      # completion.
+      #
+      # So: only lemond starts at boot, and Conflicts makes the pair mutually
+      # exclusive in both directions — `systemctl start ds4-server` stops
+      # lemond, and starting lemond again stops ds4. Whichever you ask for wins
+      # outright, instead of both limping.
+      ds4-server = {
+        wantedBy = lib.mkForce [];
+        conflicts = ["lemond.service"];
+      };
 
-  # Weights are large files that get partially rewritten (resumed downloads,
-  # in-place quantization), which CoW shatters into thousands of extents and
-  # slows every mmap load. The flag only takes on files created after it is
-  # set, so it has to land before anything writes into the subvolume.
-  systemd.services.models-nodatacow = {
-    description = "Disable btrfs CoW on /var/lib/models";
-    wantedBy = ["multi-user.target"];
-    unitConfig.RequiresMountsFor = "/var/lib/models";
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/models";
+      # Weights are large files that get partially rewritten (resumed downloads,
+      # in-place quantization), which CoW shatters into thousands of extents and
+      # slows every mmap load. The flag only takes on files created after it is
+      # set, so it has to land before anything writes into the subvolume.
+      models-nodatacow = {
+        description = "Disable btrfs CoW on /var/lib/models";
+        wantedBy = ["multi-user.target"];
+        unitConfig.RequiresMountsFor = "/var/lib/models";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/models";
+        };
+      };
     };
+
+    # disko creates the subvolumes as root:root. Split by consumer: lemond's two
+    # caches, and the plain GGUFs ds4-server reads. They inherit the parent's
+    # nodatacow flag.
+    tmpfiles.rules = [
+      "d /var/lib/models 0755 noams users -"
+      "d /var/lib/models/hf 0755 noams users -"
+      "d /var/lib/models/lemonade 0755 noams users -"
+      "d /var/lib/models/gguf 0755 noams users -"
+    ];
   };
 
   users.users.noams = {
