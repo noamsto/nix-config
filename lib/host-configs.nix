@@ -40,6 +40,11 @@
     # "desktop" not "server": nixos/core/pc.nix gates pipewire (alsa.support32Bit,
     # needed by Steam) and bluetooth (controller) behind machine.isPC.
     machine.type = "desktop";
+    # Headless by construction — no display manager, reached only over ssh. Binds
+    # the startup tmux session to default.target instead of a
+    # graphical-session.target that never arrives, so the remote session picker
+    # has a server to attach to. Also drops fprintd; this box has no sensor.
+    machine.serverMode = true;
     profile = "personal";
   };
 

@@ -28,6 +28,7 @@ in {
   inherit (hostConfig) hostname email profile;
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
+  machine.serverMode = hostConfig.machine.serverMode;
 
   boot = {
     # Strix Halo (gfx1151) support is still landing upstream; track the newest
