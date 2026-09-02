@@ -63,9 +63,18 @@ in {
     # Deliberately no amdgpu.gttsize: ROCm#5595 warns against setting it together
     # with pages_limit, and pages_limit alone is measured sufficient on a 128 GB
     # Halo (nix-amd-ai README, "GPU memory headroom").
+    #
+    # 104, not the README's 96: at 96 ds4-server cannot load
+    # DeepSeek-V4-Flash at all. It fills 91.2 GiB, then reports
+    # `free=4.80 GiB reserve=4.80 GiB total=96.00 GiB` and dies with `ROCm
+    # tensor alloc failed: out of memory` — it refuses to spend its own
+    # reserve, so 96 really means 91.2 GiB usable against an 80.76 GiB model
+    # plus ~10 GiB of mappings. Measured identical with lemond stopped, so this
+    # is a sizing floor, not contention. 104 leaves ~19 GiB outside the pool,
+    # enough for lemond's ~11 GiB resident set alongside it.
     gpuMemory = {
-      ttmSizeGiB = 96;
-      pagePoolSizeGiB = 96;
+      ttmSizeGiB = 104;
+      pagePoolSizeGiB = 104;
     };
 
     lemonade = {
