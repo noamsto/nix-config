@@ -101,6 +101,30 @@ in {
       # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.
       cacheDir = "/var/lib/models";
     };
+
+    # A second, independent server: ds4 is antirez's DeepSeek-V4-only engine,
+    # not a generic GGUF runner, and its ROCm backend targets gfx1151 alone.
+    # Sibling of lemonade, so either can fail without taking the other down.
+    ds4 = {
+      enable = true;
+      user = "noams";
+      # Upstream STRIXHALO.md names this exact build. Deliberately not one of
+      # unsloth's UD-* dynamic quants: the same doc warns the mixed IQ2/IQ4 and
+      # IQ2/Q4 GGUFs put far more pressure on the ROCm path and can take the
+      # system OOM rather than fail cleanly. 80.76 GiB, and the one measured in
+      # nix-amd-ai's README on this hardware.
+      model = "/var/lib/models/gguf/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix.gguf";
+      # Same posture as lemond: reachable on the tailnet, dropped on the LAN
+      # because 8000 stays out of allowedTCPPorts.
+      host = "0.0.0.0";
+      # ctx left at the engine default on purpose. The model is 80.76 GiB in a
+      # 96 GiB pool, and the measured run had ~4.8 GiB free before ds4 degraded
+      # itself to q8 kernels - there is no room to buy context with.
+      #
+      # No --ssd-streaming either: that exists for models too large for GTT, and
+      # this one fits. Adding it would trade memory bandwidth for NVMe reads to
+      # solve a problem we do not have.
+    };
   };
 
   # disko creates the subvolumes as root:root. Split by consumer: lemond's two
