@@ -161,11 +161,14 @@ in {
     gid = 20;
     home = "/Users/${host.username}";
     shell = pkgs.fish;
-    # Allow SSH in from the ThinkPads (shared personal key). nix-darwin wires
-    # this through /etc/ssh/sshd_config.d, but the sshd itself is macOS's —
-    # Remote Login must be toggled on once in System Settings → Sharing; it
-    # is not declarable.
-    openssh.authorizedKeys.keys = [hostConfigs.sshPublicKeys.noams];
+    # Allow SSH in from the ThinkPads (shared personal key) and from halo, whose
+    # session picker lists mbp. nix-darwin wires this through
+    # /etc/ssh/sshd_config.d, but the sshd itself is macOS's — Remote Login must
+    # be toggled on once in System Settings → Sharing; it is not declarable.
+    openssh.authorizedKeys.keys = [
+      hostConfigs.sshPublicKeys.noams
+      hostConfigs.sshPublicKeys.halo
+    ];
   };
 
   # Declarative Homebrew via nix-homebrew (Apple Silicon prefix /opt/homebrew).

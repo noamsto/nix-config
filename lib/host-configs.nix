@@ -2,7 +2,16 @@
 # Only includes properties needed by both systems
 {
   sshPublicKeys = {
+    # The laptop key, carried on the machines that unlock behind a passphrase.
     noams = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC noamstolero@gmail.com";
+
+    # halo's own key rather than a copy of `noams`: it is the one host that
+    # boots straight to a running system with no passphrase (TPM auto-unlock, no
+    # display manager) while sitting under the TV, and it runs agents
+    # unattended. Keeping it separate means revoking halo does not re-key the
+    # laptops. Halo needs to reach out, not just be reached: its own session
+    # picker lists tp-g6 and mbp, and neither runs Tailscale SSH.
+    halo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGQ6DaFgFtOJJHI5KE3YklX2NS+wxRXfzPUIFUaTvh5u noams@halo";
   };
 
   thinkpad-p14s-g5 = {

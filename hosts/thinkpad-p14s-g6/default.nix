@@ -4,6 +4,7 @@
   ...
 }: let
   hostConfig = (import ../../lib/host-configs.nix).thinkpad-p14s-g6;
+  inherit (import ../../lib/host-configs.nix) sshPublicKeys;
 in {
   imports = [
     ./hardware-configuration.nix
@@ -46,9 +47,11 @@ in {
   users.users.noams = {
     # Add user to video/render groups for NPU access
     extraGroups = ["video" "render"];
-    # Allow SSH in from mbp-m4-pro (g6 runs headless)
+    # g6 runs headless, so the hosts that bridge into it need a way in: the mac,
+    # and halo, whose session picker lists tp-g6.
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02 noams@nwms-MacBook-Pro.local"
+      sshPublicKeys.halo
     ];
   };
 
