@@ -1,5 +1,4 @@
 {
-  lib,
   pkgs,
   inputs,
   ...
@@ -112,12 +111,18 @@ in {
       cacheDir = "/var/lib/models";
     };
 
+    # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
+    # leaves nothing for page cache and both endpoints stop answering. lemond
+    # wins the boot because the ThinkPads point at it all day; `systemctl start
+    # ds4-server` takes the machine over and gives it back on stop.
+    exclusiveInference = true;
+
     # A second server: ds4 is antirez's DeepSeek-V4-only engine, not a generic
     # GGUF runner, and its ROCm backend targets gfx1151 alone. A sibling of
-    # lemonade rather than a child, so neither unit's failure touches the other
-    # — though they do contend for memory, hence the override below.
+    # lemonade rather than a child, so neither unit's failure touches the other.
     ds4 = {
       enable = true;
+      autoStart = false;
       user = "noams";
       # Upstream STRIXHALO.md names this exact build. Deliberately not one of
       # unsloth's UD-* dynamic quants: the same doc warns the mixed IQ2/IQ4 and
@@ -140,22 +145,6 @@ in {
 
   systemd = {
     services = {
-      # lemond is the default: it is what the ThinkPads point at all day, and it
-      # holds a 4B model in ~11 GiB. ds4 holds 80.76 GiB. Both loaded leaves
-      # nothing for page cache on a 123 GiB box and the machine thrashes —
-      # measured, lemond fell from 53 tok/s to 0.11 and then both endpoints
-      # stopped answering entirely. Stopping lemond returns ds4 to a 1.3 s
-      # completion.
-      #
-      # So: only lemond starts at boot, and Conflicts makes the pair mutually
-      # exclusive in both directions — `systemctl start ds4-server` stops
-      # lemond, and starting lemond again stops ds4. Whichever you ask for wins
-      # outright, instead of both limping.
-      ds4-server = {
-        wantedBy = lib.mkForce [];
-        conflicts = ["lemond.service"];
-      };
-
       # Weights are large files that get partially rewritten (resumed downloads,
       # in-place quantization), which CoW shatters into thousands of extents and
       # slows every mmap load. The flag only takes on files created after it is
