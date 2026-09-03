@@ -24,19 +24,25 @@
       source "${paletteEnv.libScript}"
 
       # Resolve macOS appearance. AppleInterfaceStyle is "Dark" in dark mode and
-      # absent (read exits non-zero) in light mode.
-      if defaults read -g AppleInterfaceStyle >/dev/null 2>&1; then
+      # absent (read exits non-zero) in light mode. Absolute path: the Home
+      # Manager activation entry below runs this with activate's own PATH, which
+      # has no /usr/bin, so a bare `defaults` would exit 127 and every switch
+      # would resolve to light.
+      if /usr/bin/defaults read -g AppleInterfaceStyle >/dev/null 2>&1; then
         theme=dark
       else
         theme=light
       fi
 
       # Debounce: skip if already applied (the watched plist changes for many
-      # unrelated reasons).
+      # unrelated reasons). THEME_APPLY_FORCE bypasses it for the activation
+      # entry below, which runs right after the updaters' output was reset to
+      # the Home Manager defaults — there the cached theme says nothing about
+      # what is on disk.
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}"
       mkdir -p "$state_dir"
       last_file="$state_dir/theme-apply-macos.last"
-      if [[ -f "$last_file" && "$(cat "$last_file")" == "$theme" ]]; then
+      if [[ -z "''${THEME_APPLY_FORCE:-}" && -f "$last_file" && "$(cat "$last_file")" == "$theme" ]]; then
         exit 0
       fi
 
@@ -77,7 +83,7 @@ in
 
       # Apply the correct theme after activation so a fresh switch lands themed.
       activation.applyThemeMacos = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        run ${theme-apply-macos}/bin/theme-apply-macos || true
+        run env THEME_APPLY_FORCE=1 ${theme-apply-macos}/bin/theme-apply-macos || true
       '';
     };
   }
