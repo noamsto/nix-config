@@ -6,6 +6,7 @@
 in {
   imports = [
     ./lazygit.nix
+    ./repos.nix
   ];
 
   # NOTE: ~/.config/git/theme-override is managed by theme-toggle script at runtime
