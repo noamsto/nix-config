@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   ...
@@ -23,12 +24,17 @@ in {
     ../../nixos/core/lanzaboote.nix
     ../../nixos/core/iwd-known-networks.nix
     inputs.nix-amd-ai.nixosModules.default
+    ../../nixos/steam-console
   ];
 
   inherit (hostConfig) hostname email profile;
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;
+
+  # Couch console on the TV. Runs as its own unprivileged user, so autologin
+  # never reaches noams's SSH keys, sudo, or the agents.
+  steamConsole.enable = true;
 
   boot = {
     # Strix Halo (gfx1151) support is still landing upstream; track the newest
@@ -109,6 +115,13 @@ in {
       # Without this both caches land in ~/.cache on @home, which is
       # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.
       cacheDir = "/var/lib/models";
+
+      # Games and lemond both draw from the same GTT pool. auto_evict unloads
+      # idle models under memory pressure and reloads on the next request, so a
+      # game does not need the endpoint stopped. Unverified whether this
+      # observes a game's allocations specifically — see the plan's Task 5
+      # measurement; if it does not, stop lemond before gaming, as with ds4.
+      settings.auto_evict = true;
     };
 
     # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
@@ -159,6 +172,20 @@ in {
           ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/models";
         };
       };
+
+      # Same rationale as models-nodatacow: game files are partially rewritten
+      # by updates, which CoW shatters into extents. Must land before Steam
+      # writes anything, since the flag only affects files created after it.
+      games-nodatacow = {
+        description = "Disable btrfs CoW on /var/lib/games";
+        wantedBy = ["multi-user.target"];
+        unitConfig.RequiresMountsFor = "/var/lib/games";
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/games";
+        };
+      };
     };
 
     # disko creates the subvolumes as root:root. Split by consumer: lemond's two
@@ -169,6 +196,7 @@ in {
       "d /var/lib/models/hf 0755 noams users -"
       "d /var/lib/models/lemonade 0755 noams users -"
       "d /var/lib/models/gguf 0755 noams users -"
+      "d /var/lib/games 0700 ${config.steamConsole.user} users -"
     ];
   };
 

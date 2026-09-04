@@ -35,6 +35,7 @@
       "https://yazi.cachix.org"
       "https://noctalia.cachix.org"
       "https://lazytmux.cachix.org"
+      "https://jovian-nixos.cachix.org"
 
       # llm-agents.nix publishes here, NOT numtide.cachix.org
       "https://cache.numtide.com"
@@ -58,6 +59,7 @@
       "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
       "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
+      "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
 
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
@@ -261,6 +263,14 @@
     # extraKnownMarketplaces.
     resolved = {
       url = "github:noamsto/resolved";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Steam Deck UI (Gaming Mode) for halo's console role. Deliberately only
+    # the Steam session — `jovian.devices.steamdeck` stays off, since it would
+    # pull linux-neptune over the gfx1151 kernel halo needs.
+    jovian = {
+      url = "github:Jovian-Experiments/Jovian-NixOS";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

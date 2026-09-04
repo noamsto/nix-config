@@ -22,6 +22,34 @@
         readOnly = true;
       };
     };
+    # Deliberately NOT a `desktop.mode` value. `desktop.mode` governs whether
+    # *this user* gets a desktop and drives the `home/desktop` import in
+    # home/noams.nix; the console session runs as a separate account, so none of
+    # that should change. Orthogonal axis, not a fourth enum member.
+    steamConsole = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Run Steam Gaming Mode (Jovian) as a dedicated console user.";
+      };
+      user = lib.mkOption {
+        type = lib.types.str;
+        default = "steam";
+        description = ''
+          Unprivileged account the console session runs as. Deliberately not
+          `username`: autologin means whoever holds the TV remote is logged in,
+          and that must not be the account with SSH keys, sudo and agent access.
+        '';
+      };
+      autoStart = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Launch Gaming Mode at boot. False leaves it startable from a VT with
+          `start-gamescope-session`.
+        '';
+      };
+    };
     machine = {
       type = lib.mkOption {
         type = lib.types.enum ["server" "desktop" "laptop"];
