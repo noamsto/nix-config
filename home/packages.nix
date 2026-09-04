@@ -96,6 +96,12 @@ in {
       ast-grep # Structural search tool using AST
       yq-go
 
+      # `cmd | osc copy` reaches the *client's* clipboard over ssh. wl-copy
+      # can't: it needs a compositor, and the headless hosts have none. tmux
+      # (set-clipboard + allow-passthrough, both already on) forwards the
+      # OSC 52 write out to kitty.
+      osc
+
       # networking tools
       mtr # A network diagnostic tool
       iperf3
