@@ -57,8 +57,9 @@ Jovian was viable on this host:
 2. **Its overlay does not replace `mesa` or `pipewire`.** It *adds*
    `mesa-radeonsi-jupiter`, `mesa-radv-jupiter`, `pipewire-jupiter` as new
    attributes rather than replacing `mesa`/`pipewire`, so the nix-amd-ai ROCm
-   stack is untouched. It *does* override `steam`, `steam-unwrapped` and
-   `inputplumber` (`overlay.nix:98-102`) — this is precisely why the module
+   stack is untouched. It *does* override `steam` and `steam-unwrapped`
+   (`overlay.nix:98-103`), plus `inputplumber` (`37-39`), `mangohud` (`41-43`)
+   and `gamescope` (`25-28`) — this is precisely why the module
    must be imported per-host rather than globally: a NixOS `imports` list
    cannot sit under `lib.mkIf`, so a global import would apply this overlay,
    and its `steam` override, to every host in the flake.
