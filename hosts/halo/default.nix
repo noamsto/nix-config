@@ -36,6 +36,19 @@ in {
   # never reaches noams's SSH keys, sudo, or the agents.
   steamConsole.enable = true;
 
+  # Steam Gaming Mode's idle sleep suspends the box over dbus as the autologin
+  # console user (logind: "suspend requested from client ... unit
+  # user@1001.service"). Suspended, halo is unreachable while the TV goes on
+  # showing its last frame, so it still looks alive. Resume then leaves wlan0
+  # wedged — iwd reaches autoconnect_quick and never associates again — so
+  # don't unmask these until #219 is fixed.
+  systemd.targets = {
+    sleep.enable = false;
+    suspend.enable = false;
+    hibernate.enable = false;
+    hybrid-sleep.enable = false;
+  };
+
   boot = {
     # Strix Halo (gfx1151) support is still landing upstream; track the newest
     # kernel rather than the LTS default.
