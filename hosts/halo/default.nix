@@ -36,6 +36,12 @@ in {
   # never reaches noams's SSH keys, sudo, or the agents.
   steamConsole.enable = true;
 
+  # Big Picture costs 6.9 W of halo's 14.1 W idle draw — measured, and roughly
+  # half the total — so it does not run unattended. Start it from the couch
+  # with `systemctl start display-manager`, or over ssh. #221 tracks starting
+  # it automatically on controller input instead.
+  steamConsole.autoStart = false;
+
   # Steam Gaming Mode's idle sleep suspends the box over dbus as the autologin
   # console user (logind: "suspend requested from client ... unit
   # user@1001.service"). Suspended, halo is unreachable while the TV goes on
