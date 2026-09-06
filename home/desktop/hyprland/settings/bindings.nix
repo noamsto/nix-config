@@ -72,7 +72,7 @@ in {
     hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("theme-toggle toggle"))
     hl.bind(mainMod .. " + ALT + K", hl.dsp.exec_cmd("system-awake toggle-last"))
     -- Session/logout menu (Noctalia)
-    hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("noctalia-ipc sessionMenu toggle"))
+    hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("noctalia-ipc panel-toggle session"))
 
     -- === FOCUS MOVEMENT (SUPER+hjkl) ===
     hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))

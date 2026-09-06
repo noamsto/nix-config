@@ -256,32 +256,27 @@ status:
     @echo "📦 Flake Input Status:"
     nix flake metadata
 
-# Restart noctalia-shell after a rebuild.
+# Restart noctalia.service after a rebuild.
 #
-# `nh os switch` flips /run/current-system, leaving the running quickshell with
+# `nh os switch` flips /run/current-system, leaving the running shell with
 # stale references (icon themes, fontconfig, /etc/os-release). Symptom: the
 # Nix distro logo on ControlCenter (useDistroLogo=true) and other
-# dynamically-resolved icons disappear until restart. Upstream acknowledged
-# this in the (now-removed) systemd integration docs and deprecated that path
-# rather than fix it:
-#   https://docs.noctalia.dev/getting-started/nixos/#running-the-shell
+# dynamically-resolved icons disappear until restart. v5 switched to a
+# systemd user unit (programs.noctalia.systemd.enable) instead of the old
+# exec-once/quickshell process, so restart that unit directly.
 #
 # Wired here rather than a Nix-level hook: NixOS activation runs as root with
 # no graphical session env, and HM activation misses `nh os switch` entirely.
 restart-noctalia:
     #!/usr/bin/env bash
     set -euo pipefail
-    # Match by the binary path the noctalia-shell wrapper exec's into.
-    # The wrapper drops its own name on exec, so the cmdline ends up as just
-    # `…/bin/quickshell` with no `noctalia-shell` token to match against.
-    pat='bin/quickshell$'
-    if ! pgrep --quiet -f "$pat"; then
+    # LoadState (not is-active) so this stays a no-op on a machine where
+    # noctalia isn't enabled, rather than erroring on an unknown unit.
+    if [ "$(systemctl --user show -p LoadState --value noctalia.service)" != "loaded" ]; then
         exit 0
     fi
-    echo "♻️  Restarting noctalia-shell to refresh runtime state..."
-    # setsid -f detaches the new process from just's lifetime
-    pkill -f "$pat" 2>/dev/null || true
-    setsid -f noctalia-shell </dev/null >/dev/null 2>&1 || true
+    echo "♻️  Restarting noctalia.service to refresh runtime state..."
+    systemctl --user restart noctalia.service
 
 # Allow charging to 100% until next reboot / `sudo systemctl restart tlp`
 # (g5 only — fresh-battery fuel-gauge calibration).

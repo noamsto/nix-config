@@ -158,13 +158,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    noctalia = {
-      # Pinned to last v4 rev. v5 is a breaking rewrite (programs.noctalia-shell →
-      # programs.noctalia, JSON→TOML config, plugins/pluginSettings dropped from the
-      # module). Unpin when home/desktop/noctalia is migrated to the v5 schema.
-      url = "github:noctalia-dev/noctalia-shell/5311e14d2000af2f523789c76a3d869dcb42f130";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # Tracks upstream's `cachix` branch, which always points at the newest commit
+    # already built by their CI. Deliberately no `inputs.nixpkgs.follows`: it
+    # forks the derivation hash and misses noctalia.cachix.org, which matters now
+    # that the shell core is C++.
+    noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
     aegis-lock.url = "https://flakehub.com/f/noamsto/aegis-lock/*.tar.gz";
 

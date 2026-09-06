@@ -63,11 +63,6 @@ in {
         };
       };
     };
-    # PAM service for Noctalia shell (GNOME keyring unlock)
-    security.pam.services.noctalia-shell = {
-      enableGnomeKeyring = true;
-    };
-
     # Ensure video group permissions for backlight control
     # ydotool group for speech-to-text typing (created by programs.ydotool)
     users.users.${config.username}.extraGroups = ["video" "i2c" "ydotool"];

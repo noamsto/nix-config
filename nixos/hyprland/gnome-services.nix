@@ -16,8 +16,6 @@ in
       gnome = {
         gnome-keyring.enable = true;
         gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
-        evolution-data-server.enable = true; # Calendar support for Noctalia
-        gnome-online-accounts.enable = true; # Google Calendar OAuth via gnome-control-center
       };
       gvfs.enable = true;
     };

@@ -195,8 +195,6 @@ in {
         hl.exec_cmd([[tmux setenv -g WAYLAND_DISPLAY "$WAYLAND_DISPLAY"]])
         hl.exec_cmd([[tmux setenv -g XDG_RUNTIME_DIR "$XDG_RUNTIME_DIR"]])
         hl.exec_cmd("kitty --single-instance --instance-group=hypr")
-        -- Noctalia shell (upstream deprecated systemd autostart)
-        hl.exec_cmd("noctalia-shell")
       end)
     '';
   };

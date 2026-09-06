@@ -6,7 +6,7 @@
 # - Hyprland border colors via hyprctl
 # - Kitty terminal via remote control (set-colors)
 # - Tmux via catppuccin flavor + config reload
-# - Noctalia Shell via settings file update
+# - Noctalia Shell via IPC
 # - Vicinae via config JSON + server restart
 # - Noctalia session menu (auto-themed)
 # - lazygit via config.yml swap (requires restart)
@@ -361,31 +361,12 @@ EOF
 # Update Noctalia Shell dark/light mode
 update_noctalia() {
   local theme="$1"
-  local dark_mode
   log_debug "Updating Noctalia to $theme"
 
-  if [[ $theme == "light" ]]; then
-    dark_mode="false"
-  else
-    dark_mode="true"
-  fi
-
-  local gui_settings="${XDG_CONFIG_HOME}/noctalia/settings.json"
-
-  if [[ ! -f $gui_settings ]]; then
-    log_debug "Noctalia settings.json not found, skipping"
-    return 0
-  fi
-
-  # Update darkMode in settings.json. Noctalia's Settings.qml uses
-  # `FileView { watchChanges: true }`, so the running shell auto-reloads
-  # — no kill+respawn needed.
-  local tmp_file
-  tmp_file=$(mktemp)
-  if jq --argjson dark "$dark_mode" '.colorSchemes.darkMode = $dark' "$gui_settings" >"$tmp_file" 2>/dev/null; then
-    mv "$tmp_file" "$gui_settings"
-  else
-    rm -f "$tmp_file"
+  # v5 owns its own config; drive it over IPC rather than writing the
+  # declarative config layer, which the GUI state layer overrides anyway.
+  if ! noctalia-ipc theme-mode-set "$theme" 2>/dev/null; then
+    log_error "Noctalia IPC call failed"
     record_failure "noctalia"
     return 1
   fi
@@ -621,26 +602,17 @@ apply_theme() {
 }
 
 # Toggle between dark and light themes via Noctalia
-# Noctalia is the source of truth - toggling it triggers the darkModeChange hook
+# Noctalia is the source of truth - toggling it triggers the theme_mode_changed hook
 toggle_theme() {
   log_debug "Toggling theme via Noctalia"
 
-  # Find Noctalia's quickshell process (the wrapper script)
-  local noctalia_pid
-  noctalia_pid=$(pgrep -f "quickshell.*noctalia-shell" 2>/dev/null | head -1)
-
-  if [[ -n $noctalia_pid ]]; then
-    log_debug "Found Noctalia at PID $noctalia_pid"
-    # Use Noctalia IPC to toggle dark mode - this triggers the darkModeChange hook
-    # which then calls `theme-toggle apply` to update all other apps
-    if noctalia-ipc --pid "$noctalia_pid" darkMode toggle 2>/dev/null; then
-      log_debug "Noctalia dark mode toggled via IPC"
-      return 0
-    fi
-    log_error "Noctalia IPC call failed"
-  else
-    log_error "Noctalia process not found"
+  # v5 exposes one IPC socket under $XDG_RUNTIME_DIR and `msg` exits non-zero
+  # when the shell is down, so the call doubles as the liveness check.
+  if noctalia-ipc theme-mode-toggle 2>/dev/null; then
+    log_debug "Noctalia theme mode toggled via IPC"
+    return 0
   fi
+  log_error "Noctalia IPC call failed"
 
   # Fallback: toggle all apps except Noctalia to avoid potential cycle
   # (If we updated Noctalia here, its hook might re-trigger us)
@@ -666,7 +638,7 @@ toggle_theme() {
 }
 
 # Apply theme from Noctalia hook (called when Noctalia dark mode changes)
-# This is triggered by Noctalia's darkModeChange hook
+# This is triggered by Noctalia's theme_mode_changed hook
 apply_theme_command() {
   local theme="$1"
 

@@ -49,13 +49,11 @@ is_lid_closed() {
     org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q "true"
 }
 
-# Report the running Noctalia shell's PID, empty if not running.
-# Noctalia execs quickshell, so its argv is just "quickshell" with no
-# recognizable suffix — a pgrep regex can't distinguish it from any other
-# quickshell instance. `noctalia-shell list` walks /run/user/$UID/quickshell/
-# and reports the real instance, matching the noctalia-crash-monitor service.
 get_noctalia_pid() {
-  noctalia-shell list 2>/dev/null | awk '/Process ID:/ {print $3; exit}'
+  # Noctalia's binary is wrapped (exec -a); comm is truncated to the
+  # wrapped ELF's name, so match argv[0] instead, anchored to exclude
+  # noctalia-ipc / noctalia msg invocations.
+  pgrep -f '/bin/noctalia$' | head -1
 }
 
 # Resolve monitor identifier to actual Hyprland monitor name
@@ -287,7 +285,8 @@ configure_undocked() {
       }
 
       get_noctalia_pid() {
-        noctalia-shell list 2>/dev/null | awk '/Process ID:/ {print \$3; exit}'
+        # Wrapped binary: comm is truncated, match argv[0] instead (see get_noctalia_pid above)
+        pgrep -f '/bin/noctalia\$' | head -1
       }
 
       has_external_monitors() {

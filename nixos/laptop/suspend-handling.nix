@@ -47,7 +47,8 @@ in {
           fi
 
           # Check Noctalia status
-          noctalia_pid=$(${pkgs.procps}/bin/pgrep -f 'quickshell.*noctalia-shell' | head -1)
+          # Noctalia's binary is wrapped (exec -a); comm is truncated, so match argv[0] instead.
+          noctalia_pid=$(${pkgs.procps}/bin/pgrep -f '/bin/noctalia$' | head -1)
           if [ -n "$noctalia_pid" ]; then
             log "Noctalia running (PID: $noctalia_pid)"
           else

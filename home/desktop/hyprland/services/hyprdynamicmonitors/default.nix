@@ -10,11 +10,7 @@
     name = "workspace-manager";
     runtimeInputs = [
       pkgs.glib # provides gdbus for lid state checking
-      pkgs.gawk # awk for parsing `noctalia-shell list`
-      # Same upstream noctalia the noctalia module wraps (both read
-      # inputs.noctalia, so they stay version-locked). `noctalia-shell list`
-      # is the authoritative liveness check — see get_noctalia_pid.
-      inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
+      pkgs.procps # provides pgrep for the noctalia liveness probe
     ];
     # In server mode the box stays awake with the lid closed — skip the
     # undocked-lid-closed suspend handler (mirrors the system-awake guard).
