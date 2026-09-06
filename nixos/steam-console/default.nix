@@ -47,6 +47,17 @@ in {
       # no userspace CEC API at all. Working CEC would need a DP->HDMI adapter
       # doing CEC-Tunneling-over-AUX plus a custom kernel.
       steamos.enableHdmiCecIntegration = false;
+      # Off for the same inheritance reason, and this one bites hard: it
+      # injects Valve's Deck cmdline (modules/steamos/boot.nix), whose
+      # `amd_iommu=off` stops `amdxdna` probing — it needs IOMMU SVA and dies
+      # with `aie2_init: Running without IOMMU not supported`, leaving the NPU
+      # unbound and /dev/accel absent.
+      #
+      # Dropping the set also drops `amdgpu.dcdebugmask=0x20000`, Jovian's
+      # workaround for black/white flashes when planes show/hide
+      # (jupiter-hw-support 1a27763) — re-add that one alone if Gaming Mode
+      # flashes. And it drops `audit=0`, so auditing comes back on.
+      steamos.enableDefaultCmdlineConfig = false;
     };
 
     # Jovian's modules/steam/steam.nix already sets programs.steam.enable,
