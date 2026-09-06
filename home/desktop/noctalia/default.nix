@@ -138,6 +138,10 @@ in {
           font_family = "Inter Nerd Font";
           avatar_path = "${config.home.homeDirectory}/.face";
           settings_show_advanced = true;
+          # v4's shadowDirection was "bottom_right"; v5 names the same
+          # direction "down_right" and does not validate this field, so the
+          # v4 spelling would be silently ignored.
+          shadow.direction = "down_right";
           launch_apps_as_systemd_services = true;
           animation.speed = 1.0;
         };
@@ -193,6 +197,10 @@ in {
         bar.default = {
           position = "top";
           background_opacity = 0.93;
+          # v4's density = "spacious" has no v5 equivalent; v5 splits it into
+          # explicit thickness (bar height) and scale (content multiplier).
+          thickness = 45;
+          scale = 1.2;
           concave_edge_corners = true;
           capsule = true;
           widget_spacing = 6;
