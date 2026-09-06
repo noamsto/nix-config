@@ -68,8 +68,25 @@ Jovian also requires `nixos-unstable`, which this flake already tracks
 (`flake.nix:70`).
 
 What it buys over hand-rolling `programs.steam.gamescopeSession`:
-`jovian.steam.user` (the dedicated-account model, built in), HDMI-CEC so the TV
-remote drives the box, the actual Deck UI, and Decky.
+`jovian.steam.user` (the dedicated-account model, built in), the actual Deck UI,
+Decky, and the session plumbing that otherwise has to be hand-rolled.
+
+**Not HDMI-CEC.** An earlier draft of this document listed CEC — the TV remote
+driving the box — as the deciding advantage. That was wrong, and it was asserted
+without testing the hardware. `amdgpu` imports only the CEC *notifier*
+(`cec_notifier_conn_register`, `cec_notifier_set_phys_addr`) and DisplayPort AUX
+tunnelling (`drm_dp_cec_*`); it never calls `cec_allocate_adapter`, so it
+registers no HDMI CEC adapter. Measured on halo with the TV live on
+`HDMI-A-1`: no `/dev/cec*` and no `/sys/class/cec`. This kernel compounds it by
+building only `cec.ko` core (`CONFIG_MEDIA_CEC_SUPPORT` unset), so there is no
+userspace CEC API at all.
+
+CEC is not impossible here, just not worth it: halo has eight DisplayPort
+outputs and `drm_dp_cec_*` is real, so a DP->HDMI adapter implementing
+CEC-Tunneling-over-AUX plus a kernel rebuilt with `CONFIG_MEDIA_CEC_SUPPORT`
+would work. That is a custom kernel on a host deliberately tracking
+`linuxPackages_latest`, recompiled on every bump. The Jovian choice stands on
+its other merits.
 
 ## Components
 
@@ -109,7 +126,10 @@ host.
 
 - `jovian.steam.{enable, autoStart, user}` from the options above
 - `jovian.hardware.has.amd.gpu = true`
-- `jovian.steamos.enableHdmiCecIntegration = true` — TV remote
+- `jovian.steamos.enableHdmiCecIntegration = false` — **must be set
+  explicitly.** It inherits `jovian.steamos.useSteamOSConfig`, which evaluates
+  true here, so leaving it alone starts `cecd` against an adapter that does not
+  exist. See "Why Jovian-NixOS" below.
 - `jovian.steam.desktopSession = "gamescope-wayland"` — **required whenever
   `autoStart` is on.** Jovian's autostart unit interpolates this into an
   `ExecStart` unconditionally (`modules/steam/autostart.nix:106`) while the
@@ -206,7 +226,6 @@ On-box, in order — each is a thing that cannot be verified by evaluation:
 2. Gaming Mode starts and autologs in as the console user.
 3. Controller pairs over bluetooth.
 4. Audio reaches the TV through pipewire.
-5. HDMI-CEC: the TV remote navigates the UI.
 6. `noams`'s SSH/tmux/agent workflow is unaffected while a session runs.
 7. **Measurement:** start a game with lemond loaded, watch whether `auto_evict`
    observes the game's allocations and unloads.

@@ -36,9 +36,17 @@ in {
       # jovian.devices.steamdeck, which would pull linux-neptune over the
       # linuxPackages_latest that gfx1151 needs.
       hardware.has.amd.gpu = true;
-      # Defaults to useSteamOSConfig (false here), so it needs saying: this is
-      # what lets the TV remote drive the UI over HDMI.
-      steamos.enableHdmiCecIntegration = true;
+      # Off, and it has to be said explicitly: this inherits
+      # `jovian.steamos.useSteamOSConfig`, which is true, so leaving it alone
+      # starts `cecd` against an adapter that does not exist. amdgpu imports
+      # only the CEC *notifier* (`cec_notifier_*`) and DisplayPort AUX
+      # tunnelling (`drm_dp_cec_*`) — never `cec_allocate_adapter` — so it
+      # registers no HDMI CEC adapter. Measured on halo with the TV live on
+      # HDMI-A-1: no /dev/cec*, no /sys/class/cec. The kernel compounds it by
+      # building only cec.ko core (CONFIG_MEDIA_CEC_SUPPORT unset), so there is
+      # no userspace CEC API at all. Working CEC would need a DP->HDMI adapter
+      # doing CEC-Tunneling-over-AUX plus a custom kernel.
+      steamos.enableHdmiCecIntegration = false;
     };
 
     # Jovian's modules/steam/steam.nix already sets programs.steam.enable,

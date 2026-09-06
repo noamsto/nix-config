@@ -224,9 +224,6 @@ Refs #210"
 Jovian's source):
 - `jovian.steam.enable`, `jovian.steam.autoStart`, `jovian.steam.user`
 - `jovian.hardware.has.amd.gpu`
-- `jovian.steamos.enableHdmiCecIntegration` — note its default is
-  `config.jovian.steamos.useSteamOSConfig`, which is false here, so it **must**
-  be set explicitly.
 
 - [ ] **Step 1: Create the module**
 
@@ -269,9 +266,6 @@ in {
       # jovian.devices.steamdeck, which would pull linux-neptune over the
       # linuxPackages_latest that gfx1151 needs.
       hardware.has.amd.gpu = true;
-      # Defaults to useSteamOSConfig (false here), so it needs saying: this is
-      # what lets the TV remote drive the UI over HDMI.
-      steamos.enableHdmiCecIntegration = true;
     };
 
     # Jovian's modules/steam/steam.nix already sets programs.steam.enable,
@@ -490,7 +484,7 @@ display.
 - [ ] **Step 1: Attach a display and controller**
 
 Connect halo to the TV over HDMI and put a controller in pairing mode. Note
-which TV input, for the CEC check.
+which TV input you used.
 
 - [ ] **Step 2: Activate**
 
@@ -519,13 +513,14 @@ Then, from the couch, confirm in order:
 3. `ssh halo whoami` still works and `loginctl` shows the session as the console
    user, not `noams`.
 
-- [ ] **Step 5: Verify controller, audio and CEC**
+- [ ] **Step 5: Verify controller and audio**
 
 1. Controller pairs and navigates the UI.
 2. Audio reaches the TV (play anything with sound).
-3. **CEC:** the TV remote's direction pad moves the Gaming Mode cursor. If not,
-   check `systemctl status cecd` and that the TV has CEC enabled — most vendors
-   ship it under a brand name (Anynet+, Bravia Sync, Simplink).
+
+There is deliberately no CEC step. amdgpu registers no HDMI CEC adapter, so the
+TV remote cannot drive the UI — see the spec's "Why Jovian-NixOS" section. Use a
+controller.
 
 - [ ] **Step 6: Measure the `auto_evict` open risk**
 
