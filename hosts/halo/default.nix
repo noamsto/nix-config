@@ -219,6 +219,17 @@ in {
     ];
   };
 
+  # Playback runs here because naspi, which stores the media, is an RPi4 whose
+  # VideoCore VI has no HEVC encoder at all — and the library is mostly 4K HEVC
+  # Dolby Vision. VCN 4.0 on the 8060S encodes HEVC Main10 and AV1 in hardware.
+  services.jellyfinHost = {
+    enable = true;
+    mediaShare = "192.168.3.6:/media/storage";
+
+    # Both NICs and the wifi, so a move to ethernet needs no config change.
+    lanInterfaces = ["wlan0" "enp97s0" "enp98s0"];
+  };
+
   users.users.noams = {
     # lemond's unit sets no SupplementaryGroups, unlike ds4-server's.
     extraGroups = ["video" "render"];

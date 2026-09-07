@@ -4,5 +4,6 @@
     ./tailscale.nix
     ./sentinelone.nix
     ./airconnect.nix
+    ./jellyfin.nix
   ];
 }
