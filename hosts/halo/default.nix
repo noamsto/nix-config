@@ -32,14 +32,6 @@ in {
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;
 
-  # agenix writes the token at activation, so environment.variables (evaluated
-  # at build time) cannot carry it; wrangler only reads it from the env.
-  programs.fish.interactiveShellInit = ''
-    if test -r ${config.age.secrets.stole_ro_cloudflare_token.path}
-      set -gx CLOUDFLARE_API_TOKEN (cat ${config.age.secrets.stole_ro_cloudflare_token.path})
-    end
-  '';
-
   # Couch console on the TV. Runs as its own unprivileged user, so autologin
   # never reaches noams's SSH keys, sudo, or the agents.
   steamConsole.enable = true;

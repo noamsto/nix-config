@@ -14,4 +14,9 @@
     owner = config.username;
     mode = "0400";
   };
+
+  # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in
+  # home/terminal/fish expands this path into the environment. Symlink mode (the
+  # default) preserves the secret's 0400 ownership; copying gives nobody:nogroup.
+  environment.etc."agenix/host_env.env".source = config.age.secrets.stole_ro_cloudflare_token.path;
 }
