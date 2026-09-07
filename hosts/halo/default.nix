@@ -31,7 +31,6 @@ in {
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;
-  environment.variables.CLOUDFLARE_API_TOKEN = builtins.readFile config.age.secrets.stole-ro-cloudflare-token.path;
 
   # Couch console on the TV. Runs as its own unprivileged user, so autologin
   # never reaches noams's SSH keys, sudo, or the agents.
