@@ -26,6 +26,22 @@
   cursorWorkMcp =
     lib.mapAttrs (_: mcpServers.toCursor) (builtins.removeAttrs mcpServers.remote ["posthog"])
     // {posthog = cursorPosthog;};
+
+  # The dispatcher's cursor-worker backstop. Cursor exposes no session-end
+  # event, so its `stop` (end-of-turn) hook stands in: `--turn-end` posts
+  # `exited` for a worker that stopped without reporting, and leaves a
+  # `blocked` one alone because that worker is waiting, not gone.
+  #
+  # Wrapped rather than pointed at directly, for two reasons. Hooks run with a
+  # bare environment, and the script shells out to jq/git/tmux/dd. And aeye's
+  # installer strips every hooks.json entry whose command contains
+  # `/adapters/cursor/scripts/` — the dispatcher's script lives at exactly that
+  # path, so a direct reference would be deleted on the next activation.
+  dispatcherCursorNotify = pkgs.writeShellApplication {
+    name = "dispatcher-cursor-notify";
+    runtimeInputs = [pkgs.jq pkgs.git pkgs.tmux pkgs.coreutils pkgs.gnugrep];
+    text = ''exec ${inputs.dispatcher}/adapters/cursor/scripts/dispatch-notify.sh "$@"'';
+  };
 in {
   home = {
     # Cursor CLI (`cursor-agent`). Used both interactively and as an alternate
@@ -80,6 +96,34 @@ in {
     activation = {
       aeyeCursorHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
         run env PATH="${lib.makeBinPath [pkgs.jq pkgs.coreutils]}:$PATH" ${aeye-cursor}/install.sh
+      '';
+
+      # Merge the dispatcher's `stop` hook into the same shared hooks.json,
+      # after aeye has rewritten its own entries. Both mergers strip only their
+      # own marker before re-appending, so each is idempotent and neither
+      # touches the other's rows (nor lazytmux's cursor-status-hook ones).
+      dispatcherCursorStopHook = lib.hm.dag.entryAfter ["aeyeCursorHooks"] ''
+        hooks_file="$HOME/.cursor/hooks.json"
+        run mkdir -p "$HOME/.cursor"
+        if [ -f "$hooks_file" ]; then
+          ${pkgs.jq}/bin/jq empty "$hooks_file" >/dev/null 2>&1 || {
+            echo "dispatcherCursorStopHook: $hooks_file is not valid JSON — refusing to rewrite it" >&2
+            exit 1
+          }
+        else
+          echo '{"version":1,"hooks":{}}' >"$hooks_file"
+        fi
+        run ${pkgs.jq}/bin/jq --arg cmd "${lib.getExe dispatcherCursorNotify} --turn-end" '
+          (.version //= 1)
+          | .hooks.stop = (
+              ((.hooks.stop // []) | map(select(
+                (.command | type) != "string"
+                or (.command | contains("dispatcher-cursor-notify") | not)
+              )))
+              + [{command: $cmd, timeout: 15}]
+            )
+        ' "$hooks_file" >"$hooks_file.tmp"
+        run mv "$hooks_file.tmp" "$hooks_file"
       '';
 
       # Cursor Agent follows XDG_CONFIG_HOME when it is set. Merge this one
