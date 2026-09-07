@@ -9,10 +9,7 @@ in
   lib.mkIf isHypr {
     services = {
       # needed for GNOME services outside of GNOME Desktop
-      dbus.packages = with pkgs; [
-        gcr
-        gnome-settings-daemon
-      ];
+      dbus.packages = [pkgs.gnome-settings-daemon];
       gnome = {
         gnome-keyring.enable = true;
         gcr-ssh-agent.enable = true; # Explicitly enable GCR SSH agent
