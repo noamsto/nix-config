@@ -133,16 +133,18 @@ in {
           query = "/proc/acpi/ibm/fan";
         }
       ];
-      # Aggressive fan curve — ramps early, wide hysteresis to prevent oscillation
+      # Driven by the slowest sensor above (thinkpad_hwmon/acpitz lag k10temp by
+      # ~10°C on the way down), so keep the hysteresis gaps narrow. Tjmax is 100°C.
       levels = [
-        [0 0 50]
-        [1 45 55]
-        [2 50 60]
-        [3 55 65]
-        [4 58 70]
-        [5 63 75]
-        [7 68 80]
-        ["level full-speed" 75 32767]
+        [0 0 55]
+        [1 50 61]
+        [2 55 66]
+        [3 60 71]
+        [4 65 75]
+        [5 69 79]
+        [6 73 83]
+        [7 77 87]
+        ["level full-speed" 83 32767]
       ];
     };
   };
