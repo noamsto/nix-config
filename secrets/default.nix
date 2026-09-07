@@ -23,6 +23,7 @@
 
     secrets = {
       noams_password.file = "${inputs.mysecrets}/noams_password.age";
+      stole-ro-cloudflare-token.file = "${inputs.mysecrets}/stole-ro-cloudflare-token.age";
     };
   };
 
