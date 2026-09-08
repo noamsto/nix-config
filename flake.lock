@@ -1244,11 +1244,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1788869680,
-        "narHash": "sha256-UUs81bP8ahOdV8uGPmzoDEsCJvdJVWWslRgCp/TVvPY=",
+        "lastModified": 1788871419,
+        "narHash": "sha256-fPSkMR9SZ8sOVjgIAK3S/rIco6KC5UtNPrNcOfplJAM=",
         "owner": "Homebrew",
         "repo": "homebrew-core",
-        "rev": "a4aac3beb582f843f7b05f8d85ceb111c50eea0a",
+        "rev": "c59b9072eee6a611d4f2ef4c17e4e56d14f4c6af",
         "type": "github"
       },
       "original": {
@@ -1367,11 +1367,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1788870048,
-        "narHash": "sha256-l9Cz1EmzbkEUvOr/XkaAkDYeapkUzLfgdf+2mDocuxU=",
+        "lastModified": 1788872280,
+        "narHash": "sha256-5vCihtV9/YbO8LZ9v+qSB+MdgrgzoC+OYaIyeI/nXYs=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "bd2034feb3721f5c5931eeb16a31e464d793a5fd",
+        "rev": "ea18710d1944319f948dd89925cbe0ce010ccca4",
         "type": "github"
       },
       "original": {
