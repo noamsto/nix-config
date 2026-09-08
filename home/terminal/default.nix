@@ -48,6 +48,10 @@ in {
     # Non-nested, so the watchman/fsevents concern (see lazytmux) doesn't apply.
     worktrunk.worktreePath = "${config.home.homeDirectory}/Data/git/.worktrees/{{ repo_path | dirname | basename }}/{{ repo_path | basename }}/{{ branch | sanitize }}";
     agentIntegration.enable = true;
+    # tmux enables sixel for no terminal by default, so the bridge's sixel relay
+    # stays inert until the outer terminal is named here. foot paints sixel; kitty
+    # uses its own graphics protocol and must NOT be listed.
+    sixelTerminals = ["foot"];
     # Summarize fallback windows (no issue, default branch) into a short title
     # via `claude -p` instead of showing the raw captured prompt.
     aiNaming.enable = true;
