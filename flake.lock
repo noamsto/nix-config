@@ -440,11 +440,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1788799484,
-        "narHash": "sha256-SBoLuKjHE8cUVUaL+O0cET+MFKtm8dr3TNTuL2BmUEA=",
+        "lastModified": 1788876648,
+        "narHash": "sha256-8VgriJyT4OSG1MV31gpZ2bxpu0IuB70sdlTN1v7OMfM=",
         "owner": "noamsto",
         "repo": "dispatcher",
-        "rev": "158abc8b0e8711dfa9f210eda00995e30bde1861",
+        "rev": "dc5589f1b3274a6650c17b3663ea0a75d79bb0d5",
         "type": "github"
       },
       "original": {
@@ -1228,11 +1228,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1788866540,
-        "narHash": "sha256-8cNNdgiEXtUPCqvx+r2wEHhNDfPadwNaGogP99V2pCk=",
+        "lastModified": 1788891647,
+        "narHash": "sha256-C2QgUtSqWJOqTpdURqW5imngzutOm2BvUhtDRNNm4c0=",
         "owner": "Homebrew",
         "repo": "homebrew-cask",
-        "rev": "8e38740b6e205fce2368c5bf371b77a9816ab919",
+        "rev": "b0c8d206fd02ecae2203896d64c0ecc0eb560a47",
         "type": "github"
       },
       "original": {
@@ -1244,11 +1244,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1788871419,
-        "narHash": "sha256-fPSkMR9SZ8sOVjgIAK3S/rIco6KC5UtNPrNcOfplJAM=",
+        "lastModified": 1788892202,
+        "narHash": "sha256-4POeOyxNqkk0yvbaV0/UqjZfEJ8DCS7jgqaj4cCkIy4=",
         "owner": "Homebrew",
         "repo": "homebrew-core",
-        "rev": "c59b9072eee6a611d4f2ef4c17e4e56d14f4c6af",
+        "rev": "b8eadb6c71e541b1504b1343dd8f85c42266b155",
         "type": "github"
       },
       "original": {
@@ -1367,11 +1367,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1788872280,
-        "narHash": "sha256-5vCihtV9/YbO8LZ9v+qSB+MdgrgzoC+OYaIyeI/nXYs=",
+        "lastModified": 1788890478,
+        "narHash": "sha256-KqJA/h30WSG8PHTjrLqDPbbhyc50cr8aqg3/5inttXs=",
         "owner": "noamsto",
         "repo": "lazytmux",
-        "rev": "ea18710d1944319f948dd89925cbe0ce010ccca4",
+        "rev": "36e94ca32931f54aa821bce89cdf104a90fb6170",
         "type": "github"
       },
       "original": {
@@ -1448,11 +1448,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788863073,
-        "narHash": "sha256-nSxo0XQWZdEhPIJS2e5OwLwZaq1chniyOIdVcd16Zqs=",
+        "lastModified": 1788882400,
+        "narHash": "sha256-sDVnen8MksfXzeavFnZdFjY3eA7G8tuPE3PIwkKex54=",
         "owner": "natsukium",
         "repo": "mcp-servers-nix",
-        "rev": "2a276867b1a8155b672178275806dec33466adb7",
+        "rev": "7775b8b23fd87e4a415e2bc6b844d657f43b22dd",
         "type": "github"
       },
       "original": {
@@ -2241,11 +2241,11 @@
         "nixpkgs": "nixpkgs_13"
       },
       "locked": {
-        "lastModified": 1788849228,
-        "narHash": "sha256-+hu9NgsdfW4LUm9tIim7wWCE1qzVMFBsPAh/pf4TekI=",
+        "lastModified": 1788886125,
+        "narHash": "sha256-5rgQFUGr8GXYyyuy8ynrN39WfZzSiO/wqGWjELBOkEY=",
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "69f623c977e3abb0df114f6f02849b0139e5a2f2",
+        "rev": "d6607b4eafbb92f6d494ebed3e296d4b741c0b58",
         "type": "github"
       },
       "original": {
@@ -2871,11 +2871,11 @@
         "systems": "systems_11"
       },
       "locked": {
-        "lastModified": 1788821166,
-        "narHash": "sha256-mwSBAaQv85VzTg7W9dihcrvYs6naO4e1mWYvczXyu+k=",
+        "lastModified": 1788889823,
+        "narHash": "sha256-f+e3LGlAW+JC1W9WTpdkrlIa3JhvxVYKzuO0725BSVQ=",
         "owner": "vicinaehq",
         "repo": "vicinae",
-        "rev": "5618237244e952387a0ec26dbb24bf0ae31fa30d",
+        "rev": "df7ce02f5ea1f7573175b1fd4d1cc73d566b1448",
         "type": "github"
       },
       "original": {
@@ -2889,11 +2889,11 @@
         "nixpkgs": "nixpkgs_15"
       },
       "locked": {
-        "lastModified": 1788251466,
-        "narHash": "sha256-98KFRidLeJ+EIWYs++LJgB7VT+/hxyKGaYP85BCEFJ0=",
+        "lastModified": 1788889659,
+        "narHash": "sha256-9yRvFaSIgYu85ZfNN55vHV2LQj06WbRqsRcppXkaWBI=",
         "owner": "Lassulus",
         "repo": "wrappers",
-        "rev": "b870d84b4fbe38a5a1e38cd2dae8503805bec900",
+        "rev": "7687cc2ffa72806ab595cb3e0f45b3cdcb44269e",
         "type": "github"
       },
       "original": {
