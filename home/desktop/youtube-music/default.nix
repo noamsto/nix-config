@@ -14,6 +14,36 @@
     hash = "sha256-K5iwNBA/6/JDmmt/u9Dnsk0lvWY12YpY+BIScrRaDGw=";
   };
 
+  # Upstream themes per element, so any surface YouTube Music adds after the last
+  # upstream release (Nov 2025) keeps painting from YT's own dark design tokens —
+  # 26 of its 149 --ytmusic-* vars still hold dark values under Latte. Harmless
+  # in Mocha, but in Latte those surfaces stay near-black under dark text (the
+  # expanded sidebar paints from --ytmusic-general-background-a, #181818).
+  #
+  # Remap the surface tokens themselves rather than chase selectors, so new
+  # elements inherit the flavor for free. Translucent black scrims and the brand
+  # red are deliberately left alone: they overlay correctly in both flavors.
+  # --ctp-* resolves per @media block, so one file serves both.
+  ytmSurfaceTokens = pkgs.writeText "ytm-surface-tokens.css" ''
+    html:not(.style-scope) {
+      --ytmusic-background: var(--ctp-base) !important;
+      --ytmusic-general-background-a: var(--ctp-mantle) !important;
+      --ytmusic-general-background-c: var(--ctp-base) !important;
+      --ytmusic-brand-background-solid: var(--ctp-mantle) !important;
+      --ytmusic-player-page-background: var(--ctp-base) !important;
+      --ytmusic-player-bar-background: var(--ctp-mantle) !important;
+      --ytmusic-nav-bar: var(--ctp-mantle) !important;
+      --ytmusic-search-background: var(--ctp-surface0) !important;
+      --ytmusic-detail-header: var(--ctp-base) !important;
+      --ytmusic-static-brand-black: var(--ctp-mantle) !important;
+      --ytmusic-text-primary-inverse: var(--ctp-base) !important;
+      --ytmusic-color-black1: var(--ctp-surface0) !important;
+      --ytmusic-color-black2: var(--ctp-mantle) !important;
+      --ytmusic-color-black4: var(--ctp-base) !important;
+      --ytmusic-color-navyblue: var(--ctp-surface0) !important;
+    }
+  '';
+
   # One file that auto-switches via prefers-color-scheme: Mocha when the system
   # (portal/OS) reports dark, Latte when light. Wrapping each whole flavor file
   # in @media is valid here — neither file has @charset/@import.
@@ -22,9 +52,11 @@
     {
       echo '@media (prefers-color-scheme: dark) {'
       cat ${ytmSrc}/src/mocha.css
+      cat ${ytmSurfaceTokens}
       echo '}'
       echo '@media (prefers-color-scheme: light) {'
       cat ${ytmSrc}/src/latte.css
+      cat ${ytmSurfaceTokens}
       # Upstream leaves the nav logo as YT's dark-mode asset (white "Music"
       # wordmark), invisible on Latte's light background. Swap in a Latte variant
       # whose wordmark is recolored to --ctp-text; the red play button is intact.
