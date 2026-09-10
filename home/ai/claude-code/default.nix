@@ -95,6 +95,10 @@
               }
               {
                 type = "command";
+                command = "${sharedGuards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard";
+              }
+              {
+                type = "command";
                 command = "${deslop-guard}/bin/claude-deslop-guard";
               }
               {

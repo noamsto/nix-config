@@ -11,6 +11,7 @@
     "${guards.git-default-branch-guard}/bin/agent-git-default-branch-guard"
     "${guards.nix-stage-guard}/bin/agent-nix-stage-guard"
     "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard"
+    "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard"
   ];
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The

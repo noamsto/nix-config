@@ -25,4 +25,8 @@
   secret-read-guard =
     pkgs.writeShellScriptBin "agent-secret-read-guard"
     (builtins.readFile ./secret-read-guard.sh);
+
+  tmux-live-server-guard =
+    pkgs.writeShellScriptBin "agent-tmux-live-server-guard"
+    (builtins.readFile ./tmux-live-server-guard.sh);
 }
