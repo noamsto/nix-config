@@ -8,31 +8,19 @@
 in {
   imports = [inputs.catppuccin.homeModules.catppuccin];
 
-  # Prevent "file would be clobbered" errors after theme-toggle modifies configs
-  home.activation.cleanThemeFiles = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
-    # Remove files that theme-toggle may have modified (no longer symlinks)
-    for f in \
-      "$HOME/.config/ghostty/config" \
-      "$HOME/.config/kitty/kitty.conf" \
-      "$HOME/.config/btop/btop.conf" \
-      "$HOME/.config/starship.toml" \
-      "$HOME/.config/k9s/config.yaml" \
-      "$HOME/.config/lazygit/config.yml" \
-      "$HOME/.config/lazydocker/config.yml" \
-      "$HOME/.config/foot/foot.ini" \
-      "$HOME/.config/yazi/theme.toml" \
-      "$HOME/.config/Kvantum/kvantum.kvconfig" \
-      "$HOME/.config/gtk-3.0/settings.ini" \
-      "$HOME/.config/gtk-3.0/gtk.css" \
-      "$HOME/.config/gtk-4.0/settings.ini" \
-      "$HOME/.config/gtk-4.0/gtk.css"
-    do
-      if [ -f "$f" ] && [ ! -L "$f" ]; then
-        $VERBOSE_ECHO "Removing theme-managed file: $f"
-        run rm -f "$f"
-      fi
-    done
-  '';
+  # Hyprland-only surfaces; the terminal apps every platform themes are
+  # cleaned by the shared hook in home/theme/default.nix.
+  programs.theme-toggle.mutatedFiles = [
+    ".config/ghostty/config"
+    ".config/kitty/kitty.conf"
+    ".config/k9s/config.yaml"
+    ".config/foot/foot.ini"
+    ".config/Kvantum/kvantum.kvconfig"
+    ".config/gtk-3.0/settings.ini"
+    ".config/gtk-3.0/gtk.css"
+    ".config/gtk-4.0/settings.ini"
+    ".config/gtk-4.0/gtk.css"
+  ];
 
   # Run theme-toggle restore after Home Manager activation
   # This ensures theme-managed configs (ghostty, starship, k9s, btop, lazygit)

@@ -56,30 +56,16 @@
   };
 in
   lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    programs.theme-toggle.package = theme-apply-macos;
+    programs.theme-toggle = {
+      package = theme-apply-macos;
+
+      # kitty is the only surface the Mac themes beyond the terminal apps the
+      # shared cleanup in home/theme/default.nix already covers.
+      mutatedFiles = [".config/kitty/kitty.conf"];
+    };
 
     home = {
       packages = [theme-apply-macos];
-
-      # The updaters replace these HM symlinks with regular files, which makes
-      # the next `darwin switch` fail its link check with "file would be
-      # clobbered" — so drop the mutated copies first. Linux equivalent:
-      # cleanThemeFiles in home/desktop/theme/catppuccin.nix.
-      activation.cleanThemeFilesMacos = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
-        for f in \
-          "$HOME/.config/kitty/kitty.conf" \
-          "$HOME/.config/btop/btop.conf" \
-          "$HOME/.config/starship.toml" \
-          "$HOME/.config/lazygit/config.yml" \
-          "$HOME/.config/lazydocker/config.yml" \
-          "$HOME/.config/yazi/theme.toml"
-        do
-          if [ -f "$f" ] && [ ! -L "$f" ]; then
-            $VERBOSE_ECHO "Removing theme-managed file: $f"
-            run rm -f "$f"
-          fi
-        done
-      '';
 
       # Apply the correct theme after activation so a fresh switch lands themed.
       activation.applyThemeMacos = lib.hm.dag.entryAfter ["linkGeneration"] ''
