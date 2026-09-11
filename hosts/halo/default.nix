@@ -255,12 +255,37 @@ in {
     localProxy = {
       enable = true;
       hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
+
+      landingPage = {
+        enable = true;
+        extraLinks = [
+          {
+            title = "Jellyfin";
+            # Not proxied: it needs its own base-url setting to answer under a
+            # path prefix. 8096 is open on the LAN, and resolves over the
+            # tailnet too, which is the only way this page is reachable.
+            url = "http://${config.hostname}:8096";
+            description = "Media library from naspi, transcoded on the 8060S";
+            icon = "🎬";
+          }
+        ];
+      };
+
       services = {
         houston = {
           port = 9090;
-          paths = ["/"];
+          # `/houston` is the door in, stripped so houston answers it at its own
+          # root; the `/` catch-all then serves the absolute asset URLs that page
+          # goes on to request. Only the bare root moves, to the landing page.
+          paths = ["/" "/houston"];
+          stripPrefix = ["/houston"];
           streaming = true;
           responseHeaderTimeout = "300s";
+          landing = {
+            title = "Houston";
+            description = "Monitor and steer remote agent sessions";
+            icon = "🚀";
+          };
         };
         # UI is deliberately not proxied: it app-store-redirects every phone
         # browser before rendering, and hosting it same-origin with houston
@@ -270,10 +295,17 @@ in {
           paths = ["/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
           streaming = true;
           responseHeaderTimeout = "300s";
+          # Nothing to open: every path here is an API surface.
+          landing.advertise = false;
         };
         prep = {
           port = config.services.prep.port;
           paths = [config.services.prep.prefix];
+          landing = {
+            title = "Prep";
+            description = "Job-search tracker";
+            icon = "📋";
+          };
         };
       };
     };
