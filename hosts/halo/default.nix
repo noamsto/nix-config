@@ -24,6 +24,7 @@ in {
     ../../nixos/core/lanzaboote.nix
     ../../nixos/core/iwd-known-networks.nix
     inputs.nix-amd-ai.nixosModules.default
+    inputs.prep.nixosModules.default
     ../../nixos/steam-console
   ];
 
@@ -240,26 +241,40 @@ in {
     lanInterfaces = ["wlan0" "enp97s0" "enp98s0"];
   };
 
-  # halo.local is deliberately not listed: it's Avahi-only, never enters
-  # houston's Host allowlist, and would just 421.
-  services.localProxy = {
-    enable = true;
-    hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
-    services = {
-      houston = {
-        port = 9090;
-        paths = ["/"];
-        streaming = true;
-        responseHeaderTimeout = "300s";
-      };
-      # UI is deliberately not proxied: it app-store-redirects every phone
-      # browser before rendering, and hosting it same-origin with houston
-      # would put houston's Path=/ control cookie inside its reach.
-      lemonade = {
-        port = config.hardware.amd-npu.lemonade.port;
-        paths = ["/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
-        streaming = true;
-        responseHeaderTimeout = "300s";
+  services = {
+    # No authentication of its own, so it binds loopback and is reachable only
+    # through localProxy below — which is tailnet-only.
+    prep = {
+      enable = true;
+      bindAddress = "127.0.0.1";
+      prefix = "/prep";
+    };
+
+    # halo.local is deliberately not listed: it's Avahi-only, never enters
+    # houston's Host allowlist, and would just 421.
+    localProxy = {
+      enable = true;
+      hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
+      services = {
+        houston = {
+          port = 9090;
+          paths = ["/"];
+          streaming = true;
+          responseHeaderTimeout = "300s";
+        };
+        # UI is deliberately not proxied: it app-store-redirects every phone
+        # browser before rendering, and hosting it same-origin with houston
+        # would put houston's Path=/ control cookie inside its reach.
+        lemonade = {
+          port = config.hardware.amd-npu.lemonade.port;
+          paths = ["/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
+          streaming = true;
+          responseHeaderTimeout = "300s";
+        };
+        prep = {
+          port = config.services.prep.port;
+          paths = [config.services.prep.prefix];
+        };
       };
     };
   };

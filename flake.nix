@@ -294,6 +294,13 @@
     # AMD AI: XRT, XDNA plugin, FastFlowLM, Lemonade (NPU + ROCm)
     nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 
+    # Interview study tracker served on halo. Private repo, hence git+ssh —
+    # `github:` would need an access token in the daemon's nix.conf.
+    prep = {
+      url = "git+ssh://git@github.com/noamsto/job-search.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Declarative Agent Skills catalog -> per-harness skill dirs (see
     # home/ai/agent-skills). Pins the upstream skill repos below so a skill set
     # only moves when the lockfile does.
