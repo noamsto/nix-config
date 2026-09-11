@@ -230,6 +230,30 @@ in {
     lanInterfaces = ["wlan0" "enp97s0" "enp98s0"];
   };
 
+  # halo.local is deliberately not listed: it's Avahi-only, never enters
+  # houston's Host allowlist, and would just 421.
+  services.localProxy = {
+    enable = true;
+    hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
+    services = {
+      houston = {
+        port = 9090;
+        paths = ["/"];
+        streaming = true;
+        responseHeaderTimeout = "300s";
+      };
+      # UI is deliberately not proxied: it app-store-redirects every phone
+      # browser before rendering, and hosting it same-origin with houston
+      # would put houston's Path=/ control cookie inside its reach.
+      lemonade = {
+        port = config.hardware.amd-npu.lemonade.port;
+        paths = ["/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
+        streaming = true;
+        responseHeaderTimeout = "300s";
+      };
+    };
+  };
+
   users.users.noams = {
     # lemond's unit sets no SupplementaryGroups, unlike ds4-server's.
     extraGroups = ["video" "render"];
