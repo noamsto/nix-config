@@ -26,7 +26,7 @@
     mcp_servers = mcpServers.base // codexRemoteMcp;
   };
 
-  aeye-plugin = "${inputs.lazytmux.inputs.aeye}/adapters/codex/plugin";
+  aeye-plugin = "${inputs.tmux-og.inputs.aeye}/adapters/codex/plugin";
   aeye-version = (lib.importJSON "${aeye-plugin}/.codex-plugin/plugin.json").version;
   aeye-cache = ".codex/plugins/cache/aeye/aeye";
 in {

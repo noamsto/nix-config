@@ -22,7 +22,7 @@ in {
   # triggers infinite recursion (pkgs is resolved inside the module fixpoint).
   # Linux-only effects are gated below via mkIf, and inside ./foot itself.
   imports = [
-    inputs.lazytmux.homeManagerModules.default
+    inputs.tmux-og.homeManagerModules.default
     ./foot
     ./kitty
     ./fish
@@ -32,7 +32,7 @@ in {
     ./lazydocker.nix
   ];
   # Cross-platform: the module gates its Linux systemd / darwin launchd internals.
-  programs.lazytmux = {
+  programs.tmux-og = {
     enable = true;
     # macOS: use the otherwise-unused § key (left of 1 on Mac ISO keyboards) as
     # prefix. Linux keeps the lazytmux default (backtick).

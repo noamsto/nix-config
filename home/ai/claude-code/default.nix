@@ -178,7 +178,7 @@
       else
         export AEYE_D2_THEME=200
       fi
-      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.lazytmux}/claude-plugin --plugin-dir ${inputs.lazytmux.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
+      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${inputs.tmux-og.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy

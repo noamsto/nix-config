@@ -101,7 +101,7 @@ Use markdown tables or bullet lists for comparisons, reviews, and analysis. Do n
 ## Git Worktrees
 
 We use **worktrunk** (the `wt` command) for git worktrees. Shell + tmux integration
-is configured via Nix (`programs.lazytmux.worktrunk.enable`), so `wt` handles
+is configured via Nix (`programs.tmux-og.worktrunk.enable`), so `wt` handles
 navigation itself — do **not** wrap it in `cd "$(...)"`.
 
 ```bash

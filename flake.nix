@@ -245,7 +245,7 @@
 
     wrappers.url = "github:Lassulus/wrappers";
 
-    lazytmux = {
+    tmux-og = {
       url = "github:noamsto/lazytmux";
       inputs.nixpkgs.follows = "nixpkgs";
     };

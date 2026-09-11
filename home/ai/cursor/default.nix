@@ -9,7 +9,7 @@
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
-  aeye-cursor = "${inputs.lazytmux.inputs.aeye}/adapters/cursor";
+  aeye-cursor = "${inputs.tmux-og.inputs.aeye}/adapters/cursor";
 
   # cursor-agent's mcp.json has no documented env-var interpolation in headers,
   # so posthog goes through mcp-remote (which expands ${...} in args) — same
