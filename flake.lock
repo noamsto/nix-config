@@ -2399,11 +2399,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1789131775,
-        "narHash": "sha256-Is2wfWd6ToN79XQ6vkonbm+EVq6x7ygiZd5EOdDdJqM=",
+        "lastModified": 1789132611,
+        "narHash": "sha256-RMLSYVQ1b3TuE7Cx7INJgUg+Xli4zfOScZizshLqbXM=",
         "ref": "refs/heads/main",
-        "rev": "88091b4c5d0002b8402bbeab072a7228a89a877f",
-        "revCount": 5,
+        "rev": "10e490620d0a0352d1f068e1a2abdc2cd355fb6d",
+        "revCount": 6,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/job-search.git"
       },
