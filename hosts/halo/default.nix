@@ -55,6 +55,16 @@ in {
     hybrid-sleep.enable = false;
   };
 
+  # Diagnostic harness for #219 -- runs N suspend/resume cycles and records
+  # per-iteration kernel/iwd/NetworkManager journal slices and time-to-IP.
+  # Requires unmasking the targets above to run; the harness documents the
+  # exact steps in `halo-wlan0-suspend-repro --check`. Measurement only: it
+  # never unmasks suspend itself and never wires its opt-in modprobe probe
+  # into a resume hook.
+  environment.systemPackages = [
+    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.halo-wlan0-suspend-repro
+  ];
+
   boot = {
     # Strix Halo (gfx1151) support is still landing upstream; track the newest
     # kernel rather than the LTS default.

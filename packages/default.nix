@@ -24,6 +24,7 @@
         airconnect = pkgs.callPackage ./airconnect.nix {};
         atlas-pro = pkgs.callPackage ./atlas_pro.nix {inherit pkgs;};
         claude-squad = pkgs.callPackage ./claude-squad {};
+        halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
         hyprvoice = pkgs.callPackage ./hyprvoice.nix {};
         sentinelone = pkgsUnfree.callPackage ./sentinelone {};
       };
