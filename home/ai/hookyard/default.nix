@@ -8,38 +8,29 @@
 # second invocation deletes the first one's rows instead of merging with them.
 # The assertion below enforces that.
 #
-# `manifests` is empty because aeye, the intended first consumer, cannot move
-# yet: noamsto/hookyard#27 (no advisory delivery outside `pre_tool`), #28 (no
-# fire-and-forget lane, 4300ms handler cap), #29 (the read path below).
+# `manifests` stays empty: the Claude Code path is now wired — see
+# `programs.hookyard.claudeOverlay` in ../claude-code/default.nix, which sets
+# `claudeOverlay.base` and wires `claudeOverlay.merged` into `--settings` —
+# but aeye, the intended first consumer, has not moved its handlers onto it
+# yet.
 {
   config,
   lib,
   inputs,
   ...
-}: let
-  # From `stateDir`, not `xdg.stateHome`, so repointing the state directory
-  # takes this file with it.
-  unroutedClaudeSettings = "${config.programs.hookyard.stateDir}/claude-settings.unrouted.json";
-in {
+}: {
   imports = [inputs.hookyard.homeModules.default];
 
   programs.hookyard = {
     enable = true;
 
-    # Nothing reads this file. hookyard refuses to write through a symlink,
-    # and `~/.claude/settings.json` is a `mkOutOfStoreSymlink` onto this repo
-    # (../claude-code) — while being Claude Code's only user-scope hook source,
-    # its other two being the checkout's `settings.local.json` and the
-    # `--settings` file. Pointing at it aborts activation with nothing
-    # registered; the two ways to free it both fail silently instead. So a
-    # claude-code handler needs #29 settled first, which the warning below
-    # says at the moment it would matter.
-    claudeSettings = unroutedClaudeSettings;
-
-    # All four destinations get written whether or not the engine is installed,
-    # so a personal host gains an empty `~/.codex/config.toml` and the darwin
-    # host a `~/.pi/agent/settings.json`. Setting these does not cause that —
-    # the defaults name the same paths.
+    # These three destinations get written whether or not the engine is
+    # installed, so a personal host gains an empty `~/.codex/config.toml` and
+    # the darwin host a `~/.pi/agent/settings.json`. Setting these does not
+    # cause that — the defaults name the same paths. Claude Code has no
+    # destination string here: its registration reaches it via
+    # `claudeOverlay.merged`, wired as an overlay in ../claude-code, not a
+    # file hookyard writes directly.
     codexConfig = "${config.home.homeDirectory}/.codex/config.toml";
     cursorHooks = "${config.home.homeDirectory}/.cursor/hooks.json";
     piSettings = "${config.home.homeDirectory}/.pi/agent/settings.json";
@@ -79,16 +70,4 @@ in {
       '';
     }
   ];
-
-  # Not an assertion: `manifests` holds paths, and reading a generated one at
-  # eval time would force it to build, so Nix cannot tell a claude-code
-  # handler from a cursor-only one. Blocking every consumer over a
-  # claude-code-specific problem is worse than warning.
-  warnings = lib.optional (config.programs.hookyard.manifests != []) ''
-    programs.hookyard: handlers are registered while `claudeSettings` is still
-    the unrouted placeholder (${unroutedClaudeSettings}), which no engine
-    reads. Any claude-code handler among them will never fire. Repoint
-    `claudeSettings` onto Claude Code's real user-scope read path first — see
-    noamsto/hookyard#29. Handlers for other engines are unaffected.
-  '';
 }

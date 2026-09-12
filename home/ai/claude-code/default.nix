@@ -178,7 +178,7 @@
       else
         export AEYE_D2_THEME=200
       fi
-      exec -a claude ${claude-wrapped}/bin/claude --settings ${nix-settings-json} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${inputs.tmux-og.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
+      exec -a claude ${claude-wrapped}/bin/claude --settings ${config.programs.hookyard.claudeOverlay.merged} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${inputs.tmux-og.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy
@@ -221,6 +221,11 @@ in {
       enable = true;
       inherit (osConfig) profile;
     };
+
+    # hookyard refuses to write through the settings.json symlink, so it
+    # merges its hooks into this overlay instead of writing its own file —
+    # set here, not in ../hookyard, so `nix-settings-json` stays in scope.
+    hookyard.claudeOverlay.base = nix-settings-json;
   };
 
   home = {
