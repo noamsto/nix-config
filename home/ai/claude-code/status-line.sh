@@ -47,7 +47,11 @@ fmt_countdown() {
     echo "0m"
     return
   }
-  local h=$(((left % 86400) / 3600)) m=$(((left % 3600) / 60))
+  local d=$((left / 86400)) h=$(((left % 86400) / 3600)) m=$(((left % 3600) / 60))
+  ((d > 0)) && {
+    echo "${d}d${h}h"
+    return
+  }
   ((h > 0)) && echo "${h}h${m}m" || echo "${m}m"
 }
 
