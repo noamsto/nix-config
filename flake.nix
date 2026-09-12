@@ -264,6 +264,20 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Cross-engine agent hook router. One manifest of handlers renders into
+    # Claude Code's, Codex's, Cursor's and Pi's native hook config in a single
+    # `hookyard install` pass, owned by home/ai/hookyard.
+    hookyard = {
+      url = "github:noamsto/hookyard";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        # Check-only dependency upstream; nothing here evaluates it, so
+        # without this the lock carries a third home-manager revision and
+        # fetches another tree on every update.
+        home-manager.follows = "home-manager";
+      };
+    };
+
     # Steam Deck UI (Gaming Mode) for halo's console role. Deliberately only
     # the Steam session — `jovian.devices.steamdeck` stays off, since it would
     # pull linux-neptune over the gfx1151 kernel halo needs.
