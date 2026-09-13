@@ -8,6 +8,10 @@
       alejandra.enable = true;
       statix.enable = true;
       deadnix.enable = true;
+      # A mangled claude-code/settings.json is live the moment it lands on disk
+      # (mkOutOfStoreSymlink), so these only stop it spreading to other hosts.
+      check-json.enable = true;
+      check-merge-conflicts.enable = true;
       prettier = {
         enable = true;
         excludes = [".js" ".md" ".ts"];
