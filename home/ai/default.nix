@@ -10,6 +10,7 @@
       ./claude-code
       ./cursor
       ./hookyard
+      ./houston
       ./mcp.nix
       ./opencode
       # Linux-only, but gated inside the module — `pkgs` in `imports` resolves

@@ -209,7 +209,7 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
 - No prefix **stripping** (`handle_path`): neither registrant needs it, and
   adding an untested code path for a hypothetical future service is the
   speculative robustness `CLAUDE.md` rules out.
-- No change to houston; it is not managed by this repo.
+- No change to houston's Caddy routing; houston itself is now Nix-managed (see home/ai/houston).
 - Not enabled on g5, g6, mbp or installer.
 
 ## Accepted risks and known limitations (to be stated in the PR body)

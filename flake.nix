@@ -314,6 +314,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Web dashboard for tmux-hosted AI agents, served on halo (see
+    # home/ai/houston and hosts/halo/default.nix's localProxy wiring).
+    houston = {
+      url = "github:noamsto/houston";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Declarative Agent Skills catalog -> per-harness skill dirs (see
     # home/ai/agent-skills). Pins the upstream skill repos below so a skill set
     # only moves when the lockfile does.
