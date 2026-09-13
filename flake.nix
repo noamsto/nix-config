@@ -289,9 +289,8 @@
     # Dispatcher agent fan-out harness: the crew bus, `dispatch`, the protocols,
     # and per-engine adapters for claude-code, codex and cursor. Extracted from
     # this repo's home/ai/claude-code/.
-    # `extract` holds the initial history; drop the ref once it lands on main.
     dispatcher = {
-      url = "github:noamsto/dispatcher/extract";
+      url = "github:noamsto/dispatcher/main";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
