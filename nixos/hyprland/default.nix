@@ -42,9 +42,6 @@ in {
         package = hyprlandUwsmOnly;
       };
 
-      # ydotool for speech-to-text typing
-      ydotool.enable = true;
-
       # Register xfconfd as a D-Bus service so Thunar's xfconf settings persist.
       # Without this, the session bus can't auto-activate xfconfd and Thunar
       # falls back to in-memory defaults (wrong view, wrong sort order, etc.).
@@ -64,8 +61,7 @@ in {
       };
     };
     # Ensure video group permissions for backlight control
-    # ydotool group for speech-to-text typing (created by programs.ydotool)
-    users.users.${config.username}.extraGroups = ["video" "i2c" "ydotool"];
+    users.users.${config.username}.extraGroups = ["video" "i2c"];
     hardware.i2c.enable = true;
     boot.kernelModules = ["i2c_dev" "uinput"];
 

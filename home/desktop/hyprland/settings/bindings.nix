@@ -145,8 +145,7 @@ in {
 
     -- === ACCESSIBILITY ===
     hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
-    hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("stt-stream-toggle"))
-    hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("hyprvoice toggle"))
+    hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("voxtype record toggle"))
 
     -- Media: launch YTM if not running
     hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce youtube-music}"))
