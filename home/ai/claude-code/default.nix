@@ -22,6 +22,28 @@
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
 
+  # hookyard's envelope carries the engine payload verbatim under `.native`; the
+  # guard's hookSpecificOutput is already hookyard's handler wire protocol.
+  default-branch-guard-bridge = pkgs.writeShellApplication {
+    name = "default-branch-guard-hookyard-bridge";
+    runtimeInputs = [pkgs.jq];
+    text = ''
+      jq -c .native | ${sharedGuards.git-default-branch-guard}/bin/agent-git-default-branch-guard
+    '';
+  };
+  guardsManifest = pkgs.writeText "guards-hookyard.json" (builtins.toJSON {
+    handlers = [
+      {
+        id = "guards.git-default-branch";
+        exec = "${default-branch-guard-bridge}/bin/default-branch-guard-hookyard-bridge";
+        events = ["pre_tool"];
+        engines = ["claude-code"];
+        match = ["Bash"];
+        timeout_ms = 2000;
+      }
+    ];
+  });
+
   # --settings overlay: ONLY keys that need /nix/store paths.
   # Everything else belongs in settings.json (symlinked to repo).
   nix-settings-json = pkgs.writeTextFile {
@@ -93,10 +115,6 @@
               {
                 type = "command";
                 command = "${sharedGuards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.git-default-branch-guard}/bin/agent-git-default-branch-guard";
               }
               {
                 type = "command";
@@ -230,7 +248,10 @@ in {
     # hookyard refuses to write through the settings.json symlink, so it
     # merges its hooks into this overlay instead of writing its own file —
     # set here, not in ../hookyard, so `nix-settings-json` stays in scope.
-    hookyard.claudeOverlay.base = nix-settings-json;
+    hookyard = {
+      claudeOverlay.base = nix-settings-json;
+      manifests = [guardsManifest];
+    };
   };
 
   home = {
