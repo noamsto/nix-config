@@ -26,8 +26,14 @@
     mcp_servers = mcpServers.base // codexRemoteMcp;
   };
 
-  aeye-plugin = "${inputs.tmux-og.inputs.aeye}/adapters/codex/plugin";
-  aeye-version = (lib.importJSON "${aeye-plugin}/.codex-plugin/plugin.json").version;
+  aeye = import ../hookyard/aeye.nix {
+    inherit pkgs;
+    aeye = inputs.tmux-og.inputs.aeye;
+  };
+  aeye-plugin = "${aeye.tree}/adapters/codex/plugin";
+  # Read the unfiltered flake input, not aeye.tree: importJSON on a runCommand
+  # output would be import-from-derivation.
+  aeye-version = (lib.importJSON "${inputs.tmux-og.inputs.aeye}/adapters/codex/plugin/.codex-plugin/plugin.json").version;
   aeye-cache = ".codex/plugins/cache/aeye/aeye";
 in {
   home = {
@@ -126,6 +132,8 @@ in {
       # "installed, enabled" in `codex plugin list` while its skills never reach
       # the model. Modes carry over because hooks.json execs scripts/*.sh
       # directly; the chmod lets the next switch replace the read-only tree.
+      # hooks.json in this copy carries only SessionStart — PostToolUse image
+      # capture routes through hookyard instead.
       #
       # The matching `[marketplaces.aeye]` / `[plugins."aeye@aeye"]` stanzas are
       # hand-managed in ~/.codex/config.toml — no store path, so not Nix's.

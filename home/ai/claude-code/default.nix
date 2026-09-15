@@ -11,6 +11,10 @@
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   sharedGuards = import ../agent-hooks {inherit pkgs;};
+  aeye = import ../hookyard/aeye.nix {
+    inherit pkgs;
+    aeye = inputs.tmux-og.inputs.aeye;
+  };
 
   psql-guard = pkgs.writeShellScriptBin "claude-psql-guard" (builtins.readFile ./psql-guard.sh);
   skeleton-guard = pkgs.writeShellScriptBin "claude-read-skeleton-guard" (builtins.readFile ./skeleton-guard.sh);
@@ -58,9 +62,10 @@
       # Union'd with settings.json's allow list.
       permissions.allow =
         lib.optionals (osConfig.profile == "work") ["mcp__codex__*"];
-      # Status-state hooks live in the lazytmux CC plugin and image-capture
-      # hooks in the aeye CC plugin (both loaded via --plugin-dir in
-      # the wrapper below); only personal hooks remain here.
+      # Status-state hooks live in the lazytmux CC plugin and aeye's
+      # SessionStart hooks in the aeye CC plugin (both loaded via --plugin-dir
+      # in the wrapper below); aeye's PostToolUse hooks come from hookyard's
+      # `claudeOverlay.merged`. Only personal hooks remain here.
       hooks = {
         SessionStart = [
           {
@@ -178,7 +183,7 @@
       else
         export AEYE_D2_THEME=200
       fi
-      exec -a claude ${claude-wrapped}/bin/claude --settings ${config.programs.hookyard.claudeOverlay.merged} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${inputs.tmux-og.inputs.aeye}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
+      exec -a claude ${claude-wrapped}/bin/claude --settings ${config.programs.hookyard.claudeOverlay.merged} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy

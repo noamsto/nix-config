@@ -9,7 +9,11 @@
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
-  aeye-cursor = "${inputs.tmux-og.inputs.aeye}/adapters/cursor";
+  aeye = import ../hookyard/aeye.nix {
+    inherit pkgs;
+    aeye = inputs.tmux-og.inputs.aeye;
+  };
+  aeye-cursor = "${aeye.tree}/adapters/cursor";
 
   # cursor-agent's mcp.json has no documented env-var interpolation in headers,
   # so posthog goes through mcp-remote (which expands ${...} in args) — same
@@ -88,21 +92,22 @@ in {
     # codex blocks — install.sh strips prior aeye entries (matched on
     # /adapters/cursor/scripts/ in the command) and re-appends pointing at the
     # current store path, so an aeye bump never leaves dangling hook commands.
-    # Unrelated user entries are preserved; a malformed hooks.json fails the
-    # merge loudly instead of clobbering. install.sh also links the
-    # aeye-diagrams / aeye-image-gallery skills into ~/.cursor/skills.
-    # Hooks find `aeye` + `resvg` on PATH via lazytmux's carouselDiagramTools.
-    # PATH is pinned for the activation env, which doesn't guarantee jq.
+    # aeye.tree has no postToolUse rows (those route through hookyard), so this
+    # writes sessionStart entries only. Unrelated user entries are preserved;
+    # a malformed hooks.json fails the merge loudly instead of clobbering.
+    # install.sh also links the aeye-diagrams / aeye-image-gallery skills into
+    # ~/.cursor/skills. Hooks find `aeye` + `resvg` on PATH via lazytmux's
+    # carouselDiagramTools. PATH is pinned for the activation env, which
+    # doesn't guarantee jq.
     activation = {
       aeyeCursorHooks = lib.hm.dag.entryAfter ["writeBoundary"] ''
         run env PATH="${lib.makeBinPath [pkgs.jq pkgs.coreutils]}:$PATH" ${aeye-cursor}/install.sh
       '';
 
-      # Merge the dispatcher's `stop` hook into the same shared hooks.json,
-      # after aeye has rewritten its own entries. Both mergers strip only their
-      # own marker before re-appending, so each is idempotent and neither
-      # touches the other's rows (nor lazytmux's cursor-status-hook ones).
-      dispatcherCursorStopHook = lib.hm.dag.entryAfter ["aeyeCursorHooks"] ''
+      # Merge the dispatcher's `stop` hook into the same shared hooks.json.
+      # aeye, hookyard and this merger each strip only their own marker before
+      # re-appending, so they commute and need no ordering.
+      dispatcherCursorStopHook = lib.hm.dag.entryAfter ["writeBoundary"] ''
         hooks_file="$HOME/.cursor/hooks.json"
         run mkdir -p "$HOME/.cursor"
         if [ -f "$hooks_file" ]; then

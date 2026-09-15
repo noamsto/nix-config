@@ -8,17 +8,22 @@
 # second invocation deletes the first one's rows instead of merging with them.
 # The assertion below enforces that.
 #
-# `manifests` stays empty: the Claude Code path is now wired — see
-# `programs.hookyard.claudeOverlay` in ../claude-code/default.nix, which sets
-# `claudeOverlay.base` and wires `claudeOverlay.merged` into `--settings` —
-# but aeye, the intended first consumer, has not moved its handlers onto it
-# yet.
+# aeye is the first consumer: its `post_tool` handlers are declared in
+# ./aeye.nix and contributed below via `manifests`. Its Claude Code
+# registration reaches `--settings` through `claudeOverlay.merged`, wired in
+# ../claude-code/default.nix, not through a file this module writes.
 {
   config,
   lib,
+  pkgs,
   inputs,
   ...
-}: {
+}: let
+  aeye = import ./aeye.nix {
+    inherit pkgs;
+    aeye = inputs.tmux-og.inputs.aeye;
+  };
+in {
   imports = [inputs.hookyard.homeModules.default];
 
   programs.hookyard = {
@@ -38,10 +43,10 @@
     # Generate the manifest (`pkgs.writeText`) with the handler's own store
     # path: `install` stats every `exec`, and a failed stat aborts the switch.
     # Namespace handler ids — `manifest.Merge` errors on a duplicate across
-    # manifests, which also aborts. And the order against ../cursor's two
-    # entries on the shared `~/.cursor/hooks.json` is undeclared; inert only
-    # while this list is empty.
-    manifests = [];
+    # manifests, which also aborts. ../cursor's two entries write the same
+    # `~/.cursor/hooks.json`, but every writer strips only its own marker, so
+    # the order does not matter.
+    manifests = [aeye.manifest];
   };
 
   assertions = [
