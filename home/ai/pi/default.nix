@@ -5,11 +5,19 @@
 }: let
   guards = import ../agent-hooks {inherit pkgs;};
 
+  # ../claude-code owns its own nix wiring for these scripts, so they're built
+  # separately here rather than shared. Both scripts self-filter on
+  # tool_name, so one guard list can serve pi's bash and read tool calls alike.
+  skeleton-guard = pkgs.writeShellScriptBin "agent-read-skeleton-guard" (builtins.readFile ../claude-code/skeleton-guard.sh);
+  psql-guard = pkgs.writeShellScriptBin "agent-psql-guard" (builtins.readFile ../claude-code/psql-guard.sh);
+
   # Deny guards first, advisory last: hook-bridge.ts stops at the first deny, so
   # a blocked call shouldn't also spend time on advice it will never show.
   hookPaths = lib.concatStringsSep ":" [
     "${guards.git-default-branch-guard}/bin/agent-git-default-branch-guard"
     "${guards.nix-stage-guard}/bin/agent-nix-stage-guard"
+    "${skeleton-guard}/bin/agent-read-skeleton-guard"
+    "${psql-guard}/bin/agent-psql-guard"
     "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard"
     "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard"
   ];
