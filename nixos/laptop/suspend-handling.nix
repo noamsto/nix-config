@@ -46,6 +46,20 @@ in {
             exit 0
           fi
 
+          # Outputs re-enumerate over several seconds after resume, and HDM matches
+          # profiles against whatever exists at that instant — so it can apply a
+          # profile for a topology this handler is still correcting. Park it for
+          # the window. The trap covers every exit path, since leaving HDM stopped
+          # loses monitor management entirely.
+          start_hdm() {
+            log "Starting hyprdynamicmonitors.service..."
+            ${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host start hyprdynamicmonitors.service 2>/dev/null || true
+          }
+          trap start_hdm EXIT
+
+          log "Stopping hyprdynamicmonitors.service for the resume window..."
+          ${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host stop hyprdynamicmonitors.service 2>/dev/null || true
+
           # Check Noctalia status
           # Noctalia's binary is wrapped (exec -a); comm is truncated, so match argv[0] instead.
           noctalia_pid=$(${pkgs.procps}/bin/pgrep -f '/bin/noctalia$' | head -1)
@@ -130,11 +144,7 @@ in {
 
           sleep 0.2
 
-          # Restart HDM to detect actual hardware state and apply correct profile
-          # This runs after DPMS is on so any profile changes happen smoothly
-          log "Restarting hyprdynamicmonitors.service..."
-          ${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host restart hyprdynamicmonitors.service 2>/dev/null || true
-
+          # HDM is started by the EXIT trap above.
           log "=== Resume handler completed ==="
         '';
       };
