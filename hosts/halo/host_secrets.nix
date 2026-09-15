@@ -9,10 +9,17 @@
   # would append to that key rather than replace it.
   age.identityPaths = lib.mkForce ["/etc/ssh/ssh_host_ed25519_key"];
 
-  age.secrets.stole_ro_cloudflare_token = {
-    file = "${inputs.mysecrets}/stole_ro_cloudflare_token.age";
-    owner = config.username;
-    mode = "0400";
+  age.secrets = {
+    stole_ro_cloudflare_token = {
+      file = "${inputs.mysecrets}/stole_ro_cloudflare_token.age";
+      owner = config.username;
+      mode = "0400";
+    };
+    nixAccessTokens = {
+      file = "${inputs.mysecrets}/tp-p14s-nix-access-tokens.age";
+      mode = "0440";
+      group = "wheel";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in
