@@ -10,7 +10,7 @@
       mode = "0400";
     };
     nixAccessTokens = {
-      file = "${inputs.mysecrets}/tp-p14s-nix-access-tokens.age";
+      file = "${inputs.mysecrets}/personal-nix-access-tokens.age";
       mode = "0440";
       group = "wheel";
     };
