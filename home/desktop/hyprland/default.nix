@@ -27,6 +27,7 @@ in {
     ./scripts/accessibility-tools.nix
     ./scripts/system-awake.nix
     ./scripts/system-awake-thermal-guard.nix
+    ./scripts/aegis-lock-recover.nix
     ./smart-dnd.nix
     ./xresources.nix
   ];
