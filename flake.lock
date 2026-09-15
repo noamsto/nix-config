@@ -2880,16 +2880,16 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1789324775,
-        "narHash": "sha256-AYIKe4pnQJ5i97yCguJEL+d4iccZIxXnIHq2H+WbClo=",
+        "lastModified": 1789459769,
+        "narHash": "sha256-g00ifpbcT15D4kqddeCIJ6pbrrtmDhW5bvDD1S1KlwE=",
         "owner": "noamsto",
-        "repo": "lazytmux",
-        "rev": "e26e690b8d665f3277cbb8d34d6f345736513f9c",
+        "repo": "tmux-og",
+        "rev": "bdbb56b23d4e151b3c2fdd7bdcf97544bf9bcb5f",
         "type": "github"
       },
       "original": {
         "owner": "noamsto",
-        "repo": "lazytmux",
+        "repo": "tmux-og",
         "type": "github"
       }
     },
