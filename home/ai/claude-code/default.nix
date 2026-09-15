@@ -23,24 +23,70 @@
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
 
   # hookyard's envelope carries the engine payload verbatim under `.native`; the
-  # guard's hookSpecificOutput is already hookyard's handler wire protocol.
-  default-branch-guard-bridge = pkgs.writeShellApplication {
-    name = "default-branch-guard-hookyard-bridge";
-    runtimeInputs = [pkgs.jq];
-    text = ''
-      jq -c .native | ${sharedGuards.git-default-branch-guard}/bin/agent-git-default-branch-guard
-    '';
+  # guards' hookSpecificOutput is already hookyard's handler wire protocol.
+  # A guard that overruns timeout_ms abstains, so each gets most of the 4300ms cap.
+  guardHandler = {
+    name,
+    exe,
+    match,
+  }: let
+    bridge = pkgs.writeShellApplication {
+      name = "${name}-hookyard-bridge";
+      runtimeInputs = [pkgs.jq];
+      text = ''
+        jq -c .native | ${exe}
+      '';
+    };
+  in {
+    inherit match;
+    id = "guards.${name}";
+    exec = "${bridge}/bin/${name}-hookyard-bridge";
+    events = ["pre_tool"];
+    engines = ["claude-code"];
+    timeout_ms = 4000;
   };
   guardsManifest = pkgs.writeText "guards-hookyard.json" (builtins.toJSON {
     handlers = [
-      {
-        id = "guards.git-default-branch";
-        exec = "${default-branch-guard-bridge}/bin/default-branch-guard-hookyard-bridge";
-        events = ["pre_tool"];
-        engines = ["claude-code"];
+      (guardHandler {
+        name = "psql";
+        exe = "${psql-guard}/bin/claude-psql-guard";
         match = ["Bash"];
-        timeout_ms = 2000;
-      }
+      })
+      (guardHandler {
+        name = "nix-stage";
+        exe = "${sharedGuards.nix-stage-guard}/bin/agent-nix-stage-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "git-commit-autostage";
+        exe = "${sharedGuards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "git-default-branch";
+        exe = "${sharedGuards.git-default-branch-guard}/bin/agent-git-default-branch-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "tmux-live-server";
+        exe = "${sharedGuards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "deslop";
+        exe = "${deslop-guard}/bin/claude-deslop-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "secret-read";
+        exe = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
+        match = ["Bash" "Read" "Grep"];
+      })
+      (guardHandler {
+        name = "read-skeleton";
+        exe = "${skeleton-guard}/bin/claude-read-skeleton-guard";
+        match = ["Read"];
+      })
     ];
   });
 
@@ -96,59 +142,6 @@
               {
                 type = "command";
                 command = "${skill-suggester}/bin/claude-skill-suggester";
-              }
-            ];
-          }
-        ];
-        PreToolUse = [
-          {
-            matcher = "Bash";
-            hooks = [
-              {
-                type = "command";
-                command = "${psql-guard}/bin/claude-psql-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.nix-stage-guard}/bin/agent-nix-stage-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard";
-              }
-              {
-                type = "command";
-                command = "${deslop-guard}/bin/claude-deslop-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
-              }
-            ];
-          }
-          {
-            matcher = "Read";
-            hooks = [
-              {
-                type = "command";
-                command = "${skeleton-guard}/bin/claude-read-skeleton-guard";
-              }
-              {
-                type = "command";
-                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
-              }
-            ];
-          }
-          {
-            matcher = "Grep";
-            hooks = [
-              {
-                type = "command";
-                command = "${sharedGuards.secret-read-guard}/bin/agent-secret-read-guard";
               }
             ];
           }

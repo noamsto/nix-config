@@ -1,5 +1,5 @@
-# Engine-neutral tool-call guards. Claude Code wires them as `hooks.PreToolUse`
-# (see ../claude-code); pi runs them through ../pi/hook-bridge.ts.
+# Engine-neutral tool-call guards. Claude Code runs them as hookyard `pre_tool`
+# handlers (see ../claude-code); pi runs them through ../pi/hook-bridge.ts.
 #
 # Protocol (Claude Code's PreToolUse contract, which the pi bridge also speaks):
 # read a JSON payload on stdin carrying `tool_name`, `tool_input`, and `cwd`;
