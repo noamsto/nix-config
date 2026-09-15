@@ -55,6 +55,51 @@ target=${target%[\"\']}
 
 git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 
+# `gh pr create --repo`/`-R` can target a different repository than `target`'s
+# local checkout — the cross-repo git-common-dir fallback further down never
+# fires here, since target == cwd for this command. Parse --repo/-R directly:
+# if it names a repo other than target's origin, the local branch isn't what's
+# being reviewed, so skip the gate (no network call — origin comes from the
+# local git config).
+normalize_repo() {
+  local url=$1
+  url=${url%.git}
+  url=${url%/}
+  url=${url#*://}
+  url=${url##*@}
+  url=${url/:/\/}
+  while [[ $url == */*/* ]]; do
+    url=${url#*/}
+  done
+  printf '%s' "${url,,}"
+}
+
+if echo "$command" | grep -qE '(^|\s)gh\s+pr\s+create(\s|$)'; then
+  repo_flag=""
+  # Tokenize with the shell's own quoting rules (via xargs) rather than
+  # regex-scanning the raw string, so `--repo=` text embedded inside an
+  # unrelated quoted --title/--body argument can't be mistaken for the flag.
+  prev=""
+  while IFS= read -r tok; do
+    if [[ $prev == "--repo" || $prev == "-R" ]]; then
+      repo_flag=$tok
+      break
+    fi
+    case $tok in
+    --repo=*) repo_flag=${tok#--repo=} ;;
+    -R=*) repo_flag=${tok#-R=} ;;
+    esac
+    [[ -n $repo_flag ]] && break
+    prev=$tok
+  done < <(xargs -n1 <<<"$command" 2>/dev/null || true)
+  if [[ -n $repo_flag ]]; then
+    origin_url=$(git -C "$target" remote get-url origin 2>/dev/null || true)
+    if [[ -n $origin_url ]]; then
+      [[ $(normalize_repo "$origin_url") != "$(normalize_repo "$repo_flag")" ]] && exit 0
+    fi
+  fi
+fi
+
 # Tag-only pushes carry no branch commits to review, so the deslop gate doesn't
 # apply — the deploy flow here is all tag pushes (`git push origin v*-…`). Skip
 # the gate when every pushed refspec resolves to a tag (or deletes one) and no
