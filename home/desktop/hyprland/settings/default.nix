@@ -122,7 +122,7 @@ in {
         };
 
         xwayland.force_zero_scaling = true;
-        debug.disable_logs = false;
+        debug.disable_logs = true;
 
         # 0 = every scroll tick is matched against binds and consumed when one
         # matches. Default 300ms makes consecutive fast scrolls bypass keybind
