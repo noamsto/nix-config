@@ -37,23 +37,26 @@ in {
           };
         }
         {
-          # Tap Right Alt to toggle streaming dictation; held it stays a plain
-          # Alt, so Alt+Tab and friends are untouched. Unlike Caps this leaves
-          # hold_threshold_millis unset: Caps wants chords to resolve to Super
-          # instantly, whereas RightAlt is only ever chorded AS Alt.
+          # Tap Right Alt to toggle streaming dictation; held it still acts as
+          # Alt, so Alt+Tab and Alt+Space are untouched.
           #
-          # alone_timeout matches Caps' second rather than something tighter.
-          # Holding is already what `held` distinguishes, so a short window buys
-          # nothing and loses the unhurried second press — the one that stops
-          # dictation, which is never as brisk as the one that starts it.
+          # held is LEFTALT, not RIGHTALT. Mapping the key to itself made xremap
+          # pass it straight through: holding worked (Alt+Space still opened
+          # vicinae) but a tap never emitted F13, because there was nothing to
+          # defer. Nothing here distinguishes the two Alts — Hyprland's modmask
+          # does not separate them — so this costs nothing.
+          #
+          # Otherwise structurally identical to caps_escape_super above, the
+          # tap/hold rule known to work on this machine.
           #
           # F13 is a keycode nothing else claims; Hyprland binds it directly.
           name = "ralt_tap_dictation";
           remap = {
             RIGHTALT = {
-              held = "KEY_RIGHTALT";
+              held = "KEY_LEFTALT";
               alone = "KEY_F13";
               alone_timeout_millis = 1000;
+              hold_threshold_millis = 0;
             };
           };
         }
