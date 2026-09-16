@@ -179,14 +179,21 @@ bootstrap-host host ip key luks:
 # Home Manager
 # =============================================================================
 
-# Switch Home Manager configuration
-home-switch CONFIG="noams@$(hostname)":
-    nix run home-manager/master -- switch --flake .#{{CONFIG}}
-    @just restart-noctalia
+# Home Manager is embedded in each host's system config, so its activation
+# package hangs off nixosConfigurations / darwinConfigurations rather than off a
+# standalone homeConfigurations entry. See flake-modules/home-manager.nix.
+hm-attr := if os() == "macos" { "darwinConfigurations" } else { "nixosConfigurations" }
+hm-path := ".config.home-manager.users.noams.home.activationPackage"
 
-# Build Home Manager configuration
-home-build CONFIG="noams@$(hostname)":
-    nom build .#homeConfigurations.{{CONFIG}}.activationPackage
+# Activate Home Manager only - no system rebuild, no sudo
+hm HOST=`hostname`:
+    "$(nom build --no-link --print-out-paths '.#{{hm-attr}}.{{HOST}}{{hm-path}}')/activate"
+    @just restart-noctalia
+    @echo "ℹ️  packages live in the system profile — adding or removing one needs a full switch"
+
+# Build Home Manager configuration without activating it
+home-build HOST=`hostname`:
+    nom build '.#{{hm-attr}}.{{HOST}}{{hm-path}}'
 
 # =============================================================================
 # Secret Management

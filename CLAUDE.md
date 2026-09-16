@@ -38,7 +38,7 @@ flake.nix                          # Entry point - imports flake-modules
 ├── flake-modules/
 │   ├── development.nix            # devShells, treefmt, pre-commit hooks
 │   ├── nixos-systems.nix          # All nixosConfigurations
-│   └── home-manager.nix           # Standalone homeConfigurations
+│   └── home-manager.nix           # homeConfigurations aliases onto each host's embedded HM
 ├── lib/
 │   ├── host-configs.nix           # Shared host settings + SSH keys (used by both NixOS and HM)
 │   ├── caches.nix                 # Binary cache configuration (SYNC with flake.nix nixConfig)

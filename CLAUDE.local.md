@@ -1,3 +1,5 @@
 - Rebuild command depends on platform:
-  - **Linux (ThinkPads)**: `nh home switch` — Home Manager is a standalone `homeConfigurations` entry (`flake-modules/home-manager.nix`), so the fast HM-only path works.
-  - **macOS (`mbp-m4-pro`)**: `nh darwin switch` — there is no standalone HM config for the Mac (the standalone configs are `x86_64-linux` only). Home Manager is wired as a nix-darwin module (`home-manager.darwinModules.home-manager`), so `nh home switch` cannot resolve a config here. `nh darwin switch` rebuilds the system + integrated HM in one go.
+  - **Linux (ThinkPads)**: `nh home switch`, or `just hm` to reach the same derivation without nh.
+  - **macOS (`mbp-m4-pro`)**: `nh home switch` / `just hm` for an HM-only pass; `nh darwin switch` when the system itself changed.
+- Home Manager is embedded in every host's system config (`useUserPackages = true`), and the `homeConfigurations` entries are thin aliases onto it (`flake-modules/home-manager.nix`), not standalone configs. One evaluation per host, so the HM-only and full-switch paths cannot drift apart or fight over `~/.nix-profile`.
+- **Package changes need a full switch.** The HM-only path activates config, services and dotfiles; packages live in the system profile, so adding or removing one needs `nh os switch` (Linux) / `nh darwin switch` (macOS).

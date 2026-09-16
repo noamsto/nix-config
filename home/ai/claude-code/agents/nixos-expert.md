@@ -35,7 +35,7 @@ This is a flake-parts-based NixOS + nix-darwin config with:
 
 The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`, built via `flake-modules/darwin-systems.nix`) differs structurally from the Linux hosts:
 
-- **HM is a nix-darwin module, not standalone.** Wired via `home-manager.darwinModules.home-manager` (`users.noams = home/noams.nix`), so there is no `homeConfigurations` entry for the Mac — `nh home switch`/`nh os switch` have nothing to resolve and fail. Only `nh darwin switch .` works.
+- **HM is a nix-darwin module.** Wired via `home-manager.darwinModules.home-manager` (`users.noams = home/noams.nix`). `nh os switch` is NixOS-only and fails here; `nh darwin switch .` rebuilds system + HM. `nh home switch` / `just hm` work for an HM-only pass, via the `homeConfigurations."noams@mbp-m4-pro"` alias onto `darwinConfigurations`.
 - **Nix settings & caches are owned by Determinate Nix** (`determinateNix.customSettings` in the host's `default.nix`), NOT `flake.nix:nixConfig`/`lib/caches.nix` (the Linux path). Don't add Linux-only caches to the darwin host.
 - **Guard platform-specific code** with `lib.optionals pkgs.stdenv.isDarwin [...]` / `pkgs.stdenv.hostPlatform.isLinux`; macOS-only HM belongs in `home/darwin/`, never unconditionally on a shared `home/` path.
 - For rebuild command forms, the Determinate-Nix PATH bug (GUI / non-login shells), and the sudo-activation gotcha, **follow the `nix-rebuild` skill** — don't re-derive them here.

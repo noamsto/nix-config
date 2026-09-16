@@ -16,7 +16,10 @@ The nix-config repo uses **flake-parts** and spans two platforms. **Pick the reb
 
 **macOS / nix-darwin host** (`mbp-m4-pro`):
 
-- **Only path**: `nh darwin switch .` — rebuilds the darwin system **and** the integrated Home Manager in one go. `nh home switch` and `nh os switch` do **not** work here (see the macOS section below).
+- **Full rebuild** (system + user): `nh darwin switch .` — `nh os switch` is NixOS-only and does **not** work here.
+- **HM-only rebuild** (user config only): `nh home switch .` — resolves through the darwin alias (see the macOS section below).
+
+**Both platforms:** Home Manager is embedded in every host's system config, so the HM-only path activates config, services and dotfiles but **not packages** — those live in the system profile. Adding or removing a package needs the full rebuild.
 
 Most commands have three forms: `nh` wrapper → `just` recipe → raw `nix`/`nixos-rebuild`/`darwin-rebuild`. Prefer `nh` for rebuilds; use `just` for common chores; drop to raw `nix` only when the wrappers don't fit.
 
@@ -44,8 +47,8 @@ This applies to **every** build path: `nh os`, `nh home`, `nix build`, `nix flak
 | System build only (no activate) | `nh os build .` | `nom build .#nixosConfigurations.<host>.config.system.build.toplevel` |
 | Apply at next boot (NixOS) | `nh os boot .` | `sudo nixos-rebuild boot --flake .#<host>` |
 | **macOS rebuild (nix-darwin)** | `nh darwin switch .` | `darwin-rebuild switch --flake .#mbp-m4-pro` |
-| Home Manager rebuild (NixOS hosts) | `nh home switch .` | `home-manager switch --flake .#<config>` |
-| HM build only (NixOS hosts) | `nh home build .` | `nom build .#homeConfigurations.<config>.activationPackage` |
+| Home Manager rebuild (any host) | `nh home switch .` / `just hm` | `nom build .#<systems>.<host>.config.home-manager.users.noams.home.activationPackage` then run its `activate` |
+| HM build only (any host) | `nh home build .` / `just home-build` | same attr path, without running `activate` |
 | Validate flake | `just check` | `nix flake check` |
 | Format all code | `just fmt` | `nix fmt` |
 | Update inputs | `just update` | `nix flake update` |
@@ -59,21 +62,22 @@ This applies to **every** build path: `nh os`, `nh home`, `nix build`, `nix flak
 
 ## Which rebuild path?
 
-**On macOS (`mbp-m4-pro`)** → always `nh darwin switch .`. There is no separate HM-only path (see below).
+The full rebuild is `nh os switch .` on NixOS and `nh darwin switch .` on macOS. The HM-only path is `nh home switch .` (or `just hm`) on both.
 
-**On NixOS hosts:**
+- **User config, no new packages** (shell, editor, dotfiles, wallpapers, services) → HM-only path
+- **Any package added or removed**, including from a flake input bump → **full rebuild**
+- **System-level** (services, kernel, drivers, hardware, system packages) → full rebuild
+- **Unsure** → the full rebuild does everything, always safe.
 
-- **User config only** (shell, editor, dotfiles, wallpapers, user packages) → `nh home switch .`
-- **System-level** (services, kernel, drivers, hardware, system packages) → `nh os switch .`
-- **Unsure** → `nh os switch .` rebuilds both, always safe.
+User explicitly prefers the HM-only path (CLAUDE.local.md) for config iterations — it skips the system toplevel build and needs no sudo.
 
-User explicitly prefers `nh home switch` (CLAUDE.local.md) for HM iterations on Linux — it's ~6× faster and doesn't need sudo.
+**The package caveat is structural, not a bug.** Every host sets `useUserPackages = true`, so `home.packages` is delivered through the system profile (`/etc/profiles/per-user/noams`). The HM activation script's `installPackages` step is a bare `nixProfileRemove home-manager-path`, so an HM-only switch will report success and install nothing new. If a command is missing after one, that's why — run the full rebuild.
 
 ## macOS (nix-darwin) specifics
 
 The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`) works differently from the Linux hosts:
 
-- **Home Manager is integrated as a nix-darwin module** (`home-manager.darwinModules.home-manager`, `users.noams = home/noams.nix`) — it is **not** a standalone `homeConfigurations` entry. So `nh home switch` has no config to resolve here and **fails**; `nh os switch` is NixOS-only and also doesn't apply. Always use `nh darwin switch .`, which rebuilds the system + HM together.
+- **Home Manager is integrated as a nix-darwin module** (`home-manager.darwinModules.home-manager`, `users.noams = home/noams.nix`), and `homeConfigurations."noams@mbp-m4-pro"` is an alias onto it rather than a standalone config. So `nh home switch` / `just hm` do work here for an HM-only pass; `nh os switch` is NixOS-only and does not apply. Use `nh darwin switch .` when the system itself changed.
 - `nh darwin switch` works without the path arg too — `NH_FLAKE` is set to the repo (see `home/ai/.../default.nix`).
 - **First switch / bootstrap** (before `darwin-rebuild` is on PATH): `nix run nix-darwin -- switch --flake ~/nix-config#mbp-m4-pro`. Full bootstrap steps live in `hosts/mbp-m4-pro/README.md`.
 - **Caches & Nix settings** are managed by **Determinate Nix** via `determinateNix.customSettings` in the host's `default.nix` — *not* `flake.nix:nixConfig`/`lib/caches.nix` (those are the Linux path). Linux-only caches (hyprland, noctalia, vicinae, yazi, etc.) are intentionally omitted on darwin.
@@ -101,7 +105,7 @@ PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin switch .
 
 **nix-darwin host:** `mbp-m4-pro` (personal, macOS) — rebuild with `nh darwin switch .`
 
-**Standalone HM configs (Linux only):** `noams@thinkpad-p14s-g5`, `noams@thinkpad-p14s-g6`, plus legacy aliases (`noams-hyprland`, `noams-hyprland-work`). `nh home` auto-picks the right one. There is **no** standalone HM config for the Mac — its HM is part of the darwin system.
+**HM configs:** `noams@thinkpad-p14s-g5`, `noams@thinkpad-p14s-g6`, `noams@halo`, `noams@mbp-m4-pro`, plus legacy aliases (`noams`, `noams-hyprland`, `noams-hyprland-work`). `nh home` auto-picks the right one. None of these are standalone — each is an alias onto its host's embedded HM (`flake-modules/home-manager.nix`), so there is exactly one evaluation per host.
 
 ## Debugging failed builds
 
@@ -170,7 +174,8 @@ nh os build .                   # test build
 | Using `home-manager switch` directly with wrong `--flake .#` arg | `error: flake output has no attribute ...` | Use `nh home switch .` — auto-resolves config |
 | Duplicating cache entries | Caches in `flake.nix` drift from `lib/caches.nix` | Edit both; verify identical |
 | Running `sudo` on HM command | HM installs into root's profile | HM never needs sudo; use `nh home switch .` |
-| `nh home switch` / `nh os switch` on the Mac | No config resolves / wrong platform | On `mbp-m4-pro` use `nh darwin switch .` — HM is a darwin module, not standalone |
+| `nh os switch` on the Mac | Wrong platform, nothing resolves | On `mbp-m4-pro` use `nh darwin switch .`; `nh home switch` works for an HM-only pass |
+| Adding a package, then only `nh home switch` | Switch succeeds, command still missing | Packages come from the system profile — run the full rebuild |
 | Building after `git stash` | Build sees pre-stash state | `git stash pop` or stage explicitly |
 | `nix flake update` then forgetting to commit `flake.lock` | Reproducibility drift | Commit `flake.lock` with the input bump |
 
