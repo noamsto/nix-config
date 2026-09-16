@@ -35,6 +35,8 @@
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
   pi-wrapper = pkgs.writeShellScriptBin "pi" ''
     export PI_AGENT_HOOKS="${hookPaths}"
+    # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
+    export PI_USER_ARGC=$#
     exec -a pi ${pkgs.pi}/bin/pi \
       -e ${./hook-bridge.ts} \
       --skill "$HOME/.claude/skills" \
