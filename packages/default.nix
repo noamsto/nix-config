@@ -26,6 +26,7 @@
         claude-squad = pkgs.callPackage ./claude-squad {};
         halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
         sentinelone = pkgsUnfree.callPackage ./sentinelone {};
+        sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
       };
   };
 }

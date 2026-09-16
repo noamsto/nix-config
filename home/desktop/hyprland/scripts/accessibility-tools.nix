@@ -1,7 +1,13 @@
-{pkgs, ...}: {
+{
+  inputs,
+  pkgs,
+  ...
+}: {
   home.packages = [
     # OCR tool - select area and copy text
     pkgs.normcap
+    # Streaming dictation, complementing voxtype's push-to-talk
+    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
   ];
 
   services.voxtype = {
