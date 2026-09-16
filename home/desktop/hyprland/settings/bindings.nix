@@ -147,8 +147,10 @@ in {
     hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
     hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("voxtype record toggle"))
     hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("sherpa-dictate toggle"))
-    -- F13 is what xremap emits when Right Alt is tapped rather than held
-    hl.bind("F13", hl.dsp.exec_cmd("sherpa-dictate toggle"))
+    -- xremap emits KEY_F13 when Right Alt is tapped rather than held, but xkb
+    -- maps that keycode to the XF86Tools keysym, and Hyprland matches on
+    -- keysyms. Binding "F13" here silently never fires.
+    hl.bind("XF86Tools", hl.dsp.exec_cmd("sherpa-dictate toggle"))
 
     -- Media: launch YTM if not running
     hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce youtube-music}"))
