@@ -1,4 +1,6 @@
-# VAD_MODEL, MODEL_DIR and DEVICE are injected by default.nix.
+# shellcheck shell=bash
+# Prepended by default.nix, which supplies the shebang along with
+# VAD_MODEL, MODEL_DIR and DEVICE.
 
 runtime="${XDG_RUNTIME_DIR:-/tmp}/sherpa-dictate"
 pidfile="$runtime/pid"
@@ -27,7 +29,7 @@ listen() {
     "$DEVICE" 2>&1 |
     stdbuf -oL tee "$runtime/log" |
     while IFS= read -r line; do
-      [[ "$line" =~ ^[[:space:]]*[0-9]+:[[:space:]]?(.*)$ ]] || continue
+      [[ $line =~ ^[[:space:]]*[0-9]+:[[:space:]]?(.*)$ ]] || continue
       text="${BASH_REMATCH[1]}"
       [ -n "$text" ] && wtype -- "$text "
     done
@@ -36,9 +38,25 @@ listen() {
 start() {
   running && return 0
   mkdir -p "$runtime"
+  : >"$runtime/log"
   setsid "$0" __listen &
   echo $! >"$pidfile"
-  notify-send -t 2000 -r 9042 "Dictation" "Listening — speak, pause to commit"
+
+  # Loading Parakeet takes ~3s, and announcing "listening" before the
+  # recognizer exists invites talking into a mic that is not capturing yet.
+  # Claim it only once the ASR says so; the shared -r id replaces the first
+  # toast rather than stacking.
+  notify-send -t 4000 -r 9042 "Dictation" "Starting…"
+  (
+    for _ in $(seq 100); do
+      if grep -q "Please speak" "$runtime/log" 2>/dev/null; then
+        notify-send -t 2000 -r 9042 "Dictation" "Listening — speak, pause to commit"
+        exit 0
+      fi
+      sleep 0.1
+    done
+    notify-send -t 3000 -r 9042 "Dictation" "Failed to start — see $runtime/log"
+  ) &
 }
 
 stop() {
