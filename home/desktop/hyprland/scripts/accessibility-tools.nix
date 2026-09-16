@@ -1,9 +1,11 @@
 {
+  config,
   inputs,
   lib,
   pkgs,
   ...
 }: let
+  palette = config.theme.palette.dark;
   voxtype =
     (pkgs.voxtype.override {
       vulkanSupport = true;
@@ -75,15 +77,33 @@ in {
         # green-to-yellow meter — three competing hues. Drop the frame and the
         # meter, and draw discrete bars instead: the filled area reads as mush
         # at this size.
-        # Literal Catppuccin Mocha rather than palette = "omarchy": that path
-        # reads ~/.config/omarchy/current/theme/colors.toml, which this host
-        # does not have. Values mirror noctalia-colors.conf ($primary/$error/
-        # $surface), so the OSD matches the rest of the desktop in dark mode.
+        # palette = "omarchy" would read ~/.config/omarchy/current/theme/
+        # colors.toml, but voxtype 1.0.1 ships no loader for it — Theme.qml
+        # marks that "Wave 2". Feed the semantic tokens directly instead.
+        #
+        # These are the dark values only. theme-toggle repaints the running
+        # OSD for light mode by patching the same tokens in the runtime style
+        # JSON; see update_voxtype in theme-toggle.sh.
         palette = "custom";
+
+        colors = {
+          accent = palette.mauve;
+          background = palette.base;
+          surface = palette.surface0;
+          foreground = palette.text;
+          muted = palette.subtext0;
+          success = palette.green;
+          warning = palette.yellow;
+          error = palette.red;
+          recording = palette.red;
+          streaming = palette.blue;
+          transcribing = palette.peach;
+          idle = palette.overlay1;
+        };
 
         frame = {
           border = "none";
-          background = "#1e1e2e";
+          background = "background";
           glow = false;
         };
 
@@ -95,14 +115,14 @@ in {
           {
             type = "bars";
             source = "peak";
-            color = "#cba6f7";
+            color = "accent";
             mirror = true;
             order = 10;
           }
           {
             type = "icon";
             source = "state";
-            color = "#f38ba8";
+            color = "recording";
             order = 20;
           }
         ];

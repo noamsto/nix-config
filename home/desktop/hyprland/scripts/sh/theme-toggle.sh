@@ -372,6 +372,50 @@ update_noctalia() {
   fi
 }
 
+# Update the voxtype OSD palette
+update_voxtype() {
+  local theme="$1"
+  local style_file="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/voxtype/quickshell-style.json"
+  log_debug "Updating voxtype OSD to $theme"
+
+  # Written by voxtype-osd-quickshell at launch, so it only exists while the
+  # OSD is up. Nothing to repaint otherwise.
+  [[ -f "$style_file" ]] || return 0
+
+  local accent background surface foreground muted recording streaming idle
+  if [[ "$theme" == "light" ]]; then
+    accent="$LIGHT_MAUVE" background="$LIGHT_BASE" surface="$LIGHT_SURFACE0"
+    foreground="$LIGHT_TEXT" muted="$LIGHT_SUBTEXT0" recording="$LIGHT_RED"
+    streaming="$LIGHT_BLUE" idle="$LIGHT_OVERLAY1"
+  else
+    accent="$DARK_MAUVE" background="$DARK_BASE" surface="$DARK_SURFACE0"
+    foreground="$DARK_TEXT" muted="$DARK_SUBTEXT0" recording="$DARK_RED"
+    streaming="$DARK_BLUE" idle="$DARK_OVERLAY1"
+  fi
+
+  local tmp
+  tmp=$(mktemp) || return 1
+
+  # StyleLoader watches this file and reloads on change, so patching it
+  # repaints a running OSD in place. Restarting voxtype instead would reload
+  # the Parakeet model, a ~10s stall for a colour change.
+  if ! jq \
+    --arg accent "$accent" --arg background "$background" \
+    --arg surface "$surface" --arg foreground "$foreground" \
+    --arg muted "$muted" --arg recording "$recording" \
+    --arg streaming "$streaming" --arg idle "$idle" \
+    '.colors += {accent: $accent, background: $background, surface: $surface,
+                 foreground: $foreground, muted: $muted, recording: $recording,
+                 error: $recording, streaming: $streaming, idle: $idle}' \
+    "$style_file" >"$tmp"; then
+    rm -f "$tmp"
+    log_error "voxtype OSD style patch failed"
+    record_failure "voxtype"
+    return 1
+  fi
+  mv "$tmp" "$style_file"
+}
+
 # Update Vicinae theme using native theme command
 update_vicinae() {
   local theme="$1"
@@ -598,7 +642,8 @@ apply_theme() {
     update_k9s update_lazygit update_lazydocker \
     update_btop update_bat update_delta update_fzf \
     update_yazi update_kvantum update_noctalia \
-    update_process_compose update_vicinae update_kde_colorscheme
+    update_process_compose update_vicinae update_kde_colorscheme \
+    update_voxtype
 }
 
 # Toggle between dark and light themes via Noctalia
@@ -724,6 +769,7 @@ sync_theme() {
     noctalia) update_noctalia "$current" ;;
     process-compose) update_process_compose "$current" ;;
     vicinae) update_vicinae "$current" ;;
+    voxtype) update_voxtype "$current" ;;
     kde) update_kde_colorscheme "$current" ;;
     claude-code) update_claude_code "$current" ;;
     gtk-css) update_gtk_css "$current" ;;
