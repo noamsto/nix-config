@@ -2,7 +2,6 @@
   pkgs,
   lib,
   inputs,
-  osConfig,
   ...
 }: let
   guards = import ../agent-hooks {inherit pkgs;};
@@ -106,23 +105,12 @@
   '';
 
   # Workers get their settings.json from dispatcher, not this activation.
-  managedSettings =
-    {
-      # grep/find/ls ship off by default.
-      defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls"];
-    }
-    // (
-      if osConfig.profile == "work"
-      then {
-        defaultProvider = "openrouter";
-        defaultModel = "deepseek/deepseek-v4.1-flash";
-      }
-      else {
-        # OpenCode Zen has no v4.1 flash.
-        defaultProvider = "opencode";
-        defaultModel = "deepseek-v4-flash";
-      }
-    );
+  managedSettings = {
+    # grep/find/ls ship off by default.
+    defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls"];
+    defaultProvider = "openrouter";
+    defaultModel = "deepseek/deepseek-v4.1-flash";
+  };
 in
   lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     # llm-agents only builds pi on Linux.
