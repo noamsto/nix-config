@@ -83,6 +83,10 @@ in {
       initial_window_width = "120c";
       initial_window_height = "30c";
 
+      # kitty 0.47+ draws an OSC 9;4 progress bar on the top edge by default;
+      # long-running CLI tools (Claude Code among them) keep it lit.
+      progress_bar = "hidden";
+
       mouse_hide_wait = -1; # hide immediately when typing
       shell_integration = "enabled";
 
