@@ -7,9 +7,15 @@ running() {
   [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null
 }
 
-# Each committed utterance arrives as "<start> -- <end>: <text>"; every other
-# line is model/config chatter. stdbuf keeps the pipe line-buffered, otherwise
-# nothing types until 4KB of output accumulates.
+# sherpa-onnx writes transcripts to STDERR, not stdout, so the pipe has to
+# carry 2>&1 — stdout alone is empty. tee keeps the full stream (including the
+# config dump) for diagnosis.
+#
+# Each committed utterance is numbered, " 0: some words." — note that is NOT
+# the "<start> -- <end>: <text>" the file-based sherpa-onnx-vad-with-offline-asr
+# emits. Anchoring on the index keeps chatter ("Use recording device:
+# plug:default") out of the typed stream. stdbuf keeps both stages
+# line-buffered, otherwise nothing types until 4KB accumulates.
 listen() {
   stdbuf -oL sherpa-onnx-vad-alsa-offline-asr \
     --silero-vad-model="$VAD_MODEL" \
@@ -18,12 +24,11 @@ listen() {
     --joiner="$MODEL_DIR/joiner.int8.onnx" \
     --tokens="$MODEL_DIR/tokens.txt" \
     --num-threads=4 \
-    "$DEVICE" 2>/dev/null |
+    "$DEVICE" 2>&1 |
+    stdbuf -oL tee "$runtime/log" |
     while IFS= read -r line; do
-      case "$line" in
-      *' -- '*': '*) text="${line#*: }" ;;
-      *) continue ;;
-      esac
+      [[ "$line" =~ ^[[:space:]]*[0-9]+:[[:space:]]?(.*)$ ]] || continue
+      text="${BASH_REMATCH[1]}"
       [ -n "$text" ] && wtype -- "$text "
     done
 }
