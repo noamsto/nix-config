@@ -25,6 +25,7 @@
         atlas-pro = pkgs.callPackage ./atlas_pro.nix {inherit pkgs;};
         claude-squad = pkgs.callPackage ./claude-squad {};
         halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
+        inherit (pkgs.callPackage ./pi-extensions {}) pi-lens pi-web-access rpiv-todo;
         sentinelone = pkgsUnfree.callPackage ./sentinelone {};
         sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
       };

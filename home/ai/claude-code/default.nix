@@ -8,6 +8,7 @@
 }: let
   # Shared MCP server definitions
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  lspServers = import ../lsp-servers.nix {inherit pkgs;};
 
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   sharedGuards = import ../agent-hooks {inherit pkgs;};
@@ -283,29 +284,13 @@ in {
     settings = {}; # Managed via --settings flag in wrapper
     # Heavy MCPs (Playwright, PostHog) loaded conditionally via mcp-profiles.nix aliases
     mcpServers = lib.removeAttrs mcpServers.base mcpServers.claudeAiProvided;
-    lspServers = {
-      nix = {
-        command = "${pkgs.nixd}/bin/nixd";
-        extensionToLanguage = {
-          ".nix" = "nix";
-        };
-      };
-      bash = {
-        command = "${pkgs.bash-language-server}/bin/bash-language-server";
-        args = ["start"];
-        extensionToLanguage = {
-          ".sh" = "shellscript";
-          ".bash" = "shellscript";
-        };
-      };
-      python = {
-        command = "${pkgs.pyright}/bin/pyright-langserver";
-        args = ["--stdio"];
-        extensionToLanguage = {
-          ".py" = "python";
-          ".pyi" = "python";
-        };
-      };
-    };
+    # Secondaries are left out: how Claude Code arbitrates two servers claiming
+    # one extension is undocumented.
+    lspServers =
+      lib.mapAttrs (_: s: {
+        command = lib.getExe s.package;
+        extensionToLanguage = s.extensions;
+      })
+      (lib.filterAttrs (_: s: !(s.secondary or false)) lspServers);
   };
 }

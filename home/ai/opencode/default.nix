@@ -5,17 +5,41 @@
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  lspServers = import ../lsp-servers.nix {inherit pkgs;};
+
+  # opencode.json stays a hand-editable out-of-store symlink, so the registry
+  # rides in through OPENCODE_CONFIG, which opencode merges over it. Its own
+  # auto-installed pyright would otherwise run beside ty.
+  lspConfig = pkgs.writeText "opencode-lsp.json" (builtins.toJSON {
+    lsp =
+      {pyright.disabled = true;}
+      // lib.mapAttrs (_: s: {
+        command = [(lib.getExe s.package)];
+        extensions = builtins.attrNames s.extensions;
+      })
+      (lib.mapAttrs' (name: lib.nameValuePair (opencodeIds.${name} or name)) lspServers);
+  });
+  # Registry entries that replace an opencode built-in take over its id.
+  opencodeIds = {
+    lua = "lua-ls";
+    yaml = "yaml-ls";
+  };
+
+  opencode-wrapped = pkgs.symlinkJoin {
+    name = "opencode";
+    paths = [pkgs.opencode];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/opencode --set-default OPENCODE_CONFIG ${lspConfig}
+    '';
+    inherit (pkgs.opencode) meta;
+  };
 in {
   home.packages = with pkgs; [
     oh-my-opencode
     (pkgs.writeShellScriptBin "comment-checker" ''
       exec ${pkgs.nodejs}/bin/npx --yes @code-yeongyu/comment-checker "$@"
     '')
-    nixd # Nix LSP
-    typescript-language-server # TS/JS LSP
-    bash-language-server # Shell script LSP
-    yaml-language-server # YAML LSP
-    lua-language-server # Lua LSP (nvim configs)
     # MCP servers
     context7-mcp
     # playwright-mcp has bundled chromium, no need to add separately
@@ -25,6 +49,7 @@ in {
 
   programs.opencode = {
     enable = true;
+    package = opencode-wrapped;
     enableMcpIntegration = true;
     tui = {
       theme = "catppuccin";
