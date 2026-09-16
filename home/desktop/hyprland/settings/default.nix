@@ -3,7 +3,7 @@
   cursorName = pointer.name;
   iconThemeName = config.gtk.iconTheme.name;
 in {
-  imports = [./bindings.nix ./window_rule.nix ./animations.nix];
+  imports = [./bindings.nix ./window_rule.nix ./animations.nix ./reload.nix];
   wayland.windowManager.hyprland = {
     settings = {
       # Everything here nests inside hl.config({...}) — Hyprland exposes no
