@@ -36,6 +36,23 @@ in {
             };
           };
         }
+        {
+          # Tap Right Alt to toggle streaming dictation; held it stays a plain
+          # Alt, so Alt+Tab and friends are untouched. Same tap/hold shape as
+          # Caps above, but with a non-zero threshold: Caps wants chords to
+          # resolve to Super instantly, whereas RightAlt is only ever chorded
+          # AS Alt, so a real hold window is what distinguishes the two.
+          #
+          # F13 is a keycode nothing else claims; Hyprland binds it directly.
+          name = "ralt_tap_dictation";
+          remap = {
+            RIGHTALT = {
+              held = "KEY_RIGHTALT";
+              alone = "KEY_F13";
+              alone_timeout_millis = 300;
+            };
+          };
+        }
       ];
       keymap = [
         {

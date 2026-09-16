@@ -147,6 +147,8 @@ in {
     hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
     hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("voxtype record toggle"))
     hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("sherpa-dictate toggle"))
+    -- F13 is what xremap emits when Right Alt is tapped rather than held
+    hl.bind("F13", hl.dsp.exec_cmd("sherpa-dictate toggle"))
 
     -- Media: launch YTM if not running
     hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce youtube-music}"))
