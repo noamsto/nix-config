@@ -192,6 +192,12 @@ in {
           version = 1;
           base_url = "http://localhost:8096";
 
+          # jellarr's runtime Zod schema requires `system`, even though the Nix
+          # module declares it nullable and omits it when unset. An empty object
+          # is a no-op: the diff renders every current field as a removal, and
+          # removals are filtered.
+          system = {};
+
           # VCN 4.0 on the 8060S: VAAPI decode plus HEVC Main10/AV1 encode.
           encoding = {
             enableHardwareEncoding = true;
