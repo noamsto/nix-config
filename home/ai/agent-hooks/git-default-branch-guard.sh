@@ -2,8 +2,8 @@
 # PreToolUse hook: block `git commit` when HEAD is the repo's default branch.
 # New work belongs on its own branch/worktree (see CLAUDE.md "Worktree
 # Isolation") — committing straight to main is what produces stray-main commits
-# when multiple sessions share one checkout. Set ALLOW_COMMIT_ON_DEFAULT=1 for a
-# deliberate default-branch commit.
+# when multiple sessions share one checkout. For a deliberate default-branch
+# commit, launch the agent with ALLOW_COMMIT_ON_DEFAULT=1 in its environment.
 
 set -euo pipefail
 
@@ -18,7 +18,8 @@ command=$(jq -r '.tool_input.command // empty' <<<"$input")
 # Only handle git commit (not `git commit-tree`, `git committed`, etc.)
 echo "$command" | grep -qE '(^|\s)git\s+commit(\s|$)' || exit 0
 
-# Explicit, deliberate override.
+# Explicit, deliberate override — from the hook's own env, never the command
+# string: an override the agent can type for itself is no override.
 [[ ${ALLOW_COMMIT_ON_DEFAULT:-} == 1 ]] && exit 0
 
 # git runs in the intercepted command's cwd, not the hook process's cwd.
@@ -63,6 +64,6 @@ jq -n --arg branch "$current" '{
   hookSpecificOutput: {
     hookEventName: "PreToolUse",
     permissionDecision: "deny",
-    permissionDecisionReason: ("Refusing to commit directly to the default branch (\($branch)). New work belongs on its own branch/worktree — run `wt switch -c <branch-name>` first, then commit. Set ALLOW_COMMIT_ON_DEFAULT=1 for a deliberate default-branch commit.")
+    permissionDecisionReason: ("Refusing to commit directly to the default branch (\($branch)). New work belongs on its own branch/worktree — run `wt switch -c <branch-name>` first, then commit. To allow default-branch commits for a whole session, launch the agent with ALLOW_COMMIT_ON_DEFAULT=1 in its environment — prefixing this command with it will not work.")
   }
 }'
