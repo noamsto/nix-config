@@ -319,16 +319,24 @@ in {
             icon = "🚀";
           };
         };
-        # UI is deliberately not proxied: it app-store-redirects every phone
-        # browser before rendering, and hosting it same-origin with houston
-        # would put houston's Path=/ control cookie inside its reach.
+        # The web UI sits at /lemonade, stripped so lemond answers it at its own
+        # root. The UI builds its API base from window.location.origin, so every
+        # request it makes — including the websocket endpoints — lands on the
+        # origin-root routes below.
+        #
+        # Known: the UI bounces phone browsers to an app store on load, and
+        # serving it same-origin puts houston's Path=/ cookie in its reach.
         lemonade = {
           port = config.hardware.amd-npu.lemonade.port;
-          paths = ["/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
+          paths = ["/lemonade" "/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
+          stripPrefix = ["/lemonade"];
           streaming = true;
           responseHeaderTimeout = "300s";
-          # Nothing to open: every path here is an API surface.
-          landing.advertise = false;
+          landing = {
+            title = "Lemonade";
+            description = "Local LLM chat UI";
+            icon = "🍋";
+          };
         };
         prep = {
           port = config.services.prep.port;

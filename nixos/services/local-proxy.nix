@@ -32,6 +32,7 @@
     intersectLists
     hasInfix
     hasPrefix
+    hasSuffix
     ;
   cfg = config.services.localProxy;
 
@@ -162,7 +163,15 @@
         reverse_proxy ${svc.upstream}:${toString svc.port} {
             ${concatStringsSep "\n    " proxyLines}
           }'';
+
+    # `handle_path` strips the prefix but does not add the trailing slash back,
+    # so an app that resolves its assets relatively asks for them one directory
+    # up when the URL lacks it. Send the bare path to the slash form.
+    slashRedirect =
+      optional (elem path svc.stripPrefix && !(hasSuffix "/" path))
+      "redir ${path} ${path}/ 308";
   in ''
+    ${concatStringsSep "\n" slashRedirect}
     ${directive}${matcher} {
       ${reverseProxy}
     }
