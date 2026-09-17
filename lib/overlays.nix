@@ -8,7 +8,6 @@ inputs: [
   })
 
   (final: _: {
-    nix-search-tv = inputs.nix-search-tv.packages.${final.stdenv.hostPlatform.system}.default;
     wtc = inputs.wtc.packages.${final.stdenv.hostPlatform.system}.default;
     zr = inputs.zr.packages.${final.stdenv.hostPlatform.system}.default;
     argonaut = inputs.argonaut.packages.${final.stdenv.hostPlatform.system}.default;

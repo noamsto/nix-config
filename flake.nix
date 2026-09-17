@@ -222,11 +222,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-search-tv = {
-      url = "github:3timeslazy/nix-search-tv";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
     };
