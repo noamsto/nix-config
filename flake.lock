@@ -1532,17 +1532,17 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1789163032,
-        "narHash": "sha256-LGLH3EsgUgqkqaPAJpy1gC7empCPE7mRrque4aU/VTs=",
-        "owner": "beefyhalo",
+        "lastModified": 1789634610,
+        "narHash": "sha256-AtEjYEkQK8RluQRF8YN9tucPRvhAImf28F/DqegU9E8=",
+        "owner": "noamsto",
         "repo": "jellarr",
-        "rev": "317f7be9d4a758f25b8180feb41fae12530a53a1",
+        "rev": "ea0157e204498c423328c0f532f06543247fc458",
         "type": "github"
       },
       "original": {
-        "owner": "beefyhalo",
+        "owner": "noamsto",
         "repo": "jellarr",
-        "rev": "317f7be9d4a758f25b8180feb41fae12530a53a1",
+        "rev": "ea0157e204498c423328c0f532f06543247fc458",
         "type": "github"
       }
     },

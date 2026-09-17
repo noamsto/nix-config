@@ -339,12 +339,15 @@
     };
 
     # Declarative Jellyfin config for halo (libraries, users, encoding) via
-    # Jellarr. Pinned to the one-commit fork carrying PR #79's Jellyfin 12 auth
-    # fix: upstream still sends the X-Emby-Token header that 12.0 rejects with a
-    # 401, which Jellarr then misreads as "already up to date". Switch back to
-    # github:venkyr77/jellarr once #79 merges.
+    # Jellarr. Pinned to our fork, which carries two changes upstream lacks:
+    #   * PR #79's Jellyfin 12 auth fix — upstream still sends the X-Emby-Token
+    #     header that 12.0 rejects with a 401, which Jellarr then misreads as
+    #     "already up to date";
+    #   * tone-mapping options (our PR #82), so HDR->SDR conversion is
+    #     declarative instead of a dashboard-only setting.
+    # Switch back to github:venkyr77/jellarr once both merge.
     jellarr = {
-      url = "github:beefyhalo/jellarr/317f7be9d4a758f25b8180feb41fae12530a53a1";
+      url = "github:noamsto/jellarr/ea0157e204498c423328c0f532f06543247fc458";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

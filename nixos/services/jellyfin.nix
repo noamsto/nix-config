@@ -229,10 +229,23 @@ in {
           system = {};
 
           # VCN 4.0 on the 8060S: VAAPI decode plus HEVC Main10/AV1 encode.
+          # Jellyfin only hardware-decodes h264 by default, so 4K HEVC was
+          # falling back to CPU decode; name every codec the GPU supports and
+          # enable 10/12-bit HEVC explicitly (the library is HDR Main 10).
           encoding = {
             enableHardwareEncoding = true;
             hardwareAccelerationType = "vaapi";
             vaapiDevice = "/dev/dri/renderD128";
+            hardwareDecodingCodecs = ["h264" "hevc" "mpeg2video" "vc1" "vp8" "vp9" "av1"];
+            enableDecodingColorDepth10Hevc = true;
+            enableDecodingColorDepth10HevcRext = true;
+            enableDecodingColorDepth12HevcRext = true;
+
+            # Without this Jellyfin "tone maps" by relabelling frames as bt709,
+            # which leaves HDR looking washed out. VPP is the AMD path.
+            enableTonemapping = true;
+            enableVppTonemapping = true;
+            tonemappingAlgorithm = "bt2390";
           };
         }
         // optionalAttrs (decl.libraries != []) {
