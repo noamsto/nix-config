@@ -251,6 +251,21 @@ in {
           administrator = true;
         }
       ];
+
+      # Read-only over the naspi export; the *arr stack there stays the only
+      # writer so its hardlinked imports survive.
+      libraries = [
+        {
+          name = "Movies";
+          collectionType = "movies";
+          path = "/mnt/media/movies";
+        }
+        {
+          name = "TV Shows";
+          collectionType = "tvshows";
+          path = "/mnt/media/tv";
+        }
+      ];
     };
   };
 
