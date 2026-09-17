@@ -9,6 +9,17 @@
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
   localPkgs = inputs.self.packages.${pkgs.stdenv.hostPlatform.system};
 
+  # aeye's pi adapter. Unlike the other three engines this routes nothing
+  # through hookyard: hookyard carries post_tool only, and the extension also
+  # owns session_start guidance/reset, resume backfill and the /aeye command.
+  # Imported from ../hookyard/aeye.nix anyway so every consumer shares one
+  # derivation — its PostToolUse stripping touches the other adapters'
+  # hooks.json, never adapters/pi.
+  aeye = import ../hookyard/aeye.nix {
+    inherit pkgs;
+    aeye = inputs.tmux-og.inputs.aeye;
+  };
+
   # ../claude-code owns its own nix wiring for these scripts, so they're built
   # separately here rather than shared. Both scripts self-filter on
   # tool_name, so one guard list can serve pi's bash and read tool calls alike.
@@ -75,6 +86,12 @@
     "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
     "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
     "${localPkgs.rpiv-todo}/lib/node_modules/@juicesharp/rpiv-todo"
+    # Capture + D2 renders into the carousel. Its scripts resolve aeye,
+    # tmux-claude-images and resvg from PATH (lazytmux's carouselDiagramTools)
+    # and jq from the system profile. A worker writing the manifest would land
+    # its images in the outer session's carousel (noamsto/aeye#235), so it
+    # belongs here rather than loading unconditionally.
+    "${aeye.tree}/adapters/pi/extensions/aeye.ts"
   ];
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The
@@ -93,7 +110,7 @@
       export PI_LENS_CONFIG_PATH=${piLensConfig}
       export PI_LENS_DISABLE_LSP_INSTALL=1
       export PI_LENS_DISABLE_TOOL_INSTALL=1
-      personal=(${personalExtensions} --lens-guard)
+      personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills)
     fi
     # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
     export PI_USER_ARGC=$#
