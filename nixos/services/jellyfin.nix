@@ -97,6 +97,36 @@ in {
           libraries as they are).
         '';
       };
+
+      users = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            name = mkOption {
+              type = types.str;
+              description = "Jellyfin username.";
+            };
+            passwordSecret = mkOption {
+              type = types.path;
+              description = ''
+                Path to the agenix secret holding the user's password. Jellarr
+                only reads it when creating the user; it never resets an
+                existing user's password (upstream FR #51).
+              '';
+            };
+            administrator = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Whether the user is an administrator.";
+            };
+          };
+        });
+        default = [];
+        description = ''
+          Users to declare. Existing users only get their policy reconciled;
+          the password is consumed at creation time so a from-scratch install
+          recreates the account.
+        '';
+      };
     };
   };
 
@@ -212,6 +242,15 @@ in {
               libraryOptions.pathInfos = [{inherit (library) path;}];
             })
             decl.libraries;
+        }
+        // optionalAttrs (decl.users != []) {
+          users =
+            map (user: {
+              inherit (user) name;
+              passwordFile = user.passwordSecret;
+              policy.isAdministrator = user.administrator;
+            })
+            decl.users;
         };
     };
   };

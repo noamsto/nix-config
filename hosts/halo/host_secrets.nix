@@ -27,6 +27,14 @@
       file = "${inputs.mysecrets}/jellarr-api-key.age";
       mode = "0400";
     };
+    # Plaintext Jellyfin password for the declared `noams` user. Read by the
+    # Jellarr service, which runs as `jellyfin`, and only consumed when the
+    # user is first created.
+    jellyfin_noams_password = {
+      file = "${inputs.mysecrets}/jellyfin-noams-password.age";
+      owner = "jellyfin";
+      mode = "0400";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in

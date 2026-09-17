@@ -243,6 +243,14 @@ in {
     declarative = {
       enable = true;
       apiKeySecret = config.age.secrets.jellarr_api_key.path;
+
+      users = [
+        {
+          name = "noams";
+          passwordSecret = config.age.secrets.jellyfin_noams_password.path;
+          administrator = true;
+        }
+      ];
     };
   };
 
