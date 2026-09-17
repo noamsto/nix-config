@@ -23,8 +23,13 @@ in {
 
   # -remote=auto forwards to one shared gopls daemon, so its parse and
   # type-check cache of dependencies is paid once across sessions and workers.
+  # gopls loads no view at all without `go` on PATH, and a harness started
+  # outside a Go devshell has none. Appended, so a repo's own toolchain wins.
   gopls = {
-    package = wrap "gopls-lsp" [pkgs.gopls] ''exec gopls -remote=auto "$@"'';
+    package = wrap "gopls-lsp" [pkgs.gopls] ''
+      export PATH="$PATH:${pkgs.go}/bin"
+      exec gopls -remote=auto "$@"
+    '';
     extensions = {".go" = "go";};
   };
 
