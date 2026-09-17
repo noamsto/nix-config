@@ -20,6 +20,13 @@
       mode = "0440";
       group = "wheel";
     };
+    # Raw Jellarr API key. Inserted into Jellyfin's database by
+    # services.jellyfinHost.declarative on first sync, then used to drive
+    # libraries/users/encoding through the REST API.
+    jellarr_api_key = {
+      file = "${inputs.mysecrets}/jellarr-api-key.age";
+      mode = "0400";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in

@@ -337,5 +337,15 @@
       url = "github:mattpocock/skills";
       flake = false;
     };
+
+    # Declarative Jellyfin config for halo (libraries, users, encoding) via
+    # Jellarr. Pinned to the one-commit fork carrying PR #79's Jellyfin 12 auth
+    # fix: upstream still sends the X-Emby-Token header that 12.0 rejects with a
+    # 401, which Jellarr then misreads as "already up to date". Switch back to
+    # github:venkyr77/jellarr once #79 merges.
+    jellarr = {
+      url = "github:beefyhalo/jellarr/317f7be9d4a758f25b8180feb41fae12530a53a1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 }

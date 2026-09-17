@@ -239,6 +239,11 @@ in {
 
     # Both NICs and the wifi, so a move to ethernet needs no config change.
     lanInterfaces = ["wlan0" "enp97s0" "enp98s0"];
+
+    declarative = {
+      enable = true;
+      apiKeySecret = config.age.secrets.jellarr_api_key.path;
+    };
   };
 
   services = {
