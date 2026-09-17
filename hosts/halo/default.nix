@@ -267,7 +267,11 @@ in {
     # houston's Host allowlist, and would just 421.
     localProxy = {
       enable = true;
-      hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
+      # Split by scheme: only the ts.net name has a certificate available. It is
+      # https-only, so plain http to it 308s to https instead of serving; an IP
+      # and a bare name can get no cert, so they stay on :80.
+      hostNames = [config.hostname "100.92.49.55" "localhost"];
+      httpsHostNames = ["halo.tail68e513.ts.net"];
 
       landingPage = {
         enable = true;
@@ -322,6 +326,13 @@ in {
         };
       };
     };
+
+    # Lets the caddy user fetch this node's TLS certificate from tailscaled
+    # (TS_PERMIT_CERT_UID); without it tailscaled refuses the local cert
+    # endpoint — its own source names caddy/nginx/www-data as the callers this
+    # exists for. Host level on purpose: it is a privilege widening, and no
+    # other host runs an HTTPS vhost.
+    tailscale.permitCertUid = config.services.caddy.user;
   };
 
   users.users.noams = {

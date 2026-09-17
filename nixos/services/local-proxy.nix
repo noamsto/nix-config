@@ -29,6 +29,7 @@
     any
     all
     subtractLists
+    intersectLists
     hasInfix
     hasPrefix
     ;
@@ -167,7 +168,20 @@
     }
   '';
 
-  vhostKey = concatStringsSep " " (map (h: "http://${h}") cfg.hostNames);
+  # Both schemes in one site block on purpose: Caddy splits `https://`
+  # addresses onto :443 and the rest onto :80 by itself, and because an
+  # `https://` address is present it also adds the HTTP->HTTPS redirect for
+  # those names. Two blocks would mean two of everything (log writer, landing
+  # handle, every service handle) for no gain.
+  vhostKey = concatStringsSep " " (
+    map (h: "http://${h}") cfg.hostNames
+    ++ map (h: "https://${h}") cfg.httpsHostNames
+  );
+
+  # Every address the vhost answers to, in either scheme. The landing page names
+  # it, and "is this vhost addressed at all" is a question about the union — an
+  # https-only vhost is a valid site.
+  siteNames = cfg.hostNames ++ cfg.httpsHostNames;
 
   rootClaimants = filterAttrs (_: svc: elem "/" svc.paths) cfg.services;
   allPaths = flatten (mapAttrsToList (_: svc: svc.paths) cfg.services);
@@ -305,7 +319,7 @@
     <main>
       <h1>${escapeXML cfg.landingPage.title}</h1>
       <div></div>
-      <p class="hosts">Answers to ${escapeXML (concatStringsSep ", " cfg.hostNames)}</p>
+      <p class="hosts">Answers to ${escapeXML (concatStringsSep ", " siteNames)}</p>
     ${
       if landingEntries == []
       then ''<p class="empty">No services are advertised yet. Add one under <code>services.localProxy.services</code>.</p>''
@@ -345,12 +359,29 @@ in {
       description = "Names/addresses the vhost answers to (without the `http://` prefix, which the module adds).";
     };
 
+    httpsHostNames = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      example = ["host.tailnet.ts.net"];
+      description = ''
+        Names/addresses the vhost also answers to over HTTPS, without the
+        `https://` prefix (the module adds it). Caddy obtains each name's
+        certificate itself — from the local Tailscale daemon for a `*.ts.net`
+        name, which additionally needs `services.tailscale.permitCertUid` set
+        to Caddy's user, or from a public CA otherwise.
+
+        Plain-HTTP requests for these names are redirected to HTTPS, so a name
+        must not also appear in `hostNames`.
+      '';
+    };
+
     lanInterfaces = mkOption {
       type = types.listOf types.str;
       default = [];
       example = ["enp97s0"];
       description = ''
-        Interfaces to open TCP 80 on. Every registered service becomes reachable,
+        Interfaces to open TCP 80 on, and TCP 443 as well when
+        `httpsHostNames` is set. Every registered service becomes reachable,
         unauthenticated, to whatever network segment the named interface is on —
         empty means tailnet-only reach, since `tailscale0` is already trusted.
       '';
@@ -426,9 +457,20 @@ in {
       {
         # A bad hostName (empty list, an already-scheme-prefixed entry, or one
         # with a space) produces a site address that silently never matches,
-        # rather than an eval or runtime error.
-        assertion = cfg.hostNames != [] && !(any (h: hasInfix " " h || hasPrefix "http://" h) cfg.hostNames);
-        message = "services.localProxy: hostNames must be non-empty, space-free, and without a scheme prefix (the module adds `http://`).";
+        # rather than an eval or runtime error. Applies to both lists — either
+        # alone can address the vhost — and to `https://` as well as `http://`:
+        # which scheme the module adds depends on the list.
+        assertion =
+          siteNames
+          != []
+          && !(any (h: hasInfix " " h || hasPrefix "http://" h || hasPrefix "https://" h) siteNames);
+        message = "services.localProxy: hostNames and httpsHostNames must not both be empty, and no name in either may contain a space or a scheme prefix (the module adds `http://` or `https://`).";
+      }
+      {
+        # A name in both lists is served on :80 and :443, so Caddy adds no
+        # redirect for it — almost certainly not what was meant.
+        assertion = intersectLists cfg.hostNames cfg.httpsHostNames == [];
+        message = "services.localProxy: a name cannot be both http and https — Caddy already redirects `httpsHostNames` to HTTPS.";
       }
       {
         assertion = all (svc: subtractLists svc.paths svc.stripPrefix == []) (attrValues cfg.services);
@@ -463,7 +505,7 @@ in {
     # Deliberately not networking.firewall.allowedTCPPorts: that opens every
     # interface, including whatever untrusted network a host roams onto.
     networking.firewall.interfaces = genAttrs cfg.lanInterfaces (_: {
-      allowedTCPPorts = [80];
+      allowedTCPPorts = [80] ++ optional (cfg.httpsHostNames != []) 443;
     });
   };
 }
