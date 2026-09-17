@@ -13,8 +13,6 @@
       ./houston
       ./mcp.nix
       ./opencode
-      # Linux-only, but gated inside the module — `pkgs` in `imports` resolves
-      # through _module.args and sends the eval into infinite recursion.
       ./pi
     ]
     # Codex is a work-only engine — there's no personal OpenAI account, so the

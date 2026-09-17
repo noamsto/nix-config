@@ -130,27 +130,25 @@
     defaultProvider = "openrouter";
     defaultModel = "deepseek/deepseek-v4.1-flash";
   };
-in
-  lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
-    # llm-agents only builds pi on Linux.
-    home = {
-      packages = [pi-wrapper];
+in {
+  home = {
+    packages = [pi-wrapper];
 
-      # Global instructions. pi's only machine-wide context channel: it reads
-      # ~/.pi/agent/AGENTS.md plus AGENTS.md/CLAUDE.md walking up from cwd, and
-      # does NOT expand the @import that pulls this file into ~/.claude/CLAUDE.md.
-      # Out-of-store symlink so it stays editable, same file codex symlinks and
-      # cursor loads as a rule.
-      file.".pi/agent/AGENTS.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+    # Global instructions. pi's only machine-wide context channel: it reads
+    # ~/.pi/agent/AGENTS.md plus AGENTS.md/CLAUDE.md walking up from cwd, and
+    # does NOT expand the @import that pulls this file into ~/.claude/CLAUDE.md.
+    # Out-of-store symlink so it stays editable, same file codex symlinks and
+    # cursor loads as a rule.
+    file.".pi/agent/AGENTS.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
 
-      activation.piSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
-        settings="$HOME/.pi/agent/settings.json"
-        managed='${builtins.toJSON managedSettings}'
-        if [ -f "$settings" ] && ! ${lib.getExe pkgs.jq} -e --argjson m "$managed" '(. + $m) == .' "$settings" >/dev/null; then
-          run ${lib.getExe pkgs.jq} --argjson m "$managed" '. + $m' "$settings" \
-            | run ${pkgs.moreutils}/bin/sponge "$settings"
-        fi
-      '';
-    };
-  }
+    activation.piSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      settings="$HOME/.pi/agent/settings.json"
+      managed='${builtins.toJSON managedSettings}'
+      if [ -f "$settings" ] && ! ${lib.getExe pkgs.jq} -e --argjson m "$managed" '(. + $m) == .' "$settings" >/dev/null; then
+        run ${lib.getExe pkgs.jq} --argjson m "$managed" '. + $m' "$settings" \
+          | run ${pkgs.moreutils}/bin/sponge "$settings"
+      fi
+    '';
+  };
+}

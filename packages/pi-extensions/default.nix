@@ -6,6 +6,10 @@
 # packages (pi-ai, pi-agent-core, pi-coding-agent, pi-tui, typebox) and loads
 # each extension with its own module root, so peers stay out of node_modules —
 # the same `--legacy-peer-deps` install `pi install` does.
+#
+# The registry packages are portable npm tarballs. `prefetch-npm-deps` fetches
+# every lock entry regardless of its `os`/`cpu`, so a single `npmDepsHash` covers
+# both linux and darwin — including pi-lens's per-platform ast-grep binaries.
 {
   lib,
   stdenv,
@@ -47,7 +51,7 @@
         meta = {
           homepage = "https://www.npmjs.com/package/${npmName}";
           license = lib.licenses.mit;
-          platforms = lib.platforms.linux;
+          platforms = lib.platforms.linux ++ lib.platforms.darwin;
         };
       }
       // removeAttrs args ["npmName" "hash" "packageJsonFilter"]);
@@ -59,11 +63,12 @@ in {
     hash = "sha256-ELmU9bGDkXJY7PbziJXkPyWbZJLNWWZNU2600xAzAMA=";
     npmDepsHash = "sha256-I8aukh3x21XuJlanRgOkJqfSxGwfRo3MfYB9qkdPVUw=";
 
-    # @ast-grep/napi and @ast-grep/cli-linux-x64-gnu ship prebuilt glibc
-    # binaries; pi-lens's tool resolver takes the CLI from its own
-    # node_modules before falling back to PATH or a managed download.
-    nativeBuildInputs = [autoPatchelfHook];
-    buildInputs = [stdenv.cc.cc.lib];
+    # @ast-grep/napi and @ast-grep/cli ship prebuilt binaries per platform; only
+    # the linux ones are ELF and need patching. pi-lens's tool resolver takes the
+    # CLI from its own node_modules before falling back to PATH or a managed
+    # download.
+    nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [autoPatchelfHook];
+    buildInputs = lib.optionals stdenv.hostPlatform.isLinux [stdenv.cc.cc.lib];
   };
 
   pi-web-access = mkPiExtension {
