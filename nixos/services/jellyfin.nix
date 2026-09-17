@@ -144,6 +144,15 @@ in {
     # way in and survives a udev rule change.
     users.users.jellyfin.extraGroups = ["render" "video"];
 
+    # Jellyfin tone-maps HDR through OpenCL on AMD. The ocl-icd loader only
+    # finds ROCm's ICD through OCL_ICD_VENDORS — hardware.graphics.extraPackages
+    # sets library paths but installs no ICD. Without it ffmpeg's
+    # `-init_hw_device opencl` fails and the transcode dies with exit 237.
+    systemd.services.jellyfin.environment.OCL_ICD_VENDORS =
+      mkIf decl.enable "${pkgs.rocmPackages.clr.icd}/etc/OpenCL/vendors";
+    environment.sessionVariables.OCL_ICD_VENDORS =
+      mkIf decl.enable "${pkgs.rocmPackages.clr.icd}/etc/OpenCL/vendors";
+
     fileSystems = optionalAttrs (cfg.mediaShare != null) {
       ${cfg.mediaPath} = {
         device = cfg.mediaShare;
@@ -242,9 +251,9 @@ in {
             enableDecodingColorDepth12HevcRext = true;
 
             # Without this Jellyfin "tone maps" by relabelling frames as bt709,
-            # which leaves HDR looking washed out. VPP is the AMD path.
+            # which leaves HDR washed out. On AMD the conversion runs through
+            # tonemap_opencl (VPP is Intel-only), hence the ROCm ICD above.
             enableTonemapping = true;
-            enableVppTonemapping = true;
             tonemappingAlgorithm = "bt2390";
           };
         }
