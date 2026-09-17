@@ -10,10 +10,11 @@
     # PERFORMANCE & HARDWARE ACCELERATION
     # =======================================================================
     "gfx.webrender.all" = true;
-    "media.ffmpeg.vaapi.enabled" = true;
-    "media.ffmpeg.low-latency.enabled" = true; # VA-API decode for WebRTC (video calls)
-    "media.webrtc.hw.h264.enabled" = true; # VA-API encode for outgoing camera stream
-    "media.navigator.mediadatadecoder.vpx.enabled" = true; # VA-API VP9 decode for incoming streams (Meet default codec)
+    # Renamed from media.ffmpeg.vaapi.enabled in FF 116. Covers WebRTC decode
+    # too; there is deliberately no encode counterpart, since FFmpegVideoEncoder
+    # has no VA-API path — outgoing camera video is software-encoded whatever
+    # prefs are set. https://bugzilla.mozilla.org/show_bug.cgi?id=1658900
+    "media.hardware-video-decoding.enabled" = true;
     "dom.webgpu.enabled" = true;
     "layers.acceleration.disabled" = false;
     "browser.tabs.unloadOnLowMemory" = true;
