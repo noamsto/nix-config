@@ -75,6 +75,19 @@ in {
     packageJsonFilter = "del(.devDependencies)";
   };
 
+  pi-vim = mkPiExtension {
+    pname = "pi-vim";
+    npmName = "pi-vim";
+    version = "0.14.2";
+    hash = "sha256-BJkHE2C/SIBYHyINCD971+ew+yDS+X0yU5xjkNks4rg=";
+    npmDepsHash = "sha256-qs96TMQCjDFxAih3vNcJuVHMH8mc+iKGv9lDDEEh288=";
+    # No runtime deps once the devDependencies go — pi bundles the peers — so
+    # the cache is empty and npmInstallHook has no node_modules to copy.
+    forceEmptyCache = true;
+    preInstall = "mkdir -p node_modules";
+    packageJsonFilter = "del(.devDependencies)";
+  };
+
   rpiv-todo = mkPiExtension {
     pname = "rpiv-todo";
     npmName = "@juicesharp/rpiv-todo";

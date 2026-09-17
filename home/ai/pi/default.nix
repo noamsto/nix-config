@@ -71,6 +71,7 @@
   # in interactive sessions.
   personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") [
     "${localPkgs.pi-lens}/lib/node_modules/pi-lens"
+    "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
     "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
     "${localPkgs.rpiv-todo}/lib/node_modules/@juicesharp/rpiv-todo"
   ];
