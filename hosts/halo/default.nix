@@ -249,6 +249,11 @@ in {
           name = "noams";
           passwordSecret = config.age.secrets.jellyfin_noams_password.path;
           administrator = true;
+
+          # heb is the ISO 639-2 code. Smart loads Hebrew subtitles whenever the
+          # audio track is not Hebrew, and forced subs otherwise.
+          subtitleLanguagePreference = "heb";
+          subtitleMode = "Smart";
         }
       ];
 

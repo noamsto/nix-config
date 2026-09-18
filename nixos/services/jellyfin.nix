@@ -118,6 +118,29 @@ in {
               default = false;
               description = "Whether the user is an administrator.";
             };
+            subtitleLanguagePreference = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              example = "heb";
+              description = ''
+                Preferred subtitle language, as an ISO 639-2 three-letter code.
+                The server picks the default subtitle track from this.
+              '';
+            };
+            subtitleMode = mkOption {
+              type = types.nullOr (types.enum [
+                "Default"
+                "Always"
+                "OnlyForced"
+                "None"
+                "Smart"
+              ]);
+              default = null;
+              description = ''
+                When subtitles play. Jellyfin's own `Default` only loads a track
+                flagged external, default or forced, which most files are not.
+              '';
+            };
           };
         });
         default = [];
@@ -271,6 +294,7 @@ in {
               inherit (user) name;
               passwordFile = user.passwordSecret;
               policy.isAdministrator = user.administrator;
+              inherit (user) subtitleLanguagePreference subtitleMode;
             })
             decl.users;
         };
