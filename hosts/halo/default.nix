@@ -141,6 +141,7 @@ in {
       models = [
         "Qwen3.5-4B-GGUF" # 3.58 GB, for cheap tasks
         "Qwen3-Coder-30B-A3B-Instruct-GGUF" # 18.6 GB, proven on g6
+        "Qwen3.8-27B-GGUF" # 18.8 GB, the pi agents' coding model
       ];
       # Without this both caches land in ~/.cache on @home, which is
       # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.

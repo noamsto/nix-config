@@ -1,0 +1,16 @@
+{
+  "providers": {
+    "Lemonade": {
+      "api": "openai-completions",
+      "apiKey": "lemonade",
+      "baseUrl": "http://halo:13305/v1",
+      "models": [
+        { "id": "Qwen3.8-27B-GGUF", "contextWindow": 262144 },
+        { "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF" },
+        { "id": "Qwen3.5-4B-GGUF" },
+        { "id": "DeepSeek-V4-Flash-0731-GGUF" },
+        { "id": "gpt-oss-120b-mxfp-GGUF" }
+      ]
+    }
+  }
+}

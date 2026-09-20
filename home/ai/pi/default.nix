@@ -176,6 +176,17 @@ in {
       };
     };
 
+    # The Lemonade server on halo is not a provider pi ships, so its models
+    # come from here. force = true because the hand-written file this replaces
+    # is a regular file HM would otherwise refuse to clobber. A store path
+    # rather than an out-of-store symlink: the symlink would resolve against
+    # the main checkout, leaving a switch run from a worktree with a dangling
+    # file.
+    file.".pi/agent/models.json" = {
+      source = ./models.json;
+      force = true;
+    };
+
     activation.piSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
       settings="$HOME/.pi/agent/settings.json"
       managed='${builtins.toJSON managedSettings}'
