@@ -5,7 +5,7 @@
   inputs,
   ...
 }: let
-  guards = import ../agent-hooks {inherit pkgs;};
+  piGuards = import ./guards.nix {inherit pkgs;};
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
   localPkgs = inputs.self.packages.${pkgs.stdenv.hostPlatform.system};
 
@@ -19,23 +19,6 @@
     inherit pkgs;
     aeye = inputs.tmux-og.inputs.aeye;
   };
-
-  # ../claude-code owns its own nix wiring for these scripts, so they're built
-  # separately here rather than shared. Both scripts self-filter on
-  # tool_name, so one guard list can serve pi's bash and read tool calls alike.
-  skeleton-guard = pkgs.writeShellScriptBin "agent-read-skeleton-guard" (builtins.readFile ../claude-code/skeleton-guard.sh);
-  psql-guard = pkgs.writeShellScriptBin "agent-psql-guard" (builtins.readFile ../claude-code/psql-guard.sh);
-
-  # Deny guards first, advisory last: hook-bridge.ts stops at the first deny, so
-  # a blocked call shouldn't also spend time on advice it will never show.
-  hookPaths = lib.concatStringsSep ":" [
-    "${guards.git-default-branch-guard}/bin/agent-git-default-branch-guard"
-    "${guards.nix-stage-guard}/bin/agent-nix-stage-guard"
-    "${skeleton-guard}/bin/agent-read-skeleton-guard"
-    "${psql-guard}/bin/agent-psql-guard"
-    "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard"
-    "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard"
-  ];
 
   # Claude Code gets these skills from the context-efficient-tools plugin,
   # which pi can't see.
@@ -122,7 +105,6 @@
   #
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
   pi-wrapper = pkgs.writeShellScriptBin "pi" ''
-    export PI_AGENT_HOOKS="${hookPaths}"
     personal=()
     if [ -z "''${CREW_WORKER_ID:-}" ]; then
       export PI_LENS_CONFIG_PATH=${piLensConfig}
@@ -133,7 +115,6 @@
     # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
     export PI_USER_ARGC=$#
     exec -a pi ${pkgs.pi}/bin/pi \
-      -e ${./hook-bridge.ts} \
       "''${personal[@]}" \
       --skill "$HOME/.claude/skills" \
       --skill ${xdg-claude}/context-efficient-tools/skills \
@@ -149,6 +130,12 @@
     defaultModel = "deepseek/deepseek-v4.1-flash";
   };
 in {
+  # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix).
+  # ../hookyard owns `enable` and the install pass; this contributes a manifest
+  # path and nothing else. It also decides which pi settings dirs the bridge
+  # lands in — both the ambient one and the dispatcher worker's.
+  programs.hookyard.manifests = [piGuards.manifest];
+
   home = {
     packages = [pi-wrapper];
 

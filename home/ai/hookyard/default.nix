@@ -8,10 +8,14 @@
 # second invocation deletes the first one's rows instead of merging with them.
 # The assertion below enforces that.
 #
-# aeye is the first consumer: its `post_tool` handlers are declared in
-# ./aeye.nix and contributed below via `manifests`. Its Claude Code
-# registration reaches `--settings` through `claudeOverlay.merged`, wired in
+# aeye is one consumer: its `post_tool` handlers are declared in ./aeye.nix
+# and contributed below via `manifests`. Its Claude Code registration reaches
+# `--settings` through `claudeOverlay.merged`, wired in
 # ../claude-code/default.nix, not through a file this module writes.
+#
+# ../pi is the other: its `pre_tool` guards are declared in ../pi/guards.nix
+# and contributed from ../pi/default.nix, which is the same contract seen from
+# the consumer's side — a manifest path, nothing more.
 {
   config,
   lib,
@@ -29,16 +33,26 @@ in {
   programs.hookyard = {
     enable = true;
 
-    # These three destinations get written whether or not the engine is
-    # installed, so a personal host gains an empty `~/.codex/config.toml` and
-    # the darwin host a `~/.pi/agent/settings.json`. Setting these does not
-    # cause that — the defaults name the same paths. Claude Code has no
-    # destination string here: its registration reaches it via
-    # `claudeOverlay.merged`, wired as an overlay in ../claude-code, not a
+    # These destinations get written whether or not the engine is installed,
+    # so a personal host gains an empty `~/.codex/config.toml` and the darwin
+    # host a `~/.pi/agent/settings.json`. Setting these does not cause that —
+    # the defaults name the same paths, except for the second pi dir below.
+    # Claude Code has no destination string here: its registration reaches it
+    # via `claudeOverlay.merged`, wired as an overlay in ../claude-code, not a
     # file hookyard writes directly.
     codexConfig = "${config.home.homeDirectory}/.codex/config.toml";
     cursorHooks = "${config.home.homeDirectory}/.cursor/hooks.json";
-    piSettings = ["${config.home.homeDirectory}/.pi/agent/settings.json"];
+
+    # Both pi settings dirs, and the second one is the security-relevant half:
+    # dispatcher launches autonomous pi workers with
+    # `PI_CODING_AGENT_DIR=~/.pi/dispatcher-worker` and `--no-approve`, and its
+    # seeder merges into that dir's own settings.json rather than inheriting
+    # anything from the ambient one. Managing only `.pi/agent` would leave
+    # every dispatched worker running ../pi's guards nowhere.
+    piSettings = [
+      "${config.home.homeDirectory}/.pi/agent/settings.json"
+      "${config.home.homeDirectory}/.pi/dispatcher-worker/settings.json"
+    ];
 
     # Generate the manifest (`pkgs.writeText`) with the handler's own store
     # path: `install` stats every `exec`, and a failed stat aborts the switch.

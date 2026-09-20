@@ -1,0 +1,111 @@
+# pi's tool-call guards as a hookyard yard-mode manifest (noamsto/hookyard#67
+# decision D2). Replaces the hand-written PI_AGENT_HOOKS transport: hookyard's
+# installed bin/hookyard-bridge.ts is now the only pi guard extension, and it
+# owns routing, deny-wins consolidation, the per-handler timeout and the
+# ask-to-block degrade that the old bridge did by hand.
+#
+# A plain function rather than a module, so ./default.nix and the flake check
+# in ./guards-check.nix name the same store paths.
+#
+# Wire contract, which is why five of the six handlers need no adapter:
+# hookyard's normalized envelope already carries `tool_name` mapped to the
+# canonical vocabulary (pi's `bash` -> `Bash`), pi's `tool_input` verbatim, and
+# `cwd` — exactly the three keys ../agent-hooks' guards read. Handler stdout is
+# the same `hookSpecificOutput` shape they already write. Read is the one
+# mismatch: pi calls the key `path` where the guards read `file_path`, so it
+# gets the adapter below and nothing else does.
+#
+# ../claude-code pipes `jq -c .native` in front of the same guard binaries; this
+# does not, on purpose. Do NOT unify them onto `.native` here: pi's native
+# payload spells the tools `bash`/`read`, so every `[[ $tool_name == "Bash" ]]`
+# would stop matching and all six guards would abstain, silently.
+{pkgs}: let
+  guards = import ../agent-hooks {inherit pkgs;};
+
+  # ../claude-code owns its own nix wiring for these two, so they're built
+  # separately here rather than shared.
+  skeleton-guard = pkgs.writeShellScriptBin "agent-read-skeleton-guard" (builtins.readFile ../claude-code/skeleton-guard.sh);
+  psql-guard = pkgs.writeShellScriptBin "agent-psql-guard" (builtins.readFile ../claude-code/psql-guard.sh);
+
+  # Read's envelope adapter. Renames pi's `path` to the guards' `file_path` and
+  # resolves it the way pi's own read tool does (resolveToCwd -> normalizePath's
+  # expandTilde, on by default): `~`/`~/…` expand to the home dir before being
+  # resolved against the event cwd. Plain resolution doesn't expand `~`, which
+  # would hand the guard a relative-looking path it cannot stat, and a guard
+  # that cannot stat abstains — silently.
+  #
+  # `path` is type-checked because jq's `startswith` is a hard error on a
+  # non-string, which `set -e` turns into a non-zero exit — and hookyard reads
+  # that as an abstain.
+  #
+  # jq throughout, reading the envelope on stdin: no JSON value is ever
+  # interpolated into the shell. The guard is `exec`d rather than piped to, so
+  # hookyard's timeout kills the guard itself instead of leaving it orphaned
+  # behind a dead wrapper.
+  #
+  # This restates pi's resolution rather than asking pi for it: if pi ever
+  # resolves `read` paths differently, the guard gets a path it cannot stat and
+  # abstains silently, and ./guards-check.nix still passes — it pins this
+  # adapter's semantics, not pi's.
+  readAdapter = pkgs.writeShellApplication {
+    name = "agent-pi-read-adapter";
+    runtimeInputs = [pkgs.jq skeleton-guard];
+    text = ''
+      payload=$(jq -c --arg home "$HOME" '
+        def normalize:
+          split("/")
+          | reduce .[] as $seg ([];
+              if $seg == "" or $seg == "." then .
+              elif $seg == ".." then .[:-1]
+              else . + [$seg] end)
+          | "/" + join("/");
+
+        (.tool_input.path) as $raw
+        | (if ($raw | type) == "string" then $raw else "" end) as $path
+        | (if $path == "~" then $home
+           elif ($path | startswith("~/")) then $home + "/" + $path[2:]
+           else $path end) as $expanded
+        | {
+            tool_name: "Read",
+            tool_input: {
+              file_path: (if ($expanded | startswith("/")) then $expanded
+                          else (.cwd // "") + "/" + $expanded end | normalize),
+              offset: .tool_input.offset,
+              limit: .tool_input.limit,
+            },
+            cwd: .cwd,
+          }
+      ')
+      exec agent-read-skeleton-guard <<<"$payload"
+    '';
+  };
+
+  # Verdict lane (no `lane` key): every one of these can block. 4000ms matches
+  # ../claude-code's value for the same guard binaries, under hookyard's 4300ms
+  # ceiling. Worth knowing when tuning it: a guard that overruns is recorded as
+  # a timeout, which consolidates as abstain — a silent fail-open, not a loud
+  # failure.
+  piGuard = id: exec: match: {
+    inherit id exec match;
+    events = ["pre_tool"];
+    engines = ["pi"];
+    timeout_ms = 4000;
+  };
+
+  handlers = [
+    (piGuard "guards.pi.git-default-branch" "${guards.git-default-branch-guard}/bin/agent-git-default-branch-guard" ["Bash"])
+    (piGuard "guards.pi.nix-stage" "${guards.nix-stage-guard}/bin/agent-nix-stage-guard" ["Bash"])
+    (piGuard "guards.pi.read-skeleton" "${readAdapter}/bin/agent-pi-read-adapter" ["Read"])
+    (piGuard "guards.pi.psql" "${psql-guard}/bin/agent-psql-guard" ["Bash"])
+    # Advisory-only, and on pi its advice now reaches the model only when it
+    # rides another handler's denial — hookyard's pi pre_tool return shape is
+    # {block, reason} with no standalone advisory channel (noamsto/hookyard#72).
+    # It stays registered for exactly that consolidation.
+    (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
+    (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
+  ];
+
+  manifest = pkgs.writeText "pi-guards-hookyard.json" (builtins.toJSON {inherit handlers;});
+in {
+  inherit manifest handlers readAdapter;
+}

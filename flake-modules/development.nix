@@ -12,6 +12,15 @@
     lib,
     ...
   }: {
+    # pi's hookyard guard manifest, end to end: the locked hookyard binary
+    # installs it, then routes real pi tool_call payloads through the real
+    # handler executables. A guard that stops blocking fails open and silently,
+    # so it is checked here rather than left to the rebuild.
+    checks.pi-guards = import ../home/ai/pi/guards-check.nix {
+      inherit pkgs;
+      hookyard = inputs'.hookyard.packages.default;
+    };
+
     devShells.default = pkgs.mkShell {
       packages =
         [

@@ -25,6 +25,9 @@
 
   # hookyard's envelope carries the engine payload verbatim under `.native`; the
   # guards' hookSpecificOutput is already hookyard's handler wire protocol.
+  # ../pi registers the same guards without this `.native` strip — its envelope's
+  # canonical `tool_name` is what those guards branch on — so the two modules
+  # differ here on purpose. See ../pi/guards.nix's header before unifying them.
   # A guard that overruns timeout_ms abstains, so each gets most of the 4300ms cap.
   guardHandler = {
     name,
