@@ -79,6 +79,20 @@
     };
   });
 
+  subagentDir = "${pkgs.pi}/libexec/pi/examples/extensions/subagent";
+
+  # pi's own sample roster, with the `model:` pin dropped: those ids are
+  # Anthropic's and this machine defaults to openrouter, and an agent without
+  # one inherits the dispatching session's model and thinking level. Derived
+  # from the package rather than copied in so it tracks pi upgrades with the
+  # extension that reads it.
+  subagentAgents = pkgs.runCommand "pi-subagent-agents" {} ''
+    mkdir -p $out
+    for f in ${subagentDir}/agents/*.md; do
+      sed '/^model:/d' "$f" >"$out/$(basename "$f")"
+    done
+  '';
+
   # Dispatcher workers resolve bare `pi` to this same wrapper; these load only
   # in interactive sessions.
   personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") [
@@ -92,6 +106,10 @@
     # its images in the outer session's carousel (noamsto/aeye#235), so it
     # belongs here rather than loading unconditionally.
     "${aeye.tree}/adapters/pi/extensions/aeye.ts"
+    # Delegation to child pi processes with their own context windows. Workers
+    # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
+    # native subagent mechanism, and dispatcher owns that claim.
+    "${subagentDir}/index.ts"
   ];
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The
@@ -110,7 +128,7 @@
       export PI_LENS_CONFIG_PATH=${piLensConfig}
       export PI_LENS_DISABLE_LSP_INSTALL=1
       export PI_LENS_DISABLE_TOOL_INSTALL=1
-      personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills)
+      personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)
     fi
     # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
     export PI_USER_ARGC=$#
@@ -139,8 +157,24 @@ in {
     # does NOT expand the @import that pulls this file into ~/.claude/CLAUDE.md.
     # Out-of-store symlink so it stays editable, same file codex symlinks and
     # cursor loads as a rule.
-    file.".pi/agent/AGENTS.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+    file = {
+      ".pi/agent/AGENTS.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+
+      # The subagent extension resolves its roster as $PI_CODING_AGENT_DIR/agents
+      # with no CLI flag to redirect it, so unlike the skills above this one
+      # has to land in the home directory. `recursive` links each agent
+      # individually rather than claiming ~/.pi/agent/agents as a whole —
+      # that tree is pi's, and a directory symlink would fight it.
+      #
+      # Workers read a different $PI_CODING_AGENT_DIR (~/.pi/dispatcher-worker),
+      # so this roster is invisible to them even if the extension ever leaked
+      # past the interactive gate.
+      ".pi/agent/agents" = {
+        source = subagentAgents;
+        recursive = true;
+      };
+    };
 
     activation.piSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
       settings="$HOME/.pi/agent/settings.json"
