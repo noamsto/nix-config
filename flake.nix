@@ -240,10 +240,10 @@
 
     wrappers.url = "github:Lassulus/wrappers";
 
-    tmux-og = {
-      url = "github:noamsto/tmux-og";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # No nixpkgs.follows: following ours forks the derivation away from the
+    # one its CI built, so every rebuild compiles it from source instead of
+    # substituting from lazytmux.cachix.org.
+    tmux-og.url = "github:noamsto/tmux-og";
 
     # agent-smith CC plugin engine (extractor/analyst/applier binaries); the
     # plugin itself is enabled via settings.json's extraKnownMarketplaces.
@@ -289,10 +289,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    wtc = {
-      url = "github:noamsto/wtc";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # No nixpkgs.follows: following ours forks the derivation away from the
+    # one its CI built, so every rebuild compiles it from source instead of
+    # substituting from wtc.cachix.org.
+    wtc.url = "github:noamsto/wtc";
 
     zr = {
       url = "github:noamsto/zr";
