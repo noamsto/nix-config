@@ -217,6 +217,24 @@ When adding new features, follow these patterns:
 
 - **Pin fetchers to a commit SHA, never a branch ref.** A `fetchFromGitHub` (or any fixed-output fetcher) with `rev = "main"`/`"master"` plus a fixed `sha256`/`hash` is a time bomb: the hash matches only until upstream pushes, then every build fails with `hash mismatch in fixed-output derivation`. This bit `gvfs.yazi` and `freecad-mcp` (commits `4d69769`, `0cc4cb6`) — both broke the Mac rebuild. Always pin `rev` to a full 40-char commit; use `nurl <url>` to scaffold `rev` + `hash` together. To find offenders: `grep -rnE 'rev = "(main|master|HEAD)"' --include=*.nix .`.
 
+- **Give a nested Wayland compositor its own `XDG_RUNTIME_DIR`.** Hyprland runs `systemctl --user import-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE ...` at every startup, nested instances included, so an unguarded nested run points the systemd user manager at a socket that dies with it. Nothing looks broken until the next `nh os switch`/`test` restarts user units: `xdg-desktop-portal-hyprland` exits with `Couldn't connect to a wayland compositor`, `xdg-desktop-portal-gtk` with `cannot open display:`, systemd reports `start-limit-hit`, and **activation exits 4** — a whole rebuild failed by one stale variable. Launch nested runs like this instead, where the private runtime dir cuts the import chain off from the live user manager and the absolute `WAYLAND_DISPLAY` still finds the parent socket:
+
+  ```bash
+  rt=$(mktemp -d)
+  XDG_RUNTIME_DIR=$rt WAYLAND_DISPLAY=/run/user/$UID/wayland-1 Hyprland -c nested.conf
+  ```
+
+  `HYPRLAND_NO_SD_VARS=1` reads like the guard and is not one — the variable exists in hyprland 0.56.2 but does not gate that call (tested: the nested run clobbered the env anyway).
+
+  Repair a session that already got clobbered, without logging out — compare `systemctl --user show-environment | grep WAYLAND_DISPLAY` against the `wl socket:` line in `hyprctl instances`, then:
+
+  ```bash
+  dbus-update-activation-environment --systemd WAYLAND_DISPLAY=<live> HYPRLAND_INSTANCE_SIGNATURE=<live> XDG_CURRENT_DESKTOP=Hyprland
+  systemctl --user start xdg-desktop-portal{,-gtk,-hyprland}.service
+  ```
+
+  The first journal entry is the signal; the `start-limit-hit` is only its echo.
+
 ## Additional Resources
 
 - Run `just help` for command usage

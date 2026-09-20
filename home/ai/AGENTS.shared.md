@@ -94,6 +94,23 @@ No confirmation needed — this is the default. User can say "don't commit" to o
   1. Committed work is recoverable via reflog — no extra steps needed
   2. **Uncommitted changes and untracked files** are NOT recoverable — run `gtrash put` on them before proceeding
 
+## Nested Wayland Compositors
+
+**Give a nested Hyprland its own `XDG_RUNTIME_DIR`** — debug runs, layout
+probes, anything that starts a second compositor:
+
+```bash
+rt=$(mktemp -d)
+XDG_RUNTIME_DIR=$rt WAYLAND_DISPLAY=/run/user/$UID/wayland-1 Hyprland -c nested.conf
+```
+
+Hyprland imports `WAYLAND_DISPLAY` into the systemd user manager at every
+startup, nested runs included, so an unguarded one leaves the live session
+pointing at a socket that dies with it — and the *next* `nh os switch` fails
+activation when the xdg-desktop-portal units inherit it. The private runtime
+dir cuts that import off; the absolute `WAYLAND_DISPLAY` still finds the parent
+socket. Diagnosis and repair: the gotcha in `~/nix-config/CLAUDE.md`.
+
 ## Response Formatting
 
 Use markdown tables or bullet lists for comparisons, reviews, and analysis. Do not use ToonFormat in chat responses.
