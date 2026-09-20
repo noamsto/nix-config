@@ -28,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1789634668,
-        "narHash": "sha256-+OGe8uLV1oV3UhdOAbUWPCCsazjURB9AP+68f3Kpxyo=",
+        "lastModified": 1789926732,
+        "narHash": "sha256-Pv5DKYzjdZTjZ/dP4DWZwKK0QOS3xmlSQ9PiQzpGpz4=",
         "owner": "noamsto",
         "repo": "aeye",
-        "rev": "10e784b1cf99f652cd3f7f66403b5f9415ceb897",
+        "rev": "902829db66debc7a4f30b516ec9172c400d42919",
         "type": "github"
       },
       "original": {
@@ -132,16 +132,16 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1788591592,
-        "narHash": "sha256-NbwVKwKLFl0oXub7oPjvmDaOygCtV2oboeKTu4xXFTk=",
+        "lastModified": 1789661079,
+        "narHash": "sha256-geVTQ51PGZ1mLULM5k7wO7qt/6xenOR/YG8X7Q3eCaI=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "08e85c4e42f5d8f1ea17c36cb59cf61c2ccb26c3",
+        "rev": "edb70f031e4170c780799633a1226ff73e1077f4",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
-        "ref": "6.0.22",
+        "ref": "7.0.4",
         "repo": "brew",
         "type": "github"
       }
@@ -1453,11 +1453,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1789919776,
-        "narHash": "sha256-SgCiVDvvM5pVb4SU3Xj5AFxrGRMXXeV8Ryt+kQaonh4=",
+        "lastModified": 1789930612,
+        "narHash": "sha256-Y4pBGLjJeLcVfmFSbXWg6EtzhfMqxOTHexeAikxiJLM=",
         "owner": "Homebrew",
         "repo": "homebrew-cask",
-        "rev": "b3d96b3ba03e80227deb5b096c85c50094d412d8",
+        "rev": "77481cffa0da5a0e99a648c1c16c826cc841e46b",
         "type": "github"
       },
       "original": {
@@ -1469,11 +1469,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1789921446,
-        "narHash": "sha256-zoZgx9QUOhU7XLVGUz1XA4N8LvZKOjm90HlIR1g75dE=",
+        "lastModified": 1789931949,
+        "narHash": "sha256-xwJ+uBD7IV477lUCqjFpt/HFoWigQp6PMaRvzj19EFo=",
         "owner": "Homebrew",
         "repo": "homebrew-core",
-        "rev": "2d277fc6ccf095dff8b35309713505bb51415b54",
+        "rev": "0cc9849038ca06dd2a8978f4cad236ed6c4264eb",
         "type": "github"
       },
       "original": {
@@ -1803,11 +1803,11 @@
         "nixpkgs": "nixpkgs_10"
       },
       "locked": {
-        "lastModified": 1789883666,
-        "narHash": "sha256-iU1LN0n7hR+iMkvUk9Wwf7eAjkHUjfbzNQSYgSk1bw0=",
+        "lastModified": 1789932200,
+        "narHash": "sha256-0nzfTkVx79ZE323/Ug4omvVZCCTxgvD8ceakHAaO72U=",
         "owner": "noamsto",
         "repo": "nix-amd-ai",
-        "rev": "3e029e3009a3251a8abbe02f4c89cda2dcc480c9",
+        "rev": "cd45108d0c2fcac72f3fb1ba397f64eeb01a6cfd",
         "type": "github"
       },
       "original": {
@@ -1884,11 +1884,11 @@
         "brew-src": "brew-src"
       },
       "locked": {
-        "lastModified": 1788981439,
-        "narHash": "sha256-fEaFq0XgpgWFPLfpq1UK4/8ylHd2T0+fo6O3hKz1LUM=",
+        "lastModified": 1789928041,
+        "narHash": "sha256-iV37ieTcE4ZLOYEe0VznW6dWMBe4lEL8AbK1vblyZGM=",
         "owner": "zhaofengli",
         "repo": "nix-homebrew",
-        "rev": "09a921d0181146cf6163ec2cc1db7b6fd539a885",
+        "rev": "c11cccfdd36dd69b5323d70d354b2853379c2426",
         "type": "github"
       },
       "original": {
@@ -3019,11 +3019,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1789883172,
-        "narHash": "sha256-8lWPOav9dbaGGN5KjNRHfh6l8V3cV5eVZBzoXX/4bYY=",
+        "lastModified": 1789932904,
+        "narHash": "sha256-p4S0lW9nmFjc/6UnP0qoGRPgdPRPfCSSw/CKhNQFn9Y=",
         "owner": "noamsto",
         "repo": "tmux-og",
-        "rev": "be26b5a77d6b30c5a7d89a3ed5834bf47b7f1193",
+        "rev": "5c558c9f93615a4201dbd66034513e79b9a7b315",
         "type": "github"
       },
       "original": {
@@ -3043,11 +3043,11 @@
         "tmux-upstream": "tmux-upstream"
       },
       "locked": {
-        "lastModified": 1789724876,
-        "narHash": "sha256-52oK67RmjEWrjRBHbfhyp4Z2gTQAnA+UCZhiHzfqIsA=",
+        "lastModified": 1789930371,
+        "narHash": "sha256-dWFKYP525UaJ/P2OW3zjX0CiOKkiMLAiNnuZX3bm78Q=",
         "owner": "noamsto",
         "repo": "tmux-remux",
-        "rev": "d203324b7a43cc656cf7fa82a053ac41137db4a5",
+        "rev": "bf7cbb6239b2ecc9b1a4642bfe170824648ddeac",
         "type": "github"
       },
       "original": {
