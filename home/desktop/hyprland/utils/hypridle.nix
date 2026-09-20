@@ -19,12 +19,15 @@
     log "  loginctl returned: $?"
   '';
 
-  # Wrapper that kills stale aegis-lock instances before spawning a new one.
-  # Defense-in-depth: aegis-lock should exit on unlock (Qt.quit), but if a
-  # stale process lingers, this prevents accumulation.
+  # A lid-close suspend delivers two Lock signals ~1s apart (logind Lock, then
+  # before_sleep_cmd re-issuing lock-session), so hypridle runs lock_cmd twice.
+  # Killing the incumbent would tear down the client currently holding the
+  # ext-session-lock, which leaves Hyprland on its "lock client died" screen
+  # with no way back except a TTY. A running instance already owns the lock.
   aegis-lock-cmd = pkgs.writeShellScript "aegis-lock-cmd" ''
-    ${pkgs.procps}/bin/pkill -f 'quickshell.*aegis-lock' 2>/dev/null || true
-    sleep 0.1
+    if ${pkgs.procps}/bin/pgrep -f 'quickshell.*aegis-lock' >/dev/null; then
+      exit 0
+    fi
     exec aegis-lock
   '';
 in {
