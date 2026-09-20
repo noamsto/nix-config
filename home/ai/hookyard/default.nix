@@ -38,7 +38,7 @@ in {
     # file hookyard writes directly.
     codexConfig = "${config.home.homeDirectory}/.codex/config.toml";
     cursorHooks = "${config.home.homeDirectory}/.cursor/hooks.json";
-    piSettings = "${config.home.homeDirectory}/.pi/agent/settings.json";
+    piSettings = ["${config.home.homeDirectory}/.pi/agent/settings.json"];
 
     # Generate the manifest (`pkgs.writeText`) with the handler's own store
     # path: `install` stats every `exec`, and a failed stat aborts the switch.
