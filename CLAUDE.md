@@ -111,7 +111,7 @@ The repository uses a **modular architecture** with conditional imports based on
 │   ├── virtualization/    # Containers, VMs
 │   └── xremap/            # Key remapping
 ├── home/                  # User-level Home Manager modules
-│   ├── ai/                # AI tools (opencode, etc.)
+│   ├── ai/                # AI tools (claude-code, pi, codex, cursor, amp)
 │   ├── desktop/           # Desktop apps, window managers, themes
 │   ├── terminal/          # Shell, terminal multiplexer
 │   ├── nvim/              # Neovim/LazyVim configuration

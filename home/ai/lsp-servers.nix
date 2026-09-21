@@ -1,5 +1,5 @@
 # Shared language-server definitions for every agent harness (Claude Code,
-# opencode, pi). Single source of truth, same shape as mcp-servers.nix.
+# pi). Single source of truth, same shape as mcp-servers.nix.
 {pkgs}: let
   wrap = name: runtimeInputs: text: pkgs.writeShellApplication {inherit name runtimeInputs text;};
 

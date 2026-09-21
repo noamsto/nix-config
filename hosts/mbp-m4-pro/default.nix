@@ -81,7 +81,7 @@ in {
         "https://nix-community.cachix.org"
         "https://nixpkgs-unfree.cachix.org"
         "https://claude-code.cachix.org"
-        "https://numtide.cachix.org" # llm-agents.nix (opencode, amp, claude-code) — cross-platform
+        "https://numtide.cachix.org" # llm-agents.nix (amp, claude-code, pi) — cross-platform
         "https://lazytmux.cachix.org" # lazytmux (worktrunk/tmux) — cross-platform
       ];
       extra-trusted-public-keys = [

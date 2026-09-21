@@ -1,4 +1,4 @@
-# Shared MCP server definitions for AI tools (Claude Code, OpenCode, etc.)
+# Shared MCP server definitions for AI tools (Claude Code, pi, etc.)
 # Single source of truth - import this in each tool's module
 {
   pkgs,
@@ -120,7 +120,7 @@ in {
     };
   };
 
-  # Wrapper-based MCPs for editable JSON configs (opencode.json, etc.)
+  # Wrapper-based MCPs for configs that reference commands by name
   # These provide simple command names that work when the wrapper is in PATH
   wrappers = {
     playwright = pkgs.writeShellScriptBin "playwright-mcp-wrapper" ''
@@ -161,14 +161,6 @@ in {
     {inherit (server) url;}
     // lib.optionalAttrs (server ? headers) {http_headers = server.headers;}
     // lib.optionalAttrs (server ? bearerTokenEnvVar) {bearer_token_env_var = server.bearerTokenEnvVar;};
-
-  # Convert a base MCP entry to opencode format (different structure)
-  toOpencode = server: {
-    type = "local";
-    command = [server.command] ++ server.args;
-    enabled = true;
-    environment = server.env or {};
-  };
 
   # MCPs provided natively by claude.ai — exclude from Claude Code
   claudeAiProvided = ["linear"];

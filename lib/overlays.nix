@@ -14,7 +14,7 @@ inputs: [
   })
 
   (final: _prev: {
-    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code cursor-agent oh-my-opencode opencode pi;
+    inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code cursor-agent pi;
     # Amp with process.title wrapper so it shows as "amp" instead of "node" in ps
     amp = let
       upstream = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}.amp;
