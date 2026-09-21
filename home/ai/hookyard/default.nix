@@ -75,10 +75,14 @@ in {
       # It counts one evaluation. halo has two activation paths — standalone
       # and NixOS-embedded — differing in `--router-path`, each installing the
       # binary into the profile it names.
+      #
+      # `trampolineApps` (mac-app-util) is excluded: reading its `.data`
+      # realises an un-substitutable cl-nix-lite derivation, which fails
+      # `nix flake check --no-build` on a clean store.
       assertion =
         lib.count
         (entry: lib.hasInfix "/bin/hookyard install" entry.data)
-        (lib.attrValues config.home.activation)
+        (lib.attrValues (removeAttrs config.home.activation ["trampolineApps"]))
         == 1;
       message = ''
         programs.hookyard: expected exactly one activation entry invoking
