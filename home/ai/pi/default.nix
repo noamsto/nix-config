@@ -9,12 +9,14 @@
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
   localPkgs = inputs.self.packages.${pkgs.stdenv.hostPlatform.system};
 
-  # aeye's pi adapter. Unlike the other three engines this routes nothing
-  # through hookyard: hookyard carries post_tool only, and the extension also
-  # owns session_start guidance/reset, resume backfill and the /aeye command.
-  # Imported from ../hookyard/aeye.nix anyway so every consumer shares one
-  # derivation — its PostToolUse stripping touches the other adapters'
-  # hooks.json, never adapters/pi.
+  # aeye's pi adapter, a self-contained hookyard "build mode" package: its own
+  # bin/hookyard router and table cover session_start guidance/reset, resume
+  # backfill, post_tool capture and the /aeye command. It never touches the
+  # yard state the ../hookyard install pass writes (the manifest there has no
+  # pi handlers for aeye), so it neither double-routes nor conflicts with the
+  # guards' yard bridge. Imported from ../hookyard/aeye.nix so every consumer
+  # shares one derivation — its PostToolUse stripping touches the other
+  # adapters' hooks.json, never adapters/pi.
   aeye = import ../hookyard/aeye.nix {
     inherit pkgs;
     aeye = inputs.tmux-og.inputs.aeye;
@@ -78,7 +80,7 @@
 
   # Dispatcher workers resolve bare `pi` to this same wrapper; these load only
   # in interactive sessions.
-  personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") [
+  extensions = [
     "${localPkgs.pi-lens}/lib/node_modules/pi-lens"
     "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
     "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
@@ -88,12 +90,13 @@
     # and jq from the system profile. A worker writing the manifest would land
     # its images in the outer session's carousel (noamsto/aeye#235), so it
     # belongs here rather than loading unconditionally.
-    "${aeye.tree}/adapters/pi/extensions/aeye.ts"
+    "${aeye.tree}/adapters/pi"
     # Delegation to child pi processes with their own context windows. Workers
     # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
     # native subagent mechanism, and dispatcher owns that claim.
     "${subagentDir}/index.ts"
   ];
+  personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") extensions;
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The
   # read-only layer rides on the CLI resource flags instead.
@@ -104,23 +107,32 @@
   # own ~/.pi/agent/skills and any project .pi/skills / .agents/skills.
   #
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
-  pi-wrapper = pkgs.writeShellScriptBin "pi" ''
-    personal=()
-    if [ -z "''${CREW_WORKER_ID:-}" ]; then
-      export PI_LENS_CONFIG_PATH=${piLensConfig}
-      export PI_LENS_DISABLE_LSP_INSTALL=1
-      export PI_LENS_DISABLE_TOOL_INSTALL=1
-      personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)
-    fi
-    # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
-    export PI_USER_ARGC=$#
-    exec -a pi ${pkgs.pi}/bin/pi \
-      "''${personal[@]}" \
-      --skill "$HOME/.claude/skills" \
-      --skill ${xdg-claude}/context-efficient-tools/skills \
-      --prompt-template "$HOME/.claude/commands" \
-      "$@"
-  '';
+  pi-wrapper = pkgs.writeTextFile {
+    name = "pi";
+    executable = true;
+    destination = "/bin/pi";
+    # A moved upstream path otherwise surfaces only as pi refusing to start.
+    meta.mainProgram = "pi";
+    checkPhase = "${pkgs.runtimeShell} -n \"$target\"\n" + lib.concatMapStringsSep "\n" (e: "test -e ${e} || { echo 'missing pi extension: ${e}' >&2; exit 1; }") extensions;
+    text = ''
+      #!${pkgs.runtimeShell}
+      personal=()
+      if [ -z "''${CREW_WORKER_ID:-}" ]; then
+        export PI_LENS_CONFIG_PATH=${piLensConfig}
+        export PI_LENS_DISABLE_LSP_INSTALL=1
+        export PI_LENS_DISABLE_TOOL_INSTALL=1
+        personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)
+      fi
+      # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
+      export PI_USER_ARGC=$#
+      exec -a pi ${pkgs.pi}/bin/pi \
+        "''${personal[@]}" \
+        --skill "$HOME/.claude/skills" \
+        --skill ${xdg-claude}/context-efficient-tools/skills \
+        --prompt-template "$HOME/.claude/commands" \
+        "$@"
+    '';
+  };
 
   # Workers get their settings.json from dispatcher, not this activation.
   managedSettings = {
