@@ -17,6 +17,7 @@
   execFor = id: (builtins.head (builtins.filter (h: h.id == id) handlers)).exec;
   psqlGuardExec = execFor "guards.pi.psql";
   readAdapterExec = execFor "guards.pi.read-skeleton";
+  secretReadExec = execFor "guards.pi.secret-read-paths";
 in
   pkgs.runCommand "pi-guards-hookyard-check" {
     nativeBuildInputs = [hookyard pkgs.jq pkgs.git pkgs.gnugrep pkgs.coreutils];
@@ -93,6 +94,16 @@ in
         hook_event_name: "tool_call", pi_version: "0.0.0-check", session_id: "check",
         cwd: $cwd, session_file: "", argv: [],
         tool_name: "read", tool_input: {path: $path}, tool_use_id: "call-1"
+      }'
+    }
+
+    grep_payload() {
+      jq -n --arg cwd "$1" --arg path "$2" --arg pattern "$3" --arg glob "''${4:-}" '{
+        hook_event_name: "tool_call", pi_version: "0.0.0-check", session_id: "check",
+        cwd: $cwd, session_file: "", argv: [],
+        tool_name: "grep",
+        tool_input: ({pattern: $pattern, path: $path} + (if $glob == "" then {} else {glob: $glob} end)),
+        tool_use_id: "call-1"
       }'
     }
 
@@ -231,6 +242,74 @@ in
       guards.pi.read-skeleton abstain \
       "$(read_payload "$HOME" 'big.txt' 50)"
 
+    ## secret-read, through the same adapter for Read/Grep and untouched for Bash.
+    assert_blocked "secret-read denies a Read of .env (relative path)" \
+      guards.pi.secret-read-paths deny \
+      "$(read_payload "$HOME" '.env' null)" \
+      'Reading '"$HOME"'/.env would print live credentials'
+
+    assert_blocked "secret-read denies a Read of a ~/-rooted credential file" \
+      guards.pi.secret-read-paths deny \
+      "$(read_payload "$TMPDIR" '~/.aws/credentials' null)" \
+      'Reading '"$HOME"'/.aws/credentials would print live credentials'
+
+    assert_blocked "secret-read denies an @-prefixed Read of .env (pi's @file mention)" \
+      guards.pi.secret-read-paths deny \
+      "$(read_payload "$HOME" '@.env' null)" \
+      'Reading '"$HOME"'/.env would print live credentials'
+
+    assert_allowed "secret-read lets an ordinary Read through" \
+      guards.pi.secret-read-paths abstain \
+      "$(read_payload "$HOME" 'big.txt' 50)"
+
+    assert_allowed "secret-read lets a Read of a committed .env.example through" \
+      guards.pi.secret-read-paths abstain \
+      "$(read_payload "$HOME" '.env.example' null)"
+
+    assert_blocked "secret-read denies cat .env in bash" \
+      guards.pi.secret-read deny \
+      "$(bash_payload "$repo" 'cat .env')" \
+      'prints credential-file content'
+
+    assert_allowed "secret-read lets an ordinary bash command through" \
+      guards.pi.secret-read abstain \
+      "$(bash_payload "$repo" 'ls -la')"
+
+    # pi's grep always prints matching lines, so the adapter forces
+    # output_mode=content; without it the guard would read Claude's default
+    # (files_with_matches) and abstain on exactly this call.
+    assert_blocked "secret-read denies a grep over .env" \
+      guards.pi.secret-read-paths deny \
+      "$(grep_payload "$repo" '~/.env' 'FOO')" \
+      'Grepping '"$HOME"'/.env'
+
+    assert_blocked "secret-read denies a grep whose glob names .env" \
+      guards.pi.secret-read-paths deny \
+      "$(grep_payload "$repo" 'src' 'FOO' '**/.env')" \
+      'Grepping with glob **/.env'
+
+    assert_blocked "secret-read denies a grep whose glob wildcards .env" \
+      guards.pi.secret-read-paths deny \
+      "$(grep_payload "$repo" 'src' 'FOO' '.env*')" \
+      'Grepping with glob .env*'
+
+    assert_blocked "secret-read denies a template glob that also names .env" \
+      guards.pi.secret-read-paths deny \
+      "$(grep_payload "$repo" 'src' 'FOO' '{.env.example,.env}')" \
+      'Grepping with glob {.env.example,.env}'
+
+    assert_allowed "secret-read lets a grep with an .envrc glob through" \
+      guards.pi.secret-read-paths abstain \
+      "$(grep_payload "$repo" 'src' 'FOO' '.envrc')"
+
+    assert_allowed "secret-read lets a grep with an .env.example glob through" \
+      guards.pi.secret-read-paths abstain \
+      "$(grep_payload "$repo" 'src' 'FOO' '.env.example')"
+
+    assert_allowed "secret-read lets an ordinary grep through" \
+      guards.pi.secret-read-paths abstain \
+      "$(grep_payload "$repo" 'src' 'foo')"
+
     # Probed directly rather than through the router: hookyard records a handler
     # that exits non-zero as `abstain`, the same outcome a guard that declined
     # produces, so only the exit status distinguishes a crash from a clean
@@ -243,6 +322,11 @@ in
       fi
       [ -z "$probe" ] || fail "read adapter should stay silent on a non-string path ($malformed)" "$probe"
     done
+
+    if ! probe=$(read_payload_raw "$HOME" 123 | ${secretReadExec} 2>&1); then
+      fail "secret-read adapter aborted on a non-string path" "$probe"
+    fi
+    [ -z "$probe" ] || fail "secret-read adapter should stay silent on a non-string path" "$probe"
 
     ## psql: `ask` has no channel on pi, so hookyard degrades it to a block
     ## rather than letting the destructive call run unconfirmed.

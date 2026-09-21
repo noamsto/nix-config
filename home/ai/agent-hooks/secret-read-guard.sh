@@ -23,6 +23,9 @@ tool_name=$(echo "$input" | jq -r '.tool_name // empty')
 # pattern that catches `.env.example` (a committed template of op:// refs, not
 # secrets) would train people to work around the guard.
 secret_path_re='(^|/)\.env($|\.[A-Za-z0-9_-]+$)|(^|/)\.envrc\.local$|\.aws/credentials|(^|/)\.netrc$|(^|/)id_(rsa|ed25519|ecdsa)$|\.pem$|\.p12$|\.pfx$'
+# Grep globs spell the same files by pattern (`.env*`, `.env.*`, `*.env`), so
+# they get this looser test on top of secret_path_re.
+glob_secret_re='(^|[/*{,[])\.env($|[]*.?,}])|\.(pem|p12|pfx)($|[]*?,}])|\.netrc($|[]*?,}])|id_(rsa|ed25519|ecdsa)($|[]*?,}])|\.aws(/|$)'
 # On a command line the same path is preceded by a space, quote, = or /, and
 # followed by whitespace, a redirect or a pipe — never by a line anchor. Reusing
 # the path-anchored pattern above here silently matches nothing, which is a
@@ -52,14 +55,24 @@ Read)
   deny "Reading $path would print live credentials into this transcript, which costs a rotation. Nothing needs the value: the tool that consumes it reads the environment itself, and a missing key produces a clear error — run the tool and read that instead. To know a key is merely present without seeing it: grep -c '^NAME=' (count, not content)."
   ;;
 Grep)
-  target=$(echo "$input" | jq -r '[.tool_input.path // "", .tool_input.glob // ""] | join(" ")')
   pattern=$(echo "$input" | jq -r '.tool_input.pattern // empty')
   mode=$(echo "$input" | jq -r '.tool_input.output_mode // "files_with_matches"')
   # files_with_matches and count never emit file content.
   [[ $mode == "content" ]] || exit 0
-  [[ $target =~ $template_re ]] && exit 0
-  if [[ $target =~ $secret_path_re ]]; then
-    deny "Grepping $target with output_mode=content would print credential lines into this transcript. Use output_mode=\"count\" to confirm a key exists, or run the consuming tool and read its error."
+  # secret_path_re is anchored, so path and glob are tested separately, never
+  # joined. Template names are stripped rather than exempting the whole call, so
+  # `{.env.example,.env}` still trips on its `.env`.
+  grep_path=$(echo "$input" | jq -r '.tool_input.path // empty')
+  grep_glob=$(echo "$input" | jq -r '.tool_input.glob // empty')
+  path_left=$(sed -E "s/$template_re//g" <<<"$grep_path")
+  glob_left=$(sed -E "s/$template_re//g" <<<"$grep_glob")
+  # A glob names files by pattern, so `.env*`, `.env.*` and `*.env` are the
+  # spellings that reach a real .env; `.envrc` is direnv config and stays out.
+  if [[ $path_left =~ $secret_path_re ]]; then
+    deny "Grepping $grep_path with output_mode=content would print credential lines into this transcript. Use output_mode=\"count\" to confirm a key exists, or run the consuming tool and read its error."
+  fi
+  if [[ $glob_left =~ $secret_path_re || $glob_left =~ $glob_secret_re ]]; then
+    deny "Grepping with glob $grep_glob and output_mode=content would print credential lines into this transcript. Use output_mode=\"count\" to confirm a key exists, or run the consuming tool and read its error."
   fi
   # A secret-shaped pattern with content output leaks even when the path is broad.
   if [[ $pattern =~ (API_?KEY|SECRET|TOKEN|PASSWORD|CREDENTIAL|PRIVATE_KEY) ]]; then
