@@ -127,10 +127,19 @@ in {
       host = "0.0.0.0";
       # A non-loopback host with no origins makes browsers on other machines
       # get a 403, so every name the ThinkPads might use is listed.
+      #
+      # The bare names carry no port because that is all a browser ever sends:
+      # the web UI is reached through the Caddy vhost (below), so its requests
+      # are same-origin with the proxy and lemond sees the vhost's own address,
+      # never the :13305 one it is reached on upstream.
       allowedOrigins = [
         "http://halo:13305"
         "http://halo.tail68e513.ts.net:13305"
         "http://100.92.49.55:13305"
+        "http://halo"
+        "http://localhost"
+        "http://100.92.49.55"
+        "https://halo.tail68e513.ts.net"
       ];
 
       # Deliberately short. g6's 16-model set is entirely imperative and
