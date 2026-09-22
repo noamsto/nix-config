@@ -234,12 +234,14 @@ in {
     # resolved CC plugin binary on PATH; the /resolved:stale plugin finds it there.
     resolved.enable = true;
     # crew + dispatch + dispatcher on PATH, DISPATCH_PROFILE and
-    # DISPATCHER_PROTOCOL_DIR exported, cursor rule/commands written, and the
-    # codex plugin installed. The claude plugin dir is passed in the wrapper
-    # below. `profile` gates the codex/cursor engines to the work machine.
+    # DISPATCHER_PROTOCOL_DIR exported. The claude plugin dir is passed in the
+    # wrapper below. `engines` — not `profile` — gates which worker engines may
+    # be dispatched and which per-engine artifacts get installed.
     dispatcher = {
       enable = true;
       inherit (osConfig) profile;
+      # cursor-agent ships on every host but is only logged in on the work one.
+      engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
     };
 
     # hookyard refuses to write through the settings.json symlink, so it
