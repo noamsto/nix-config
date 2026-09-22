@@ -9,6 +9,19 @@
   isHalo = osConfig.hostname == "halo";
   houstonPkg = inputs.houston.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
+  # Picks dev vs pinned at process start, so `houston-dev on/off` needs no
+  # rebuild. No runtimeInputs: they would prepend to houston.service's PATH.
+  launcher = pkgs.writeShellApplication {
+    name = "houston";
+    text = ''
+      dev_dir="''${HOUSTON_DEV_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/houston/dev}"
+      if [[ -e "$dev_dir/enabled" && -x "$dev_dir/current/bin/houston" ]]; then
+        exec "$dev_dir/current/bin/houston" "$@"
+      fi
+      exec ${houstonPkg}/bin/houston "$@"
+    '';
+  };
+
   # Turns hookyard's normalized envelope back into houston's own input:
   # houston parses Claude Code's native payload shape, which the envelope
   # carries verbatim under `.native`. `houston hook` always exits 0 and reads
@@ -20,7 +33,8 @@
   # stray stdout line must not be able to start influencing that classification.
   bridge = pkgs.writeShellApplication {
     name = "houston-hookyard-bridge";
-    runtimeInputs = [pkgs.jq houstonPkg];
+    # The hook writer must run the same build as the server reading its state.
+    runtimeInputs = [pkgs.jq launcher];
     text = ''
       jq -c .native | houston hook >/dev/null || true
     '';
@@ -63,38 +77,87 @@
       }
     ];
   });
+
+  sync = pkgs.writeShellApplication {
+    name = "houston-dev-sync";
+    runtimeInputs = [pkgs.git pkgs.coreutils osConfig.nix.package pkgs.systemd];
+    text =
+      ''
+        nixpkgs_src=${inputs.nixpkgs}
+      ''
+      + builtins.readFile ./houston-dev-common.sh
+      + builtins.readFile ./houston-dev-sync.sh;
+  };
+
+  cli = pkgs.writeShellApplication {
+    name = "houston-dev";
+    runtimeInputs = [pkgs.git pkgs.coreutils pkgs.systemd];
+    text =
+      ''
+        pinned=${houstonPkg}
+        pinned_rev=${inputs.houston.rev or "unknown"}
+      ''
+      + builtins.readFile ./houston-dev-common.sh
+      + builtins.readFile ./houston-dev.sh;
+  };
 in {
   programs.hookyard.manifests = lib.mkIf isHalo [manifest];
 
-  systemd.user.services.houston = lib.mkIf isHalo {
-    Unit = {
-      Description = "Houston - mission control for AI coding agents in tmux";
-      # tmux-startup.service brings up the user's tmux server (and its
-      # control socket) on halo; houston needs that socket to exist before
-      # it can talk to tmux in control mode.
-      After = ["tmux-startup.service"];
-      Wants = ["tmux-startup.service"];
+  systemd.user = lib.mkIf isHalo {
+    services.houston = {
+      Unit = {
+        Description = "Houston - mission control for AI coding agents in tmux";
+        # tmux-startup.service brings up the user's tmux server (and its
+        # control socket) on halo; houston needs that socket to exist before
+        # it can talk to tmux in control mode.
+        After = ["tmux-startup.service"];
+        Wants = ["tmux-startup.service"];
+      };
+
+      Service = {
+        ExecStart = "${launcher}/bin/houston";
+        Restart = "on-failure";
+        RestartSec = 5;
+        Environment = [
+          # tmuxPackage first: houston must see the same tmux binary version
+          # the user's tmux server runs, or control mode breaks on a
+          # client/server version mismatch.
+          "PATH=${lib.makeBinPath [
+            config.programs.tmux-og.tmuxPackage
+            pkgs.git
+            inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
+          ]}"
+          # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
+          # the same runtime dir (/run/user/1000) and therefore the same socket.
+          "TMUX_TMPDIR=%t"
+        ];
+      };
+
+      Install.WantedBy = ["default.target"];
     };
 
-    Service = {
-      ExecStart = "${houstonPkg}/bin/houston";
-      Restart = "on-failure";
-      RestartSec = 5;
-      Environment = [
-        # tmuxPackage first: houston must see the same tmux binary version
-        # the user's tmux server runs, or control mode breaks on a
-        # client/server version mismatch.
-        "PATH=${lib.makeBinPath [
-          config.programs.tmux-og.tmuxPackage
-          pkgs.git
-          inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
-        ]}"
-        # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
-        # the same runtime dir (/run/user/1000) and therefore the same socket.
-        "TMUX_TMPDIR=%t"
-      ];
+    services.houston-dev-sync = {
+      Unit.Description = "Build and deploy github:noamsto/houston main when houston dev mode is on";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${sync}/bin/houston-dev-sync";
+        # oneshot has no start timeout by default; a stalled fetch would keep
+        # the unit "activating" and the timer could never fire it again.
+        TimeoutStartSec = "30min";
+      };
     };
 
-    Install.WantedBy = ["default.target"];
+    # Always on; the sync no-ops while dev mode is off. HM owns the timer's
+    # wants links, so `houston-dev` could not enable it at runtime.
+    timers.houston-dev-sync = {
+      Unit.Description = "Poll github:noamsto/houston main for houston dev mode";
+      Timer = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "2min";
+      };
+      Install.WantedBy = ["timers.target"];
+    };
   };
+
+  home.packages = lib.mkIf isHalo [cli];
 }
