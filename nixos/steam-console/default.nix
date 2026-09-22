@@ -6,7 +6,7 @@
 }: let
   cfg = config.steamConsole;
 in {
-  imports = [inputs.jovian.nixosModules.default];
+  imports = [inputs.jovian.nixosModules.default ./on-demand.nix];
 
   config = lib.mkIf cfg.enable {
     assertions = [
@@ -22,15 +22,18 @@ in {
     jovian = {
       steam = {
         enable = true;
-        inherit (cfg) autoStart user;
-        # Required whenever autoStart is on: Jovian's autostart unit
-        # interpolates this into an ExecStart unconditionally
-        # (modules/steam/autostart.nix:106) and it defaults to null, so
-        # evaluation dies with "cannot coerce null to a string". halo has no
-        # desktop to switch to, and "gamescope-wayland" is the value Jovian's
-        # own check message prescribes for exactly that case — "Switch to
-        # Desktop" just relaunches Gaming Mode.
-        desktopSession = lib.mkIf cfg.autoStart "gamescope-wayland";
+        autoStart = true;
+        inherit (cfg) user;
+        # Jovian's autostart unit interpolates this into an ExecStart
+        # unconditionally (modules/steam/autostart.nix:106) and it defaults
+        # to null, so evaluation dies with "cannot coerce null to a string"
+        # if left unset. halo has no desktop to switch to, and
+        # "gamescope-wayland" is the value Jovian's own check message
+        # prescribes for exactly that case — "Switch to Desktop" just
+        # relaunches Gaming Mode. Autostart is on unconditionally: every
+        # `start` mode needs the DM installed, only whether it's *booted*
+        # differs (below).
+        desktopSession = "gamescope-wayland";
       };
       # Gates Jovian's AMD backlight/modesetting helpers. NOT
       # jovian.devices.steamdeck, which would pull linux-neptune over the
@@ -59,6 +62,13 @@ in {
       # flashes. And it drops `audit=0`, so auditing comes back on.
       steamos.enableDefaultCmdlineConfig = false;
     };
+
+    # The DM is pulled in at boot only through systemd's stock
+    # `graphical.target` (`Wants=display-manager.service`). Jovian's unit has
+    # `wantedBy = []` and `restartIfChanged = false`, so staying off
+    # graphical.target keeps display-manager.service installed but unstarted
+    # — a switch never starts it either.
+    systemd.defaultUnit = lib.mkIf (cfg.start != "boot") (lib.mkForce "multi-user.target");
 
     # Jovian's modules/steam/steam.nix already sets programs.steam.enable,
     # hardware.graphics and hardware.steam-hardware. remotePlay.openFirewall is

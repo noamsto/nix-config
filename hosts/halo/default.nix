@@ -38,17 +38,20 @@ in {
   steamConsole.enable = true;
 
   # Big Picture costs 6.9 W of halo's 14.1 W idle draw — measured, and roughly
-  # half the total — so it does not run unattended. Start it from the couch
-  # with `systemctl start display-manager`, or over ssh. #221 tracks starting
-  # it automatically on controller input instead.
-  steamConsole.autoStart = false;
+  # half the total — so it does not run unattended. Instead it starts on the
+  # controller's Home button and stops on Steam's own idle sleep or the TV
+  # going off, never mid-game (see nixos/steam-console/on-demand.nix).
+  # `systemctl start|stop display-manager` over ssh is still the manual
+  # override.
+  steamConsole.start = "controller";
 
-  # Steam Gaming Mode's idle sleep suspends the box over dbus as the autologin
-  # console user (logind: "suspend requested from client ... unit
-  # user@1001.service"). Suspended, halo is unreachable while the TV goes on
-  # showing its last frame, so it still looks alive. Resume then leaves wlan0
-  # wedged — iwd reaches autoconnect_quick and never associates again — so
-  # don't unmask these until #219 is fixed.
+  # Steam Gaming Mode's idle sleep is a dbus suspend request from the
+  # autologin console user (logind: "suspend requested from client ... unit
+  # user@1001.service"). The sleep targets below stay masked — resume leaves
+  # wlan0 wedged, iwd reaches autoconnect_quick and never associates again, so
+  # don't unmask these until #219 is fixed — so the request itself never
+  # suspends halo; steam-console-idle.service reacts to it instead and stops
+  # Gaming Mode.
   systemd.targets = {
     sleep.enable = false;
     suspend.enable = false;

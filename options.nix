@@ -41,12 +41,17 @@
           and that must not be the account with SSH keys, sudo and agent access.
         '';
       };
-      autoStart = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
+      start = lib.mkOption {
+        type = lib.types.enum ["boot" "manual" "controller"];
+        default = "boot";
         description = ''
-          Launch Gaming Mode at boot. False leaves it startable from a VT with
-          `start-gamescope-session`.
+          How Gaming Mode's display manager gets started:
+          - `boot`: started at boot, as usual.
+          - `manual`: installed but not booted; start it from the couch or
+            over ssh with `systemctl start display-manager`.
+          - `controller`: like `manual`, plus a controller Home-button press
+            starts it, and Steam's own idle sleep or the TV going off stops
+            it. Never stops while a game is running.
         '';
       };
     };
