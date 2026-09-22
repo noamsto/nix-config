@@ -42,6 +42,12 @@ nix run nix-darwin -- switch --flake ~/nix-config#mbp-m4-pro
 - Homebrew 6.0 tap-trust for the non-official `mediosz/tap` (swipeaerospace) is
   handled declaratively — `homebrew.onActivation.extraEnv.XDG_CONFIG_HOME` points
   brew at a store-baked `trust.json`. No manual `brew trust` needed.
+- The `mediosz/tap` cask is patched in-flake: its `postflight_steps` block
+  interpolates a bare `appdir`, which Homebrew 7 no longer provides, making the
+  cask unreadable and aborting `brew bundle`. The block is stripped and its
+  quarantine strip moved into the SwipeAeroSpace LaunchAgent supervisor (the
+  build is ad-hoc signed, so a quarantined bundle won't launch at all). Revert
+  both once upstream regenerates the cask.
 - **The full config already evaluates cleanly on Linux** — the entire darwin
   system toplevel (`config.system.build.toplevel.drvPath`) instantiates without
   error, so all Linux-only-package gating and missing-attr issues are resolved.

@@ -7,6 +7,22 @@
   hostConfigs = import ../../lib/host-configs.nix;
   host = hostConfigs.mbp-m4-pro;
 
+  # Homebrew 7 turned `postflight_steps` into a declarative template DSL, so the
+  # bare Ruby `appdir` the upstream cask interpolates is no longer a method on
+  # the block — the cask dies at *load* with "unreadable: undefined local
+  # variable or method 'appdir'". That aborts `brew bundle`, so every `nh darwin
+  # switch` fails even though the app is installed and fine. Upstream generates
+  # the file from build-brew-cask.py and hasn't respun it (v0.3.3, latest).
+  # Strip the block here; the supervisor below re-does its one job (the
+  # quarantine strip). Deletion is tolerant, so this no-ops once upstream fixes
+  # it — at which point drop this derivation and go back to the bare input.
+  homebrew-mediosz-patched = pkgs.runCommand "homebrew-mediosz-patched" {} ''
+    cp -R ${inputs.homebrew-mediosz} $out
+    chmod -R u+w $out
+    ${pkgs.gnused}/bin/sed -i '/^  postflight_steps do$/,/^  end$/d' \
+      $out/Casks/swipeaerospace.rb
+  '';
+
   # SwipeAeroSpace connects to AeroSpace's control socket once at startup and
   # never reconnects, so an AeroSpace restart leaves it running but deaf and
   # swipes silently do nothing. Nothing recovers it: KeepAlive sees a healthy
@@ -20,6 +36,14 @@
     # inode compares unequal — restarting the helper every 5s forever.
     until [ -S "$sock" ]; do sleep 1; done
     ino=$(/usr/bin/stat -f %i "$sock")
+
+    # Took over from the cask's postflight, dropped above. The build is ad-hoc
+    # signed with no Team ID, so Gatekeeper rejects it outright and a quarantined
+    # bundle simply won't launch — and a LaunchAgent start has no "Open anyway"
+    # prompt to fall back on. Non-recursive, matching the postflight: the flag on
+    # the top-level bundle is the one that blocks exec. Absolute path because a
+    # LaunchAgent PATH is not the login shell's.
+    /usr/bin/xattr -d com.apple.quarantine /Applications/SwipeAeroSpace.app 2>/dev/null || true
 
     /Applications/SwipeAeroSpace.app/Contents/MacOS/SwipeAeroSpace &
     pid=$!
@@ -184,7 +208,8 @@ in {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
       # mediosz/tap → SwipeAerospace (swipe-to-switch-workspace for AeroSpace).
-      "mediosz/homebrew-tap" = inputs.homebrew-mediosz;
+      # Patched: upstream cask is unreadable under Homebrew 7 (see above).
+      "mediosz/homebrew-tap" = homebrew-mediosz-patched;
       # nikitabobko/tap → AeroSpace itself.
       "nikitabobko/homebrew-tap" = inputs.homebrew-nikitabobko;
     };
