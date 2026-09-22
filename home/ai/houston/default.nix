@@ -122,10 +122,18 @@ in {
           # tmuxPackage first: houston must see the same tmux binary version
           # the user's tmux server runs, or control mode breaks on a
           # client/server version mismatch.
+          #
+          # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
+          # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
+          # wrapping them (dispatcher flake.nix).
           "PATH=${lib.makeBinPath [
             config.programs.tmux-og.tmuxPackage
             pkgs.git
+            pkgs.gh
+            pkgs.worktrunk
+            pkgs.direnv
             inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
+            inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
           ]}"
           # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
           # the same runtime dir (/run/user/1000) and therefore the same socket.
