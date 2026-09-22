@@ -16,8 +16,10 @@
 # ends on its `jq -n`; append nothing after it.
 #
 # `additionalContext` reaches the model on Claude Code either way. On pi it
-# rides a denial's reason and has no standalone channel (noamsto/hookyard#72),
-# so an advisory-only guard is silent there.
+# rides a denial's reason, and — since noamsto/hookyard#72 was resolved by
+# hookyard#75 — an advisory-only guard (no denial) now reaches the model too,
+# appended onto that call's own tool_result rather than the tool_call return
+# (which pi still has no content channel for on allow).
 #
 # `permissionDecision: "ask"` is a hard block on pi, not a prompt: pi's channel
 # is binary, so hookyard degrades ask to deny. Claude Code still prompts. That

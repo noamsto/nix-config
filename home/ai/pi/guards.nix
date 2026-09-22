@@ -136,10 +136,15 @@
     (piGuard "guards.pi.secret-read" "${guards.secret-read-guard}/bin/agent-secret-read-guard" ["Bash"])
     (piGuard "guards.pi.secret-read-paths" "${secretReadAdapter}/bin/agent-pi-secret-read-adapter" ["Read" "Grep"])
     (piGuard "guards.pi.psql" "${psql-guard}/bin/agent-psql-guard" ["Bash"])
-    # Advisory-only, and on pi its advice now reaches the model only when it
-    # rides another handler's denial — hookyard's pi pre_tool return shape is
-    # {block, reason} with no standalone advisory channel (noamsto/hookyard#72).
-    # It stays registered for exactly that consolidation.
+    # Advisory-only. pi's tool_call return still can't carry content on allow
+    # (a pi platform limit), but hookyard's bridge now delivers the advice
+    # anyway: it stashes it at tool_call and appends it onto that call's own
+    # tool_result once the call resolves — after the tool's own output and
+    # after any post_tool advice (noamsto/hookyard#72, resolved by #75; see
+    # docs/design/hookyard.md §11.1). A denial still carries the advice only
+    # in its reason, never doubled. Delivery is skipped if the call aborts
+    # before it executes, if tool_result content isn't an array, or if a
+    # later extension replaces rather than appends content.
     (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
   ];

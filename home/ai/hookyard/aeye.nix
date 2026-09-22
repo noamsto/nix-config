@@ -44,8 +44,8 @@
     lane = "fire_and_forget";
   };
 
-  # Verdict lane: Claude Code is the only engine with a post_tool advisory
-  # slot, so diagrams.sh's compile-failure/markdown-blank warnings reach the
+  # Verdict lane: aeye registers no pi handlers, so this shim is Claude Code
+  # only — diagrams.sh's compile-failure/markdown-blank warnings reach the
   # model only this way. Large graphs render for tens of seconds, past the
   # 4.3s verdict deadline, so the render runs detached and the shim forwards
   # its output only if it finishes within 3s. Each side writes its marker
