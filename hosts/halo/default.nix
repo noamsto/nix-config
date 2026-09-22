@@ -226,6 +226,11 @@ in {
           ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/games";
         };
       };
+
+      # Wi-Fi is halo's only uplink, and restarting iwd under a running
+      # NetworkManager leaves wlan0 stuck in autoconnect_quick (#219). A new
+      # iwd takes effect at the next boot instead.
+      iwd.restartIfChanged = false;
     };
 
     # disko creates the subvolumes as root:root. Split by consumer: lemond's two
