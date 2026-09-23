@@ -369,10 +369,25 @@ in {
 
     # KeepingYouAwake's own "Start at Login" uses SMAppService (macOS 13+), which
     # can't be set declaratively via `defaults`. Drive it from a LaunchAgent
-    # instead — same `open -a` + RunAtLoad-only pattern as easy-move-resize. It
-    # comes up caffeinating because ActivateOnLaunch is set below.
+    # instead — same `open -a` + RunAtLoad-only pattern as easy-move-resize.
+    #
+    # ActivateOnLaunch is passed as an `open -a --args` launch argument (NSArgumentDomain)
+    # rather than written into KeepingYouAwake's persisted defaults domain: that domain is
+    # sandboxed (~/Library/Containers/info.marcel-dierkes.KeepingYouAwake/), so a `defaults
+    # write` against it at activation reads as cross-app container access and macOS pops
+    # the "kitty would like to access data from other apps" TCC prompt on every darwin
+    # switch. The argument domain overrides the same key at launch without touching the
+    # container. Quirk from KeepingYouAwake's source (NSUserDefaults+KYAKeys): the whole
+    # reverse-DNS string is the *key name*, hence it repeats after the app-name arg below.
     keepingyouawake.serviceConfig = {
-      ProgramArguments = ["/usr/bin/open" "-a" "KeepingYouAwake"];
+      ProgramArguments = [
+        "/usr/bin/open"
+        "-a"
+        "KeepingYouAwake"
+        "--args"
+        "-info.marcel-dierkes.KeepingYouAwake.ActivateOnLaunch"
+        "YES"
+      ];
       RunAtLoad = true;
     };
 
@@ -475,12 +490,11 @@ in {
         "org.dmarcotte.Easy-Move-Resize".ModifierFlags = "CMD,ALT";
 
         # KeepingYouAwake starts caffeinating as soon as it launches, so the
-        # login-item LaunchAgent above yields an always-awake session with a
-        # filled menu-bar cup — replacing a hand-run `caffeinate`. Quirk from
-        # its source (NSUserDefaults+KYAKeys): the whole reverse-DNS string is
-        # the *key name*, stored inside the app's own domain — hence the domain
-        # prefix repeats as domain and key.
-        "info.marcel-dierkes.KeepingYouAwake"."info.marcel-dierkes.KeepingYouAwake.ActivateOnLaunch" = true;
+        # login-item LaunchAgent yields an always-awake session with a filled
+        # menu-bar cup — replacing a hand-run `caffeinate`. ActivateOnLaunch is
+        # passed as a launch argument on that LaunchAgent (see its comment)
+        # rather than set here, since this domain is sandboxed and writing it
+        # at activation triggers a TCC "access data from other apps" prompt.
       };
     };
   };
