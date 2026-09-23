@@ -1527,11 +1527,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1790059385,
-        "narHash": "sha256-22ZfN3KoiLX9YKTzvYiWjmv3UHco1KgB4EWDEYJegNw=",
+        "lastModified": 1790153131,
+        "narHash": "sha256-L1mjzxSUCBia65paSKzfWW3p5kEIQ0CpPvnj6NGrIsQ=",
         "owner": "noamsto",
         "repo": "hookyard",
-        "rev": "8c802d5faa839867d696aabe421f42b9e0600f2e",
+        "rev": "d48795336503897f0ad4045eb75fe61f2c066ae7",
         "type": "github"
       },
       "original": {
@@ -1575,11 +1575,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790143793,
-        "narHash": "sha256-Pcsp9PQ4mSBxOmU63smkVTkeQGqK02ZaHzcrvM4JPBI=",
+        "lastModified": 1790153930,
+        "narHash": "sha256-rLjYelsIJBx5yBtXpzs4+83/z6Uph5qp/OhuqcKPA90=",
         "owner": "noamsto",
         "repo": "houston",
-        "rev": "8893df28b2639e24b526b7850b7662ae407db58d",
+        "rev": "d6125f0b99250c672f6ea7da4e1c0a668b5d7681",
         "type": "github"
       },
       "original": {

@@ -45,9 +45,16 @@
   # have no canonical equivalent, so they ride engine-scoped. `prompt_submit`
   # is included too: houston's `apply()` treats UserPromptSubmit as a new
   # turn starting (state -> thinking, Turn++). `pre_compact` and
-  # `pi:session_shutdown` are added to the observe set: the latter is
-  # engine-scoped because a pi session has no canonical SessionEnd, and
-  # without it a pi session that exits stays "waiting" forever in Fleet.
+  # `pi:session_shutdown`, `pi:agent_settled`, and the engine-scoped session
+  # ends are added to the observe set. A pi session has no canonical
+  # SessionEnd, so `pi:session_shutdown` is engine-scoped and, without it, a
+  # pi session that exits stays "waiting" forever in Fleet. `pi:agent_settled`
+  # is pi's final "run settled" signal: houston treats every pi `turn_end` as
+  # intermediate, so without it a pi run stays "thinking" after its last turn.
+  # `codex:SessionEnd` and `cursor:sessionEnd` are engine-scoped like Claude
+  # Code's own SessionEnd because neither engine has a canonical equivalent;
+  # houston maps all three session ends to ended and pi `agent_settled` to
+  # waiting.
   #
   # `pre_tool` is the only event with a decision slot (hookyard's
   # internal/verdict.HasDecisionSlot), and houston's pi turn_end rule depends
@@ -74,7 +81,10 @@
           "pre_compact"
           "claude-code:Notification"
           "claude-code:SessionEnd"
+          "codex:SessionEnd"
+          "cursor:sessionEnd"
           "pi:session_shutdown"
+          "pi:agent_settled"
         ];
         engines = ["claude-code" "codex" "cursor" "pi"];
         match = [];
