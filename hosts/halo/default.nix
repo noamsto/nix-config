@@ -352,7 +352,7 @@ in {
         # serving it same-origin puts houston's Path=/ cookie in its reach.
         lemonade = {
           port = config.hardware.amd-npu.lemonade.port;
-          paths = ["/lemonade" "/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream"];
+          paths = ["/lemonade" "/api/v1" "/api/v0" "/v1" "/v0" "/realtime" "/logs/stream" "/internal"];
           stripPrefix = ["/lemonade"];
           streaming = true;
           responseHeaderTimeout = "300s";
