@@ -22,21 +22,20 @@
     '';
   };
 
-  # Turns hookyard's normalized envelope back into houston's own input:
-  # houston parses Claude Code's native payload shape, which the envelope
-  # carries verbatim under `.native`. `houston hook` always exits 0 and reads
-  # the event name from the payload's own `hook_event_name` when no CLI arg is
-  # given, so no event argument is needed here. Stdout is redirected away even
-  # though houston never writes to it today: the pre_tool handler below runs
-  # in the verdict lane, where hookyard parses a handler's stdout as a
-  # potential Allow/Ask/Deny decision, so a future houston version growing a
-  # stray stdout line must not be able to start influencing that classification.
+  # Passes hookyard's normalized envelope straight to houston: houston
+  # detects the envelope by its `engine` field and reads the event from
+  # `canonical_event`/`native_event` itself, so no reshaping is needed here.
+  # `houston hook` always exits 0. Stdout is redirected away even though
+  # houston never writes to it today: the pre_tool handler below runs in the
+  # verdict lane, where hookyard parses a handler's stdout as a potential
+  # Allow/Ask/Deny decision, so a future houston version growing a stray
+  # stdout line must not be able to start influencing that classification.
   bridge = pkgs.writeShellApplication {
     name = "houston-hookyard-bridge";
     # The hook writer must run the same build as the server reading its state.
-    runtimeInputs = [pkgs.jq launcher];
+    runtimeInputs = [launcher];
     text = ''
-      jq -c .native | houston hook >/dev/null || true
+      houston hook >/dev/null || true
     '';
   };
 
@@ -45,18 +44,22 @@
   # (= Stop) are hookyard's canonical events; `Notification` and `SessionEnd`
   # have no canonical equivalent, so they ride engine-scoped. `prompt_submit`
   # is included too: houston's `apply()` treats UserPromptSubmit as a new
-  # turn starting (state -> thinking, Turn++).
+  # turn starting (state -> thinking, Turn++). `pre_compact` and
+  # `pi:session_shutdown` are added to the observe set: the latter is
+  # engine-scoped because a pi session has no canonical SessionEnd, and
+  # without it a pi session that exits stays "waiting" forever in Fleet.
   #
-  # `pre_tool` is the only event with a decision slot for claude-code
-  # (hookyard's internal/verdict.HasDecisionSlot), so it alone runs in the
-  # synchronous verdict lane; the rest run `fire_and_forget`.
+  # `pre_tool` is the only event with a decision slot (hookyard's
+  # internal/verdict.HasDecisionSlot), and houston's pi turn_end rule depends
+  # on pre_tool landing synchronously, so it alone runs in the verdict lane
+  # across all engines; the rest run `fire_and_forget`.
   manifest = pkgs.writeText "houston-hookyard.json" (builtins.toJSON {
     handlers = [
       {
         id = "houston.state";
         exec = "${bridge}/bin/houston-hookyard-bridge";
         events = ["pre_tool"];
-        engines = ["claude-code"];
+        engines = ["claude-code" "codex" "cursor" "pi"];
         match = [];
         timeout_ms = 1000;
       }
@@ -68,10 +71,12 @@
           "prompt_submit"
           "post_tool"
           "turn_end"
+          "pre_compact"
           "claude-code:Notification"
           "claude-code:SessionEnd"
+          "pi:session_shutdown"
         ];
-        engines = ["claude-code"];
+        engines = ["claude-code" "codex" "cursor" "pi"];
         match = [];
         lane = "fire_and_forget";
       }
