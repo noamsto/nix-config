@@ -51,7 +51,8 @@ in {
   # wlan0 wedged, iwd reaches autoconnect_quick and never associates again, so
   # don't unmask these until #219 is fixed — so the request itself never
   # suspends halo; steam-console-idle.service reacts to it instead and stops
-  # Gaming Mode.
+  # Gaming Mode, or, if a game is running, keeps Gaming Mode and restarts
+  # Steam's UI instead.
   systemd.targets = {
     sleep.enable = false;
     suspend.enable = false;

@@ -16,10 +16,16 @@
     # installs it, then routes real pi tool_call payloads through the real
     # handler executables. A guard that stops blocking fails open and silently,
     # so it is checked here rather than left to the rebuild.
-    checks.pi-guards = import ../home/ai/pi/guards-check.nix {
-      inherit pkgs;
-      hookyard = inputs'.hookyard.packages.default;
-    };
+    checks =
+      {
+        pi-guards = import ../home/ai/pi/guards-check.nix {
+          inherit pkgs;
+          hookyard = inputs'.hookyard.packages.default;
+        };
+      }
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};
+      };
 
     devShells.default = pkgs.mkShell {
       packages =

@@ -7,18 +7,24 @@
   cfg = config.steamConsole;
   systemctl = "${pkgs.systemd}/bin/systemctl";
 
-  # The single "never stop mid-game" check, shared by both stop paths below.
-  # Steam runs every game (and non-Steam shortcut) as a child of its own
-  # `reaper` process, which exits with the game — nothing else needs
-  # checking, and in particular no stop path reads the controller, so a
-  # flat pad battery can never end a session.
+  # The single "never stop mid-game" check, shared by the stop paths and the
+  # idle keep branch below. Steam runs every game (and non-Steam shortcut) as
+  # a child of its own `reaper` process, which exits with the game — nothing
+  # else needs checking, and in particular no stop path reads the controller,
+  # so a flat pad battery can never end a session.
+  gameRunning = pkgs.writeShellApplication {
+    name = "steam-console-game-running";
+    runtimeInputs = [pkgs.procps];
+    text = "pgrep -u ${cfg.user} -x reaper >/dev/null";
+  };
+
   stop = pkgs.writeShellApplication {
     name = "steam-console-stop";
-    runtimeInputs = [pkgs.procps pkgs.systemd];
+    runtimeInputs = [pkgs.systemd];
     text = ''
       reason="$1"
 
-      if pgrep -u ${cfg.user} -x reaper >/dev/null; then
+      if ${lib.getExe gameRunning}; then
         echo "$reason, but a game is running — keeping Gaming Mode"
         exit 0
       fi
@@ -68,7 +74,8 @@
 
   # Steam's idle sleep is a dbus-send Suspend call to logind, made from
   # inside the console user's session (#219: the actual suspend targets
-  # stay masked, so logind refuses it — this only reacts to the request).
+  # stay masked, so logind refuses it — this only reacts to the request,
+  # either stopping Gaming Mode or, mid-game, restarting Steam's UI).
   # *WithFlags members cover recent systemd's `systemctl suspend`, in case
   # anything besides Steam ever issues one on halo.
   sleepMembers = [
@@ -89,11 +96,21 @@
 
   idle = pkgs.writeShellApplication {
     name = "steam-console-idle";
-    runtimeInputs = [pkgs.dbus stop];
+    runtimeInputs = [pkgs.dbus pkgs.procps pkgs.coreutils stop];
     text = ''
       dbus-monitor --system ${dbusMatchArgs} | while read -r line; do
         case "$line" in
-        "method call "*) steam-console-stop "Steam requested sleep (idle)" ;;
+        "method call "*)
+          if ${lib.getExe gameRunning}; then
+            echo "Steam requested sleep (idle), but a game is running — keeping Gaming Mode, restarting Steam's UI"
+            sleep 1
+            # The refused sleep means Steam's resume never comes, so a fresh UI
+            # is the only way out — Steam relaunches its webhelper, as Decky does.
+            pkill -TERM -u ${cfg.user} -x steamwebhelper || echo "no Steam UI process to restart"
+          else
+            steam-console-stop "Steam requested sleep (idle)"
+          fi
+          ;;
         esac
       done
     '';
