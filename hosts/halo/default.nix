@@ -25,6 +25,7 @@ in {
     ../../nixos/core/iwd-known-networks.nix
     inputs.nix-amd-ai.nixosModules.default
     inputs.prep.nixosModules.default
+    inputs.hermes-agent.nixosModules.default
     ../../nixos/steam-console
   ];
 
@@ -235,6 +236,28 @@ in {
       # NetworkManager leaves wlan0 stuck in autoconnect_quick (#219). A new
       # iwd takes effect at the next boot instead.
       iwd.restartIfChanged = false;
+
+      # Hermes keeps cron jobs in its state dir; this makes the scout relay job
+      # exist after every activation without duplicating it.
+      hermes-scout-cron = {
+        description = "Ensure the Hermes scout relay cron job exists";
+        after = ["hermes-agent.service"];
+        wants = ["hermes-agent.service"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "hermes";
+          Group = "hermes";
+          Environment = "HERMES_HOME=${config.services.hermes-agent.stateDir}/.hermes";
+        };
+        path = [config.services.hermes-agent.package pkgs.gnugrep];
+        script = ''
+          if ! hermes cron list --all | grep -q 'scout-watch'; then
+            hermes cron create "30 15 * * 1-5" --no-agent --script scout-relay-watch.sh \
+              --deliver telegram --name scout-watch
+          fi
+        '';
+      };
     };
 
     # disko creates the subvolumes as root:root. Split by consumer: lemond's two
@@ -300,6 +323,34 @@ in {
       enable = true;
       bindAddress = "127.0.0.1";
       prefix = "/prep";
+    };
+
+    moneyScout.enable = true;
+
+    hermes-agent = {
+      enable = true;
+      extraDependencyGroups = ["messaging"];
+      environmentFiles = [config.age.secrets.hermes-env.path];
+      # Not secret: who may talk to the bot, and where cron results go (a
+      # private chat's id is the user's id).
+      environment = {
+        TELEGRAM_ALLOWED_USERS = "595513674";
+        TELEGRAM_HOME_CHANNEL = "595513674";
+      };
+      settings = {
+        model = {
+          provider = "custom";
+          base_url = "http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1";
+          default = "gpt-oss-120b-mxfp-GGUF";
+        };
+        # Chat can read files in its home and the scout report dir, but it
+        # cannot run code, browse, delegate or schedule, and the hermes uid
+        # holds no broker credentials.
+        agent.disabled_toolsets = ["terminal" "code_execution" "cronjob" "delegation" "browser" "web"];
+      };
+      # `hermes cron create --script` takes a bare path with no arguments, so
+      # the job is fixed by this wrapper.
+      hermesHomeFiles."scripts/scout-relay-watch.sh" = "exec ${config.services.moneyScout.relayScript}/bin/scout-relay watch\n";
     };
 
     # halo.local is deliberately not listed: it's Avahi-only, never enters
@@ -388,6 +439,13 @@ in {
     openssh.authorizedKeys.keys = [
       sshPublicKeys.noams
     ];
+  };
+
+  # Reads the scout's reports via the money-scout group; needs no broker
+  # credentials of its own.
+  users.users.hermes = {
+    extraGroups = ["money-scout"];
+    linger = true;
   };
 
   # Ryzen AI Max+ 395: 16 cores / 32 threads.

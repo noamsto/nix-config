@@ -35,6 +35,12 @@
       owner = "jellyfin";
       mode = "0400";
     };
+    # TELEGRAM_BOT_TOKEN=... for Hermes; merged into $HERMES_HOME/.env.
+    hermes-env = {
+      file = "${inputs.mysecrets}/hermes-env.age";
+      owner = "hermes";
+      mode = "0400";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in

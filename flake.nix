@@ -309,6 +309,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Telegram relay for the portfolio scout, served on halo (see
+    # nixos/services/money-scout.nix and hosts/halo/default.nix).
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Web dashboard for tmux-hosted AI agents, served on halo (see
     # home/ai/houston and hosts/halo/default.nix's localProxy wiring).
     houston = {
