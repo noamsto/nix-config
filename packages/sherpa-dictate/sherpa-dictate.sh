@@ -18,6 +18,13 @@ running() {
 # emits. Anchoring on the index keeps chatter ("Use recording device:
 # plug:default") out of the typed stream. stdbuf keeps both stages
 # line-buffered, otherwise nothing types until 4KB accumulates.
+#
+# The sed stage drops filler words, the same list voxtype filters, and
+# re-capitalizes a segment that opened with one. It runs after tee so the log
+# keeps the raw transcript. A segment that was nothing but filler leaves bare
+# punctuation, which the alnum check refuses to type.
+fillers='(uh|um|er|ah|eh|hmm|hm|mm|mhm)'
+
 listen() {
   stdbuf -oL sherpa-onnx-vad-alsa-offline-asr \
     --silero-vad-model="$VAD_MODEL" \
@@ -28,10 +35,15 @@ listen() {
     --num-threads=4 \
     "$DEVICE" 2>&1 |
     stdbuf -oL tee "$runtime/log" |
+    sed -uE \
+      -e "s/^([[:space:]]*[0-9]+:[[:space:]]?)$fillers\\b[,.]?[[:space:]]*([a-z])/\\1\\u\\3/I" \
+      -e "s/\\b$fillers\\b,?//gI" \
+      -e 's/[[:space:],]+([.?!])/\1/g' \
+      -e 's/  +/ /g' |
     while IFS= read -r line; do
       [[ $line =~ ^[[:space:]]*[0-9]+:[[:space:]]?(.*)$ ]] || continue
       text="${BASH_REMATCH[1]}"
-      [ -n "$text" ] && wtype -- "$text "
+      [[ $text =~ [[:alnum:]] ]] && wtype -- "$text "
     done
 }
 

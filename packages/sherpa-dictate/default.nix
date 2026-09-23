@@ -7,6 +7,7 @@
   libnotify,
   coreutils,
   util-linux,
+  gnused,
 }: let
   vadModel = fetchurl {
     url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx";
@@ -20,7 +21,7 @@
 in
   writeShellApplication {
     name = "sherpa-dictate";
-    runtimeInputs = [sherpa-onnx wtype libnotify coreutils util-linux];
+    runtimeInputs = [sherpa-onnx wtype libnotify coreutils util-linux gnused];
 
     # sherpa-onnx's ALSA layer rejects the PipeWire PCM's hw_params outright
     # ("Operation not permitted"); the plug: wrapper converts for it, which
