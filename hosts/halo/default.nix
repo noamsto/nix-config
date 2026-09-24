@@ -356,15 +356,25 @@ in {
         # hermes_cli/commands_platforms.py:100-145).
         platforms.telegram.extra.command_menu = {
           priority_mode = "replace";
-          priority = ["help" "new" "stop" "status"];
-          max_commands = 4;
+          priority = ["watch" "digest" "holdings" "scoutstatus" "help" "new" "stop" "status"];
+          max_commands = 8;
         };
+        # The scout's own commands (a plugin, so no LLM rewrites the reports).
+        plugins.enabled = ["money-scout"];
       };
       # `hermes cron create --script` takes a bare path with no arguments, so
       # the job is fixed by this wrapper.
       hermesHomeFiles = {
         "scripts/scout-relay-watch.sh" = "exec ${config.services.moneyScout.relayScript}/bin/scout-relay watch\n";
         "scripts/scout-relay-crowd.sh" = "exec ${config.services.moneyScout.relayScript}/bin/scout-relay crowd\n";
+        "plugins/money-scout/plugin.yaml" = ''
+          name: money-scout
+          version: 1.0.0
+          description: "Slash commands that print the scout reports verbatim"
+        '';
+        "plugins/money-scout/__init__.py" =
+          builtins.replaceStrings ["@reportDir@"] [config.services.moneyScout.reportDir]
+          (builtins.readFile ../../nixos/services/money-scout-commands.py);
         "SOUL.md" = ''
           You are the portfolio scout for Noam on halo. You answer questions about the scout reports in /var/lib/money-scout — watch.txt (daily rule alerts), crowd.md (the opportunity digest), holdings.json and status.json.
           Be brief: the answer or the number first, then at most one line of why.
