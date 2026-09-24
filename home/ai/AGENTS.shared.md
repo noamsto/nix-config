@@ -58,8 +58,8 @@ The CLI tooling here (`gh`, `git`, `wt`, tmux) is installed identically on Linux
 **After `gh repo create`, run `gh-repo-defaults <owner/repo>`.** GitHub has no
 account-level default for merge settings, so a fresh repo starts with
 merge-commit enabled and no branch cleanup. The command applies the house
-settings — squash-only merges, delete branch on merge, auto-merge — and is
-idempotent. `gh-repo-defaults --check --all` reports drift across every owned
+settings — squash-only merges, delete branch on merge, auto-merge, and
+Actions allowed to open PRs (release-please needs it) — and is idempotent. `gh-repo-defaults --check --all` reports drift across every owned
 repo; `--all` without `--check` fixes it.
 
 ## Branch Naming

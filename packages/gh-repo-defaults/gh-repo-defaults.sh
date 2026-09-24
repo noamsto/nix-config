@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # House GitHub repo settings: squash-only merges, auto-delete branch on merge,
-# auto-merge enabled. Idempotent — safe to re-run over the whole account.
+# auto-merge enabled, Actions allowed to open PRs. Idempotent — safe to re-run
+# over the whole account.
 set -euo pipefail
 
 usage() {
@@ -12,7 +13,8 @@ Usage:
                                          report drift only, exit 1 if any
 
 Applies: squash-only merges (merge-commit and rebase disabled), delete branch
-on merge, allow auto-merge.
+on merge, allow auto-merge, and let GitHub Actions create and approve pull
+requests (release-please opens its release PR with the workflow token).
 
 Auto-merge is a public-repo-only feature on the GitHub free plan. The API
 accepts the write and silently keeps it off, so private repos on free are
@@ -26,8 +28,12 @@ owned_repos() {
 }
 
 state_of() {
-  gh api "repos/$1" \
-    --jq '[.private, .allow_squash_merge, .allow_merge_commit, .allow_rebase_merge, .delete_branch_on_merge, .allow_auto_merge] | map(tostring) | @tsv'
+  local repo actions
+  repo=$(gh api "repos/$1" \
+    --jq '[.private, .allow_squash_merge, .allow_merge_commit, .allow_rebase_merge, .delete_branch_on_merge, .allow_auto_merge] | map(tostring) | @tsv') || return
+  actions=$(gh api "repos/$1/actions/permissions/workflow" \
+    --jq '.can_approve_pull_request_reviews | tostring') || return
+  printf '%s\t%s\n' "$repo" "$actions"
 }
 
 apply_to() {
@@ -36,12 +42,15 @@ apply_to() {
     -F allow_merge_commit=false \
     -F allow_rebase_merge=false \
     -F delete_branch_on_merge=true \
-    -F allow_auto_merge=true >/dev/null
+    -F allow_auto_merge=true >/dev/null || return
+  # Leaves default_workflow_permissions (the token's read/write scope) as is.
+  gh api -X PUT "repos/$1/actions/permissions/workflow" \
+    -F can_approve_pull_request_reviews=true >/dev/null
 }
 
 # Auto-merge the plan cannot grant is not drift — nothing would fix it.
 drift_of() {
-  local private=$1 squash=$2 merge=$3 rebase=$4 delete=$5 auto=$6
+  local private=$1 squash=$2 merge=$3 rebase=$4 delete=$5 auto=$6 actions_prs=$7
   local -a drift=()
 
   [[ $squash == true ]] || drift+=("squash-merge off")
@@ -51,6 +60,7 @@ drift_of() {
   if [[ $auto != true ]] && ! automerge_blocked "$private"; then
     drift+=("auto-merge off")
   fi
+  [[ $actions_prs == true ]] || drift+=("actions-can-open-prs off")
 
   local item out=""
   for item in ${drift[@]+"${drift[@]}"}; do
@@ -93,7 +103,9 @@ main() {
     return 2
   fi
 
-  PLAN=$(gh api user --jq '.plan.name')
+  # .plan is only returned to a token with the `user` scope; gh's default token
+  # gets no plan at all, which on a personal account means free.
+  PLAN=$(gh api user --jq '.plan.name // "free"')
   readonly PLAN
 
   local repo state drift failed=0 changed=0 blocked=0
