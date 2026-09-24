@@ -237,6 +237,15 @@ in {
       # iwd takes effect at the next boot instead.
       iwd.restartIfChanged = false;
 
+      # The module installs config.yaml and the home files (plugins, SOUL.md) at
+      # activation but leaves the running gateway alone, and the gateway reads
+      # plugins and pushes the Telegram menu only at startup. The module doesn't
+      # expose the generated paths, so hash their inputs.
+      hermes-agent.restartTriggers = [
+        (builtins.toJSON config.services.hermes-agent.settings)
+        (builtins.toJSON config.services.hermes-agent.hermesHomeFiles)
+      ];
+
       # Hermes keeps cron jobs in its state dir; this makes the scout relay jobs
       # exist after every activation without duplicating them.
       hermes-scout-cron = {
