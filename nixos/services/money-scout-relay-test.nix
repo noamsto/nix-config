@@ -32,11 +32,11 @@ in
 
     expect 0 "digest body" \
       '{"crowd":{"ok":true,"date":"'"$today"'","finishedAt":"t"}}'
-    expect 1 "scout crowd: no run today (last run $yesterday)" \
+    expect 1 "⚠️ **Scout digest**: no run today (last run $yesterday)" \
       '{"crowd":{"ok":false,"date":"'"$yesterday"'","finishedAt":"t","error":"boom"}}'
-    expect 1 "scout crowd: still running (started 05:15)" \
+    expect 1 "⚠️ **Scout digest**: still running (started 05:15)" \
       '{"crowd":{"ok":false,"running":true,"date":"'"$today"'","startedAt":"05:15"}}'
-    expect 1 "scout crowd: boom" \
+    expect 1 "⚠️ **Scout digest**: boom" \
       '{"crowd":{"ok":false,"date":"'"$today"'","finishedAt":"t","error":"boom"}}'
     touch $out
   ''
