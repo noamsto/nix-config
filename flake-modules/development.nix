@@ -25,6 +25,7 @@
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};
+        money-scout-relay = import ../nixos/services/money-scout-relay-test.nix {inherit pkgs;};
       };
 
     devShells.default = pkgs.mkShell {

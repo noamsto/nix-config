@@ -9,37 +9,26 @@
 }: let
   cfg = config.services.moneyScout;
 
-  watch = pkgs.writeShellApplication {
-    name = "money-scout-watch";
-    runtimeInputs = [pkgs.nix pkgs.git pkgs.coreutils];
-    text = ''
-      cd ${lib.escapeShellArg cfg.repoDir}
-      # A checkout update can add dependencies; install only when the lockfile moved.
-      if [ ! node_modules/.package-lock.json -nt package-lock.json ]; then
-        nix develop --command npm ci --no-audit --no-fund
-      fi
-      exec nix develop --command ./bin/money scout watch --write
-    '';
-  };
+  scoutJob = job:
+    pkgs.writeShellApplication {
+      name = "money-scout-${job}";
+      runtimeInputs = [pkgs.nix pkgs.git pkgs.coreutils];
+      text = ''
+        cd ${lib.escapeShellArg cfg.repoDir}
+        # A checkout update can add dependencies; install only when the lockfile moved.
+        if [ ! node_modules/.package-lock.json -nt package-lock.json ]; then
+          nix develop --command npm ci --no-audit --no-fund
+        fi
+        exec nix develop --command ./bin/money scout ${job} --write
+      '';
+    };
 
-  relay = pkgs.writeShellApplication {
-    name = "scout-relay";
-    runtimeInputs = [pkgs.jq pkgs.coreutils];
-    text = ''
-      job="''${1:?usage: scout-relay <job>}"
-      dir=${lib.escapeShellArg cfg.reportDir}
-      today="$(TZ=Asia/Jerusalem date +%F)"
-      if [ ! -r "$dir/status.json" ]; then
-        echo "scout $job: no status file — the $job timer has never run"
-        exit 1
-      fi
-      if ! jq -e --arg j "$job" --arg d "$today" '.[$j].ok == true and .[$j].date == $d' "$dir/status.json" >/dev/null; then
-        reason="$(jq -r --arg j "$job" '.[$j].error // "no run today"' "$dir/status.json")"
-        echo "scout $job failed: $reason"
-        exit 1
-      fi
-      cat "$dir/$job.txt"
-    '';
+  watch = scoutJob "watch";
+  crowd = scoutJob "crowd";
+
+  relay = import ./money-scout-relay.nix {
+    inherit pkgs lib;
+    inherit (cfg) reportDir;
   };
 in {
   options.services.moneyScout = {
@@ -72,25 +61,56 @@ in {
     systemd = {
       tmpfiles.rules = ["d ${cfg.reportDir} 2750 ${cfg.user} money-scout - -"];
 
-      user.services.money-scout-watch = {
-        description = "portfolio-agent: check IPS rules and write the scout report";
-        unitConfig.ConditionUser = cfg.user;
-        environment.MONEY_SCOUT_DIR = cfg.reportDir;
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${watch}/bin/money-scout-watch";
-          TimeoutStartSec = "20min";
-        };
-      };
+      user = {
+        services = {
+          money-scout-watch = {
+            description = "portfolio-agent: check IPS rules and write the scout report";
+            unitConfig.ConditionUser = cfg.user;
+            environment.MONEY_SCOUT_DIR = cfg.reportDir;
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${watch}/bin/money-scout-watch";
+              TimeoutStartSec = "20min";
+            };
+          };
 
-      user.timers.money-scout-watch = {
-        description = "Daily scout watch before the US open";
-        unitConfig.ConditionUser = cfg.user;
-        wantedBy = ["timers.target"];
-        # Not Persistent: a catch-up run at boot would mark alerts as sent with
-        # no relay after it. A missed day surfaces as the relay's "no run today".
-        timerConfig = {
-          OnCalendar = "Mon..Fri *-*-* 15:15:00 Asia/Jerusalem";
+          money-scout-crowd = {
+            description = "portfolio-agent: grade trending tickers and write the crowd digest";
+            unitConfig.ConditionUser = cfg.user;
+            environment.MONEY_SCOUT_DIR = cfg.reportDir;
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${crowd}/bin/money-scout-crowd";
+              # Two thinking-model gradings, each allowed 30 min on the local server.
+              TimeoutStartSec = "90min";
+            };
+          };
+        };
+
+        timers = {
+          money-scout-watch = {
+            description = "Daily scout watch before the US open";
+            unitConfig.ConditionUser = cfg.user;
+            wantedBy = ["timers.target"];
+            # Not Persistent: a catch-up run at boot would mark alerts as sent with
+            # no relay after it. A missed day surfaces as the relay's "no run today".
+            timerConfig = {
+              OnCalendar = "Mon..Fri *-*-* 15:15:00 Asia/Jerusalem";
+            };
+          };
+
+          money-scout-crowd = {
+            description = "Daily crowd digest, before the 07:00 relay";
+            unitConfig.ConditionUser = cfg.user;
+            wantedBy = ["timers.target"];
+            # 05:15: US after-hours earnings have settled, and the 105 minutes
+            # to the 07:00 relay outlast the 90-minute timeout. Not Persistent: a
+            # catch-up after the relay would spend Adanos quota on a digest no
+            # relay ever posts.
+            timerConfig = {
+              OnCalendar = "Mon..Fri *-*-* 05:15:00 Asia/Jerusalem";
+            };
+          };
         };
       };
     };
