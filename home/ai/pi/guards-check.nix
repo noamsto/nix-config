@@ -389,6 +389,297 @@ in
           guards.pi.secret-read abstain \
           "$(bash_payload "$repo" 'ls -la')"
 
+        ## secret-read: variable-dumping shell builtins that print a value
+        ## without echoing it — the LINEAR_API_KEY incident
+        ## (`fish -ic 'set -S LINEAR_API_KEY'`) plus the rest of the family
+        ## named in nix-config#373: fish's set -S/-x/-gx/-U, bash/zsh's
+        ## declare/export/typeset -p/-x, /proc/*/environ, and the
+        ## tmux/systemctl/launchctl session-env dumpers.
+        assert_blocked "secret-read denies fish set -S" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'set -S FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies fish set --show" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'set --show FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a bare set" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'set')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies bash declare -p" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'declare -p FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies bash bare declare -x" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'declare -x')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies bash export -p" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'export -p')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies zsh typeset -p" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'typeset -p FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies tmux show-environment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'tmux show-environment')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies systemctl --user show-environment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'systemctl --user show-environment')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies launchctl getenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'launchctl getenv FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies /proc/*/environ" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'cat /proc/1234/environ')" \
+          'reads a process'"'"'s environment table'
+
+        assert_blocked "secret-read denies a quoted /proc/*/environ path" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'cat "/proc/1234/environ"')" \
+          'reads a process'"'"'s environment table'
+
+        assert_blocked "secret-read denies /proc/*/environ split via tr, not just cat" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "tr '\0' '\n' < /proc/self/environ")" \
+          'reads a process'"'"'s environment table'
+
+        # The literal incident: `fish -ic` combines the interactive and
+        # command flags into one token, which a shell_c_re requiring a
+        # standalone `-c` token would never match — letting the exact command
+        # that forced the rotation straight through.
+        assert_blocked "secret-read denies the literal LINEAR_API_KEY incident shape" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -ic 'set -S FAKE_API_KEY' | grep -v -i value")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies set -U wrapped in fish -ic" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -ic 'set -U'")" \
+          'set -x/-gx/-U'
+
+        assert_blocked "secret-read denies set -S wrapped in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set -S FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies set --show wrapped in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set --show FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a bare set wrapped in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies declare -p wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies declare -p wrapped in bash -lc" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -lc 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies bare declare -x wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'declare -x'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies export -p wrapped in sh -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sh -c 'export -p'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies typeset -p wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'typeset -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies tmux show-environment wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'tmux show-environment'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies systemctl --user show-environment wrapped in sh -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sh -c 'systemctl --user show-environment'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies launchctl getenv wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'launchctl getenv FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies /proc/*/environ wrapped in bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'cat /proc/1234/environ'")" \
+          'reads a process'"'"'s environment table'
+
+        assert_blocked "secret-read denies bare set -x wrapped in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set -x'")" \
+          'set -x/-gx/-U'
+
+        assert_blocked "secret-read denies bare set -gx wrapped in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set -gx'")" \
+          'set -x/-gx/-U'
+
+        assert_blocked "secret-read still denies a bare env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still denies a bare printenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'printenv')" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets set -q through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'set -q FAKE_API_KEY')"
+
+        assert_allowed "secret-read lets a set assignment through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'set -l foo bar')"
+
+        assert_allowed "secret-read lets a bash presence check through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" '[ -n "''${FAKE_API_KEY:-}" ] && echo set || echo unset')"
+
+        assert_allowed "secret-read lets set -gx with a name and value through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'set -gx PATH /usr/bin')"
+
+        assert_allowed "secret-read lets declare -x with a name through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'declare -x FAKE_API_KEY=dummy')"
+
+        assert_allowed "secret-read lets a top-level bash set -x (xtrace) through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'set -x')"
+
+        assert_allowed "secret-read lets bash -c set -x (xtrace) through, not just top-level" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "bash -c 'set -x; true'")"
+
+        assert_allowed "secret-read lets sh -c set -x (xtrace) through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "sh -c 'set -x'")"
+
+        assert_allowed "secret-read lets set -gx with a name wrapped in fish -c through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "fish -c 'set -gx PATH /usr/bin'")"
+
+        assert_allowed "secret-read lets set -q wrapped in fish -c through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "fish -c 'set -q FAKE_API_KEY'")"
+
+        # Rule 2's old (^|[|;&]\s*)(printenv|env) matched a literal | sitting
+        # next to the word even inside a quoted argument, so a search for the
+        # word itself used to trip the guard it was checking.
+        assert_allowed "secret-read lets a quoted regex containing env|printenv through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "rg 'env|printenv|foo' file")"
+
+        # Reviewer-found bypasses (round 1): a single-level -c unwrap missed a
+        # second layer of nesting, and neither mask_quotes nor the -c
+        # extraction understood a backslash-escaped quote or the standard
+        # close-quote/escaped-apostrophe/reopen-quote idiom for embedding a
+        # literal apostrophe in a single-quoted argument — both let the rest
+        # of the command, including a real dumper, ride past unmasked-away or
+        # unextracted.
+        assert_blocked "secret-read denies two levels of -c nesting" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c \"fish -c 'set -S FAKE_API_KEY'\"")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a backslash-escaped quote at top level" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "echo \"\\\"\" ; declare -p FAKE_API_KEY")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a backslash-escaped quote inside bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c \"echo \\\"hi\\\"; env\"")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a backslash-escaped quote hiding set -S in fish -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c \"echo \\\"x\\\"; set -S FAKE_API_KEY\"")" \
+          'lists or shows shell variables'
+
+        # Close the quote, an escaped literal apostrophe, reopen — three
+        # concatenated fragments with no space between them are ONE shell
+        # word to bash. Below, an extra apostrophe is folded into each
+        # doubled-up run because this whole file is itself a Nix multi-line
+        # string, where two adjacent apostrophes are Nix's own escape
+        # trigger for a literal pair of them; once rendered, each such run
+        # collapses down to the plain two-apostrophe bash idiom.
+        assert_blocked "secret-read denies the close-escape-reopen apostrophe idiom inside bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'echo '\\'''hi'\\'''; env'")" \
+          'bare env/printenv'
+
+        # Reviewer-found bypasses (round 2, after the round-1 fix above): a
+        # single "cur" variable dropped every -c invocation after the first
+        # one it matched, and $'...' (ANSI-C quoting) wasn't a recognized
+        # quote form at all, so its leading $ survived into the decoded text
+        # and pushed the dumper off the command-position anchor.
+        assert_blocked "secret-read denies a dumper in a sibling -c invocation" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'true' ; bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a dumper behind two sibling -c invocations" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'true' ; fish -c 'true' ; fish -c 'set -S FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies declare -p wrapped in bash -c with \$'...' quoting" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c \$'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a bare env wrapped in sh -c with \$'...' quoting" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sh -c \$'env'")" \
+          'bare env/printenv'
+
+        # Round 3: a newline is just as ordinary a statement separator as a
+        # semicolon (this is what a multi-line Bash tool call looks like),
+        # but decode_word's terminator set didn't include one — an unquoted
+        # newline got folded into the current word, swallowing the next
+        # invocation's shell name along with it and hiding the sibling scan
+        # above ever finding it. Built via $'...' rather than a literal
+        # newline in this source file, which is itself a Nix multi-line
+        # string whose indentation stripping a raw embedded newline would
+        # disrupt.
+        nl_sibling=$'bash -c \'true\'\nbash -c \'declare -p FAKE_API_KEY\'''
+        assert_blocked "secret-read denies a dumper in a newline-separated sibling -c invocation" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$nl_sibling")" \
+          'lists or shows shell variables'
+
         # pi's grep always prints matching lines, so the adapter forces
         # output_mode=content; without it the guard would read Claude's default
         # (files_with_matches) and abstain on exactly this call.
