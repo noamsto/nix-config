@@ -34,25 +34,6 @@
       fi
     fi
   '';
-
-  # mini-docker 1.0.4 decodes every docker listing in one luau callback and
-  # blows noctalia's CPU budget on large inventories, wedging the widget.
-  # Served as a path source that shadows the community copy; drop it once the
-  # fix lands upstream (noctalia-dev/community-plugins). See #330.
-  miniDockerPatched = let
-    upstream = pkgs.fetchFromGitHub {
-      owner = "noctalia-dev";
-      repo = "community-plugins";
-      rev = "ac7d955525456ee339f384a1c691954810a03fbf";
-      hash = "sha256-XXrz4JhHtkFZu8tQPWtSDYgtijriFbsofpUWtNpA7jU=";
-    };
-  in
-    pkgs.runCommand "noctalia-mini-docker-patched" {} ''
-      mkdir -p $out
-      cp -r ${upstream}/mini-docker $out/mini-docker
-      chmod -R u+w $out
-      patch -p1 -d $out < ${./patches/mini-docker-lazy-inventory.patch}
-    '';
 in {
   imports = [
     inputs.noctalia.homeModules.default
@@ -186,28 +167,8 @@ in {
           };
         };
 
-        # Declaring any source replaces noctalia's default seeding, so the
-        # official/community git sources are restated. Later sources shadow
-        # earlier ones per plugin id, so the patched path source goes last.
         plugins = {
           auto_update = "all";
-          source = [
-            {
-              name = "official";
-              kind = "git";
-              location = "https://github.com/noctalia-dev/official-plugins";
-            }
-            {
-              name = "community";
-              kind = "git";
-              location = "https://github.com/noctalia-dev/community-plugins";
-            }
-            {
-              name = "mini-docker-patched";
-              kind = "path";
-              location = "${miniDockerPatched}";
-            }
-          ];
           enabled = [
             "noctalia/bongocat"
             "8bury/mini-docker"
