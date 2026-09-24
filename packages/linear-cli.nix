@@ -3,8 +3,9 @@
   stdenv,
   fetchurl,
   makeWrapper,
+  libsecret,
 }: let
-  version = "2.0.0";
+  version = "2.6.0";
   system = stdenv.hostPlatform.system;
 
   target =
@@ -20,10 +21,10 @@
     or (throw "linear-cli: unsupported system ${system}");
 
   hashes = {
-    x86_64-unknown-linux-gnu = "sha256-r/tZRnLC8iDO9o+nz+uBOUXEAQeJpLjMLA5GRo/reHA=";
-    aarch64-unknown-linux-gnu = "sha256-bDr90Rx8D7kAU9S1OyclK1w1u3XGeTgyNL7yCiVVjqw=";
-    x86_64-apple-darwin = "sha256-cp5nFmxQlMiVFQtnLNOkRh+omYl+HyTbzQfBO7O0jBM=";
-    aarch64-apple-darwin = "sha256-Eh/h7ubZCyLnbk6Yy7YkR07s2XCkpMYi/U1QiJtX2sw=";
+    x86_64-unknown-linux-gnu = "sha256-u8udNlMIvDcooeyZE60YgPiMDOaHZzgyl+NIwFfzW40=";
+    aarch64-unknown-linux-gnu = "sha256-VcxKaySJpAOtnrgPYS36hBKHv6FrmDkLtNTgcteeI2E=";
+    x86_64-apple-darwin = "sha256-CKuhmvTwBinl6JqwQBfTHRhXP7ydySIoCChwL9riej8=";
+    aarch64-apple-darwin = "sha256-uavdS1rsFEWeQ0oomSA3V96K6EfwVerk8frue7H7wHg=";
   };
 in
   stdenv.mkDerivation {
@@ -53,9 +54,14 @@ in
       runHook postInstall
     '';
 
+    # The CLI shells out to `secret-tool` (libsecret) to reach the Secret
+    # Service; it never links libsecret itself. Hook and `-B` monitor callers
+    # do not inherit the interactive profile PATH, so the binary has to carry
+    # secret-tool on its own PATH.
     postFixup = lib.optionalString stdenv.hostPlatform.isLinux ''
       wrapProgram $out/bin/linear \
-        --prefix NIX_LD_LIBRARY_PATH : ${lib.makeLibraryPath [stdenv.cc.cc.lib]}
+        --prefix NIX_LD_LIBRARY_PATH : ${lib.makeLibraryPath [stdenv.cc.cc.lib]} \
+        --prefix PATH : ${lib.makeBinPath [libsecret]}
     '';
 
     meta = {
