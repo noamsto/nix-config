@@ -73,8 +73,10 @@ fish_dump_re="$cmd_start"'set[[:space:]]+(-x|-gx|-U)[[:space:]]*($|[;&|)])'
 # cluster like `-ic` (interactive + command, as in `fish -ic '...'`) or
 # `-lc`/`-ec` still matches. The leading anchor also allows `/` and `(`
 # ahead of the shell name, for `/usr/bin/fish -c '...'` and `(bash -c
-# '...')`.
-shell_c_re="(^|[[:space:]/(])(fish|bash|sh|zsh)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*-[A-Za-z]*c[[:space:]]+"
+# '...')`, and `;`/`&`/`|`/`)` for a compact one-liner or sibling -c
+# invocation with no space before the wrapper (`true;bash -c '...'`,
+# `x&&bash -c '...'`, `echo x|bash -c '...'`).
+shell_c_re="(^|[[:space:]/(;&|)])(fish|bash|sh|zsh)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*-[A-Za-z]*c[[:space:]]+"
 # /proc/<pid>/environ is a process's whole environment, NUL-joined — reading
 # it any way (cat, a redirect, tr/xargs/sort splitting the NUL bytes, …) is
 # exactly as much a dump as env/printenv, so this denies unconditionally
@@ -302,11 +304,33 @@ Bash)
   while ((wi < ${#worklist[@]})) && ((matches < 20)); do
     cur=${worklist[wi]}
     wi=$((wi + 1))
-    [[ $cur =~ $shell_c_re ]] || continue
-    match=${BASH_REMATCH[0]}
-    interpreter=${BASH_REMATCH[2]}
-    prefix=${cur%%"$match"*}
-    arg_start=$((${#prefix} + ${#match}))
+    # shell_c_re's ;&|) anchors (see above) are as common inside an ordinary
+    # quoted regex/string as a bare space already was, e.g. `rg 'foo|bash -c
+    # env x' .`. So a match only counts if its full text (anchor through
+    # trailing whitespace) falls outside any quoted span — checked against
+    # the quote-masked form, which is length-preserving, so an index into
+    # one applies to the other. A match that fails this is rejected and the
+    # search resumes just past it, since $cur may still hold a real sibling
+    # invocation later on.
+    masked_cur=$(mask_quotes "$cur")
+    search_from=0
+    found=0
+    while ((search_from <= ${#cur})); do
+      candidate=${cur:search_from}
+      [[ $candidate =~ $shell_c_re ]] || break
+      match=${BASH_REMATCH[0]}
+      interpreter=${BASH_REMATCH[2]}
+      local_prefix=${candidate%%"$match"*}
+      match_idx=$((search_from + ${#local_prefix}))
+      if [[ ${masked_cur:match_idx:${#match}} != "${cur:match_idx:${#match}}" ]]; then
+        search_from=$((match_idx + 1))
+        continue
+      fi
+      arg_start=$((match_idx + ${#match}))
+      found=1
+      break
+    done
+    ((found)) || continue
     decode_word "$cur" "$arg_start"
     sub=$DECODED_WORD
     masked_sub=$(mask_quotes "$sub")

@@ -680,6 +680,50 @@ in
           "$(bash_payload "$repo" "$nl_sibling")" \
           'lists or shows shell variables'
 
+        # Round 4 (nix-config#376): shell_c_re's leading anchor omitted
+        # `;&|)`, unlike cmd_start's — so a compact one-liner with no space
+        # before the shell -c wrapper (an ordinary shape, not obfuscation)
+        # wasn't recognized as a -c invocation at all, and its dumper body
+        # slipped through unexamined.
+        assert_blocked "secret-read denies a compact ; one-liner before bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "true;bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a compact && one-liner before bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "true&&bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a compact | one-liner before bash -c" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "echo x|bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a dumper in a no-space sibling -c invocation" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "bash -c 'true';bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
+        assert_allowed "secret-read lets bash -c set -x (xtrace) through after a compact ; separator" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "true;bash -c 'set -x; true'")"
+
+        # Widening shell_c_re's anchor to ;&|) (round 4, above) initially
+        # regressed the false-positive side: those characters are as common
+        # inside an ordinary quoted regex/string as a bare space already was,
+        # e.g. a grep/rg alternation pattern that happens to mention "bash
+        # -c" as literal text. shell_c_re now verifies its match sits outside
+        # any quoted span before treating it as a real -c wrapper.
+        assert_allowed "secret-read lets a quoted alternation mentioning bash -c through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "rg 'foo|bash -c env x' .")"
+
+        assert_blocked "secret-read denies a real sibling -c invocation after a quoted red herring" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "rg 'foo|bash -c bar' ; bash -c 'declare -p FAKE_API_KEY'")" \
+          'lists or shows shell variables'
+
         # pi's grep always prints matching lines, so the adapter forces
         # output_mode=content; without it the guard would read Claude's default
         # (files_with_matches) and abstain on exactly this call.
