@@ -86,6 +86,18 @@
         description = "How long to wait for the upstream's response headers before failing the request.";
       };
 
+      upstreamHost = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "localhost:7757";
+        description = ''
+          Rewrite the `Host` header sent upstream (`header_up Host <value>`).
+          Null keeps Caddy's default of forwarding the client's Host. Needed by
+          an upstream that rejects any Host but its own loopback address, as a
+          DNS-rebinding guard.
+        '';
+      };
+
       landing = {
         advertise = mkOption {
           type = types.bool;
@@ -132,9 +144,10 @@
   # blocks by matcher specificity and evaluates the matcher-less one last, so a
   # root service can never swallow another's paths and emission order is free.
   #
-  # Host header is deliberately NOT rewritten (Caddy's default: preserved).
+  # Host header is NOT rewritten by default (Caddy's default: preserved).
   # houston's own Host allowlist is what gates access, and it 403s any request
   # whose Origin disagrees with Host, so a proxy that rewrote Host would break it.
+  # `upstreamHost` opts a single service into a rewrite.
   mkHandle = svc: path: let
     # Prefix glob (path* not path/*), so a bare /v1 is proxied along with
     # /v1/...; naspi's reverse-proxy.nix hit this with /radarr vs /radarr/.
@@ -149,7 +162,8 @@
       else "handle";
 
     proxyLines =
-      optional svc.streaming "flush_interval -1"
+      optional (svc.upstreamHost != null) "header_up Host ${svc.upstreamHost}"
+      ++ optional svc.streaming "flush_interval -1"
       ++ optionals (svc.responseHeaderTimeout != null) [
         "transport http {"
         "  response_header_timeout ${svc.responseHeaderTimeout}"

@@ -499,6 +499,25 @@ in {
             icon = "🍋";
           };
         };
+        # serve builds every URL absolutely (/static/, /api/...). `/hookyard` is
+        # the door in, stripped; its own routes are claimed one by one rather
+        # than as a blanket /api, which other services on this vhost share.
+        #
+        # serve 403s any Host but its loopback address, hence upstreamHost. It is
+        # unauthenticated and shows tool payloads: only tailnet-only reach makes
+        # that acceptable.
+        hookyard = {
+          port = 7757;
+          paths = ["/hookyard" "/static" "/api/days" "/api/events" "/api/flow" "/api/stats" "/api/stream" "/api/table"];
+          stripPrefix = ["/hookyard"];
+          upstreamHost = "localhost:7757";
+          streaming = true;
+          landing = {
+            title = "hookyard";
+            description = "Agent hook events and flow across engines";
+            icon = "🪝";
+          };
+        };
         prep = {
           port = config.services.prep.port;
           paths = [config.services.prep.prefix];
