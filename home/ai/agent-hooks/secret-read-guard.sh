@@ -37,13 +37,16 @@ cmd_secret_re='(^|[[:space:]"'"'"'=/])\.env([[:space:]"'"'"';|&)>]|$|\.[A-Za-z0-
 # resolved values. Blocking them would teach people to route around the guard.
 template_re='\.env\.(example|template|sample|dist)'
 
-# Command-position anchor for the two checks below: start of string, or after
-# ; && || | ( — never a bare mid-argument character. Every dumper is matched
+# Command-position anchor for the env, builtin and fish checks below: start of
+# string, or after ; && || | ( ) — never a bare mid-argument character. `)`
+# covers a case pattern like `*)env`. Every dumper is matched
 # only here, against text with quoted spans already replaced by spaces
 # (mask_quotes), which is what lets `rg 'env|printenv|x' file` stay allowed
 # (the literal `|` next to the word, inside the quotes, used to look like a
-# real pipe) while `env` on its own is still denied.
-cmd_start='(^|[;&|(]+[[:space:]]*)'
+# real pipe) while `env` on its own is still denied. A trailing unquoted
+# `$(...)`/`(...)` before a bare dumper word (`echo $(pwd) env`) is an accepted
+# rare false positive, on the safe side.
+cmd_start='(^|[;&|()]+[[:space:]]*)'
 env_dump_re="$cmd_start"'(printenv|env)[[:space:]]*($|[;&|)])'
 # Listing/show forms that print a variable's value without echoing it — the
 # gap behind the LINEAR_API_KEY rotation. `-S`/`--show`/`-p` always print,

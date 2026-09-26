@@ -724,6 +724,34 @@ in
           "$(bash_payload "$repo" "rg 'foo|bash -c bar' ; bash -c 'declare -p FAKE_API_KEY'")" \
           'lists or shows shell variables'
 
+        # Round 5 (nix-config#381): cmd_start's anchor omitted `)`, so a bare
+        # dumper right behind a case pattern (`*)env;;`) wasn't at command
+        # position. The dumper regexes only run on quote-masked text, so a
+        # quoted `)env;` (terminator inside the quotes, so the unmasked text
+        # would match) still can't trip it.
+        assert_blocked "secret-read denies env behind a compact case arm" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "case x in *)env;;esac")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies declare -p behind a compact case arm" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "case x in *)declare -p FAKE_API_KEY;;esac")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies env behind a spaced case arm" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "case x in *) env ;; esac")" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets a quoted )env; through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "a)env;"')"
+
+        assert_allowed "secret-read lets env= behind a case arm through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "case x in a) env=1 true;; esac")"
+
         # pi's grep always prints matching lines, so the adapter forces
         # output_mode=content; without it the guard would read Claude's default
         # (files_with_matches) and abstain on exactly this call.
