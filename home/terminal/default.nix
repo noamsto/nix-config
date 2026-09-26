@@ -26,6 +26,7 @@ in {
     ./foot
     ./kitty
     ./fish
+    ./bash
     ./process_compose
     ./television
     ./btop.nix

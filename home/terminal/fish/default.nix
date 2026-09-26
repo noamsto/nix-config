@@ -503,10 +503,20 @@
     fzf = {
       enable = true;
       enableFishIntegration = true;
+      enableBashIntegration = true;
       defaultOptions = ["--height 45% --tmux='80%,60%'"];
       fileWidget.options = [
         "--preview '${pkgs.bat}/bin/bat -n --color=always {}'"
         "--bind 'ctrl-/:change-preview-window(down|hidden|)'"
+      ];
+      historyWidget.bash.options = [
+        "--tmux 80%,70%"
+        "--preview-window 'down,50%,wrap'"
+        "--bind 'ctrl-/:toggle-preview'"
+        "--bind 'alt-j:preview-down'"
+        "--bind 'alt-k:preview-up'"
+        "--bind 'ctrl-d:preview-page-down'"
+        "--bind 'ctrl-u:preview-page-up'"
       ];
     };
 
