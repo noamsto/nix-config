@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook: ask before a `gh` post to a public repo carries private
 # context — a private repo's `owner/name`, an agent session URL, a scratchpad
-# path, a home-directory path, or a secret gitleaks recognizes. Once posted,
+# path, a home-directory path, or a secret betterleaks recognizes. Once posted,
 # GitHub's edit history keeps it public even after the body is fixed.
 #
 # `ask`, not `deny`: whether a name is a leak is a judgment call, and on
@@ -92,7 +92,7 @@ done < <(grep -oE "$file_arg_re" <<<"$text" |
 
 hits=$(grep -oiwF -f "$cache" <<<"$body" | tr '[:upper:]' '[:lower:]' | sort -u || true)
 hits+=$'\n'$(grep -oE 'claude\.ai/code/session_[A-Za-z0-9]+|/tmp/claude-[^[:space:]]*|'"$HOME"'/[^[:space:]]*' <<<"$body" | sort -u || true)
-hits+=$'\n'$(gitleaks stdin --no-banner -l error --redact -f json -r - <<<"$body" 2>/dev/null |
+hits+=$'\n'$(betterleaks stdin --no-banner -l error --redact -f json -r - <<<"$body" 2>/dev/null |
   jq -r '.[] | "secret: \(.RuleID)"' | sort -u || true)
 hits=$(sed '/^$/d' <<<"$hits")
 [[ -n $hits ]] || exit 0
