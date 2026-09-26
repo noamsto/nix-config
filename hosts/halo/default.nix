@@ -81,6 +81,12 @@ in {
     # file during the install, which would silently delete this. `cryptroot`
     # is the name disko gives the LUKS device.
     initrd.luks.devices.cryptroot.crypttabExtraOpts = ["tpm2-device=auto"];
+
+    # The platform denies OS LTR control (`_OSC: ... does not support [AER
+    # LTR]`), which leaves the MT7925 prone to a firmware hang in L1.2. Once
+    # hung it drops off the PCI bus until a full power cycle, and Wi-Fi is
+    # halo's only uplink.
+    extraModprobeConfig = "options mt7925e disable_aspm=1";
   };
 
   hardware.amd-npu = {
