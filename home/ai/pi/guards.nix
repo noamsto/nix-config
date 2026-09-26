@@ -147,6 +147,7 @@
     # later extension replaces rather than appends content.
     (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
+    (piGuard "guards.pi.public-leak" "${guards.public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
   ];
 
   manifest = pkgs.writeText "pi-guards-hookyard.json" (builtins.toJSON {inherit handlers;});

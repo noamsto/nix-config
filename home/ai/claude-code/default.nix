@@ -77,6 +77,11 @@
         match = ["Bash"];
       })
       (guardHandler {
+        name = "public-leak";
+        exe = "${sharedGuards.public-leak-guard}/bin/agent-public-leak-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
         name = "deslop";
         exe = "${deslop-guard}/bin/claude-deslop-guard";
         match = ["Bash"];

@@ -51,4 +51,11 @@
   tmux-live-server-guard =
     pkgs.writeShellScriptBin "agent-tmux-live-server-guard"
     (builtins.readFile ./tmux-live-server-guard.sh);
+
+  # gitleaks is pinned rather than read from PATH: without it the secret scan
+  # finds nothing and that half of the guard fails open.
+  public-leak-guard = pkgs.writeShellScriptBin "agent-public-leak-guard" ''
+    export PATH=${pkgs.lib.makeBinPath [pkgs.gitleaks]}:$PATH
+    ${builtins.readFile ./public-leak-guard.sh}
+  '';
 }
