@@ -333,11 +333,13 @@ heredoc_is_code() {
   l=${l//\$\(/;}
   l=${l//\`/;}
   l=${l//[;&|(]/$'\n'}
+  # Capturing the tail after a repeated group strips every leading token in
+  # one pass; stripping one token per loop iteration is quadratic and can
+  # overrun the hook's time budget.
+  local lead_re='^(([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*|sudo|time|nice|nohup|exec|command|then|do|else|!|\{)[[:space:]]+)*(.*)$'
   while IFS= read -r seg; do
     seg=${seg#"${seg%%[![:space:]]*}"}
-    while [[ $seg =~ ^([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*|sudo|time|nice|nohup|exec|command|then|do|else|!|\{)[[:space:]]+(.*)$ ]]; do
-      seg=${BASH_REMATCH[2]}
-    done
+    [[ $seg =~ $lead_re ]] && seg=${BASH_REMATCH[3]}
     w=${seg%%[[:space:]<>]*}
     w=${w##*/}
     case $w in
@@ -385,13 +387,16 @@ strip_heredocs() {
   local s=$1 out='' line cmp delim='' dash=0 quoted=0 code=0 pre at lead rest masked_line body='' cont=0
   local hd_re="(^|[^<])<<(-?)[[:space:]]*('([^']+)'|\"([^\"]+)\"|[$bs]([A-Za-z0-9_]+)|([A-Za-z_][A-Za-z0-9_]*))"
   local delim_end_re='^[[:space:];&|<>()]'
+  local tab_strip_re=$'^\t*(.*)$'
   HD_PLAIN=()
   HD_CODE=()
   while IFS= read -r line || [[ -n $line ]]; do
     if [[ -n $delim ]]; then
       cmp=$line
       if ((dash)); then
-        while [[ $cmp == $'\t'* ]]; do cmp=${cmp#$'\t'}; done
+        # A per-tab strip loop, and bash's own `${cmp%%[!\t]*}` glob match,
+        # are both quadratic here; the regex quantifier is linear.
+        [[ $cmp =~ $tab_strip_re ]] && cmp=${BASH_REMATCH[1]}
       fi
       if [[ $cmp == "$delim" ]]; then
         out+=$line$'\n'

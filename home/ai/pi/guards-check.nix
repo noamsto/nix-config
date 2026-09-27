@@ -1239,6 +1239,32 @@ in
           "$(bash_payload "$repo" $'cat <<-EOF\n\tfix: don\'t crash\n\tEOF\nenv')" \
           'bare env/printenv'
 
+        # The dash-mode tab strip must be linear: a body line of many leading
+        # tabs used to be stripped one tab at a time (quadratic copy), which
+        # overran the hook's time budget and abstained (fail open).
+        many_tabs=$(printf '\t%.0s' $(seq 1 60000))
+        assert_blocked "secret-read denies env after a <<- heredoc body line with 60000 tabs" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<-\'EOF\'\n'"$many_tabs"$'\nEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets a <<- heredoc body line with 60000 tabs and no dumper through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<-\'EOF\'\n'"$many_tabs"$'\nEOF')"
+
+        # heredoc_is_code strips leading assignment/keyword tokens off the marker
+        # line the same way, one token at a time via BASH_REMATCH reassignment —
+        # the same quadratic shape, on the marker line instead of a body line.
+        many_assigns=$(printf 'a=1 %.0s' $(seq 1 4090))
+        assert_blocked "secret-read denies env after a heredoc marker line with 4090 leading assignments" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$many_assigns"$'cat <<EOF\nhello\nEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets a heredoc marker line with 4090 leading assignments and no dumper through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "$many_assigns"$'cat <<EOF\nhello\nEOF')"
+
         assert_blocked "secret-read denies a backticked bash -c dumper in an unquoted heredoc body" \
           guards.pi.secret-read deny \
           "$(bash_payload "$repo" $'cat <<EOF\nrun `bash -c "declare -p FAKE_API_KEY"` now\nEOF')" \
