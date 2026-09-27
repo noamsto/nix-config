@@ -752,6 +752,720 @@ in
           guards.pi.secret-read abstain \
           "$(bash_payload "$repo" "case x in a) env=1 true;; esac")"
 
+        # Round 6 (nix-config#391): cmd_start must chain lead words (reserved
+        # words, `{`, `!`, env assignments, sudo/exec/time/nice/xargs/command)
+        # but only from command position. The allows pin the false-positive
+        # surface: a dumper that isn't the command, or that takes arguments.
+        assert_blocked "secret-read denies env in a brace group" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "{ env; }")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in a function body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "f() { env; }")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after then" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "if true; then env; fi")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after do" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "for a in b; do env; done")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies negated env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "! env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env behind an assignment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "x=1 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env behind two assignments" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "x=1 y=2 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies time env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "time env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies command env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "command env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo -E env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo -E env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies exec env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "exec env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies nice env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "nice env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies nice -n 5 env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "nice -n 5 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies xargs env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "xargs env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env behind an assignment and sudo -E" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "x=1 sudo -E env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies declare -p after then" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "if true; then declare -p FAKE_API_KEY; fi")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies env after else" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "if false; then true; else env; fi")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after elif" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "if false; then true; elif env; then true; fi")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env as a while condition" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "while env; do true; done")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env as an until condition" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "until env; do true; done")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies command -p env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "command -p env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo time env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo time env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a double negated env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "! ! env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies printenv after then" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "if true; then printenv; fi")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies xargs -n 1 env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "xargs -n 1 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo -u root env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo -u root env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies xargs -I {} env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "xargs -I {} env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies nohup env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "nohup env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies declare -p behind builtin" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "builtin declare -p FAKE_API_KEY")" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies doas env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "doas env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies setsid env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "setsid env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies eval env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "eval env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies command -- env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "command -- env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo -a 1 env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo -a 1 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo -u 0 env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo -u 0 env")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies set -S behind sudo -E" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "sudo -E set -S FAKE_API_KEY")" \
+          'lists or shows shell variables'
+
+        # Indented bodies: a dumper on its own line after leading whitespace is
+        # command position. Built via $'...' for the same reason as the Round 3
+        # newline case above.
+        assert_blocked "secret-read denies an indented env in a multi-line if body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'if true; then\n  env\nfi')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a tab-indented env in a multi-line function body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'f() {\n\tenv\n}')" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets sudo env with an assignment and command through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "sudo env VAR=x cmd")"
+
+        assert_allowed "secret-read lets xargs env with a command through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "xargs env cmd")"
+
+        assert_allowed "secret-read lets echo then env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo then env")"
+
+        assert_allowed "secret-read lets echo do env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo do env")"
+
+        assert_allowed "secret-read lets command -v env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "command -v env")"
+
+        assert_allowed "secret-read lets echo sudo env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo sudo env")"
+
+        assert_allowed "secret-read lets echo x=1 env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo x=1 env")"
+
+        assert_allowed "secret-read lets x=1 env=2 true through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "x=1 env=2 true")"
+
+        assert_allowed "secret-read lets sudo -n make env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "sudo -n make env")"
+
+        assert_allowed "secret-read lets echo and env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo and env")"
+
+        assert_allowed "secret-read lets command -- echo env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "command -- echo env")"
+
+        assert_allowed "secret-read lets a quoted then env pattern through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "rg 'then env' .")"
+
+        # Command substitution: mask_quotes blanks a whole "..." span, so the
+        # body of $(...) or backticks is scanned as a command string of its own.
+        # Payloads are single-quoted so the check's own shell never runs them.
+        assert_blocked "secret-read denies env in a double-quoted command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in a bare command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo $(env)')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in backticks" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo `env`')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in backticks inside double quotes" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "`env`"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies declare -p in a double-quoted command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(declare -p FAKE_API_KEY)"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies env in a nested command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(echo "$(env)")"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in backticks nested in a command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(echo `env`)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a bash -c dumper inside a command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(bash -c "declare -p FAKE_API_KEY")"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies an unbalanced command substitution holding env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in a substitution after a quoted-heredoc one" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'printf %s "$(cat <<\'EOF\'\nx\nEOF\n)" && echo "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in an unquoted-heredoc command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\n$(env)\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in an unquoted heredoc body with an apostrophe" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\nIt\'s here: $(env)\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a bash -c dumper in backticks with escaped inner quotes" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        # Past the verification ceiling the guard denies instead of abstaining.
+        many=$(printf '"$(:)" %.0s' $(seq 1 320))
+        assert_blocked "secret-read denies a command with too many substitutions to verify" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "echo $many")" \
+          'too many substitutions'
+
+        # Each nesting level re-scans its whole body, so the work is quadratic in
+        # depth; past the scan budget the guard denies quickly instead of running
+        # over the hook's 4s and abstaining.
+        nested_subst() {
+          local s='echo x' _
+          for _ in $(seq 1 "$1"); do s="echo \$($s)"; done
+          printf '%s' "$s"
+        }
+        assert_blocked "secret-read denies a 250-deep command substitution nest" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$(nested_subst 250)")" \
+          'too many substitutions'
+
+        # A quoted heredoc feeding a shell is scanned as code, so its body counts.
+        pad=$(printf 'x=1 # pad\n%.0s' $(seq 1 6000))
+        assert_blocked "secret-read denies a 60KB code heredoc before a dumper" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$(printf "bash <<'EOF'\n%s\nenv\nEOF" "$pad")")" \
+          'too many substitutions'
+
+        # Many tiny substitutions and a long heredoc-marker line each cost more per
+        # byte than their size suggests; both must deny, not overrun.
+        assert_blocked "secret-read denies thousands of tiny substitutions" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "echo $(printf '$() %.0s' $(seq 1 5000))")" \
+          'too many substitutions'
+
+        assert_blocked "secret-read denies a long heredoc marker line before a dumper" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "cat <<EOF $(printf 'word %.0s' $(seq 1 20000)); env")" \
+          'too many substitutions'
+
+        msg=$(printf 'commit message line here.\n%.0s' $(seq 1 330))
+        assert_allowed "secret-read lets a 9KB heredoc commit message through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'printf %s "$(cat <<\'EOF\'\n'"$msg"$'\nEOF\n)"')"
+
+        assert_allowed "secret-read lets a 60-deep command substitution nest through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "$(nested_subst 60)")"
+
+        assert_blocked "secret-read still scans after a heredoc marker inside a quoted string" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo "<<\'X\'"\necho "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still scans after a heredoc marker in a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo hi # <<\'X\'\necho "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still scans past an apostrophe in a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'# what\'s set\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still flags declare -p past an apostrophe in a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'# what\'s set\ndeclare -p FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read still scans a substitution on the line after a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'# x\necho "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still scans after a heredoc marker in a comment behind a substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo $(pwd) # <<\'X\'\necho "$(env)"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read still scans after a heredoc marker in a comment behind backticks" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo `pwd` # <<\'X\'\necho "$(env)"')" \
+          'bare env/printenv'
+
+        # A `#` in an unquoted heredoc body is text: the substitution on its line
+        # still runs, so collect_substs must not skip it as a comment.
+        assert_blocked "secret-read treats a hash in an unquoted heredoc body as text" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\n# see `env`\nEOF')" \
+          'bare env/printenv'
+
+        # An apostrophe in a heredoc body is text, not a quote: it must not open
+        # a phantom span that hides the dumper on a later line.
+        assert_blocked "secret-read denies env after a quoted heredoc with an apostrophe in its body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'git commit -F - <<\'EOF\'\nfix: don\'t crash\nEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after an unquoted heredoc with an apostrophe in its body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\nfix: don\'t crash\nEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a tab-stripped heredoc with an apostrophe in its body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<-EOF\n\tfix: don\'t crash\n\tEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a backticked bash -c dumper in an unquoted heredoc body" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\nrun `bash -c "declare -p FAKE_API_KEY"` now\nEOF')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a dumper in the body of a heredoc fed to a shell" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'bash <<\'EOF\'\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a quoted heredoc piped to a shell" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<\'EOF\' | sh\necho "it\'s"\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after an arithmetic shift that is not a heredoc" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'x=$((1<<n))\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a heredoc marker inside a multi-line quoted string" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo "a\nb <<EOF\nc"; env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a heredoc whose delimiter is not a plain word" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<A.B\nx\nA.B\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a heredoc with a backslash delimiter and an apostrophe" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<\\EOF\nit\'s\nEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a tab-stripped quoted heredoc with an apostrophe" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<-\'EOF\'\n\tit\'s\n\tEOF\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env in an unterminated heredoc" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF\nno terminator\nenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to a shell with no space before the marker" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'bash<<\'EOF\'\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to a quoted shell name" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'\"bash\" <<\'EOF\'\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to source /dev/stdin" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'source /dev/stdin <<\'EOF\'\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to ssh" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'ssh host <<EOF\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc piped to a read loop" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF | while read l; do eval \"$l\"; done\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc inside an eval substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'eval \"$(cat <<EOF\nenv\nEOF\n)\"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc whose redirection precedes the shell" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'<<EOF bash\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to a shell behind a stdin redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'</dev/null bash <<EOF\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a heredoc with a dashed delimiter" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF-x\nx\nEOF-x\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a heredoc with a partly quoted delimiter" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<\'E\'OF\nx\nEOF\nenv\nE')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc piped to a shell over a continued line" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF \\\n | bash\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc whose pipeline continues after the terminator" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'cat <<EOF |\nenv\nEOF\nsh')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after a backslash-escaped heredoc marker" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo \\<<A\nenv\nA')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env after an arithmetic shift by a sink-named operand" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo $((cat<<A))\nenv\nA')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a dumper in a heredoc fed to git with an alias" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'git -c alias.a=!sh a <<\'EOF\'\nenv\nEOF')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read does not let a false comment start in a quoted string in a substitution hide a trailing dumper" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(printf "Issue #%s" "$n")"; env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read does not let a backtick span holding a hash hide a trailing dumper" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo `date # now`; env')" \
+          'bare env/printenv'
+
+        # The dumpers below sit in backticks with escaped inner quotes, which the
+        # raw scan cannot see, so only a wrongly-skipped `#` would let them through.
+        assert_blocked "secret-read does not treat a mid-word hash as a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo a#"`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read does not treat a hash after a closing paren as a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo $(x)#"`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read does not treat a hash inside an open parameter expansion as a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo ''${x:- #"`bash -c \"declare -p FAKE_API_KEY\"`"}')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read does not treat a hash after an escaped space as a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo a\ #"`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read ends a comment at the newline" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo hi # x\necho "`bash -c \\"declare -p FAKE_API_KEY\\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read does not treat a hash after a closing backtick as a comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo `x`#"`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read does not treat the argument-count parameter as a comment start" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo $# "`bash -c \"declare -p FAKE_API_KEY\"`"')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read skips a comment holding a paren when finding the end of a substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'echo "$(true # )\n env)"')" \
+          'bare env/printenv'
+
+        # A comment-heavy command once took ~3s, near the hook's 4s budget (an
+        # overrun abstains). This is a deny check, not a timing assertion: it
+        # only fails if the guard gets slow enough to hit the build's timeout.
+        long=$(for n in $(seq 200); do printf '# note %s\necho hi\n' "$n"; done)
+        assert_blocked "secret-read still denies after a long run of comment lines" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$long"$'\n'"echo \"\$(env)\"")" \
+          'bare env/printenv'
+
+        assert_allowed "secret-read lets backticked env in a comment through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'# use `env` here')"
+
+        assert_allowed "secret-read lets a mid-word hash through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo a#b')"
+
+        assert_allowed "secret-read lets an array length expansion through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo ''${#arr[@]}')"
+
+        assert_allowed "secret-read lets the argument-count parameter through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "$#"')"
+
+        assert_allowed "secret-read lets a double-quoted hash through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "#"')"
+
+        assert_allowed "secret-read lets a single-quoted hash through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo '#'")"
+
+        assert_allowed "secret-read lets a comment holding a paren and a quote inside a substitution through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'echo "$(true # a) \\"b\nx)"')"
+
+        assert_allowed "secret-read lets a single-quoted command substitution through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo '\$(env)'")"
+
+        assert_allowed "secret-read lets single-quoted backticks through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo '\`env\`'")"
+
+        assert_allowed "secret-read lets a quoted env|printenv regex through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "rg 'env|printenv' file")"
+
+        assert_allowed "secret-read lets a quoted string with a stray paren and env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "a)env;"')"
+
+        assert_allowed "secret-read lets env as an argument beside a command substitution through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "$(pwd) env"')"
+
+        assert_allowed "secret-read lets an unbalanced command substitution without a dumper through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "$(pwd')"
+
+        assert_allowed "secret-read lets a single-quoted string with a paren and env inside a substitution through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo \"\$(echo 'x)env')\"")"
+
+        # The commit-message idiom (via printf, so the git-commit guard stays
+        # out of it): a quoted heredoc runs no substitution, so
+        # backticked prose and apostrophes in its body must not read as one.
+        assert_allowed "secret-read lets a quoted-heredoc commit body with backticked env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'printf %s "$(cat <<\'EOF\'\nfix: x\n\nMentions `env` and `set`, don\'t "quote" it.\nenv\nEOF\n)"')"
+
+        assert_allowed "secret-read lets a quoted-heredoc body with a lone paren and backticked env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'printf %s "$(cat <<\'EOF\'\nFix things\n\n1) first item mentions `env` handling\nEOF\n)"')"
+
+        assert_allowed "secret-read lets a quoted-heredoc body with backticked env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat > s.sh <<\'EOF\'\nx `env` y\nEOF')"
+
+        # A quoted heredoc body is literal: no substitution runs in it.
+        assert_allowed "secret-read lets a quoted heredoc with literal \$(env) and backticked env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<\'EOF\'\nrun $(env) or `env` here\nEOF')"
+
+        assert_allowed "secret-read lets a double-quoted-delimiter heredoc with literal \$(env) through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<"EOF"\nrun $(env) or `env` here\nEOF')"
+
+        assert_allowed "secret-read lets a heredoc PR body with an apostrophe through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'gh pr create --body-file - <<\'EOF\'\nfix: don\'t crash\n\nIt\'s a "quoted" word.\nEOF')"
+
+        assert_allowed "secret-read lets an unquoted heredoc with an apostrophe and no dumper through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<EOF\nfix: don\'t crash\nEOF')"
+
+        assert_allowed "secret-read lets a tab-stripped heredoc with an apostrophe and no dumper through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<-EOF\n\tfix: don\'t crash\n\tEOF')"
+
+        assert_allowed "secret-read lets a bare env line in an unquoted heredoc body through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<EOF\nenv\nEOF')"
+
+        assert_allowed "secret-read lets a bare env line in a quoted heredoc body with an apostrophe through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'cat <<\'EOF\'\ndon\'t\nenv\nEOF')"
+
+        assert_allowed "secret-read lets a gh PR body heredoc with an apostrophe and a bare env line through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'gh pr create --body-file - <<\'EOF\'\nfix: don\'t\nenv\nEOF')"
+
+        assert_allowed "secret-read lets a heredoc assigned through a substitution with an apostrophe through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" $'x=$(cat <<\'EOF\'\nfix: don\'t\nEOF\n)')"
+
         # pi's grep always prints matching lines, so the adapter forces
         # output_mode=content; without it the guard would read Claude's default
         # (files_with_matches) and abstain on exactly this call.

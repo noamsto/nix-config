@@ -16,6 +16,12 @@
 
 set -euo pipefail
 
+# Byte semantics: every delimiter this guard cares about is ASCII, and the
+# character-by-character scanners below are quadratic in a UTF-8 locale (each
+# ${s:i:1} walks from the start) — 3-4x slower on a 10KB command, close to the
+# hook's 4s budget, and an overrun abstains.
+export LC_ALL=C
+
 input=$(cat)
 
 tool_name=$(echo "$input" | jq -r '.tool_name // empty')
@@ -38,15 +44,53 @@ cmd_secret_re='(^|[[:space:]"'"'"'=/])\.env([[:space:]"'"'"';|&)>]|$|\.[A-Za-z0-
 template_re='\.env\.(example|template|sample|dist)'
 
 # Command-position anchor for the env, builtin and fish checks below: start of
-# string, or after ; && || | ( ) — never a bare mid-argument character. `)`
-# covers a case pattern like `*)env`. Every dumper is matched
-# only here, against text with quoted spans already replaced by spaces
-# (mask_quotes), which is what lets `rg 'env|printenv|x' file` stay allowed
-# (the literal `|` next to the word, inside the quotes, used to look like a
-# real pipe) while `env` on its own is still denied. A trailing unquoted
-# `$(...)`/`(...)` before a bare dumper word (`echo $(pwd) env`) is an accepted
-# rare false positive, on the safe side.
-cmd_start='(^|[;&|()]+[[:space:]]*)'
+# a line (after any indentation, so an indented body counts), or after
+# ; && || | ( ) — never a bare mid-argument character. `)` covers a case
+# pattern like `*)env`. After the separator, any chain of lead words still
+# counts as command position: reserved words, `{`, `!`, env assignments, and
+# prefix commands (sudo exec time nice xargs nohup setsid doas builtin eval,
+# with their option flags and the value of -u/-g/-a/-U/-I; `command` only with
+# -p or --, so `command -v env` stays allowed). Anchoring to the separator is
+# what keeps `echo then env` allowed; the dumper regexes still require the
+# dumper to END the command, which keeps `sudo env VAR=x cmd` and
+# `xargs env cmd` allowed. Matching is per line (grep runs line by line), so a
+# wrapped commit-body line inside a quoted string that is only lead words plus a
+# dumper word (`if set`), a `\`-continuation line, or a line starting with a
+# quoted/expanded word before a dumper argument also counts as command position:
+# accepted false positives, on the safe side. Not followed (accepted limits):
+# flags with other non-numeric values, `timeout N env`, stdbuf/ionice/`env FOO=1
+# env` wrappers, `{env` without a space. Every dumper is matched only here,
+# against text with quoted spans already replaced by spaces (mask_quotes), which
+# is what lets
+# `rg 'env|printenv|x' file` stay allowed (the literal `|` next to the word,
+# inside the quotes, used to look like a real pipe) while `env` on its own is
+# still denied. A trailing unquoted `$(...)`/`(...)` before a bare dumper word
+# (`echo $(pwd) env`) is an accepted rare false positive, on the safe side.
+# The body of every `$(...)`/backtick substitution — quoted or not, nested or
+# not — is also scanned as its own command string (collect_substs, below), so
+# `echo "$(env)"` is denied while `echo '$(env)'` and `echo "$(pwd) env"` are
+# not. Accepted limits: a `)` inside a `case` pattern ends the body early
+# (`$(case x in a) env;; esac)`), fish `(...)` substitutions are not collected,
+# substitutions found in a `fish -c` body are checked for bash dumpers only,
+# `$'...\'...'` is read as a plain single-quoted string, and two heredocs on
+# one line track only the first delimiter, so the second body is read as shell
+# code. Heredoc bodies (strip_heredocs) are text, not code: they never reach
+# mask_quotes, so an apostrophe in one cannot hide a later line, and a bare
+# `env` line inside one is allowed; only the substitutions in an unquoted one, or
+# the whole body of one whose marker line feeds anything but a known text sink
+# (`bash <<'EOF'`, `ssh h <<EOF`, `cat <<EOF | sh`), are scanned. Comments
+# (comment_at) are skipped by the substitution scanners and quote-neutralized,
+# not blanked, by mask_quotes; a nested `${a:-${b} #c}` is treated as one. An
+# unclosed `${` earlier on the same line (even inside quotes, e.g. `'${' # it's`)
+# disables comment recognition for the rest of that line. Comment text is still scanned as ordinary text, so a
+# comment holding a separator before a dumper (`# run: a; env`) is denied
+# (safe-side false positive).
+cmd_sep='(^[[:space:]]*|[;&|()]+[[:space:]]*)'
+cmd_lead_res='((then|do|else|elif|if|while|until|!|[{])[[:space:]]+)'
+cmd_lead_asg='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)'
+cmd_lead_opt='(-[ugaUI][[:space:]]+[^-0-9[:space:]][^[:space:]]*[[:space:]]+|-[^[:space:]]+[[:space:]]+([0-9]+[[:space:]]+)?)*'
+cmd_lead_pfx='((sudo|exec|time|nice|xargs|nohup|setsid|doas|builtin|eval)[[:space:]]+'"$cmd_lead_opt"'|command[[:space:]]+((-p|--)[[:space:]]+)*)'
+cmd_start="$cmd_sep($cmd_lead_res|$cmd_lead_asg|$cmd_lead_pfx)*"
 env_dump_re="$cmd_start"'(printenv|env)[[:space:]]*($|[;&|)])'
 # Listing/show forms that print a variable's value without echoing it — the
 # gap behind the LINEAR_API_KEY rotation. `-S`/`--show`/`-p` always print,
@@ -94,10 +138,40 @@ proc_environ_re="(^|[[:space:]\"'<=])/proc/[^[:space:]\"']*/environ"
 # decode_word below can compare against it unambiguously.
 bs=$'\\'
 
+# Succeeds, setting COMMENT_END to the index of the newline ending the comment
+# (or the string length), iff s[i] starts a shell comment: an unquoted `#` at a
+# word start. Deliberately not a comment: `#` after `)`, `<`, `>` (`$(x)#y`,
+# `<#`) or after a backslash-escaped char, and `#` inside an open `${` (`${#a}`,
+# `${x:- #$(cmd)}`), where substitutions still run. Callers pass only unquoted
+# positions and call it from `if` conditions (a failing return would trip set -e).
+comment_at() {
+  local s=$1 i=$2 pre rest
+  if ((i > 0)); then
+    case ${s:i-1:1} in
+    ' ' | $'\t' | $'\n' | ';' | '&' | '|' | '(') ;;
+    *) return 1 ;;
+    esac
+    if ((i > 1)) && [[ ${s:i-2:1} == "$bs" ]]; then return 1; fi
+  fi
+  pre=${s:0:i}
+  rest=${pre%\$\{*}
+  if [[ $rest != "$pre" ]]; then
+    rest=${pre:${#rest}}
+    if [[ $rest != *'}'* && $rest != *$'\n'* ]]; then return 1; fi
+  fi
+  rest=${s:i}
+  rest=${rest%%$'\n'*}
+  COMMENT_END=$((i + ${#rest}))
+}
+
 # Replaces every character inside a '...' or "..." span (quotes included)
 # with a space, so quoted data can never look like a command. Positional, not
 # a strip, so a caller that only needs one span (decode_word, below) can pull
-# the original quoted text out first and mask *that* on its own.
+# the original quoted text out first and mask *that* on its own. Command
+# substitutions inside a span are blanked with it and scanned separately
+# (collect_substs). A span ends at the first unescaped quote of its kind, so a
+# nested `"$(echo "x")"` masks in pieces and the inner quoted text can land
+# bare at command position (accepted false positive).
 #
 # Backslash-aware on both sides of the quote boundary, matching real bash:
 # outside any quote, `\X` is a literal X with no special meaning, so `\"`/
@@ -105,8 +179,13 @@ bs=$'\\'
 # \<newline> are real escapes, so a bare `\"` doesn't close the span either.
 # Single quotes have no escape mechanism in bash, so no such handling inside
 # them — a `\` there is just another masked character.
+#
+# A comment (comment_at) is not blanked: an apostrophe in `# what's set` would
+# open a phantom quote and hide the next line, but blanking the text instead
+# would let a false comment start hide a real dumper. So it is copied verbatim
+# with only its quote characters turned into spaces.
 mask_quotes() {
-  local s=$1 out='' i=0 c q
+  local s=$1 out='' i=0 c q seg
   local len=${#s}
   while ((i < len)); do
     c=${s:i:1}
@@ -114,6 +193,11 @@ mask_quotes() {
       out+=$c
       out+=${s:i+1:1}
       i=$((i + 2))
+    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+      seg=${s:i:COMMENT_END-i}
+      seg=${seg//\'/ }
+      out+=${seg//\"/ }
+      i=$COMMENT_END
     elif [[ $c == "'" || $c == '"' ]]; then
       q=$c
       out+=' '
@@ -230,6 +314,302 @@ decode_word() {
   DECODE_WORD_END=$i
 }
 
+# True iff a heredoc whose `<<` sits on `line` feeds something that may run its
+# body as code. Only a marker line whose every pipeline stage is a known text
+# sink (cat, tee, git commit -F -, gh --body-file -, ...) is text; any other
+# command — a shell, ssh, `source /dev/stdin`, `eval`, `while read`, an unknown
+# tool — is treated as running it, so an unrecognised consumer errs toward
+# scanning. Quote characters are blanked and `$(`/backticks/`(` split stages, so
+# `x="$(cat <<'EOF'` is judged by its `cat`.
+heredoc_is_code() {
+  local l=${1//[\'\"]/ } seg w t=${1%"${1##*[![:space:]]}"}
+  # A trailing `|`/`&` continues the pipeline on the line after the terminator.
+  if [[ $t == *[\|\&] ]]; then return 0; fi
+  l=${l//\$\(/;}
+  l=${l//\`/;}
+  l=${l//[;&|(]/$'\n'}
+  while IFS= read -r seg; do
+    seg=${seg#"${seg%%[![:space:]]*}"}
+    while [[ $seg =~ ^([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*|sudo|time|nice|nohup|exec|command|then|do|else|!|\{)[[:space:]]+(.*)$ ]]; do
+      seg=${BASH_REMATCH[2]}
+    done
+    w=${seg%%[[:space:]<>]*}
+    w=${w##*/}
+    case $w in
+    '')
+      # A redirection before the command word (`<<EOF bash`) hides it.
+      if [[ -n ${seg//[[:space:]]/} ]]; then return 0; fi
+      ;;
+    [A-Za-z_]*=*) ;;
+    git)
+      # `git -c alias.x=!sh x` runs stdin as a script.
+      if [[ $seg =~ [[:space:]]-c[[:space:]] ]]; then return 0; fi
+      ;;
+    cat | tee | printf | echo | gh | patch | sponge | sort | tr | wc | head | tail | grep | rg | jq | base64 | curl | diff | cmp | read | mapfile | readarray) ;;
+    *) return 0 ;;
+    esac
+  done <<<"$l"
+  return 1
+}
+
+# Splits heredoc bodies out of a command, line by line, so an apostrophe or `#`
+# in a body can never desync mask_quotes or the substitution scanners. Sets
+# HD_VIEW to the command with every body removed (the `<<` line and the
+# delimiter line stay): a body is text for the heredoc's command, not shell
+# code, so the dumper regexes must not see it. Bodies of unquoted-delimiter
+# heredocs (<<EOF) land in HD_PLAIN, because `$(...)` and backticks still run
+# in them; quoted ones (<<'EOF', <<"EOF", <<\EOF) substitute nothing and are
+# dropped, which is what lets the `git commit -m "$(cat <<'EOF' ... EOF)"` idiom
+# carry prose full of backticks and apostrophes. When the marker line does not
+# feed a known text sink (heredoc_is_code) the body may be code, so it also
+# lands in HD_CODE for the caller to scan as a command string. A `<<` inside a
+# quoted string or after a `#` comment start is not a heredoc (checked on the
+# quote-masked line). A heredoc whose delimiter line never appears is not one —
+# `$((1<<n))`, a `<<EOF` inside a multi-line string, `<<A.B` — so its lines are
+# put back into the view instead of hiding the rest of the command. Accepted
+# limits: only the first heredoc marker on a line is recognised, and a body
+# only reaches a shell through its marker line (`cat <<'EOF' > s.sh` then
+# `bash s.sh`, or `s=$(cat <<'EOF' ...)` then `eval "$s"`, is not followed). A
+# marker line ending in `\`, or following one that does, or whose delimiter is
+# not a plain word, or a `<<` after `\` or inside `((`, is not treated as a
+# heredoc, leaving its body visible; so is one ending in `|` or `&`, whose
+# consumer is on a later line. A `<<` on a line inside a quoted string that
+# opened on an earlier line is still read as a marker (the quote-masking is per
+# line), which hides the lines up to a matching terminator.
+strip_heredocs() {
+  local s=$1 out='' line cmp delim='' dash=0 quoted=0 code=0 pre at lead rest masked_line body='' cont=0
+  local hd_re="(^|[^<])<<(-?)[[:space:]]*('([^']+)'|\"([^\"]+)\"|[$bs]([A-Za-z0-9_]+)|([A-Za-z_][A-Za-z0-9_]*))"
+  local delim_end_re='^[[:space:];&|<>()]'
+  HD_PLAIN=()
+  HD_CODE=()
+  while IFS= read -r line || [[ -n $line ]]; do
+    if [[ -n $delim ]]; then
+      cmp=$line
+      if ((dash)); then
+        while [[ $cmp == $'\t'* ]]; do cmp=${cmp#$'\t'}; done
+      fi
+      if [[ $cmp == "$delim" ]]; then
+        out+=$line$'\n'
+        if ((! quoted)); then HD_PLAIN+=("$body"); fi
+        if ((code)); then HD_CODE+=("$body"); fi
+        delim=''
+        body=''
+      else
+        body+=$line$'\n'
+      fi
+      continue
+    fi
+    out+=$line$'\n'
+    # Past scan_budget the caller denies whatever follows, and a long marker line
+    # is scanned character by character below.
+    if ((${#out} > scan_budget)); then break; fi
+    if [[ $line =~ $hd_re ]] && ((! cont)); then
+      delim=${BASH_REMATCH[4]}${BASH_REMATCH[5]}${BASH_REMATCH[6]}${BASH_REMATCH[7]}
+      quoted=1
+      if [[ -n ${BASH_REMATCH[7]} ]]; then quoted=0; fi
+      dash=0
+      if [[ ${BASH_REMATCH[2]} == - ]]; then dash=1; fi
+      lead=${BASH_REMATCH[1]}
+      rest=${line#*"${BASH_REMATCH[0]}"}
+      pre=${line%%"${BASH_REMATCH[0]}"*}
+      at=$((${#pre} + ${#lead}))
+      # The regex stops at the first non-word character, but bash takes the whole
+      # word (`EOF-x`, `E'O'F`), so a longer delimiter would end the body at the
+      # wrong line and swallow real code after it.
+      if [[ -n $rest && ! $rest =~ $delim_end_re ]]; then delim=''; fi
+      # `\<<A` is a literal `<` and a file redirect, `((1<<n))` a shift.
+      if [[ $lead == "$bs" || ${line:0:at} == *'(('* ]]; then delim=''; fi
+      masked_line=$(mask_quotes "$line")
+      # `"$(cat <<'EOF'` opens its quote on the same line, so mask_quotes
+      # blanks the `<<`: a `$(` or backtick before it restarts quote context.
+      if [[ ${masked_line:0:at} =~ (^|[[:space:]])# ]] ||
+        [[ ${masked_line:at:2} != '<<' && ${line:0:at} != *'$'\(* && ${line:0:at} != *'`'* ]]; then
+        delim=''
+      fi
+      code=0
+      if [[ -n $delim ]] && heredoc_is_code "$line"; then code=1; fi
+      if [[ $line == *"$bs" ]]; then delim=''; fi
+    fi
+    cont=0
+    if [[ $line == *"$bs" ]]; then cont=1; fi
+  done <<<"$s"
+  if [[ -n $delim ]]; then out+=$body; fi
+  HD_VIEW=$out
+}
+
+# Index of the backtick closing the span opened at s[i], or the string length
+# when it never closes. Sets BT_END.
+skip_backtick() {
+  local s=$1 i=$(($2 + 1))
+  local len=${#s}
+  while ((i < len)) && [[ ${s:i:1} != '`' ]]; do
+    if [[ ${s:i:1} == "$bs" ]]; then i=$((i + 2)); else i=$((i + 1)); fi
+  done
+  if ((i > len)); then i=$len; fi
+  BT_END=$i
+}
+
+# Index of the `)` matching a `$(` whose body starts at s[i], or the string
+# length when unbalanced (the rest of the string is then the body: scanning
+# more errs toward denying, and the scan still terminates). A stack of
+# contexts — P paren, D double quote, S single quote — because `$(` opens an
+# independent quoting context even inside "...": `"$(echo "$(env)")"` nests.
+# Sets FPE_END.
+find_paren_end() {
+  local s=$1 i=$2
+  local len=${#s} c top
+  local st=(P) sp=1
+  while ((i < len)); do
+    c=${s:i:1}
+    top=${st[sp - 1]}
+    if [[ $top == S ]]; then
+      if [[ $c == "'" ]]; then sp=$((sp - 1)); fi
+    elif [[ $c == "$bs" ]]; then
+      i=$((i + 1))
+    elif [[ $c == '`' ]]; then
+      skip_backtick "$s" "$i"
+      i=$BT_END
+    elif [[ $top == D ]]; then
+      if [[ $c == '"' ]]; then
+        sp=$((sp - 1))
+      elif [[ $c == '$' && ${s:i+1:1} == '(' ]]; then
+        st[sp]=P
+        sp=$((sp + 1))
+        i=$((i + 1))
+      fi
+    else
+      case $c in
+      '#')
+        if comment_at "$s" "$i"; then i=$COMMENT_END; fi
+        ;;
+      "'")
+        st[sp]=S
+        sp=$((sp + 1))
+        ;;
+      '"')
+        st[sp]=D
+        sp=$((sp + 1))
+        ;;
+      '(')
+        st[sp]=P
+        sp=$((sp + 1))
+        ;;
+      ')')
+        sp=$((sp - 1))
+        if ((sp == 0)); then
+          FPE_END=$i
+          return
+        fi
+        ;;
+      esac
+    fi
+    i=$((i + 1))
+  done
+  FPE_END=$len
+}
+
+# Appends to SUBST_BODIES the body of every top-level command substitution in
+# s — `$(...)` and backticks, outside '...' and inside or outside "..." — each
+# as the shell would run it. mask_quotes blanks a whole "..." span, so without
+# this a dumper inside one is invisible. With plain=1 (a heredoc body) quotes
+# and `#` are literal text, so only `$(`, backticks and backslashes matter.
+# Unbalanced input takes the rest of the string as the body.
+scan_substs() {
+  local s=$1 plain=$2 i=0 len c dq=0 body out n
+  len=${#s}
+  while ((i < len)); do
+    c=${s:i:1}
+    if [[ $c == "$bs" ]]; then
+      i=$((i + 2))
+    elif [[ $c == '`' ]]; then
+      skip_backtick "$s" "$i"
+      body=${s:i+1:BT_END-i-1}
+      out=''
+      n=0
+      while ((n < ${#body})); do
+        if [[ ${body:n:1} == "$bs" ]]; then
+          case ${body:n+1:1} in
+          "$bs" | '`' | '$') n=$((n + 1)) ;;
+          '"') if ((dq)); then n=$((n + 1)); fi ;;
+          esac
+        fi
+        out+=${body:n:1}
+        n=$((n + 1))
+      done
+      SUBST_BODIES+=("$out")
+      i=$((BT_END + 1))
+    elif [[ $c == '$' && ${s:i+1:1} == '(' ]]; then
+      find_paren_end "$s" $((i + 2))
+      SUBST_BODIES+=("${s:i+2:FPE_END-i-2}")
+      i=$((FPE_END + 1))
+    elif ((plain)); then
+      i=$((i + 1))
+    elif ((dq)); then
+      if [[ $c == '"' ]]; then dq=0; fi
+      i=$((i + 1))
+    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+      i=$COMMENT_END
+    elif [[ $c == "'" ]]; then
+      i=$((i + 1))
+      while ((i < len)) && [[ ${s:i:1} != "'" ]]; do i=$((i + 1)); done
+      i=$((i + 1))
+    else
+      if [[ $c == '"' ]]; then dq=1; fi
+      i=$((i + 1))
+    fi
+  done
+}
+
+# Sets SUBST_BODIES to everything in s worth scanning as a command string of
+# its own: the substitutions of the heredoc-free view (HD_VIEW) plus those in
+# each unquoted heredoc body, and the bodies of heredocs that may be code verbatim.
+# Callers re-scan each as a command string, which is how nested substitutions
+# (and `-c` bodies inside one) are reached. Must directly follow strip_heredocs
+# on the same string: it reads HD_VIEW/HD_PLAIN/HD_CODE.
+collect_substs() {
+  local body
+  local plain=("${HD_PLAIN[@]}")
+  local code=("${HD_CODE[@]}")
+  SUBST_BODIES=()
+  scan_substs "$HD_VIEW" 0
+  for body in "${plain[@]}"; do scan_substs "$body" 1; done
+  SUBST_BODIES+=("${code[@]}")
+}
+
+# mask_quotes over a command's heredoc-free view: the text the dumper regexes
+# may match against.
+masked_view() {
+  strip_heredocs "$1"
+  mask_quotes "$HD_VIEW"
+}
+
+# The scanners above walk a string character by character, and each nested
+# command substitution re-runs them over its whole body, so the work grows
+# with (nesting depth x length) and a single long command is superlinear too.
+# scan_budget caps the bytes they are asked to read across one command: the
+# heredoc-free view plus unquoted heredoc bodies of the command itself (a
+# quoted heredoc body is dropped whole and costs almost nothing), then each
+# queued substitution or -c body in full, and strip_heredocs stops reading once
+# its view passes the budget. max_command_len bounds the one thing that scan
+# still reads whole, the body of a quoted heredoc. The hook has 4000ms and an
+# overrun abstains, so a command past either ceiling is denied.
+# Measured on the dev box (LC_ALL=C), at 16384 bytes: flat words ~0.6s, nested
+# $(...) ~0.4s, a 12KB python heredoc ~0.5s, a 9KB unquoted heredoc ~0.1s, and
+# 3000 heredoc markers ~0.7s; realistic commands sit far below both ceilings.
+# Bytes are only a proxy: comment-dense text (comment_at copies the string per
+# `#`), many `-c` siblings over a long tail, and a `<<-` line of thousands of
+# tabs still cost more than their size and can pass 4s under the budget
+# (#405, #406, #407).
+scan_budget=16384
+max_command_len=524288
+scanned=0
+
+# Adds $1 bytes to scanned; succeeds when that puts the command past scan_budget.
+over_scan_budget() {
+  scanned=$((scanned + $1))
+  ((scanned > scan_budget))
+}
+
 deny() {
   jq -n --arg reason "$1" '{
     hookSpecificOutput: {
@@ -290,7 +670,20 @@ Bash)
   #    leak, different command. Matched only at command position, against
   #    text with quoted spans masked out, so a quoted regex or string
   #    argument can never look like one of these.
-  masked=$(mask_quotes "$command")
+  unverified=0
+  masked=''
+  if ((${#command} > max_command_len)); then
+    unverified=1
+  else
+    strip_heredocs "$command"
+    size=${#HD_VIEW}
+    for body in "${HD_PLAIN[@]}"; do size=$((size + ${#body})); done
+    if over_scan_budget "$size"; then
+      unverified=1
+    else
+      masked=$(mask_quotes "$HD_VIEW")
+    fi
+  fi
   search_spaces=("$masked")
   fish_spaces=()
   # Recurse through nested -c wrapping (bash -c "fish -c '...'") and scan for
@@ -298,15 +691,38 @@ Bash)
   # 'declare -p NAME' are two separate bodies). A worklist, not a single
   # variable: each match queues the extracted word plus the remainder of the
   # source string after it, so neither a nested nor a sibling body is ever
-  # dropped. Bounded by total matches rather than nesting depth — each match
-  # queues at most 2 items and every item is visited once, so this always
-  # terminates.
+  # dropped. Command-substitution bodies ride the same worklist (the flag array
+  # marks the items still worth scanning for them: not a -c remainder, whose
+  # substitutions its source string already yielded), so a dumper inside
+  # `$(...)` or backticks, nested or not, is tested at command position. Every
+  # item is visited once and each queued item is shorter than its
+  # source, so the loop terminates. 20 -c matches, 300 visited items and
+  # scan_budget bytes are generous ceilings; a command past any cannot be
+  # verified, so it is denied rather than left to abstain.
   worklist=("$command")
+  collect_flags=(1)
   wi=0
   matches=0
-  while ((wi < ${#worklist[@]})) && ((matches < 20)); do
-    cur=${worklist[wi]}
+  while ((! unverified && wi < ${#worklist[@]})) && ((wi < 300)); do
+    strip_heredocs "${worklist[wi]}"
+    cur=$HD_VIEW
+    if ((collect_flags[wi])); then
+      collect_substs
+      for body in "${SUBST_BODIES[@]}"; do
+        if ((${#worklist[@]} >= 300)) || over_scan_budget "${#body}"; then
+          unverified=1
+          break
+        fi
+        worklist+=("$body")
+        collect_flags+=(1)
+        search_spaces+=("$(masked_view "$body")")
+      done
+    fi
     wi=$((wi + 1))
+    if ((matches >= 20)); then
+      if [[ $cur =~ $shell_c_re ]]; then unverified=1; fi
+      continue
+    fi
     # shell_c_re's ;&|) anchors (see above) are as common inside an ordinary
     # quoted regex/string as a bare space already was, e.g. `rg 'foo|bash -c
     # env x' .`. So a match only counts if its full text (anchor through
@@ -336,12 +752,20 @@ Bash)
     ((found)) || continue
     decode_word "$cur" "$arg_start"
     sub=$DECODED_WORD
-    masked_sub=$(mask_quotes "$sub")
+    if over_scan_budget "${#sub}"; then
+      unverified=1
+      continue
+    fi
+    masked_sub=$(masked_view "$sub")
     search_spaces+=("$masked_sub")
     [[ $interpreter == fish ]] && fish_spaces+=("$masked_sub")
     matches=$((matches + 1))
     worklist+=("$sub" "${cur:DECODE_WORD_END}")
+    collect_flags+=(1 0)
   done
+  if ((unverified || wi < ${#worklist[@]})); then
+    deny "This command is too long, or nests too many substitutions or shell -c wrappers, for the secret-read guard to verify that none prints an environment dump. Split it into simpler commands, or move the logic into a script file."
+  fi
   for space in "${search_spaces[@]}"; do
     if echo "$space" | grep -qE "$env_dump_re"; then
       deny "A bare env/printenv prints every secret in scope into this transcript. Name the one variable you need and test it without echoing its value."
