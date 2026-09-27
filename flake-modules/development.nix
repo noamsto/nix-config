@@ -21,6 +21,7 @@
         pi-guards = import ../home/ai/pi/guards-check.nix {
           inherit pkgs;
           hookyard = inputs'.hookyard.packages.default;
+          inherit (inputs) dispatcher;
         };
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

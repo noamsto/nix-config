@@ -5,7 +5,10 @@
   inputs,
   ...
 }: let
-  piGuards = import ./guards.nix {inherit pkgs;};
+  piGuards = import ./guards.nix {
+    inherit pkgs;
+    inherit (inputs) dispatcher;
+  };
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
   localPkgs = inputs.self.packages.${pkgs.stdenv.hostPlatform.system};
 

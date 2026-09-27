@@ -11,8 +11,9 @@
 {
   pkgs,
   hookyard,
+  dispatcher,
 }: let
-  inherit (import ./guards.nix {inherit pkgs;}) manifest handlers;
+  inherit (import ./guards.nix {inherit pkgs dispatcher;}) manifest handlers;
 
   execFor = id: (builtins.head (builtins.filter (h: h.id == id) handlers)).exec;
   psqlGuardExec = execFor "guards.pi.psql";
@@ -1551,8 +1552,8 @@ in
 
         ## public-leak. A fresh cache stands in for `gh api`, which the sandbox
         ## cannot reach; an ask renders as a block on pi.
-        mkdir -p "$HOME/.cache/agent-public-leak-guard"
-        printf 'owner/secret\n' >"$HOME/.cache/agent-public-leak-guard/private-repos"
+        mkdir -p "$HOME/.cache/dispatcher"
+        printf 'owner/secret\n' >"$HOME/.cache/dispatcher/private-repos"
 
         assert_blocked "public-leak asks before a private repo name goes public" \
           guards.pi.public-leak ask \

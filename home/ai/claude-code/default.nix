@@ -77,11 +77,6 @@
         match = ["Bash"];
       })
       (guardHandler {
-        name = "public-leak";
-        exe = "${sharedGuards.public-leak-guard}/bin/agent-public-leak-guard";
-        match = ["Bash"];
-      })
-      (guardHandler {
         name = "deslop";
         exe = "${deslop-guard}/bin/claude-deslop-guard";
         match = ["Bash"];
@@ -176,7 +171,9 @@
   claude-wrapped = inputs.wrappers.lib.wrapPackage {
     inherit pkgs;
     package = pkgs.claude-code;
-    runtimeInputs = [pkgs.nodejs pkgs.uv];
+    # betterleaks: the dispatcher plugin's public-leak guard skips its secret
+    # scan when it isn't on PATH.
+    runtimeInputs = [pkgs.nodejs pkgs.uv pkgs.betterleaks];
   };
 
   # DISABLE_INSTALLATION_CHECKS: suppress false warnings when running via Nix

@@ -20,8 +20,20 @@
 # does not, on purpose. Do NOT unify them onto `.native` here: pi's native
 # payload spells the tools `bash`/`read`, so every `[[ $tool_name == "Bash" ]]`
 # would stop matching and all six guards would abstain, silently.
-{pkgs}: let
+{
+  pkgs,
+  dispatcher,
+}: let
   guards = import ../agent-hooks {inherit pkgs;};
+
+  # dispatcher ships this one for every engine; Claude Code gets it from the
+  # dispatcher plugin, but its hookyard.json isn't installed here, so pi's
+  # registration stays in this manifest. Run through bash explicitly: the
+  # script's `/usr/bin/env` shebang doesn't resolve in the check's sandbox.
+  public-leak-guard = pkgs.writeShellScriptBin "agent-public-leak-guard" ''
+    export PATH=${pkgs.lib.makeBinPath (with pkgs; [betterleaks curl jq gh git coreutils findutils gnugrep gnused])}:$PATH
+    exec ${pkgs.bash}/bin/bash ${dispatcher}/adapters/core/public-leak-guard.sh
+  '';
 
   # ../claude-code owns its own nix wiring for these two, so they're built
   # separately here rather than shared.
@@ -147,7 +159,7 @@
     # later extension replaces rather than appends content.
     (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
-    (piGuard "guards.pi.public-leak" "${guards.public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
+    (piGuard "guards.pi.public-leak" "${public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
   ];
 
   manifest = pkgs.writeText "pi-guards-hookyard.json" (builtins.toJSON {inherit handlers;});
