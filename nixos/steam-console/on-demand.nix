@@ -78,6 +78,15 @@
   # either stopping Gaming Mode or, mid-game, restarting Steam's UI).
   # *WithFlags members cover recent systemd's `systemctl suspend`, in case
   # anything besides Steam ever issues one on halo.
+  #
+  # sleepPolicy lets only the console user (and root, via login1.conf) reach
+  # logind with these calls. A bus monitor sees each call before the policy
+  # check, so the watcher acts only on logind's own answer to a reply-expected
+  # call addressed to it, and a broker refusal means "not the console user".
+  # That never resolves the caller itself, so nothing races Steam's
+  # short-lived dbus-send. It can't be forged either: only reply-expected
+  # calls to org.freedesktop.login1 are recorded, and the broker's refusal
+  # lands in the same dispatch as the call, before any reuse of its serial.
   sleepMembers = [
     "Suspend"
     "Hibernate"
@@ -89,30 +98,67 @@
     "HybridSleepWithFlags"
     "SuspendThenHibernateWithFlags"
   ];
-  dbusMatchArgs = lib.escapeShellArgs (map (
+
+  sleepRules = verb:
+    lib.concatMapStringsSep "\n" (
+      member: ''<${verb} send_destination="org.freedesktop.login1" send_interface="org.freedesktop.login1.Manager" send_member="${member}"/>''
+    )
+    sleepMembers;
+  sleepPolicy = pkgs.writeTextDir "share/dbus-1/system.d/steam-console-sleep.conf" ''
+    <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0//EN"
+     "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+    <busconfig>
+      <policy context="default">
+    ${sleepRules "deny"}
+      </policy>
+      <policy user="${cfg.user}">
+    ${sleepRules "allow"}
+      </policy>
+    </busconfig>
+  '';
+
+  busMatchArgs = lib.escapeShellArgs (map (rule: "--match=${rule}") (
+    map (
       member: "type='method_call',interface='org.freedesktop.login1.Manager',member='${member}'"
     )
-    sleepMembers);
+    sleepMembers
+    ++ [
+      "type='error',sender='org.freedesktop.DBus'"
+      "type='error',sender='org.freedesktop.login1'"
+    ]
+  ));
 
   idle = pkgs.writeShellApplication {
     name = "steam-console-idle";
-    runtimeInputs = [pkgs.dbus pkgs.procps pkgs.coreutils stop];
+    runtimeInputs = [pkgs.systemd pkgs.jq pkgs.procps pkgs.coreutils stop];
     text = ''
-      dbus-monitor --system ${dbusMatchArgs} | while read -r line; do
-        case "$line" in
-        "method call "*)
-          if ${lib.getExe gameRunning}; then
-            echo "Steam requested sleep (idle), but a game is running — keeping Gaming Mode, restarting Steam's UI"
-            sleep 1
-            # The refused sleep means Steam's resume never comes, so a fresh UI
-            # is the only way out — Steam relaunches its webhelper, as Decky does.
-            pkill -TERM -u ${cfg.user} -x steamwebhelper || echo "no Steam UI process to restart"
-          else
-            steam-console-stop "Steam requested sleep (idle)"
-          fi
-          ;;
-        esac
-      done
+      declare -A pending=()
+      busctl monitor --system --json=short ${busMatchArgs} |
+        jq --unbuffered -r '[.type, .flags, .sender, .destination, .cookie, .reply_cookie] | map(. // "-") | @tsv' |
+        while IFS=$'\t' read -r type flags sender destination cookie reply_cookie; do
+          case "$type" in
+          method_call)
+            if [[ $destination == org.freedesktop.login1 ]] && ((!(flags & 1))); then
+              pending["$sender $cookie"]=1
+            fi
+            ;;
+          error)
+            key="$destination $reply_cookie"
+            [[ -n ''${pending[$key]:-} ]] || continue
+            unset "pending[$key]"
+            [[ $sender != org.freedesktop.DBus ]] || continue
+            if ${lib.getExe gameRunning}; then
+              echo "Steam requested sleep (idle), but a game is running — keeping Gaming Mode, restarting Steam's UI"
+              sleep 1
+              # The refused sleep means Steam's resume never comes, so a fresh UI
+              # is the only way out — Steam relaunches its webhelper, as Decky does.
+              pkill -TERM -u ${cfg.user} -x steamwebhelper || echo "no Steam UI process to restart"
+            else
+              steam-console-stop "Steam requested sleep (idle)"
+            fi
+            ;;
+          esac
+        done
     '';
   };
 
@@ -188,6 +234,11 @@ in {
         ACTION=="change", SUBSYSTEM=="drm", ENV{HOTPLUG}=="1", RUN+="${systemctl} start --no-block steam-console-tv-off.service"
       '';
 
+      # mkAfter: dbus-broker ranks rules by context band, then parse order,
+      # so this default-context deny has to be parsed after login1.conf's
+      # default-context allow. login1.conf's user="root" allow still outranks it.
+      services.dbus.packages = lib.mkAfter [sleepPolicy];
+
       # Shared budget for every per-device watcher below.
       systemd.slices.steam-console-wake = {
         sliceConfig = {
@@ -226,9 +277,11 @@ in {
             NoNewPrivileges = true;
             ProtectHome = true;
             # Losing the bus exits the pipeline, which would leave idle-stop
-            # dead for the rest of the session. PartOf teardown is a
+            # dead for the rest of the session — and busctl exits 0 when the
+            # broker disconnects it (e.g. an overflowing monitor queue), so
+            # on-failure wouldn't catch it. PartOf teardown is a
             # systemd-initiated stop, so it never restarts through that path.
-            Restart = "on-failure";
+            Restart = "always";
             RestartSec = 1;
           };
         };
