@@ -446,6 +446,67 @@ in
           "$(bash_payload "$repo" 'launchctl getenv FAKE_API_KEY')" \
           'lists or shows shell variables'
 
+        ## nix-config#396: the same dumpers, invoked by an absolute or
+        ## relative path instead of the bare word.
+        assert_blocked "secret-read denies /usr/bin/env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/printenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/printenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a nix store env path" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/run/current-system/sw/bin/printenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies sudo /usr/bin/env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'sudo /usr/bin/env')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/tmux show-environment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/tmux show-environment')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies /usr/bin/systemctl --user show-environment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/systemctl --user show-environment')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies /usr/bin/launchctl getenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/launchctl getenv FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_allowed "secret-read lets /usr/bin/env python3 script.py through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" '/usr/bin/env python3 script.py')"
+
+        assert_allowed "secret-read lets /usr/bin/env -i foo through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" '/usr/bin/env -i foo')"
+
+        assert_allowed "secret-read lets ls /usr/bin/env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'ls /usr/bin/env')"
+
+        assert_allowed "secret-read lets cat /usr/bin/env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'cat /usr/bin/env')"
+
+        assert_allowed "secret-read lets echo /usr/bin/env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo /usr/bin/env')"
+
+        assert_allowed "secret-read lets ./env-setup.sh through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" './env-setup.sh')"
+
         assert_blocked "secret-read denies /proc/*/environ" \
           guards.pi.secret-read deny \
           "$(bash_payload "$repo" 'cat /proc/1234/environ')" \

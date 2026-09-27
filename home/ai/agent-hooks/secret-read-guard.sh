@@ -91,13 +91,18 @@ cmd_lead_asg='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)'
 cmd_lead_opt='(-[ugaUI][[:space:]]+[^-0-9[:space:]][^[:space:]]*[[:space:]]+|-[^[:space:]]+[[:space:]]+([0-9]+[[:space:]]+)?)*'
 cmd_lead_pfx='((sudo|exec|time|nice|xargs|nohup|setsid|doas|builtin|eval)[[:space:]]+'"$cmd_lead_opt"'|command[[:space:]]+((-p|--)[[:space:]]+)*)'
 cmd_start="$cmd_sep($cmd_lead_res|$cmd_lead_asg|$cmd_lead_pfx)*"
-env_dump_re="$cmd_start"'(printenv|env)[[:space:]]*($|[;&|)])'
+# External dumper binaries (env, printenv, tmux, systemctl, launchctl) can be
+# invoked by an absolute or relative path, not just the bare word — a shell
+# builtin (set, declare, export, typeset) never has a path in front of it, so
+# this prefix is only spliced into the external-binary alternatives below.
+path_pfx='([^[:space:];&|()]*/)?'
+env_dump_re="$cmd_start$path_pfx"'(printenv|env)[[:space:]]*($|[;&|)])'
 # Listing/show forms that print a variable's value without echoing it — the
 # gap behind the LINEAR_API_KEY rotation. `-S`/`--show`/`-p` always print,
 # with or without a name, so those ignore whatever follows; the rest only
 # dump when bare (no name), matching real shell semantics: `declare -x
 # NAME=value` just marks NAME for export and prints nothing.
-builtin_dump_re="$cmd_start"'(set([[:space:]]+(-S|--show)([[:space:]]|$|[;&|)])|[[:space:]]*($|[;&|)]))|declare[[:space:]]+-p([[:space:]]|$|[;&|)])|declare[[:space:]]+-x[[:space:]]*($|[;&|)])|export[[:space:]]+-p([[:space:]]|$|[;&|)])|typeset[[:space:]]+-p([[:space:]]|$|[;&|)])|tmux[[:space:]]+show-environment([[:space:]]|$|[;&|)])|systemctl([[:space:]]+--user)?[[:space:]]+show-environment([[:space:]]|$|[;&|)])|launchctl[[:space:]]+getenv([[:space:]]|$|[;&|)]))'
+builtin_dump_re="$cmd_start"'(set([[:space:]]+(-S|--show)([[:space:]]|$|[;&|)])|[[:space:]]*($|[;&|)]))|declare[[:space:]]+-p([[:space:]]|$|[;&|)])|declare[[:space:]]+-x[[:space:]]*($|[;&|)])|export[[:space:]]+-p([[:space:]]|$|[;&|)])|typeset[[:space:]]+-p([[:space:]]|$|[;&|)])|'"$path_pfx"'tmux[[:space:]]+show-environment([[:space:]]|$|[;&|)])|'"$path_pfx"'systemctl([[:space:]]+--user)?[[:space:]]+show-environment([[:space:]]|$|[;&|)])|'"$path_pfx"'launchctl[[:space:]]+getenv([[:space:]]|$|[;&|)]))'
 # fish's `-x`/`-gx`/`-U` mean export/universal scope, not bash's xtrace: bare
 # (no name) they list that scope's variables, same as `-S`; WITH a name
 # they're the ordinary `set -gx PATH …` assignment idiom. Checked only inside
