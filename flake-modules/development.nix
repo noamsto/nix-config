@@ -26,6 +26,9 @@
 
         # Direct bats regression suite for the secret-read guard script.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
+
+        # Direct bats regression suite for the lock-commit fish function.
+        lock-commit = import ../home/terminal/fish/check.nix {inherit pkgs;};
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};

@@ -190,6 +190,8 @@
 
       __reload_theme
     '';
+
+    "fish/functions/lock-commit.fish".text = import ./lock-commit.nix {inherit pkgs;};
   };
 
   programs = {
