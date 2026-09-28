@@ -549,6 +549,123 @@ in
           "$(bash_payload "$repo" 'printenv --null')" \
           'bare env/printenv'
 
+        ## env with only its own options/assignments and no command prints the
+        ## (modified) environment (#414).
+        assert_blocked "secret-read denies env -i (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -i')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env - (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -- (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env --')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u NAME (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -u NAME')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -uNAME (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -uNAME')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env --unset=NAME (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env --unset=NAME')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env --unset NAME (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env --unset NAME')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env FOO=1 (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env FOO=1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -i FOO=1 -u BAR (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -i FOO=1 -u BAR')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/env -u NAME (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/env -u NAME')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/env -i FOO=1 (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/env -i FOO=1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u NAME before a semicolon sibling" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -u NAME; ls')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u NAME before a pipe" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -u NAME | cat')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env FOO=1 before &&" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env FOO=1 && ls')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -i in a subshell" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '(env -i)')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u NAME newline-separated from a sibling" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'env -u NAME\nls')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u NAME before a trailing comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -u NAME # note')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -i before an output redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -i > /tmp/x')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env FOO=1 before a stderr redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env FOO=1 2>&1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u with a quoted name (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -u "NAME"')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env with a non-identifier assignment (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env a-b=1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env with a substitution-valued assignment (no command)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env FOO=$(pwd)')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -u X inside a command substitution" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo "$(env -u X)"')" \
+          'bare env/printenv'
+
         assert_blocked "secret-read denies /usr/bin/env before a redirect (#396 composition)" \
           guards.pi.secret-read deny \
           "$(bash_payload "$repo" '/usr/bin/env 2>&1')" \
@@ -666,6 +783,38 @@ in
         assert_allowed "secret-read lets env FOO=1 make through" \
           guards.pi.secret-read abstain \
           "$(bash_payload "$repo" 'env FOO=1 make')"
+
+        assert_allowed "secret-read lets env -i bash -c true through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env -i bash -c true')"
+
+        assert_allowed "secret-read lets env -u HOME ls through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env -u HOME ls')"
+
+        assert_allowed "secret-read lets env --unset=HOME ls through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env --unset=HOME ls')"
+
+        assert_allowed "secret-read lets /usr/bin/env -u HOME ls through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" '/usr/bin/env -u HOME ls')"
+
+        assert_allowed "secret-read lets env -i FOO=1 make through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env -i FOO=1 make')"
+
+        assert_allowed "secret-read lets env FOO=\"a b\" make through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env FOO="a b" make')"
+
+        assert_allowed "secret-read lets env -- ls through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env -- ls')"
+
+        assert_allowed "secret-read lets env FOO=\$(pwd) make through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env FOO=$(pwd) make')"
 
         assert_allowed "secret-read lets printenv HOME through" \
           guards.pi.secret-read abstain \

@@ -126,10 +126,31 @@ path_pfx='([^[:space:];&|()]*/)?'
 # (`declare -p>f`).
 term_bare='([[:space:]]*($|[;&|)<>])|[[:space:]]*[0-9]+[<>]|[[:space:]]*\{[A-Za-z_][A-Za-z0-9_]*\}[<>]|[[:space:]]+#)'
 term_imm='([[:space:]]|$|[;&|)<>])'
-# `-0`/`--null` NUL-separate the output instead of newline-separating it, but
-# every variable still comes out — still a dump, unlike `-i`/`FOO=1`/`-u NAME`,
-# which change what env runs rather than how it prints.
-env_dump_re="$cmd_start$path_pfx"'(printenv|env)([[:space:]]+(-0|--null))?'"$term_bare"
+# env with no COMMAND prints the resulting environment, so `env` followed only
+# by its own options/operands — `-i`/`-`, `-0`/`--null`, `-v`/`--debug`,
+# `-u NAME`/`--unset=NAME`, `--`, and NAME=VALUE (GNU env takes any word with
+# a `=` that doesn't start with `-` as one, not only a valid shell name) — up
+# to a terminator is a dump; `-0` just NUL-separates it. Any other word (a
+# command) stops the option loop, so `env -u HOME ls` / `env FOO=1 make` stay
+# allowed. printenv keeps only `-0`/`--null` (it has no -i/-u/assignments;
+# `printenv HOME` names one variable).
+# The operand patterns are non-space runs, not shell words: they can swallow a
+# `;`/`|`/`)`, but the match still backtracks to the real terminator. An
+# assignment value takes a flat `$(...)` whole, so its `)` isn't read as a
+# terminator (`env FOO=$(pwd) make` stays allowed).
+# Accepted limits: `env -i` alone (empty env) and `env -i FOO=1` (only FOO)
+# leak nothing but are denied anyway (safe side, keeps a flat token loop);
+# options are matched in any order, and a `-u` name is optional in every
+# position, so `env FOO=1 -u BAR` (GNU env would run `-u` as the command) and
+# `env -u -u ls` (the second `-u` is the name) are denied too; a quoted `-u`
+# name or command word masks to spaces, so `env -u "X" ls` and `env FOO=1
+# "$cmd"` read as bare and are denied; a redirect right after an option ends
+# it (`env -u a >f ls` denied), as for bare env. Not followed: a nested
+# `$(...)` in a bare assignment value (`env A=$(x $(y))`), abbreviated long
+# options (`--ign`, `--un=X`), `-S`/`--split-string`, `-C`/`--chdir`, the
+# signal options.
+env_opt='(-[0iv]*u([[:space:]]*[^[:space:]]+)?|-[0iv]*|--(null|ignore-environment|debug)?|--unset((=|[[:space:]]+)[^[:space:]]*)?|[^-[:space:];&|()<>][^=[:space:];&|()<>]*=([^[:space:]$]|\$[^([:space:]]|\$\([^()]*\))*\$?)'
+env_dump_re="$cmd_start$path_pfx"'(printenv([[:space:]]+(-0|--null))?|env([[:space:]]+'"$env_opt"')*)'"$term_bare"
 # Listing/show forms that print a variable's value without echoing it — the
 # gap behind the LINEAR_API_KEY rotation. `-S`/`--show`/`-p` always print,
 # with or without a name, so those ignore whatever follows; the rest only
