@@ -634,9 +634,8 @@ masked_view() {
 # $(...) ~0.4s, a 12KB python heredoc ~0.5s, a 9KB unquoted heredoc ~0.1s, and
 # 3000 heredoc markers ~0.7s; realistic commands sit far below both ceilings.
 # Bytes are only a proxy: comment-dense text (comment_at copies the string per
-# `#`), many `-c` siblings over a long tail, and a `<<-` line of thousands of
-# tabs still cost more than their size and can pass 4s under the budget
-# (#405, #406, #407).
+# `#`) and a `<<-` line of thousands of tabs still cost more than their size
+# and can pass 4s under the budget (#405, #407).
 scan_budget=16384
 max_command_len=524288
 scanned=0
@@ -735,7 +734,8 @@ Bash)
   # item is visited once and each queued item is shorter than its
   # source, so the loop terminates. 20 -c matches, 300 visited items and
   # scan_budget bytes are generous ceilings; a command past any cannot be
-  # verified, so it is denied rather than left to abstain.
+  # verified, so it is denied rather than left to abstain. A remainder is
+  # scanned again in full, so it is charged along with the body it follows.
   worklist=("$command")
   collect_flags=(1)
   wi=0
@@ -789,7 +789,7 @@ Bash)
     ((found)) || continue
     decode_word "$cur" "$arg_start"
     sub=$DECODED_WORD
-    if over_scan_budget "${#sub}"; then
+    if over_scan_budget $((${#sub} + ${#cur} - DECODE_WORD_END)); then
       unverified=1
       continue
     fi

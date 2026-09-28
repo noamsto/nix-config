@@ -1290,6 +1290,23 @@ in
           "$(bash_payload "$repo" "cat <<EOF $(printf 'word %.0s' $(seq 1 20000)); env")" \
           'too many substitutions'
 
+        # Each -c match queues the rest of its source string as a new item that is
+        # scanned again, so siblings in front of a long tail multiply its cost.
+        sibling_tail=$(printf 'word %.0s' $(seq 1 2000))
+        assert_blocked "secret-read denies sibling -c invocations before a 10KB tail" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$(printf "bash -c 'true'; %.0s" $(seq 1 5))$sibling_tail")" \
+          'too many substitutions'
+
+        assert_blocked "secret-read denies 20 sibling -c invocations before a 10KB tail" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$(printf "bash -c 'true'; %.0s" $(seq 1 20))$sibling_tail")" \
+          'too many substitutions'
+
+        assert_allowed "secret-read lets 20 short sibling -c invocations through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "$(printf "bash -c 'true'; %.0s" $(seq 1 20))true")"
+
         msg=$(printf 'commit message line here.\n%.0s' $(seq 1 330))
         assert_allowed "secret-read lets a 9KB heredoc commit message through" \
           guards.pi.secret-read abstain \
