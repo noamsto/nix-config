@@ -12,17 +12,20 @@
     lib,
     ...
   }: {
-    # pi's hookyard guard manifest, end to end: the locked hookyard binary
-    # installs it, then routes real pi tool_call payloads through the real
-    # handler executables. A guard that stops blocking fails open and silently,
-    # so it is checked here rather than left to the rebuild.
     checks =
       {
+        # pi's hookyard guard manifest, end to end: the locked hookyard binary
+        # installs it, then routes real pi tool_call payloads through the real
+        # handler executables. A guard that stops blocking fails open and silently,
+        # so it is checked here rather than left to the rebuild.
         pi-guards = import ../home/ai/pi/guards-check.nix {
           inherit pkgs;
           hookyard = inputs'.hookyard.packages.default;
           inherit (inputs) dispatcher;
         };
+
+        # Direct bats regression suite for the secret-read guard script.
+        agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};
