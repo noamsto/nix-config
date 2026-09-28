@@ -196,13 +196,7 @@
       # Don't follow nixpkgs - leads to cache misses for FlakeHub Cache artifacts
     };
 
-    agenix = {
-      url = "github:ryantm/agenix";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-      };
-    };
+    agenix.url = "github:ryantm/agenix";
 
     mysecrets = {
       url = "git+ssh://git@github.com/noamsto/nix-secrets.git";
