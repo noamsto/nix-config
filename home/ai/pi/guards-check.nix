@@ -554,6 +554,63 @@ in
           "$(bash_payload "$repo" '/usr/bin/env 2>&1')" \
           'bare env/printenv'
 
+        ## nix-config#412: a dumper word spelled with unquoted backslash escapes,
+        ## which bash removes before running it.
+        assert_blocked "secret-read denies p\\rintenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'p\rintenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies \\printenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '\printenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/p\\rintenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/p\rintenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies e\\nv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'e\nv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies a backslash-newline continuation inside env" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" $'en\\\nv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies echo hi; p\\rintenv" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'echo hi; p\rintenv')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies d\\eclare -p FAKE_API_KEY" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'd\eclare -p FAKE_API_KEY')" \
+          'lists or shows shell variables'
+
+        assert_allowed "secret-read lets echo p\\rintenv through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo p\rintenv')"
+
+        assert_allowed "secret-read lets envsubst through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'envsubst')"
+
+        assert_allowed "secret-read lets e\\nvsubst < f through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'e\nvsubst < f')"
+
+        assert_allowed "secret-read lets echo 'p\\rintenv' through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" "echo 'p\rintenv'")"
+
+        assert_allowed "secret-read lets echo \"p\\rintenv\" through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo "p\rintenv"')"
+
         assert_blocked "secret-read denies export -p before a redirect" \
           guards.pi.secret-read deny \
           "$(bash_payload "$repo" 'export -p > f')" \

@@ -91,6 +91,12 @@ template_re='\.env\.(example|template|sample|dist)'
 # disables comment recognition for the rest of that line. Comment text is still scanned as ordinary text, so a
 # comment holding a separator before a dumper (`# run: a; env`) is denied
 # (safe-side false positive).
+# Unquoted backslash escapes are removed (strip_escapes) before the dumper
+# regexes run, and both the raw and the stripped view are checked, so
+# `p\rintenv` and `e\<newline>nv` are denied. Escaped separators and spaces
+# then read as real ones (`echo \(env\)`, `env\ x`): safe-side false
+# positives. ANSI-C `$'\x70rintenv'` and quote removal (`p''rintenv`) are not
+# decoded: accepted limits.
 cmd_sep='(^[[:space:]]*|[;&|()]+[[:space:]]*)'
 cmd_lead_res='((then|do|else|elif|if|while|until|!|[{])[[:space:]]+)'
 cmd_lead_asg='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)'
@@ -620,6 +626,32 @@ masked_view() {
   mask_quotes "$HD_VIEW"
 }
 
+# Bash's own removal of unquoted backslashes, over an already-masked view
+# (quoted spans are spaces there, so every `\` left is unquoted): `\X` is X,
+# `\\` is one `\`, and `\<newline>` is nothing. Splitting on `\` keeps this
+# linear; the trailing `x` keeps a final `\` or `\\` from being lost to the
+# split.
+strip_escapes() {
+  local out part k lit=0 parts
+  mapfile -d "$bs" -t parts <<<"$1x"
+  out=${parts[0]}
+  for ((k = 1; k < ${#parts[@]}; k++)); do
+    part=${parts[k]}
+    if ((lit)); then
+      out+=$part
+      lit=0
+    elif [[ -z $part ]]; then
+      out+=$bs
+      lit=1
+    elif [[ $part == $'\n'* ]]; then
+      out+=${part:1}
+    else
+      out+=$part
+    fi
+  done
+  STRIPPED=${out%x$'\n'}
+}
+
 # The scanners above walk a string character by character, and each nested
 # command substitution re-runs them over its whole body, so the work grows
 # with (nesting depth x length) and a single long command is superlinear too.
@@ -804,6 +836,10 @@ Bash)
     deny "This command is too long, or nests too many substitutions or shell -c wrappers, for the secret-read guard to verify that none prints an environment dump. Split it into simpler commands, or move the logic into a script file."
   fi
   for space in "${search_spaces[@]}"; do
+    if [[ $space == *"$bs"* ]]; then
+      strip_escapes "$space"
+      space+=$'\n'$STRIPPED
+    fi
     if echo "$space" | grep -qE "$env_dump_re"; then
       deny "A bare env/printenv prints every secret in scope into this transcript. Name the one variable you need and test it without echoing its value."
     fi
@@ -812,6 +848,10 @@ Bash)
     fi
   done
   for space in "${fish_spaces[@]}"; do
+    if [[ $space == *"$bs"* ]]; then
+      strip_escapes "$space"
+      space+=$'\n'$STRIPPED
+    fi
     if echo "$space" | grep -qE "$fish_dump_re"; then
       deny "set -x/-gx/-U with no name lists that scope's variables in fish, printing live values into this transcript — same leak as set -S. To test presence: set -q NAME."
     fi
