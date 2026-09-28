@@ -507,6 +507,125 @@ in
           guards.pi.secret-read abstain \
           "$(bash_payload "$repo" './env-setup.sh')"
 
+        ## nix-config#395: the same dumpers, but with a redirect, comment, or a
+        ## null-output flag trailing the dumper word instead of ending it cleanly.
+        assert_blocked "secret-read denies env before a stderr redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env 2>&1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env before an output redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env > /tmp/x')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env directly touching a redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env>/tmp/x')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env before a trailing comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env # note')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -0 (still a dump, just NUL-separated)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env -0')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies env -0 piped through tr" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "env -0 | tr '\0' '\n'")" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies printenv -0" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'printenv -0')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies printenv --null" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'printenv --null')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies /usr/bin/env before a redirect (#396 composition)" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/env 2>&1')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies export -p before a redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'export -p > f')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies declare -p touching a redirect with no space" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'declare -p>f')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies an absolute-path tmux show-environment touching a redirect with no space" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" '/usr/bin/tmux show-environment>f')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies bare declare -x before a redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'declare -x 2>&1')" \
+          'lists or shows shell variables'
+
+        ## Named-fd redirects (`{fd}>&2`, bash >=4.1) end the command exactly
+        ## like a numbered fd (`2>&1`) does, but need their own branch since a
+        ## brace identifier isn't a digit.
+        assert_blocked "secret-read denies env before a named-fd redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'env {fd}>&2')" \
+          'bare env/printenv'
+
+        assert_blocked "secret-read denies bare declare -x before a named-fd redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'declare -x {fd}>&2')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a bare set before a named-fd redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'set {fd}>&2')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies a bare set before a trailing comment" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" 'set # x')" \
+          'lists or shows shell variables'
+
+        assert_blocked "secret-read denies fish set -U wrapped in fish -c before a redirect" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "fish -c 'set -U 2>&1'")" \
+          'set -x/-gx/-U'
+
+        assert_allowed "secret-read lets env -i foo through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env -i foo')"
+
+        assert_allowed "secret-read lets env FOO=1 make through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'env FOO=1 make')"
+
+        assert_allowed "secret-read lets printenv HOME through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'printenv HOME')"
+
+        assert_allowed "secret-read lets printenv HOME with a trailing redirect through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'printenv HOME 2>&1')"
+
+        assert_allowed "secret-read lets echo env > f through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'echo env > f')"
+
+        assert_allowed "secret-read lets make env through" \
+          guards.pi.secret-read abstain \
+          "$(bash_payload "$repo" 'make env')"
+
         assert_blocked "secret-read denies /proc/*/environ" \
           guards.pi.secret-read deny \
           "$(bash_payload "$repo" 'cat /proc/1234/environ')" \

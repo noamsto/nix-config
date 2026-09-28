@@ -52,14 +52,20 @@ template_re='\.env\.(example|template|sample|dist)'
 # with their option flags and the value of -u/-g/-a/-U/-I; `command` only with
 # -p or --, so `command -v env` stays allowed). Anchoring to the separator is
 # what keeps `echo then env` allowed; the dumper regexes still require the
-# dumper to END the command, which keeps `sudo env VAR=x cmd` and
-# `xargs env cmd` allowed. Matching is per line (grep runs line by line), so a
+# dumper to END the command — now widened to also accept a following redirect
+# (`>`, `<`, `2>&1`, …) or an unquoted `#` comment, not just a separator or
+# end-of-line — which keeps `sudo env VAR=x cmd` and `xargs env cmd` allowed.
+# Matching is per line (grep runs line by line), so a
 # wrapped commit-body line inside a quoted string that is only lead words plus a
 # dumper word (`if set`), a `\`-continuation line, or a line starting with a
 # quoted/expanded word before a dumper argument also counts as command position:
 # accepted false positives, on the safe side. Not followed (accepted limits):
 # flags with other non-numeric values, `timeout N env`, stdbuf/ionice/`env FOO=1
-# env` wrappers, `{env` without a space. Every dumper is matched only here,
+# env` wrappers, `{env` without a space. A redirect or numbered fd right after
+# the dumper word now also ends it, even when a command follows the redirect
+# (`env >/dev/null cmd`, `env 2>/dev/null FOO=1 make` are denied, though `env`
+# there still just runs `cmd` — an accepted false positive, on the safe side).
+# Every dumper is matched only here,
 # against text with quoted spans already replaced by spaces (mask_quotes), which
 # is what lets
 # `rg 'env|printenv|x' file` stay allowed (the literal `|` next to the word,
@@ -96,13 +102,34 @@ cmd_start="$cmd_sep($cmd_lead_res|$cmd_lead_asg|$cmd_lead_pfx)*"
 # builtin (set, declare, export, typeset) never has a path in front of it, so
 # this prefix is only spliced into the external-binary alternatives below.
 path_pfx='([^[:space:];&|()]*/)?'
-env_dump_re="$cmd_start$path_pfx"'(printenv|env)[[:space:]]*($|[;&|)])'
+# Terminator classes shared by the three dump regexes below: does the dumper
+# word end the command, where "end" now also covers a redirect or an unquoted
+# comment, not only a separator/end-of-line. `term_bare` skips trailing
+# whitespace before checking — used where a following name changes the
+# verdict (bare `env`/`printenv`, bare `set`, `declare -x` with no name): it
+# accepts a redirect char (`<`/`>`, which covers `>>`/`>|`/`&>` since only the
+# first char must match), a numbered fd redirect (`2>&1` — digits directly
+# followed by `<`/`>`), a named-fd redirect (`{fd}>&2`, bash ≥4.1 — a brace
+# identifier directly followed by `<`/`>`, which dumps exactly like the
+# numbered form), or a `#` comment (requires at least one preceding space,
+# matching bash's own comment-start rule, so `env#x` stays one word, not a
+# dumper plus a comment). `term_imm` checks only the very next character —
+# used where the form always dumps regardless of a trailing name (`-S`/
+# `--show`/`-p`, `show-environment`, `getenv`): a bare space already satisfies
+# it unconditionally, so only `<`/`>` need adding, for the no-space case
+# (`declare -p>f`).
+term_bare='([[:space:]]*($|[;&|)<>])|[[:space:]]*[0-9]+[<>]|[[:space:]]*\{[A-Za-z_][A-Za-z0-9_]*\}[<>]|[[:space:]]+#)'
+term_imm='([[:space:]]|$|[;&|)<>])'
+# `-0`/`--null` NUL-separate the output instead of newline-separating it, but
+# every variable still comes out — still a dump, unlike `-i`/`FOO=1`/`-u NAME`,
+# which change what env runs rather than how it prints.
+env_dump_re="$cmd_start$path_pfx"'(printenv|env)([[:space:]]+(-0|--null))?'"$term_bare"
 # Listing/show forms that print a variable's value without echoing it — the
 # gap behind the LINEAR_API_KEY rotation. `-S`/`--show`/`-p` always print,
 # with or without a name, so those ignore whatever follows; the rest only
 # dump when bare (no name), matching real shell semantics: `declare -x
 # NAME=value` just marks NAME for export and prints nothing.
-builtin_dump_re="$cmd_start"'(set([[:space:]]+(-S|--show)([[:space:]]|$|[;&|)])|[[:space:]]*($|[;&|)]))|declare[[:space:]]+-p([[:space:]]|$|[;&|)])|declare[[:space:]]+-x[[:space:]]*($|[;&|)])|export[[:space:]]+-p([[:space:]]|$|[;&|)])|typeset[[:space:]]+-p([[:space:]]|$|[;&|)])|'"$path_pfx"'tmux[[:space:]]+show-environment([[:space:]]|$|[;&|)])|'"$path_pfx"'systemctl([[:space:]]+--user)?[[:space:]]+show-environment([[:space:]]|$|[;&|)])|'"$path_pfx"'launchctl[[:space:]]+getenv([[:space:]]|$|[;&|)]))'
+builtin_dump_re="$cmd_start"'(set([[:space:]]+(-S|--show)'"$term_imm"'|'"$term_bare"')|declare[[:space:]]+-p'"$term_imm"'|declare[[:space:]]+-x'"$term_bare"'|export[[:space:]]+-p'"$term_imm"'|typeset[[:space:]]+-p'"$term_imm"'|'"$path_pfx"'tmux[[:space:]]+show-environment'"$term_imm"'|'"$path_pfx"'systemctl([[:space:]]+--user)?[[:space:]]+show-environment'"$term_imm"'|'"$path_pfx"'launchctl[[:space:]]+getenv'"$term_imm"')'
 # fish's `-x`/`-gx`/`-U` mean export/universal scope, not bash's xtrace: bare
 # (no name) they list that scope's variables, same as `-S`; WITH a name
 # they're the ordinary `set -gx PATH …` assignment idiom. Checked only inside
@@ -110,7 +137,7 @@ builtin_dump_re="$cmd_start"'(set([[:space:]]+(-S|--show)([[:space:]]|$|[;&|)])|
 # level or inside a bash/sh/zsh -c: bash's own `set -x` there is the
 # ubiquitous, harmless xtrace toggle, and `-gx`/`-U` aren't even valid bash
 # flags for set.
-fish_dump_re="$cmd_start"'set[[:space:]]+(-x|-gx|-U)[[:space:]]*($|[;&|)])'
+fish_dump_re="$cmd_start"'set[[:space:]]+(-x|-gx|-U)'"$term_bare"
 # A `fish -c`/`bash -c`/`sh -c`/`zsh -c` argument is quoted, so mask_quotes
 # alone would erase a dumper hiding inside it even though the shell actually
 # runs it — pull it out with decode_word (below) and test it as its own
