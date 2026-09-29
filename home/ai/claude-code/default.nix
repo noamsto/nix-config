@@ -244,6 +244,7 @@ in {
       inherit (osConfig) profile;
       # cursor-agent ships on every host but is only logged in on the work one.
       engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
+      orgTrackers.factify-inc = "linear:ENG";
     };
 
     # hookyard refuses to write through the settings.json symlink, so it
