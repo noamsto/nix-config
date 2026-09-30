@@ -1,6 +1,6 @@
 ---
 name: secure-boot-tpm
-description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enrolling TPM2 for LUKS auto-unlock, recovering from failed TPM unlock, handling BIOS updates that invalidate PCRs, or adding Secure Boot to a new host. Applies to nix-config hosts that import nixos/core/lanzaboote.nix (currently thinkpad-p14s-g5, thinkpad-p14s-g6).
+description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enrolling TPM2 for LUKS auto-unlock, recovering from failed TPM unlock, handling BIOS updates that invalidate PCRs, or adding Secure Boot to a new host. Applies to nix-config hosts that import nixos/core/lanzaboote.nix (currently thinkpad-p14s-g5, thinkpad-p14s-g6, halo).
 ---
 
 # Secure Boot + TPM2 LUKS Auto-Unlock
@@ -9,7 +9,7 @@ description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enro
 
 Hosts that import `nixos/core/lanzaboote.nix` replace systemd-boot with **Lanzaboote** (signed EFI bundles) and use **TPM2** to auto-unlock the LUKS root at boot. Lanzaboote auto-generates and auto-enrolls the Secure Boot keys; TPM enrollment is a **one-time manual step** per machine.
 
-Currently imported by: `thinkpad-p14s-g5`, `thinkpad-p14s-g6`.
+Currently imported by: `thinkpad-p14s-g5`, `thinkpad-p14s-g6`, `halo`.
 
 ## When to use
 
@@ -67,65 +67,44 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 3. Rebuild → reboot. First boot auto-generates keys and enrolls into UEFI. On some ThinkPads you must enter BIOS Setup once to accept key enrollment (Secure Boot → Reset to Setup Mode, then reboot).
 4. Do the TPM enrollment step below.
 
-## TPM enrollment (one-time, per machine)
+## TPM enrollment: `just tpm-enroll`
 
-**Current recommended invocation** (matches BTRFS-MIGRATION.md in hosts/thinkpad-p14s-g5/):
+Use `just tpm-enroll` for every enrollment: the first one on a new host, and every re-enroll after unlock breaks. It finds the LUKS device backing `/`, which differs per host (g5 `/dev/nvme0n1p5`, which dual-boots Windows; g6/halo `/dev/disk/by-partlabel/disk-main-root`). It refuses to run if the volume has no password or recovery slot. It enrolls PCR 7 and wipes the old TPM slot only after the new one succeeds, then reseals `keyring-seal`'s credential if that one stopped unsealing too.
 
+A recovery key has no recipe because the printed key must go to a password manager by hand:
 ```fish
-# Bind to PCRs 0 (firmware) and 7 (Secure Boot policy)
-sudo systemd-cryptenroll /dev/nvme0n1p2 --tpm2-device=auto --tpm2-pcrs=0+7
-
-# ALSO enroll a recovery key — required if PCRs change and you're locked out
-sudo systemd-cryptenroll /dev/nvme0n1p2 --recovery-key
-# Save the printed recovery key somewhere safe (password manager, offline).
+sudo systemd-cryptenroll <dev> --recovery-key
 ```
 
-Verify slots:
-```fish
-sudo systemd-cryptenroll /dev/nvme0n1p2
-```
+Inspect slots with `sudo systemd-cryptenroll <dev>`. The expected set is the original password, a recovery key, and one tpm2 slot.
 
-You should see: password slot (original), tpm2 slot, and a recovery slot.
+**Why PCR 7 only.** PCR 7 records Secure Boot state, the db/KEK/dbx contents, and the certificate that verified each boot image. With our own Lanzaboote key enrolled, a boot through anything else (a Microsoft-signed shim, Windows' bootmgr, Secure Boot off) produces a different PCR 7, and the TPM refuses to unseal. PCR 0 hashes the firmware code, so it changes on every BIOS update. What it adds on top is detection of a physical SPI reflash, and a well-built implant can forge the firmware's own measurement anyway. `keyring-seal` binds PCR 7 as well, so both TPM secrets break and recover together.
 
-**PCR selection rationale:**
-- **0** — firmware — catches BIOS tampering
-- **7** — Secure Boot state/policy — catches Secure Boot disabled or key changes
+PCR 7 still changes when a firmware update rewrites db or dbx, when Secure Boot is reset, or when the fTPM is cleared (AMD BIOS updates sometimes do this). All three end at the password prompt, and `just tpm-enroll` fixes all three.
 
-Binding more PCRs (e.g. 4, 8, 9) increases the chance that a routine kernel/initrd update invalidates the TPM slot. `0+7` is the standard balance.
+Binding boot-component PCRs (4, 8, 9, 11) breaks unlock on every kernel or initrd update. Leave them out.
 
 ## Recovering from failed TPM unlock
 
-**Symptom:** System drops to password prompt at boot instead of auto-unlocking.
+**Symptom:** boot stops at the LUKS password prompt instead of auto-unlocking.
 
-**Diagnose:**
-```fish
-# Was the TPM detected?
-sudo tpm2_getcap properties-fixed
-
-# Are slots still present?
-sudo systemd-cryptenroll /dev/nvme0n1p2
-
-# Secure Boot still healthy?
-sbctl status
-```
-
-**Common causes:**
+Type the password, then run `just tpm-enroll`. Check `sbctl status` first: if Secure Boot came back disabled or in Setup Mode, fix that before enrolling, or the new slot binds to the broken state.
 
 | Cause | Fix |
 |---|---|
-| BIOS/firmware update changed PCR 0 | Re-enroll: `sudo systemd-cryptenroll --wipe-slot=tpm2 --tpm2-device=auto --tpm2-pcrs=0+7 /dev/nvme0n1p2` |
-| Secure Boot disabled/reset (PCR 7 change) | Re-enable SB, boot, re-enroll TPM |
-| TPM cleared in BIOS | Re-enroll from scratch |
-| "No slot available" when enrolling | First add a recovery key (`--recovery-key`) so the LUKS header has free slots |
-| Lanzaboote keys wiped from UEFI | `sbctl enroll-keys` inside a working boot, or re-enroll via BIOS Setup Mode |
+| Firmware update rewrote db/dbx, or cleared the fTPM | `just tpm-enroll` |
+| Secure Boot disabled/reset | Re-enable it in BIOS, boot, `just tpm-enroll` |
+| Lanzaboote keys wiped from UEFI | `sbctl enroll-keys` from a working boot (or BIOS Setup Mode), then `just tpm-enroll` |
+| "No slot available" when enrolling | Wipe a stale slot; LUKS2 holds 32 |
+| TPM not detected | `sudo tpm2_getcap properties-fixed`; fTPM may be disabled in BIOS |
 
-Always keep the **recovery key** somewhere offline — it's your only way back in if both the password and TPM slots are unusable.
+Keep the **recovery key** offline. It is the way back in if both the password and TPM slots are unusable.
 
 ## Verification after a rebuild
 
 ```fish
 sbctl status                                   # secure boot enabled + signed
-sudo systemd-cryptenroll /dev/nvme0n1p2        # slots present
+sudo systemd-cryptenroll <dev>                 # slots present (dev: see just tpm-enroll)
 sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 ```
 
@@ -136,8 +115,7 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 | Forgetting `initrd.systemd.enable = true` | No TPM unlock attempt in initrd | Already set in the shared module — don't override |
 | Leaving `boot.loader.systemd-boot.enable = true` | Conflicts with Lanzaboote | Shared module does `lib.mkForce false` — don't re-enable |
 | Enrolling TPM without a recovery key | Locked out after BIOS update | Always enroll `--recovery-key` too |
-| Hardcoding `/dev/nvme0n1p2` | Wrong partition on other hosts | Verify with `lsblk` / `blkid` first |
-| Re-enrolling without `--wipe-slot=tpm2` | Multiple stale TPM slots | Wipe old slot before enrolling new |
+| Hand-typing `systemd-cryptenroll` with a guessed device | Wrong partition (g5's LUKS is p5, not p2) | `just tpm-enroll` detects it |
 | Skipping Setup Mode in BIOS on first install | Secure Boot keys not accepted | Enter BIOS → Secure Boot → Reset to Setup Mode |
 
 ## Related

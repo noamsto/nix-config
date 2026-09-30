@@ -228,6 +228,29 @@ keyring-seal:
     sudo chmod 0400 "$out"
     echo "✅ Sealed to $out — relogin to activate"
 
+# (Re-)enroll the TPM2 LUKS auto-unlock on the root volume (TPM2 hosts: g5, g6,
+# halo). Run after a firmware update or TPM clear drops boot to the password
+# prompt. Binds PCR 7 only: Secure Boot with our own keys already gates what
+# boots, and PCR 0 changes on every BIOS update.
+tpm-enroll:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dev=$(lsblk -lnpso NAME,FSTYPE "$(findmnt -no SOURCE --nofsroot /)" | awk '$2 == "crypto_LUKS" {print $1}')
+    echo "🔐 LUKS root: $dev"
+    # A TPM-only volume is locked out by the next PCR 7 change
+    fallback=$(sudo cryptsetup luksDump --dump-json-metadata "$dev" | jq '(.keyslots | keys) - [.tokens[] | select(.type == "systemd-tpm2") | .keyslots[]] | length')
+    if [ "$fallback" -eq 0 ]; then
+        echo "❌ No password or recovery slot on $dev — add one first: sudo systemd-cryptenroll --recovery-key $dev" >&2
+        exit 1
+    fi
+    sudo systemd-cryptenroll "$dev" --tpm2-device=auto --tpm2-pcrs=7 --wipe-slot=tpm2
+    cred=/var/lib/gnome-keyring-tpm/noams-login-keyring.cred
+    if sudo test -f "$cred" && ! sudo systemd-creds decrypt --name=noams-login-keyring "$cred" - >/dev/null 2>&1; then
+        echo "🔑 Keyring credential no longer unseals — resealing"
+        just keyring-seal
+    fi
+    echo "✅ TPM enrolled on $dev (PCR 7)"
+
 # =============================================================================
 # Utility Commands
 # =============================================================================
