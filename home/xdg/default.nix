@@ -9,11 +9,66 @@
   osConfig,
   ...
 }: let
-  primaryBrowser =
+  # The profile the primary Firefox entry launches. Both the MIME default and
+  # the router derive from this one binding so they cannot drift.
+  firefoxProfile =
     if osConfig.profile == "work"
-    then "firefox-work.desktop"
-    else "firefox-personal.desktop";
+    then "work"
+    else "personal";
+  primaryBrowser = "firefox-${firefoxProfile}.desktop";
   inherit (pkgs.stdenv.hostPlatform) isLinux;
+
+  # Routes Meet links to Brave and every other link to the primary Firefox.
+  # Both launchers come from the packages the MIME entries already use, so the
+  # per-profile Firefox and the Wayland flags on Brave keep applying.
+  browserRouter = pkgs.writeShellApplication {
+    name = "browser-router";
+    runtimeInputs = [pkgs.coreutils];
+    text = ''
+      brave=${lib.getExe config.programs.brave.finalPackage}
+      firefox=${lib.getExe config.programs.firefox.finalPackage}
+      firefox_profile=(-P ${firefoxProfile})
+
+      if [ "$#" -eq 0 ]; then
+        exec "$firefox" "''${firefox_profile[@]}"
+      fi
+
+      meet_urls=()
+      other_urls=()
+      for url in "$@"; do
+        # Pull the host out of the URL without shelling out to a URL parser:
+        # strip scheme, userinfo, port, path, query and fragment.
+        host=''${url#*://}
+        host=''${host%%/*}
+        host=''${host##*@}
+        host=''${host%%:*}
+        host=''${host%%\?*}
+        host=''${host%%#*}
+        host=''${host,,}
+        if [ "$host" = "meet.google.com" ]; then
+          meet_urls+=("$url")
+        else
+          other_urls+=("$url")
+        fi
+      done
+
+      # Detach so the router exits immediately, as a MIME handler should.
+      if [ "''${#meet_urls[@]}" -gt 0 ]; then
+        nohup "$brave" "''${meet_urls[@]}" >/dev/null 2>&1 &
+      fi
+      if [ "''${#other_urls[@]}" -gt 0 ]; then
+        nohup "$firefox" "''${firefox_profile[@]}" "''${other_urls[@]}" >/dev/null 2>&1 &
+      fi
+    '';
+  };
+
+  # Only desktop hosts install the browsers the router needs; elsewhere the
+  # scheme handlers stay on the primary Firefox entry.
+  routerEnabled = isLinux && osConfig.desktop.isEnabled;
+  urlHandler =
+    if routerEnabled
+    then "browser-router.desktop"
+    else primaryBrowser;
 in {
   # xdg-utils / xdg-user-dirs are freedesktop (Linux) tools.
   home.packages = lib.optionals isLinux (with pkgs; [
@@ -29,6 +84,18 @@ in {
     cacheHome = config.home.homeDirectory + "/.local/cache";
 
     systemDirs.data = lib.mkIf isLinux ["${config.home.homeDirectory}/.local/share/flatpak/exports/share/" "/var/lib/flatpak/exports/share/"];
+
+    desktopEntries = lib.mkIf routerEnabled {
+      browser-router = {
+        name = "Browser Router";
+        genericName = "Web Browser";
+        exec = "${browserRouter}/bin/browser-router %U";
+        icon = "firefox";
+        terminal = false;
+        mimeType = ["x-scheme-handler/http" "x-scheme-handler/https"];
+        categories = ["Network" "WebBrowser"];
+      };
+    };
 
     mimeApps = lib.mkIf isLinux {
       enable = true;
@@ -93,8 +160,8 @@ in {
 
         "x-scheme-handler/about" = browser;
         "x-scheme-handler/ftp" = browser;
-        "x-scheme-handler/http" = browser;
-        "x-scheme-handler/https" = browser;
+        "x-scheme-handler/http" = [urlHandler];
+        "x-scheme-handler/https" = [urlHandler];
         "x-scheme-handler/slack" = "slack.desktop";
         "x-scheme-handler/unknown" = browser;
 
