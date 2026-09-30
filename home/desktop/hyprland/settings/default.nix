@@ -102,7 +102,9 @@ in {
 
           vrr = 2;
 
-          enable_swallow = true;
+          enable_swallow = false;
+          # A browser launched via `xdg-open` from a terminal is a child process
+          # that would swallow the terminal if swallowing were enabled.
           swallow_regex = "^(foot|kitty|com\\.mitchellh\\.ghostty)$";
 
           layers_hog_keyboard_focus = true;
