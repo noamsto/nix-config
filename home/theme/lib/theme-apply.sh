@@ -576,12 +576,20 @@ update_yazi() {
   { name = \"docs\", text = \"$ICON_DOCS\", fg = \"$sapphire\" },
   { name = \"scripts\", text = \"$ICON_SCRIPTS\", fg = \"$green\" },"
 
-  # Inject [icon].dirs right after [icon] header
+  # Prepend custom entries to the flavor's own [icon].dirs when it has one
+  # (a second `dirs` key is a TOML error); otherwise add the array after [icon].
   local tmp_config="${yazi_config}.tmp"
   awk -v dirs="$custom_dirs" '
-    /^\[icon\]$/ { print; print "dirs = ["; print dirs; print "]"; next }
+    NR == FNR {
+      if (/^\[/) in_icon = ($0 == "[icon]")
+      else if (in_icon && /^dirs[ \t]*=[ \t]*\[/) has_dirs = 1
+      next
+    }
+    /^\[/ { in_icon = ($0 == "[icon]") }
+    in_icon && has_dirs && /^dirs[ \t]*=[ \t]*\[/ { print; print dirs; next }
+    !has_dirs && /^\[icon\]$/ { print; print "dirs = ["; print dirs; print "]"; next }
     { print }
-  ' "$yazi_config" >"$tmp_config" && mv "$tmp_config" "$yazi_config"
+  ' "$yazi_config" "$yazi_config" >"$tmp_config" && mv "$tmp_config" "$yazi_config"
 }
 
 # Update bat syntax highlighter theme.
