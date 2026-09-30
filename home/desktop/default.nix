@@ -111,6 +111,7 @@ in {
       ./theme
       ./easyeffects
       ./wireplumber
+      ./bt-headset
       ./mpv.nix
       ./kdenlive.nix
       ./obsidian.nix
