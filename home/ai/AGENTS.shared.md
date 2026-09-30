@@ -62,6 +62,21 @@ settings — squash-only merges, delete branch on merge, auto-merge, and
 Actions allowed to open PRs (release-please needs it) — and is idempotent. `gh-repo-defaults --check --all` reports drift across every owned
 repo; `--all` without `--check` fixes it.
 
+### External reporters and contributors
+
+When work comes from an issue or PR opened by someone who is not the repo owner:
+
+- Once the bug is confirmed against the code, reply on the issue: what was
+  verified, the planned fix, and — if their suggested fix is wrong or
+  incomplete — say so and why. Never adopt a proposed fix without checking it
+  against the code first.
+- Credit them in the PR body: `Reported by @handle in #N`.
+- Commit trailer: `Reported-by: <handle> <https://github.com/<handle>>` for a
+  report; `Co-authored-by:` only when their code actually landed in the change.
+- **Scope: personal repos only.** Do not apply in factify-inc (Linear) repos —
+  reporters there are teammates or customers. Customer identifiers must never
+  land in git history or PR bodies, and ticket writes need explicit approval.
+
 ## Branch Naming
 
 **Branch naming depends on where the repo tracks work** — pick the rule by that axis, not by personal taste:
