@@ -74,6 +74,14 @@ in {
     -- Session/logout menu (Noctalia)
     hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("noctalia-ipc panel-toggle session"))
 
+    -- Peek the bar above a fullscreen window: flip it between Noctalia's
+    -- default "top" (hidden on fullscreen) and "overlay" (above it).
+    local barOverlay = false
+    hl.bind(mainMod .. " + SHIFT + B", function()
+      barOverlay = not barOverlay
+      hl.dispatch(hl.dsp.exec_cmd("noctalia-ipc bar-layer-set " .. (barOverlay and "overlay" or "top")))
+    end)
+
     -- === FOCUS MOVEMENT (SUPER+hjkl) ===
     hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
     hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
