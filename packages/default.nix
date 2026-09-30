@@ -17,6 +17,7 @@
     # keeps `packages.aarch64-darwin` from trying to build them on macOS.
     packages =
       {
+        deja-vu = pkgs.callPackage ./deja-vu.nix {};
         gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
         inherit (pkgs.callPackage ./pi-extensions {}) pi-lens pi-vim pi-web-access rpiv-todo;
