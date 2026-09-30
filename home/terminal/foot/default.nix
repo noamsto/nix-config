@@ -105,6 +105,10 @@ in
       settings = {};
     };
 
+    # GIO tries xdg-terminal-exec first for `Terminal=true` apps (nvim.desktop
+    # from Thunar); its built-in fallback list has neither foot nor kitty.
+    home.packages = [pkgs.xdg-terminal-exec];
+
     xdg.configFile = {
       "foot/foot.ini".text = footIni;
       "foot/themes/${palette.dark.name}.ini".text = mkFootTheme palette.dark;

@@ -151,6 +151,27 @@ in {
     "misc-single-click" = false;
   };
 
+  # xdg-terminal-exec (installed by the foot module) cds into --dir itself,
+  # since foot.desktop has no X-TerminalArgDir. Called by name, not store path:
+  # the long-lived Thunar daemon would keep a path that GC can remove.
+  xdg.configFile."Thunar/uca.xml".text = ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <actions>
+    <action>
+    	<icon>utilities-terminal</icon>
+    	<name>Open Terminal Here</name>
+    	<submenu></submenu>
+    	<unique-id>1727610268729651-1</unique-id>
+    	<command>xdg-terminal-exec --dir=%f</command>
+    	<description>Open the default terminal in this folder</description>
+    	<range></range>
+    	<patterns>*</patterns>
+    	<startup-notify/>
+    	<directories/>
+    </action>
+    </actions>
+  '';
+
   # Sidebar bookmarks (shows in Thunar and other GTK file dialogs).
   # Data bookmarks only on hosts that mount /home/$USER/Data.
   gtk.gtk3.bookmarks = let
