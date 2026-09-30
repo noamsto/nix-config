@@ -206,7 +206,8 @@ in {
           margin_ends = 4;
           margin_edge = 4;
           radius = 12;
-          layer = "overlay";
+          # Not "overlay": Hyprland keeps only overlay-layer surfaces above a
+          # true-fullscreen window, which would leave the bar on screen.
           start = ["bongocat" "clock" "group:sysmon" "active_window" "media"];
           center = ["workspaces"];
           end = [
