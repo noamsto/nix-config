@@ -90,4 +90,16 @@ inputs: [
       pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["zxing-cpp"];
     });
   })
+
+  # Hyprland 0.56.2 resets m_draggingTiled only inside updateDragWindow(), but
+  # dragBegin() has three early returns (unmapped window / no workspace / drag
+  # rejected on a fullscreen workspace) that skip it. dragEnd() then runs with a
+  # stale true and calls changeFloatingMode() on a window this drag never
+  # floated -> SEGV in CDwindleAlgorithm::addTarget. Upstream PR #15833 (fixes
+  # #15789) is merged to master but unreleased. Drop once nixpkgs carries >0.56.2.
+  (_final: prev: {
+    hyprland = prev.hyprland.overrideAttrs (old: {
+      patches = (old.patches or []) ++ [./patches/hyprland-drag-tiled-reset.patch];
+    });
+  })
 ]
