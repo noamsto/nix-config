@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   osConfig,
   ...
 }: let
@@ -7,9 +8,14 @@
   # 96 * 1.25 = 120, 96 * 2.0 = 192
   scale = builtins.fromJSON (osConfig.laptop-scale or "1.25");
   dpi = builtins.floor (96.0 * scale);
+
+  # Records the active profile so the Hyprland start hook can replay it.
+  xresourcesApply = import ./scripts/xresources-apply.nix {inherit pkgs;};
 in {
   # XWayland HiDPI scaling via .Xresources
   # This provides proper scaling for XWayland apps when using force_zero_scaling
+
+  home.packages = [xresourcesApply];
 
   home.file = {
     # Laptop profile: dynamic scale based on host config

@@ -34,6 +34,9 @@
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};
         money-scout-relay = import ../nixos/services/money-scout-relay-test.nix {inherit pkgs;};
         bt-headset-mode = import ../home/desktop/bt-headset/check.nix {inherit pkgs;};
+        # Direct bats regression suite for the xresources-apply script, against a
+        # real Xvfb server + xrdb (fresh-X-server behaviour).
+        xresources-apply = import ../home/desktop/hyprland/check.nix {inherit pkgs;};
       };
 
     devShells.default = pkgs.mkShell {

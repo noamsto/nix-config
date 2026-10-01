@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Generic workspace manager for hyprdynamicmonitors
-# Dependencies provided by Nix writeShellApplication: gdbus, hyprctl, xrdb
+# Dependencies provided by Nix writeShellApplication: gdbus, hyprctl
+# (xrdb is bundled by xresources-apply)
 
 set -euo pipefail
 
@@ -396,12 +397,9 @@ main() {
     exit 1
   fi
 
-  # Load XWayland settings in background
-  if [ "$PROFILE" = "docked" ]; then
-    xrdb -merge ~/.Xresources.docked 2>/dev/null &
-  else
-    xrdb -merge ~/.Xresources.laptop 2>/dev/null &
-  fi
+  # Apply the profile's XWayland resources and record it, so the Hyprland start
+  # hook can replay the same profile after an XWayland/Hyprland restart.
+  xresources-apply "$PROFILE" 2>/dev/null &
 
   # Configure workspaces
   case "$PROFILE" in

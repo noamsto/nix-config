@@ -190,7 +190,10 @@ in {
       hl.on("hyprland.start", function()
         hl.exec_cmd("hyprctl setcursor ${cursorName} ${toString pointer.size}")
         hl.exec_cmd("theme-toggle restore")
-        hl.exec_cmd("xrdb -merge ~/.Xresources")
+        -- Re-apply the active monitor profile's X resources (Xft.dpi), recorded
+        -- by workspace-manager; until HDM's first switch of the session it may
+        -- replay the previous session's profile.
+        hl.exec_cmd("xresources-apply")
         -- Propagate Wayland env to fish (universal vars) and tmux (global env)
         hl.exec_cmd("fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE; set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'")
         hl.exec_cmd([[tmux setenv -g HYPRLAND_INSTANCE_SIGNATURE "$HYPRLAND_INSTANCE_SIGNATURE"]])
