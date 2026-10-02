@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  config,
   inputs,
   ...
 }: let
@@ -69,9 +68,4 @@ in {
   # Also tell NM to use magic-packet WoL when it manages the connection (docked).
   # The udev rule above handles the undocked case; this prevents NM from resetting WoL to disabled.
   networking.networkmanager.settings.connection."ethernet.wake-on-lan" = 64;
-
-  services.sentinelone = {
-    enable = false;
-    sentinelOneManagementTokenPath = config.age.secrets.sentinelone-token.path;
-  };
 }

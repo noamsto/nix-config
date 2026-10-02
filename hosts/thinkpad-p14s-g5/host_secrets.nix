@@ -25,10 +25,6 @@
       owner = config.username;
       mode = "0400";
     };
-    sentinelone-token = {
-      file = "${inputs.mysecrets}/tp-p14s-factify-sentinelone-agent-key.age";
-      mode = "0400";
-    };
     # thinkpad_p15s_aliases.file = "${inputs.mysecrets}/thinkpad_p15s_aliases.age";
   };
 
