@@ -35,6 +35,10 @@
     fi
   '';
 in {
+  # Disable Home Manager's own `programs.noctalia` (path relative to its
+  # modules directory) so the flake module below stays the sole owner.
+  disabledModules = ["programs/noctalia"];
+
   imports = [
     inputs.noctalia.homeModules.default
     inputs.aegis-lock.homeModules.default
