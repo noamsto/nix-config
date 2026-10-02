@@ -404,11 +404,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790847725,
-        "narHash": "sha256-MsJI1m27pQKE0UIUSZv+BY5OmIPfB6tbB4eRP/OycYM=",
+        "lastModified": 1790971365,
+        "narHash": "sha256-MapjRLkntVQ1unrKcCohpWsg+6TPHWXlW8jb5fF/Yrw=",
         "owner": "noamsto",
         "repo": "dispatcher",
-        "rev": "53d9adf583e3cfb06c656c67c34c9b34cd0f71fa",
+        "rev": "9f31c9818f135fa8ddfa6211987780f54587c0ed",
         "type": "github"
       },
       "original": {
@@ -1631,11 +1631,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790746996,
-        "narHash": "sha256-9whbJ/zycQECBPKCGesHAgTIdkmd8+++YqEd0virDns=",
+        "lastModified": 1790973563,
+        "narHash": "sha256-8BuxFP6t1TyIsK4Z5a/aEcqTbWpJ0s/EsssQ4mCUg/E=",
         "owner": "noamsto",
         "repo": "houston",
-        "rev": "cf06146a0b7933c58d7080b407dcb13b64e8a240",
+        "rev": "44dddce6a41c2087e03236358406a00f68b76748",
         "type": "github"
       },
       "original": {
