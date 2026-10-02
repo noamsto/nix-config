@@ -61,7 +61,7 @@
   linux-only = with pkgs; [
     # syscall / hardware introspection — Linux kernel specific
     strace
-    ltrace
+    uftrace
     sysstat
     lm_sensors
     ethtool
