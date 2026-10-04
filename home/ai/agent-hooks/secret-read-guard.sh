@@ -42,6 +42,12 @@ cmd_secret_re='(^|[[:space:]"'"'"'=/])\.env([[:space:]"'"'"';|&)>]|$|\.[A-Za-z0-
 # `.env.example` and `.env.template` are committed templates of op:// refs, not
 # resolved values. Blocking them would teach people to route around the guard.
 template_re='\.env\.(example|template|sample|dist)'
+# Rule 3's printing tools, the grep family, and the grep flags that print no
+# line. Explicit [^[:alnum:]_] boundaries stand in for \b: the same word
+# boundary under LC_ALL=C, and macOS regcomp has no \b.
+print_tool_re='(^|[^[:alnum:]_])(cat|bat|head|tail|less|more|strings|xxd|od|nl|tac|rev|cut|paste|sed|awk|dotenv|source)($|[^[:alnum:]_])'
+grep_tool_re='(^|[^[:alnum:]_])(grep|rg|ripgrep|ag)($|[^[:alnum:]_])'
+quiet_flag_re='(-[a-zA-Z]*[cqlL]|--count|--quiet|--silent|--files-with-matches|--files-without-match)($|[^[:alnum:]_])'
 
 # Command-position anchor for the env, builtin and fish checks below: start of
 # a line (after any indentation, so an indented body counts), or after
@@ -95,8 +101,15 @@ template_re='\.env\.(example|template|sample|dist)'
 # regexes run, and both the raw and the stripped view are checked, so
 # `p\rintenv` and `e\<newline>nv` are denied. Escaped separators and spaces
 # then read as real ones (`echo \(env\)`, `env\ x`): safe-side false
-# positives. ANSI-C `$'\x70rintenv'` and quote removal (`p''rintenv`) are not
-# decoded: accepted limits.
+# positives. For the dumper words, ANSI-C `$'\x70rintenv'` and quote removal
+# (`p''rintenv`) are not decoded: accepted limits.
+# The `-c` finder (shell_c_re), /proc/*/environ and rule 3 read the dequoted
+# view (dequote: bash's quote removal over raw text) of every scanned command
+# string, so `b\ash -c`, `"bash" '-c'`, `/pro\c/1/environ` and `cat .e''nv`
+# are seen as bash runs them. The `$` of `$'...'` and `$"..."` is dropped and
+# the span read as a plain quoted string; ANSI-C escapes are not decoded. The
+# dequoted view drops an empty quoted word, so `bash -c '' env` reads `env` as
+# the -c body (safe-side false positive).
 cmd_sep='(^[[:space:]]*|[;&|()]+[[:space:]]*)'
 cmd_lead_res='((then|do|else|elif|if|while|until|!|[{])[[:space:]]+)'
 cmd_lead_asg='([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)'
@@ -182,15 +195,20 @@ fish_dump_re="$cmd_start"'set[[:space:]]+(-x|-gx|-U)'"$term_bare"
 # '...')`, and `;`/`&`/`|`/`)` for a compact one-liner or sibling -c
 # invocation with no space before the wrapper (`true;bash -c '...'`,
 # `x&&bash -c '...'`, `echo x|bash -c '...'`).
+#
+# Matched against the dequoted view (dequote, below), where those anchors
+# inside a quoted span read as `_`, so `rg 'foo|bash -c env x' .` never
+# matches while `b\ash -c` and `"bash" -c` do.
 shell_c_re="(^|[[:space:]/(;&|)])(fish|bash|sh|zsh)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*-[A-Za-z]*c[[:space:]]+"
 # /proc/<pid>/environ is a process's whole environment, NUL-joined — reading
 # it any way (cat, a redirect, tr/xargs/sort splitting the NUL bytes, …) is
 # exactly as much a dump as env/printenv, so this denies unconditionally
 # rather than gating on a printing-tool list the way rule 3 does for .env:
 # there's no non-printing reason to open this path. Checked against the raw
-# command, not the quote-masked spaces — the path itself is what's dangerous,
-# with or without quotes around it, so it also catches `fish -c 'cat
-# /proc/1/environ'` without needing the -c extraction above.
+# command and every dequoted view, not the quote-masked spaces — the path
+# itself is what's dangerous, with or without quotes around it, so the raw
+# text catches `fish -c 'cat /proc/1/environ'` and the dequoted views catch
+# `/pro\c/1/e''nviron`.
 proc_environ_re="(^|[[:space:]\"'<=])/proc/[^[:space:]\"']*/environ"
 # A single backslash, spelled this way (rather than the bare '\' shellcheck
 # flags as SC1003, a likely quote-escaping mistake) so mask_quotes and
@@ -337,6 +355,8 @@ decode_word() {
           fi
         done
         ((i < len)) && i=$((i + 1))
+      elif [[ ${s:i+1:1} == '"' ]]; then
+        i=$((i + 1))
       else
         out+=$c
         i=$((i + 1))
@@ -673,6 +693,70 @@ strip_escapes() {
   STRIPPED=${out%x$'\n'}
 }
 
+# Bash's quote removal over raw text, setting DEQUOTED: quote characters are
+# dropped, `\X` outside quotes is X and `\<newline>` is nothing, inside "..."
+# the `\` is dropped only before $ ` " \ and newline, and '...' is verbatim.
+# A quoted or escaped metacharacter (whitespace, ; & | ( ) < >) is written as
+# `_`, so quoted data can never act as a word separator here.
+# DEQUOTED_MAP[k] is the raw index DEQUOTED[k] came from. The quote and comment
+# rules are mask_quotes' own, so a span this drops is exactly a span that one
+# blanks. strip_escapes is no substitute: on the masked view the quoted
+# characters are already gone, and on raw text it would unescape inside '...'
+# too, turning `grep '\.env' f` into a credential read.
+dequote() {
+  local s=$1 i=0 c q k
+  local len=${#s}
+  DEQUOTED=''
+  DEQUOTED_MAP=()
+  while ((i < len)); do
+    c=${s:i:1}
+    if [[ $c == "$bs" ]] && ((i + 1 < len)); then
+      if [[ ${s:i+1:1} != $'\n' ]]; then dequote_char "${s:i+1:1}" $((i + 1)); fi
+      i=$((i + 2))
+    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+      for ((k = i; k < COMMENT_END; k++)); do DEQUOTED_MAP+=("$k"); done
+      DEQUOTED+=${s:i:COMMENT_END-i}
+      i=$COMMENT_END
+    elif [[ $c == "'" || $c == '"' ]]; then
+      q=$c
+      i=$((i + 1))
+      while ((i < len)) && [[ ${s:i:1} != "$q" ]]; do
+        c=${s:i:1}
+        if [[ $q == '"' && $c == "$bs" ]] && ((i + 1 < len)); then
+          case ${s:i+1:1} in
+          $'\n') ;;
+          '$' | '`' | '"' | "$bs") dequote_char "${s:i+1:1}" $((i + 1)) ;;
+          *)
+            dequote_char "$c" "$i"
+            dequote_char "${s:i+1:1}" $((i + 1))
+            ;;
+          esac
+          i=$((i + 2))
+        else
+          dequote_char "$c" "$i"
+          i=$((i + 1))
+        fi
+      done
+      if ((i < len)); then i=$((i + 1)); fi
+    elif [[ $c == '$' && (${s:i+1:1} == "'" || ${s:i+1:1} == '"') ]]; then
+      i=$((i + 1))
+    else
+      DEQUOTED+=$c
+      DEQUOTED_MAP+=("$i")
+      i=$((i + 1))
+    fi
+  done
+}
+
+# Appends one quoted or escaped character to DEQUOTED, a metacharacter as `_`.
+dequote_char() {
+  case $1 in
+  ' ' | $'\t' | $'\n' | $'\r' | $'\v' | $'\f' | ';' | '&' | '|' | '(' | ')' | '<' | '>') DEQUOTED+=_ ;;
+  *) DEQUOTED+=$1 ;;
+  esac
+  DEQUOTED_MAP+=("$2")
+}
+
 # The scanners above walk a string character by character, and each nested
 # command substitution re-runs them over its whole body, so the work grows
 # with (nesting depth x length) and a single long command is superlinear too.
@@ -708,6 +792,20 @@ deny() {
     }
   }'
   exit 0
+}
+
+# Rule 3 over one view of a Bash command. In-process [[ =~ ]] rather than a
+# grep per test, so judging every dequoted view costs no forks; `if` statements
+# rather than && lists, so a failed test cannot trip set -e.
+deny_secret_file_read() {
+  if [[ ! $1 =~ $cmd_secret_re || $1 =~ $template_re ]]; then return 0; fi
+  if [[ $1 =~ $print_tool_re ]]; then
+    deny "This prints credential-file content into the transcript. If you need to confirm a key is configured, use grep -c '^NAME=' (a count), or run the consuming tool and read its error — a missing key fails loudly and that failure is the signal."
+  fi
+  # grep/rg leak unless restricted to a non-printing mode.
+  if [[ $1 =~ $grep_tool_re && ! $1 =~ $quiet_flag_re ]]; then
+    deny "grep/rg over a credential file prints the matching line, value included. Add -c (count) or -q (quiet) if you only need to know whether it is set."
+  fi
 }
 
 case $tool_name in
@@ -793,6 +891,7 @@ Bash)
   collect_flags=(1)
   wi=0
   matches=0
+  dequoted_views=()
   while ((! unverified && wi < ${#worklist[@]})) && ((wi < 300)); do
     strip_heredocs "${worklist[wi]}"
     cur=$HD_VIEW
@@ -809,37 +908,22 @@ Bash)
       done
     fi
     wi=$((wi + 1))
+    dequote "$cur"
+    dequoted_views+=("$DEQUOTED")
     if ((matches >= 20)); then
-      if [[ $cur =~ $shell_c_re ]]; then unverified=1; fi
+      if [[ $cur =~ $shell_c_re || $DEQUOTED =~ $shell_c_re ]]; then unverified=1; fi
       continue
     fi
-    # shell_c_re's ;&|) anchors (see above) are as common inside an ordinary
-    # quoted regex/string as a bare space already was, e.g. `rg 'foo|bash -c
-    # env x' .`. So a match only counts if its full text (anchor through
-    # trailing whitespace) falls outside any quoted span — checked against
-    # the quote-masked form, which is length-preserving, so an index into
-    # one applies to the other. A match that fails this is rejected and the
-    # search resumes just past it, since $cur may still hold a real sibling
-    # invocation later on.
-    masked_cur=$(mask_quotes "$cur")
-    search_from=0
-    found=0
-    while ((search_from <= ${#cur})); do
-      candidate=${cur:search_from}
-      [[ $candidate =~ $shell_c_re ]] || break
-      match=${BASH_REMATCH[0]}
-      interpreter=${BASH_REMATCH[2]}
-      local_prefix=${candidate%%"$match"*}
-      match_idx=$((search_from + ${#local_prefix}))
-      if [[ ${masked_cur:match_idx:${#match}} != "${cur:match_idx:${#match}}" ]]; then
-        search_from=$((match_idx + 1))
-        continue
-      fi
-      arg_start=$((match_idx + ${#match}))
-      found=1
-      break
-    done
-    ((found)) || continue
+    # Matched on the dequoted view, so an escaped or quoted interpreter word or
+    # flag (`b\ash -\c`, `"bash" '-c'`) still counts, while a quoted separator
+    # (`_` there) can never anchor one. The match ends on a literal whitespace,
+    # whose raw index + 1 is where the body starts in $cur: decode_word reads
+    # the raw text, since the body's own quoting is what delimits it.
+    [[ $DEQUOTED =~ $shell_c_re ]] || continue
+    match=${BASH_REMATCH[0]}
+    interpreter=${BASH_REMATCH[2]}
+    local_prefix=${DEQUOTED%%"$match"*}
+    arg_start=$((DEQUOTED_MAP[${#local_prefix} + ${#match} - 1] + 1))
     decode_word "$cur" "$arg_start"
     sub=$DECODED_WORD
     if over_scan_budget $((${#sub} + ${#cur} - DECODE_WORD_END)); then
@@ -881,22 +965,22 @@ Bash)
   # Reading a process's environment table directly is the same dump by
   # another door, unconditionally (no printing-tool gate — there's no
   # non-printing reason to open this path at all).
-  if echo "$command" | grep -qE "$proc_environ_re"; then
+  # In-process: a grep -q pipe exits on the first match, and on a command
+  # past the pipe buffer the writer's SIGPIPE fails the pipeline open.
+  views=$command
+  for view in "${dequoted_views[@]}"; do views+=$'\n'$view; done
+  if [[ $views =~ $proc_environ_re ]]; then
     deny "This reads a process's environment table directly, which prints every secret in scope into this transcript — same leak as env/printenv, just via /proc instead. To test presence: set -q NAME (fish), or branch on an -n test of the variable and echo only the words set or unset (bash/sh) — never the variable itself."
   fi
 
   # 3. Reading a credential file's content. Non-printing inspection stays
   #    allowed: test, [, git check-ignore, ls, stat, wc, chmod, rm, gtrash,
-  #    update-env, direnv — none of which emit the value.
-  if echo "$command" | grep -qE "$cmd_secret_re" && ! echo "$command" | grep -qE "$template_re"; then
-    if echo "$command" | grep -qE '\b(cat|bat|head|tail|less|more|strings|xxd|od|nl|tac|rev|cut|paste|sed|awk|dotenv|source)\b'; then
-      deny "This prints credential-file content into the transcript. If you need to confirm a key is configured, use grep -c '^NAME=' (a count), or run the consuming tool and read its error — a missing key fails loudly and that failure is the signal."
-    fi
-    # grep/rg leak unless restricted to a non-printing mode.
-    if echo "$command" | grep -qE '\b(grep|rg|ripgrep|ag)\b' && ! echo "$command" | grep -qE '(-[a-zA-Z]*[cqlL]|--count|--quiet|--silent|--files-with-matches|--files-without-match)\b'; then
-      deny "grep/rg over a credential file prints the matching line, value included. Add -c (count) or -q (quiet) if you only need to know whether it is set."
-    fi
-  fi
+  #    update-env, direnv — none of which emit the value. The raw command
+  #    and each dequoted view are judged on their own, so an exemption
+  #    (`.env.example`, `-c`) in one view never covers a credential read in
+  #    another.
+  deny_secret_file_read "$command"
+  for view in "${dequoted_views[@]}"; do deny_secret_file_read "$view"; done
   ;;
 *)
   exit 0

@@ -311,6 +311,245 @@ assert_allow() {
   assert_allow
 }
 
+# --- dequoted view: backslash escapes and quote removal (#417 #418 #419) ---
+
+@test "deny: b\\ash -c 'env', a backslash-escaped interpreter" {
+  guard_bash $'b\\ash -c \'env\''
+  assert_deny
+}
+
+@test "deny: bash -\\c 'env', a backslash-escaped -c flag" {
+  guard_bash $'bash -\\c \'env\''
+  assert_deny
+}
+
+@test "deny: f\\ish -c 'set -x', a backslash-escaped fish" {
+  guard_bash $'f\\ish -c \'set -x\''
+  assert_deny
+}
+
+@test "deny: b''ash -c 'env', an empty single-quote pair in the interpreter" {
+  guard_bash $'b\'\'ash -c \'env\''
+  assert_deny
+}
+
+@test "deny: b\"\"ash -c 'env', an empty double-quote pair in the interpreter" {
+  guard_bash $'b""ash -c \'env\''
+  assert_deny
+}
+
+@test "deny: \"bash\" -c 'env', a quoted interpreter" {
+  guard_bash $'"bash" -c \'env\''
+  assert_deny
+}
+
+@test "deny: bash '-c' 'env', a quoted -c flag" {
+  guard_bash $'bash \'-c\' \'env\''
+  assert_deny
+}
+
+@test "deny: echo 'bash' -c env, a quoted interpreter word" {
+  guard_bash $'echo \'bash\' -c env'
+  assert_deny
+}
+
+@test "deny: cat /pro\\c/1/environ, a backslash inside /proc" {
+  guard_bash 'cat /pro\c/1/environ'
+  assert_deny
+}
+
+@test "deny: cat /proc/1/env\\iron, a backslash inside environ" {
+  guard_bash 'cat /proc/1/env\iron'
+  assert_deny
+}
+
+@test "deny: cat /proc/1/e''nviron, an empty quote pair inside environ" {
+  guard_bash $'cat /proc/1/e\'\'nviron'
+  assert_deny
+}
+
+@test "deny: cat \\.env, a backslash before the dot" {
+  guard_bash 'cat \.env'
+  assert_deny
+}
+
+@test "deny: cat .e''nv, an empty single-quote pair inside .env" {
+  guard_bash $'cat .e\'\'nv'
+  assert_deny
+}
+
+@test "deny: cat ./.e\"\"nv, an empty double-quote pair inside .env" {
+  guard_bash 'cat ./.e""nv'
+  assert_deny
+}
+
+@test "deny: cat .n\\etrc, a backslash inside .netrc" {
+  guard_bash 'cat .n\etrc'
+  assert_deny
+}
+
+@test "deny: head .env\\.local, a backslash inside .env.local" {
+  guard_bash 'head .env\.local'
+  assert_deny
+}
+
+@test "deny: bash -c 'cat \\.env', an escaped .env inside an inner command" {
+  guard_bash $'bash -c \'cat \\.env\''
+  assert_deny
+}
+
+@test "deny: bash -c 'grep FOO .env', a content-reading grep inside an inner command" {
+  guard_bash $'bash -c \'grep FOO .env\''
+  assert_deny
+}
+
+@test "deny: cat .env .env.ex\\ample, an exemption must not cover the plain .env" {
+  guard_bash 'cat .env .env.ex\ample'
+  assert_deny
+}
+
+@test "deny: cat .env .e''nv.example, an exemption must not cover the plain .env" {
+  guard_bash $'cat .env .e\'\'nv.example'
+  assert_deny
+}
+
+@test "deny: grep FOO .env; bash -\\c true, an exemption in one view must not cover another" {
+  guard_bash 'grep FOO .env; bash -\c true'
+  assert_deny
+}
+
+@test "deny: fish -c 'set -x', unescaped" {
+  guard_bash $'fish -c \'set -x\''
+  assert_deny
+}
+
+@test "deny: cat /proc/1/environ, unescaped" {
+  guard_bash 'cat /proc/1/environ'
+  assert_deny
+}
+
+@test "deny: ba\$''sh -c 'env', an empty ANSI-C quote pair in the interpreter" {
+  guard_bash $'ba$\'\'sh -c \'env\''
+  assert_deny
+}
+
+@test "deny: \$'bash' -c 'env', an ANSI-C quoted interpreter" {
+  guard_bash $'$\'bash\' -c \'env\''
+  assert_deny
+}
+
+@test "deny: bash \$'-c' 'env', an ANSI-C quoted -c flag" {
+  guard_bash $'bash $\'-c\' \'env\''
+  assert_deny
+}
+
+@test "deny: bash \$\"-c\" 'env', a locale-quoted -c flag" {
+  guard_bash $'bash $"-c" \'env\''
+  assert_deny
+}
+
+@test "deny: cat .e\$''nv, an empty ANSI-C quote pair inside .env" {
+  guard_bash $'cat .e$\'\'nv'
+  assert_deny
+}
+
+@test "deny: cat /proc/1/envi\$''ron, an empty ANSI-C quote pair inside environ" {
+  guard_bash $'cat /proc/1/envi$\'\'ron'
+  assert_deny
+}
+
+@test "deny: bash -c \$\"env\", a locale-quoted -c body" {
+  guard_bash 'bash -c $"env"'
+  assert_deny
+}
+
+@test "deny: an escaped interpreter on the line after a comment with an apostrophe" {
+  guard_bash $'echo hi # it\'s done\nb\\ash -c env'
+  assert_deny
+}
+
+@test "deny: b\\ash -c with a backslash-newline before the body" {
+  guard_bash $'b\\ash -c \\\n  \'env\''
+  assert_deny
+}
+
+@test "deny: x=\$(b\\ash -c env), an escaped interpreter in a substitution" {
+  # shellcheck disable=SC2016
+  guard_bash 'x=$(b\ash -c env)'
+  assert_deny
+}
+
+@test "deny: bash -c 'true'; b\\ash -c env, a second -c after a harmless one" {
+  guard_bash $'bash -c \'true\'; b\\ash -c env'
+  assert_deny
+}
+
+@test "deny: cat /proc/1/environ followed by a heredoc larger than the pipe buffer" {
+  local body json
+  body=$(printf 'line of filler text %s\n' {1..8000})
+  ((${#body} > 120000))
+  # Through stdin: one argv string this long exceeds the kernel's per-argument limit.
+  json=$(printf '%s' "cat /proc/1/environ; cat <<'EOF'"$'\n'"$body"$'\n'"EOF" |
+    jq -Rs '{tool_name:"Bash",tool_input:{command:.}}')
+  guard_json "$json"
+  assert_deny
+}
+
+@test "allow: bash -c 'echo hi'" {
+  guard_bash $'bash -c \'echo hi\''
+  assert_allow
+}
+
+@test "allow: cat README.md" {
+  guard_bash 'cat README.md'
+  assert_allow
+}
+
+@test "allow: ls /proc/1/" {
+  guard_bash 'ls /proc/1/'
+  assert_allow
+}
+
+@test "allow: grep '\\.env' file, a literal backslash in a pattern" {
+  guard_bash $'grep \'\\.env\' file'
+  assert_allow
+}
+
+@test "allow: rg \"\\.env\" src, a literal backslash in a pattern" {
+  guard_bash 'rg "\.env" src'
+  assert_allow
+}
+
+@test "allow: echo 'a\\.env', a literal backslash in data" {
+  guard_bash $'echo \'a\\.env\''
+  assert_allow
+}
+
+@test "allow: cat .e''nv.example, a quoted-in-the-middle example file" {
+  guard_bash $'cat .e\'\'nv.example'
+  assert_allow
+}
+
+@test "allow: rg 'foo|bash -c env x' ., the words sit inside one pattern" {
+  guard_bash $'rg \'foo|bash -c env x\' .'
+  assert_allow
+}
+
+@test "allow: test -f \\.env only checks existence" {
+  guard_bash 'test -f \.env'
+  assert_allow
+}
+
+@test "allow: grep -c FOO \\.env only counts matches" {
+  guard_bash 'grep -c FOO \.env'
+  assert_allow
+}
+
+@test "allow: echo \"x<CR>bash<CR>-c<CR>env\", a quoted CR is not a separator" {
+  guard_bash $'echo "x\rbash\r-c\renv"'
+  assert_allow
+}
+
 # --- non-Bash tools ---
 
 @test "deny: Read .env" {
