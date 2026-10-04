@@ -29,6 +29,9 @@
     "dom.serviceWorkers.enabled" = true;
     "dom.enable_resource_timing" = true;
 
+    # Sideloaded add-ons (see meetToBraveExtensions) start disabled otherwise.
+    "extensions.autoDisableScopes" = 0;
+
     # =======================================================================
     # NATIVE PROFILE SYSTEM (Firefox 138+) - per-profile color/avatar
     # =======================================================================
@@ -105,6 +108,93 @@
   firefox-marionette = pkgs.writeShellScriptBin "firefox-marionette" ''
     exec ${config.programs.firefox.finalPackage}/bin/firefox -P automation --marionette --remote-debugging-port=9222 "$@"
   '';
+
+  # Meet links clicked inside Firefox never reach the desktop URL handler, so
+  # External Application Button redirects those navigations to a native host
+  # that opens them in Brave. The add-on's own helper (com.add0n.node) is an
+  # unmanaged Node install that runs arbitrary commands; this stand-in speaks
+  # the same wire protocol but ignores the requested command and only ever
+  # launches Brave on one validated meet.google.com URL.
+  externalApplicationId = "{65b77238-bb05-470a-a445-ec0efe1d66c4}";
+  meetToBraveHost = pkgs.writers.writePython3Bin "meet-to-brave-host" {flakeIgnore = ["E501"];} ''
+    import json
+    import re
+    import struct
+    import subprocess
+    import sys
+    from urllib.parse import urlsplit
+
+    BRAVE = "${lib.getExe config.programs.brave.finalPackage}"
+
+
+    def read_message():
+        header = sys.stdin.buffer.read(4)
+        if len(header) < 4:
+            return None
+        (length,) = struct.unpack("=I", header)
+        return json.loads(sys.stdin.buffer.read(length))
+
+
+    def reply(payload):
+        data = json.dumps(payload).encode()
+        sys.stdout.buffer.write(struct.pack("=I", len(data)) + data)
+        sys.stdout.buffer.flush()
+
+
+    def meet_url(args):
+        if not isinstance(args, list) or len(args) != 1 or not isinstance(args[0], str):
+            return None
+        url = args[0]
+        if not re.fullmatch(r"[!-~]+", url):
+            return None
+        parts = urlsplit(url)
+        try:
+            port = parts.port
+        except ValueError:
+            return None
+        if parts.scheme != "https" or parts.hostname != "meet.google.com":
+            return None
+        if parts.username is not None or parts.password is not None or port is not None:
+            return None
+        return url
+
+
+    msg = read_message()
+    if not isinstance(msg, dict):
+        sys.exit(0)
+    if msg.get("cmd") == "env":
+        reply({"env": {}})
+    elif msg.get("cmd") == "exec":
+        url = meet_url(msg.get("arguments"))
+        if url is None:
+            reply({"code": 1, "stdout": "", "stderr": "refused: not an https://meet.google.com URL"})
+        else:
+            subprocess.Popen(
+                [BRAVE, url],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            reply({"code": 0, "stdout": "", "stderr": ""})
+    else:
+        reply({"code": 1, "stdout": "", "stderr": "unsupported command"})
+  '';
+  meetToBraveManifest = pkgs.writeText "com.add0n.node.json" (builtins.toJSON {
+    name = "com.add0n.node";
+    description = "Open Meet links in Brave";
+    path = lib.getExe meetToBraveHost;
+    type = "stdio";
+    allowed_extensions = [externalApplicationId];
+  });
+  meetToBraveNativeHost = pkgs.runCommand "meet-to-brave-native-host" {} ''
+    install -Dm444 ${meetToBraveManifest} $out/lib/mozilla/native-messaging-hosts/com.add0n.node.json
+  '';
+  # Not configured through extensions.settings: HM then turns off IndexedDB
+  # extension storage for every add-on in the profile, wiping uBlock, Dark
+  # Reader and the others. The add-on's rule must also be created in its own
+  # options page, which is where it asks for the host permission it needs.
+  meetToBraveExtensions.packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.firefox-addons.external-application];
 in {
   imports =
     [
@@ -142,6 +232,7 @@ in {
     firefox = {
       enable = true;
       configPath = ".mozilla/firefox";
+      nativeMessagingHosts = lib.optionals pkgs.stdenv.hostPlatform.isLinux [meetToBraveNativeHost];
       profiles =
         {
           personal = {
@@ -150,6 +241,7 @@ in {
             isDefault = true;
             settings = firefoxCommonSettings;
             userChrome = firefoxUserChrome;
+            extensions = meetToBraveExtensions;
           };
 
           # Dedicated automation profile driven by `firefox-marionette`. Pins the
@@ -171,6 +263,7 @@ in {
             path = "work";
             settings = firefoxCommonSettings;
             userChrome = firefoxUserChrome;
+            extensions = meetToBraveExtensions;
           };
         };
     };
