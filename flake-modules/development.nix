@@ -10,8 +10,17 @@
     config,
     pkgs,
     lib,
+    system,
     ...
   }: {
+    # Match the hosts' pkgs: devShell tools sit first on PATH, so a stock build
+    # here (e.g. nom) would shadow the patched system one.
+    _module.args.pkgs = import inputs.nixpkgs {
+      inherit system;
+      overlays = import ../lib/overlays.nix inputs;
+      config.allowUnfree = true;
+    };
+
     checks =
       {
         # pi's hookyard guard manifest, end to end: the locked hookyard binary
