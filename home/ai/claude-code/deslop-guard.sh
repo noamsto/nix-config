@@ -151,6 +151,53 @@ if [[ -f "${TMPDIR:-/tmp}/claude-deslop/$session/.ran" && -n $(git_common "$targ
   exit 0
 fi
 
+# A branch whose diff against its deslop base touches only non-source files has
+# nothing for the skill to review, so the gate doesn't apply. The base mirrors
+# the skill's own resolution (@{push}, @{upstream}, else merge-base main HEAD);
+# it's captured under `if !` so a failing rev-parse can't trip `set -e` into a
+# non-blocking hook error — which would fail open.
+deslop_base() {
+  git -C "$target" rev-parse --verify --quiet '@{push}' ||
+    git -C "$target" rev-parse --verify --quiet '@{upstream}' ||
+    git -C "$target" merge-base main HEAD
+}
+
+is_nonsource_path() {
+  case $1 in
+  *.json | *.lock | *.lockb | *.lock.toml | *.md | \
+    *.yaml | *.yml | *.png | *.jpg | *.jpeg | *.gif | *.svg | *.webp | *.ico | \
+    docs/*) return 0 ;;
+  esac
+  return 1
+}
+
+if ! base=$(deslop_base 2>/dev/null); then
+  : # unresolvable base → today's deny
+else
+  nonsource_only=true
+  changed=0
+  paths_left=0
+  # `--name-status -z` emits a status token then one path (two for R/C), so a
+  # source path removed by a rename is still judged.
+  while IFS= read -r -d '' tok; do
+    if ((paths_left > 0)); then
+      paths_left=$((paths_left - 1))
+      changed=$((changed + 1))
+      if ! is_nonsource_path "$tok"; then
+        nonsource_only=false
+      fi
+    elif [[ $tok =~ ^[A-Z][0-9]*$ ]]; then
+      case $tok in
+      R* | C*) paths_left=2 ;;
+      *) paths_left=1 ;;
+      esac
+    fi
+  done < <(git -C "$target" diff -z --name-status "$base"..HEAD 2>/dev/null)
+  if ((changed > 0)) && [[ $nonsource_only == true ]]; then
+    exit 0
+  fi
+fi
+
 jq -n --arg branch "$branch" '{
   hookSpecificOutput: {
     hookEventName: "PreToolUse",
