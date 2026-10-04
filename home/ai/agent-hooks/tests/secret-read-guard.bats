@@ -550,6 +550,188 @@ assert_allow() {
   assert_allow
 }
 
+# --- rule 3: path anchors and per-word exemptions ---
+
+@test "deny: cat ~/.netrc, a slash before .netrc" {
+  guard_bash 'cat ~/.netrc'
+  assert_deny
+}
+
+@test "deny: cat /x/.netrc, a slash before .netrc" {
+  guard_bash 'cat /x/.netrc'
+  assert_deny
+}
+
+@test "deny: cat <.env, a redirect right before .env" {
+  guard_bash 'cat <.env'
+  assert_deny
+}
+
+@test "deny: cat<.env, no space around the redirect" {
+  guard_bash 'cat<.env'
+  assert_deny
+}
+
+@test "deny: cat {.env,}, a brace-expansion list" {
+  guard_bash 'cat {.env,}'
+  assert_deny
+}
+
+@test "deny: cat .env .env.example, a template must not exempt the plain .env" {
+  guard_bash 'cat .env .env.example'
+  assert_deny
+}
+
+@test "deny: grep KEY .env --null, --null is not a quiet flag" {
+  guard_bash 'grep KEY .env --null'
+  assert_deny
+}
+
+@test "deny: grep KEY .env | tee out-full, -full is not a quiet flag" {
+  guard_bash 'grep KEY .env | tee out-full'
+  assert_deny
+}
+
+@test "deny: cat .e''nv .env\$''.example, empty quote pairs hide the plain .env" {
+  guard_bash $'cat .e\'\'nv .env$\'\'.example'
+  assert_deny
+}
+
+@test "deny: grep KEY .e''nv x-\$'l', a literal -l inside a word is not a quiet flag" {
+  guard_bash $'grep KEY .e\'\'nv x-$\'l\''
+  assert_deny
+}
+
+@test "deny: grep KEY .env then wc -l on the next line, the -l belongs to wc" {
+  guard_bash $'grep KEY .env\nwc -l'
+  assert_deny
+}
+
+@test "deny: rg -L KEY .env, rg's -L is --follow, not quiet" {
+  guard_bash 'rg -L KEY .env'
+  assert_deny
+}
+
+@test "deny: grep KEY .env -- -c, nothing after -- is an option" {
+  guard_bash 'grep KEY .env -- -c'
+  assert_deny
+}
+
+@test "deny: grep --label -c KEY .env, -c is the value of --label" {
+  guard_bash 'grep --label -c KEY .env'
+  assert_deny
+}
+
+@test "deny: grep -ec .env, -c is the inline value of -e" {
+  guard_bash 'grep -ec .env'
+  assert_deny
+}
+
+@test "deny: grep -e KEY -e -c .env, -c is the value of the second -e" {
+  guard_bash 'grep -e KEY -e -c .env'
+  assert_deny
+}
+
+@test "deny: ag --silent KEY .env, ag --silent still prints matches" {
+  guard_bash 'ag --silent KEY .env'
+  assert_deny
+}
+
+@test "deny: cat .env glued to a backtick substitution" {
+  guard_bash 'cat .env`true`'
+  assert_deny
+}
+
+@test "deny: cat .env glued to a \$( substitution" {
+  guard_bash 'cat .env$(true)'
+  assert_deny
+}
+
+@test "deny: cat ~/.netrc glued to a variable expansion" {
+  guard_bash 'cat ~/.netrc$x'
+  assert_deny
+}
+
+@test "allow: grep KEY .env 2>&1 -c, a redirect does not end the segment" {
+  guard_bash 'grep KEY .env 2>&1 -c'
+  assert_allow
+}
+
+@test "allow: grep -rc KEY .env counts matches" {
+  guard_bash 'grep -rc KEY .env'
+  assert_allow
+}
+
+@test "allow: grep -Ec 'A' .env counts matches" {
+  guard_bash $'grep -Ec \'A\' .env'
+  assert_allow
+}
+
+@test "allow: grep -i -c KEY .env counts matches" {
+  guard_bash 'grep -i -c KEY .env'
+  assert_allow
+}
+
+@test "allow: rg -l KEY .env lists files only" {
+  guard_bash 'rg -l KEY .env'
+  assert_allow
+}
+
+@test "allow: rg -c KEY .env counts matches" {
+  guard_bash 'rg -c KEY .env'
+  assert_allow
+}
+
+@test "allow: grep -e KEY -c .env counts matches" {
+  guard_bash 'grep -e KEY -c .env'
+  assert_allow
+}
+
+@test "allow: ag -l KEY .env lists files only" {
+  guard_bash 'ag -l KEY .env'
+  assert_allow
+}
+
+@test "allow: ls -la .env only lists the file" {
+  guard_bash 'ls -la .env'
+  assert_allow
+}
+
+@test "allow: grep -c '^KEY=' .env only counts matches" {
+  guard_bash $'grep -c \'^KEY=\' .env'
+  assert_allow
+}
+
+@test "allow: grep -q KEY .env prints nothing" {
+  guard_bash 'grep -q KEY .env'
+  assert_allow
+}
+
+@test "allow: git check-ignore .env prints no content" {
+  guard_bash 'git check-ignore .env'
+  assert_allow
+}
+
+@test "allow: cp .env.example .env writes, never prints" {
+  guard_bash 'cp .env.example .env'
+  assert_allow
+}
+
+@test "allow: grep --count KEY .env only counts matches" {
+  guard_bash 'grep --count KEY .env'
+  assert_allow
+}
+
+@test "allow: grep -nc KEY .env only counts matches" {
+  guard_bash 'grep -nc KEY .env'
+  assert_allow
+}
+
+@test "allow: grep KEY config/.env -c, the flag after the file" {
+  guard_bash 'grep KEY config/.env -c'
+  assert_allow
+}
+
 # --- non-Bash tools ---
 
 @test "deny: Read .env" {

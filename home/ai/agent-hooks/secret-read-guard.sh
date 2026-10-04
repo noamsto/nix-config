@@ -34,20 +34,40 @@ secret_path_re='(^|/)\.env($|\.[A-Za-z0-9_-]+$)|(^|/)\.envrc\.local$|\.aws/crede
 # Grep globs spell the same files by pattern (`.env*`, `.env.*`, `*.env`), so
 # they get this looser test on top of secret_path_re.
 glob_secret_re='(^|[/*{,[])\.env($|[]*.?,}])|\.(pem|p12|pfx)($|[]*?,}])|\.netrc($|[]*?,}])|id_(rsa|ed25519|ecdsa)($|[]*?,}])|\.aws(/|$)'
-# On a command line the same path is preceded by a space, quote, = or /, and
-# followed by whitespace, a redirect or a pipe — never by a line anchor. Reusing
-# the path-anchored pattern above here silently matches nothing, which is a
-# guard that looks installed and blocks the exact case it was written for.
-cmd_secret_re='(^|[[:space:]"'"'"'=/])\.env([[:space:]"'"'"';|&)>]|$|\.[A-Za-z0-9_-]+)|\.aws/credentials|(^|[[:space:]])\.netrc([[:space:]]|$)|id_(rsa|ed25519|ecdsa)([[:space:]]|$)|\.(pem|p12|pfx)([[:space:]]|$)'
+# On a command line the same path is preceded by a space, quote, =, /, a
+# redirect (`<`) or a brace-list opener or comma (`{.env,}`), and followed by
+# whitespace, a quote, a separator, a redirect, a paren, a brace-list closer or
+# comma — never by a line anchor. Reusing the path-anchored pattern above here
+# silently matches nothing, which is a guard that looks installed and blocks the
+# exact case it was written for. `.netrc` takes the same lead, so `~/.netrc` and
+# `/x/.netrc` count; the key and certificate names stay unanchored on the left.
+# `.env` also accepts a `.suffix` (`.env.local`), which is why `.env.example.bak`
+# is denied: an accepted false positive, on the safe side. A backtick or `$`
+# also ends the path, so a name glued to an expansion (`.env$(true)`,
+# `.env$x`) still counts: the shell resolves that word to the file.
+cmd_lead_re='(^|[[:space:]"'"'"'=/<{,])'
+cmd_tail_re='([[:space:]"'"'"';|&()<>},`$]|$)'
+cmd_secret_re="${cmd_lead_re}\\.env(${cmd_tail_re}|\\.[A-Za-z0-9_-]+)|\\.aws/credentials|${cmd_lead_re}\\.netrc${cmd_tail_re}|id_(rsa|ed25519|ecdsa)${cmd_tail_re}|\\.(pem|p12|pfx)${cmd_tail_re}"
 # `.env.example` and `.env.template` are committed templates of op:// refs, not
 # resolved values. Blocking them would teach people to route around the guard.
 template_re='\.env\.(example|template|sample|dist)'
-# Rule 3's printing tools, the grep family, and the grep flags that print no
-# line. Explicit [^[:alnum:]_] boundaries stand in for \b: the same word
-# boundary under LC_ALL=C, and macOS regcomp has no \b.
+# A whole template word: the template name plus the boundary char after it, so
+# `.env.example.bak` is not one. Group 2 is that boundary char.
+template_word_re="$template_re([^A-Za-z0-9_.-]|\$)"
+# Rule 3's printing tools and the grep family. Explicit [^[:alnum:]_]
+# boundaries stand in for \b: the same word boundary under LC_ALL=C, and macOS
+# regcomp has no \b.
 print_tool_re='(^|[^[:alnum:]_])(cat|bat|head|tail|less|more|strings|xxd|od|nl|tac|rev|cut|paste|sed|awk|dotenv|source)($|[^[:alnum:]_])'
-grep_tool_re='(^|[^[:alnum:]_])(grep|rg|ripgrep|ag)($|[^[:alnum:]_])'
-quiet_flag_re='(-[a-zA-Z]*[cqlL]|--count|--quiet|--silent|--files-with-matches|--files-without-match)($|[^[:alnum:]_])'
+# A grep-family word plus its arguments up to the next separator (`; & | ( )` or
+# a newline). The newline is spliced in as a real byte: `\n` inside an ERE
+# bracket is a literal backslash and `n`. An `&` right after `<` or `>` stays
+# in the segment, so `2>&1` is not a separator. Group 2 is the tool word, group
+# 3 the argument segment.
+nl=$'\n'
+grep_cmd_re='(^|[^[:alnum:]_])(grep|rg|ripgrep|ag)((([^[:alnum:]_;&|()'"$nl"']|[<>]&)([^;&|()'"$nl"']|[<>]&)*)?)($|[^[:alnum:]_])'
+# Long options that take a value as the next word when written without `=`.
+# That word is the option's value, never an option itself.
+long_value_opt_re='^--(regexp|file|label|exclude|include|exclude-dir|exclude-from|include-dir|max-count|context|after-context|before-context|binary-files|devices|directories|group-separator|glob|iglob|type|type-not|type-add|replace|max-depth|encoding|max-filesize|engine|path-separator|sort|sortr|pre|pre-glob|ignore-file|colors|file-search-regex|path-to-ignore|ignore|after|before|depth)$'
 
 # Command-position anchor for the env, builtin and fish checks below: start of
 # a line (after any indentation, so an indented body counts), or after
@@ -794,18 +814,81 @@ deny() {
   exit 0
 }
 
+# Succeeds when a grep-family argument segment carries a flag that prints no
+# line. The segment is walked word by word, because a quiet-looking word only
+# counts as an option of this invocation: nothing after a standalone `--` is an
+# option, and an option's value (`--label -c`, `-e -c`) is not one either. The
+# flag sets differ per tool: `-L` is --files-without-match in grep but --follow
+# in rg, and `ag --silent` only mutes log messages and still prints matches. A
+# short bundle is quiet only when every letter before the quiet one takes no
+# value; a bundle with a value letter followed by more characters (`-ec`) carries
+# that value inline and so is neither quiet nor consuming the next word.
+grep_seg_is_quiet() {
+  local tool=$1 seg=$2 noval quiet valletter longs w skip=0
+  local -a words
+  case $tool in
+  grep)
+    noval='[EFGHIPRTUVZabhinorsuvwxyz]' quiet='[cqlL]' valletter='[efmABCdD]'
+    longs='count|quiet|silent|files-with-matches|files-without-match'
+    ;;
+  ag)
+    noval='[aiQsSuUvw]' quiet='[clL]' valletter='[ABCGgmp]'
+    longs='count|files-with-matches|files-without-matches'
+    ;;
+  *)
+    noval='[FHINPSUabinopsuvwxz]' quiet='[cql]' valletter='[efmABCEgtTrjMd]'
+    longs='count|count-matches|quiet|files-with-matches|files-without-match'
+    ;;
+  esac
+  local quiet_short_re="^-${noval}*${quiet}\$"
+  local quiet_long_re="^--(${longs})\$"
+  local value_short_re="^-${noval}*${valletter}\$"
+  read -ra words <<<"$seg"
+  for w in "${words[@]}"; do
+    if ((skip)); then
+      skip=0
+      continue
+    fi
+    if [[ $w == -- ]]; then return 1; fi
+    if [[ $w =~ $quiet_short_re || $w =~ $quiet_long_re ]]; then return 0; fi
+    if [[ $w =~ $value_short_re || $w =~ $long_value_opt_re ]]; then skip=1; fi
+  done
+  return 1
+}
+
 # Rule 3 over one view of a Bash command. In-process [[ =~ ]] rather than a
 # grep per test, so judging every dequoted view costs no forks; `if` statements
 # rather than && lists, so a failed test cannot trip set -e.
+#
+# Exemptions are judged per word, not per view. Each whole template word is
+# stripped first, so `cat .env .env.example` still trips on its plain `.env`. A
+# quiet flag exempts only the grep whose own simple command carries it, as an
+# option of that invocation (grep_seg_is_quiet). Accepted limits, on the safe
+# side: print_tool_re is still tested on the whole view, so
+# `cat .env.example; test -f .env` is denied; in the raw view a quoted `|`, `;`,
+# `(` or `)` in a grep pattern ends its segment early, so
+# `grep -E 'A|B' -c .env` is denied; a quoted quiet flag is denied in the raw
+# view, which keeps the quotes (`grep "-c" KEY .env`); and `grep KEY .env | wc -l`
+# is denied, the -l being wc's.
 deny_secret_file_read() {
-  if [[ ! $1 =~ $cmd_secret_re || $1 =~ $template_re ]]; then return 0; fi
-  if [[ $1 =~ $print_tool_re ]]; then
+  local v=$1 rest tool seg
+  while [[ $v =~ $template_word_re ]]; do
+    v=${v/"${BASH_REMATCH[0]}"/"${BASH_REMATCH[2]}"}
+  done
+  if [[ ! $v =~ $cmd_secret_re ]]; then return 0; fi
+  if [[ $v =~ $print_tool_re ]]; then
     deny "This prints credential-file content into the transcript. If you need to confirm a key is configured, use grep -c '^NAME=' (a count), or run the consuming tool and read its error — a missing key fails loudly and that failure is the signal."
   fi
   # grep/rg leak unless restricted to a non-printing mode.
-  if [[ $1 =~ $grep_tool_re && ! $1 =~ $quiet_flag_re ]]; then
-    deny "grep/rg over a credential file prints the matching line, value included. Add -c (count) or -q (quiet) if you only need to know whether it is set."
-  fi
+  rest=$v
+  while [[ $rest =~ $grep_cmd_re ]]; do
+    tool=${BASH_REMATCH[2]}
+    seg=${BASH_REMATCH[3]}
+    rest=${rest#*"${BASH_REMATCH[0]}"}
+    if ! grep_seg_is_quiet "$tool" "$seg"; then
+      deny "grep/rg over a credential file prints the matching line, value included. Add -c (count) or -q (quiet) if you only need to know whether it is set."
+    fi
+  done
 }
 
 case $tool_name in
