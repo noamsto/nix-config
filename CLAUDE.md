@@ -10,7 +10,7 @@ This is a **NixOS Configuration Repository** using Nix flakes that manages both 
 
 Command-heavy and host-specific reference material lives in skills (loaded on demand), not in this file:
 
-- **`nix-rebuild`** — invoke before running `nh`, `nixos-rebuild`, `home-manager`, `nix flake` / `build` / `develop` / `fmt`, or debugging a failed build. Covers the `git add` gotcha, `just` wrappers, host/config list, binary caches, devshell tooling.
+- **`nix-rebuild`** — invoke before running `nh`, `nixos-rebuild`, `home-manager`, `nix flake` / `build` / `develop` / `fmt`, verifying a change, or debugging a failed build. Covers the narrowest-check ladder (verify a package or option without a full system build), the `git add` gotcha, `just` wrappers, host/config list, binary caches, devshell tooling.
 - **`thinkfan-tuning`** — invoke when editing `hardware.thinkpad.thinkfan`, fan curves, or sensor paths on ThinkPad hosts (gen4/gen5/gen6).
 - **`secure-boot-tpm`** — invoke when touching Lanzaboote, Secure Boot keys, or TPM2 LUKS enrollment on hosts that import `nixos/core/lanzaboote.nix` (currently g5, g6).
 - **`nix-package-authoring`** — invoke when adding a new derivation under `packages/`, using `nurl` / `nix-init` to scaffold, or running `nix-locate` / `,` to find/run something without installing.

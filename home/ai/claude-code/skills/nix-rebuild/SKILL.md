@@ -1,6 +1,6 @@
 ---
 name: nix-rebuild
-description: Use when rebuilding NixOS, nix-darwin (macOS), or Home Manager, running any `nh`, `nixos-rebuild`, `darwin-rebuild`, `home-manager`, `nix flake`, `nix build`, `nix develop`, `nix fmt` command, testing a flake change, debugging a failed build, or hitting "file not found" / "path does not exist" errors on untracked files. Applies to the nix-config repo workflow (flake-parts, hybrid Home Manager, justfile wrappers).
+description: Use when rebuilding NixOS, nix-darwin (macOS), or Home Manager, running any `nh`, `nixos-rebuild`, `darwin-rebuild`, `home-manager`, `nix flake`, `nix build`, `nix develop`, `nix fmt` command, verifying a flake change (pick the narrowest check, not a full system build), debugging a failed build, or hitting "file not found" / "path does not exist" errors on untracked files. Applies to the nix-config repo workflow (flake-parts, hybrid Home Manager, justfile wrappers).
 ---
 
 # Nix Rebuild Workflow
@@ -150,21 +150,22 @@ Pre-configured in `flake.nix:nixConfig` and mirrored in `lib/caches.nix` — **k
 
 No manual config needed; they apply automatically.
 
-## Testing workflow before commit
+## Verifying a change: narrowest check first
 
-```fish
-git add <files>                 # 1. stage (flakes only see tracked files)
-just check-staged               # 2. confirm what's included
-nh os build .                   # 3. build without activating (or `nh home build .`)
-nh os switch .                  # 4. activate if build succeeded
-```
+Verify with the **narrowest** attr that answers the question. A whole-system build (`nh os build`, `.toplevel`) or `just check` (it evaluates every host and runs every check) costs minutes. Use one only as the final gate before a switch, or when the change touches system-wide wiring such as module imports, overlays every host consumes, or a flake input bump.
 
-For flake input bumps:
-```fish
-nix flake update                # or: just update
-just check                      # validate
-nh os build .                   # test build
-```
+| Question | Narrowest check |
+|---|---|
+| Does a patched/overlaid package build? | `nix build --no-link .#nixosConfigurations.<host>.pkgs.<pkg>` |
+| Did the overlay/patch land? (no build) | `nix eval --json .#nixosConfigurations.<host>.pkgs.<pkg>.patches` |
+| What value does an option end up with? | `nix eval .#nixosConfigurations.<host>.config.<option.path>` |
+| What does a generated HM file contain? | `nix build --no-link --print-out-paths '.#nixosConfigurations.<host>.config.home-manager.users.noams.xdg.configFile."<name>".source'` |
+| Does one flake check pass? | `nix build --no-link .#checks.x86_64-linux.<name>` |
+| Does the whole host still evaluate and build? | `nh os build .` (final gate only) |
+
+`<host>` is the current machine (`hostname`) unless the change targets another one. `.#nixosConfigurations.<host>.pkgs` is the host's own package set, with every overlay applied, so a package built there is exactly the one the switch will use.
+
+Before committing: `git add <files>`, run the narrowest check, then `nh os switch .` (or `nh home switch .` for HM-only config) as the real activation.
 
 ## Common mistakes
 
