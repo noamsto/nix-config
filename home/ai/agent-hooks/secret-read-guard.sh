@@ -208,18 +208,36 @@ fish_dump_re="$cmd_start"'set[[:space:]]+(-x|-gx|-U)'"$term_bare"
 # its flags, and the trailing whitespace — it does not capture the
 # argument's quoted content itself; decode_word does that.
 #
-# The final flag is `-[A-Za-z]*c`, not a literal `-c`, so a combined flag
-# cluster like `-ic` (interactive + command, as in `fish -ic '...'`) or
-# `-lc`/`-ec` still matches. The leading anchor also allows `/` and `(`
-# ahead of the shell name, for `/usr/bin/fish -c '...'` and `(bash -c
-# '...')`, and `;`/`&`/`|`/`)` for a compact one-liner or sibling -c
-# invocation with no space before the wrapper (`true;bash -c '...'`,
-# `x&&bash -c '...'`, `echo x|bash -c '...'`).
+# It models bash's option grammar. Option words run until the first
+# non-option word, and when a `-` cluster among them contained `c`, that word
+# is the body — so `-ic`, `-ce`, `-c -e` and `-o pipefail -c` all find it. An
+# option word is a `-`/`+` cluster (one containing `o`/`O` takes the next
+# word, as in `-euo pipefail` and `-O extglob`), a long `--norc`,
+# `--rcfile FILE`/`--init-file FILE`, or a bare `--` or `-`. Leftmost-longest
+# matching ends the match right before the body.
+#
+# The interpreters are the POSIX shells sharing bash's -c grammar: dash
+# (Debian's /bin/sh), ash and `busybox sh`/`busybox ash` (Alpine), ksh and
+# mksh. Not listed: yash, posh, rbash, versioned names like bash5.
+#
+# Shapes not modelled: an option-looking word after `--` (`bash -c -- -x`
+# reads `-x` as an option), other argument-taking options (fish `-C`/`-p`,
+# zsh specifics), a cluster with two `o`s, and fish's own `-c`, which takes
+# the next word or the rest of its cluster as the body (`fish -cenv`,
+# `fish -c -n x`) — read here with bash's grammar.
+#
+# The leading anchor also allows `/` and `(` ahead of the shell name, for
+# `/usr/bin/fish -c '...'` and `(bash -c '...')`, and `;`/`&`/`|`/`)` for a
+# compact one-liner or sibling -c invocation with no space before the wrapper
+# (`true;bash -c '...'`, `x&&bash -c '...'`, `echo x|bash -c '...'`).
 #
 # Matched against the dequoted view (dequote, below), where those anchors
 # inside a quoted span read as `_`, so `rg 'foo|bash -c env x' .` never
 # matches while `b\ash -c` and `"bash" -c` do.
-shell_c_re="(^|[[:space:]/(;&|)])(fish|bash|sh|zsh)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*-[A-Za-z]*c[[:space:]]+"
+shell_c_interp='(fish|bash|sh|zsh|dash|ksh|mksh|ash|busybox[[:space:]]+(sh|ash))'
+shell_c_opt='([-+][A-Za-z]*[oO][A-Za-z]*[[:space:]]+[^-+[:space:]][^[:space:]]*|[-+][A-Za-z]+|--(rcfile|init-file)[[:space:]]+[^[:space:]]+|-(-([A-Za-z][-A-Za-z]*(=[^[:space:]]*)?)?)?)[[:space:]]+'
+shell_c_flag='(-[A-Za-z]*([oO][A-Za-z]*c|c[A-Za-z]*[oO])[A-Za-z]*[[:space:]]+[^-+[:space:]][^[:space:]]*|-[A-Za-z]*c[A-Za-z]*)'
+shell_c_re="(^|[[:space:]/(;&|)])${shell_c_interp}[[:space:]]+(${shell_c_opt})*${shell_c_flag}[[:space:]]+(${shell_c_opt})*"
 # /proc/<pid>/environ is a process's whole environment, NUL-joined — reading
 # it any way (cat, a redirect, tr/xargs/sort splitting the NUL bytes, …) is
 # exactly as much a dump as env/printenv, so this denies unconditionally

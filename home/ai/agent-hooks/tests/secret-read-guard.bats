@@ -484,6 +484,118 @@ assert_allow() {
   assert_deny
 }
 
+@test "deny: bash -o pipefail -c 'env', pipefail is an option argument" {
+  guard_bash "bash -o pipefail -c 'env'"
+  assert_deny
+}
+
+@test "deny: bash -euo pipefail -c 'env', a cluster with o takes the next word" {
+  guard_bash "bash -euo pipefail -c 'env'"
+  assert_deny
+}
+
+@test "deny: bash -ce 'env', c inside a cluster before another flag" {
+  guard_bash "bash -ce 'env'"
+  assert_deny
+}
+
+@test "deny: bash -c -e 'env', an option after -c before the body" {
+  guard_bash "bash -c -e 'env'"
+  assert_deny
+}
+
+@test "deny: bash --norc -c 'env', a long option before -c" {
+  guard_bash "bash --norc -c 'env'"
+  assert_deny
+}
+
+@test "deny: dash -c 'env'" {
+  guard_bash "dash -c 'env'"
+  assert_deny
+}
+
+@test "deny: ksh -c 'env'" {
+  guard_bash "ksh -c 'env'"
+  assert_deny
+}
+
+@test "deny: mksh -c 'env'" {
+  guard_bash "mksh -c 'env'"
+  assert_deny
+}
+
+@test "deny: ash -c 'env'" {
+  guard_bash "ash -c 'env'"
+  assert_deny
+}
+
+@test "deny: busybox sh -c 'env'" {
+  guard_bash "busybox sh -c 'env'"
+  assert_deny
+}
+
+@test "deny: bash -co pipefail 'env', o and c in one cluster" {
+  guard_bash "bash -co pipefail 'env'"
+  assert_deny
+}
+
+@test "allow: bash script.sh -c foo, -c after the script is the script's" {
+  guard_bash "bash script.sh -c foo"
+  assert_allow
+}
+
+@test "allow: grep -c x file" {
+  guard_bash "grep -c x file"
+  assert_allow
+}
+
+@test "allow: echo \"bash -c env\", a quoted mention" {
+  guard_bash 'echo "bash -c env"'
+  assert_allow
+}
+
+@test "allow: echo 'see bash -c env here', a quoted mention" {
+  guard_bash "echo 'see bash -c env here'"
+  assert_allow
+}
+
+@test "allow: true # see bash -c 'echo hi', a harmless bash -c mention in a comment" {
+  guard_bash "true # see bash -c 'echo hi'"
+  assert_allow
+}
+
+@test "deny: a comment holding a full bash -c 'env'" {
+  guard_bash "true # see bash -c 'env'"
+  assert_deny
+}
+
+# shellcheck disable=SC2016
+@test "deny: a # inside backticks is not a comment" {
+  guard_bash 'echo `true #`; bash -c '"'env'"
+  assert_deny
+}
+
+# shellcheck disable=SC2016
+@test "deny: a # inside a nested \${} default is not a comment" {
+  guard_bash 'echo ${x:-${y} #}; bash -c '"'env'"
+  assert_deny
+}
+
+@test "deny: a # inside backticks in a nested bash -c body" {
+  guard_bash "bash -c 'echo \`true #\`; bash -c env'"
+  assert_deny
+}
+
+@test "deny: bash -c - 'env', a lone - ends options" {
+  guard_bash "bash -c - 'env'"
+  assert_deny
+}
+
+@test "allow: bash -o pipefail script.sh, no -c" {
+  guard_bash "bash -o pipefail script.sh"
+  assert_allow
+}
+
 @test "deny: cat /proc/1/environ followed by a heredoc larger than the pipe buffer" {
   local body json
   body=$(printf 'line of filler text %s\n' {1..8000})
