@@ -119,6 +119,13 @@
     checkPhase = "${pkgs.runtimeShell} -n \"$target\"\n" + lib.concatMapStringsSep "\n" (e: "test -e ${e} || { echo 'missing pi extension: ${e}' >&2; exit 1; }") extensions;
     text = ''
       #!${pkgs.runtimeShell}
+      # Pass pi subcommands straight to the real binary — the injected --skill / --prompt-template
+      # flags put options before the subcommand, which pi rejects (subcommand must be argv[1]).
+      case "''\${1:-}" in
+        install|remove|uninstall|update|list|config|auth|mcp)
+          exec -a pi ${pkgs.pi}/bin/pi "$@"
+          ;;
+      esac
       personal=()
       if [ -z "''${CREW_WORKER_ID:-}" ]; then
         export PI_LENS_CONFIG_PATH=${piLensConfig}
