@@ -169,6 +169,15 @@ in {
       # unsloth's MTP copy aborts on stock llama.cpp b11382. q8_0 KV beat f16 at
       # 128K (less memory, faster) and n-max 3 has no clear loser; 30-37 tok/s
       # decode on halo with MTP (nix-amd-ai #240 / #245).
+      # Bench qwen38-flash-next-lazy-ub-pmin-2026-10-05 (nix-amd-ai #248, halo,
+      # gfx1151, b11382 Vulkan):
+      # - --lazy-mode on reads the n-gram embedding table from disk on demand:
+      #   host RSS 27.1 -> 0.31 GiB, GTT unchanged, speed within noise.
+      # - -ub/-b 2048: prefill 394 -> 465 t/s at 4K and 331 -> 385 at 32K for
+      #   +4.3 GiB GTT; decode unchanged. 4096 isn't worth +10.7 GiB.
+      # Risk: one unexplained ErrorDeviceLost with -ub 2048 at load avg ~19.6,
+      # not reproduced in two quiet reruns. If lemond's journal shows it, drop
+      # -ub 2048 -b 2048 first.
       customModels."Qwen3.8-Flash-Next-MTP" = {
         checkpoints = {
           main = "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS";
@@ -177,7 +186,7 @@ in {
         recipe = "llamacpp";
         recipe_options = {
           ctx_size = 131072;
-          llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3";
+          llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3 --lazy-mode on -ub 2048 -b 2048";
         };
         labels = ["chat" "reasoning" "tool-calling" "mtp"];
       };
