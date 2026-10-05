@@ -3,22 +3,6 @@
 @~/.claude/AGENTS.shared.md
 @~/.claude/CLAUDE.profile.md
 
-## Settings
-
-In `~/nix-config/home/ai/claude-code/`:
-
-- `settings.json` → writable `~/.claude/settings.json`: plain JSON settings,
-  common plugins, permissions, theme, sandbox, MCP servers, preferences.
-  Third-party tools/UI edit this file; runtime keys such as
-  `feedbackSurveyState` may add diff noise.
-- `default.nix` → read-only `--settings` overlay (`nix-settings-json`): hooks,
-  statusLine, anything referencing `/nix/store`, and profile-dependent settings
-  gated with `lib.optionalAttrs`. Overlay plugins are profile-locked in the TUI.
-
-Object-valued keys (`enabledPlugins`, `permissions`, `env`, `mcpServers`, `hooks`)
-deep-merge; the overlay wins per key. Keep nested keys disjoint unless overriding
-intentionally.
-
 ## Tools and skills
 
 - Prefer simple Bash commands that match `Bash(cmd *)` permissions: direct
@@ -39,3 +23,5 @@ intentionally.
   sequentially; one failed parallel call can cancel siblings.
 - Playwright screenshots: default to PNG for crisp text/borders; JPEG when image
   volume/token cost dominates. Vision accepts JPEG, PNG, GIF, WebP; not AVIF/HEIC.
+- Claude Code settings, hooks, and plugin changes in nix-config: the
+  `claude-code-settings` skill there explains the two settings layers.

@@ -110,7 +110,8 @@
   # ~/.claude/skills is a flat dir of per-skill symlinks (locally-authored
   # skills, the agent-skills bundle, and out-of-store ones); ~/.claude/commands
   # is the shared repo dir. pi follows symlinked skill dirs. Additive to pi's
-  # own ~/.pi/agent/skills and any project .pi/skills / .agents/skills.
+  # own ~/.pi/agent/skills and any project .pi/skills / .agents/skills (nix-config's
+  # repo-specific skills live in .agents/skills, symlinked into .claude/skills).
   #
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
   pi-wrapper = pkgs.writeTextFile {

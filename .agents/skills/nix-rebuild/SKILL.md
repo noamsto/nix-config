@@ -1,6 +1,6 @@
 ---
 name: nix-rebuild
-description: Use when rebuilding NixOS, nix-darwin (macOS), or Home Manager, running any `nh`, `nixos-rebuild`, `darwin-rebuild`, `home-manager`, `nix flake`, `nix build`, `nix develop`, `nix fmt` command, verifying a flake change (pick the narrowest check, not a full system build), debugging a failed build, or hitting "file not found" / "path does not exist" errors on untracked files. Applies to the nix-config repo workflow (flake-parts, hybrid Home Manager, justfile wrappers).
+description: Use when rebuilding NixOS, nix-darwin or Home Manager, running nh, nixos-rebuild, darwin-rebuild, home-manager or nix flake/build/develop/fmt, verifying a flake change with the narrowest check, debugging a failed build, or hitting "path does not exist" errors on untracked files.
 ---
 
 # Nix Rebuild Workflow

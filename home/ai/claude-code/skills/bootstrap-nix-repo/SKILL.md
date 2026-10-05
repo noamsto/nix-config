@@ -1,6 +1,6 @@
 ---
 name: bootstrap-nix-repo
-description: Use when starting a new project repo (Go, Rust, Node, or generic) and it needs a Nix flake, direnv, devShell, formatting, and pre-commit. Scaffolds flake-parts flake.nix, .envrc, .gitignore, treefmt, and git-hooks following Noam's conventions. Triggers - "set up a flake", "add nix to this repo", "bootstrap a nix project", "new repo with devshell/direnv".
+description: Use when starting a new project repo (Go, Rust, Node, generic) that needs a Nix flake, direnv, devShell, treefmt and pre-commit, following Noam's conventions.
 ---
 
 # Bootstrap a Nix Repo
@@ -26,7 +26,7 @@ New project repos follow one house pattern: **flake-parts, inline `perSystem`, a
 ## Steps
 
 1. Create the files below (`flake.nix`, `.envrc`, `.gitignore`).
-2. `git add -A` — **untracked files are invisible to flakes**; this is non-negotiable, not just for committing. This covers your source too: Go needs `go.mod` (+ `go.sum` once there are deps) staged; Rust needs `Cargo.toml`/`Cargo.lock`. (See `nix-rebuild` skill for the full gotcha.)
+2. `git add -A` — **untracked files are invisible to flakes**; this is non-negotiable, not just for committing. This covers your source too: Go needs `go.mod` (+ `go.sum` once there are deps) staged; Rust needs `Cargo.toml`/`Cargo.lock`. (This is the flake git-tracking gotcha from the nix-config `nix-rebuild` skill.)
 3. `direnv allow` (or `nix develop`).
 4. Set the dependency hash, then `nix build`:
    - **Go, no dependencies (stdlib only):** leave `vendorHash = null` — no hash step, it just builds.
@@ -195,12 +195,8 @@ flake.homeManagerModules.default = {pkgs, ...} @ args:
 | Hand-edited `.pre-commit-config.yaml` | changes vanish on next `nix develop` | edit `pre-commit.settings.hooks` in flake.nix; the YAML is generated |
 | Made a `flake-modules/` dir for a small project | needless indirection | keep `perSystem` inline; that split is only for `nix-config` |
 
-## After creating the skill
-
-This skill lives in `nix-config` and is auto-discovered (any dir under `home/ai/claude-code/skills/` is symlinked). Run `nh home switch .` to activate it. See `nix-rebuild` skill.
-
 ## When NOT to use
 
-- Adding a package to **this** `nix-config` repo → `nix-package-authoring` skill
-- Rebuilding / switching → `nix-rebuild` skill
+- Adding a package to **this** `nix-config` repo → `nix-package-authoring` skill (inside nix-config)
+- Rebuilding / switching → `nix-rebuild` skill (inside nix-config)
 - The repo already has a working flake — just edit it
