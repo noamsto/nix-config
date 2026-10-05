@@ -244,8 +244,8 @@ in {
       inherit (osConfig) profile;
       # cursor-agent ships on every host but is only logged in on the work one.
       engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
-      # $40/mo OpenRouter budget gate for pi worker spend.
-      openrouter.monthlyTarget = 40;
+      # $40/mo OpenRouter budget gate for pi worker spend — personal only.
+      openrouter.monthlyTarget = lib.mkIf (osConfig.profile == "personal") 40;
       orgTrackers.factify-inc = "linear:ENG";
     };
 
