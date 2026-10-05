@@ -41,6 +41,17 @@ in {
   # held). Mixed mode terminates the whole cgroup cleanly.
   systemd.user.services.vicinae.Service.KillMode = lib.mkForce "mixed";
 
+  # The cachix build uses vicinae's own nixpkgs pin. Host mesa built on a newer
+  # glibc can't load into it, so EGL init fails. Use the pin's mesa instead;
+  # `inputs.nixpkgs.follows` would also fix it but forfeits vicinae.cachix.
+  systemd.user.services.vicinae.Service.Environment = let
+    mesa = inputs.vicinae.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.mesa;
+  in [
+    "__EGL_VENDOR_LIBRARY_FILENAMES=${mesa}/share/glvnd/egl_vendor.d/50_mesa.json"
+    "GBM_BACKENDS_PATH=${mesa}/lib/gbm"
+    "LIBGL_DRIVERS_PATH=${mesa}/lib/dri"
+  ];
+
   home.activation = let
     seedConfig = pkgs.writeText "vicinae-seed-config.json" (builtins.toJSON {
       "$schema" = "https://vicinae.com/schemas/config.json";
