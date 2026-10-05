@@ -161,18 +161,42 @@ in {
       models = [
         "Qwen3.5-4B-GGUF" # 3.58 GB, for cheap tasks
         "Qwen3-Coder-30B-A3B-Instruct-GGUF" # 18.6 GB, proven on g6
-        "Qwen3.8-27B-GGUF" # 18.8 GB, the pi agents' coding model
+        "Qwen3.8-27B-GGUF" # 18.8 GB, fallback coding model
+        "Qwen3.8-Flash-Next-MTP" # resident default, see customModels
       ];
+
+      # UD-IQ4_XS plus its MTP draft head. The draft must be the ggml-org one:
+      # unsloth's MTP copy aborts on stock llama.cpp b11382. q8_0 KV beat f16 at
+      # 128K (less memory, faster) and n-max 3 has no clear loser; 30-37 tok/s
+      # decode on halo with MTP (nix-amd-ai #240 / #245).
+      customModels."Qwen3.8-Flash-Next-MTP" = {
+        checkpoints = {
+          main = "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS";
+          draft = "ggml-org/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0.gguf";
+        };
+        recipe = "llamacpp";
+        recipe_options = {
+          ctx_size = 131072;
+          llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3";
+        };
+        labels = ["chat" "reasoning" "tool-calling" "mtp"];
+      };
+
+      # Canonical id, not the bare name: user models are prefixed `user.` here
+      # and a bare key silently matches nothing.
+      recipeOptions."user.Qwen3.8-Flash-Next-MTP".pinned = true;
       # Without this both caches land in ~/.cache on @home, which is
       # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.
       cacheDir = "/var/lib/models";
 
       # Games and lemond both draw from the same GTT pool. auto_evict unloads
-      # idle models under memory pressure and reloads on the next request, so a
-      # game does not need the endpoint stopped. Unverified whether this
-      # observes a game's allocations specifically — see the plan's Task 5
-      # measurement; if it does not, stop lemond before gaming, as with ds4.
+      # idle models under memory pressure, but the pinned Flash-Next is exempt,
+      # so it no longer frees its GTT for a game: gaming now means stopping
+      # lemond first, the same as for ds4.
       settings.auto_evict = true;
+      # Lets the 4B load beside the pinned Flash-Next instead of evicting it;
+      # health reports this as max_models.llm.
+      settings.max_loaded_models = 2;
     };
 
     # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
@@ -236,6 +260,32 @@ in {
           RemainAfterExit = true;
           ExecStart = "${pkgs.e2fsprogs}/bin/chattr +C /var/lib/games";
         };
+      };
+
+      # lemond's own load is lazy, so the pinned model would otherwise load on
+      # the first request. Tied to lemond's lifecycle: PartOf stops and restarts
+      # it with lemond, WantedBy starts it with lemond. /load blocks until the
+      # model is up, so the retry only covers lemond's port not answering yet.
+      lemond-preload = {
+        description = "Load the resident model into lemond";
+        after = ["lemond.service"];
+        partOf = ["lemond.service"];
+        wantedBy = ["lemond.service"];
+        path = [pkgs.curl];
+        serviceConfig = {
+          # exec, not oneshot: a oneshot makes `nh os switch` wait out the model
+          # load (and the first download). RemainAfterExit keeps it active so
+          # PartOf still stops and restarts it with lemond.
+          Type = "exec";
+          RemainAfterExit = true;
+          User = config.hardware.amd-npu.lemonade.user;
+        };
+        script = ''
+          curl --silent --show-error --fail --retry 60 --retry-delay 5 --retry-all-errors \
+            --max-time 900 --header 'Content-Type: application/json' \
+            --data '{"model_name": "user.Qwen3.8-Flash-Next-MTP"}' \
+            http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1/load
+        '';
       };
 
       # Wi-Fi is halo's only uplink, and restarting iwd under a running
@@ -360,7 +410,10 @@ in {
         model = {
           provider = "custom";
           base_url = "http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1";
-          default = "gpt-oss-120b-mxfp-GGUF";
+          # The id /api/v1/models serves: the bare name, since no builtin shadows it.
+          # The 27B and gpt-oss-120b cannot load beside the pinned Flash-Next (not
+          # enough RAM), so using them means unloading Flash-Next first.
+          default = "Qwen3.8-Flash-Next-MTP";
         };
         # Chat can read files in its home and the scout report dir, but it
         # cannot run code, browse, delegate or schedule, and the hermes uid
