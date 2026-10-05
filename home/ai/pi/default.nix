@@ -3,8 +3,11 @@
   pkgs,
   lib,
   inputs,
+  osConfig,
   ...
 }: let
+  isHalo = osConfig.hostname == "halo";
+
   piGuards = import ./guards.nix {
     inherit pkgs;
     inherit (inputs) dispatcher;
@@ -148,8 +151,14 @@
   managedSettings = {
     # grep/find/ls ship off by default.
     defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls"];
-    defaultProvider = "openrouter";
-    defaultModel = "deepseek/deepseek-v4.1-flash";
+    defaultProvider =
+      if isHalo
+      then "Lemonade"
+      else "openrouter";
+    defaultModel =
+      if isHalo
+      then "Qwen3.8-Flash-Next-MTP"
+      else "deepseek/deepseek-v4.1-flash";
   };
 in {
   # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix).
@@ -190,7 +199,7 @@ in {
     # is a regular file HM would otherwise refuse to clobber. A store path
     # rather than an out-of-store symlink: the symlink would resolve against
     # the main checkout, leaving a switch run from a worktree with a dangling
-    # file. Flash-Next is listed first and is the coding default on halo; the
+    # file. The halo default (Flash-Next) is set in managedSettings above; the
     # 27B and gpt-oss-120b cannot load beside the pinned Flash-Next (not enough
     # RAM), so using them means unloading Flash-Next first.
     file.".pi/agent/models.json" = {
