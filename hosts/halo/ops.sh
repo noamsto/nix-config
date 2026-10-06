@@ -13,7 +13,9 @@ usage() {
   cat <<'USAGE'
 usage: halo-ops <command>
   rebuild                    fast-forward the checkout, build and switch halo
-  update-prepare [inputs...] update inputs and gate them (exit 10: already up to date)
+  update-prepare [inputs...] [--skip <input>]...
+                             update inputs (all but the skipped) and gate them
+                             (exit 10: already up to date)
   update-push                commit and push the gated candidate lock
   reboot                     reboot halo
   status                     uptime, generation, failed units, inference state, memory
@@ -70,24 +72,47 @@ lock_message() {
   git show HEAD:flake.lock | jq -c -f "$LOCK_COMMIT_FILTER" --slurpfile new "$1"
 }
 
-update_prepare_unit() {
-  local inputs=() name root_inputs
-  if [[ -f "$OPS_STATE/update-inputs" ]]; then
-    mapfile -t inputs <"$OPS_STATE/update-inputs"
+# Prints the inputs to update, one per line; nothing means update all. Every
+# named or skipped input is validated before it can reach nix.
+resolve_update_inputs() {
+  local root_inputs=$1 inputs_file=$2 skips_file=$3
+  local names=() skips=() name
+  [[ ! -f $inputs_file ]] || mapfile -t names < <(grep -v '^$' "$inputs_file" || true)
+  [[ ! -f $skips_file ]] || mapfile -t skips < <(grep -v '^$' "$skips_file" || true)
+
+  for name in "${names[@]}" "${skips[@]}"; do
+    [[ $name =~ ^[A-Za-z0-9_-]+$ ]] || die "invalid input name: $name"
+    grep -qxF -- "$name" <<<"$root_inputs" || die "not a root input of flake.lock: $name"
+  done
+
+  if ((${#skips[@]} == 0)); then
+    ((${#names[@]} == 0)) || printf '%s\n' "${names[@]}"
+    return 0
+  fi
+  if ((${#names[@]} == 0)); then
+    mapfile -t names <<<"$root_inputs"
   fi
 
+  local skip kept=()
+  for name in "${names[@]}"; do
+    for skip in "${skips[@]}"; do
+      [[ $name != "$skip" ]] || continue 2
+    done
+    kept+=("$name")
+  done
+  ((${#kept[@]} > 0)) || die "every input is skipped; nothing to update"
+  printf '%s\n' "${kept[@]}"
+}
+
+update_prepare_unit() {
   sync_main
   trap 'git checkout -- flake.lock' EXIT
   rm -f "$OPS_STATE"/candidate.{lock,base,summary}
 
-  local names=()
-  root_inputs=$(jq -r '.nodes[.root].inputs | keys[]' flake.lock)
-  for name in "${inputs[@]}"; do
-    [[ -n $name ]] || continue
-    [[ $name =~ ^[A-Za-z0-9_-]+$ ]] || die "invalid input name: $name"
-    grep -qxF -- "$name" <<<"$root_inputs" || die "not a root input of flake.lock: $name"
-    names+=("$name")
-  done
+  local resolved names=()
+  resolved=$(resolve_update_inputs "$(jq -r '.nodes[.root].inputs | keys[]' flake.lock)" \
+    "$OPS_STATE/update-inputs" "$OPS_STATE/update-skips")
+  [[ -z $resolved ]] || mapfile -t names <<<"$resolved"
 
   nix flake update "${names[@]}"
 
@@ -138,11 +163,22 @@ update_prepare() {
   # is-active reports a running oneshot as "activating" and exits non-zero.
   [[ "$(systemctl show -P ActiveState halo-update-prepare.service)" =~ ^(activating|active|deactivating|reloading)$ ]] &&
     die "an update is already being prepared"
-  if (($# > 0)); then
-    printf '%s\n' "$@" >"$OPS_STATE/update-inputs"
-  else
-    : >"$OPS_STATE/update-inputs"
-  fi
+  local inputs=() skips=()
+  while (($# > 0)); do
+    case $1 in
+    --skip)
+      [[ -n ${2:-} ]] || die "--skip needs an input name"
+      skips+=("$2")
+      shift 2
+      ;;
+    *)
+      inputs+=("$1")
+      shift
+      ;;
+    esac
+  done
+  printf '%s\n' "${inputs[@]}" >"$OPS_STATE/update-inputs"
+  printf '%s\n' "${skips[@]}" >"$OPS_STATE/update-skips"
   (run_unit halo-update-prepare.service)
   [[ -f "$OPS_STATE/candidate.lock" ]] || exit 10
   cat "$OPS_STATE/candidate.summary"

@@ -3,7 +3,8 @@ usage() {
   cat >&2 <<'USAGE'
 usage: halo <command>
   rebuild                      rebuild halo from its own checkout
-  update [inputs...] [--switch] update flake.lock on halo, push, optionally rebuild
+  update [inputs...] [--skip <input>]... [--switch]
+                               update flake.lock on halo, push, optionally rebuild
   reboot
   status
   logs <unit> [-n N]
@@ -74,8 +75,17 @@ reboot)
 update)
   switch=0
   inputs=()
-  for a in "$@"; do
-    if [[ $a == --switch ]]; then switch=1; else inputs+=("$a"); fi
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+    --switch) switch=1 ;;
+    --skip)
+      [[ ${2-} ]] || usage
+      inputs+=(--skip "$2")
+      shift
+      ;;
+    *) inputs+=("$1") ;;
+    esac
+    shift
   done
   rc=0
   remote update-prepare "${inputs[@]}" || rc=$?

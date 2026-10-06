@@ -10,6 +10,14 @@
     runtimeEnv.FLAKE = osConfig.flakePath;
     text = builtins.readFile ./halo.sh;
   };
+  isHalo = osConfig.hostname == "halo";
 in {
-  home.packages = lib.optionals (osConfig.hostname != "halo") [halo];
+  home.packages = lib.optionals (!isHalo) [halo];
+  xdg.configFile."fish/completions/halo.fish" = lib.mkIf (!isHalo) {
+    source = import ./halo-completions.nix {
+      inherit pkgs;
+      command = "halo";
+      flake = osConfig.flakePath;
+    };
+  };
 }

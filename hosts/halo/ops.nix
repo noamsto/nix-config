@@ -31,6 +31,14 @@
     text = builtins.readFile ./ops.sh;
   };
 
+  completions = pkgs.runCommand "halo-ops-completions" {} ''
+    install -Dm444 ${import ../../home/terminal/halo-completions.nix {
+      inherit pkgs;
+      command = "halo-ops";
+      flake = config.flakePath;
+    }} $out/share/fish/vendor_completions.d/halo-ops.fish
+  '';
+
   # restartIfChanged = false: a switch must never kill a running action
   # (halo-rebuild is itself what performs the switch).
   oneshot = {
@@ -43,7 +51,7 @@
     Group = "users";
   };
 in {
-  environment.systemPackages = [ops];
+  environment.systemPackages = [ops completions];
 
   systemd.tmpfiles.rules = ["d /var/lib/halo-ops 0750 ${config.username} users -"];
 
