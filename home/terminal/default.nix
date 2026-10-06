@@ -31,6 +31,7 @@ in {
     ./television
     ./btop.nix
     ./lazydocker.nix
+    ./halo.nix
   ];
   # Cross-platform: the module gates its Linux systemd / darwin launchd internals.
   programs.tmux-og = {

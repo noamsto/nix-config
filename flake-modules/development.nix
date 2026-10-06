@@ -49,6 +49,8 @@
         # Direct bats regression suite for the xresources-apply script, against a
         # real Xvfb server + xrdb (fresh-X-server behaviour).
         xresources-apply = import ../home/desktop/hyprland/check.nix {inherit pkgs;};
+        # Asserts halo's polkit allow-list: exact unit/verb/user matches only.
+        halo-ops-polkit = import ../hosts/halo/ops-polkit-check.nix {inherit pkgs lib;};
       };
 
     devShells.default = pkgs.mkShell {

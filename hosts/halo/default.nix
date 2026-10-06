@@ -11,6 +11,7 @@ in {
     ./hardware-configuration.nix
     ./disko.nix
     ./host_secrets.nix
+    ./ops.nix
     ../../nixos
     ../../home
     ../../overlays
