@@ -1819,11 +1819,11 @@
     "mysecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1790190214,
-        "narHash": "sha256-PVAysILfXYG2PKO1y2Zy2R3quEvUlIhYsUH5JLa6er8=",
+        "lastModified": 1791266161,
+        "narHash": "sha256-TVjgWBm1hHQmMOWMlytJB+wVFhn8SsVlGD+vyBDTfG4=",
         "ref": "refs/heads/main",
-        "rev": "83109efeea2f2213786fbe396f866e4a1734bb2a",
-        "revCount": 72,
+        "rev": "63a010d8f4ddaf54342b67d029650e88e91cf47e",
+        "revCount": 73,
         "type": "git",
         "url": "ssh://git@github.com/noamsto/nix-secrets.git"
       },
