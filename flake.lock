@@ -1862,11 +1862,11 @@
         "nixpkgs": "nixpkgs_10"
       },
       "locked": {
-        "lastModified": 1791208988,
-        "narHash": "sha256-r+Abt3U8ftnUbHl8BPHVBESG8vkuiJkoQQ0muMDVqM0=",
+        "lastModified": 1791299576,
+        "narHash": "sha256-aWajzxvuM9D9HGH64L/5Zk7hT04Y/U/NRWNWXyYe6Lg=",
         "owner": "noamsto",
         "repo": "nix-amd-ai",
-        "rev": "b20490abc13967cb455da737ea70c68d7097c12e",
+        "rev": "fbc40fda096db873971457d2e1fab8ae7abd8a38",
         "type": "github"
       },
       "original": {

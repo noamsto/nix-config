@@ -101,6 +101,11 @@ in {
     enableVulkan = true;
     enableLemonade = true;
 
+    # GSQHalo.cpp (Strix Halo fork) behind lemonade's llamacpp-rocm backend; the
+    # default rocmGpuTargets build already covers gfx1151. Used only by models
+    # that select llamacpp_backend = "rocm" (Flash-Next, see customModels).
+    llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;
+
     # On deliberately, both here and by default: halo is the only npu5 (rev 0x11)
     # host, and nix-amd-ai's Halo checklist has npu5-on-FLM-1.0.3 as an unfilled
     # cell - 0.9.43 is confirmed, 1.0.3 is not. Turning these off would skip the
@@ -171,18 +176,23 @@ in {
       ];
 
       # UD-IQ4_XS plus its MTP draft head. The draft must be the ggml-org one:
-      # unsloth's MTP copy aborts on stock llama.cpp b11382. q8_0 KV beat f16 at
-      # 128K (less memory, faster) and n-max 3 has no clear loser; 30-37 tok/s
-      # decode on halo with MTP (nix-amd-ai #240 / #245).
-      # Bench qwen38-flash-next-lazy-ub-pmin-2026-10-05 (nix-amd-ai #248, halo,
-      # gfx1151, b11382 Vulkan):
-      # - --lazy-mode on reads the n-gram embedding table from disk on demand:
-      #   host RSS 27.1 -> 0.31 GiB, GTT unchanged, speed within noise.
-      # - -ub/-b 2048: prefill 394 -> 465 t/s at 4K and 331 -> 385 at 32K for
-      #   +4.3 GiB GTT; decode unchanged. 4096 isn't worth +10.7 GiB.
-      # Risk: one unexplained ErrorDeviceLost with -ub 2048 at load avg ~19.6,
-      # not reproduced in two quiet reruns. If lemond's journal shows it, drop
-      # -ub 2048 -b 2048 first.
+      # unsloth's MTP copy aborts on stock llama.cpp b11382.
+      # Served by the GSQHalo.cpp ROCm fork (hardware.amd-npu.llamaCppRocmPackage
+      # above) with f16 KV. Bench qwen38-flash-next-gsq-tuning-2026-10-06
+      # (nix-amd-ai #252, halo, gfx1151, GSQHalo 5fc881b vs b11382 Vulkan):
+      # - agent replay 116 s vs 179 s; prefill 723 vs 474 t/s at 4K and 761 vs
+      #   267 at 128K; decode 40.9 vs 37.3 at 32K and 35.1 vs 25.6 at 128K;
+      #   peak GTT 73.4 vs 74.3 GiB; correctness unchanged.
+      # - Stock ROCm llama.cpp with f16 KV was slower than Vulkan, so the fork
+      #   is required. -lzm is the fork's flag and stock llama.cpp rejects it.
+      # - Per-model llamacpp_backend = "rocm" moves only this model; the other
+      #   llama.cpp models keep the global (Vulkan/auto) backend.
+      # Risk: an earlier Vulkan run with -ub 2048 hit one unexplained
+      # ErrorDeviceLost. If lemond's journal shows device-lost or GPU reset
+      # errors, fall back to Vulkan with its previous args: set
+      #   llamacpp_backend = "vulkan";
+      #   llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3 --lazy-mode on -ub 2048 -b 2048";
+      # Change both lines together: -lzm in llamacpp_args fails on any non-GSQHalo binary.
       customModels."Qwen3.8-Flash-Next-MTP" = {
         checkpoints = {
           main = "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS";
@@ -191,7 +201,8 @@ in {
         recipe = "llamacpp";
         recipe_options = {
           ctx_size = 131072;
-          llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3 --lazy-mode on -ub 2048 -b 2048";
+          llamacpp_backend = "rocm";
+          llamacpp_args = "-ctk f16 -ctv f16 --spec-draft-n-max 3 -lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3";
         };
         labels = ["chat" "reasoning" "tool-calling" "mtp"];
       };
