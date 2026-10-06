@@ -29,7 +29,7 @@ is destroyed.
 | `/etc/ssh/ssh_host_ed25519_key` | `--extra-files` | agenix identity for host secrets, needed at first activation |
 | `~/.ssh` | `--extra-files` | agenix identity for `noams_password` — no login without it |
 | `/etc/secureboot` | `--extra-files` | the firmware already trusts these keys; fresh ones would fail Secure Boot |
-| Keyrings, `~/.claude/projects`, fish/zoxide history, `~/.aws`, `~/.kube`, `~/.mozilla` | `restore.sh` | not needed to boot |
+| Keyrings, `~/.claude/projects`, fish/zoxide history, `~/.aws`, `~/.kube`, `~/.mozilla`, `~/.gnupg` | `restore.sh` | not needed to boot |
 | Every git repo: all branches, every stash, uncommitted files, `.git/crew`, pruned worktrees | `restore.sh` | see `scripts/reinstall/backup.sh` header |
 
 Full backup is ~12 GB.
@@ -88,6 +88,12 @@ copy of your data from that point.
    bash ~/g5-backup/restore.sh ~/g5-backup
    ```
    It never overwrites an existing path, so a rerun is safe.
+
+   Checkouts land in g6's layout: `~/Data/git/<rest>` is restored to
+   `~/git/<rest>` (repos, linked worktrees, submodules, orphaned worktrees), and
+   `~/.claude/projects/-home-<user>-Data-git-*` dirs are renamed to
+   `-home-<user>-git-*` unless the target already exists. `~/nix-config` and the
+   other backup roots keep their paths.
 3. **Recovery key, then TPM** (`just tpm-enroll` finds the LUKS device itself):
    ```fish
    sudo systemd-cryptenroll /dev/disk/by-partlabel/disk-main-root --recovery-key   # → password manager
