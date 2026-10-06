@@ -9,12 +9,14 @@
 in {
   imports = [
     ./hardware-configuration.nix
+    ./disko.nix
     ../../nixos
     ../../home
     ../../overlays
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
+    inputs.disko.nixosModules.disko
     inputs.nix-amd-ai.nixosModules.default
     ../../nixos/core/lanzaboote.nix
     ../../nixos/hardware/udev-hwmon.nix
@@ -44,6 +46,7 @@ in {
 
   # /dev/kfd (ROCm) needs render group; default users.nix only adds video
   users.users.noams.extraGroups = ["render"];
+  users.users.noams.uid = 1000;
 
   # AMD Ryzen 7 PRO 8840HS: 16 cores, 54GB RAM
   nix.settings = {

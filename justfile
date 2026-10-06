@@ -175,6 +175,52 @@ bootstrap-host host ip key luks:
         --disk-encryption-keys /tmp/disk.key "{{luks}}" \
         --generate-hardware-config nixos-generate-config hosts/{{host}}/hardware-configuration.nix
 
+# Wipe and reinstall a host that already runs, carrying over its boot state
+reinstall-host host ip backup luks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # backup: dir written by scripts/reinstall/backup.sh on the old install
+    # luks:   file containing the new LUKS passphrase — never commit this
+    if [ ! -f "hosts/{{host}}/disko.nix" ]; then
+        echo "❌ hosts/{{host}}/disko.nix does not exist." >&2
+        echo "   nixos-anywhere needs a disko layout to partition the target." >&2
+        echo "   Hosts with one: $(ls -d hosts/*/disko.nix | xargs -n1 dirname | xargs -n1 basename | tr '\n' ' ')" >&2
+        exit 1
+    fi
+    for f in "{{backup}}/root-state.tar" "{{backup}}/home-state.tar" "{{luks}}"; do
+        if [ ! -f "$f" ]; then echo "❌ no such file: $f" >&2; exit 1; fi
+    done
+    for f in "{{backup}}/root-state.tar" "{{backup}}/home-state.tar"; do
+        if ! tar -tf "$f" >/dev/null; then
+            echo "❌ unreadable archive: $f" >&2
+            exit 1
+        fi
+    done
+    user=$(nix eval --raw .#nixosConfigurations.{{host}}.config.username)
+    # A null uid is "not declared"; --raw cannot print null, so coerce it to empty.
+    uid=$(nix eval --raw --apply 'u: if u == null then "" else toString u' \
+        ".#nixosConfigurations.{{host}}.config.users.users.${user}.uid")
+    gid=$(nix eval --raw --apply toString ".#nixosConfigurations.{{host}}.config.users.groups.users.gid")
+    if [ -z "$uid" ]; then
+        echo "❌ {{host}} must declare a uid for $user" >&2
+        exit 1
+    fi
+    # Needed at first activation, so --extra-files rather than restore.sh:
+    # the host key and ~/.ssh are agenix identities (host secrets, login
+    # password), and lanzaboote signs the bootloader at install with the keys
+    # the firmware already trusts — fresh ones would fail Secure Boot.
+    staging=$(mktemp -d)
+    trap 'rm -rf "$staging"' EXIT
+    tar -C "$staging" -xpf "{{backup}}/root-state.tar"
+    mkdir -p "$staging/home/$user"
+    tar -C "$staging/home/$user" -xpf "{{backup}}/home-state.tar" .ssh
+    nix run github:nix-community/nixos-anywhere -- \
+        --flake .#{{host}} \
+        --target-host root@{{ip}} \
+        --extra-files "$staging" \
+        --chown "/home/$user" "$uid:$gid" \
+        --disk-encryption-keys /tmp/disk.key "{{luks}}"
+
 # =============================================================================
 # Home Manager
 # =============================================================================
