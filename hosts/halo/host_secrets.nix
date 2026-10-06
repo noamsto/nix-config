@@ -48,6 +48,13 @@
       owner = config.username;
       mode = "0400";
     };
+    # 1Password service account for portfolio-agent (read-only on its vault).
+    # Only the research runner reads it; hermes must not.
+    op-sa-portfolio = {
+      file = "${inputs.mysecrets}/op-sa-portfolio.age";
+      owner = config.username;
+      mode = "0400";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in

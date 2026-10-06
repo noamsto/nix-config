@@ -316,6 +316,9 @@ in {
         (builtins.toJSON config.services.hermes-agent.hermesHomeFiles)
       ];
 
+      # The /research plugin drops requests there; the unit is ProtectSystem=strict.
+      hermes-agent.serviceConfig.ReadWritePaths = ["${config.services.moneyScout.reportDir}/requests"];
+
       # Hermes keeps cron jobs in its state dir; this makes the scout relay jobs
       # exist after every activation without duplicating them.
       hermes-scout-cron = {
@@ -338,6 +341,10 @@ in {
           if ! hermes cron list --all | grep -q 'scout-crowd'; then
             hermes cron create "0 7 * * 1-5" --no-agent --script scout-relay-crowd.sh \
               --deliver telegram --name scout-crowd
+          fi
+          if ! hermes cron list --all | grep -q 'scout-research'; then
+            hermes cron create "* * * * *" --no-agent --script scout-relay-research.sh \
+              --deliver telegram --name scout-research
           fi
         '';
       };
@@ -408,7 +415,10 @@ in {
       prefix = "/prep";
     };
 
-    moneyScout.enable = true;
+    moneyScout = {
+      enable = true;
+      opTokenFile = config.age.secrets.op-sa-portfolio.path;
+    };
 
     hermes-agent = {
       enable = true;
@@ -439,8 +449,8 @@ in {
         platforms.telegram.extra = {
           command_menu = {
             priority_mode = "replace";
-            priority = ["watch" "digest" "holdings" "scoutstatus" "help" "new" "stop" "status"];
-            max_commands = 8;
+            priority = ["watch" "digest" "holdings" "scoutstatus" "research" "checkup" "help" "new" "stop" "status"];
+            max_commands = 10;
           };
           # Bot API rich messages render Markdown tables as real tables (the
           # default path flattens them to bullets); the adapter falls back to
@@ -461,6 +471,7 @@ in {
       hermesHomeFiles = {
         "scripts/scout-relay-watch.sh" = "exec ${config.services.moneyScout.relayScript}/bin/scout-relay watch\n";
         "scripts/scout-relay-crowd.sh" = "exec ${config.services.moneyScout.relayScript}/bin/scout-relay crowd\n";
+        "scripts/scout-relay-research.sh" = "exec ${config.services.moneyScout.researchRelayScript}/bin/scout-relay-research\n";
         "plugins/money-scout/plugin.yaml" = ''
           name: money-scout
           version: 1.0.0
