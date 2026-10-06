@@ -41,6 +41,13 @@
       owner = "hermes";
       mode = "0400";
     };
+    # 1Password service account token (halo-toddl-ro). Keep it out of
+    # host_env.env: a global export hands it to every agent session on halo.
+    op-sa-toddl = {
+      file = "${inputs.mysecrets}/op-sa-toddl.age";
+      owner = config.username;
+      mode = "0400";
+    };
   };
 
   # The secret is env-file shaped (CLOUDFLARE_API_TOKEN=...) and the fish init in
