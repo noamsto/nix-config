@@ -257,7 +257,18 @@ in {
   };
 
   systemd = {
+    # A GPU wedge leaves lemond's llama-server in D state, which SIGKILL can't
+    # end, and `reboot` then hangs on it after the network is already down.
+    # This only arms once systemd-shutdown takes over (the unit-stop phase is
+    # covered by lemond's short TimeoutStopSec below), so cut it from the 10min
+    # default and let sp5100_tco reset a wedged final stage sooner.
+    settings.Manager.RebootWatchdogSec = "2min";
+
     services = {
+      # The default 1min 30s applies twice (stop signal, then SIGKILL) and a
+      # D-state llama-server outlasts both, so keep a wedged stop short.
+      lemond.serviceConfig.TimeoutStopSec = "15s";
+
       # Weights are large files that get partially rewritten (resumed downloads,
       # in-place quantization), which CoW shatters into thousands of extents and
       # slows every mmap load. The flag only takes on files created after it is
