@@ -72,6 +72,10 @@ in {
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.halo-wlan0-suspend-repro
   ];
 
+  # `op` for the op-sa-toddl service account token; nixos/desktop/1password
+  # is gated on a desktop, which halo lacks.
+  programs._1password.enable = true;
+
   boot = {
     # Strix Halo (gfx1151) support is still landing upstream; track the newest
     # kernel rather than the LTS default.
