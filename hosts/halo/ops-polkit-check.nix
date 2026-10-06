@@ -30,8 +30,9 @@
       }
     };
 
-    for (const [unit, verbs] of Object.entries(allowed))
-      for (const verb of verbs) expect("yes", "noams", ACT, unit, verb);
+    for (const user of ["noams", "hermes-assistant"])
+      for (const [unit, verbs] of Object.entries(allowed))
+        for (const verb of verbs) expect("yes", user, ACT, unit, verb);
 
     expect(undefined, "noams", ACT, "sshd.service", "restart");
     expect(undefined, "noams", ACT, "lemond.service", "start");
@@ -41,7 +42,11 @@
     expect(undefined, "noams", ACT, "halo-rebuild.servicex", "start");
     expect(undefined, "noams", ACT, "constructor", "start");
     expect(undefined, "noams", "org.freedesktop.login1.reboot", "halo-reboot.service", "start");
-    expect(undefined, "hermes", ACT, "halo-rebuild.service", "start");
+    expect(undefined, "hermes-assistant", ACT, "sshd.service", "restart");
+    expect(undefined, "hermes-assistant", ACT, "hermes-agent.service", "restart");
+    expect(undefined, "hermes-assistant", "org.freedesktop.login1.reboot", "halo-reboot.service", "start");
+    for (const [unit, verbs] of Object.entries(allowed))
+      for (const verb of verbs) expect(undefined, "hermes", ACT, unit, verb);
 
     if (failed) process.exit(1);
   '';

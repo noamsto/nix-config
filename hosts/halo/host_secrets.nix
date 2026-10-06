@@ -41,6 +41,13 @@
       owner = "hermes";
       mode = "0400";
     };
+    # TELEGRAM_BOT_TOKEN (the ops bot) and CLAUDE_CODE_OAUTH_TOKEN (a
+    # `claude setup-token` token for /model claude) for hermes-assistant.
+    hermes-assistant-env = {
+      file = "${inputs.mysecrets}/hermes-assistant-env.age";
+      owner = "hermes-assistant";
+      mode = "0400";
+    };
     # 1Password service account token (halo-toddl-ro). Keep it out of
     # host_env.env: a global export hands it to every agent session on halo.
     op-sa-toddl = {

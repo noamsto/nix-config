@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 # halo-ops: halo-local ops CLI plus the entry points of the halo-* units.
-# FLAKE, LEMOND_PORT, LOCK_COMMIT_FILTER, OPS_STATE and OPS_USER come from ops.nix.
+# FLAKE, LEMOND_PORT, LOCK_COMMIT_FILTER, OPS_REQUESTS, OPS_STATE and OPS_USER
+# come from ops.nix.
 
 NIX_BUILD_FLAGS=(--max-jobs 2 --cores 4 --no-link)
 
@@ -33,6 +34,16 @@ sync_main() {
   git merge --ff-only origin/main
   [[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] ||
     die "$FLAKE has local commits not on origin/main"
+}
+
+# The request dir is shared with the assistant bot, so a file there may belong
+# to the other uid: replace it rather than write through it.
+write_request() {
+  local file=$OPS_REQUESTS/$1 tmp
+  shift
+  tmp=$(mktemp "$file.XXXXXX")
+  printf '%s\n' "$@" >"$tmp"
+  mv -f "$tmp" "$file"
 }
 
 # Start a unit while following its journal; exit status is the unit's.
@@ -111,7 +122,7 @@ update_prepare_unit() {
 
   local resolved names=()
   resolved=$(resolve_update_inputs "$(jq -r '.nodes[.root].inputs | keys[]' flake.lock)" \
-    "$OPS_STATE/update-inputs" "$OPS_STATE/update-skips")
+    "$OPS_REQUESTS/update-inputs" "$OPS_REQUESTS/update-skips")
   [[ -z $resolved ]] || mapfile -t names <<<"$resolved"
 
   nix flake update "${names[@]}"
@@ -134,6 +145,7 @@ update_prepare_unit() {
   cp flake.lock "$OPS_STATE/candidate.lock"
   git rev-parse HEAD >"$OPS_STATE/candidate.base"
   jq -r '.subject, "", .body' <<<"$result" >"$OPS_STATE/candidate.summary"
+  cat "$OPS_STATE/candidate.summary"
 }
 
 update_push_unit() {
@@ -177,11 +189,10 @@ update_prepare() {
       ;;
     esac
   done
-  printf '%s\n' "${inputs[@]}" >"$OPS_STATE/update-inputs"
-  printf '%s\n' "${skips[@]}" >"$OPS_STATE/update-skips"
+  write_request update-inputs "${inputs[@]}"
+  write_request update-skips "${skips[@]}"
   (run_unit halo-update-prepare.service)
   [[ -f "$OPS_STATE/candidate.lock" ]] || exit 10
-  cat "$OPS_STATE/candidate.summary"
 }
 
 status() {

@@ -12,6 +12,7 @@ in {
     ./disko.nix
     ./host_secrets.nix
     ./ops.nix
+    ./assistant.nix
     ../../nixos
     ../../home
     ../../overlays

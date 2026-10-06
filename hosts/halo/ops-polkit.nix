@@ -1,6 +1,7 @@
 {lib}: rec {
-  # A future bot uid is one more entry here.
-  users = ["noams"];
+  # hermes-assistant is the ops Telegram bot. The scout bot's uid (hermes)
+  # reads untrusted news, so it must never appear here.
+  users = ["noams" "hermes-assistant"];
 
   allowed = {
     "halo-rebuild.service" = ["start"];
