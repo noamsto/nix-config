@@ -14,22 +14,22 @@
     halo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGQ6DaFgFtOJJHI5KE3YklX2NS+wxRXfzPUIFUaTvh5u noams@halo";
   };
 
-  thinkpad-p14s-g5 = {
+  tp-g5 = {
     username = "noams";
     user-full-name = "Noam Stolero";
     email = "noam@factify.com";
-    hostname = "thinkpad-p14s-g5";
+    hostname = "tp-g5";
     desktop.mode = "hyprland";
     machine.type = "laptop";
     profile = "work";
     laptop-scale = "2.0";
   };
 
-  thinkpad-p14s-g6 = {
+  tp-g6 = {
     username = "noams";
     user-full-name = "Noam Stolero";
     email = "noamstolero@gmail.com";
-    hostname = "thinkpad-p14s-g6";
+    hostname = "tp-g6";
     desktop.mode = "hyprland";
     machine.type = "laptop";
     # Temporarily running g6 as an always-on headless server (SSH/tmux).

@@ -8,8 +8,8 @@
   # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
   # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio
   useGen5Presets = builtins.elem osConfig.hostname [
-    "thinkpad-p14s-g5"
-    "thinkpad-p14s-g6"
+    "tp-g5"
+    "tp-g6"
   ];
 
   # EasyEffects 8.x reads presets from ~/.local/share/easyeffects (xdg.dataHome).
@@ -117,13 +117,13 @@ in {
   # EE's output-device got stuck on a disconnected HDMI sink, which took EasyEffects
   # out of the speaker path entirely. Pin it to the speaker on this host (the device
   # name is hardware-specific, so this is gen5-g5 only).
-  dconf.settings = lib.mkIf (osConfig.hostname == "thinkpad-p14s-g5") {
+  dconf.settings = lib.mkIf (osConfig.hostname == "tp-g5") {
     "com/github/wwmm/easyeffects/streamoutputs".output-device = speakerSink;
   };
 
   # Keep EE's speaker correction off everything that isn't the built-in speaker.
   # Runs alongside EE and re-evaluates whenever the default sink changes.
-  systemd.user.services.easyeffects-bypass-by-sink = lib.mkIf (osConfig.hostname == "thinkpad-p14s-g5") {
+  systemd.user.services.easyeffects-bypass-by-sink = lib.mkIf (osConfig.hostname == "tp-g5") {
     Unit = {
       Description = "Bypass EasyEffects unless the default sink is the built-in speaker";
       After = ["easyeffects.service" "pipewire-pulse.service"];

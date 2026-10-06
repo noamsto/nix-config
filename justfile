@@ -359,8 +359,8 @@ restart-noctalia:
 battery-calibrate:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ "$(hostname)" != "thinkpad-p14s-g5" ]; then
-        echo "❌ battery-calibrate is gated to thinkpad-p14s-g5 (current: $(hostname))" >&2
+    if [ "$(hostname)" != "tp-g5" ]; then
+        echo "❌ battery-calibrate is gated to tp-g5 (current: $(hostname))" >&2
         exit 1
     fi
     bat=/sys/class/power_supply/BAT0

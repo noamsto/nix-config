@@ -3,7 +3,7 @@
   inputs,
   ...
 }: let
-  hostConfig = (import ../../lib/host-configs.nix).thinkpad-p14s-g6;
+  hostConfig = (import ../../lib/host-configs.nix).tp-g6;
   inherit (import ../../lib/host-configs.nix) sshPublicKeys;
 in {
   imports = [

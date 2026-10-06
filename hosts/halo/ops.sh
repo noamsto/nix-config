@@ -124,7 +124,7 @@ update_prepare_unit() {
   fi
 
   local host
-  for host in halo thinkpad-p14s-g5 thinkpad-p14s-g6; do
+  for host in halo tp-g5 tp-g6; do
     echo "building $host"
     nix build "${NIX_BUILD_FLAGS[@]}" "$(toplevel_attr "$host")"
   done

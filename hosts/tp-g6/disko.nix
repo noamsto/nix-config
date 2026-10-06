@@ -2,7 +2,7 @@
 # LUKS full-disk encryption + Btrfs with zstd compression
 #
 # Usage with nixos-anywhere:
-#   nixos-anywhere --flake .#thinkpad-p14s-g6 --disk main /dev/nvme0n1 root@<ip>
+#   nixos-anywhere --flake .#tp-g6 --disk main /dev/nvme0n1 root@<ip>
 #
 # After first boot, enroll TPM for auto-unlock:
 #   sudo systemd-cryptenroll --tpm2-device=auto /dev/disk/by-partlabel/disk-main-root

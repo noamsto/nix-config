@@ -16,7 +16,7 @@ This is a flake-parts-based NixOS + nix-darwin config with:
 - `options.nix` — custom options: `desktop.mode`, `machine.type`, `profile`, `username`, `flakePath` (resolves `/Users` on darwin, `/home` on Linux via `pkgs.stdenv.hostPlatform.isDarwin`)
 - `nixos/` — system-level NixOS (Linux) modules
 - `home/` — Home Manager modules; `home/darwin/` holds macOS-only HM modules (nh, aerospace, karabiner)
-- `hosts/` — per-host configs: `thinkpad-p14s-g5`, `thinkpad-p14s-g6` (NixOS), `mbp-m4-pro` (nix-darwin, aarch64-darwin)
+- `hosts/` — per-host configs: `tp-g5`, `tp-g6` (NixOS), `mbp-m4-pro` (nix-darwin, aarch64-darwin)
 - `secrets/` — agenix encrypted secrets
 
 **Key derived options to use** (never raw comparisons):
@@ -79,13 +79,13 @@ The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`, built via `flake-m
 
 ```bash
 # Evaluate a specific option value
-nix eval .#nixosConfigurations.thinkpad-p14s-g5.config.services.foo.enable
+nix eval .#nixosConfigurations.tp-g5.config.services.foo.enable
 
 # Same on the Mac (darwin attr path)
 nix eval .#darwinConfigurations.mbp-m4-pro.config.system.stateVersion
 
 # Check what's pulling in a package
-nix why-depends .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel nixpkgs#somepackage
+nix why-depends .#nixosConfigurations.tp-g5.config.system.build.toplevel nixpkgs#somepackage
 
 # Build without switching (test first)
 nh os build .

@@ -9,7 +9,7 @@ description: Use when rebuilding NixOS, nix-darwin or Home Manager, running nh, 
 
 The nix-config repo uses **flake-parts** and spans two platforms. **Pick the rebuild path by platform first:**
 
-**Linux / NixOS hosts** (`thinkpad-p14s-g5`, `thinkpad-p14s-g6`):
+**Linux / NixOS hosts** (`tp-g5`, `tp-g6`):
 
 - **Full rebuild** (system + user): `nh os switch .` — 2–3 min
 - **HM-only rebuild** (user config only): `nh home switch .` — ~30 s
@@ -101,11 +101,11 @@ PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin switch .
 
 ## Available configs
 
-**NixOS hosts:** `thinkpad-p14s-g5` (work), `thinkpad-p14s-g6` (personal)
+**NixOS hosts:** `tp-g5` (work), `tp-g6` (personal)
 
 **nix-darwin host:** `mbp-m4-pro` (personal, macOS) — rebuild with `nh darwin switch .`
 
-**HM configs:** `noams@thinkpad-p14s-g5`, `noams@thinkpad-p14s-g6`, `noams@halo`, `noams@mbp-m4-pro`, plus legacy aliases (`noams`, `noams-hyprland`, `noams-hyprland-work`). `nh home` auto-picks the right one. None of these are standalone — each is an alias onto its host's embedded HM (`flake-modules/home-manager.nix`), so there is exactly one evaluation per host.
+**HM configs:** `noams@tp-g5`, `noams@tp-g6`, `noams@halo`, `noams@mbp-m4-pro`, plus legacy aliases (`noams`, `noams-hyprland`, `noams-hyprland-work`). `nh home` auto-picks the right one. None of these are standalone — each is an alias onto its host's embedded HM (`flake-modules/home-manager.nix`), so there is exactly one evaluation per host.
 
 ## Debugging failed builds
 
@@ -135,7 +135,7 @@ PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin switch .
 
 5. **Better build output** — `nom` (nix-output-monitor) is already in the devshell and gives readable tree output:
    ```fish
-   nom build .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel
+   nom build .#nixosConfigurations.tp-g5.config.system.build.toplevel
    ```
 
 ## Devshell (`nix develop` / `just dev`)

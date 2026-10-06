@@ -176,7 +176,7 @@ in {
   # Data bookmarks only on hosts that mount /home/$USER/Data.
   gtk.gtk3.bookmarks = let
     home = config.home.homeDirectory;
-    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s" "thinkpad-p14s-g5"];
+    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s" "tp-g5"];
   in
     [
       "file://${home}/Documents"

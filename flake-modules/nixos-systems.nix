@@ -13,8 +13,8 @@
 in {
   flake = {
     nixosConfigurations = {
-      thinkpad-p14s-g5 = mkSystem ../hosts/thinkpad-p14s-g5;
-      thinkpad-p14s-g6 = mkSystem ../hosts/thinkpad-p14s-g6;
+      tp-g5 = mkSystem ../hosts/tp-g5;
+      tp-g6 = mkSystem ../hosts/tp-g6;
       halo = mkSystem ../hosts/halo;
       installer = mkSystem ../hosts/installer;
     };

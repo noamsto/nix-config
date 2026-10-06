@@ -5,7 +5,7 @@
   ...
 }: let
   # Import shared host configuration
-  hostConfig = (import ../../lib/host-configs.nix).thinkpad-p14s-g5;
+  hostConfig = (import ../../lib/host-configs.nix).tp-g5;
 in {
   imports = [
     ./hardware-configuration.nix

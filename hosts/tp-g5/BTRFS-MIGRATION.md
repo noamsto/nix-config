@@ -1,4 +1,4 @@
-# Btrfs-on-LUKS Reinstall — thinkpad-p14s-g5
+# Btrfs-on-LUKS Reinstall — tp-g5
 
 Wipe g5 and reinstall it from g6 with `nixos-anywhere`, onto g6's btrfs-on-LUKS
 layout (`disko.nix`). **The whole disk is wiped — Windows included.** The install
@@ -36,11 +36,11 @@ Full backup is ~12 GB.
 
 ## 1. Pre-flight (on g5)
 
-1. **`main` must build.** The install builds `.#thinkpad-p14s-g5` from g6; a red
+1. **`main` must build.** The install builds `.#tp-g5` from g6; a red
    build fails mid-install, after the wipe. Check it on the branch you will
    install from:
    ```fish
-   nix build --no-link .#nixosConfigurations.thinkpad-p14s-g5.config.system.build.toplevel
+   nix build --no-link .#nixosConfigurations.tp-g5.config.system.build.toplevel
    ```
 2. **Network: ethernet.** nixos-anywhere's kexec installer has no Wi-Fi. Plug a
    cable (or a USB-ethernet adapter) into g5 and note its IP. Kexec also keeps
@@ -69,7 +69,7 @@ set -l key (mktemp)
 read -s -P 'New LUKS passphrase for g5: ' p
 printf %s $p > $key
 set -e p
-just reinstall-host thinkpad-p14s-g5 <g5-ip> ~/g5-backup $key
+just reinstall-host tp-g5 <g5-ip> ~/g5-backup $key
 gtrash put $key
 ```
 

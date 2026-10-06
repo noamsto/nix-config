@@ -60,8 +60,8 @@
           IdentityFile = "~/.ssh/id_ed25519";
         };
 
-        # g6 (headless server). Tailnet name is `tp-g6`, but its mDNS name is
-        # the real hostname — same Match fallback pattern as mbp.
+        # g6 (headless server). Tailnet and mDNS names match the hostname —
+        # same Match fallback pattern as mbp.
         "tp-g6" = {
           User = "noams";
           IdentityFile = "~/.ssh/id_ed25519";
@@ -75,7 +75,7 @@
           HostName = "mbp-m4-pro.local";
         };
         "Match host tp-g6 exec \"! getent hosts tp-g6\"" = lib.hm.dag.entryBefore ["tp-g6"] {
-          HostName = "thinkpad-p14s-g6.local";
+          HostName = "tp-g6.local";
         };
       };
   };

@@ -38,16 +38,16 @@
 in {
   flake.homeConfigurations = {
     # Default configs for nh auto-detection (username@hostname)
-    "noams@thinkpad-p14s-g5" = nixosHome "thinkpad-p14s-g5";
-    "noams@thinkpad-p14s-g6" = nixosHome "thinkpad-p14s-g6";
+    "noams@tp-g5" = nixosHome "tp-g5";
+    "noams@tp-g6" = nixosHome "tp-g6";
     "noams@halo" = nixosHome "halo";
     "noams@mbp-m4-pro" = darwinHome "mbp-m4-pro";
 
     # Fallback for nh auto-detection (username only, defaults to personal)
-    noams = nixosHome "thinkpad-p14s-g6";
+    noams = nixosHome "tp-g6";
 
     # Legacy names for compatibility
-    noams-hyprland = nixosHome "thinkpad-p14s-g6";
-    noams-hyprland-work = nixosHome "thinkpad-p14s-g5";
+    noams-hyprland = nixosHome "tp-g6";
+    noams-hyprland-work = nixosHome "tp-g5";
   };
 }
