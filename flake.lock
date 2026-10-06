@@ -3516,11 +3516,11 @@
         "systems": "systems_9"
       },
       "locked": {
-        "lastModified": 1791201039,
-        "narHash": "sha256-D7Lr7Exp0WJT9Yudn2aOZUYB4Zi9Tx3cH5pTbV7VHw0=",
+        "lastModified": 1791201103,
+        "narHash": "sha256-IKLp7HJdxngMT1DkF9YMh73xfg2rGqfdoYsw0shsXpM=",
         "owner": "vicinaehq",
         "repo": "vicinae",
-        "rev": "d6dbfbba57ce98229e5f043ce3d43595651953a7",
+        "rev": "d53a08eb9d83782d14c6800677e05e99cf3ae804",
         "type": "github"
       },
       "original": {
