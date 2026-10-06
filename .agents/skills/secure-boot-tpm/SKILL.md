@@ -69,7 +69,7 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 
 ## TPM enrollment: `just tpm-enroll`
 
-Use `just tpm-enroll` for every enrollment: the first one on a new host, and every re-enroll after unlock breaks. It finds the LUKS device backing `/`, which differs per host (g5 `/dev/nvme0n1p5`, which dual-boots Windows; g6/halo `/dev/disk/by-partlabel/disk-main-root`). It refuses to run if the volume has no password or recovery slot. It enrolls PCR 7 and wipes the old TPM slot only after the new one succeeds, then reseals `keyring-seal`'s credential if that one stopped unsealing too.
+Use `just tpm-enroll` for every enrollment: the first one on a new host, and every re-enroll after unlock breaks. It finds the LUKS device backing `/`, which is `/dev/disk/by-partlabel/disk-main-root` on every disko host (g5, g6, halo). It refuses to run if the volume has no password or recovery slot. It enrolls PCR 7 and wipes the old TPM slot only after the new one succeeds, then reseals `keyring-seal`'s credential if that one stopped unsealing too.
 
 A recovery key has no recipe because the printed key must go to a password manager by hand:
 ```fish
@@ -115,7 +115,7 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 | Forgetting `initrd.systemd.enable = true` | No TPM unlock attempt in initrd | Already set in the shared module — don't override |
 | Leaving `boot.loader.systemd-boot.enable = true` | Conflicts with Lanzaboote | Shared module does `lib.mkForce false` — don't re-enable |
 | Enrolling TPM without a recovery key | Locked out after BIOS update | Always enroll `--recovery-key` too |
-| Hand-typing `systemd-cryptenroll` with a guessed device | Wrong partition (g5's LUKS is p5, not p2) | `just tpm-enroll` detects it |
+| Hand-typing `systemd-cryptenroll` with a guessed device | Wrong partition, or a stale path from a pre-disko layout | `just tpm-enroll` detects it |
 | Skipping Setup Mode in BIOS on first install | Secure Boot keys not accepted | Enter BIOS → Secure Boot → Reset to Setup Mode |
 
 ## Related

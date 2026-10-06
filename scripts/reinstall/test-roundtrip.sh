@@ -108,8 +108,29 @@ for n in "with space" .dotted x.lock; do
   echo "$n" >"$HOME/Data/git/wts/$n/untracked"
 done
 
+# --- shallow clone: its bundle lacks the history below the shallow boundary ----
+new_repo "$T/up/deep.src"
+commit "$T/up/deep.src" second two
+shallow=$HOME/Data/git/shallow
+git clone -q --depth 1 "file://$T/up/deep.src" "$shallow"
+commit "$shallow" local.txt local-only
+
+# --- LFS: a bundle is not an LFS store, so checkout must not smudge from it ----
+export GIT_CONFIG_COUNT=4 \
+  GIT_CONFIG_KEY_1=filter.lfs.process GIT_CONFIG_VALUE_1="git-lfs filter-process" \
+  GIT_CONFIG_KEY_2=filter.lfs.required GIT_CONFIG_VALUE_2=true \
+  GIT_CONFIG_KEY_3=filter.lfs.clean GIT_CONFIG_VALUE_3="git-lfs clean -- %f"
+new_repo "$T/up/lfs.src"
+g "$T/up/lfs.src" lfs track '*.bin' >/dev/null
+head -c 4096 /dev/urandom >"$T/up/lfs.src/blob.bin"
+g "$T/up/lfs.src" add .gitattributes blob.bin
+g "$T/up/lfs.src" commit -q -m lfs
+lfs=$HOME/Data/git/lfs
+git clone -q "$T/up/lfs.src" "$lfs"
+
 repos=("$proj" "$sub" "$proj/lib" "$HOME/Data/git/bare/.git" "$HOME/Data/git/.worktrees/owner/proj/wtbranch" "$HOME/Data/git/.worktrees/owner/proj/wtbranch/services/sub"
-  "$del" "$wtmain" "$HOME/Data/git/wts/with space" "$HOME/Data/git/wts/.dotted" "$HOME/Data/git/wts/x.lock")
+  "$del" "$wtmain" "$HOME/Data/git/wts/with space" "$HOME/Data/git/wts/.dotted" "$HOME/Data/git/wts/x.lock"
+  "$shallow" "$lfs")
 
 snapshot() {
   local r

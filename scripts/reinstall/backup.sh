@@ -27,7 +27,7 @@ trap 'rm -f "$dirty_list" "$dirty_all"' EXIT
 
 roots=(
   "$HOME/Data/git" "$HOME/nix-config" "$HOME/Documents" "$HOME/code"
-  "$HOME/tmux-config" "$HOME/.config/lzvim" "$HOME/Downloads" "$HOME/data"
+  "$HOME/tmux-config" "$HOME/Downloads" "$HOME/data"
 )
 home_state=(
   .ssh .local/share/keyrings .claude/projects .local/share/fish/fish_history

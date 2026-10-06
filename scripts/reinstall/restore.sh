@@ -8,6 +8,15 @@ set -euo pipefail
 src=${1:?usage: restore.sh <backup-dir>}
 git_src=$src/git
 
+# No checkout below may smudge: a bundle is not an LFS store, and git-lfs would
+# try to download from it. LFS content comes from the real remote once a repo's
+# saved config is back.
+export GIT_LFS_SKIP_SMUDGE=1
+lfs_pull() {
+  [[ -n $(git -C "$1" lfs ls-files -n) ]] || return 0
+  git -C "$1" lfs pull || echo "WARN: lfs pull failed: $1"
+}
+
 # The manifest keeps the old host's paths. g6 keeps checkouts under ~/git rather
 # than ~/Data/git; this pair is the only place that layout change lives. Git
 # writes every absolute path it stores (worktree gitfiles, <common>/worktrees/*/gitdir,
@@ -68,16 +77,23 @@ restore_repo() {
   mkdir -p "$(dirname "$path")"
   # A bare repo kept at <path>/.git (worktrees elsewhere) must come back bare,
   # or the clone checks a tree out next to it.
+  local clone_args=(-q) target=$path url
   if [[ $(git config -f "$git_src/config/$name.config" --bool core.bare) == true ]]; then
-    git clone -q --bare "$git_src/bundles/$name.bundle" "$path/.git" || {
+    clone_args+=(--bare)
+    target=$path/.git
+  fi
+  # A shallow repo's bundle cannot be cloned: the history under its shallow
+  # boundary is missing. Origin supplies that history; the bundle's refs, local
+  # commits included, still go on top below.
+  local from_origin=false
+  if ! git clone "${clone_args[@]}" "$git_src/bundles/$name.bundle" "$target" 2>/dev/null; then
+    url=$(git config -f "$git_src/config/$name.config" remote.origin.url) || url=
+    if [[ -z $url ]] || ! git clone "${clone_args[@]}" "$url" "$target"; then
       echo "FAIL clone: $path"
       return
-    }
-  else
-    git clone -q "$git_src/bundles/$name.bundle" "$path" || {
-      echo "FAIL clone: $path"
-      return
-    }
+    fi
+    from_origin=true
+    echo "cloned from origin (bundle not self-contained): $path"
   fi
   # clone maps the bundle's local branches to origin/*; mirroring with --prune
   # drops those fakes and brings every ref back verbatim. The clone's own
@@ -87,6 +103,9 @@ restore_repo() {
     echo "FAIL fetch: $path"
     return
   fi
+  # The fetch moved the checked-out branch past origin's tip; the fresh tree
+  # still shows origin's.
+  [[ $from_origin == true && ${clone_args[*]} != *--bare* ]] && git -C "$path" reset -q --hard
   [[ $origin_head != - ]] && git -C "$path" symbolic-ref refs/remotes/origin/HEAD "$origin_head"
   # A bundle does not carry a detached HEAD (every submodule has one).
   if [[ $(git config -f "$git_src/config/$name.config" --bool core.bare) == true ]]; then
@@ -106,6 +125,7 @@ restore_repo() {
     git -C "$super" submodule absorbgitdirs -- "${path#"$super"/}" ||
       echo "WARN absorb failed, left as standalone repo: $path"
   fi
+  [[ $(git -C "$path" rev-parse --is-bare-repository) == true ]] || lfs_pull "$path"
   gitdir=$(git -C "$path" rev-parse --absolute-git-dir)
   # Oldest first, so the newest ends up as stash@{0}.
   git -C "$path" update-ref -d refs/stash
@@ -153,6 +173,7 @@ while IFS=$'\t' read -r _ _ path main branch; do
   # Detached HEAD keeps the commit alive from here on; the pin ref was only
   # for the bundle.
   [[ $branch == refs/worktree-backup/* ]] && git -C "$main" update-ref -d "$branch"
+  lfs_pull "$path"
   done_paths[$path]=1
   echo "worktree: $path ($branch)"
 done < <(rows worktree)

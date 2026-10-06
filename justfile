@@ -141,6 +141,14 @@ install-host host ip:
         echo "   Hosts with one: $(ls -d hosts/*/disko.nix | xargs -n1 dirname | xargs -n1 basename | tr '\n' ' ')" >&2
         exit 1
     fi
+    # disko wipes the disk before luksFormat reads the key, so a missing key
+    # file fails only after the data is gone.
+    if grep -qE '^\s*passwordFile\s*=' "hosts/{{host}}/disko.nix"; then
+        echo "❌ hosts/{{host}}/disko.nix reads its LUKS key from a passwordFile, which install-host does not upload." >&2
+        echo "   Use: just reinstall-host {{host}} {{ip}} <backup> <luks-key-file>   (existing host)" >&2
+        echo "        just bootstrap-host {{host}} {{ip}} <host-key> <luks-key-file>   (first install)" >&2
+        exit 1
+    fi
     nix run github:nix-community/nixos-anywhere -- \
         --flake .#{{host}} --target-host root@{{ip}}
 
