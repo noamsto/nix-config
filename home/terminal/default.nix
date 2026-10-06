@@ -48,7 +48,7 @@ in {
     # visible `<repo>-worktrees` sibling that doubles up the git folder listing.
     # Org-nested (<org>/<repo>) so same-named repos across orgs can't collide.
     # Non-nested, so the watchman/fsevents concern (see lazytmux) doesn't apply.
-    worktrunk.worktreePath = "${config.home.homeDirectory}/Data/git/.worktrees/{{ repo_path | dirname | basename }}/{{ repo_path | basename }}/{{ branch | sanitize }}";
+    worktrunk.worktreePath = "${config.home.homeDirectory}/git/.worktrees/{{ repo_path | dirname | basename }}/{{ repo_path | basename }}/{{ branch | sanitize }}";
     agentIntegration.enable = true;
     # tmux enables sixel for no terminal by default, so the bridge's sixel relay
     # stays inert until the outer terminal is named here. foot paints sixel; kitty

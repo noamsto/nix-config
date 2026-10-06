@@ -183,9 +183,9 @@ in {
       "file://${home}/Downloads"
       "file://${home}/Pictures"
       "file://${home}/Videos"
+      "file://${home}/git git"
     ]
     ++ lib.optionals hasDataMount [
       "file://${home}/Data Data"
-      "file://${home}/Data/git git"
     ];
 }

@@ -28,6 +28,9 @@
         # mono-worktrees that predate the move.
         whitelist = {
           prefix = [
+            "/home/noams/git/.worktrees"
+            "/home/noams/git/factify"
+            # Legacy prefixes below stay until no host has worktrees left under the old location.
             "/home/noams/Data/git/.worktrees"
             "/home/noams/Data/git/factify"
           ];

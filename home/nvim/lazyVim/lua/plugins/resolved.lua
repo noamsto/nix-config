@@ -1,6 +1,6 @@
 return {
   "noamsto/resolved.nvim",
-  -- dir = "~/Data/git/noamsto/resolved.nvim",
+  -- dir = "~/git/noamsto/resolved.nvim",
   -- dependencies = { "nvim-lua/plenary.nvim" },
   opts = {},
   config = function(_, opts)
