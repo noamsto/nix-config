@@ -22,6 +22,12 @@
   skill-suggester = pkgs.writeShellScriptBin "claude-skill-suggester" (builtins.readFile ./skill-suggester.sh);
   deslop-guard = pkgs.writeShellScriptBin "claude-deslop-guard" (builtins.readFile ./deslop-guard.sh);
   deslop-mark = pkgs.writeShellScriptBin "claude-deslop-mark" (builtins.readFile ./deslop-mark.sh);
+  settings-merge = pkgs.writeShellApplication {
+    name = "claude-settings-merge";
+    runtimeInputs = [pkgs.jq pkgs.coreutils];
+    text = builtins.readFile ./settings-merge.sh;
+  };
+  overlay = config.programs.hookyard.claudeOverlay.merged;
 
   # hookyard's envelope carries the engine payload verbatim under `.native`; the
   # guards' hookSpecificOutput is already hookyard's handler wire protocol.
@@ -200,7 +206,27 @@
       else
         export AEYE_D2_THEME=200
       fi
-      exec -a claude ${claude-wrapped}/bin/claude --settings ${config.programs.hookyard.claudeOverlay.merged} --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "$@"
+      # Claude Code keeps only the last --settings, so a caller's own --settings
+      # would silently drop this overlay (status line, hookyard guards,
+      # permissions). Merge caller layers into it instead: hook arrays and
+      # permission lists concatenate, so a caller can add but never remove.
+      args=()
+      layers=()
+      while [ $# -gt 0 ]; do
+        case $1 in
+          --) args+=("$@"); break ;;
+          --settings)
+            [ $# -ge 2 ] || { echo "claude: --settings needs a value" >&2; exit 2; }
+            layers+=("$2"); shift 2 ;;
+          --settings=*) layers+=("''${1#--settings=}"); shift ;;
+          *) args+=("$1"); shift ;;
+        esac
+      done
+      settings=${overlay}
+      if [ ''${#layers[@]} -gt 0 ]; then
+        settings=$(${settings-merge}/bin/claude-settings-merge ${overlay} "''${layers[@]}") || exit
+      fi
+      exec -a claude ${claude-wrapped}/bin/claude --settings "$settings" --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "''${args[@]}"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy
