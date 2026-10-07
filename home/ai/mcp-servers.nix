@@ -17,13 +17,12 @@
       # docs/superpowers/specs/2026-08-03-playwright-1password-autofill-design.md
       playwrightMcpAutomation = pkgs.writeShellApplication {
         name = "playwright-mcp-automation";
-        runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.jq];
+        runtimeInputs = [pkgs.coreutils pkgs.jq];
         text = ''
           cache_home="''${XDG_CACHE_HOME:-$HOME/.cache}"
           user_data_dir="$cache_home/playwright-mcp-automation"
           nm_dir="$user_data_dir/NativeMessagingHosts"
           config_path="$user_data_dir/mcp-config.json"
-          ext_root="$HOME/.config/chromium/Default/Extensions/aeblfdkhhhdcdjpifhhbdiojplfjncoa"
           chromium_bin="${lib.getExe pkgs.chromium}"
           mcp_bin="${lib.getExe pkgs.playwright-mcp}"
 
@@ -44,24 +43,15 @@
             ]
           }' >"$nm_dir/com.1password.1password.json"
 
-          ext_dir=""
-          if [[ -d "$ext_root" ]]; then
-            ext_dir="$(find "$ext_root" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1 || true)"
-          fi
-
-          # Extensions stay enabled either way: without a copy to side-load, 1Password
-          # is installed once from the Web Store into this profile and persists there.
-          ext_args='[]'
-          if [[ -n "$ext_dir" && -f "$ext_dir/manifest.json" ]]; then
-            ext_args="$(jq -n --arg ext "$ext_dir" '["--load-extension=" + $ext]')"
-          fi
-
+          # 1Password comes from the ExtensionInstallForcelist policy
+          # (nixos/desktop/1password). Two Playwright defaults block it:
+          # --disable-extensions, and --disable-background-networking, which
+          # stops the policy downloading the extension from the Web Store.
           # chromiumSandbox: Playwright otherwise adds --no-sandbox, which shows a
           # warning bar; the namespace sandbox works on NixOS.
           jq -n \
             --arg userDataDir "$user_data_dir" \
             --arg executablePath "$chromium_bin" \
-            --argjson args "$ext_args" \
             '{
               browser: {
                 browserName: "chromium",
@@ -70,8 +60,7 @@
                   executablePath: $executablePath,
                   headless: false,
                   chromiumSandbox: true,
-                  ignoreDefaultArgs: ["--disable-extensions"],
-                  args: $args
+                  ignoreDefaultArgs: ["--disable-extensions", "--disable-background-networking"]
                 }
               }
             }' >"$config_path"
