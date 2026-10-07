@@ -11,6 +11,7 @@ bats_require_minimum_version 1.5.0
 setup() {
   FUNCTION=${LOCK_COMMIT_FUNCTION:?LOCK_COMMIT_FUNCTION must be set}
   FILTER=${LOCK_COMMIT_FILTER:?LOCK_COMMIT_FILTER must be set}
+  NVIM_FILTER=${LOCK_COMMIT_NVIM_FILTER:?LOCK_COMMIT_NVIM_FILTER must be set}
   FIXTURES="$BATS_TEST_TMPDIR/fixtures"
   mkdir -p "$FIXTURES"
 }
@@ -59,6 +60,20 @@ secrets_lock() { # <url> <rev> <lastModified> <outfile>
 
 secrets_field() { # <old> <new> <secrets json> <field>
   jq -c -f "$FILTER" --slurpfile new "$2" --argjson secrets "$3" <"$1" | jq -r --arg f "$4" '.[$f]'
+}
+
+# The lazy.nvim lock is a flat map of plugin name -> {branch, commit}; build
+# one where every named plugin sits at $rev.
+build_nvim_lock() { # <rev> <outfile> <name...>
+  local rev="$1" out="$2"
+  shift 2
+  jq -n --arg rev "$rev" --args '
+    reduce $ARGS.positional[] as $n ({}; .[$n] = {branch: "main", commit: $rev})
+  ' -- "$@" >"$out"
+}
+
+nvim_field() { # <old> <new> <field>
+  jq -c -f "$NVIM_FILTER" --slurpfile new "$2" <"$1" | jq -r --arg f "$3" '.[$f]'
 }
 
 # --- message shape ---
@@ -360,4 +375,116 @@ JSON
   [ "$status" -eq 0 ]
   [[ "$output" == *"could not fetch mysecrets history"* ]]
   [[ "$output" == *"chore(deps): update mysecrets"* ]]
+}
+
+# --- lazy.nvim lock ---
+
+@test "lazy-lock: updated plugins name themselves and list their revs" {
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" alpha.nvim beta.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new.json" alpha.nvim beta.nvim
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" subject
+  [ "$status" -eq 0 ]
+  [ "$output" = "chore(nvim): update alpha.nvim, beta.nvim" ]
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" body
+  [ "$output" = "- alpha.nvim: 1111111 → 2222222"$'\n'"- beta.nvim: 1111111 → 2222222" ]
+}
+
+@test "lazy-lock: added and removed plugins are labelled" {
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" gone.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new.json" fresh.nvim
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" subject
+  [ "$output" = "chore(nvim): update fresh.nvim, gone.nvim" ]
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" body
+  [ "$output" = "- fresh.nvim: added (2222222)"$'\n'"- gone.nvim: removed" ]
+}
+
+@test "lazy-lock: unchanged plugins do not count as a change" {
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" alpha.nvim
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/new.json" alpha.nvim
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" changed
+  [ "$output" = "false" ]
+}
+
+@test "lazy-lock: subject over 72 chars falls back to the count form" {
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" \
+    plugin-alpha-00.nvim plugin-bravo-00.nvim plugin-charlie-00.nvim plugin-delta-00.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new.json" \
+    plugin-alpha-00.nvim plugin-bravo-00.nvim plugin-charlie-00.nvim plugin-delta-00.nvim
+  run nvim_field "$FIXTURES/old.json" "$FIXTURES/new.json" subject
+  [ "$output" = "chore(nvim): update 4 nvim plugins" ]
+}
+
+@test "lazy-lock: commits lazy-lock.json alone with the nvim subject" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  mkdir -p "$repo/home/nvim/lazyVim"
+  lock="$repo/home/nvim/lazyVim/lazy-lock.json"
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" alpha.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new.json" alpha.nvim
+  cp "$FIXTURES/old.json" "$lock"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm init
+
+  cp "$FIXTURES/new.json" "$lock"
+  run_lock_commit "$repo"
+  [ "$status" -eq 0 ]
+  [ "$(git -C "$repo" show --name-only --format= HEAD)" = "home/nvim/lazyVim/lazy-lock.json" ]
+  [ "$(git -C "$repo" show -s --format=%s HEAD)" = "chore(nvim): update alpha.nvim" ]
+}
+
+@test "lazy-lock: dry-run prints the message and commits nothing" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  mkdir -p "$repo/home/nvim/lazyVim"
+  lock="$repo/home/nvim/lazyVim/lazy-lock.json"
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old.json" alpha.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new.json" alpha.nvim
+  cp "$FIXTURES/old.json" "$lock"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm init
+  before=$(git -C "$repo" rev-parse HEAD)
+  cp "$FIXTURES/new.json" "$lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"chore(nvim): update alpha.nvim"* ]]
+  [[ "$output" == *"- alpha.nvim: 1111111 → 2222222"* ]]
+  [ "$(git -C "$repo" rev-parse HEAD)" = "$before" ]
+}
+
+@test "both locks changed: one commit each, nvim last" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  mkdir -p "$repo/home/nvim/lazyVim"
+  lock="$repo/home/nvim/lazyVim/lazy-lock.json"
+  build_lock "1111111111111111111111111111111111111111" "$FIXTURES/old-flake.json" nixpkgs
+  build_lock "2222222222222222222222222222222222222222" "$FIXTURES/new-flake.json" nixpkgs
+  build_nvim_lock "1111111111111111111111111111111111111111" "$FIXTURES/old-nvim.json" alpha.nvim
+  build_nvim_lock "2222222222222222222222222222222222222222" "$FIXTURES/new-nvim.json" alpha.nvim
+  cp "$FIXTURES/old-flake.json" "$repo/flake.lock"
+  cp "$FIXTURES/old-nvim.json" "$lock"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm init
+
+  cp "$FIXTURES/new-flake.json" "$repo/flake.lock"
+  cp "$FIXTURES/new-nvim.json" "$lock"
+  run_lock_commit "$repo"
+  [ "$status" -eq 0 ]
+  [ "$(git -C "$repo" rev-list --count HEAD)" -eq 3 ]
+  [ "$(git -C "$repo" show -s --format=%s HEAD)" = "chore(nvim): update alpha.nvim" ]
+  [ "$(git -C "$repo" show -s --format=%s HEAD~1)" = "chore(deps): update nixpkgs" ]
+  [ "$(git -C "$repo" show --name-only --format= HEAD)" = "home/nvim/lazyVim/lazy-lock.json" ]
+  [ "$(git -C "$repo" show --name-only --format= HEAD~1)" = "flake.lock" ]
+}
+
+@test "no lock files: exits 1 without a repo-specific path in the message" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  printf 'x\n' >"$repo/README"
+  git -C "$repo" add README
+  git -C "$repo" commit -qm init
+
+  run_lock_commit "$repo"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no lock files found"* ]]
 }
