@@ -266,6 +266,10 @@ in {
     settings.Manager.RebootWatchdogSec = "2min";
 
     services = {
+      # 128 GiB minus the 104 GiB GTT window leaves 24 GiB outside the GPU; 70%
+      # of RAM would let builds collide with a loaded model.
+      nix-daemon.serviceConfig.MemoryHigh = "16G";
+
       # The default 1min 30s applies twice (stop signal, then SIGKILL) and a
       # D-state llama-server outlasts both, so keep a wedged stop short.
       lemond.serviceConfig.TimeoutStopSec = "15s";
@@ -657,7 +661,6 @@ in {
   # Ryzen AI Max+ 395: 16 cores / 32 threads.
   nix.settings = {
     max-jobs = 8;
-    cores = 4;
     max-silent-time = 14400;
     timeout = 172800;
   };

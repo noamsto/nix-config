@@ -63,10 +63,9 @@ in {
   # boot.kernelParams = [ "resume_offset=<offset>" ];
   # Get offset with: sudo btrfs inspect-internal map-swapfile -r /swap/swapfile
 
-  # Adjust cores/jobs to match actual CPU — Ryzen AI 300 series expected
+  # Adjust jobs to match actual CPU — Ryzen AI 300 series expected
   nix.settings = {
     max-jobs = 4;
-    cores = 4;
     max-silent-time = 14400;
     timeout = 172800;
   };

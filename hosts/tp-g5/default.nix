@@ -51,7 +51,6 @@ in {
   # AMD Ryzen 7 PRO 8840HS: 16 cores, 54GB RAM
   nix.settings = {
     max-jobs = 4;
-    cores = 8; # 4x8 oversubscribes 16 threads so a lone big build isn't capped at 4
     max-silent-time = 14400;
     timeout = 172800;
   };

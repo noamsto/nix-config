@@ -1,4 +1,8 @@
-{inputs, ...}: let
+{
+  inputs,
+  lib,
+  ...
+}: let
   caches = import ../../lib/caches.nix;
 in {
   imports = [
@@ -41,6 +45,20 @@ in {
       trusted-substituters = caches.trustedSubstituters;
       extra-substituters = caches.extraSubstituters;
       extra-trusted-public-keys = caches.extraTrustedPublicKeys;
+
+      # All threads per build; the scheduling below keeps the host responsive.
+      cores = 0;
     };
+
+    # Not `idle`: that starves builds outright while anything else is busy.
+    daemonCPUSchedPolicy = "batch";
+    daemonIOSchedClass = "idle";
+  };
+
+  systemd.services.nix-daemon.serviceConfig = {
+    Nice = 19;
+    # Throttles builds before they push the desktop into swap: 30% of a 54 GiB
+    # laptop is the ~16 GiB desktop working set measured during a big build.
+    MemoryHigh = lib.mkDefault "70%";
   };
 }
