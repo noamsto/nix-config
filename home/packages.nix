@@ -5,6 +5,24 @@
   inputs,
   ...
 }: let
+  # Electron picks its keyring backend from XDG_CURRENT_DESKTOP and doesn't
+  # recognise Hyprland, so it falls back to unencrypted storage and won't keep
+  # sign-in, extension secrets or env vars. The launcher maps this variable to
+  # --password-store.
+  claude-desktop =
+    if osConfig.desktop.isHyprland
+    then
+      pkgs.symlinkJoin {
+        name = "claude-desktop-fhs-libsecret";
+        paths = [pkgs.claude-desktop-fhs];
+        buildInputs = [pkgs.makeWrapper];
+        postBuild = ''
+          wrapProgram $out/bin/claude-desktop \
+            --set-default CLAUDE_PASSWORD_STORE gnome-libsecret
+        '';
+      }
+    else pkgs.claude-desktop-fhs;
+
   desktop-packages = with pkgs; [
     # Hyprland dynamic monitor management
     inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
@@ -17,7 +35,7 @@
     zoom-us
 
     # Claude Desktop (FHS variant so MCP servers find their interpreters)
-    claude-desktop-fhs
+    claude-desktop
 
     evince # PDF Viewer
 
