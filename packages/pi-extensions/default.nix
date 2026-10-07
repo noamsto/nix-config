@@ -77,7 +77,15 @@ in {
     version = "0.29.0";
     hash = "sha256-yooPtDglWlqp/x1URIajH+axAOMOAggc/KvaoqFjXQk=";
     npmDepsHash = "sha256-nJ9tB1qLwgUq2rZurXcjIzOz4B1SDlUH8fELLTAPe04=";
-    packageJsonFilter = "del(.devDependencies)";
+    # pi bundles typebox; move it from dependencies to peerDependencies ("*")
+    # so the pi extension loader doesn't warn about a local copy shadowing.
+    packageJsonFilter = ''
+      del(.devDependencies)
+      | if .dependencies.typebox then
+          .peerDependencies.typebox = "*"
+          | del(.dependencies.typebox)
+        else . end
+    '';
   };
 
   pi-vim = mkPiExtension {
@@ -100,6 +108,13 @@ in {
     hash = "sha256-a1tVGhYwgRZFab8V6Za7/oanrCeeyWJgEsL3P06Yn04=";
     npmDepsHash = "sha256-iL7/b931OjB7v7SPI5B1E14JY23GQ9mJRj4im6vavEw=";
     # rpiv-i18n is an optional peer, but pi does not bundle it.
-    packageJsonFilter = ''.dependencies["@juicesharp/rpiv-i18n"] = "2.10.1"'';
+    # typebox is bundled by pi; move to peerDependencies to avoid shadowing.
+    packageJsonFilter = ''
+      .dependencies["@juicesharp/rpiv-i18n"] = "2.10.1"
+      | if .dependencies.typebox then
+          .peerDependencies.typebox = "*"
+          | del(.dependencies.typebox)
+        else . end
+    '';
   };
 }
