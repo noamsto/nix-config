@@ -227,6 +227,27 @@ in {
       settings.max_loaded_models = 1;
     };
 
+    # Strata, served behind lemond's ds4 recipe as a non-resident soak
+    # candidate for replacing the GSQHalo Flash-Next. It never
+    # loads beside the resident: with one slot held by a pinned model lemond
+    # refuses the load before starting a backend, so swapping means unloading
+    # Flash-Next first. Taking over lemond's ds4 recipe is safe here because
+    # ds4-server below is its own unit and never goes through lemond.
+    # Context (131072), sampling and vision stay at the module defaults.
+    # Enabling it raises lemond's global_timeout from 0 to 3600, which also caps
+    # Flash-Next requests at 1 h. Not overridden: 0 would give Strata's backend
+    # readiness wait no time at all.
+    strata = {
+      enable = true;
+      profile = "fast";
+      # Experts are read from the GGUF in place and the pack was built from this
+      # snapshot, so it is pinned by hash rather than following lemond's download.
+      model = "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
+      pack = "/var/lib/models/strata/pack";
+      mtp = "/var/lib/models/strata/mtp/rt";
+      vision.mmproj = "/var/lib/models/strata/mmproj-Qwen3.8-Flash-Next-BF16.gguf";
+    };
+
     # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
     # leaves nothing for page cache and both endpoints stop answering. lemond
     # wins the boot because the ThinkPads point at it all day; `systemctl start
@@ -380,13 +401,14 @@ in {
     };
 
     # disko creates the subvolumes as root:root. Split by consumer: lemond's two
-    # caches, and the plain GGUFs ds4-server reads. They inherit the parent's
-    # nodatacow flag.
+    # caches, the plain GGUFs ds4-server reads, and Strata's pack, MTP and mmproj
+    # files. They inherit the parent's nodatacow flag.
     tmpfiles.rules = [
       "d /var/lib/models 0755 noams users -"
       "d /var/lib/models/hf 0755 noams users -"
       "d /var/lib/models/lemonade 0755 noams users -"
       "d /var/lib/models/gguf 0755 noams users -"
+      "d /var/lib/models/strata 0755 noams users -"
       "d /var/lib/games 0700 ${config.steamConsole.user} users -"
     ];
   };
