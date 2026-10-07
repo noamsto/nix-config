@@ -131,19 +131,25 @@ in {
         run mv "$hooks_file.tmp" "$hooks_file"
       '';
 
-      # Cursor Agent follows XDG_CONFIG_HOME when it is set. Merge this one
-      # setting so the CLI can retain every other user-managed preference.
-      cursorAgentVimMode = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      # Cursor Agent follows XDG_CONFIG_HOME when it is set. Merge these
+      # settings so the CLI can retain every other user-managed preference.
+      # Attribution is injected by the agent's own commit/PR path, not by the
+      # model, so an always-apply rule cannot suppress it; only this opt-out can.
+      cursorAgentCliConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
         config_dir="''${XDG_CONFIG_HOME:-$HOME/.config}/cursor"
         config="$config_dir/cli-config.json"
         run mkdir -p "$config_dir"
         if [ -f "$config" ]; then
-          run ${pkgs.jq}/bin/jq '(.version //= 1) | .editor.vimMode = true' "$config" > "$config.tmp"
+          run ${pkgs.jq}/bin/jq '(.version //= 1) | .editor.vimMode = true | .attribution.attributeCommitsToAgent = false | .attribution.attributePRsToAgent = false' "$config" > "$config.tmp"
           run mv "$config.tmp" "$config"
         else
           run install -Dm644 ${pkgs.writeText "cursor-agent-cli-config.json" (builtins.toJSON {
           version = 1;
           editor.vimMode = true;
+          attribution = {
+            attributeCommitsToAgent = false;
+            attributePRsToAgent = false;
+          };
         })} "$config"
         fi
       '';
