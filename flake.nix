@@ -71,6 +71,9 @@
     # Use nixos-unstable for latest packages and features
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-26.05";
+    # bambu-studio is unfree, so Hydra never caches it and every nixpkgs bump
+    # recompiles it locally (~1h). Bump this rev only to upgrade it.
+    nixpkgs-bambu.url = "github:nixos/nixpkgs/a7868a727837f3c09cee2ce0ca671c76b1589fed";
 
     systems.url = "github:nix-systems/default-linux";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";

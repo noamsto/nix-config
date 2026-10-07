@@ -5,6 +5,13 @@ inputs: [
       inherit (final.stdenv.hostPlatform) system;
       config.allowUnfree = true;
     };
+    inherit
+      (import inputs.nixpkgs-bambu {
+        inherit (final.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      })
+      bambu-studio
+      ;
   })
 
   (final: _: {
