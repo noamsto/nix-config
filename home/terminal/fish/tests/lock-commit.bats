@@ -49,6 +49,18 @@ build_lock() { # <rev> <outfile> <name...>
   ' -- "$@" >"$out"
 }
 
+# A lock whose only input is a git-type mysecrets at $rev of $url.
+secrets_lock() { # <url> <rev> <lastModified> <outfile>
+  jq -n --arg url "$1" --arg rev "$2" --argjson lm "$3" '
+    {nodes: {root: {inputs: {mysecrets: "mysecrets"}},
+             mysecrets: {locked: {type: "git", url: $url, rev: $rev, lastModified: $lm}}},
+     root: "root", version: 7}' >"$4"
+}
+
+secrets_field() { # <old> <new> <secrets json> <field>
+  jq -c -f "$FILTER" --slurpfile new "$2" --argjson secrets "$3" <"$1" | jq -r --arg f "$4" '.[$f]'
+}
+
 # --- message shape ---
 
 @test "updated github input: subject names it, body has revs/dates and compare URL" {
@@ -178,6 +190,46 @@ JSON
   [ "$output" = "- foo: AAAAAAAAAAAA → BBBBBBBBBBBB (2020-09-13 → 2023-11-14)" ]
 }
 
+# --- secrets summary ---
+
+@test "lone secrets bump: subject names the secrets, body lists them and commits" {
+  secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 "$FIXTURES/old.json"
+  secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 "$FIXTURES/new.json"
+  secrets='{"input":"mysecrets","added":["wifi","api"],"updated":["token"],"removed":[],"commits":["2222222 feat: add wifi and api"]}'
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" subject
+  [ "$output" = "chore(secrets): add api, wifi, update token" ]
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" body
+  [ "$output" = "- mysecrets: 1111111 → 2222222 (2020-09-13 → 2023-11-14)"$'\n'"  added: api, wifi"$'\n'"  updated: token"$'\n'"  commits:"$'\n'"    2222222 feat: add wifi and api" ]
+}
+
+@test "secrets bump without .age changes names the input" {
+  secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 "$FIXTURES/old.json"
+  secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 "$FIXTURES/new.json"
+  secrets='{"input":"mysecrets","added":[],"updated":[],"removed":[],"commits":["2222222 docs: readme"]}'
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" subject
+  [ "$output" = "chore(secrets): update mysecrets" ]
+}
+
+@test "secrets subject over 72 chars falls back to the count form" {
+  secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 "$FIXTURES/old.json"
+  secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 "$FIXTURES/new.json"
+  secrets='{"input":"mysecrets","added":["a-very-long-secret-name","another-long-secret"],"updated":["yet-another-secret"],"removed":["old"],"commits":[]}'
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" subject
+  [ "$output" = "chore(secrets): update 4 secrets" ]
+}
+
+@test "secrets bump alongside other inputs stays a deps commit with the detail in the body" {
+  jq '.nodes.root.inputs.nixpkgs = "nixpkgs" | .nodes.nixpkgs = {locked: {type: "github", owner: "o", repo: "r", rev: "1111111111111111111111111111111111111111", lastModified: 1600000000}}' \
+    <(secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 /dev/stdout) >"$FIXTURES/old.json"
+  jq '.nodes.root.inputs.nixpkgs = "nixpkgs" | .nodes.nixpkgs = {locked: {type: "github", owner: "o", repo: "r", rev: "2222222222222222222222222222222222222222", lastModified: 1700000000}}' \
+    <(secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 /dev/stdout) >"$FIXTURES/new.json"
+  secrets='{"input":"mysecrets","added":["wifi"],"updated":[],"removed":[],"commits":[]}'
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" subject
+  [ "$output" = "chore(deps): update mysecrets, nixpkgs" ]
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$secrets" body
+  [ "${lines[1]}" = "  added: wifi" ]
+}
+
 # --- the installed fish function ---
 
 @test "fish --no-execute accepts the rendered function" {
@@ -264,4 +316,48 @@ JSON
   [ "$(git -C "$repo" show --name-only --format= HEAD)" = "flake.lock" ]
   [ "$(git -C "$repo" show -s --format=%s HEAD)" = "chore(deps): update nixpkgs" ]
   [ "$(git -C "$repo" diff --cached --name-only)" = "other.txt" ]
+}
+
+@test "secrets bump: fetches the secrets repo and names the changed secrets" {
+  secrets="$BATS_TEST_TMPDIR/secrets"
+  new_repo "$secrets"
+  git -C "$secrets" config uploadpack.allowFilter true
+  printf 'a\n' >"$secrets/token.age"
+  printf 'a\n' >"$secrets/gone.age"
+  printf 'a\n' >"$secrets/secrets.nix"
+  git -C "$secrets" add -A
+  git -C "$secrets" commit -qm init
+  old_rev=$(git -C "$secrets" rev-parse HEAD)
+  printf 'b\n' >"$secrets/token.age"
+  printf 'b\n' >"$secrets/wifi.age"
+  git -C "$secrets" rm -q gone.age
+  git -C "$secrets" add -A
+  git -C "$secrets" commit -qm "feat: add wifi"
+  new_rev=$(git -C "$secrets" rev-parse HEAD)
+
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  secrets_lock "file://$secrets" "$old_rev" 1600000000 "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  secrets_lock "file://$secrets" "$new_rev" 1700000000 "$repo/flake.lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [ "${lines[0]}" = "chore(secrets): add wifi, update token, remove gone" ]
+  [[ "$output" == *"    ${new_rev:0:7} feat: add wifi"* ]]
+}
+
+@test "secrets bump with an unreachable repo warns and keeps the plain message" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "1111111111111111111111111111111111111111" 1600000000 "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "2222222222222222222222222222222222222222" 1700000000 "$repo/flake.lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"could not fetch mysecrets history"* ]]
+  [[ "$output" == *"chore(deps): update mysecrets"* ]]
 }

@@ -7,6 +7,11 @@
 #
 # Output: {"changed": bool, "subject": string, "body": string}
 #
+# Optional `--argjson secrets '{"input", "added", "updated", "removed",
+# "commits"}'` describes what moved inside a secrets input (names are .age
+# paths without the suffix, commits are "<short> <subject>" lines). When that
+# input is the only change, the subject names the secrets instead of the input.
+#
 # Every list is sorted and every date is computed here in jq (strftime is UTC
 # on every platform), so the same lock diff always yields the same message.
 
@@ -29,7 +34,30 @@ def lock_date($n):
   elif ($n.locked.lastModified? // null) != null then ($n.locked.lastModified | strftime("%Y-%m-%d"))
   else "unknown" end;
 
+def secret_actions($s):
+  [ (if ($s.added | length) > 0 then "add \($s.added | sort | join(", "))" else empty end),
+    (if ($s.updated | length) > 0 then "update \($s.updated | sort | join(", "))" else empty end),
+    (if ($s.removed | length) > 0 then "remove \($s.removed | sort | join(", "))" else empty end) ];
+
+def secret_subject($s):
+  secret_actions($s) as $parts |
+  if ($parts | length) == 0 then "chore(secrets): update \($s.input)"
+  else
+    ("chore(secrets): " + ($parts | join(", "))) as $candidate |
+    if ($candidate | length) > 72 then
+      "chore(secrets): update \(($s.added + $s.updated + $s.removed) | length) secrets"
+    else $candidate end
+  end;
+
+def secret_lines($s):
+  [ (if ($s.added | length) > 0 then "  added: \($s.added | sort | join(", "))" else empty end),
+    (if ($s.updated | length) > 0 then "  updated: \($s.updated | sort | join(", "))" else empty end),
+    (if ($s.removed | length) > 0 then "  removed: \($s.removed | sort | join(", "))" else empty end) ]
+  + (if ($s.commits | length) > 0 then ["  commits:"] + ($s.commits | map("    \(.)")) else [] end)
+  | map("\n" + .) | join("");
+
 ($new[0]) as $n |
+($ARGS.named.secrets // null) as $secrets |
 . as $o |
 (root_inputs($o)) as $oi |
 (root_inputs($n)) as $ni |
@@ -71,7 +99,8 @@ def lock_date($n):
     "- \(.name): \(short_ref(.old)) → \(short_ref(.new)) (\(lock_date(.old)) → \(lock_date(.new)))" +
     (if (.old.locked.type? == "github" and .new.locked.type? == "github") then
        "\n  https://github.com/\(.new.locked.owner)/\(.new.locked.repo)/compare/\(.old.locked.rev)...\(.new.locked.rev)"
-     else "" end)
+     else "" end) +
+    (if $secrets != null and .name == $secrets.input then secret_lines($secrets) else "" end)
   elif .kind == "added" then
     "- \(.name): added (\(short_ref(.new)), \(lock_date(.new)))"
   else
@@ -79,7 +108,12 @@ def lock_date($n):
   end
 )) as $change_lines |
 
-(if ($changes | length) > 0 then
+# A lone bump of the secrets input names the secrets; mixed with other
+# updates it stays a deps commit and the detail lives in the body.
+(if $secrets != null and $transitive == 0 and ($changes | length) == 1
+    and $changes[0].name == $secrets.input and $changes[0].kind == "updated" then
+   secret_subject($secrets)
+ elif ($changes | length) > 0 then
    ($changes | map(.name) | join(", ")) as $joined |
    ("chore(deps): update \($joined)") as $candidate |
    if ($candidate | length) > 72 then

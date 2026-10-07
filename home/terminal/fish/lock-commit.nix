@@ -28,7 +28,38 @@
           set old_json '{}'
       end
 
-      set -l result (printf '%s' "$old_json" | $jq -c -f "$filter" --slurpfile new "$lock")
+      # A bump of the secrets input names the secrets it added, updated or
+      # removed. A blobless fetch of both revs reads trees and commits only, so
+      # no ciphertext is downloaded; if it fails the plain input line remains.
+      set -l secrets_input mysecrets
+      set -l secrets null
+      set -l locked_query '(.nodes[.root].inputs[$i]? // null) as $k
+          | (if ($k | type) == "string" then .nodes[$k].locked else {} end)
+          | "\(.type // "")\t\(.url // "")\t\(.rev // "")"'
+      set -l old_ref (printf '%s' "$old_json" | $jq -r --arg i $secrets_input $locked_query | string split \t)
+      set -l new_ref ($jq -r --arg i $secrets_input $locked_query "$lock" | string split \t)
+      if test "$old_ref[1]" = git -a "$new_ref[1]" = git -a -n "$old_ref[3]" -a "$old_ref[3]" != "$new_ref[3]"
+          set -l old_rev $old_ref[3]
+          set -l new_rev $new_ref[3]
+          set -l tmp (command mktemp -d)
+          if command git -C $tmp init -q --bare
+              and GIT_TERMINAL_PROMPT=0 command git -C $tmp fetch -q --filter=blob:none --no-tags $new_ref[2] $old_rev $new_rev
+              set -l files (command git -C $tmp diff --no-renames --name-status $old_rev $new_rev -- '*.age')
+              set -l commits (command git -C $tmp log --no-merges --format='%h %s' $old_rev..$new_rev)
+              set secrets (printf '%s\n' $files | $jq -Rnc --arg input $secrets_input '
+                  [inputs | select(length > 0) | split("\t") | {status: .[0][0:1], name: (.[1] | rtrimstr(".age"))}] as $f
+                  | {input: $input,
+                     added: [$f[] | select(.status == "A") | .name],
+                     removed: [$f[] | select(.status == "D") | .name],
+                     updated: [$f[] | select(.status != "A" and .status != "D") | .name],
+                     commits: $ARGS.positional}' --args $commits)
+          else
+              echo "lock-commit: could not fetch $secrets_input history; using the plain message" >&2
+          end
+          command rm -rf $tmp
+      end
+
+      set -l result (printf '%s' "$old_json" | $jq -c -f "$filter" --slurpfile new "$lock" --argjson secrets "$secrets")
       if test -z "$result"
           echo 'lock-commit: failed to compute the lock diff' >&2
           return 1
