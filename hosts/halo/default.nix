@@ -220,9 +220,11 @@ in {
       # so it no longer frees its GTT for a game: gaming now means stopping
       # lemond first, the same as for ds4.
       settings.auto_evict = true;
-      # Lets the 4B load beside the pinned Flash-Next instead of evicting it;
-      # health reports this as max_models.llm.
-      settings.max_loaded_models = 2;
+      # While the pinned Flash-Next holds the only slot, lemond refuses other
+      # models. A second slot lets one load beside it, and auto-tuned ctx sizes
+      # its KV to fill the free GTT, starving RAM outside the window into a
+      # global OOM. Using another model means unpinning Flash-Next first.
+      settings.max_loaded_models = 1;
     };
 
     # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
