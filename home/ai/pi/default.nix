@@ -193,6 +193,12 @@ in {
         source = subagentAgents;
         recursive = true;
       };
+
+      # pi-web-access defaults `workflow` to `summary-review`, which opens the
+      # browser curator with a generated draft on every search. Keep it text-only.
+      # This path is also the extension's credential store, so provider keys
+      # belong in env vars rather than in a file nix owns.
+      ".config/pi/web-search.json".text = builtins.toJSON {workflow = "none";};
     };
 
     # The Lemonade server on halo is not a provider pi ships, so its models
