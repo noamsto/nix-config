@@ -13,9 +13,10 @@
 # `--settings` through `claudeOverlay.merged`, wired in
 # ../claude-code/default.nix, not through a file this module writes.
 #
-# ../pi is the other: its `pre_tool` guards are declared in ../pi/guards.nix
-# and contributed from ../pi/default.nix, which is the same contract seen from
-# the consumer's side — a manifest path, nothing more.
+# ../pi is the other: its `pre_tool` guards and the dispatcher handlers generated
+# from ${inputs.dispatcher}/hookyard.json are declared in ../pi/guards.nix and
+# contributed from ../pi/default.nix, which is the same contract seen from the
+# consumer's side — manifest paths, nothing more.
 {
   config,
   lib,

@@ -7,7 +7,7 @@
 # A plain function rather than a module, so ./default.nix and the flake check
 # in ./guards-check.nix name the same store paths.
 #
-# Wire contract, which is why nine of the eleven handlers need no adapter:
+# Wire contract, which is why eight of the ten handlers need no adapter:
 # hookyard's normalized envelope already carries `tool_name` mapped to the
 # canonical vocabulary (pi's `bash` -> `Bash`), pi's `tool_input` verbatim, and
 # `cwd` — exactly the three keys ../agent-hooks' guards read. Handler stdout is
@@ -25,23 +25,6 @@
   dispatcher,
 }: let
   guards = import ../agent-hooks {inherit pkgs;};
-
-  # dispatcher ships this one for every engine; Claude Code gets it from the
-  # dispatcher plugin, but its hookyard.json isn't installed here, so pi's
-  # registration stays in this manifest. Run through bash explicitly: the
-  # script's `/usr/bin/env` shebang doesn't resolve in the check's sandbox.
-  public-leak-guard = pkgs.writeShellScriptBin "agent-public-leak-guard" ''
-    export PATH=${pkgs.lib.makeBinPath (with pkgs; [betterleaks curl jq gh git coreutils findutils gnugrep gnused])}:$PATH
-    exec ${pkgs.bash}/bin/bash ${dispatcher}/adapters/core/public-leak-guard.sh
-  '';
-
-  # Same story as public-leak: dispatcher ships it, Claude Code gets it from the
-  # plugin, pi's registration stays in this manifest. A no-op unless
-  # CREW_WORKER_ID is set, so interactive pi sessions are unaffected.
-  test-scope-guard = pkgs.writeShellScriptBin "agent-test-scope-guard" ''
-    export PATH=${pkgs.lib.makeBinPath (with pkgs; [jq git coreutils gnugrep gnused])}:$PATH
-    exec ${pkgs.bash}/bin/bash ${dispatcher}/adapters/core/test-scope-guard.sh
-  '';
 
   # ../claude-code owns its own nix wiring for these two, so they're built
   # separately here rather than shared.
@@ -169,11 +152,73 @@
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
     (piGuard "guards.pi.git-identity" "${guards.git-identity-guard}/bin/agent-git-identity-guard" ["Bash"])
     (piGuard "guards.pi.pgrep-self-match" "${guards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard" ["Bash"])
-    (piGuard "guards.pi.public-leak" "${public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
-    (piGuard "guards.pi.test-scope" "${test-scope-guard}/bin/agent-test-scope-guard" ["Bash"])
   ];
 
   manifest = pkgs.writeText "pi-guards-hookyard.json" (builtins.toJSON {inherit handlers;});
+
+  # dispatcher's own pi handlers, generated from its own hookyard.json rather
+  # than hand-copied (#567). dispatcher declares its pi pre_tool guards and its
+  # session_shutdown notify there with exec paths relative to its tree; read
+  # that locked file at eval time and render each handler through a store-path
+  # wrapper, so a new dispatcher handler arrives with a plain
+  # `nix flake update dispatcher` and no nix-config edit.
+  dispatcherJson = builtins.fromJSON (builtins.readFile "${dispatcher}/hookyard.json");
+
+  # dispatcher handlers nix-config already provides for pi, by dispatcher id.
+  # secret-read-guard: ../agent-hooks' guard is the same family and is what pi
+  # already runs (Bash via guards.pi.secret-read, Read/Grep via the path adapter
+  # guards.pi.secret-read-paths); the two copies have diverged, so installing
+  # dispatcher's as well would double-run two different filters.
+  dispatcherExcluded = ["secret-read-guard"];
+
+  # One shared PATH for every dispatcher handler: the union of what the four
+  # scripts resolve. Supersedes both hand-written wrappers' PATHs, so no handler
+  # loses a binary (notify needs ps/tmux; public-leak needs betterleaks/curl/gh;
+  # secret-read needs awk; test-scope needs jq/git).
+  dispatcherPath = pkgs.lib.makeBinPath (with pkgs; [
+    bash
+    jq
+    gawk
+    gnugrep
+    gnused
+    coreutils
+    findutils
+    git
+    curl
+    gh
+    betterleaks
+    procps
+    tmux
+  ]);
+
+  # hookyard resolves `exec` at hook-fire time against the agent's cwd and PATH,
+  # so it must be an absolute store path; the dispatcher scripts' `/usr/bin/env`
+  # shebang also does not resolve in the check sandbox, hence the explicit bash.
+  # `engines` is pinned to pi: claude-code gets these from the dispatcher plugin
+  # already, and installing them here too would double-run them there.
+  dispatcherHandler = h:
+    {
+      id = "dispatcher.${h.id}";
+      exec = "${
+        pkgs.writeShellScriptBin "hookyard-dispatcher-${h.id}" ''
+          export PATH=${dispatcherPath}:$PATH
+          exec ${pkgs.bash}/bin/bash ${dispatcher}/${h.exec} "$@"
+        ''
+      }/bin/hookyard-dispatcher-${h.id}";
+      inherit (h) events;
+      engines = ["pi"];
+      match = h.match or [];
+    }
+    // pkgs.lib.optionalAttrs (h ? lane) {inherit (h) lane;}
+    // pkgs.lib.optionalAttrs (h ? timeout_ms) {inherit (h) timeout_ms;};
+
+  dispatcherHandlers =
+    builtins.concatMap
+    (h: pkgs.lib.optional (!builtins.elem h.id dispatcherExcluded) (dispatcherHandler h))
+    (builtins.filter (h: builtins.elem "pi" (h.engines or [])) dispatcherJson.handlers);
+
+  dispatcherManifest =
+    pkgs.writeText "hookyard-dispatcher.json" (builtins.toJSON {handlers = dispatcherHandlers;});
 in {
-  inherit manifest handlers readAdapter;
+  inherit manifest handlers readAdapter dispatcherManifest dispatcherExcluded;
 }

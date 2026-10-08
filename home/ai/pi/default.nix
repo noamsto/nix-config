@@ -162,11 +162,12 @@
       else "deepseek/deepseek-v4.1-flash";
   };
 in {
-  # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix).
-  # ../hookyard owns `enable` and the install pass; this contributes a manifest
-  # path and nothing else. It also decides which pi settings dirs the bridge
-  # lands in — both the ambient one and the dispatcher worker's.
-  programs.hookyard.manifests = [piGuards.manifest];
+  # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix),
+  # plus the dispatcher's own pi handlers generated from its hookyard.json. Both
+  # are plain manifests: ../hookyard owns `enable` and the install pass and this
+  # contributes manifest paths and nothing else. It also decides which pi settings
+  # dirs the bridge lands in — both the ambient one and the dispatcher worker's.
+  programs.hookyard.manifests = [piGuards.manifest piGuards.dispatcherManifest];
 
   home = {
     packages = [pi-wrapper];

@@ -33,6 +33,15 @@
           inherit (inputs) dispatcher;
         };
 
+        # Every pi handler in the locked dispatcher's hookyard.json must reach the
+        # generated manifest, or be in guards.nix's explicit exclusion list. A
+        # silently dropped handler fails the build here rather than disappearing
+        # at hook-fire time.
+        pi-dispatcher-manifest = import ../home/ai/pi/dispatcher-manifest-check.nix {
+          inherit pkgs;
+          inherit (inputs) dispatcher;
+        };
+
         # Direct bats regression suite for the secret-read, git-identity and pgrep-self-match guard scripts.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
 
