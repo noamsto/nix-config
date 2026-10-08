@@ -108,6 +108,12 @@ in
       # is listening, which is the earliest an unlock can land
       paths."gnome-keyring-tpm-unlock@" = {
         description = "Watch for uid %i's GNOME keyring daemon to unlock";
+        # Gated here, not on the service: a condition-skipped service never goes
+        # active, so RemainAfterExit= can't hold it and PathExists= re-fires it
+        # until the path trips its trigger limit. LoadCredentialEncrypted= is
+        # fatal on a missing source file, so hosts with no sealed blob must not
+        # arm the watch at all.
+        unitConfig.ConditionPathExists = credFile;
         pathConfig = {
           PathExists = "/run/user/%i/keyring/control";
           Unit = "gnome-keyring-tpm-unlock@%i.service";
@@ -117,9 +123,6 @@ in
       services."gnome-keyring-tpm-unlock@" = {
         description = "Unlock uid %i's GNOME login keyring from TPM-sealed password";
         unitConfig = {
-          # LoadCredentialEncrypted= is fatal on a missing source file, so hosts
-          # with no sealed blob need to skip the unit rather than fail it
-          ConditionPathExists = credFile;
           # Ties the unit's lifetime to the session so RemainAfterExit= below
           # releases on logout, re-arming the path for the next login
           BindsTo = "user@%i.service";
