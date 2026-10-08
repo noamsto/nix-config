@@ -87,7 +87,9 @@ nix eval .#darwinConfigurations.mbp-m4-pro.config.system.stateVersion
 # Check what's pulling in a package
 nix why-depends .#nixosConfigurations.tp-g5.config.system.build.toplevel nixpkgs#somepackage
 
-# Build without switching (test first)
+# Verify with the narrowest check first (nix-rebuild skill's "narrowest check" ladder);
+# a single-package input bump needs only that package's build.
+# Full build without switching (final gate before a switch)
 nh os build .
 nh home build .
 nh darwin build .   # macOS

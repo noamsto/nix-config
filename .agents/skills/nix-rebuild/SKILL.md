@@ -65,7 +65,7 @@ This applies to **every** build path: `nh os`, `nh home`, `nix build`, `nix flak
 The full rebuild is `nh os switch .` on NixOS and `nh darwin switch .` on macOS. The HM-only path is `nh home switch .` (or `just hm`) on both.
 
 - **User config, no new packages** (shell, editor, dotfiles, wallpapers, services) → HM-only path
-- **Any package added or removed**, including from a flake input bump → **full rebuild**
+- **Any package added or removed**, including from a flake input bump → **full rebuild** to switch; verify the bump with the narrowest check below
 - **System-level** (services, kernel, drivers, hardware, system packages) → full rebuild
 - **Unsure** → the full rebuild does everything, always safe.
 
@@ -152,12 +152,13 @@ No manual config needed; they apply automatically.
 
 ## Verifying a change: narrowest check first
 
-Verify with the **narrowest** attr that answers the question. A whole-system build (`nh os build`, `.toplevel`) or `just check` (it evaluates every host and runs every check) costs minutes. Use one only as the final gate before a switch, or when the change touches system-wide wiring such as module imports, overlays every host consumes, or a flake input bump.
+Verify with the **narrowest** attr that answers the question. A whole-system build (`nh os build`, `.toplevel`) or `just check` (it evaluates every host and runs every check) costs minutes. Use one only as the final gate before a switch, or when the change touches system-wide wiring such as module imports, overlays every host consumes, or a bump of a widely consumed input (nixpkgs, home-manager, inputs whose own overlay or module every host imports). An input that supplies a single package is not system-wide: build that package.
 
 | Question | Narrowest check |
 |---|---|
 | Does a patched/overlaid package build? | `nix build --no-link .#nixosConfigurations.<host>.pkgs.<pkg>` |
 | Did the overlay/patch land? (no build) | `nix eval --json .#nixosConfigurations.<host>.pkgs.<pkg>.patches` |
+| Did a single-package input bump build and do what it was bumped for? | `nix build --no-link --print-out-paths .#nixosConfigurations.<host>.pkgs.<pkg>` (if not in `pkgs`: direct input `.#nixosConfigurations.<host>._module.specialArgs.inputs.<input>.packages.x86_64-linux.<pkg>`; nested input `….specialArgs.inputs.<parent>.inputs.<input>.packages.x86_64-linux.<pkg>`, with `<parent>` from `jq -r '.nodes \| to_entries[] \| select((.value.inputs // {}) \| to_entries \| any(.value == "<input>")) \| .key' flake.lock`), then run the motivating behaviour check on the built binary |
 | What value does an option end up with? | `nix eval .#nixosConfigurations.<host>.config.<option.path>` |
 | What does a generated HM file contain? | `nix build --no-link --print-out-paths '.#nixosConfigurations.<host>.config.home-manager.users.noams.xdg.configFile."<name>".source'` |
 | Does one flake check pass? | `nix build --no-link .#checks.x86_64-linux.<name>` |
