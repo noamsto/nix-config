@@ -283,6 +283,15 @@ in {
       # $40/mo OpenRouter budget gate for pi worker spend — personal only.
       openrouter.monthlyTarget = lib.mkIf (osConfig.profile == "personal") 40;
       orgTrackers.factify-inc = "linear:ENG";
+      # halo's resident Strata model; two sessions at 256K each.
+      # maxConcurrent 2 takes both slots; halo's assistant and interactive pi
+      # queue behind dispatch workers.
+      localModels."lemonade/Qwen3.8-Flash-Next-Strata" = {
+        baseUrl = "http://halo:13305/v1";
+        contextWindow = 262144;
+        maxConcurrent = 2;
+        tiers = ["trivial" "standard"];
+      };
     };
 
     # hookyard refuses to write through the settings.json symlink, so it
