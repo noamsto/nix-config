@@ -33,7 +33,7 @@
           inherit (inputs) dispatcher;
         };
 
-        # Direct bats regression suite for the secret-read guard script.
+        # Direct bats regression suite for the secret-read, git-identity and pgrep-self-match guard scripts.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
 
         # Direct bats regression suite for the deslop push guard.

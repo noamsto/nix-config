@@ -7,7 +7,7 @@
 # A plain function rather than a module, so ./default.nix and the flake check
 # in ./guards-check.nix name the same store paths.
 #
-# Wire contract, which is why five of the six handlers need no adapter:
+# Wire contract, which is why nine of the eleven handlers need no adapter:
 # hookyard's normalized envelope already carries `tool_name` mapped to the
 # canonical vocabulary (pi's `bash` -> `Bash`), pi's `tool_input` verbatim, and
 # `cwd` — exactly the three keys ../agent-hooks' guards read. Handler stdout is
@@ -19,7 +19,7 @@
 # ../claude-code pipes `jq -c .native` in front of the same guard binaries; this
 # does not, on purpose. Do NOT unify them onto `.native` here: pi's native
 # payload spells the tools `bash`/`read`, so every `[[ $tool_name == "Bash" ]]`
-# would stop matching and all six guards would abstain, silently.
+# would stop matching and every Bash guard would abstain, silently.
 {
   pkgs,
   dispatcher,
@@ -159,6 +159,8 @@
     # later extension replaces rather than appends content.
     (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
+    (piGuard "guards.pi.git-identity" "${guards.git-identity-guard}/bin/agent-git-identity-guard" ["Bash"])
+    (piGuard "guards.pi.pgrep-self-match" "${guards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard" ["Bash"])
     (piGuard "guards.pi.public-leak" "${public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
   ];
 

@@ -83,6 +83,16 @@
         match = ["Bash"];
       })
       (guardHandler {
+        name = "git-identity";
+        exe = "${sharedGuards.git-identity-guard}/bin/agent-git-identity-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
+        name = "pgrep-self-match";
+        exe = "${sharedGuards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
         name = "deslop";
         exe = "${deslop-guard}/bin/claude-deslop-guard";
         match = ["Bash"];

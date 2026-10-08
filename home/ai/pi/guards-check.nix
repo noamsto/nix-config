@@ -2000,5 +2000,40 @@ in
           guards.pi.public-leak abstain \
           "$(bash_payload "$repo" "gh issue create -R owner/secret --title t --body 'Filed from owner/secret#8'")"
 
+        ## git-identity. Both fixtures stay unborn (no commit, nothing staged) so
+        ## git-default-branch and git-commit-autostage abstain.
+        idrepo=$TMPDIR/idrepo
+        idlocal=$TMPDIR/idlocal
+        git init -q "$idrepo"
+        git -C "$idrepo" remote add origin https://example.invalid/x.git
+        git init -q "$idlocal"
+
+        assert_blocked "git-identity denies -c user.email in a repo with a remote" \
+          guards.pi.git-identity deny \
+          "$(bash_payload "$idrepo" 'git -c user.email=x@y.z commit -m m')" \
+          'commit with the configured git identity'
+
+        assert_allowed "git-identity lets -c user.email through in a repo without a remote" \
+          guards.pi.git-identity abstain \
+          "$(bash_payload "$idlocal" 'git -c user.email=x@y.z commit -m m')"
+
+        assert_allowed "git-identity lets a plain commit through in a repo with a remote" \
+          guards.pi.git-identity abstain \
+          "$(bash_payload "$idrepo" 'git commit -m m')"
+
+        ## pgrep-self-match
+        assert_blocked "pgrep-self-match denies pgrep -f without a bracket class" \
+          guards.pi.pgrep-self-match deny \
+          "$(bash_payload "$idlocal" 'pgrep -f "bats .*-j 8"')" \
+          'matches its own shell'
+
+        assert_allowed "pgrep-self-match lets the bracket trick through" \
+          guards.pi.pgrep-self-match abstain \
+          "$(bash_payload "$idlocal" "pgrep -f '[b]ats'")"
+
+        assert_allowed "pgrep-self-match lets pgrep -x through" \
+          guards.pi.pgrep-self-match abstain \
+          "$(bash_payload "$idlocal" 'pgrep -x bats')"
+
         touch $out
   ''

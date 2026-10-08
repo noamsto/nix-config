@@ -48,6 +48,14 @@
     pkgs.writeShellScriptBin "agent-secret-read-guard"
     (builtins.readFile ./secret-read-guard.sh);
 
+  git-identity-guard =
+    pkgs.writeShellScriptBin "agent-git-identity-guard"
+    (builtins.readFile ./git-identity-guard.sh);
+
+  pgrep-self-match-guard =
+    pkgs.writeShellScriptBin "agent-pgrep-self-match-guard"
+    (builtins.readFile ./pgrep-self-match-guard.sh);
+
   tmux-live-server-guard =
     pkgs.writeShellScriptBin "agent-tmux-live-server-guard"
     (builtins.readFile ./tmux-live-server-guard.sh);
