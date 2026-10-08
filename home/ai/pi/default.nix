@@ -158,7 +158,7 @@
       else "openrouter";
     defaultModel =
       if isHalo
-      then "Qwen3.8-Flash-Next-MTP"
+      then "Qwen3.8-Flash-Next-Strata"
       else "deepseek/deepseek-v4.1-flash";
   };
 in {
@@ -206,9 +206,9 @@ in {
     # is a regular file HM would otherwise refuse to clobber. A store path
     # rather than an out-of-store symlink: the symlink would resolve against
     # the main checkout, leaving a switch run from a worktree with a dangling
-    # file. The halo default (Flash-Next) is set in managedSettings above; the
-    # 27B and gpt-oss-120b cannot load beside the pinned Flash-Next (not enough
-    # RAM), so using them means unloading Flash-Next first.
+    # file. The halo default (Strata) is set in managedSettings above; the
+    # 27B and gpt-oss-120b cannot load beside the pinned Strata (not enough
+    # RAM), so using them means unloading Strata first.
     file.".pi/agent/models.json" = {
       source = ./models.json;
       force = true;

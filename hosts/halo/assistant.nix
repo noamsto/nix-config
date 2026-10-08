@@ -22,7 +22,7 @@
   hermesHome = "${stateDir}/.hermes";
   workingDirectory = "${stateDir}/workspace";
   lemond = "http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1";
-  qwen = "Qwen3.8-Flash-Next-MTP";
+  qwen = "Qwen3.8-Flash-Next-Strata";
   claude = "claude-opus-5-5";
 
   cfg =

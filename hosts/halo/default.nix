@@ -71,6 +71,14 @@ in {
   # into a resume hook.
   environment.systemPackages = [
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.halo-wlan0-suspend-repro
+    # Post-deploy check for the resident Strata model; body in
+    # hosts/halo/strata-smoke-test.sh (no shebang: writeShellApplication adds it).
+    (pkgs.writeShellApplication {
+      name = "halo-strata-smoke";
+      runtimeInputs = [pkgs.curl pkgs.jq pkgs.coreutils];
+      runtimeEnv.LEMOND_PORT = toString config.hardware.amd-npu.lemonade.port;
+      text = builtins.readFile ./strata-smoke-test.sh;
+    })
   ];
 
   # `op` for the op-sa-toddl service account token; nixos/desktop/1password
@@ -173,7 +181,7 @@ in {
         "Qwen3.5-4B-GGUF" # 3.58 GB, for cheap tasks
         "Qwen3-Coder-30B-A3B-Instruct-GGUF" # 18.6 GB, proven on g6
         "Qwen3.8-27B-GGUF" # 18.8 GB, fallback coding model
-        "Qwen3.8-Flash-Next-MTP" # resident default, see customModels
+        "Qwen3.8-Flash-Next-MTP" # GSQHalo fallback; Strata is resident (customModels below)
       ];
 
       # UD-IQ4_XS plus its MTP draft head. The draft must be the ggml-org one:
@@ -208,44 +216,49 @@ in {
         labels = ["chat" "reasoning" "tool-calling" "mtp"];
       };
 
-      # Canonical id, not the bare name: user models are prefixed `user.` here
-      # and a bare key silently matches nothing.
-      recipeOptions."user.Qwen3.8-Flash-Next-MTP".pinned = true;
+      # Resident model. Canonical id: user models are prefixed `user.` here and
+      # a bare key silently matches nothing.
+      recipeOptions."user.Qwen3.8-Flash-Next-Strata".pinned = true;
+      # GSQHalo stays registered but unpinned, so loading it means unloading
+      # Strata first. Written explicitly rather than dropped: lemond's
+      # recipe_options.json is merged key-by-key and never pruned, so an
+      # absent key would leave the previous generation's `pinned = true`.
+      recipeOptions."user.Qwen3.8-Flash-Next-MTP".pinned = false;
       # Without this both caches land in ~/.cache on @home, which is
       # compress=zstd and CoW - 157 GB of weights on the wrong subvolume.
       cacheDir = "/var/lib/models";
 
       # Games and lemond both draw from the same GTT pool. auto_evict unloads
-      # idle models under memory pressure, but the pinned Flash-Next is exempt,
+      # idle models under memory pressure, but the pinned Strata is exempt,
       # so it no longer frees its GTT for a game: gaming now means stopping
       # lemond first, the same as for ds4.
       settings.auto_evict = true;
-      # While the pinned Flash-Next holds the only slot, lemond refuses other
+      # While the pinned Strata holds the only slot, lemond refuses other
       # models. A second slot lets one load beside it, and auto-tuned ctx sizes
       # its KV to fill the free GTT, starving RAM outside the window into a
-      # global OOM. Using another model means unpinning Flash-Next first.
+      # global OOM. Using another model means unpinning Strata first.
       settings.max_loaded_models = 1;
     };
 
-    # Strata, served behind lemond's ds4 recipe as a non-resident soak
-    # candidate for replacing the GSQHalo Flash-Next. It never
-    # loads beside the resident: with one slot held by a pinned model lemond
-    # refuses the load before starting a backend, so swapping means unloading
-    # Flash-Next first. Taking over lemond's ds4 recipe is safe here because
-    # ds4-server below is its own unit and never goes through lemond.
-    # Context (131072), sampling and vision stay at the module defaults.
-    # Enabling it raises lemond's global_timeout from 0 to 3600, which also caps
-    # Flash-Next requests at 1 h. Not overridden: 0 would give Strata's backend
-    # readiness wait no time at all.
+    # Strata is the resident Flash-Next: one 256K slot, faster than GSQHalo at
+    # every depth and ~7-10 GiB lighter (nix-amd-ai #282 soak, PR #289).
+    # pack, mtp and vision.mmproj stay at their module defaults, so the
+    # strata-prepare oneshot builds the pack and MTP runtime under
+    # /var/lib/strata and mmproj comes from the module's pinned BF16 fetch. The
+    # shim refuses a load until both stamps exist. Strata serves lemond's native
+    # strata recipe, so the ds4 recipe (and ds4-server below) is unaffected.
+    # GSQHalo stays registered and can be loaded by hand after unloading Strata.
+    # The strata backend carries its own 1 h readiness timeout, so lemond's
+    # global_timeout stays 0 (halo does not enable vLLM).
     strata = {
       enable = true;
       profile = "fast";
-      # Experts are read from the GGUF in place and the pack was built from this
+      # Feeds both the run config's --max-context and the lemond ctx_size: the
+      # 256K slot.
+      contextSize = 262144;
+      # Experts are read from the GGUF in place and the pack is built from this
       # snapshot, so it is pinned by hash rather than following lemond's download.
       model = "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
-      pack = "/var/lib/models/strata/pack";
-      mtp = "/var/lib/models/strata/mtp/rt";
-      vision.mmproj = "/var/lib/models/strata/mmproj-Qwen3.8-Flash-Next-BF16.gguf";
     };
 
     # lemond and ds4 cannot both hold weights on this box: 80.76 GiB + ~11 GiB
@@ -330,9 +343,13 @@ in {
       # the first request. Tied to lemond's lifecycle: PartOf stops and restarts
       # it with lemond, WantedBy starts it with lemond. /load blocks until the
       # model is up, so the retry only covers lemond's port not answering yet.
+      # Ordered after strata-prepare: on the first deploy the shim refuses a
+      # load until the pack/MTP stamps exist, and the 4.9 GiB MTP download can
+      # outlast the curl retry budget (60 x 5s).
       lemond-preload = {
         description = "Load the resident model into lemond";
-        after = ["lemond.service"];
+        after = ["lemond.service" "strata-prepare.service"];
+        wants = ["strata-prepare.service"];
         partOf = ["lemond.service"];
         wantedBy = ["lemond.service"];
         path = [pkgs.curl];
@@ -347,7 +364,7 @@ in {
         script = ''
           curl --silent --show-error --fail --retry 60 --retry-delay 5 --retry-all-errors \
             --max-time 900 --header 'Content-Type: application/json' \
-            --data '{"model_name": "user.Qwen3.8-Flash-Next-MTP"}' \
+            --data '{"model_name": "user.Qwen3.8-Flash-Next-Strata"}' \
             http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1/load
         '';
       };
@@ -486,9 +503,9 @@ in {
           provider = "custom";
           base_url = "http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1";
           # The id /api/v1/models serves: the bare name, since no builtin shadows it.
-          # The 27B and gpt-oss-120b cannot load beside the pinned Flash-Next (not
-          # enough RAM), so using them means unloading Flash-Next first.
-          default = "Qwen3.8-Flash-Next-MTP";
+          # The 27B and gpt-oss-120b cannot load beside the pinned Strata (not
+          # enough RAM), so using them means unloading Strata first.
+          default = "Qwen3.8-Flash-Next-Strata";
         };
         # Chat can read files in its home and the scout report dir, but it
         # cannot run code, browse, delegate or schedule, and the hermes uid

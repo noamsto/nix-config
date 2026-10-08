@@ -5,7 +5,7 @@
       "apiKey": "lemonade",
       "baseUrl": "http://halo:13305/v1",
       "models": [
-        { "id": "Qwen3.8-Flash-Next-MTP", "contextWindow": 131072 },
+        { "id": "Qwen3.8-Flash-Next-Strata", "contextWindow": 262144 },
         { "id": "Qwen3.8-27B-GGUF", "contextWindow": 262144 },
         { "id": "Qwen3-Coder-30B-A3B-Instruct-GGUF" },
         { "id": "Qwen3.5-4B-GGUF" },
