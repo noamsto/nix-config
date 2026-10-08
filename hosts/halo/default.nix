@@ -230,8 +230,9 @@ in {
 
       # Games and lemond both draw from the same GTT pool. auto_evict unloads
       # idle models under memory pressure, but the pinned Strata is exempt,
-      # so it no longer frees its GTT for a game: gaming now means stopping
-      # lemond first, the same as for ds4.
+      # so it would never free its GTT for a game: the Gaming Mode session
+      # stops lemond and ds4 itself and starts lemond again afterwards
+      # (steam-console-inference below).
       settings.auto_evict = true;
       # While the pinned Strata holds the only slot, lemond refuses other
       # models. A second slot lets one load beside it, and auto-tuned ctx sizes
@@ -367,6 +368,30 @@ in {
             --data '{"model_name": "user.Qwen3.8-Flash-Next-Strata"}' \
             http://127.0.0.1:${toString config.hardware.amd-npu.lemonade.port}/api/v1/load
         '';
+      };
+
+      # The console session is the gaming signal. BindsTo, not PartOf: PartOf
+      # only follows explicit stop jobs, so a crashed session would leave
+      # lemond down. Here any DM exit runs ExecStop, and lemond-preload then
+      # reloads the model. Ordered before the DM so the GTT is free before
+      # Steam starts.
+      steam-console-inference = {
+        description = "Free the GPU for Gaming Mode, restore lemond afterwards";
+        wantedBy = ["display-manager.service"];
+        bindsTo = ["display-manager.service"];
+        before = ["display-manager.service"];
+        # A restart would run ExecStop, bringing lemond back mid-game.
+        restartIfChanged = false;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          TimeoutStartSec = "60s";
+          # "-": a wedged stop costs GTT headroom, not a black TV; a failure
+          # here would fail the DM start through BindsTo.
+          ExecStart = "-${pkgs.systemd}/bin/systemctl stop lemond.service ds4-server.service";
+          # "-": at shutdown the start job is refused, which isn't a failure.
+          ExecStop = "-${pkgs.systemd}/bin/systemctl start --no-block lemond.service";
+        };
       };
 
       # Wi-Fi is halo's only uplink, and restarting iwd under a running
