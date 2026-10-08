@@ -291,6 +291,9 @@ in {
         contextWindow = 262144;
         maxConcurrent = 2;
         tiers = ["trivial" "standard"];
+        reasoning = true;
+        thinkingFormat = "qwen-chat-template";
+        effortThinking = {low = "off";};
       };
     };
 
