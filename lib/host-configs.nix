@@ -21,6 +21,7 @@
     hostname = "tp-g5";
     desktop.mode = "hyprland";
     machine.type = "laptop";
+    agentDashboard.enable = true;
     profile = "work";
     laptop-scale = "2.0";
   };
@@ -54,6 +55,7 @@
     # graphical-session.target that never arrives, so the remote session picker
     # has a server to attach to. Also drops fprintd; this box has no sensor.
     machine.serverMode = true;
+    agentDashboard.enable = true;
     profile = "personal";
   };
 

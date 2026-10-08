@@ -16,6 +16,7 @@ in {
     ../../secrets
     ../../options.nix
     ./host_secrets.nix
+    ./agent-dashboard.nix
     inputs.disko.nixosModules.disko
     inputs.nix-amd-ai.nixosModules.default
     ../../nixos/core/lanzaboote.nix
@@ -26,6 +27,7 @@ in {
   inherit (hostConfig) hostname email profile laptop-scale;
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
+  agentDashboard.enable = hostConfig.agentDashboard.enable;
 
   # Thinkfan configuration
   hardware.thinkpad.thinkfan = {

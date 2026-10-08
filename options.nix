@@ -82,6 +82,13 @@
         '';
       };
     };
+    agentDashboard = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`.";
+      };
+    };
     profile = lib.mkOption {
       type = lib.types.enum ["personal" "work"];
       default = "personal";

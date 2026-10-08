@@ -24,7 +24,6 @@
   inputs,
   ...
 }: let
-  isHalo = osConfig.hostname == "halo";
   aeye = import ./aeye.nix {
     inherit pkgs;
     aeye = inputs.tmux-og.inputs.aeye;
@@ -95,10 +94,10 @@ in {
       '';
     }
   ];
-  # Always-on viewer for halo's localProxy. Binds 127.0.0.1:7757 only; the
-  # proxy is the sole way in. Lingering for the user comes from
-  # nixos/core/users.nix, so this runs without a login session.
-  systemd.user.services.hookyard-serve = lib.mkIf isHalo {
+  # Always-on viewer behind services.localProxy on agentDashboard hosts. Binds
+  # 127.0.0.1:7757 only; the proxy is the sole way in. Lingering for the user
+  # comes from nixos/core/users.nix, so this runs without a login session.
+  systemd.user.services.hookyard-serve = lib.mkIf osConfig.agentDashboard.enable {
     Unit.Description = "hookyard serve - hook event viewer";
     Service = {
       ExecStart = "${config.programs.hookyard.package}/bin/hookyard serve --port 7757";

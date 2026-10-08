@@ -35,6 +35,7 @@ in {
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;
+  agentDashboard.enable = hostConfig.agentDashboard.enable;
 
   # Couch console on the TV. Runs as its own unprivileged user, so autologin
   # never reaches noams's SSH keys, sudo, or the agents.
@@ -643,21 +644,6 @@ in {
       };
 
       services = {
-        houston = {
-          port = 9090;
-          # `/houston` is the door in, stripped so houston answers it at its own
-          # root; the `/` catch-all then serves the absolute asset URLs that page
-          # goes on to request. Only the bare root moves, to the landing page.
-          paths = ["/" "/houston"];
-          stripPrefix = ["/houston"];
-          streaming = true;
-          responseHeaderTimeout = "300s";
-          landing = {
-            title = "Houston";
-            description = "Monitor and steer remote agent sessions";
-            icon = "🚀";
-          };
-        };
         # The web UI sits at /lemonade, stripped so lemond answers it at its own
         # root. The UI builds its API base from window.location.origin, so every
         # request it makes — including the websocket endpoints — lands on the
@@ -675,25 +661,6 @@ in {
             title = "Lemonade";
             description = "Local LLM chat UI";
             icon = "🍋";
-          };
-        };
-        # serve builds every URL absolutely (/static/, /api/...). `/hookyard` is
-        # the door in, stripped; its own routes are claimed one by one rather
-        # than as a blanket /api, which other services on this vhost share.
-        #
-        # serve 403s any Host but its loopback address, hence upstreamHost. It is
-        # unauthenticated and shows tool payloads: only tailnet-only reach makes
-        # that acceptable.
-        hookyard = {
-          port = 7757;
-          paths = ["/hookyard" "/static" "/api/days" "/api/events" "/api/flow" "/api/stats" "/api/stream" "/api/table"];
-          stripPrefix = ["/hookyard"];
-          upstreamHost = "localhost:7757";
-          streaming = true;
-          landing = {
-            title = "hookyard";
-            description = "Agent hook events and flow across engines";
-            icon = "🪝";
           };
         };
         prep = {

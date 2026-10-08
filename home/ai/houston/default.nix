@@ -7,6 +7,10 @@
   ...
 }: let
   isHalo = osConfig.hostname == "halo";
+  enabled = osConfig.agentDashboard.enable;
+  # houston only trusts Host values it can derive itself; the tsnet node's
+  # name is not one of them.
+  hostnameArgs = lib.optionals (osConfig.services.localProxy.tailscale.enable or false) ["-hostname" osConfig.services.localProxy.tailscale.fqdn];
   houstonPkg = inputs.houston.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Picks dev vs pinned at process start, so `houston-dev on/off` needs no
@@ -116,71 +120,84 @@
       + builtins.readFile ./houston-dev.sh;
   };
 in {
-  programs.hookyard.manifests = lib.mkIf isHalo [manifest];
+  programs.hookyard.manifests = lib.mkIf enabled [manifest];
 
-  systemd.user = lib.mkIf isHalo {
-    services.houston = {
-      Unit = {
-        Description = "Houston - mission control for AI coding agents in tmux";
-        # tmux-startup.service brings up the user's tmux server (and its
-        # control socket) on halo; houston needs that socket to exist before
-        # it can talk to tmux in control mode.
-        After = ["tmux-startup.service"];
-        Wants = ["tmux-startup.service"];
-      };
+  systemd.user = lib.mkMerge [
+    (lib.mkIf enabled {
+      services.houston = {
+        Unit = {
+          Description = "Houston - mission control for AI coding agents in tmux";
+          # tmux-startup.service brings up the user's tmux server (and its
+          # control socket); houston needs that socket to exist before it can
+          # talk to tmux in control mode.
+          After = ["tmux-startup.service"];
+          Wants = ["tmux-startup.service"];
+        };
 
-      Service = {
-        ExecStart = "${launcher}/bin/houston";
-        Restart = "on-failure";
-        RestartSec = 5;
-        Environment = [
-          # tmuxPackage first: houston must see the same tmux binary version
-          # the user's tmux server runs, or control mode breaks on a
-          # client/server version mismatch.
-          #
-          # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
-          # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
-          # wrapping them (dispatcher flake.nix).
-          "PATH=${lib.makeBinPath [
-            config.programs.tmux-og.tmuxPackage
-            pkgs.git
-            pkgs.gh
-            pkgs.worktrunk
-            pkgs.direnv
-            inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
-            inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
-          ]}"
-          # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
-          # the same runtime dir (/run/user/1000) and therefore the same socket.
-          "TMUX_TMPDIR=%t"
+        Service = {
+          ExecStart = lib.concatStringsSep " " (["${launcher}/bin/houston"] ++ hostnameArgs);
+          Restart = "on-failure";
+          RestartSec = 5;
+          Environment = [
+            # tmuxPackage first: houston must see the same tmux binary version
+            # the user's tmux server runs, or control mode breaks on a
+            # client/server version mismatch.
+            #
+            # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
+            # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
+            # wrapping them (dispatcher flake.nix).
+            "PATH=${lib.makeBinPath [
+              config.programs.tmux-og.tmuxPackage
+              pkgs.git
+              pkgs.gh
+              pkgs.worktrunk
+              pkgs.direnv
+              inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
+              inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
+            ]}"
+            # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
+            # the same runtime dir (/run/user/1000) and therefore the same socket.
+            "TMUX_TMPDIR=%t"
+          ];
+        };
+
+        # Same switch tmux-startup uses for `headless`: on a desktop host the
+        # lingering user manager would otherwise pull tmux-startup (and
+        # graphical-session.target with it) up at boot, before the compositor.
+        Install.WantedBy = [
+          (
+            if osConfig.machine.serverMode or false
+            then "default.target"
+            else "graphical-session.target"
+          )
         ];
       };
+    })
 
-      Install.WantedBy = ["default.target"];
-    };
-
-    services.houston-dev-sync = {
-      Unit.Description = "Build and deploy github:noamsto/houston main when houston dev mode is on";
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${sync}/bin/houston-dev-sync";
-        # oneshot has no start timeout by default; a stalled fetch would keep
-        # the unit "activating" and the timer could never fire it again.
-        TimeoutStartSec = "30min";
+    (lib.mkIf isHalo {
+      services.houston-dev-sync = {
+        Unit.Description = "Build and deploy github:noamsto/houston main when houston dev mode is on";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${sync}/bin/houston-dev-sync";
+          # oneshot has no start timeout by default; a stalled fetch would keep
+          # the unit "activating" and the timer could never fire it again.
+          TimeoutStartSec = "30min";
+        };
       };
-    };
 
-    # Always on; the sync no-ops while dev mode is off. HM owns the timer's
-    # wants links, so `houston-dev` could not enable it at runtime.
-    timers.houston-dev-sync = {
-      Unit.Description = "Poll github:noamsto/houston main for houston dev mode";
-      Timer = {
-        OnBootSec = "2min";
-        OnUnitActiveSec = "2min";
+      # Always on; the sync no-ops while dev mode is off. HM owns the timer's
+      # wants links, so `houston-dev` could not enable it at runtime.
+      timers.houston-dev-sync = {
+        Unit.Description = "Poll github:noamsto/houston main for houston dev mode";
+        Timer = {
+          OnBootSec = "2min";
+          OnUnitActiveSec = "2min";
+        };
+        Install.WantedBy = ["timers.target"];
       };
-      Install.WantedBy = ["timers.target"];
-    };
-  };
+    })
+  ];
 
   home.packages = lib.mkIf isHalo [cli];
 }

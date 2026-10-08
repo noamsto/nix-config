@@ -5,6 +5,7 @@
     ./airconnect.nix
     ./jellyfin.nix
     ./local-proxy.nix
+    ./agent-dashboard.nix
     ./money-scout.nix
   ];
 }

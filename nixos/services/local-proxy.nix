@@ -9,12 +9,14 @@
     mkEnableOption
     mkOption
     mkIf
+    mkMerge
     types
     literalExpression
     genAttrs
     concatStringsSep
     optional
     optionals
+    optionalString
     escapeXML
     length
     unique
@@ -205,6 +207,12 @@
   # it, and "is this vhost addressed at all" is a question about the union — an
   # https-only vhost is a valid site.
   siteNames = cfg.hostNames ++ cfg.httpsHostNames;
+  landingNames = siteNames ++ optional cfg.tailscale.enable cfg.tailscale.fqdn;
+
+  # Pseudo-version of commit de41b249af4fd2083612c3b2303197e92787d1c5; the repo
+  # has no tags.
+  caddyTailscale = "github.com/tailscale/caddy-tailscale@v0.0.0-20260826180304-de41b249af4f";
+  credentialPath = "/run/credentials/caddy.service/ts-authkey";
 
   rootClaimants = filterAttrs (_: svc: elem "/" svc.paths) cfg.services;
   allPaths = flatten (mapAttrsToList (_: svc: svc.paths) cfg.services);
@@ -342,7 +350,7 @@
     <main>
       <h1>${escapeXML cfg.landingPage.title}</h1>
       <div></div>
-      <p class="hosts">Answers to ${escapeXML (concatStringsSep ", " siteNames)}</p>
+      <p class="hosts">Answers to ${escapeXML (concatStringsSep ", " landingNames)}</p>
     ${
       if landingEntries == []
       then ''<p class="empty">No services are advertised yet. Add one under <code>services.localProxy.services</code>.</p>''
@@ -372,6 +380,11 @@
       file_server
     }
   '';
+
+  siteBody = concatStringsSep "\n" (
+    optional cfg.landingPage.enable landingHandle
+    ++ flatten (mapAttrsToList (_: svc: map (mkHandle svc) svc.paths) cfg.services)
+  );
 in {
   options.services.localProxy = {
     enable = mkEnableOption "Caddy reverse proxy for local services, addressed by path prefix";
@@ -398,15 +411,26 @@ in {
       '';
     };
 
+    listenAddresses = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      example = ["127.0.0.1" "::1"];
+      description = ''
+        Addresses the vhost binds to (Caddy's `bind`). Empty keeps Caddy's
+        default of every interface.
+      '';
+    };
+
     lanInterfaces = mkOption {
       type = types.listOf types.str;
       default = [];
       example = ["enp97s0"];
       description = ''
         Interfaces to open TCP 80 on, and TCP 443 as well when
-        `httpsHostNames` is set. Every registered service becomes reachable,
-        unauthenticated, to whatever network segment the named interface is on —
-        empty means tailnet-only reach, since `tailscale0` is already trusted.
+        `httpsHostNames` is set. Unless `listenAddresses` keeps Caddy off it,
+        every registered service becomes reachable, unauthenticated, to
+        whatever network segment the named interface is on — empty means
+        tailnet-only reach, since `tailscale0` is already trusted.
       '';
     };
 
@@ -465,70 +489,200 @@ in {
         '';
       };
     };
-  };
 
-  config = mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = length (attrNames rootClaimants) <= 1;
-        message = "services.localProxy: more than one service claims \"/\": ${concatStringsSep ", " (attrNames rootClaimants)}";
-      }
-      {
-        assertion = length allPaths == length (unique allPaths);
-        message = "services.localProxy: a path is claimed by more than one service.";
-      }
-      {
-        # A bad hostName (empty list, an already-scheme-prefixed entry, or one
-        # with a space) produces a site address that silently never matches,
-        # rather than an eval or runtime error. Applies to both lists — either
-        # alone can address the vhost — and to `https://` as well as `http://`:
-        # which scheme the module adds depends on the list.
-        assertion =
-          siteNames
-          != []
-          && !(any (h: hasInfix " " h || hasPrefix "http://" h || hasPrefix "https://" h) siteNames);
-        message = "services.localProxy: hostNames and httpsHostNames must not both be empty, and no name in either may contain a space or a scheme prefix (the module adds `http://` or `https://`).";
-      }
-      {
-        # A name in both lists is served on :80 and :443, so Caddy adds no
-        # redirect for it — almost certainly not what was meant.
-        assertion = intersectLists cfg.hostNames cfg.httpsHostNames == [];
-        message = "services.localProxy: a name cannot be both http and https — Caddy already redirects `httpsHostNames` to HTTPS.";
-      }
-      {
-        assertion = all (svc: subtractLists svc.paths svc.stripPrefix == []) (attrValues cfg.services);
-        message = "services.localProxy: every stripPrefix entry must also appear in that service's paths.";
-      }
-      {
-        # `handle_path` needs a matcher ending in `*`, which a root claim has none of.
-        assertion = all (svc: !(elem "/" svc.stripPrefix)) (attrValues cfg.services);
-        message = "services.localProxy: \"/\" cannot be stripped — it is the matcher-less catch-all.";
-      }
-      {
-        assertion = !cfg.landingPage.enable || selfLinked == [];
-        message = "services.localProxy: the landing page owns \"/\", so these buttons would point back at it: ${concatStringsSep ", " (map (entry: entry.title) selfLinked)}. Give each a non-root path, or set `landing.url`.";
-      }
-    ];
+    tailscale = {
+      enable = mkEnableOption ''
+        serving the vhost's routes over HTTPS on a dedicated Tailscale node that
+        Caddy runs itself (the `tailscale/caddy-tailscale` plugin, userspace
+        tsnet), separate from the host's tailscaled and restricted to
+        `allowedLogins`
+      '';
 
-    services.caddy = {
-      enable = true;
+      nodeName = mkOption {
+        type = types.str;
+        example = "tp-g5-agents";
+        description = "Node config name in Caddy, and the hostname the node requests.";
+      };
 
-      virtualHosts.${vhostKey} = {
-        # The vhost key above is space-separated http:// addresses; nixpkgs'
-        # default log filename derives from that key, which would mangle into
-        # an ~89-char name.
-        logFormat = "output file ${config.services.caddy.logDir}/access-local-proxy.log";
-        extraConfig = concatStringsSep "\n" (
-          optional cfg.landingPage.enable landingHandle
-          ++ flatten (mapAttrsToList (_: svc: map (mkHandle svc) svc.paths) cfg.services)
-        );
+      tailnetDomain = mkOption {
+        type = types.str;
+        example = "tail1234.ts.net";
+        description = "The tailnet's MagicDNS domain.";
+      };
+
+      fqdn = mkOption {
+        type = types.str;
+        readOnly = true;
+        default = "${cfg.tailscale.nodeName}.${cfg.tailscale.tailnetDomain}";
+        defaultText = literalExpression ''"''${nodeName}.''${tailnetDomain}"'';
+        description = ''
+          The node's site address. Tailscale suffixes a name already taken on
+          the tailnet (e.g. `-1`), so pick an unused `nodeName`.
+        '';
+      };
+
+      authKeyFile = mkOption {
+        type = types.nullOr types.externalPath;
+        default = null;
+        description = ''
+          Auth key that registers the node on first start. Handed to Caddy with
+          systemd `LoadCredential`, so the file can stay root-only. Null makes
+          the node log a login URL to Caddy's journal instead. Only needed
+          until the node's state exists in `stateDir`.
+        '';
+      };
+
+      allowedLogins = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ["alice@example.com"];
+        description = ''
+          Tailscale login names allowed in. Anyone else on the tailnet gets 403;
+          tagged devices and non-tailnet clients get 401.
+        '';
+      };
+
+      stateDir = mkOption {
+        type = types.str;
+        default = "${config.services.caddy.dataDir}/tailscale";
+        defaultText = literalExpression ''"''${config.services.caddy.dataDir}/tailscale"'';
+        description = "tsnet state; the node keeps its identity in `<stateDir>/<nodeName>`.";
       };
     };
-
-    # Deliberately not networking.firewall.allowedTCPPorts: that opens every
-    # interface, including whatever untrusted network a host roams onto.
-    networking.firewall.interfaces = genAttrs cfg.lanInterfaces (_: {
-      allowedTCPPorts = [80] ++ optional (cfg.httpsHostNames != []) 443;
-    });
   };
+
+  config = mkIf cfg.enable (mkMerge [
+    {
+      assertions = [
+        {
+          assertion = length (attrNames rootClaimants) <= 1;
+          message = "services.localProxy: more than one service claims \"/\": ${concatStringsSep ", " (attrNames rootClaimants)}";
+        }
+        {
+          assertion = length allPaths == length (unique allPaths);
+          message = "services.localProxy: a path is claimed by more than one service.";
+        }
+        {
+          # A bad hostName (empty list, an already-scheme-prefixed entry, or one
+          # with a space) produces a site address that silently never matches,
+          # rather than an eval or runtime error. Applies to both lists — either
+          # alone can address the vhost — and to `https://` as well as `http://`:
+          # which scheme the module adds depends on the list.
+          assertion =
+            siteNames
+            != []
+            && !(any (h: hasInfix " " h || hasPrefix "http://" h || hasPrefix "https://" h) siteNames);
+          message = "services.localProxy: hostNames and httpsHostNames must not both be empty, and no name in either may contain a space or a scheme prefix (the module adds `http://` or `https://`).";
+        }
+        {
+          # A name in both lists is served on :80 and :443, so Caddy adds no
+          # redirect for it — almost certainly not what was meant.
+          assertion = intersectLists cfg.hostNames cfg.httpsHostNames == [];
+          message = "services.localProxy: a name cannot be both http and https — Caddy already redirects `httpsHostNames` to HTTPS.";
+        }
+        {
+          assertion = all (svc: subtractLists svc.paths svc.stripPrefix == []) (attrValues cfg.services);
+          message = "services.localProxy: every stripPrefix entry must also appear in that service's paths.";
+        }
+        {
+          # `handle_path` needs a matcher ending in `*`, which a root claim has none of.
+          assertion = all (svc: !(elem "/" svc.stripPrefix)) (attrValues cfg.services);
+          message = "services.localProxy: \"/\" cannot be stripped — it is the matcher-less catch-all.";
+        }
+        {
+          assertion = !cfg.landingPage.enable || selfLinked == [];
+          message = "services.localProxy: the landing page owns \"/\", so these buttons would point back at it: ${concatStringsSep ", " (map (entry: entry.title) selfLinked)}. Give each a non-root path, or set `landing.url`.";
+        }
+      ];
+
+      services.caddy = {
+        enable = true;
+
+        virtualHosts.${vhostKey} = {
+          # The vhost key above is space-separated http:// addresses; nixpkgs'
+          # default log filename derives from that key, which would mangle into
+          # an ~89-char name.
+          logFormat = "output file ${config.services.caddy.logDir}/access-local-proxy.log";
+          inherit (cfg) listenAddresses;
+          extraConfig = siteBody;
+        };
+      };
+
+      # Deliberately not networking.firewall.allowedTCPPorts: that opens every
+      # interface, including whatever untrusted network a host roams onto.
+      networking.firewall.interfaces = genAttrs cfg.lanInterfaces (_: {
+        allowedTCPPorts = [80] ++ optional (cfg.httpsHostNames != []) 443;
+      });
+    }
+
+    (mkIf cfg.tailscale.enable {
+      assertions = [
+        {
+          assertion = cfg.tailscale.allowedLogins != [];
+          message = "services.localProxy.tailscale: allowedLogins is empty, so every request would be refused.";
+        }
+        {
+          assertion = cfg.tailscale.nodeName != "";
+          message = "services.localProxy.tailscale: nodeName must not be empty.";
+        }
+        {
+          assertion = cfg.tailscale.tailnetDomain != "";
+          message = "services.localProxy.tailscale: tailnetDomain must not be empty.";
+        }
+      ];
+
+      services.caddy = {
+        package = pkgs.caddy.withPlugins {
+          plugins = [caddyTailscale];
+          hash = "sha256-OzzyBF/SA1WkX/g+WOwvZo2t5bfeNPOeYJ1ziOLlTTk=";
+        };
+
+        # h1/h2 only: the plugin's HTTP/3 listener calls tsnet `Up`, which blocks
+        # until the node is logged in, so with h3 `caddy reload` (the switch
+        # path) and shutdown hang while offline or before the auth key exists.
+        #
+        # The node reports its login URL at INFO, below nixpkgs' default ERROR
+        # level, hence its own log.
+        globalConfig = ''
+          servers tailscale/${cfg.tailscale.nodeName}:443 {
+            protocols h1 h2
+          }
+          log tsnet {
+            include tailscale
+            level INFO
+          }
+          tailscale {
+            state_dir ${cfg.tailscale.stateDir}
+            ${cfg.tailscale.nodeName} {
+              ${optionalString (cfg.tailscale.authKeyFile != null) "auth_key {file.${credentialPath}}"}
+            }
+          }
+        '';
+
+        virtualHosts."https://${cfg.tailscale.fqdn}" = {
+          listenAddresses = ["tailscale/${cfg.tailscale.nodeName}"];
+          logFormat = "output file ${config.services.caddy.logDir}/access-local-proxy-tailscale.log";
+          # `tailscale_auth` admits any tailnet user; the `vars` match on
+          # `{http.auth.user.id}` (the login name) narrows it to the allowlist.
+          # `respond` sorts after `handle`, and the root claimant's matcher-less
+          # `handle` would always win, so the check runs inside a `route` (which
+          # keeps written order) wrapping a `handle` (sorted as usual).
+          extraConfig = ''
+            route {
+              tailscale_auth
+              @denied not vars {http.auth.user.id} ${concatStringsSep " " cfg.tailscale.allowedLogins}
+              respond @denied "Forbidden" 403
+              handle {
+                ${siteBody}
+              }
+            }
+          '';
+        };
+      };
+
+      systemd.services.caddy.serviceConfig.LoadCredential =
+        mkIf (cfg.tailscale.authKeyFile != null)
+        ["ts-authkey:${cfg.tailscale.authKeyFile}"];
+    })
+  ]);
 }
