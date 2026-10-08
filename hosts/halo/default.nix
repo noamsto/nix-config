@@ -347,9 +347,10 @@ in {
       # the first request. Tied to lemond's lifecycle: PartOf stops and restarts
       # it with lemond, WantedBy starts it with lemond. /load blocks until the
       # model is up, so the retry only covers lemond's port not answering yet.
-      # Ordered after strata-prepare: on the first deploy the shim refuses a
+      # Waits for strata-prepare to exit: on the first deploy the shim refuses a
       # load until the pack/MTP stamps exist, and the 4.9 GiB MTP download can
-      # outlast the curl retry budget (60 x 5s).
+      # outlast the curl retry budget (60 x 5s). strata-prepare is Type=exec, so
+      # After= only orders its start; the loop waits out the build itself.
       lemond-preload = {
         description = "Load the resident model into lemond";
         after = ["lemond.service" "strata-prepare.service"];
@@ -366,6 +367,9 @@ in {
           User = config.hardware.amd-npu.lemonade.user;
         };
         script = ''
+          while [ "$(systemctl show -P SubState strata-prepare.service)" = running ]; do
+            sleep 10
+          done
           curl --silent --show-error --fail --retry 60 --retry-delay 5 --retry-all-errors \
             --max-time 900 --header 'Content-Type: application/json' \
             --data '{"model_name": "user.Qwen3.8-Flash-Next-Strata"}' \
