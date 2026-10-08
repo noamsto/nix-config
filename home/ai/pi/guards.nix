@@ -35,6 +35,14 @@
     exec ${pkgs.bash}/bin/bash ${dispatcher}/adapters/core/public-leak-guard.sh
   '';
 
+  # Same story as public-leak: dispatcher ships it, Claude Code gets it from the
+  # plugin, pi's registration stays in this manifest. A no-op unless
+  # CREW_WORKER_ID is set, so interactive pi sessions are unaffected.
+  test-scope-guard = pkgs.writeShellScriptBin "agent-test-scope-guard" ''
+    export PATH=${pkgs.lib.makeBinPath (with pkgs; [jq git coreutils gnugrep gnused])}:$PATH
+    exec ${pkgs.bash}/bin/bash ${dispatcher}/adapters/core/test-scope-guard.sh
+  '';
+
   # ../claude-code owns its own nix wiring for these two, so they're built
   # separately here rather than shared.
   skeleton-guard = pkgs.writeShellScriptBin "agent-read-skeleton-guard" (builtins.readFile ../claude-code/skeleton-guard.sh);
@@ -162,6 +170,7 @@
     (piGuard "guards.pi.git-identity" "${guards.git-identity-guard}/bin/agent-git-identity-guard" ["Bash"])
     (piGuard "guards.pi.pgrep-self-match" "${guards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard" ["Bash"])
     (piGuard "guards.pi.public-leak" "${public-leak-guard}/bin/agent-public-leak-guard" ["Bash"])
+    (piGuard "guards.pi.test-scope" "${test-scope-guard}/bin/agent-test-scope-guard" ["Bash"])
   ];
 
   manifest = pkgs.writeText "pi-guards-hookyard.json" (builtins.toJSON {inherit handlers;});
