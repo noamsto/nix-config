@@ -252,6 +252,10 @@ proc_environ_re="(^|[[:space:]\"'<=])/proc/[^[:space:]\"']*/environ"
 # flags as SC1003, a likely quote-escaping mistake) so mask_quotes and
 # decode_word below can compare against it unambiguously.
 bs=$'\\'
+# A slice `${s:i:n}` costs O(len(s)) however short, so the scanners below take a
+# run of ordinary characters per window-sized slice instead of one per char,
+# which keeps them linear in practice.
+scan_window=128
 
 # Succeeds, setting COMMENT_END to the index of the newline ending the comment
 # (or the string length), iff s[i] starts a shell comment: an unquoted `#` at a
@@ -300,13 +304,15 @@ comment_at() {
 # would let a false comment start hide a real dumper. So it is copied verbatim
 # with only its quote characters turned into spaces.
 mask_quotes() {
-  local s=$1 out='' i=0 c q seg
+  local s=$1 out='' i=0 c q seg pad span_re w
   local len=${#s}
+  local run_re="^[^$bs#'\"]+"
   while ((i < len)); do
-    c=${s:i:1}
+    w=${s:i:scan_window}
+    c=${w:0:1}
     if [[ $c == "$bs" ]] && ((i + 1 < len)); then
       out+=$c
-      out+=${s:i+1:1}
+      out+=${w:1:1}
       i=$((i + 2))
     elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
       seg=${s:i:COMMENT_END-i}
@@ -315,10 +321,15 @@ mask_quotes() {
       i=$COMMENT_END
     elif [[ $c == "'" || $c == '"' ]]; then
       q=$c
+      span_re="^[^$q$bs]+"
       out+=' '
       i=$((i + 1))
-      while ((i < len)) && [[ ${s:i:1} != "$q" ]]; do
-        if [[ $q == '"' && ${s:i:1} == "$bs" ]] && ((i + 1 < len)); then
+      while ((i < len)) && w=${s:i:scan_window} && [[ ${w:0:1} != "$q" ]]; do
+        if [[ ${w:0:2} == [!"$q"\\][!"$q"\\] ]] && [[ $w =~ $span_re ]]; then
+          printf -v pad '%*s' "${#BASH_REMATCH[0]}" ''
+          out+=$pad
+          i=$((i + ${#BASH_REMATCH[0]}))
+        elif [[ $q == '"' && ${w:0:1} == "$bs" ]] && ((i + 1 < len)); then
           out+='  '
           i=$((i + 2))
         else
@@ -330,6 +341,9 @@ mask_quotes() {
         out+=' '
         i=$((i + 1))
       fi
+    elif [[ ${w:0:2} == [!\\#\'\"][!\\#\'\"] ]] && [[ $w =~ $run_re ]]; then
+      out+=${BASH_REMATCH[0]}
+      i=$((i + ${#BASH_REMATCH[0]}))
     else
       out+=$c
       i=$((i + 1))
@@ -523,7 +537,7 @@ strip_heredocs() {
     fi
     out+=$line$'\n'
     # Past scan_budget the caller denies whatever follows, and a long marker line
-    # is scanned character by character below.
+    # is scanned once per special character or ordinary run below.
     if ((${#out} > scan_budget)); then break; fi
     if [[ $line =~ $hd_re ]] && ((! cont)); then
       delim=${BASH_REMATCH[4]}${BASH_REMATCH[5]}${BASH_REMATCH[6]}${BASH_REMATCH[7]}
@@ -532,8 +546,9 @@ strip_heredocs() {
       dash=0
       if [[ ${BASH_REMATCH[2]} == - ]]; then dash=1; fi
       lead=${BASH_REMATCH[1]}
-      rest=${line#*"${BASH_REMATCH[0]}"}
       pre=${line%%"${BASH_REMATCH[0]}"*}
+      # `${line#*"…"}` is the same cut, but its glob prefix match is quadratic.
+      rest=${line:${#pre}+${#BASH_REMATCH[0]}}
       at=$((${#pre} + ${#lead}))
       # The regex stops at the first non-word character, but bash takes the whole
       # word (`EOF-x`, `E'O'F`), so a longer delimiter would end the body at the
@@ -637,10 +652,12 @@ find_paren_end() {
 # and `#` are literal text, so only `$(`, backticks and backslashes matter.
 # Unbalanced input takes the rest of the string as the body.
 scan_substs() {
-  local s=$1 plain=$2 i=0 len c dq=0 body out n
+  local s=$1 plain=$2 i=0 len c dq=0 body out n w
+  local run_re="^[^$bs\`\$#'\"]+" sq_run_re="^[^']+"
   len=${#s}
   while ((i < len)); do
-    c=${s:i:1}
+    w=${s:i:scan_window}
+    c=${w:0:1}
     if [[ $c == "$bs" ]]; then
       i=$((i + 2))
     elif [[ $c == '`' ]]; then
@@ -660,10 +677,12 @@ scan_substs() {
       done
       SUBST_BODIES+=("$out")
       i=$((BT_END + 1))
-    elif [[ $c == '$' && ${s:i+1:1} == '(' ]]; then
+    elif [[ $c == '$' && ${w:1:1} == '(' ]]; then
       find_paren_end "$s" $((i + 2))
       SUBST_BODIES+=("${s:i+2:FPE_END-i-2}")
       i=$((FPE_END + 1))
+    elif [[ ${w:0:2} == [!\\\`\$#\'\"][!\\\`\$#\'\"] ]] && [[ $w =~ $run_re ]]; then
+      i=$((i + ${#BASH_REMATCH[0]}))
     elif ((plain)); then
       i=$((i + 1))
     elif ((dq)); then
@@ -673,7 +692,13 @@ scan_substs() {
       i=$COMMENT_END
     elif [[ $c == "'" ]]; then
       i=$((i + 1))
-      while ((i < len)) && [[ ${s:i:1} != "'" ]]; do i=$((i + 1)); done
+      while ((i < len)) && w=${s:i:scan_window} && [[ ${w:0:1} != "'" ]]; do
+        if [[ ${w:0:2} == [!\'][!\'] ]] && [[ $w =~ $sq_run_re ]]; then
+          i=$((i + ${#BASH_REMATCH[0]}))
+        else
+          i=$((i + 1))
+        fi
+      done
       i=$((i + 1))
     else
       if [[ $c == '"' ]]; then dq=1; fi
@@ -742,14 +767,16 @@ strip_escapes() {
 # characters are already gone, and on raw text it would unescape inside '...'
 # too, turning `grep '\.env' f` into a credential read.
 dequote() {
-  local s=$1 i=0 c q k
+  local s=$1 i=0 c q k n span_re w
   local len=${#s}
+  local run_re="^[^$bs#'\"\$]+" meta=$' \t\n\r\v\f;&|()<>'
   DEQUOTED=''
   DEQUOTED_MAP=()
   while ((i < len)); do
-    c=${s:i:1}
+    w=${s:i:scan_window}
+    c=${w:0:1}
     if [[ $c == "$bs" ]] && ((i + 1 < len)); then
-      if [[ ${s:i+1:1} != $'\n' ]]; then dequote_char "${s:i+1:1}" $((i + 1)); fi
+      if [[ ${w:1:1} != $'\n' ]]; then dequote_char "${w:1:1}" $((i + 1)); fi
       i=$((i + 2))
     elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
       for ((k = i; k < COMMENT_END; k++)); do DEQUOTED_MAP+=("$k"); done
@@ -757,16 +784,23 @@ dequote() {
       i=$COMMENT_END
     elif [[ $c == "'" || $c == '"' ]]; then
       q=$c
+      span_re="^[^$q$bs]+"
       i=$((i + 1))
-      while ((i < len)) && [[ ${s:i:1} != "$q" ]]; do
-        c=${s:i:1}
-        if [[ $q == '"' && $c == "$bs" ]] && ((i + 1 < len)); then
-          case ${s:i+1:1} in
+      while ((i < len)) && w=${s:i:scan_window} && [[ ${w:0:1} != "$q" ]]; do
+        c=${w:0:1}
+        if [[ ${w:0:2} == [!"$q"\\][!"$q"\\] ]] && [[ $w =~ $span_re ]]; then
+          n=${#BASH_REMATCH[0]}
+          # dequote_char over each character of the run.
+          DEQUOTED+=${BASH_REMATCH[0]//[$meta]/_}
+          for ((k = i; k < i + n; k++)); do DEQUOTED_MAP+=("$k"); done
+          i=$((i + n))
+        elif [[ $q == '"' && $c == "$bs" ]] && ((i + 1 < len)); then
+          case ${w:1:1} in
           $'\n') ;;
-          '$' | '`' | '"' | "$bs") dequote_char "${s:i+1:1}" $((i + 1)) ;;
+          '$' | '`' | '"' | "$bs") dequote_char "${w:1:1}" $((i + 1)) ;;
           *)
             dequote_char "$c" "$i"
-            dequote_char "${s:i+1:1}" $((i + 1))
+            dequote_char "${w:1:1}" $((i + 1))
             ;;
           esac
           i=$((i + 2))
@@ -776,8 +810,13 @@ dequote() {
         fi
       done
       if ((i < len)); then i=$((i + 1)); fi
-    elif [[ $c == '$' && (${s:i+1:1} == "'" || ${s:i+1:1} == '"') ]]; then
+    elif [[ $c == '$' && (${w:1:1} == "'" || ${w:1:1} == '"') ]]; then
       i=$((i + 1))
+    elif [[ ${w:0:2} == [!\\#\'\"\$][!\\#\'\"\$] ]] && [[ $w =~ $run_re ]]; then
+      n=${#BASH_REMATCH[0]}
+      DEQUOTED+=${BASH_REMATCH[0]}
+      for ((k = i; k < i + n; k++)); do DEQUOTED_MAP+=("$k"); done
+      i=$((i + n))
     else
       DEQUOTED+=$c
       DEQUOTED_MAP+=("$i")
@@ -795,9 +834,10 @@ dequote_char() {
   DEQUOTED_MAP+=("$2")
 }
 
-# The scanners above walk a string character by character, and each nested
-# command substitution re-runs them over its whole body, so the work grows
-# with (nesting depth x length) and a single long command is superlinear too.
+# The scanners above slice a string once per special character or ordinary run,
+# and each nested command substitution re-runs them over its whole body, so the
+# work grows with (nesting depth x length) and a long command dense in quotes or
+# metacharacters is superlinear too.
 # scan_budget caps the bytes they are asked to read across one command: the
 # heredoc-free view plus unquoted heredoc bodies of the command itself (a
 # quoted heredoc body is dropped whole and costs almost nothing), then each
@@ -805,12 +845,14 @@ dequote_char() {
 # its view passes the budget. max_command_len bounds the one thing that scan
 # still reads whole, the body of a quoted heredoc. The hook has 4000ms and an
 # overrun abstains, so a command past either ceiling is denied.
-# Measured on the dev box (LC_ALL=C), at 16384 bytes: flat words ~0.6s, nested
-# $(...) ~0.4s, a 12KB python heredoc ~0.5s, a 9KB unquoted heredoc ~0.1s, and
-# 3000 heredoc markers ~0.7s; realistic commands sit far below both ceilings.
+# Measured on a loaded dev box (LC_ALL=C), at 16384 bytes: flat words ~0.13s,
+# nested $(...) ~0.8s, a 12KB python heredoc ~1.4s, a 9KB unquoted heredoc
+# ~0.1s, and 3000 heredoc markers ~3.1s; realistic commands sit far below both
+# ceilings.
 # Bytes are only a proxy: comment-dense text (comment_at copies the string per
-# `#`) and a `<<-` line of thousands of tabs still cost more than their size
-# and can pass 4s under the budget (#405, #407).
+# `#`), quote-dense text (`'a' "b" ...`, ~2.1s) and a `<<-` line of thousands of
+# tabs still cost more than their size and can pass 4s under the budget (#405,
+# #407).
 scan_budget=16384
 max_command_len=524288
 scanned=0

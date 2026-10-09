@@ -607,6 +607,48 @@ assert_allow() {
   assert_deny
 }
 
+@test "deny: env after a heredoc whose marker line is 2000 assignments long" {
+  local pad
+  pad=$(printf 'a=1 %.0s' $(seq 1 2000))
+  guard_bash "${pad}cat <<EOF"$'\nhello\nEOF\nenv'
+  assert_deny
+}
+
+@test "deny: env after a 1500-byte single-quoted string" {
+  local x
+  x=$(printf 'x%.0s' $(seq 1 1500))
+  guard_bash "echo '$x'; env"
+  assert_deny
+}
+
+@test "allow: env inside a 1500-byte single-quoted string" {
+  local x
+  x=$(printf 'x%.0s' $(seq 1 1500))
+  guard_bash "echo '$x env'"
+  assert_allow
+}
+
+@test "deny: \$(env) inside a 1500-byte double-quoted string" {
+  local x
+  x=$(printf 'x%.0s' $(seq 1 1500))
+  guard_bash "echo \"$x\$(env)\""
+  assert_deny
+}
+
+@test "deny: backslash-escaped env after a 1030-byte word" {
+  local x
+  x=$(printf 'x%.0s' $(seq 1 1030))
+  guard_bash "echo $x; \\env"
+  assert_deny
+}
+
+@test "deny: e\\nv after a 1030-byte word runs env" {
+  local x
+  x=$(printf 'x%.0s' $(seq 1 1030))
+  guard_bash "echo $x; e\\nv"
+  assert_deny
+}
+
 @test "allow: bash -c 'echo hi'" {
   guard_bash $'bash -c \'echo hi\''
   assert_allow
