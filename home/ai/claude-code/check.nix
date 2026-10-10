@@ -1,8 +1,9 @@
 # Direct regression suites for the helpers: the deslop push guard
-# (../claude-code/deslop-guard.sh) — its non-source short-circuit and the
-# retained deny path — the caller --settings merge (settings-merge.sh) and the
-# wrapper's --settings argument scan (wrapper-args.sh). The hookyard routing
-# that installs the guard is covered separately by ../claude-code/default.nix.
+# (../claude-code/deslop-guard.sh) — its non-source short-circuit, tag-only push
+# exemption and nothing-to-push case, plus the retained deny path — the caller
+# --settings merge (settings-merge.sh) and the wrapper's --settings argument
+# scan (wrapper-args.sh). The hookyard routing that installs the guard is
+# covered separately by ../claude-code/default.nix.
 {pkgs}:
 pkgs.runCommand "deslop-guard-check" {
   nativeBuildInputs = with pkgs; [bats bash jq gnugrep gnused coreutils git findutils];

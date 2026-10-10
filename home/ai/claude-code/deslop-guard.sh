@@ -103,12 +103,79 @@ fi
 # Tag-only pushes carry no branch commits to review, so the deslop gate doesn't
 # apply — the deploy flow here is all tag pushes (`git push origin v*-…`). Skip
 # the gate when every pushed refspec resolves to a tag (or deletes one) and no
-# flag drags commits along. Bare `git push` (current branch), any branch
-# refspec, and --follow-tags/--all/--mirror/--branches fall through to the gate.
-if echo "$command" | grep -qE '(^|\s)git\s+(-[Cc]\s+\S+\s+|-[^ ]+\s+)*push(\s|$)'; then
-  after=${command#*push} # args after the `push` word
-  after=${after%%[;&|]*} # ignore anything past a shell separator
-  read -ra ptoks <<<"$after"
+# flag drags commits along. A tag created earlier in the same command counts:
+# this hook runs before the command, so the ref doesn't exist yet. Bare
+# `git push` (current branch), any branch refspec, --follow-tags/--all/--mirror/
+# --branches, a second push, and `gh pr create` fall through to the gate.
+push_re='(^|[[:space:]])git[[:space:]]+(-[Cc][[:space:]]+[^[:space:]]+[[:space:]]+|-[^[:space:]]+[[:space:]]+)*push([[:space:]]|$)'
+
+# Tag names a segment creates: `git [globals] tag [flags] <name>`, skipping
+# list/delete/verify modes.
+created_tags_in() {
+  local -a t=()
+  local i=0 n name listing=false tok
+  mapfile -t t < <(xargs -n1 <<<"$1" 2>/dev/null || true)
+  n=${#t[@]}
+  while ((i < n)) && [[ ${t[i]} =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; do i=$((i + 1)); done
+  ((i < n)) && [[ ${t[i]} == git ]] || return 0
+  i=$((i + 1))
+  while ((i < n)) && [[ ${t[i]} == -* ]]; do
+    case ${t[i]} in -C | -c) i=$((i + 2)) ;; *) i=$((i + 1)) ;; esac
+  done
+  ((i < n)) && [[ ${t[i]} == tag ]] || return 0
+  i=$((i + 1))
+  name=""
+  while ((i < n)); do
+    tok=${t[i]}
+    case $tok in
+    -m | -F | -u | --message | --file | --local-user | --trailer | --cleanup | --color) i=$((i + 1)) ;;
+    -d | --delete | -l | --list | -v | --verify | -n* | --contains* | --no-contains* | --points-at* | --merged* | --no-merged* | --sort* | --format*) listing=true ;;
+    -*) : ;;
+    *)
+      name=$tok
+      break
+      ;;
+    esac
+    i=$((i + 1))
+  done
+  [[ $listing == false && -n $name ]] && printf '%s\n' "$name"
+  return 0
+}
+
+is_push=false
+refspecs=() push_remote=""
+if [[ $command =~ $push_re ]]; then
+  is_push=true
+  match=${BASH_REMATCH[0]}
+  before=${command%%"$match"*}
+  after=${command#*"$match"} # args after the `push` word
+  # Drop redirections (`2>&1`, `&>f`, `> f`, `<f`) so they aren't read as refspecs.
+  after=$(sed -E 's/(^|[[:space:]])(&>>?|[0-9]*[<>]+\|?&?)[[:space:]]*[^[:space:];&|]*/ /g' <<<"$after")
+  # A redirect glued to a word (`v1>/dev/null`) is cut off the word.
+  after=$(sed -E 's/([^[:space:]])[<>][^[:space:];&|]*/\1/g' <<<"$after")
+  args=${after%%[;&|$'\n']*} # ignore anything past a shell separator
+  rest=${after#"$args"}
+
+  created_tags=()
+  while IFS= read -r seg; do
+    while IFS= read -r name; do
+      [[ -n $name ]] && created_tags+=("$name")
+    done < <(created_tags_in "$seg")
+  done < <(tr ';&|' '\n' <<<"$before")
+
+  is_tag() {
+    local x
+    # A name that is also a local branch may belong to a `git tag` that never
+    # ran (or ran elsewhere), so only a pre-existing tag counts then.
+    git -C "$target" rev-parse --verify --quiet "refs/tags/$1" >/dev/null 2>&1 && return 0
+    for x in "${created_tags[@]}"; do
+      [[ $x == "$1" ]] &&
+        ! git -C "$target" rev-parse --verify --quiet "refs/heads/$1" >/dev/null 2>&1 && return 0
+    done
+    return 1
+  }
+
+  read -ra ptoks <<<"$args"
   carries_commits=false saw_remote=false saw_refspec=false tag_only=true
   for tok in "${ptoks[@]}"; do
     case $tok in
@@ -118,21 +185,30 @@ if echo "$command" | grep -qE '(^|\s)git\s+(-[Cc]\s+\S+\s+|-[^ ]+\s+)*push(\s|$)
     *)
       if [[ $saw_remote == false ]]; then
         saw_remote=true # first positional is the remote
+        push_remote=$tok
       else
         saw_refspec=true
+        refspecs+=("$tok")
         ref=${tok#+}                 # strip force '+'
         src=${ref%%:*} dst=${ref#*:} # split a src:dst refspec
-        if [[ -z $src ]]; then
-          [[ $dst == refs/tags/* ]] || tag_only=false # deletion — safe only for a tag
-        elif [[ $src != refs/tags/* ]] &&
-          ! git -C "$target" rev-parse --verify --quiet "refs/tags/$src" >/dev/null 2>&1; then
+        if [[ $src == *[~^*]* ]]; then
+          tag_only=false # peeled/globbed source may resolve to a branch tip
+        elif [[ $ref == *:* && $dst != refs/tags/* ]]; then
+          tag_only=false # destination must be a tag (also covers deletions)
+        elif [[ -z $src ]]; then
+          :
+        elif [[ $src != refs/tags/* ]] && ! is_tag "$src"; then
           tag_only=false # branch or unknown ref
         fi
       fi
       ;;
     esac
   done
-  [[ $carries_commits == false && $saw_refspec == true && $tag_only == true ]] && exit 0
+  if [[ $carries_commits == false && $saw_refspec == true && $tag_only == true &&
+    ! $rest =~ $push_re ]] &&
+    ! echo "$command" | grep -qE '(^|\s)gh\s+pr\s+create(\s|$)'; then
+    exit 0
+  fi
 fi
 
 branch=$(git -C "$target" symbolic-ref --quiet --short HEAD 2>/dev/null || true)
@@ -174,6 +250,25 @@ is_nonsource_path() {
 if ! base=$(deslop_base 2>/dev/null); then
   : # unresolvable base → today's deny
 else
+  # Nothing ahead of upstream (e.g. a branch merely behind it) leaves nothing to
+  # review. Only for a push of the current branch to its own upstream: `gh pr
+  # create` and pushes to another destination still need the gate.
+  if [[ $is_push == true ]] && ! echo "$command" | grep -qE '(^|\s)gh\s+pr\s+create(\s|$)' &&
+    { git -C "$target" rev-parse --verify --quiet '@{push}' ||
+      git -C "$target" rev-parse --verify --quiet '@{upstream}'; } >/dev/null 2>&1 &&
+    [[ $(git -C "$target" rev-list --count "$base"..HEAD 2>/dev/null) == 0 ]]; then
+    to_upstream=true
+    upstream_remote=$(git -C "$target" rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || true)
+    upstream_remote=${upstream_remote%%/*}
+    [[ -z $push_remote || $push_remote == "$upstream_remote" ]] || to_upstream=false
+    for r in "${refspecs[@]}"; do
+      [[ $r == "$branch" || $r == HEAD ]] || to_upstream=false
+    done
+    [[ $carries_commits == false && ! $rest =~ $push_re ]] || to_upstream=false
+    [[ $to_upstream == true ]] && exit 0
+  fi
+  # Diff only the commits being pushed, not upstream's side of a diverged history.
+  base=$(git -C "$target" merge-base "$base" HEAD 2>/dev/null || printf '%s' "$base")
   nonsource_only=true
   changed=0
   paths_left=0

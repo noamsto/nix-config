@@ -1,7 +1,9 @@
 #!/usr/bin/env bats
-# Regression suite for deslop-guard.sh's non-source short-circuit: a branch whose
-# diff against its deslop base touches only non-source paths may push without
-# /deslop, while any source path keeps the gate. Run directly:
+# Regression suite for deslop-guard.sh: the non-source short-circuit (a branch
+# whose diff against its deslop base touches only non-source paths may push
+# without /deslop), the tag-only push exemption, and the nothing-to-push case
+# for a branch behind its upstream. Source paths and branch pushes keep the
+# gate. Run directly:
 #   bats home/ai/claude-code/tests/deslop-guard.bats
 # or: nix build .#checks.x86_64-linux.deslop-guard
 
@@ -197,4 +199,232 @@ assert_deny() {
   export ALLOW_PUSH_WITHOUT_DESLOP=1
   run_guard 'git push'
   assert_allow
+}
+
+# --- tag-only pushes ---
+
+_with_remote() {
+  git init -q --bare -b main "$BATS_TEST_TMPDIR/remote.git"
+  git -C "$repo" remote add origin "$BATS_TEST_TMPDIR/remote.git"
+  git -C "$repo" push -q -u origin main
+}
+
+_source_commit() {
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+}
+
+@test "allow: push of an existing tag" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag created earlier in the same command" {
+  _source_commit
+  run_guard 'git tag -a v1 -m "deploy: ship it" && git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag created via git -C earlier in the same command" {
+  _source_commit
+  run_guard "git -C $repo tag v1; git -C $repo push origin v1"
+  assert_allow
+}
+
+@test "allow: tag push with 2>&1 and a pipe" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 2>&1 | tail -2'
+  assert_allow
+}
+
+@test "allow: tag push with spaced and file redirections" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 > /dev/null 2> err.log &>> all.log'
+  assert_allow
+}
+
+@test "allow: same-command tag push with redirect (issue repro)" {
+  _source_commit
+  run_guard 'git tag -a v0.0.0-test -m test && git push origin v0.0.0-test 2>&1 | tail -2'
+  assert_allow
+}
+
+@test "allow: tag named push-x is not mistaken for the push word" {
+  _source_commit
+  git -C "$repo" tag push-x
+  run_guard 'git push origin push-x'
+  assert_allow
+}
+
+@test "deny: branch push" {
+  _source_commit
+  git -C "$repo" checkout -qb feat
+  run_guard 'git push origin feat'
+  assert_deny
+}
+
+@test "deny: mixed tag and branch refspecs" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 main'
+  assert_deny
+}
+
+@test "deny: unknown ref is not a tag" {
+  _source_commit
+  run_guard 'git push origin v1'
+  assert_deny
+}
+
+@test "deny: tag creation only in a non-creating command" {
+  _source_commit
+  run_guard 'echo git tag main; git push origin main'
+  assert_deny
+}
+
+@test "deny: tag list/delete does not create the tag" {
+  _source_commit
+  run_guard 'git tag -d main && git push origin main'
+  assert_deny
+}
+
+@test "deny: tag push followed by a branch push" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 && git push origin main'
+  assert_deny
+}
+
+@test "deny: tag push chained with gh pr create" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 && gh pr create --fill'
+  assert_deny
+}
+
+@test "deny: --follow-tags carries commits" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push --follow-tags origin v1'
+  assert_deny
+}
+
+# --- branch behind upstream ---
+
+_behind_upstream() {
+  _with_remote
+  printf 'true\n' >"$repo/up.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm up
+  git -C "$repo" push -q origin main
+  git -C "$repo" reset -q --hard HEAD~1
+}
+
+@test "allow: branch behind upstream with nothing to push" {
+  _behind_upstream
+  run_guard 'git push'
+  assert_allow
+}
+
+@test "allow: current-branch push behind upstream by name" {
+  _behind_upstream
+  run_guard 'git push origin main'
+  assert_allow
+}
+
+@test "deny: behind upstream plus a local source commit" {
+  _behind_upstream
+  _source_commit
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: up-to-date branch pushed to another destination" {
+  _with_remote
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+  git -C "$repo" push -q origin main
+  run_guard 'git push origin HEAD:release'
+  assert_deny
+}
+
+@test "deny: gh pr create on a branch equal to its upstream" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" push -q -u origin feat
+  run_guard 'gh pr create --fill'
+  assert_deny
+}
+
+# --- bypass probes ---
+
+@test "allow: redirect glued to the tag refspec" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1>/dev/null'
+  assert_allow
+}
+
+@test "deny: branch push on a later line after a tag push" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard $'git push origin v1\ngit push origin main'
+  assert_deny
+}
+
+@test "deny: tag pushed to a branch destination" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1:refs/heads/main'
+  assert_deny
+}
+
+@test "deny: new tag pushed to a branch destination" {
+  _source_commit
+  run_guard 'git tag v9 && git push origin v9:refs/heads/main'
+  assert_deny
+}
+
+@test "deny: peeled tag source" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1^{}:main'
+  assert_deny
+}
+
+@test "deny: tag that never gets created shadows a branch" {
+  _source_commit
+  run_guard 'false && git tag main; git push origin main'
+  assert_deny
+}
+
+@test "deny: --trailer value is not the tag name" {
+  _source_commit
+  run_guard 'git tag --trailer main v1; git push origin main'
+  assert_deny
+}
+
+@test "deny: --all under the upstream exemption" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" checkout -q main
+  run_guard 'git push --all origin'
+  assert_deny
+}
+
+@test "deny: second push chained after an up-to-date push" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" checkout -q main
+  run_guard 'git push origin main && git push origin feat'
+  assert_deny
 }
