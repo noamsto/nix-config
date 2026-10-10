@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # halo-ops: halo-local ops CLI plus the entry points of the halo-* units.
-# FLAKE, LEMOND_PORT, LOCK_COMMIT_FILTER, OPS_REQUESTS, OPS_STATE and OPS_USER
+# FLAKE, LEMOND_PORT, LOCK_COMMIT_FILTER, OPS_REQUESTS and OPS_STATE
 # come from ops.nix.
 
 NIX_BUILD_FLAGS=(--max-jobs 2 --cores 4 --no-link)
@@ -71,12 +71,7 @@ build_system() {
 }
 
 rebuild_unit() {
-  local path
-  path=$(runuser -u "$OPS_USER" -- "$0" _build-system)
-  [[ $path =~ ^/nix/store/[^/]+$ ]] || die "refusing store path: $path"
-  [[ -x "$path/bin/switch-to-configuration" ]] || die "no switch-to-configuration in $path"
-  nix-env -p /nix/var/nix/profiles/system --set "$path"
-  "$path/bin/switch-to-configuration" switch
+  exec switch-as-owner "$0" _build-system
 }
 
 lock_message() {

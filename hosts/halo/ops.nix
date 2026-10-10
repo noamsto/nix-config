@@ -23,6 +23,7 @@
       pkgs.gawk
       pkgs.git-lfs
       pkgs.util-linux
+      config.system.build.switchAsOwner
     ];
     runtimeEnv = {
       FLAKE = config.flakePath;
@@ -30,7 +31,6 @@
       LOCK_COMMIT_FILTER = "${../../home/terminal/fish/lock-commit.jq}";
       OPS_REQUESTS = requestDir;
       OPS_STATE = stateDir;
-      OPS_USER = config.username;
     };
     text = builtins.readFile ./ops.sh;
   };
@@ -89,12 +89,10 @@ in {
     security.polkit.extraConfig = polkit.rule;
 
     systemd.services = {
-      # Builds as the checkout owner (root can't open the noams-owned checkout:
-      # libgit2 "not owned by current user"; root has no GitHub key for
-      # mysecrets), then switches as root in the same process, so the store path
-      # never passes through a noams-writable file. What gets built is still
-      # decided by noams's checkout and git/nix config: this trusts the noams uid
-      # exactly as far as nix trusted-users (@wheel) already does.
+      # Fast-forwards the checkout, then builds and switches via switch-as-owner.
+      # What gets built is still decided by noams's checkout and git/nix config:
+      # this trusts the noams uid exactly as far as nix trusted-users (@wheel)
+      # already does.
       halo-rebuild =
         oneshot
         // {
