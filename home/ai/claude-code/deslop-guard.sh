@@ -41,13 +41,54 @@ session=$(jq -r '.session_id // empty' <<<"$input")
 cwd=$(jq -r '.cwd // empty' <<<"$input" || true)
 cwd=${cwd:-$PWD}
 
-# Resolve the directory the command truly runs in (cd / git -C), mirroring
-# git-default-branch-guard, so the branch matches what deslop-mark recorded.
+# Same-length copy of $1 with command separators inside quotes replaced by `_`,
+# so quoted text (`-m 'a; cd x'`, `-m "git push later"`) can't pose as structure.
+mask_quoted() {
+  local s=$1 out="" q="" c i
+  for ((i = 0; i < ${#s}; i++)); do
+    c=${s:i:1}
+    if [[ -n $q ]]; then
+      [[ $c == "$q" ]] && q=""
+      [[ $c == [\;\&\|$'\n'] ]] && c=_
+    elif [[ $c == [\"\'] ]]; then
+      q=$c
+    fi
+    out+=$c
+  done
+  printf '%s' "$out"
+}
+
+# Resolve the directory the gated command truly runs in, so the branch matches
+# what deslop-mark recorded: the push's own `git -C <dir>`, else the nearest `cd
+# <dir>` before it. An earlier `git -C`/`cd` aimed at another checkout must not
+# decide which repo is checked.
+push_re='(^|[[:space:]])git[[:space:]]+(-[Cc][[:space:]]+[^[:space:]]+[[:space:]]+|-[^[:space:]]+[[:space:]]+)*push([[:space:]]|$)'
+gh_re='(^|[[:space:]])gh[[:space:]]+pr[[:space:]]+create([[:space:]]|$)'
+dq='"' sq="'"
+path_re="(${dq}[^${dq}]+${dq}|${sq}[^${sq}]+${sq}|[^[:space:];&|]+)"
 target=$cwd
-if [[ $command =~ (^|[[:space:]])git[[:space:]]+-C[[:space:]]+(\"[^\"]+\"|\'[^\']+\'|[^[:space:]]+) ]]; then
-  target=${BASH_REMATCH[2]}
-elif [[ $command =~ (^|[;&|][[:space:]]*|[[:space:]])cd[[:space:]]+(\"[^\"]+\"|\'[^\']+\'|[^[:space:];&|]+) ]]; then
-  target=${BASH_REMATCH[2]}
+anchor=""
+masked=$(mask_quoted "$command")
+if [[ $masked =~ $push_re ]]; then
+  anchor=${BASH_REMATCH[0]}
+  if [[ $anchor =~ git[[:space:]]+(.*[[:space:]])?-C[[:space:]]+$path_re ]]; then
+    target=${BASH_REMATCH[2]}
+    anchor=""
+  fi
+elif [[ $masked =~ $gh_re ]]; then
+  anchor=${BASH_REMATCH[0]}
+fi
+if [[ -n $anchor ]]; then
+  before_anchor=${masked%%"$anchor"*}
+  cd_re="^[[:space:]]*(([{(!]|if|then|do|else|elif|while|until|command|builtin)[[:space:]]*)*cd[[:space:]]+$path_re"
+  while IFS= read -r seg; do
+    if [[ $seg =~ $cd_re ]]; then
+      dir=${BASH_REMATCH[3]}
+      dir=${dir#[\"\']}
+      dir=${dir%[\"\']}
+      if [[ $dir == /* ]]; then target=$dir; else target=$target/$dir; fi
+    fi
+  done < <(tr ';&|' '\n' <<<"$before_anchor")
 fi
 target=${target#[\"\']}
 target=${target%[\"\']}
@@ -107,8 +148,6 @@ fi
 # this hook runs before the command, so the ref doesn't exist yet. Bare
 # `git push` (current branch), any branch refspec, --follow-tags/--all/--mirror/
 # --branches, a second push, and `gh pr create` fall through to the gate.
-push_re='(^|[[:space:]])git[[:space:]]+(-[Cc][[:space:]]+[^[:space:]]+[[:space:]]+|-[^[:space:]]+[[:space:]]+)*push([[:space:]]|$)'
-
 # Tag names a segment creates: `git [globals] tag [flags] <name>`, skipping
 # list/delete/verify modes.
 created_tags_in() {

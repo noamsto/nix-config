@@ -428,3 +428,101 @@ _behind_upstream() {
   run_guard 'git push origin main && git push origin feat'
   assert_deny
 }
+
+# --- repo resolution: the push's own -C / nearest preceding cd ---
+
+# `clean` is up to date with origin; `repo` has an unpushed source commit.
+_two_checkouts() {
+  _with_remote
+  clean="$BATS_TEST_TMPDIR/clean"
+  git clone -q "$BATS_TEST_TMPDIR/remote.git" "$clean"
+  _source_commit
+}
+
+@test "deny: push in a dirty checkout after git -C on a clean one" {
+  _two_checkouts
+  run_guard "git -C $clean fetch && git -C $repo push origin main"
+  assert_deny
+}
+
+@test "deny: push in a dirty checkout after cd to a clean one" {
+  _two_checkouts
+  run_guard "cd $clean && git fetch && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "deny: push's own -C wins over an unrelated cd" {
+  _two_checkouts
+  run_guard "cd $clean && git -C $repo push origin main"
+  assert_deny
+}
+
+@test "allow: push's own -C on a clean checkout after git -C on a dirty one" {
+  _two_checkouts
+  run_guard "git -C $repo fetch && git -C $clean push origin main"
+  assert_allow
+}
+
+# cwd is the clean checkout, so a cd that goes unrecognised falls back to it.
+run_guard_from() {
+  local json
+  json=$(jq -n --arg c "$2" --arg cwd "$1" \
+    '{tool_name:"Bash",tool_input:{command:$c},session_id:"deslop-guard-test",cwd:$cwd}')
+  run --separate-stderr _feed "$json"
+}
+
+@test "deny: cd inside a brace group" {
+  _two_checkouts
+  run_guard_from "$clean" "{ cd $repo; git push origin main; }"
+  assert_deny
+}
+
+@test "deny: cd in an if condition" {
+  _two_checkouts
+  run_guard_from "$clean" "if cd $repo; then git push origin main; fi"
+  assert_deny
+}
+
+@test "deny: chained relative cd" {
+  _two_checkouts
+  mkdir "$repo/sub"
+  run_guard_from "$clean" "cd $repo && cd sub && git push origin main"
+  assert_deny
+}
+
+@test "deny: cd-like text inside a quoted commit message" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && git commit -m 'x; cd $clean' && git push origin main"
+  assert_deny
+}
+
+@test "deny: double-quoted args before and after the cd" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m \"a\" && cd $repo && git commit -m \"b\" && git push origin main"
+  assert_deny
+}
+
+@test "deny: single-quoted args around a ;-separated cd" {
+  _two_checkouts
+  run_guard_from "$clean" "echo 'hi'; cd $repo; echo 'x'; git push origin main"
+  assert_deny
+}
+
+@test "deny: quoted cd path followed by a quoted separator" {
+  _two_checkouts
+  run_guard_from "$clean" "cd '$repo' && git commit -m 'x; y' && git push origin main"
+  assert_deny
+}
+
+@test "deny: git push text inside an earlier quoted message" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m \"note: git push later\" && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "deny: cd-like line inside a multi-line quoted message" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && git commit -m 'first
+cd docs for details' && git push origin main"
+  assert_deny
+}
