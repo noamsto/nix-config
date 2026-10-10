@@ -6,11 +6,14 @@ if [[ -z $input ]] || ! echo "$input" | jq empty 2>/dev/null; then
   exit 0
 fi
 
-model='' ctx_size=0 ctx_pct=0 r5_pct='' r5_reset='' r7_pct='' r7_reset='' effort=''
+model='' model_id='' proj_dir='' ctx_size=0 ctx_pct=0 ctx_used_exact=0 r5_pct='' r5_reset='' r7_pct='' r7_reset='' effort=''
 eval "$(echo "$input" | jq -r '
   @sh "model=\(.model.display_name // "Unknown")",
+  @sh "model_id=\(.model.id // "")",
+  @sh "proj_dir=\(.workspace.project_dir // .workspace.current_dir // .cwd // "")",
   @sh "ctx_size=\(.context_window.context_window_size // 0)",
   @sh "ctx_pct=\(.context_window.used_percentage // 0)",
+  @sh "ctx_used_exact=\(((.context_window.context_window_size | numbers // 0) * (.context_window.used_percentage | numbers // 0) / 100) | round)",
   @sh "r5_pct=\(.rate_limits.five_hour.used_percentage // "")",
   @sh "r5_reset=\(.rate_limits.five_hour.resets_at // "")",
   @sh "r7_pct=\(.rate_limits.seven_day.used_percentage // "")",
@@ -95,13 +98,141 @@ if [[ -n $effort ]]; then
 fi
 
 # --- Context ---
+# Auto-compact fires before the window fills, so measure against its trigger:
+# window - 20000 (output reserve, assumes maxOutputTokens >= 20000) - 13000.
+# CLAUDE_AUTOCOMPACT_PCT_OVERRIDE can only lower it. The window comes from
+# CLAUDE_CODE_AUTO_COMPACT_WINDOW or autoCompactWindow in the user, project and
+# project-local settings files. The `--settings` overlay and managed/policy
+# settings are not read. Unconfigured keeps the full window.
+is_truthy() {
+  case ${1,,} in
+  1 | true | yes | on) return 0 ;;
+  *) return 1 ;;
+  esac
+}
+
+# Layers are read lowest to highest precedence. Mirroring Claude Code's merge,
+# a layer's valid top-level autoCompactWindow (integer in 100000..1000000; any
+# other value is dropped as if absent) sets the default and discards lower
+# layers' per-model values; otherwise its per-model value ("auto" or the same
+# integer) sets the model override. "auto" is kept so it can clear lower layers.
+ac_default='' ac_model='' ac_enabled=''
+read_ac_layer() {
+  local out t m e
+  [[ -f $1 ]] || return 0
+  # Key normalisation is a subset of Claude Code's model-alias resolution.
+  out=$(jq -r --arg m "$canon_model" '
+    def win: type == "number" and . == floor and . >= 100000 and . <= 1000000;
+    def top: if win then tostring else "-" end;
+    def per: if . == "auto" then "auto" else top end;
+    def norm: sub("\\[.*$"; "") | sub("[-@][0-9]{8}$"; "");
+    ([.modelSettings | objects | to_entries[]
+      | select((.key | norm) == $m)
+      | {k: .key, v: (.value | objects | .autoCompactWindow | per)}
+      | select(.v != "-")] as $c
+     | (.autoCompactWindow | top),
+       (([$c[] | select(.k == $m)][0].v) // $c[0].v // "-"),
+       (.autoCompactEnabled | if type == "boolean" then tostring else "-" end))
+  ' "$1" 2>/dev/null | tr '\n' ' ') || return 0
+  read -r t m e <<<"$out"
+  if [[ -n $t && $t != - ]]; then
+    ac_default=$t
+    ac_model=''
+    [[ -z $m || $m == - ]] || ac_model=$m
+  elif [[ -n $m && $m != - ]]; then
+    ac_model=$m
+  fi
+  [[ -z $e || $e == - ]] || ac_enabled=$e
+}
+
+canon_model=${model_id%%\[*}
+if [[ $canon_model =~ ^(.*)[-@][0-9]{8}$ ]]; then
+  canon_model=${BASH_REMATCH[1]}
+fi
+user_dir=${CLAUDE_CONFIG_DIR:-${HOME:+$HOME/.claude}}
+if [[ -n $user_dir ]]; then
+  read_ac_layer "$user_dir/settings.json"
+fi
+if [[ -n $proj_dir ]]; then
+  read_ac_layer "$proj_dir/.claude/settings.json"
+  read_ac_layer "$proj_dir/.claude/settings.local.json"
+fi
+ac_window=${ac_model:-$ac_default}
+
+env_window=${CLAUDE_CODE_AUTO_COMPACT_WINDOW:-}
+if [[ $env_window =~ ^[0-9]+$ ]]; then
+  env_digits=${env_window#"${env_window%%[!0]*}"}
+  if [[ -n $env_digits ]]; then
+    env_n=1000000
+    if ((${#env_digits} <= 7 && 10#$env_digits < 1000000)); then
+      env_n=$((10#$env_digits))
+    fi
+    ac_window=$((env_n < 100000 ? 100000 : env_n))
+  fi
+fi
+if [[ $ac_window =~ ^[0-9]{1,12}$ ]] && ((10#$ac_window > 0)); then
+  ac_window=$((10#$ac_window))
+else
+  ac_window=''
+fi
+
+ac_pm='' # percent * 1000: Claude Code accepts decimals
+env_pct=${CLAUDE_AUTOCOMPACT_PCT_OVERRIDE:-}
+if [[ $env_pct =~ ^([0-9]{1,6})(\.([0-9]+))?$ ]]; then
+  pm_int=$((10#${BASH_REMATCH[1]}))
+  pm_frac=${BASH_REMATCH[3]}000
+  pm=$((pm_int * 1000 + 10#${pm_frac:0:3}))
+  # Reject above 100 before the fraction is truncated to three digits.
+  if ((pm >= 1 && pm <= 100000)); then
+    if ((pm_int != 100)) || [[ $pm_frac != *[1-9]* ]]; then
+      ac_pm=$pm
+    fi
+  fi
+fi
+
+ac_off=0
+if is_truthy "${DISABLE_COMPACT:-}" || is_truthy "${DISABLE_AUTO_COMPACT:-}"; then
+  ac_off=1
+else
+  if [[ -z $ac_enabled ]]; then
+    cfg_dir=${CLAUDE_CONFIG_DIR:-${HOME:-}}
+    if [[ -n $cfg_dir && -f $cfg_dir/.claude.json ]]; then
+      ac_enabled=$(jq -r '.autoCompactEnabled | booleans' "$cfg_dir/.claude.json" 2>/dev/null) || ac_enabled=''
+    fi
+  fi
+  if [[ $ac_enabled == false ]]; then
+    ac_off=1
+  fi
+fi
+
+ctx_den=${ctx_size:-200000}
 ctx_int=${ctx_pct%%.*}
 ctx_used=$(((${ctx_size:-200000} * ctx_int + 50) / 100))
+if ((ac_off == 0)) && [[ -n $ac_window || -n $ac_pm ]]; then
+  eff=${ctx_size:-200000}
+  if [[ -n $ac_window ]] && ((ac_window < eff)); then
+    eff=$ac_window
+  fi
+  reserve=$((eff - 20000))
+  trigger=$((reserve - 13000))
+  if [[ -n $ac_pm ]] && ((reserve * ac_pm / 100000 < trigger)); then
+    trigger=$((reserve * ac_pm / 100000))
+  fi
+  if ((trigger > 0)); then
+    ctx_den=$trigger
+    ctx_used=$ctx_used_exact
+    ctx_int=$((ctx_used * 100 / trigger))
+  fi
+fi
+
 tc=$(color_pct "$ctx_int")
-if ((${ctx_size:-200000} >= 1000000)); then
-  out+=" | ${tc}$chart $((ctx_used / 1000))k/$((ctx_size / 1000000))M$R"
+if ((ctx_den >= 1000000)); then
+  out+=" | ${tc}$chart $((ctx_used / 1000))k/$((ctx_den / 1000000))M$R"
 else
-  out+=" | ${tc}$chart $((ctx_used / 1000))k/$((${ctx_size:-200000} / 1000))k$R"
+  out+=" | ${tc}$chart $((ctx_used / 1000))k/$((ctx_den / 1000))k$R"
+fi
+if ((ac_off == 1)); then
+  out+=" \033[2mno-ac$R"
 fi
 
 # --- Rate limits ---
