@@ -35,6 +35,7 @@
       "https://yazi.cachix.org"
       "https://noctalia.cachix.org"
       "https://lazytmux.cachix.org"
+      "https://dispatcher.cachix.org"
       "https://jovian-nixos.cachix.org"
 
       # llm-agents.nix publishes here, NOT numtide.cachix.org
@@ -59,6 +60,7 @@
       "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
       "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
+      "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
       "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
 
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
@@ -286,10 +288,10 @@
     # Dispatcher agent fan-out harness: the crew bus, `dispatch`, the protocols,
     # and per-engine adapters for claude-code, codex and cursor. Extracted from
     # this repo's home/ai/claude-code/.
-    dispatcher = {
-      url = "github:noamsto/dispatcher/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # No nixpkgs.follows: following ours forks the derivation away from the
+    # one its CI built, so every rebuild compiles it from source instead of
+    # substituting from dispatcher.cachix.org.
+    dispatcher.url = "github:noamsto/dispatcher/main";
 
     # No nixpkgs.follows: following ours forks the derivation away from the
     # one its CI built, so every rebuild compiles it from source instead of

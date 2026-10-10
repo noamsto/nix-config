@@ -11,6 +11,7 @@
     "https://wtc.cachix.org"
     "https://noctalia.cachix.org"
     "https://lazytmux.cachix.org"
+    "https://dispatcher.cachix.org"
     "https://jovian-nixos.cachix.org"
   ];
 
@@ -41,6 +42,7 @@
     "wtc.cachix.org-1:rXr2jpSoAtqezDz8xK/gPMjH2Rgyda0zOErfk3N5WnI="
     "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
+    "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
     "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
   ];
 

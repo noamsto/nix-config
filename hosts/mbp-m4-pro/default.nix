@@ -107,6 +107,7 @@ in {
         "https://claude-code.cachix.org"
         "https://numtide.cachix.org" # llm-agents.nix (amp, claude-code, pi) — cross-platform
         "https://lazytmux.cachix.org" # lazytmux (worktrunk/tmux) — cross-platform
+        "https://dispatcher.cachix.org" # dispatcher (crew, dispatch) — cross-platform
       ];
       extra-trusted-public-keys = [
         "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
@@ -115,6 +116,7 @@ in {
         "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
         "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
         "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
+        "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
       ];
     };
   };
