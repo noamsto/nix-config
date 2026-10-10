@@ -10,5 +10,6 @@ pkgs.runCommand "deslop-guard-check" {
   export HOME=$TMPDIR
   GUARD=${./deslop-guard.sh} bats --tap ${./tests/deslop-guard.bats}
   MERGE=${./settings-merge.sh} bats --tap ${./tests/settings-merge.bats}
+  SCRIPT=${./status-line.sh} bats --tap ${./tests/status-line.bats}
   touch $out
 ''

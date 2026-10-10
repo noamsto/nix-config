@@ -18,6 +18,28 @@ eval "$(echo "$input" | jq -r '
   @sh "effort=\(.effort.level // "")"
 ')"
 
+# A billing-month rollover also clears the weekly window; tmux-og's usage cache
+# is the only source of the monthly reset. Mirrors tmux-agent-usage.sh's dir
+# resolution and owner checks (the dir may sit in a world-writable /tmp).
+if [[ -n $r7_reset ]]; then
+  usage_dir=${OG_AGENT_USAGE_DIR:-}
+  if [[ -z $usage_dir ]]; then
+    usage_dir=${XDG_RUNTIME_DIR:-}
+    [[ $usage_dir == /* ]] || usage_dir=${TMPDIR:-/tmp}
+    usage_dir="${usage_dir%"${usage_dir##*[!/]}"}/og-agent-usage-$UID"
+  fi
+  usage_file=$usage_dir/claude.json
+  if [[ -d $usage_dir && -O $usage_dir && -f $usage_file && ! -L $usage_file && -O $usage_file ]]; then
+    monthly_reset=$(jq -r '.monthly.reset_at | numbers // empty' "$usage_file" 2>/dev/null) || monthly_reset=''
+    if [[ $monthly_reset =~ ^[1-9][0-9]{0,11}$ ]]; then
+      printf -v now '%(%s)T' -1
+      if ((monthly_reset > now && monthly_reset < ${r7_reset%%.*})); then
+        r7_reset=$monthly_reset
+      fi
+    fi
+  fi
+fi
+
 R="\033[0m"
 
 # Emoji via hex (avoids encoding issues in nix builds)
