@@ -65,10 +65,15 @@ g "$proj" worktree add -q "$HOME/Data/git/.worktrees/owner/proj/wtbranch" -b wtb
 g "$HOME/Data/git/.worktrees/owner/proj/wtbranch" submodule update -q --init
 echo wtdirty >"$HOME/Data/git/.worktrees/owner/proj/wtbranch/services/sub/untracked.txt"
 
+# --- #515: a linked worktree of the submodule itself ---------------------------
+subwt=$HOME/Data/git/.worktrees/subwt
+g "$sub" worktree add -q "$subwt" -b subwtbranch
+echo subwt-dirty >"$subwt/untracked.txt"
+
 # --- #508: staged deletes, git rm --cached, non-ASCII paths --------------------
 del=$HOME/Data/git/del
 new_repo "$del"
-for f in a.txt keep.txt é-staged.txt é-kept.txt plain.txt; do commit "$del" "$f" "$f"; done
+for f in a.txt keep.txt é-staged.txt é-kept.txt plain.txt mm.txt; do commit "$del" "$f" "$f"; done
 commit "$del" local.cfg v1
 echo local.cfg >"$del/.gitignore"
 g "$del" add .gitignore
@@ -80,6 +85,20 @@ g "$del" rm -q --cached keep.txt
 g "$del" rm -q é-staged.txt
 g "$del" rm -q --cached é-kept.txt
 echo changed >"$del/plain.txt"
+
+# --- #514: partly staged file, and a staged new file ---------------------------
+echo staged-v >"$del/mm.txt"
+g "$del" add mm.txt
+echo worktree-v >"$del/mm.txt"
+echo new >"$del/new-staged.txt"
+g "$del" add new-staged.txt
+
+# --- #513: repo with no commits ------------------------------------------------
+unborn=$HOME/Data/git/unborn
+git init -q -b main "$unborn"
+echo s >"$unborn/staged.txt"
+g "$unborn" add staged.txt
+echo u >"$unborn/untracked.txt"
 
 # submodules the first block does not cover: a .git directory (existing clone
 # added in place) and a staged removal
@@ -129,13 +148,14 @@ lfs=$HOME/Data/git/lfs
 git clone -q "$T/up/lfs.src" "$lfs"
 
 repos=("$proj" "$sub" "$proj/lib" "$HOME/Data/git/bare/.git" "$HOME/Data/git/.worktrees/owner/proj/wtbranch" "$HOME/Data/git/.worktrees/owner/proj/wtbranch/services/sub"
-  "$del" "$wtmain" "$HOME/Data/git/wts/with space" "$HOME/Data/git/wts/.dotted" "$HOME/Data/git/wts/x.lock"
+  "$subwt" "$del" "$unborn" "$wtmain" "$HOME/Data/git/wts/with space" "$HOME/Data/git/wts/.dotted" "$HOME/Data/git/wts/x.lock"
   "$shallow" "$lfs")
 
 snapshot() {
   local r
   for r in "${repos[@]}"; do
     echo "### ${r#"$HOME"/}"
+    [[ $(g "$r" rev-parse --is-bare-repository) == true ]] || g "$r" ls-files -s
     g "$r" for-each-ref --format='%(refname) %(objectname) %(symref)'
     g "$r" symbolic-ref -q HEAD || g "$r" rev-parse HEAD
     g "$r" symbolic-ref -q refs/remotes/origin/HEAD || true
@@ -249,4 +269,21 @@ if grep -q '^done' "$T/fail.log"; then
   exit 1
 fi
 grep FATAL "$T/fail.log"
+
+echo "== #516: a tab in a repo path is refused before any row is written"
+rm "$T/shims/git"
+tabrepo=$HOME/Data/git/$(printf 'tab\tdir')
+git init -q -b main "$tabrepo"
+if bash "$here/backup.sh" "$T/dest-tab" >"$T/tab.log" 2>&1; then
+  echo "backup unexpectedly succeeded on a tab path" >&2
+  exit 1
+fi
+if ! grep -q 'FATAL.*tab.*dir' "$T/tab.log"; then
+  echo "tab path not named in error" >&2
+  exit 1
+fi
+[[ ! -s $T/dest-tab/git/manifest.tsv ]] || {
+  echo "manifest has rows despite refusal" >&2
+  exit 1
+}
 echo "PASS"

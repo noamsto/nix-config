@@ -147,27 +147,43 @@ while IFS=$'\t' read -r _ name path origin_head head _; do
   restore_repo repo "$name" "$path" "$origin_head" "$head"
 done < <(rows repo | LC_ALL=C sort -t$'\t' -k3,3)
 
-echo "== worktrees"
-while IFS=$'\t' read -r _ _ path main branch; do
+echo "== unborn repos"
+while IFS=$'\t' read -r _ name path _ head _; do
   path=$(map_path "$path")
-  main=$(map_path "$main")
   if [[ -e $path ]]; then
     echo "skip (exists): $path"
     continue
   fi
+  mkdir -p "$path"
+  git init -q "$path"
+  git -C "$path" symbolic-ref HEAD "$head"
+  cp "$git_src/config/$name.config" "$path/.git/config"
+  [[ -f $git_src/crew/$name.tar ]] && tar -C "$path/.git" -xf "$git_src/crew/$name.tar"
+  done_paths[$path]=1
+  echo "unborn: $path"
+done < <(rows unborn)
+
+restore_worktree() {
+  local path=$1 main=$2 branch=$3
+  path=$(map_path "$path")
+  main=$(map_path "$main")
+  if [[ -e $path ]]; then
+    echo "skip (exists): $path"
+    return
+  fi
   if [[ -z $branch ]]; then
     echo "skip (was detached): $path"
-    continue
+    return
   fi
   if [[ $branch == refs/* ]]; then
     git -C "$main" worktree add -q --detach "$path" "$branch" || {
       echo "FAIL worktree: $path"
-      continue
+      return
     }
   else
     git -C "$main" worktree add -q "$path" "$branch" || {
       echo "FAIL worktree: $path"
-      continue
+      return
     }
   fi
   # Detached HEAD keeps the commit alive from here on; the pin ref was only
@@ -176,15 +192,56 @@ while IFS=$'\t' read -r _ _ path main branch; do
   lfs_pull "$path"
   done_paths[$path]=1
   echo "worktree: $path ($branch)"
-done < <(rows worktree)
+}
 
-# After worktrees: a linked worktree can be the superproject. Parents sort
-# before their children, so nested submodules come back in order.
-echo "== submodules"
-while IFS=$'\t' read -r _ name path origin_head head _; do
+# A linked worktree can be the superproject of a submodule, and a submodule can
+# own linked worktrees, so neither kind goes strictly first. Parents sort before
+# children, so nested submodules come back in order.
+echo "== submodules and worktrees"
+mapfile -t pending < <({
+  rows submodule | LC_ALL=C sort -t$'\t' -k3,3
+  rows worktree
+})
+blocked() {
+  local kind _ path main other okind opath
+  IFS=$'\t' read -r kind _ path main _ <<<"$1"
   path=$(map_path "$path")
-  restore_repo submodule "$name" "$path" "$origin_head" "$head"
-done < <(rows submodule | LC_ALL=C sort -t$'\t' -k3,3)
+  main=$(map_path "$main")
+  for other in "${pending[@]}"; do
+    [[ $other == "$1" ]] && continue
+    IFS=$'\t' read -r okind _ opath _ <<<"$other"
+    opath=$(map_path "$opath")
+    if [[ $kind == worktree ]]; then
+      [[ $okind == submodule && $opath == "$main" ]] && return 0
+    else
+      [[ $path == "$opath"/* ]] && return 0
+    fi
+  done
+  return 1
+}
+restore_entry() {
+  local kind name path a b
+  IFS=$'\t' read -r kind name path a b _ <<<"$1"
+  if [[ $kind == worktree ]]; then
+    restore_worktree "$path" "$a" "$b"
+  else
+    restore_repo submodule "$name" "$(map_path "$path")" "$a" "$b"
+  fi
+}
+while ((${#pending[@]})); do
+  ready=() waiting=()
+  for line in "${pending[@]}"; do
+    if blocked "$line"; then waiting+=("$line"); else ready+=("$line"); fi
+  done
+  # Nothing unblocked (a cycle or a failed dependency): run the rest as-is so
+  # each reports its own failure.
+  ((${#ready[@]})) || {
+    ready=("${waiting[@]}")
+    waiting=()
+  }
+  for line in "${ready[@]}"; do restore_entry "$line"; done
+  pending=("${waiting[@]}")
+done
 
 echo "== uncommitted files"
 while IFS=$'\t' read -r _ name path _; do
@@ -204,6 +261,10 @@ while IFS=$'\t' read -r _ name path _; do
   fi
   if [[ -f $git_src/dirty/$name.tar ]]; then
     tar -C "$path" -xf "$git_src/dirty/$name.tar"
+  fi
+  if [[ -f $git_src/dirty/$name.staged.patch ]]; then
+    git -C "$path" apply --cached --binary "$git_src/dirty/$name.staged.patch" ||
+      echo "FAIL staged changes: $path"
   fi
   if [[ -f $git_src/dirty/$name.deletes ]]; then
     # update-index, not `git rm --cached`: the latter refuses to drop a

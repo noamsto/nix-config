@@ -87,9 +87,24 @@ bundle_repo() {
     echo "FATAL: bundle failed: $wt" >&2
     exit 1
   else
-    echo "WARN: no commits, nothing to bundle: $wt"
+    # An unborn HEAD has no refs to bundle, but staged and untracked files
+    # still travel as a dirty row; restore re-inits the repo to receive them.
+    echo "WARN: no commits, restoring as an empty repo: $wt"
+    cp "$cfg" "$dest/git/config/$name.config"
+    row unborn "$name" "$wt" - "$(git -C "$wt" symbolic-ref -q HEAD || echo refs/heads/main)"
   fi
 }
+
+# Manifest rows are unescaped TSV: refuse paths that would corrupt one before
+# anything is written.
+mapfile -d '' gitpaths < <(find "${roots[@]}" \( -name node_modules -o -name .terraform -o -name _deps -o -name .venv \) -prune \
+  -o -name .git -prune -print0 2>/dev/null)
+for gitpath in "${gitpaths[@]}"; do
+  if [[ $gitpath == *[$'\t\n']* ]]; then
+    printf 'FATAL: tab or newline in path, cannot be recorded: %q\n' "$gitpath" >&2
+    exit 1
+  fi
+done
 
 echo "== root state (sudo)"
 if ! sudo tar -C / -cf "$dest/root-state.tar" \
@@ -111,7 +126,7 @@ if ! (
 fi
 
 echo "== git"
-while IFS= read -r -d '' gitpath; do
+for gitpath in "${gitpaths[@]}"; do
   wt=$(dirname "$gitpath")
   name=$(name_of "$wt")
   if [[ -n ${used_names[$name]:-} ]]; then
@@ -143,7 +158,13 @@ while IFS= read -r -d '' gitpath; do
       cfg=$(git -C "$wt" rev-parse --path-format=absolute --git-path config)
       bundle_repo "$wt" "$name" "$cfg" "$kind"
     else
-      main=$(dirname "$commondir")
+      # A submodule's common dir is <super>/.git/modules/..., whose work tree
+      # is named by core.worktree; plain and bare layouts fall back to dirname.
+      main=$(git -C "$commondir" rev-parse --show-toplevel 2>/dev/null) || main=$(dirname "$commondir")
+      if [[ $main == *[$'\t\n']* ]]; then
+        printf 'FATAL: tab or newline in path, cannot be recorded: %q\n' "$main" >&2
+        exit 1
+      fi
       bundle=$dest/git/bundles/$(name_of "$main").bundle
       branch=$(git -C "$wt" branch --show-current)
       if [[ -z $branch ]]; then
@@ -219,6 +240,19 @@ while IFS= read -r -d '' gitpath; do
     [[ -L $wt/$f || (-e $wt/$f && ! -d $wt/$f) ]] && printf '%s\0' "$f" >>"$dirty_list"
   done <"$dirty_all"
   have_dirty=0
+  # The tar holds worktree content only; the staged blobs travel as a patch.
+  excludes=()
+  for g in "${gitlinks[@]}"; do excludes+=(":(exclude,literal)$g"); done
+  if ! git -C "$wt" diff --cached --binary --no-renames --no-ext-diff --no-textconv --no-color \
+    --src-prefix=a/ --dst-prefix=b/ --diff-filter=ACMRT -- . "${excludes[@]}" >"$dest/git/dirty/$name.staged.patch"; then
+    echo "FATAL: cannot capture staged changes in $wt" >&2
+    exit 1
+  fi
+  if [[ -s $dest/git/dirty/$name.staged.patch ]]; then
+    have_dirty=1
+  else
+    rm -f "$dest/git/dirty/$name.staged.patch"
+  fi
   if [[ -s $dirty_list ]]; then
     tar -C "$wt" --null --ignore-failed-read -T "$dirty_list" -cf "$dest/git/dirty/$name.tar"
     have_dirty=1
@@ -232,8 +266,7 @@ while IFS= read -r -d '' gitpath; do
   if [[ $have_dirty == 1 ]]; then
     row dirty "$name" "$wt" -
   fi
-done < <(find "${roots[@]}" \( -name node_modules -o -name .terraform -o -name _deps -o -name .venv \) -prune \
-  -o -name .git -prune -print0 2>/dev/null)
+done
 
 echo "done -> $dest"
 du -sh "$dest"/*.tar "$dest"/git/*/
