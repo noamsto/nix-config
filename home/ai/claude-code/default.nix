@@ -216,26 +216,8 @@
       else
         export AEYE_D2_THEME=200
       fi
-      # Claude Code keeps only the last --settings, so a caller's own --settings
-      # would silently drop this overlay (status line, hookyard guards,
-      # permissions). Merge caller layers into it instead: hook arrays and
-      # permission lists concatenate, so a caller can add but never remove.
-      args=()
-      layers=()
-      while [ $# -gt 0 ]; do
-        case $1 in
-          --) args+=("$@"); break ;;
-          --settings)
-            [ $# -ge 2 ] || { echo "claude: --settings needs a value" >&2; exit 2; }
-            layers+=("$2"); shift 2 ;;
-          --settings=*) layers+=("''${1#--settings=}"); shift ;;
-          *) args+=("$1"); shift ;;
-        esac
-      done
-      settings=${overlay}
-      if [ ''${#layers[@]} -gt 0 ]; then
-        settings=$(${settings-merge}/bin/claude-settings-merge ${overlay} "''${layers[@]}") || exit
-      fi
+      source ${./wrapper-args.sh}
+      claude_resolve_args ${overlay} ${settings-merge}/bin/claude-settings-merge "$@"
       exec -a claude ${claude-wrapped}/bin/claude --settings "$settings" --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "''${args[@]}"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
