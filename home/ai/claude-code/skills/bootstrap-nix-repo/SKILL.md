@@ -185,6 +185,39 @@ flake.homeManagerModules.default = {pkgs, ...} @ args:
 # };
 ```
 
+## CI (GitHub Actions)
+
+Evidence: a CI audit cut nix-amd-ai#247 from 9m09s to 4m54s, prdash#161 from 5–9m to 2m53s, aeye#327 from 3m48s–5m34s to 3m07s. Apply these patterns from the start.
+
+**Go gate.** Expose one `checks.go-gate` derivation instead of several checks that each rebuild:
+
+- Set `buildPhase = "true"` and share one GOCACHE across the steps.
+- Run in order: lint → nilaway → test → `-race`.
+- Do not repeat those tests in the package (`doCheck`) unless there is a sandbox-only reason. hookyard keeps its `doCheck` for one.
+
+**Workflow shape.**
+
+- Run independent work as parallel jobs, not sequential steps.
+- Anything outside the Nix sandbox (devshell `go test`, bats) gets `actions/cache` on GOCACHE and GOMODCACHE.
+- Pin each job's `name:`. A matrix key changes the job name and breaks required status checks.
+
+**Checking outputs.**
+
+- Cachix repos: use `nix-fast-build --skip-cached` instead of `nix build` + `nix flake check`.
+- Add `nix flake check --no-build` to cover non-check outputs (packages, modules) that fast-build skips.
+
+**Pitfalls.**
+
+- magic-nix-cache now needs FlakeHub. Do not rely on it; use cachix or `actions/cache`.
+- Slow `-race` render-matrix tests can skip under `-short` (prdash#161).
+
+**Auditing CI time.**
+
+- Read job and step durations, not wall-clock times: those include re-runs.
+- `nix build` without `-L` prints only "building …" lines; add `-L` to see where time goes.
+- "previously built" in the log means the time went to evaluation, not building.
+- Time a suspect check locally with `--rebuild` before blaming it.
+
 ## Common mistakes
 
 | Mistake | Symptom | Fix |
