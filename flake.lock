@@ -1634,11 +1634,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791589546,
-        "narHash": "sha256-SnRi4CS5WO1UzS4W6vejsi41siTK+MtULbNToeY7E3Q=",
+        "lastModified": 1791608179,
+        "narHash": "sha256-SzMHPocT4qS72UwAWzcrvY3NQTEFt8kFe0mRx/VhIBY=",
         "owner": "noamsto",
         "repo": "houston",
-        "rev": "fd9808586fa813119f1bb34111d840f6f95e986f",
+        "rev": "cbaa5af9d527bb220196d3bc50033a9b7d0ad997",
         "type": "github"
       },
       "original": {
