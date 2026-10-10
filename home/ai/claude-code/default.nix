@@ -289,6 +289,8 @@ in {
       localModels."lemonade/Qwen3.8-Flash-Next-Strata" = {
         baseUrl = "http://halo:13305/v1";
         contextWindow = 262144;
+        # Thinking counts against pi's 16384 default output cap.
+        maxTokens = 32768;
         maxConcurrent = 2;
         tiers = ["trivial" "standard"];
         reasoning = true;
