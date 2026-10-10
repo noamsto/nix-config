@@ -46,22 +46,24 @@ update_gtk_theme() {
 
   # Use dconf load to write all values atomically (single portal notification)
   if [[ $theme == "light" ]]; then
-    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'; then
+    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'
 [/]
 color-scheme='prefer-light'
 gtk-theme='Adwaita'
 icon-theme='Papirus-Light'
 EOF
+    then
       record_failure "gtk"
       return 1
     fi
   else
-    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'; then
+    if ! dconf load /org/gnome/desktop/interface/ <<'EOF'
 [/]
 color-scheme='prefer-dark'
 gtk-theme='Adwaita-dark'
 icon-theme='Papirus-Dark'
 EOF
+    then
       record_failure "gtk"
       return 1
     fi
@@ -347,10 +349,11 @@ update_kvantum() {
   fi
 
   local tmp_config="${kvantum_config}.tmp"
-  if ! cat >"$tmp_config" <<EOF; then
+  if ! cat >"$tmp_config" <<EOF
 [General]
 theme=$kvantum_theme
 EOF
+  then
     record_failure "kvantum"
     rm -f "$tmp_config"
     return 1
@@ -380,10 +383,10 @@ update_voxtype() {
 
   # Written by voxtype-osd-quickshell at launch, so it only exists while the
   # OSD is up. Nothing to repaint otherwise.
-  [[ -f "$style_file" ]] || return 0
+  [[ -f $style_file ]] || return 0
 
   local accent background surface foreground muted recording streaming idle
-  if [[ "$theme" == "light" ]]; then
+  if [[ $theme == "light" ]]; then
     accent="$LIGHT_MAUVE" background="$LIGHT_BASE" surface="$LIGHT_SURFACE0"
     foreground="$LIGHT_TEXT" muted="$LIGHT_SUBTEXT0" recording="$LIGHT_RED"
     streaming="$LIGHT_BLUE" idle="$LIGHT_OVERLAY1"

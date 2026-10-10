@@ -29,9 +29,9 @@ lock_state() {
     tail -1)
 
   case "$last" in
-    *"got locked") echo locked ;;
-    *"got unlocked") echo unlocked ;;
-    *) echo unknown ;;
+  *"got locked") echo locked ;;
+  *"got unlocked") echo unlocked ;;
+  *) echo unknown ;;
   esac
 }
 
@@ -59,24 +59,24 @@ hypr_vt() {
 
 force=false
 case "${1:-}" in
-  --status)
-    status_clients=$(lock_client_pids)
-    status_vt=$(hypr_vt)
-    echo "lock state:   $(lock_state)"
-    echo "lock clients: ${status_clients:-none}"
-    echo "hyprland vt:  ${status_vt:-unknown}"
-    exit 0
-    ;;
-  --force) force=true ;;
-  -h | --help)
-    usage
-    exit 0
-    ;;
-  "") ;;
-  *)
-    usage
-    exit 1
-    ;;
+--status)
+  status_clients=$(lock_client_pids)
+  status_vt=$(hypr_vt)
+  echo "lock state:   $(lock_state)"
+  echo "lock clients: ${status_clients:-none}"
+  echo "hyprland vt:  ${status_vt:-unknown}"
+  exit 0
+  ;;
+--force) force=true ;;
+-h | --help)
+  usage
+  exit 0
+  ;;
+"") ;;
+*)
+  usage
+  exit 1
+  ;;
 esac
 
 state=$(lock_state)
