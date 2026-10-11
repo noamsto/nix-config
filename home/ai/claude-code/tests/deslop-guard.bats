@@ -261,6 +261,41 @@ _source_commit() {
   assert_allow
 }
 
+@test "allow: issue repro: cd into the repo, tag a commit-ish, push with 2>&1 | tail" {
+  _two_checkouts
+  # A same-named branch in the cwd checkout means only the cd'd repo allows.
+  git -C "$clean" branch v1.4.4.8-renderer
+  run_guard_from "$clean" "cd $repo && git tag v1.4.4.8-renderer origin/main && git push origin v1.4.4.8-renderer 2>&1 | tail -3"
+  assert_allow
+}
+
+@test "allow: existing tag push with a bare 2>&1 and no pipe" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 2>&1'
+  assert_allow
+}
+
+@test "allow: lightweight tag created earlier in the same command" {
+  _source_commit
+  run_guard 'git tag v1 && git push origin v1'
+  assert_allow
+}
+
+@test "allow: same-command annotated tag on a commit-ish" {
+  _with_remote
+  _source_commit
+  run_guard 'git tag -a v1 -m "msg" origin/main && git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag deleted then pushed when it already exists as a tag" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git tag -d v1 && git push origin v1'
+  assert_allow
+}
+
 @test "deny: branch push" {
   _source_commit
   git -C "$repo" checkout -qb feat
@@ -311,6 +346,25 @@ _source_commit() {
   _source_commit
   git -C "$repo" tag v1
   run_guard 'git push --follow-tags origin v1'
+  assert_deny
+}
+
+@test "deny: tag delete does not create a non-branch tag" {
+  _source_commit
+  run_guard 'git tag -d v1 && git push origin v1'
+  assert_deny
+}
+
+@test "deny: same-command tag but a branch is pushed" {
+  _source_commit
+  run_guard 'git tag v1 && git push origin main'
+  assert_deny
+}
+
+@test "deny: bare git push with 2>&1" {
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  run_guard 'git push 2>&1'
   assert_deny
 }
 
