@@ -9,6 +9,12 @@
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
 
+  # Reviewer agents, from the one store tree ../claude-code/agents.nix builds.
+  agents = import ../claude-code/agents.nix {
+    inherit pkgs lib;
+    inherit (inputs) dispatcher;
+  };
+
   aeye = import ../hookyard/aeye.nix {
     inherit pkgs;
     aeye = inputs.tmux-og.inputs.aeye;
@@ -83,8 +89,7 @@ in {
       # read ~/.claude/agents, but the CLI only reliably discovers project-level
       # agents; user-level ~/.cursor/agents still helps the IDE and keeps the
       # three harnesses on one source of truth.
-      ".cursor/agents".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+      ".cursor/agents".source = agents;
     };
 
     # aeye's Cursor adapter (noamsto/aeye#169): merge its hook entries into

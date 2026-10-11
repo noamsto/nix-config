@@ -10,6 +10,13 @@
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
 
+  # Reviewer agents for Claude Code, Cursor and Codex: the dispatcher input's
+  # canonical briefs plus the local-only agents in ./agents (see agents.nix).
+  agents = import ./agents.nix {
+    inherit pkgs lib;
+    inherit (inputs) dispatcher;
+  };
+
   claude-statusline = pkgs.callPackage ./statusline.nix {};
   sharedGuards = import ../agent-hooks {inherit pkgs;};
   aeye = import ../hookyard/aeye.nix {
@@ -307,10 +314,8 @@ in {
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
         ".claude/settings.json".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
-        # Mirrored to ~/.cursor/agents and ~/.codex/agents from those modules —
-        # one source tree for all three harnesses.
-        ".claude/agents".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+        # Mirrored to ~/.cursor/agents and ~/.codex/agents from those modules.
+        ".claude/agents".source = agents;
         ".claude/commands".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";
         # No `.claude/workflows` symlink: spec-plan-critic.js was the only

@@ -8,6 +8,12 @@
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
   tomlFormat = pkgs.formats.toml {};
 
+  # Reviewer agents, from the one store tree ../claude-code/agents.nix builds.
+  agents = import ../claude-code/agents.nix {
+    inherit pkgs lib;
+    inherit (inputs) dispatcher;
+  };
+
   # This whole module is work-only (gated in home/ai/default.nix), so the
   # remote MCPs — all work tools — ride along ungated. OAuth logins happen
   # interactively (`codex mcp login <name>`); workers reuse the stored tokens.
@@ -53,10 +59,9 @@ in {
       ".codex/AGENTS.md".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
 
-      # Same reviewer/specialist agents as Claude Code / Cursor (one tree under
-      # home/ai/claude-code/agents). Codex loads ~/.codex/agents for user scope.
-      ".codex/agents".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/agents";
+      # Same reviewer/specialist agents as Claude Code / Cursor. Codex loads
+      # ~/.codex/agents for user scope.
+      ".codex/agents".source = agents;
     };
 
     # Worker MCP profile. `dispatch … --agent codex` launches with
