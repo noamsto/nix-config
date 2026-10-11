@@ -197,9 +197,11 @@ For each gap from Step 3, report it plainly:
 
 Then ask whether to create one. **On yes:**
 
-1. Write `~/.claude/agents/<x>-reviewer.md`, modeled on `~/.claude/agents/go-reviewer.md`:
+1. Draft the new reviewer at `~/nix-config/home/ai/claude-code/agents/<x>-reviewer.md`, modeled on the generated `~/.claude/agents/go-reviewer.md` (still readable):
    - Frontmatter: `name`, a `description` ending in "Use for all `<lang>` code changes.", `tools: ["Read", "Grep", "Glob", "Bash"]`, `model: sonnet`.
    - Body: a focused `<lang>` reviewer system prompt (idioms, common bugs, the language's lint/vet tooling, the "When invoked" steps pattern).
-2. Offer to run the new reviewer on **this same PR** and fold its findings back through Steps 4–9.
+   - It takes effect only after `git add` and `nh home switch`; `~/.claude/agents` is a read-only store symlink, so a write there fails, and a git-based flake sees only tracked files, so the switch ignores an untracked draft.
+   - A language-generic reviewer belongs upstream in the dispatcher repo's `adapters/core/reviewers/` with roster frontmatter (`name`, `description`, `globs`, `when`) — offer that as the durable home. The local file is the personal or repo-specific fallback.
+2. Offer to run the new reviewer on **this same PR** and fold its findings back through Steps 4–9 — only after the `nh home switch` from 10.1 has made it visible.
 
 Never write an agent file without the user's yes.
