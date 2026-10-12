@@ -110,6 +110,16 @@ inputs: [
     });
   })
 
+  # sesh builds with Go 1.27 and rebuilds go-mockery with it for its preBuild,
+  # but mockery 3.8.0 vendors golang.org/x/tools v0.49.0, which can't decode
+  # Go 1.27.2 export data (v5 > 4), so both mockery's checks and sesh's mock
+  # generation fail. sesh's go.mod only needs 1.26, so build both with 1.26.
+  # Upstream PR vektra/mockery#1188 (fixes #1187) bumps x/tools to v0.51.0.
+  # Drop once nixpkgs ships a mockery release carrying it.
+  (_final: prev: {
+    sesh = prev.sesh.override {buildGo127Module = prev.buildGo126Module;};
+  })
+
   # Determinate Nix 3.23 emits OTel activity type 10113 in --log-format
   # internal-json; nom 2.2.0 rejects any unknown type and aborts, which breaks
   # `nh os switch`. Upstream PR maralorn/nix-output-monitor#321 (fixes #320)
