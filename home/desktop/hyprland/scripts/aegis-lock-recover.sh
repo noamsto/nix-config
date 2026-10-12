@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebind a lock client to a session lock whose client died.
+# Rebind a lock client to a session lock whose client died or hung.
 #
 # When an ext-session-lock client dies without unlocking, the compositor is
 # required to stay locked - leaving a lock surface with nothing behind it to
@@ -21,10 +21,16 @@ EOF
 
 # hypridle follows ext-session-lock via the lock-notify protocol, so its journal
 # is the compositor's view. logind's LockedHint is not: it stays "no" for a
-# compositor-side lock.
+# compositor-side lock. Scoped to the running hypridle: an earlier invocation's
+# last word belongs to a session that no longer exists.
 lock_state() {
-  local last
-  last=$(journalctl --user -u hypridle --no-pager 2>/dev/null |
+  local invocation last
+  invocation=$(systemctl --user show -p InvocationID --value hypridle)
+  [[ -n $invocation ]] || {
+    echo unknown
+    return
+  }
+  last=$(journalctl --user "_SYSTEMD_INVOCATION_ID=$invocation" --no-pager 2>/dev/null |
     grep -oE "Wayland session got (locked|unlocked)" |
     tail -1)
 
@@ -43,7 +49,7 @@ lock_client_pids() {
     if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q "share/aegis-lock"; then
       pids+=("$pid")
     fi
-  done < <(pgrep -x quickshell || true)
+  done < <(pgrep -x 'qs|quickshell' || true)
   echo "${pids[*]}"
 }
 
@@ -86,11 +92,23 @@ if [[ $state != locked && $force == false ]]; then
   exit 1
 fi
 
+# A client that still holds the lock but cannot be unlocked from the VT is hung:
+# it can stall after queueing unlock_and_destroy but before flushing it (seen
+# when an output appears mid-unlock). SIGABRT leaves a coredump with its stacks
+# for `coredumpctl info qs`, and its death orphans the lock for the new client.
 clients=$(lock_client_pids)
 if [[ -n $clients ]]; then
-  echo "A lock client is already running (pid: $clients)."
-  echo "Switch to $(hypr_vt) and authenticate there."
-  exit 0
+  echo "Aborting stuck lock client (pid: $clients); coredump: coredumpctl info qs"
+  # shellcheck disable=SC2086 # one word per pid
+  kill -ABRT $clients
+  for _ in $(seq 50); do
+    [[ -z $(lock_client_pids) ]] && break
+    sleep 0.1
+  done
+  if [[ -n $(lock_client_pids) ]]; then
+    echo "Lock client still alive after SIGABRT; not spawning a second one." >&2
+    exit 1
+  fi
 fi
 
 systemctl --user reset-failed "$UNIT" 2>/dev/null || true

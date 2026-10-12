@@ -420,6 +420,18 @@ in {
     # Uses WlSessionLock protocol, supports PAM + fingerprint, syncs MD3 colors with Noctalia
     programs.aegis-lock = {
       enable = true;
+      # Suspected: the threaded render loop stalls tearing down a lock surface
+      # whose output appeared mid-unlock (dock + lid open), leaving
+      # unlock_and_destroy unflushed and the session stuck locked. The basic
+      # loop has no render thread to wait on. aegis-lock-recover keeps a
+      # coredump of any client it aborts; drop this if one shows otherwise.
+      package = inputs.aegis-lock.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
+        preFixup =
+          old.preFixup
+          + ''
+            qtWrapperArgs+=(--set QSG_RENDER_LOOP basic)
+          '';
+      });
       fingerprint.enable = true;
       settings = {
         general = {
