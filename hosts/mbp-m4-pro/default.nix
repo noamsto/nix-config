@@ -105,7 +105,7 @@ in {
         "https://nix-community.cachix.org"
         "https://nixpkgs-unfree.cachix.org"
         "https://claude-code.cachix.org"
-        "https://numtide.cachix.org" # llm-agents.nix (amp, claude-code, pi) — cross-platform
+        "https://cache.numtide.com" # llm-agents.nix (amp, claude-code, pi); NOT numtide.cachix.org
         "https://lazytmux.cachix.org" # lazytmux (worktrunk/tmux) — cross-platform
         "https://dispatcher.cachix.org" # dispatcher (crew, dispatch) — cross-platform
       ];
@@ -114,7 +114,7 @@ in {
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
         "claude-code.cachix.org-1:YeXf2aNu7UTX8Vwrze0za1WEDS+4DuI2kVeWEE4fsRk="
-        "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+        "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
         "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
         "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
       ];
