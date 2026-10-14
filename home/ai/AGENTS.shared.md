@@ -33,7 +33,9 @@ external contributor handling.
 
 Staging and committing are authorized without confirmation. Finish branches
 with push + PR, assigned via `gh pr create --assignee @me`, without asking.
-Ask only when the direction remains undecided (e.g. a spike).
+Ask only when the direction remains undecided (e.g. a spike). Never add
+`Generated with Claude Code` lines or AI `Co-Authored-By` trailers to commits,
+PRs or issues.
 
 ## Safety and validation
 

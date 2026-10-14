@@ -2022,6 +2022,18 @@ in
           guards.pi.git-identity abstain \
           "$(bash_payload "$idrepo" 'git commit -m m')"
 
+        ## attribution. The bats suite drives the guard binary directly; this
+        ## covers the real pi envelope/matcher path, where a wrong exec path or
+        ## matcher fails open and silently.
+        assert_blocked "attribution denies a commit message with a trailer" \
+          guards.pi.attribution deny \
+          "$(bash_payload "$idrepo" $'git commit -m "x\n\nCo-Authored-By: Claude <noreply@anthropic.com>"')" \
+          'attribution line or trailer'
+
+        assert_allowed "attribution lets a clean commit message through" \
+          guards.pi.attribution abstain \
+          "$(bash_payload "$idrepo" 'git commit -m "fix: a thing"')"
+
         ## pgrep-self-match
         assert_blocked "pgrep-self-match denies pgrep -f without a bracket class" \
           guards.pi.pgrep-self-match deny \

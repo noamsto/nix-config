@@ -151,6 +151,7 @@
     (piGuard "guards.pi.git-commit-autostage" "${guards.git-commit-autostage-guard}/bin/agent-git-commit-autostage-guard" ["Bash"])
     (piGuard "guards.pi.tmux-live-server" "${guards.tmux-live-server-guard}/bin/agent-tmux-live-server-guard" ["Bash"])
     (piGuard "guards.pi.git-identity" "${guards.git-identity-guard}/bin/agent-git-identity-guard" ["Bash"])
+    (piGuard "guards.pi.attribution" "${guards.attribution-guard}/bin/agent-attribution-guard" ["Bash"])
     (piGuard "guards.pi.pgrep-self-match" "${guards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard" ["Bash"])
   ];
 

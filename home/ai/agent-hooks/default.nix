@@ -52,6 +52,10 @@
     pkgs.writeShellScriptBin "agent-git-identity-guard"
     (builtins.readFile ./git-identity-guard.sh);
 
+  attribution-guard =
+    pkgs.writeShellScriptBin "agent-attribution-guard"
+    (builtins.readFile ./attribution-guard.sh);
+
   pgrep-self-match-guard =
     pkgs.writeShellScriptBin "agent-pgrep-self-match-guard"
     (builtins.readFile ./pgrep-self-match-guard.sh);

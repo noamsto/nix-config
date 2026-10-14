@@ -95,6 +95,11 @@
         match = ["Bash"];
       })
       (guardHandler {
+        name = "attribution";
+        exe = "${sharedGuards.attribution-guard}/bin/agent-attribution-guard";
+        match = ["Bash"];
+      })
+      (guardHandler {
         name = "pgrep-self-match";
         exe = "${sharedGuards.pgrep-self-match-guard}/bin/agent-pgrep-self-match-guard";
         match = ["Bash"];
