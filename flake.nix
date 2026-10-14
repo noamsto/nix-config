@@ -251,30 +251,27 @@
 
     # agent-smith CC plugin engine (extractor/analyst/applier binaries); the
     # plugin itself is enabled via settings.json's extraKnownMarketplaces.
-    agent-smith = {
-      url = "github:noamsto/agent-smith";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # No nixpkgs.follows: its CI pushes the package to dispatcher.cachix.org,
+    # built against its own lock; following ours would fork the derivation.
+    agent-smith.url = "github:noamsto/agent-smith";
 
     # resolved CC plugin binary; the plugin itself is enabled via settings.json's
     # extraKnownMarketplaces.
-    resolved = {
-      url = "github:noamsto/resolved";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # No nixpkgs.follows: its CI pushes the package to dispatcher.cachix.org,
+    # built against its own lock; following ours would fork the derivation.
+    resolved.url = "github:noamsto/resolved";
 
     # Cross-engine agent hook router. One manifest of handlers renders into
     # Claude Code's, Codex's, Cursor's and Pi's native hook config in a single
     # `hookyard install` pass, owned by home/ai/hookyard.
     hookyard = {
       url = "github:noamsto/hookyard";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        # Check-only dependency upstream; nothing here evaluates it, so
-        # without this the lock carries a third home-manager revision and
-        # fetches another tree on every update.
-        home-manager.follows = "home-manager";
-      };
+      # No nixpkgs.follows: its CI pushes the package to dispatcher.cachix.org,
+      # built against its own lock; following ours would fork the derivation.
+      # home-manager is check-only upstream; nothing here evaluates it, so without
+      # this the lock carries a third home-manager revision and fetches another
+      # tree on every update.
+      inputs.home-manager.follows = "home-manager";
     };
 
     # Steam Deck UI (Gaming Mode) for halo's console role. Deliberately only
