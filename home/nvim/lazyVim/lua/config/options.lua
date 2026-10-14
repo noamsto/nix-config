@@ -12,11 +12,18 @@ vim.o.winborder = "rounded"
 
 -- nvim's clipboard autodetect matches any binary named `lemonade`; on halo that
 -- name belongs to AMD's Lemonade LLM server, not the SSH clipboard relay.
-if vim.env.DISPLAY == nil and vim.env.WAYLAND_DISPLAY == nil then
+-- macOS never sets DISPLAY, so it keeps its native pbcopy/pbpaste provider.
+-- Paste stays local: an OSC 52 read makes the terminal show a permission prompt
+-- and blocks behind tmux. Tradeoff: "+p pastes the last nvim yank, not the
+-- client clipboard; terminal paste still works.
+if vim.fn.has("mac") == 0 and vim.env.DISPLAY == nil and vim.env.WAYLAND_DISPLAY == nil then
   local osc52 = require("vim.ui.clipboard.osc52")
+  local function paste_unnamed()
+    return { vim.fn.split(vim.fn.getreg('"'), "\n"), vim.fn.getregtype('"') }
+  end
   vim.g.clipboard = {
     name = "OSC 52",
     copy = { ["+"] = osc52.copy("+"), ["*"] = osc52.copy("*") },
-    paste = { ["+"] = osc52.paste("+"), ["*"] = osc52.paste("*") },
+    paste = { ["+"] = paste_unnamed, ["*"] = paste_unnamed },
   }
 end
