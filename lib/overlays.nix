@@ -129,4 +129,23 @@ inputs: [
       patches = (old.patches or []) ++ [./patches/nix-output-monitor-unknown-activity-type.patch];
     });
   })
+
+  # typescript-language-server 6.0.2 moved from yarn to pnpm and shipped a
+  # stale fetchPnpmDeps hash, so the whole darwin/hm build dies in the FOD's
+  # fixupPhase with a hash mismatch. Upstream fixed the hash in ac7b1aaed03d
+  # ("typescript-language-server: fix pnpm hash"), which nixos-unstable at
+  # 7fd4004d has not picked up yet. The corrected FOD is already on
+  # cache.nixos.org, so this only rewrites the hash. Drop once nixpkgs ships a
+  # rev carrying the fix.
+  (_final: prev: {
+    typescript-language-server =
+      if prev.typescript-language-server.version == "6.0.2"
+      then
+        prev.typescript-language-server.overrideAttrs (old: {
+          pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+            outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
+          });
+        })
+      else prev.typescript-language-server;
+  })
 ]
