@@ -29,7 +29,7 @@
     tomlFormat.generate "codex-mcp-${name}.toml" {mcp_servers.${name} = codexInteractiveMcp.${name};};
 
   worker-config = tomlFormat.generate "codex-worker.config.toml" {
-    mcp_servers = mcpServers.base // codexRemoteMcp;
+    mcp_servers = removeAttrs mcpServers.base ["playwright" "firefox-devtools"] // codexRemoteMcp;
   };
 
   aeye = import ../hookyard/aeye.nix {
@@ -68,9 +68,12 @@ in {
     # `--profile worker`, which layers this file on top of the hand-managed
     # ~/.codex/config.toml (model, trust levels, NUX) without clobbering it. It
     # gives dispatched codex workers the same base MCP stack as claude workers,
-    # from the single mcp-servers.nix source. Cheap by construction: codex defers
-    # tool schemas and browsers launch lazily, so the servers cost ~nothing until
-    # a task actually uses one.
+    # excluding interactive browser MCPs (playwright, firefox-devtools) — workers
+    # get a separate headless browser CLI from the dispatcher, avoiding parallel
+    # worker collisions on Playwright's shared persistent profile and Firefox
+    # DevTools attaching to the owner's logged-in Firefox. Cheap by construction:
+    # codex defers tool schemas and browsers launch lazily, so the servers cost
+    # ~nothing until a task actually uses one.
     #
     # Writable copy, not a `home.file` symlink: codex writes TUI config changes
     # back to the topmost layer, so a store symlink fails it — "failed to persist

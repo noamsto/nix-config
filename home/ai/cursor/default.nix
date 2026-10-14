@@ -63,14 +63,17 @@ in {
 
     file = {
       # Generate cursor MCP config at ~/.cursor/mcp.json
-      # Uses same base MCPs as Claude Code for consistent experience.
-      # cursor-agent has no per-invocation MCP-config flag, so this single shared
-      # file also serves dispatched cursor workers (no separate worker profile —
-      # the launch passes --approve-mcps for headless auto-approval).
+      # Uses same base MCPs as Claude Code for consistent experience, excluding
+      # Firefox DevTools — cursor-agent has no per-invocation MCP-config flag so
+      # this single shared file also serves dispatched cursor workers (no separate
+      # worker profile — the launch passes --approve-mcps for headless
+      # auto-approval). Firefox DevTools attaches to the owner's logged-in Firefox
+      # and is excluded because dispatched workers get a separate headless browser
+      # CLI from the dispatcher instead.
       # Note: Cursor uses ~/.cursor (not ~/.config/cursor) for its config
       ".cursor/mcp.json".text = builtins.toJSON {
         mcpServers =
-          mcpServers.base
+          builtins.removeAttrs mcpServers.base ["firefox-devtools"]
           # Work-profile remotes for parity with claude's connector/plugin MCPs.
           # OAuth (linear, notion, slack, fireflies, figma, groundcover) is
           # approved per-server on first use.
