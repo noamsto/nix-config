@@ -230,7 +230,7 @@
       fi
       source ${./wrapper-args.sh}
       claude_resolve_args ${overlay} ${settings-merge}/bin/claude-settings-merge "$@"
-      exec -a claude ${claude-wrapped}/bin/claude --settings "$settings" --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${inputs.dispatcher}/adapters/claude-code/plugin "''${args[@]}"
+      exec -a claude ${claude-wrapped}/bin/claude --settings "$settings" --plugin-dir ${inputs.tmux-og}/claude-plugin --plugin-dir ${aeye.tree}/adapters/claude-code/plugin --plugin-dir ${config.programs.dispatcher.claudePluginDir} "''${args[@]}"
     ''
     # writeShellScriptBin carries no version, so the HM claude-code module can't
     # detect that the wrapped package is >=2.1.157 and falls back to the legacy

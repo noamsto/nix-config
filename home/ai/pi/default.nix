@@ -135,7 +135,9 @@
         export PI_LENS_CONFIG_PATH=${piLensConfig}
         export PI_LENS_DISABLE_LSP_INSTALL=1
         export PI_LENS_DISABLE_TOOL_INSTALL=1
-        personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)
+        personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)${lib.optionalString (config.programs.dispatcher.agentBrowser.package != null) ''
+
+        personal+=(--skill ${config.home.sessionVariables.DISPATCHER_SKILLS_DIR}/agent-browser)''}
       fi
       # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
       export PI_USER_ARGC=$#
