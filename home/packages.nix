@@ -64,7 +64,7 @@
 
     dragon-drop
 
-    # firefox provided by programs.firefox.enable in home/desktop/default.nix
+    # firefox provided by programs.firefox.enable in home/firefox/default.nix
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.atlas-pro
 
     # Network file system support for Dolphin/file managers

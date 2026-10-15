@@ -25,6 +25,8 @@
       # Darwin-only config; self-gates with mkIf internally (referencing pkgs in
       # `imports` would infinite-recurse, so it can't be a lib.optionals guard).
       ./darwin
+      # Self-gates: Firefox on darwin, desktop hosts on Linux.
+      ./firefox
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop
