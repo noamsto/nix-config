@@ -242,8 +242,11 @@ in {
       settings.max_loaded_models = 1;
     };
 
-    # Strata is the resident Flash-Next: two concurrent 256K sessions, faster than
-    # GSQHalo at every depth and ~7-10 GiB lighter (nix-amd-ai #282 soak, PR #289).
+    # Strata is the resident Flash-Next: two concurrent 256K sessions. The
+    # "faster than GSQHalo at every depth, ~7-10 GiB lighter" figures (nix-amd-ai
+    # #282 soak, PR #289) were measured on the previous quant; the resident is
+    # now GSQ-RCO IQ3_S, chosen for headroom. Its speed and GTT on halo are not
+    # yet measured.
     # pack, mtp and vision.mmproj stay at their module defaults, so the
     # strata-prepare oneshot builds the pack and MTP runtime under
     # /var/lib/strata and mmproj comes from the module's pinned BF16 fetch. The
@@ -258,9 +261,8 @@ in {
       # Feeds both the run config's --max-context and the lemond ctx_size: the
       # per-session 256K window; --batch 2 runs two of them.
       contextSize = 262144;
-      # Experts are read from the GGUF in place and the pack is built from this
-      # snapshot, so it is pinned by hash rather than following lemond's download.
-      model = "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
+      # The module pins the model snapshot per quant.
+      quant = "GSQ-RCO-IQ3_S";
       # 10240 MiB is the smallest conversation cache that held two ~241K sessions
       # (nix-amd-ai #291); 12288 adds margin.
       extraArgs = ["--batch" "2" "--conversation-cache-mib" "12288"];
