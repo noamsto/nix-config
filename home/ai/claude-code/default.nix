@@ -272,6 +272,9 @@ in {
     dispatcher = {
       enable = true;
       inherit (osConfig) profile;
+      # 32-core host: 16 weight units ≈ 8 standard workers machine-wide; the
+      # load-average gate (1-min load > cores) still refuses new workers.
+      fleetBudget = 16;
       # cursor-agent ships on every host but is only logged in on the work one.
       engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
       # $40/mo OpenRouter budget gate for pi worker spend — personal only.
