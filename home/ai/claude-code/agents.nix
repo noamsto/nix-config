@@ -88,7 +88,14 @@
       else combined + "."
     )}\"";
 
-  toClaudeAgent = text: let
+  # Sonnet 5.5's safeguard fallback is Sonnet 5 with thinking disabled, so the
+  # security path runs on opus; every other reviewer shares sonnet.
+  modelFor = file:
+    if file == "security-reviewer.md"
+    then "opus"
+    else "sonnet";
+
+  toClaudeAgent = file: text: let
     inherit (splitFrontmatter text) frontmatter body;
     kept = lib.map (addWhen frontmatter) (lib.filter (l: lib.hasPrefix "name:" l || lib.hasPrefix "description:" l) frontmatter);
     head =
@@ -96,7 +103,7 @@
       ++ kept
       ++ [
         ''tools: ["Read", "Grep", "Glob", "Bash"]''
-        "model: sonnet"
+        "model: ${modelFor file}"
         "---"
       ];
   in
@@ -104,7 +111,7 @@
 
   generated = lib.listToAttrs (map (file: {
       name = file;
-      value = pkgs.writeText file (toClaudeAgent (builtins.readFile "${upstream}/${file}"));
+      value = pkgs.writeText file (toClaudeAgent file (builtins.readFile "${upstream}/${file}"));
     })
     (lib.filter (n: lib.hasSuffix "-reviewer.md" n) (builtins.attrNames (builtins.readDir upstream))));
 
