@@ -63,6 +63,8 @@
 in {
   imports = [
     ../../options.nix
+    # The one file under nixos/ that darwin shares: priors' trust file and binary.
+    ../../nixos/core/priors.nix
     inputs.determinate.darwinModules.default
     inputs.nix-homebrew.darwinModules.nix-homebrew
     inputs.home-manager.darwinModules.home-manager

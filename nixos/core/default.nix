@@ -13,6 +13,7 @@
     ./users.nix
     ./nice-looking-console.nix
     ./auto-upgrade.nix
+    ./priors.nix
   ];
 
   users.defaultUserShell = pkgs.fish;
