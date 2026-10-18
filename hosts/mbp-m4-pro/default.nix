@@ -271,6 +271,8 @@ in {
       "1password"
       "1password-cli" # op; cask (not nixpkgs) so desktop-app integration works
       "blender"
+      # Chromium browser for Meet, matching Linux
+      "brave-browser"
       "claude"
       # Hold-Hyper (⌘⌥) + mouse drag to move/resize windows, mirroring
       # Hyprland's SUPER+drag. AeroSpace is keyboard-only; this fills the gap.
@@ -299,6 +301,7 @@ in {
       # 3-finger swipe → AeroSpace workspace (parity with Hyprland's gesture
       # swipe on the ThinkPad). From the mediosz/tap declared above.
       "mediosz/tap/swipeaerospace"
+      "microsoft-teams"
       # Cask for the TCC reason above; here it's the Accessibility grant, plus
       # the Automation one the float-center osascript needs. The LaunchAgent
       # below owns startup, config stays in home/darwin/aerospace.nix.
