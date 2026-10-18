@@ -523,6 +523,8 @@ in {
       opTokenFile = config.age.secrets.op-sa-portfolio.path;
     };
 
+    toddlIssueIntake.enable = true;
+
     hermes-agent = {
       enable = true;
       extraDependencyGroups = ["messaging"];
