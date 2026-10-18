@@ -135,6 +135,12 @@
   # the same wire protocol but ignores the requested command and only ever
   # launches Brave on one validated meet.google.com URL.
   externalApplicationId = "{65b77238-bb05-470a-a445-ec0efe1d66c4}";
+  # LaunchServices rather than exec'ing the app binary, so Brave (not Firefox)
+  # is the responsible process for its camera/mic grants.
+  braveLauncher =
+    if isDarwin
+    then "/usr/bin/open"
+    else lib.getExe config.programs.brave.finalPackage;
   meetToBraveHost = pkgs.writers.writePython3Bin "meet-to-brave-host" {flakeIgnore = ["E501"];} ''
     import json
     import re
@@ -143,7 +149,7 @@
     import sys
     from urllib.parse import urlsplit
 
-    BRAVE = "${lib.getExe config.programs.brave.finalPackage}"
+    BRAVE = "${braveLauncher}"
 
 
     def read_message():
@@ -189,7 +195,7 @@
             reply({"code": 1, "stdout": "", "stderr": "refused: not an https://meet.google.com URL"})
         else:
             subprocess.Popen(
-                [BRAVE, url],
+                [BRAVE, ${lib.optionalString isDarwin ''"-b", "com.brave.Browser", ''}url],
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -213,7 +219,9 @@
   # extension storage for every add-on in the profile, wiping uBlock, Dark
   # Reader and the others. The add-on's rule must also be created in its own
   # options page, which is where it asks for the host permission it needs.
-  meetToBraveExtensions.packages = lib.optionals isLinux [pkgs.firefox-addons.external-application];
+  # The darwin daily profile gets no user.js, so no autoDisableScopes = 0
+  # either: there the add-on must be enabled once in about:addons.
+  meetToBraveExtensions.packages = [pkgs.firefox-addons.external-application];
 
   automationAddons = [pkgs.firefox-addons.onepassword-password-manager];
 in {
@@ -226,6 +234,7 @@ in {
         package = null;
         # Otherwise HM writes EnterprisePoliciesEnabled into the cask's plist.
         darwinDefaultsId = null;
+        nativeMessagingHosts = [meetToBraveNativeHost];
         profiles = {
           # Existing daily profile: HM must not write user.js into it. The
           # install-locked default lives in installs.ini, which HM never touches.
@@ -234,6 +243,7 @@ in {
             name = "default-release";
             path = "i2bldrhv.default-release-1780495918171";
             isDefault = true;
+            extensions = meetToBraveExtensions;
           };
 
           automation = {
