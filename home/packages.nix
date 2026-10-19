@@ -69,8 +69,6 @@
 
     # Network file system support for Dolphin/file managers
     gvfs # Virtual filesystem with NFS/SMB support
-
-    shellcheck
   ];
   personal-packages = [
     # Steam is enabled via programs.steam.enable in nixos/desktop/default.nix
@@ -116,6 +114,8 @@ in {
       # ripgrep, fd, jq, bat, eza available system-wide
       ast-grep # Structural search tool using AST
       yq-go
+      shellcheck
+      shfmt
 
       # `cmd | osc copy` reaches the *client's* clipboard over ssh. wl-copy
       # can't: it needs a compositor, and the headless hosts have none. tmux
