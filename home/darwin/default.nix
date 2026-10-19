@@ -5,6 +5,7 @@
 }: {
   imports = [
     ./aerospace.nix
+    ./brave-claude.nix
     ./karabiner.nix
     ./nh.nix
     ./nix-access-tokens.nix
