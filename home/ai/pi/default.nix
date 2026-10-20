@@ -161,7 +161,7 @@
     defaultModel =
       if isHalo
       then "Qwen3.8-Flash-Next-Strata"
-      else "deepseek/deepseek-v4.1-flash";
+      else "deepseek/deepseek-v4.1-flash-1017";
   };
 in {
   # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix),
