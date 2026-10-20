@@ -25,3 +25,9 @@
   volume/token cost dominates. Vision accepts JPEG, PNG, GIF, WebP; not AVIF/HEIC.
 - Claude Code settings, hooks, and plugin changes in nix-config: the
   `claude-code-settings` skill there explains the two settings layers.
+- On macOS, when a task needs Claude in Chrome (a logged-in web console), start
+  the browser yourself: run `brave-claude` with Bash `run_in_background`, then wait
+  for `list_connected_browsers` (or `tabs_context_mcp`) to answer. Never ask the
+  user to open it. The user still types passwords and sign-ins. If the extension
+  doesn't connect within about a minute, fall back to paste-ready steps and say
+  what failed.
