@@ -278,7 +278,7 @@ in {
       # cursor-agent ships on every host but is only logged in on the work one.
       engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
       # $40/mo OpenRouter budget gate for pi worker spend — personal only.
-      openrouter.monthlyTarget = lib.mkIf (osConfig.profile == "personal") 40;
+      openrouter.monthlyTarget = lib.mkIf (osConfig.profile == "personal") 100;
       orgTrackers.factify-inc = "linear:ENG";
       # halo's resident Strata model; two sessions at 256K each.
       # maxConcurrent 2 takes both slots; halo's assistant and interactive pi
