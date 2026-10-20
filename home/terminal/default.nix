@@ -95,6 +95,14 @@ in {
     };
   };
 
+  # macOS: launchd starts the tmux server with no LANG, so it runs in the C
+  # locale and pbcopy (tmux's copy-command) decodes UTF-8 as Mac Roman (┌ → ‚îå).
+  # Linux sets LANG/LC_ALL system-wide, so leave it alone there.
+  launchd.agents.tmux-startup.config.EnvironmentVariables = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+    LANG = "en_US.UTF-8";
+    LC_CTYPE = "en_US.UTF-8";
+  };
+
   # Eza icon overrides matching yazi custom icons (theme-toggle.sh update_yazi)
   # Schema: filenames/extensions are top-level, each entry is { icon: { glyph: <char> } }
   xdg.configFile."eza/theme.yml".text = let
