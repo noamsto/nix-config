@@ -35,14 +35,13 @@
       fi
 
       # Debounce: skip if already applied (the watched plist changes for many
-      # unrelated reasons). THEME_APPLY_FORCE bypasses it for the activation
-      # entry below, which runs right after the updaters' output was reset to
-      # the Home Manager defaults — there the cached theme says nothing about
-      # what is on disk.
-      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}"
-      mkdir -p "$state_dir"
-      last_file="$state_dir/theme-apply-macos.last"
-      if [[ -z "''${THEME_APPLY_FORCE:-}" && -f "$last_file" && "$(cat "$last_file")" == "$theme" ]]; then
+      # unrelated reasons). The shared theme-state.json is the only record, so
+      # a missing or unparseable file never debounces (get_current_theme
+      # defaults to dark, which would pin a corrupt file on a dark Mac).
+      # THEME_APPLY_FORCE bypasses it for the activation entry below, which
+      # runs right after the updaters' output was reset to the Home Manager
+      # defaults — there the recorded theme says nothing about what is on disk.
+      if [[ -z "''${THEME_APPLY_FORCE:-}" && -f "$STATE_FILE" && "$(jq -r '.theme // empty' "$STATE_FILE" 2>/dev/null)" == "$theme" ]]; then
         exit 0
       fi
 
@@ -51,7 +50,7 @@
         update_lazydocker update_process_compose update_bat update_delta \
         update_fzf update_yazi update_lazygit
 
-      printf '%s' "$theme" > "$last_file"
+      write_state "$theme" "$(failed_to_json)"
     '';
   };
 in
