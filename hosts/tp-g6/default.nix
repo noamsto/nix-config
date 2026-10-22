@@ -26,7 +26,6 @@ in {
   inherit (hostConfig) hostname email profile laptop-scale;
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
-  machine.serverMode = hostConfig.machine.serverMode;
 
   # Thinkfan configuration
   hardware.thinkpad.thinkfan = {
@@ -47,7 +46,7 @@ in {
   users.users.noams = {
     # Add user to video/render groups for NPU access
     extraGroups = ["video" "render"];
-    # g6 runs headless, so the hosts that bridge into it need a way in: the mac,
+    # The hosts that bridge into g6 need a way in: the mac,
     # and halo, whose session picker lists tp-g6.
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02 noams@nwms-MacBook-Pro.local"
