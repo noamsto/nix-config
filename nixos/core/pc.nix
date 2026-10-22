@@ -115,7 +115,17 @@ in {
     ];
 
     # OBS virtual Camera
-    boot.extraModulePackages = with config.boot.kernelPackages; [v4l2loopback];
+    boot.extraModulePackages = [
+      # On kernel 7.3 the build runs depmod and ships modules.* index files,
+      # which collide with the kernel's own in the linux-modules buildEnv.
+      (config.boot.kernelPackages.v4l2loopback.overrideAttrs (old: {
+        postInstall =
+          (old.postInstall or "")
+          + ''
+            find $out/lib/modules -maxdepth 2 -type f -name 'modules.*' -delete
+          '';
+      }))
+    ];
     boot.extraModprobeConfig = ''
       options v4l2loopback devices=1 video_nr=1 card_label="OBS Cam" exclusive_caps=1
     '';
