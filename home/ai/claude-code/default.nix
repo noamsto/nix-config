@@ -208,6 +208,12 @@
   # https://github.com/anthropics/claude-code/issues/8523
   # DISABLE_UPDATES: block self-update paths on immutable Nix store (>=2.1.118)
   #
+  # CLAUDE_CODE_CERT_STORE: nixpkgs forces `system`, but macOS's system-store
+  # loader reads only part of the keychain and misses GlobalSign Root CA, the
+  # root of api.anthropic.com's chain (anthropics/claude-code#72712). Default to
+  # the bundled store; an explicit CLAUDE_CODE_CERT_STORE (e.g. `system`) still
+  # wins. Revert this once upstream fixes it.
+  #
   # exec -a claude: set argv[0] so ps/comm/Activity Monitor (and Linux tmux,
   # which reads /proc/pid/cmdline) show `claude`, not the nix store wrapper.
   # macOS tmux can't be fixed here: it reads proc_pidpath, which resolves
@@ -218,6 +224,7 @@
     pkgs.writeShellScriptBin "claude" ''
       export DISABLE_INSTALLATION_CHECKS=1
       export DISABLE_UPDATES=1
+      export CLAUDE_CODE_CERT_STORE=''${CLAUDE_CODE_CERT_STORE:-bundled}
       # D2 diagrams (aeye diagrams.sh): bundle d2's own font so resvg
       # renders text, and follow the desktop light/dark scheme for the theme.
       export AEYE_D2_FONT="Source Sans 3"
