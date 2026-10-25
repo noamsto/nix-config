@@ -177,5 +177,5 @@ in {
     ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux linux-only
     ++ lib.optionals (osConfig.desktop.mode != "none") desktop-packages
     # personal-packages are Linux gaming tools (Steam/vinegar) — Linux-only.
-    ++ lib.optionals (osConfig.profile != "work" && pkgs.stdenv.hostPlatform.isLinux) personal-packages;
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux personal-packages;
 }

@@ -1,16 +1,12 @@
 {
   pkgs,
   config,
-  lib,
   osConfig,
   ...
 }: let
   # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
   # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio
-  useGen5Presets = builtins.elem osConfig.hostname [
-    "tp-g5"
-    "tp-g6"
-  ];
+  useGen5Presets = osConfig.hostname == "tp-g6";
 
   # EasyEffects 8.x reads presets from ~/.local/share/easyeffects (xdg.dataHome).
   # It migrates away from the old ~/.config location, but that migration aborts on
@@ -82,60 +78,8 @@
       };
       defaultPreset = "ThinkPad P14s G4";
     };
-
-  # EE is an all-or-nothing interceptor (it moves every output stream through its
-  # sink) and its per-device autoload only fires on a route change *within* one
-  # device — never when the default sink switches between separate devices. So the
-  # only reliable way to keep the speaker-correction chain off Bluetooth/HDMI/USB is
-  # to flip EE's global bypass to track the default sink: correction on only for the
-  # built-in speaker (whose IRS the chain is voiced for), clean passthrough elsewhere.
-  # The sink name is hardware-specific, so this is gen5-g5 only.
-  speakerSink = "alsa_output.pci-0000_c4_00.6.HiFi__Speaker__sink";
-  eeBypassBySink = pkgs.writeShellApplication {
-    name = "ee-bypass-by-sink";
-    runtimeInputs = [pkgs.pulseaudio pkgs.dconf];
-    text = ''
-      bypass_key=/com/github/wwmm/easyeffects/bypass
-      apply() {
-        if [ "$(pactl get-default-sink)" = "${speakerSink}" ]; then
-          dconf write "$bypass_key" false
-        else
-          dconf write "$bypass_key" true
-        fi
-      }
-      apply
-      pactl subscribe | while read -r line; do
-        case "$line" in
-          *"on server"*) apply ;;
-        esac
-      done
-    '';
-  };
 in {
   xdg.dataFile = presetConfig.dataFiles;
-
-  # EE's output-device got stuck on a disconnected HDMI sink, which took EasyEffects
-  # out of the speaker path entirely. Pin it to the speaker on this host (the device
-  # name is hardware-specific, so this is gen5-g5 only).
-  dconf.settings = lib.mkIf (osConfig.hostname == "tp-g5") {
-    "com/github/wwmm/easyeffects/streamoutputs".output-device = speakerSink;
-  };
-
-  # Keep EE's speaker correction off everything that isn't the built-in speaker.
-  # Runs alongside EE and re-evaluates whenever the default sink changes.
-  systemd.user.services.easyeffects-bypass-by-sink = lib.mkIf (osConfig.hostname == "tp-g5") {
-    Unit = {
-      Description = "Bypass EasyEffects unless the default sink is the built-in speaker";
-      After = ["easyeffects.service" "pipewire-pulse.service"];
-      BindsTo = ["easyeffects.service"];
-    };
-    Service = {
-      ExecStart = lib.getExe eeBypassBySink;
-      Restart = "on-failure";
-      RestartSec = 2;
-    };
-    Install.WantedBy = ["easyeffects.service"];
-  };
 
   services.easyeffects = {
     enable = true;

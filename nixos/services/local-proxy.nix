@@ -500,7 +500,7 @@ in {
 
       nodeName = mkOption {
         type = types.str;
-        example = "tp-g5-agents";
+        example = "tp-g6-agents";
         description = "Node config name in Caddy, and the hostname the node requests.";
       };
 

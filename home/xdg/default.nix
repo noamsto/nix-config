@@ -11,10 +11,7 @@
 }: let
   # The profile the primary Firefox entry launches. Both the MIME default and
   # the router derive from this one binding so they cannot drift.
-  firefoxProfile =
-    if osConfig.profile == "work"
-    then "work"
-    else "personal";
+  firefoxProfile = "personal";
   primaryBrowser = "firefox-${firefoxProfile}.desktop";
   inherit (pkgs.stdenv.hostPlatform) isLinux;
 

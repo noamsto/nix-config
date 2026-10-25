@@ -287,4 +287,4 @@ while IFS=$'\t' read -r _ name path _; do
   echo "orphan: $path"
 done < <(rows orphan)
 
-echo "done. Next: just tpm-enroll (see hosts/tp-g5/BTRFS-MIGRATION.md)"
+echo "done. Next: just tpm-enroll"

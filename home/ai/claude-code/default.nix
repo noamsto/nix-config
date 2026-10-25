@@ -3,7 +3,6 @@
   lib,
   config,
   inputs,
-  osConfig,
   ...
 }: let
   # Shared MCP server definitions
@@ -131,37 +130,9 @@
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";
       };
-      # Profile-gated plugins. Deep-merged with (and higher precedence than)
-      # the common set in settings.json, so these are profile-locked: the
-      # /plugin TUI can't toggle them on the wrong machine. Common,
-      # TUI-toggleable plugins stay in settings.json.
-      enabledPlugins =
-        lib.optionalAttrs (osConfig.profile == "work") {
-          "pg@aiguide" = true;
-          "cc-skills-golang@samber" = true;
-          "figma@claude-plugins-official" = true;
-          "pr-reviewers@factify-pr-reviewers" = true;
-        }
-        // lib.optionalAttrs (osConfig.profile == "personal") {
-          "swift-lsp@claude-plugins-official" = true;
-        };
-      # Marketplace for the work-only pr-reviewers plugin above. Common
-      # marketplaces (samber, aiguide, claude-plugins-official, etc.) live in
-      # settings.json; this one is profile-gated alongside its plugin.
-      extraKnownMarketplaces = lib.optionalAttrs (osConfig.profile == "work") {
-        "factify-pr-reviewers" = {
-          source = {
-            source = "github";
-            repo = "factify-inc/claude-pr-reviewers";
-          };
-        };
-      };
-      # Allow-lists the codex MCP tools (registered via `dispatch`'s
-      # --mcp-config, not this overlay — --settings doesn't register
-      # mcpServers) so an auto-mode worker's reviewer subagent isn't denied.
-      # Union'd with settings.json's allow list.
-      permissions.allow =
-        lib.optionals (osConfig.profile == "work") ["mcp__codex__*"];
+      # Deep-merged with (and higher precedence than) the common set in
+      # settings.json, so this plugin can't be toggled off from the /plugin TUI.
+      enabledPlugins."swift-lsp@claude-plugins-official" = true;
       # Status-state hooks live in the lazytmux CC plugin and aeye's
       # SessionStart hooks in the aeye CC plugin (both loaded via --plugin-dir
       # in the wrapper below); aeye's PostToolUse hooks come from hookyard's
@@ -274,19 +245,15 @@ in {
     resolved.enable = true;
     # crew + dispatch + dispatcher on PATH, DISPATCH_PROFILE and
     # DISPATCHER_PROTOCOL_DIR exported. The claude plugin dir is passed in the
-    # wrapper below. `engines` — not `profile` — gates which worker engines may
-    # be dispatched and which per-engine artifacts get installed.
+    # wrapper below. `engines` gates which worker engines may be dispatched
+    # and which per-engine artifacts get installed.
     dispatcher = {
       enable = true;
-      inherit (osConfig) profile;
       # 32-core host: 16 weight units ≈ 8 standard workers machine-wide; the
       # load-average gate (1-min load > cores) still refuses new workers.
       fleetBudget = 16;
-      # cursor-agent ships on every host but is only logged in on the work one.
-      engines = ["claude" "pi"] ++ lib.optionals (osConfig.profile == "work") ["cursor"];
-      # $40/mo OpenRouter budget gate for pi worker spend — personal only.
-      openrouter.monthlyTarget = lib.mkIf (osConfig.profile == "personal") 100;
-      orgTrackers.factify-inc = "linear:ENG";
+      engines = ["claude" "pi"];
+      openrouter.monthlyTarget = 100;
       # halo's resident Strata model; two sessions at 256K each.
       # maxConcurrent 2 takes both slots; halo's assistant and interactive pi
       # queue behind dispatch workers.
@@ -323,17 +290,17 @@ in {
         ".claude/CLAUDE.md".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
         # Engine-neutral conventions imported by CLAUDE.global.md via
-        # @~/.claude/AGENTS.shared.md. The same file backs ~/.codex/AGENTS.md
-        # and ~/.cursor/rules (see ../codex, ../cursor) — one source, three engines.
+        # @~/.claude/AGENTS.shared.md. The same file backs ~/.cursor/rules
+        # (see ../cursor).
         ".claude/AGENTS.shared.md".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
         # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
-        # Always present (work or personal) so the import never silently no-ops.
+        # Always present so the import never silently no-ops.
         ".claude/CLAUDE.profile.md".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.${osConfig.profile}.md";
+          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.personal.md";
         ".claude/settings.json".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
-        # Mirrored to ~/.cursor/agents and ~/.codex/agents from those modules.
+        # Mirrored to ~/.cursor/agents from the cursor module.
         ".claude/agents".source = agents;
         ".claude/commands".source =
           config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";

@@ -28,8 +28,7 @@
       #
       # serve 403s any Host but its loopback address, hence upstreamHost. It is
       # unauthenticated and shows tool payloads: only a proxy that keeps reach
-      # private makes that acceptable (tailnet-only on halo; loopback plus an
-      # allowlisted tsnet node on tp-g5).
+      # private makes that acceptable (tailnet-only on halo).
       hookyard = {
         port = 7757;
         paths = ["/hookyard" "/static" "/api/days" "/api/events" "/api/flow" "/api/stats" "/api/stream" "/api/table"];

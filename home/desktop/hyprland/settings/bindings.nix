@@ -1,16 +1,11 @@
 {
   lib,
   pkgs,
-  osConfig,
   ...
 }: let
   terminal = "kitty";
   fileManager = "${lib.getExe pkgs.thunar}";
-  primaryProfile =
-    if osConfig.profile == "work"
-    then "work"
-    else "personal";
-  browser = "${lib.getExe pkgs.firefox} -P ${primaryProfile}";
+  browser = "${lib.getExe pkgs.firefox} -P personal";
   youtube-music = "${lib.getExe pkgs.pear-desktop}";
 
   # Run a program only if it's not already running

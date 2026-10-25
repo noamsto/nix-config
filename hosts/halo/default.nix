@@ -31,7 +31,7 @@ in {
     ../../nixos/steam-console
   ];
 
-  inherit (hostConfig) hostname email profile;
+  inherit (hostConfig) hostname email;
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;

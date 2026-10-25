@@ -4,9 +4,7 @@
   lib,
   osConfig,
   ...
-}: let
-  isWork = osConfig.profile == "work";
-in {
+}: {
   imports = [
     ./gtk.nix
     ./vicinae
@@ -99,40 +97,28 @@ in {
   # Per-profile launchers (right-click "Open with…" or app menus).
   # Workspace-follow is handled by Hyprland's misc.focus_on_activate via
   # the xdg-activation protocol, not a wrapper script.
-  xdg.desktopEntries =
-    {
-      firefox-personal = {
-        name = "Firefox (Personal)";
-        genericName = "Web Browser";
-        exec = "${lib.getExe pkgs.firefox} -P personal %U";
-        icon = "firefox";
-        terminal = false;
-        mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
-        categories = ["Network" "WebBrowser"];
-      };
-
-      # Automation profile with Marionette active for the firefox-devtools MCP.
-      # No mimeType: it's a launcher entry, not a default-browser handler.
-      firefox-marionette = {
-        name = "Firefox (Marionette)";
-        genericName = "Web Browser";
-        exec = "${lib.getExe pkgs.firefox} -P automation --marionette --remote-debugging-port=9222 %U";
-        icon = "firefox";
-        terminal = false;
-        categories = ["Network" "WebBrowser"];
-      };
-    }
-    // lib.optionalAttrs isWork {
-      firefox-work = {
-        name = "Firefox (Work)";
-        genericName = "Web Browser";
-        exec = "${lib.getExe pkgs.firefox} -P work %U";
-        icon = "firefox";
-        terminal = false;
-        mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
-        categories = ["Network" "WebBrowser"];
-      };
+  xdg.desktopEntries = {
+    firefox-personal = {
+      name = "Firefox (Personal)";
+      genericName = "Web Browser";
+      exec = "${lib.getExe pkgs.firefox} -P personal %U";
+      icon = "firefox";
+      terminal = false;
+      mimeType = ["x-scheme-handler/http" "x-scheme-handler/https" "text/html"];
+      categories = ["Network" "WebBrowser"];
     };
+
+    # Automation profile with Marionette active for the firefox-devtools MCP.
+    # No mimeType: it's a launcher entry, not a default-browser handler.
+    firefox-marionette = {
+      name = "Firefox (Marionette)";
+      genericName = "Web Browser";
+      exec = "${lib.getExe pkgs.firefox} -P automation --marionette --remote-debugging-port=9222 %U";
+      icon = "firefox";
+      terminal = false;
+      categories = ["Network" "WebBrowser"];
+    };
+  };
 
   # Thunar settings — written to xfconf at HM activation.
   # Thunar 4.20 reads its preferences from xfconf (channel "thunar").
@@ -176,7 +162,7 @@ in {
   # Data bookmarks only on hosts that mount /home/$USER/Data.
   gtk.gtk3.bookmarks = let
     home = config.home.homeDirectory;
-    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s" "tp-g5"];
+    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s"];
   in
     [
       "file://${home}/Documents"

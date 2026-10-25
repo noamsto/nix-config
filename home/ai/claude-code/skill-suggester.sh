@@ -57,7 +57,7 @@ if [ -f "$repo_root/go.mod" ]; then
   suggest "cc-skills-golang@samber" "Go project (go.mod)"
 fi
 
-# Postgres / Factify
+# Postgres
 pg_reason=""
 for dir in migrations db/migrations; do
   if [ -d "$repo_root/$dir" ]; then
@@ -68,9 +68,6 @@ for dir in migrations db/migrations; do
     fi
   fi
 done
-if [ -z "$pg_reason" ] && git -C "$repo_root" remote get-url origin 2>/dev/null | grep -qi factify; then
-  pg_reason="factify repo"
-fi
 [ -n "$pg_reason" ] && suggest "pg@aiguide" "$pg_reason"
 
 [ ${#suggestions[@]} -eq 0 ] && exit 0

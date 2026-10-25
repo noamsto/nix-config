@@ -108,47 +108,8 @@ in {
     '';
   };
 
-  # Remote (streamable HTTP) MCP servers. Claude gets these via claude.ai
-  # connectors / plugin MCPs; cursor-agent and codex need explicit entries.
-  # All are work tools — consumers gate on osConfig.profile.
-  remote = {
-    linear.url = "https://mcp.linear.app/mcp";
-    notion.url = "https://mcp.notion.com/mcp";
-    fireflies.url = "https://api.fireflies.ai/mcp";
-    figma.url = "https://mcp.figma.com/mcp";
-    slack.url = "https://mcp.slack.com/mcp";
-    groundcover = {
-      url = "https://mcp.groundcover.com/api/mcp";
-      headers = {
-        X-Timezone = "Asia/Jerusalem";
-        X-Tenant-UUID = "f9cea478-4af0-451b-b226-c05829b9f8ea";
-        X-Backend-Id = "groundcover";
-      };
-    };
-    posthog = {
-      url = "https://mcp.posthog.com/mcp";
-      bearerTokenEnvVar = "POSTHOG_PERSONAL_API_KEY";
-    };
-  };
-
-  # Convert a remote MCP entry to cursor mcp.json format
-  toCursor = server:
-    {inherit (server) url;}
-    // lib.optionalAttrs (server ? headers) {inherit (server) headers;};
-
-  # Convert a remote MCP entry to codex config.toml [mcp_servers.*] format
-  toCodex = server:
-    {inherit (server) url;}
-    // lib.optionalAttrs (server ? headers) {http_headers = server.headers;}
-    // lib.optionalAttrs (server ? bearerTokenEnvVar) {bearer_token_env_var = server.bearerTokenEnvVar;};
-
   # MCPs provided natively by claude.ai — exclude from Claude Code
   claudeAiProvided = ["linear"];
-
-  # mcp.slack.com rejects dynamic client registration (pre-registered
-  # confidential clients only), so `codex mcp login slack` can't complete.
-  # Cursor-agent is a partner client and OAuths fine.
-  codexUnsupported = ["slack"];
 
   # Re-export helpers for use in tool-specific configs
   inherit helpers;

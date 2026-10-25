@@ -30,10 +30,6 @@
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
       ./desktop
-    ]
-    ++ lib.optionals (osConfig.profile == "work") [
-      ./kubernetes
-      ./work
     ];
 
   home = {

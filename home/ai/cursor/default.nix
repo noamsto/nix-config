@@ -4,7 +4,6 @@
   pkgs,
   lib,
   inputs,
-  osConfig,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
@@ -20,22 +19,6 @@
     aeye = inputs.tmux-og.inputs.aeye;
   };
   aeye-cursor = "${aeye.tree}/adapters/cursor";
-
-  # cursor-agent's mcp.json has no documented env-var interpolation in headers,
-  # so posthog goes through mcp-remote (which expands ${...} in args) — same
-  # shape as the claude/amp analytics profiles.
-  cursorPosthog = mcpServers.helpers.mkNpxMcp {
-    package = "mcp-remote@latest";
-    args = [
-      "https://mcp.posthog.com/mcp"
-      "--header"
-      "Authorization: Bearer \${POSTHOG_PERSONAL_API_KEY}"
-    ];
-  };
-
-  cursorWorkMcp =
-    lib.mapAttrs (_: mcpServers.toCursor) (builtins.removeAttrs mcpServers.remote ["posthog"])
-    // {posthog = cursorPosthog;};
 
   # The dispatcher's cursor-worker backstop. Cursor exposes no session-end
   # event, so its `stop` (end-of-turn) hook stands in: `--turn-end` posts
@@ -54,10 +37,7 @@
   };
 in {
   home = {
-    # Cursor CLI (`cursor-agent`). Used both interactively and as an alternate
-    # work-profile `dispatch` worker engine (`dispatch … --agent cursor …`). The
-    # work-profile gate lives in the dispatcher flake, keyed on the
-    # `programs.dispatcher.profile` this repo sets. Auth is out of band — run
+    # Cursor CLI (`cursor-agent`). Auth is out of band — run
     # `cursor-agent login` once; there's no secret to manage in Nix.
     packages = [pkgs.cursor-agent];
 
@@ -72,12 +52,7 @@ in {
       # CLI from the dispatcher instead.
       # Note: Cursor uses ~/.cursor (not ~/.config/cursor) for its config
       ".cursor/mcp.json".text = builtins.toJSON {
-        mcpServers =
-          builtins.removeAttrs mcpServers.base ["firefox-devtools"]
-          # Work-profile remotes for parity with claude's connector/plugin MCPs.
-          # OAuth (linear, notion, slack, fireflies, figma, groundcover) is
-          # approved per-server on first use.
-          // lib.optionalAttrs (osConfig.profile == "work") cursorWorkMcp;
+        mcpServers = builtins.removeAttrs mcpServers.base ["firefox-devtools"];
       };
 
       # Global instructions. `~/.cursor/rules/*.mdc` is cursor's user-level rule

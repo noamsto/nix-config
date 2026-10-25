@@ -1,8 +1,4 @@
-{
-  lib,
-  osConfig,
-  ...
-}: let
+{lib, ...}: let
   # Public, non-fork repos under github.com/noamsto.
   ossRepos = [
     "aegis-lock"
@@ -30,7 +26,7 @@
 in {
   # Section paths are relative to the dir holding .mrconfig, and programs.mr
   # writes it to $HOME — hence the "git/" prefix rather than an absolute path.
-  programs.mr = lib.mkIf (osConfig.profile == "personal") {
+  programs.mr = {
     enable = true;
     settings = lib.listToAttrs (map (name: {
         name = "git/${name}";

@@ -105,9 +105,8 @@
   },
   "autoMode": {
     "environment": [
-      "**Organization**: Repositories under the `factify-inc` GitHub organization are Factify work; all other repositories are personal unless the user says otherwise. Determine this from the session repository's configured remote, not from the host machine.",
       "**Primary use of Claude Code**: Software development, repository maintenance, and declarative NixOS, nix-darwin, and Home Manager configuration.",
-      "**Work tracking**: Factify repositories use Linear; personal repositories use GitHub Issues. Creating or modifying tickets, issues, comments, or pull requests is an external write and must be within the user's requested workflow.",
+      "**Work tracking**: Repositories use GitHub Issues. Creating or modifying tickets, issues, comments, or pull requests is an external write and must be within the user's requested workflow.",
       "**Repository visibility**: Do not infer visibility from the owner or organization. Check the configured remote's visibility when an action depends on whether a repository is public or private.",
       "**Trusted repo**: The git repository where the session started and the remotes already configured for it. Files read from another repository retain their original trust boundary even if copied into the session repository.",
       "**Source control**: The session repository and its existing configured remotes only. A remote added or repointed during the session is a new destination, not an implicitly trusted one.",
@@ -220,12 +219,6 @@
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "mcpServers": {
-    "factify": {
-      "type": "http",
-      "url": "https://factify-mcp.factify.workers.dev/mcp"
-    }
-  },
   "additionalDirectories": ["~/.claude/plugins/cache"],
   "modelSettings": {
     "claude-opus-5": {

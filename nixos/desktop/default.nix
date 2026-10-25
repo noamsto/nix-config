@@ -15,7 +15,7 @@
       zoom-us.enable = true;
       chromium.enable = true;
 
-      steam = lib.mkIf (config.profile == "personal") {
+      steam = {
         enable = true;
         remotePlay.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;

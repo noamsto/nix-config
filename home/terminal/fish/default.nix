@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  osConfig,
   ...
 }: {
   home.packages = with pkgs; [
@@ -206,74 +205,68 @@
 
       preferAbbrs = true;
 
-      shellAliases =
-        {
-          ll = "eza -l --icons --git";
-          tree = "eza --tree --icons";
-          update = "sudo nixos-rebuild switch";
-          ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
+      shellAliases = {
+        ll = "eza -l --icons --git";
+        tree = "eza --tree --icons";
+        update = "sudo nixos-rebuild switch";
+        ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
 
-          hdm = "hyprdynamicmonitors";
+        hdm = "hyprdynamicmonitors";
 
-          # Claude Code
-          c = "claude";
-          cc = "claude --continue";
-          cr = "claude --resume";
-          cf = "claude-frontend";
+        # Claude Code
+        c = "claude";
+        cc = "claude --continue";
+        cr = "claude --resume";
+        cf = "claude-frontend";
 
-          # Claude quick commands — haiku, no MCPs, restricted tools.
-          # ALLOW_COMMIT_ON_DEFAULT=1 is inherited by the PreToolUse guard so a
-          # deliberate quick commit on main isn't blocked.
-          # Low effort + stable cached prefix keep these snappy; cco stays at
-          # medium so the commit message still reasons over the diff.
-          cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --effort medium --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
-          cpush = ''claude --model haiku --effort low --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
+        # Claude quick commands — haiku, no MCPs, restricted tools.
+        # ALLOW_COMMIT_ON_DEFAULT=1 is inherited by the PreToolUse guard so a
+        # deliberate quick commit on main isn't blocked.
+        # Low effort + stable cached prefix keep these snappy; cco stays at
+        # medium so the commit message still reasons over the diff.
+        cco = ''ALLOW_COMMIT_ON_DEFAULT=1 claude --model haiku --effort medium --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/commit"'';
+        cpush = ''claude --model haiku --effort low --exclude-dynamic-system-prompt-sections --strict-mcp-config --allowed-tools "Bash(git *)" -p "/push"'';
 
-          # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
-          tss = "tailscale status";
-          tsl = "tailscale switch --list"; # profiles; current marked with *
-          # operator/routing live in nixos/services/tailscale.nix; these only flip per-profile accept-routes
-          tsp = "tailscale switch stellern@gmail.com && tailscale up && tailscale set --accept-routes=false";
-          # tsw (work tailnet) is merged in below, work profile only.
+        # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
+        tss = "tailscale status";
+        tsl = "tailscale switch --list"; # profiles; current marked with *
+        # operator/routing live in nixos/services/tailscale.nix; these only flip per-profile accept-routes
+        tsp = "tailscale switch stellern@gmail.com && tailscale up && tailscale set --accept-routes=false";
 
-          # Git (aliases not covered by forgit)
-          gsb = "git status -sb";
-          gst = "git status";
-          gsw = "git switch";
-          gswc = "git switch --create";
-          gcom = "git checkout main || git checkout master";
-          # Worktrees
-          gwa = "git worktree add";
-          gwl = "git worktree list";
-          gwr = "git worktree remove";
-          gwp = "git worktree prune";
-          gwm = "git worktree move";
-          # Remote
-          gpf = "git push --force-with-lease";
-          gpu = "git push -u origin HEAD";
-          gp = "git push";
-          gl = "git pull";
-          gf = "git fetch";
-          gfa = "git fetch --all --prune";
-          gup = "git pull --rebase";
-          # Staging & committing
-          gaa = "git add --all";
-          gc = "git commit -v";
-          gcm = "git commit -m";
-          gca = "git commit -v -a";
-          gcan = "git commit -v -a --no-edit --amend";
-          gwip = "git add -A && git commit -m 'WIP'";
-          gunwip = "git reset HEAD~1";
-          # Rebasing
-          grbi = "git-forgit rebase -i";
-          grbc = "git rebase --continue";
-          grba = "git rebase --abort";
-          grhh = "git reset --hard";
-        }
-        // lib.optionalAttrs (osConfig.profile == "work") {
-          # Work tailnet (factify) — only on the work machine.
-          tsw = "tailscale switch noam@factify.com && tailscale up && tailscale set --accept-routes";
-        };
+        # Git (aliases not covered by forgit)
+        gsb = "git status -sb";
+        gst = "git status";
+        gsw = "git switch";
+        gswc = "git switch --create";
+        gcom = "git checkout main || git checkout master";
+        # Worktrees
+        gwa = "git worktree add";
+        gwl = "git worktree list";
+        gwr = "git worktree remove";
+        gwp = "git worktree prune";
+        gwm = "git worktree move";
+        # Remote
+        gpf = "git push --force-with-lease";
+        gpu = "git push -u origin HEAD";
+        gp = "git push";
+        gl = "git pull";
+        gf = "git fetch";
+        gfa = "git fetch --all --prune";
+        gup = "git pull --rebase";
+        # Staging & committing
+        gaa = "git add --all";
+        gc = "git commit -v";
+        gcm = "git commit -m";
+        gca = "git commit -v -a";
+        gcan = "git commit -v -a --no-edit --amend";
+        gwip = "git add -A && git commit -m 'WIP'";
+        gunwip = "git reset HEAD~1";
+        # Rebasing
+        grbi = "git-forgit rebase -i";
+        grbc = "git rebase --continue";
+        grba = "git rebase --abort";
+        grhh = "git reset --hard";
+      };
 
       plugins = with pkgs.fishPlugins; [
         {

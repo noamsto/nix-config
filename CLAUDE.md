@@ -19,16 +19,15 @@ Project skills load on demand from `.agents/skills` (symlinked into `.claude/ski
 
 ## How configuration flows
 
-`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `profile` (personal/work), `username`, `email`, `hostname`, and the read-only `flakePath`. `lib/host-configs.nix` is the single source of truth for per-host settings and SSH public keys; NixOS hosts (`hosts/*/default.nix`) and the `homeConfigurations` aliases in `flake-modules/home-manager.nix` both take their values from it, using `inherit`. Home Manager modules read `osConfig`, so a new host needs an entry in `host-configs.nix`.
+`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `username`, `email`, `hostname`, and the read-only `flakePath`. `lib/host-configs.nix` is the single source of truth for per-host settings and SSH public keys; NixOS hosts (`hosts/*/default.nix`) and the `homeConfigurations` aliases in `flake-modules/home-manager.nix` both take their values from it, using `inherit`. Home Manager modules read `osConfig`, so a new host needs an entry in `host-configs.nix`.
 
 Gate features with `lib.optionals` or conditional imports on these options:
 
-- `osConfig.profile == "work"` for work packages (`home/work/`) and the kubernetes module.
 - `osConfig.desktop.mode == "hyprland"` for Hyprland modules; desktop packages only when `desktop.mode != "none"`.
 - Use the derived booleans instead of raw comparisons: `config.desktop.isEnabled`, `config.desktop.isHyprland`, `config.machine.isLaptop`, `config.machine.isPC`. Write `inherit (config.machine) isLaptop;` in let-bindings.
 - Use `config.flakePath` (NixOS) or `config.home.homeDirectory` (HM) instead of hardcoded paths.
 
-Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with profile/desktop conditionals. NixOS modules go under `nixos/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, check both `nh os switch` and `nh home switch`.
+Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with desktop conditionals. NixOS modules go under `nixos/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, check both `nh os switch` and `nh home switch`.
 
 ## Secrets
 

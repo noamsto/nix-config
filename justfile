@@ -362,27 +362,6 @@ restart-noctalia:
     echo "♻️  Restarting noctalia.service to refresh runtime state..."
     systemctl --user restart noctalia.service
 
-# Allow charging to 100% until next reboot / `sudo systemctl restart tlp`
-# (g5 only — fresh-battery fuel-gauge calibration).
-battery-calibrate:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ "$(hostname)" != "tp-g5" ]; then
-        echo "❌ battery-calibrate is gated to tp-g5 (current: $(hostname))" >&2
-        exit 1
-    fi
-    bat=/sys/class/power_supply/BAT0
-    echo "🔋 Current: $(cat $bat/capacity)% — start=$(cat $bat/charge_start_threshold) stop=$(cat $bat/charge_stop_threshold)"
-    echo "→ Raising stop threshold to 100 (runtime only; TLP restores 60/80 on reboot or 'sudo systemctl restart tlp')"
-    echo 100 | sudo tee $bat/charge_stop_threshold > /dev/null
-    echo "✅ stop=$(cat $bat/charge_stop_threshold)"
-    echo ""
-    echo "Calibration cycle:"
-    echo "  1. Charge to 100% (plugged in)."
-    echo "  2. Unplug, use until battery hits ~5% and the laptop warns / suspends."
-    echo "  3. Plug in, charge back to 100%."
-    echo "  4. Restore thresholds: sudo systemctl restart tlp"
-
 # Rebind hid-multitouch to recover a touchpad that has gone silent (common on AMD ThinkPads post-suspend)
 touchpad-rebind:
     #!/usr/bin/env bash

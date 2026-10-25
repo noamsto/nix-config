@@ -89,11 +89,6 @@
         description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`.";
       };
     };
-    profile = lib.mkOption {
-      type = lib.types.enum ["personal" "work"];
-      default = "personal";
-      description = "Work or Personal";
-    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "noams";

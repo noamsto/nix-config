@@ -1,6 +1,6 @@
 ---
 name: secure-boot-tpm
-description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enrolling TPM2 for LUKS auto-unlock, recovering from failed TPM unlock, handling BIOS updates that invalidate PCRs, or adding Secure Boot to a new host. Applies to nix-config hosts that import nixos/core/lanzaboote.nix (currently tp-g5, tp-g6, halo).
+description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enrolling TPM2 for LUKS auto-unlock, recovering from failed TPM unlock, handling BIOS updates that invalidate PCRs, or adding Secure Boot to a new host. Applies to nix-config hosts that import nixos/core/lanzaboote.nix (currently tp-g6, halo).
 ---
 
 # Secure Boot + TPM2 LUKS Auto-Unlock
@@ -9,7 +9,7 @@ description: Use when configuring Secure Boot / Lanzaboote, enrolling or re-enro
 
 Hosts that import `nixos/core/lanzaboote.nix` replace systemd-boot with **Lanzaboote** (signed EFI bundles) and use **TPM2** to auto-unlock the LUKS root at boot. Lanzaboote auto-generates and auto-enrolls the Secure Boot keys; TPM enrollment is a **one-time manual step** per machine.
 
-Currently imported by: `tp-g5`, `tp-g6`, `halo`.
+Currently imported by: `tp-g6`, `halo`.
 
 ## When to use
 
@@ -68,7 +68,7 @@ boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 
 ## TPM enrollment: `just tpm-enroll`
 
-Use `just tpm-enroll` for every enrollment: the first one on a new host, and every re-enroll after unlock breaks. It finds the LUKS device backing `/`, which is `/dev/disk/by-partlabel/disk-main-root` on every disko host (g5, g6, halo). It refuses to run if the volume has no password or recovery slot. It enrolls PCR 7 and wipes the old TPM slot only after the new one succeeds, then reseals `keyring-seal`'s credential if that one stopped unsealing too.
+Use `just tpm-enroll` for every enrollment: the first one on a new host, and every re-enroll after unlock breaks. It finds the LUKS device backing `/`, which is `/dev/disk/by-partlabel/disk-main-root` on every disko host (g6, halo). It refuses to run if the volume has no password or recovery slot. It enrolls PCR 7 and wipes the old TPM slot only after the new one succeeds, then reseals `keyring-seal`'s credential if that one stopped unsealing too.
 
 A recovery key has no recipe because the printed key must go to a password manager by hand:
 ```fish
@@ -120,4 +120,4 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 
 - Rebuild workflow: see `nix-rebuild` skill
 - Fan control on same hosts: see `thinkfan-tuning` skill
-- Host-specific disko / migration notes: `hosts/tp-g5/BTRFS-MIGRATION.md`, `hosts/tp-g6/disko.nix`
+- Host-specific disko / migration notes: `hosts/tp-g6/disko.nix`

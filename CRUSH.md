@@ -29,7 +29,7 @@ nix run home-manager/master -- switch --flake .#<config>  # Home Manager rebuild
 ### Module Structure
 - Entry points use `default.nix` files
 - Host configs in `hosts/` set options and import base modules
-- Conditional imports based on `osConfig.desktop.mode`, `osConfig.profile`, `osConfig.machine.type`
+- Conditional imports based on `osConfig.desktop.mode`, `osConfig.machine.type`
 - Use descriptive let bindings for complex conditional logic
 
 ### File Organization

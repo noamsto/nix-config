@@ -24,15 +24,12 @@
         # loads the devshell without a manual `direnv allow` — otherwise the
         # shared but path-keyed approval is missing and tools like semgrep that
         # only live in the devshell vanish from PATH. Covers the consolidated
-        # worktree root (worktrunk.worktreePath) plus factify's in-place
-        # mono-worktrees that predate the move.
+        # worktree root (worktrunk.worktreePath).
         whitelist = {
           prefix = [
             "/home/noams/git/.worktrees"
-            "/home/noams/git/factify"
             # Legacy prefixes below stay until no host has worktrees left under the old location.
             "/home/noams/Data/git/.worktrees"
-            "/home/noams/Data/git/factify"
           ];
         };
       };

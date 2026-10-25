@@ -37,7 +37,6 @@
     };
 
     chromium = {
-      enable = lib.mkIf (osConfig.profile == "work") true;
       commandLineArgs = [
         "--disable-features=WaylandWpColorManagerV1"
       ];

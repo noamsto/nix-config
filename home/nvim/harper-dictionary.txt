@@ -26,7 +26,6 @@ batchItemFailures
 commitizen
 cz
 etc
-factify
 frontmatter
 gitmoji
 json

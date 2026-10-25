@@ -18,13 +18,11 @@
 # agent is running.
 {
   lib,
-  osConfig,
   pkgs,
   inputs,
   ...
 }: let
   deja = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.deja-vu;
-  isWork = osConfig.profile == "work";
 
   # hookyard's handler manifest has no `env` field (internal/manifest), so the
   # non-negotiable knobs travel in the handler's own exec. This is not
@@ -37,7 +35,6 @@
     runtimeInputs = [deja];
     text = ''
       export DEJA_EMBED_OFF=1
-      ${lib.optionalString isWork "export DEJA_AUTORECALL_LOCAL_ONLY=1"}
       exec ${lib.getExe deja} hook-context
     '';
   };
@@ -67,12 +64,7 @@ in {
   home = {
     packages = [deja];
 
-    # Every profile keeps the index lexical: nothing is sent to an embedding
-    # endpoint. The work profile additionally stays local-only for recall (no
-    # imported records); work sessions themselves remain indexed — no exclude
-    # list, no sync config.
-    sessionVariables =
-      {DEJA_EMBED_OFF = "1";}
-      // lib.optionalAttrs isWork {DEJA_AUTORECALL_LOCAL_ONLY = "1";};
+    # The index stays lexical: nothing is sent to an embedding endpoint.
+    sessionVariables.DEJA_EMBED_OFF = "1";
   };
 }

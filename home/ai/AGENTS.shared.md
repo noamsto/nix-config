@@ -16,12 +16,8 @@ commit on a branch, never directly on the default branch. Other forms:
 `wt switch <branch>`, `wt list`, `wt remove`, `wt merge`; flags go after the
 subcommand, and never wrap `wt` in `cd` or command substitution.
 
-- factify-inc: tracked in Linear. Use an existing ticket or get confirmation
-  to create one (show full title, description, labels, priority first), and use
-  Linear's branch name verbatim. Ticket writes need explicit approval; never put
-  customer identifiers in commits or PR bodies.
-- Any other org: open a GitHub issue (after confirmation) only for substantial
-  work; branch names `type/id-desc`, or `type/desc` without an issue.
+- Open a GitHub issue (after confirmation) only for substantial work; branch
+  names `type/id-desc`, or `type/desc` without an issue.
 - Unrelated task switch: commit the previous task's uncommitted work first,
   briefly noting it. No confirmation needed unless the user says not to commit.
 

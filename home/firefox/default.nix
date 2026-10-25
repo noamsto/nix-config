@@ -259,36 +259,26 @@ in {
         enable = true;
         configPath = ".mozilla/firefox";
         nativeMessagingHosts = [meetToBraveNativeHost];
-        profiles =
-          {
-            personal = {
-              id = 0;
-              path = "personal";
-              isDefault = true;
-              settings = firefoxSettings;
-              userChrome = firefoxUserChrome;
-              extensions = meetToBraveExtensions;
-            };
-
-            # Dedicated automation profile driven by `firefox-marionette`. Pins the
-            # Marionette port to match the firefox-devtools MCP. 1Password is
-            # declared here so a freshly-created profile is login-ready.
-            automation = {
-              id = 2;
-              path = "automation";
-              settings = firefoxSettings // {"marionette.port" = 2828;};
-              extensions.packages = automationAddons;
-            };
-          }
-          // lib.optionalAttrs (osConfig.profile == "work") {
-            work = {
-              id = 1;
-              path = "work";
-              settings = firefoxSettings;
-              userChrome = firefoxUserChrome;
-              extensions = meetToBraveExtensions;
-            };
+        profiles = {
+          personal = {
+            id = 0;
+            path = "personal";
+            isDefault = true;
+            settings = firefoxSettings;
+            userChrome = firefoxUserChrome;
+            extensions = meetToBraveExtensions;
           };
+
+          # Dedicated automation profile driven by `firefox-marionette`. Pins the
+          # Marionette port to match the firefox-devtools MCP. 1Password is
+          # declared here so a freshly-created profile is login-ready.
+          automation = {
+            id = 2;
+            path = "automation";
+            settings = firefoxSettings // {"marionette.port" = 2828;};
+            extensions.packages = automationAddons;
+          };
+        };
       };
 
     home.packages = [firefox-marionette];

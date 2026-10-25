@@ -22,7 +22,7 @@ in {
   options.priors = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.profile == "personal";
+      default = true;
       description = "Install priors, its trust file and (via home/ai/priors) the personal store.";
     };
     package = lib.mkOption {
@@ -55,19 +55,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # A work-profile trust file also needs [stores.work], which priors requires
-    # there and this module does not write yet.
-    assertions = [
-      {
-        assertion = config.profile == "personal";
-        message = "priors: only the personal store is wired; a work-profile host needs stores.work in the trust file first.";
-      }
-    ];
-
     environment.systemPackages = [cfg.package];
     environment.etc."priors/trust.toml".source = (pkgs.formats.toml {}).generate "priors-trust.toml" {
-      inherit (config) profile;
-      work_orgs = ["github.com/factify-inc"];
+      profile = "personal";
+      # priors rejects an empty list; this placeholder matches no real org.
+      work_orgs = ["example.invalid/none"];
       personal_orgs = ["github.com/noamsto"];
       work_names = cfg.workNames;
       trust_root = cfg.trustRoot;

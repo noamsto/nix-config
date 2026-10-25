@@ -4,11 +4,7 @@
 # Locally-authored skills stay where they are: home/ai/claude-code/skills, which
 # out-of-store-symlinks them so they're editable without a rebuild. This module
 # is only for upstream skills we consume read-only.
-{
-  osConfig,
-  inputs,
-  ...
-}: {
+{inputs, ...}: {
   imports = [inputs.agent-skills-nix.homeManagerModules.default];
 
   programs.agent-skills = {
@@ -70,12 +66,6 @@
         enable = true;
         structure = "link";
         dest = ".cursor/skills";
-      };
-      # Matches home/ai/default.nix, which only imports ./codex on work.
-      codex = {
-        enable = osConfig.profile == "work";
-        structure = "link";
-        dest = ".codex/skills";
       };
     };
   };

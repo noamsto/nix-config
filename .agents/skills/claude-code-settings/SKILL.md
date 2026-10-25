@@ -15,8 +15,7 @@ Settings live in two layers under `home/ai/claude-code/`. Do not mix them.
 Rules:
 
 - A setting that needs a nix store path goes in the overlay.
-- A setting that must differ by `osConfig.profile` (work vs personal) goes in the overlay, gated with `lib.optionalAttrs`.
 - Everything else goes in `settings.json`.
-- Object-valued keys (`enabledPlugins`, `permissions`, `env`, `mcpServers`, `hooks`) deep-merge across the layers and the overlay wins per key. The same top-level key can live in both, but keep the nested keys disjoint unless the overlay should win. Example: common plugins live in `settings.json` (toggleable in the `/plugin` TUI); profile-specific plugins (`figma`/`pg`/`cc-skills-golang` for work, `swift-lsp` for personal) live in the overlay and are profile-locked like hooks.
+- Object-valued keys (`enabledPlugins`, `permissions`, `env`, `mcpServers`, `hooks`) deep-merge across the layers and the overlay wins per key. The same top-level key can live in both, but keep the nested keys disjoint unless the overlay should win. Example: common plugins live in `settings.json` (toggleable in the `/plugin` TUI); plugins that must not be toggled off (`swift-lsp`) live in the overlay.
 - Third-party tools (lazytmux, etc.) should edit `settings.json`, so their changes show up as git diffs.
 - `feedbackSurveyState` and other runtime-mutated keys live in `settings.json`; ignore that diff noise.

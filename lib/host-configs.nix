@@ -14,18 +14,6 @@
     halo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGQ6DaFgFtOJJHI5KE3YklX2NS+wxRXfzPUIFUaTvh5u noams@halo";
   };
 
-  tp-g5 = {
-    username = "noams";
-    user-full-name = "Noam Stolero";
-    email = "noam@factify.com";
-    hostname = "tp-g5";
-    desktop.mode = "hyprland";
-    machine.type = "laptop";
-    agentDashboard.enable = true;
-    profile = "work";
-    laptop-scale = "2.0";
-  };
-
   tp-g6 = {
     username = "noams";
     user-full-name = "Noam Stolero";
@@ -33,7 +21,6 @@
     hostname = "tp-g6";
     desktop.mode = "hyprland";
     machine.type = "laptop";
-    profile = "personal";
     laptop-scale = "1.25";
   };
 
@@ -52,7 +39,6 @@
     # has a server to attach to. Also drops fprintd; this box has no sensor.
     machine.serverMode = true;
     agentDashboard.enable = true;
-    profile = "personal";
   };
 
   mbp-m4-pro = {
@@ -62,6 +48,5 @@
     hostname = "mbp-m4-pro";
     desktop.mode = "none";
     machine.type = "laptop";
-    profile = "personal";
   };
 }
