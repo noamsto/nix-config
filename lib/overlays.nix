@@ -120,16 +120,6 @@ inputs: [
     sesh = prev.sesh.override {buildGo127Module = prev.buildGo126Module;};
   })
 
-  # Determinate Nix 3.23 emits OTel activity type 10113 in --log-format
-  # internal-json; nom 2.2.0 rejects any unknown type and aborts, which breaks
-  # `nh os switch`. Upstream PR maralorn/nix-output-monitor#321 (fixes #320)
-  # maps unknown types to Unknown. Drop once nixpkgs ships a nom carrying it.
-  (_final: prev: {
-    nix-output-monitor = prev.nix-output-monitor.overrideAttrs (old: {
-      patches = (old.patches or []) ++ [./patches/nix-output-monitor-unknown-activity-type.patch];
-    });
-  })
-
   # typescript-language-server 6.0.2 moved from yarn to pnpm and shipped a
   # stale fetchPnpmDeps hash, so the whole darwin/hm build dies in the FOD's
   # fixupPhase with a hash mismatch. Upstream fixed the hash in ac7b1aaed03d
