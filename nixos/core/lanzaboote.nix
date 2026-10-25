@@ -9,7 +9,6 @@
   imports = [inputs.lanzaboote.nixosModules.lanzaboote];
 
   boot = {
-    initrd.systemd.enable = true; # Required for TPM unlock
     loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote replaces systemd-boot
     lanzaboote = {
       enable = true;

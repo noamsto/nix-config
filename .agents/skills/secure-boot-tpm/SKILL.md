@@ -37,7 +37,6 @@ Both tools are installed by `nixos/core/lanzaboote.nix` — no extra packages ne
 imports = [inputs.lanzaboote.nixosModules.lanzaboote];
 
 boot = {
-  initrd.systemd.enable = true;                # REQUIRED for TPM unlock
   loader.systemd-boot.enable = lib.mkForce false;
   lanzaboote = {
     enable = true;
@@ -112,7 +111,6 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 
 | Mistake | Symptom | Fix |
 |---|---|---|
-| Forgetting `initrd.systemd.enable = true` | No TPM unlock attempt in initrd | Already set in the shared module — don't override |
 | Leaving `boot.loader.systemd-boot.enable = true` | Conflicts with Lanzaboote | Shared module does `lib.mkForce false` — don't re-enable |
 | Enrolling TPM without a recovery key | Locked out after BIOS update | Always enroll `--recovery-key` too |
 | Hand-typing `systemd-cryptenroll` with a guessed device | Wrong partition, or a stale path from a pre-disko layout | `just tpm-enroll` detects it |
