@@ -76,6 +76,9 @@ in {
         # Matches tmux-startup.service's TMUX_TMPDIR=%t, so the slot count reaches
         # the owner's tmux server instead of an empty /tmp socket.
         environment.TMUX_TMPDIR = "%t";
+        # A restart mid-switch races the network restart and fails `op read`;
+        # the minutely timer runs the new unit anyway.
+        restartIfChanged = false;
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${intake}/bin/toddl-issue-intake";
