@@ -104,6 +104,8 @@ in {
     extraModprobeConfig = "options mt7925e disable_aspm=1";
   };
 
+  hardware.ms-s1-max.fanCurve.enable = true;
+
   hardware.amd-npu = {
     enable = true;
     gpuTarget = "gfx1151"; # Strix Halo; the module default is gfx1150 (Strix Point)
