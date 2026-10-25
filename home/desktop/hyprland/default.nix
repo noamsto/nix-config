@@ -162,7 +162,7 @@
   # Data bookmarks only on hosts that mount /home/$USER/Data.
   gtk.gtk3.bookmarks = let
     home = config.home.homeDirectory;
-    hasDataMount = builtins.elem osConfig.hostname ["thinkpad-p14s"];
+    hasDataMount = osConfig.nix-config.desktop.dataMount;
   in
     [
       "file://${home}/Documents"

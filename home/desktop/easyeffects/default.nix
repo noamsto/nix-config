@@ -1,12 +1,11 @@
 {
   pkgs,
+  lib,
   config,
   osConfig,
   ...
 }: let
-  # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
-  # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio
-  useGen5Presets = osConfig.hostname == "tp-g6";
+  inherit (osConfig.nix-config.desktop.easyeffects) preset;
 
   # EasyEffects 8.x reads presets from ~/.local/share/easyeffects (xdg.dataHome).
   # It migrates away from the old ~/.config location, but that migration aborts on
@@ -48,10 +47,8 @@
       ' "${thinkpad-p14s-g5-linux}/easyeffects/ThinkPad P14s G5 - Voice.json" > $out
     '';
 
-  # Select preset configuration based on hardware generation
-  presetConfig =
-    if useGen5Presets
-    then {
+  presetConfigs = {
+    "thinkpad-p14s-g5-linux" = {
       dataFiles = {
         # Gen 5 IRS convolver files
         "easyeffects/irs/P14s_G5_Dynamic.irs".source = "${thinkpad-p14s-g5-linux}/easyeffects/P14s_G5_Dynamic.irs";
@@ -69,8 +66,8 @@
         "easyeffects/output/ThinkPad P14s G5 - Voice HP.json".source = voiceHpPreset;
       };
       defaultPreset = "ThinkPad P14s G5 - Voice HP";
-    }
-    else {
+    };
+    "thinkpad-p14s-g4-linux" = {
       dataFiles = {
         # Gen 4 files
         "easyeffects/irs/P14s_G4_Music_Movies.irs".source = "${thinkpad-p14s-g4-linux}/easyeffects/P14s_G4_Music_Movies.irs";
@@ -78,12 +75,17 @@
       };
       defaultPreset = "ThinkPad P14s G4";
     };
+  };
+  presetConfig =
+    if preset == null
+    then null
+    else presetConfigs.${preset};
 in {
-  xdg.dataFile = presetConfig.dataFiles;
+  xdg.dataFile = lib.optionalAttrs (presetConfig != null) presetConfig.dataFiles;
 
   services.easyeffects = {
     enable = true;
     package = pkgs.stable.easyeffects;
-    preset = presetConfig.defaultPreset;
+    preset = lib.mkIf (presetConfig != null) presetConfig.defaultPreset;
   };
 }

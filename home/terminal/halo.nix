@@ -10,10 +10,10 @@
     runtimeEnv.FLAKE = osConfig.flakePath;
     text = builtins.readFile ./halo.sh;
   };
-  isHalo = osConfig.hostname == "halo";
+  isLocalServer = osConfig.nix-config.ai.localServer.enable;
 in {
-  home.packages = lib.optionals (!isHalo) [halo];
-  xdg.configFile."fish/completions/halo.fish" = lib.mkIf (!isHalo) {
+  home.packages = lib.optionals (!isLocalServer) [halo];
+  xdg.configFile."fish/completions/halo.fish" = lib.mkIf (!isLocalServer) {
     source = import ./halo-completions.nix {
       inherit pkgs;
       command = "halo";

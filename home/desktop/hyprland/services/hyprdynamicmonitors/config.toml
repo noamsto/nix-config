@@ -9,9 +9,15 @@ path = "/org/freedesktop/UPower/devices/line_power_AC"
 [[power_events.dbus_signal_match_rules]]
 object_path = "/org/freedesktop/UPower/devices/line_power_AC"
 
-# Profile Configuration - Location-based with Lid State Profiles
-# HDM auto-detects location via required_monitors and lid state
-# Profile order: undocked_lid_closed → undocked → docked-home → docked-office
+# Profile Configuration - Lid State Profiles
+# HDM picks a profile from required_monitors and lid state
+# Profile order: undocked_lid_closed → undocked
+#
+# This default only carries the undocked profiles. A host that needs docked
+# profiles (they match specific external monitors) points
+# nix-config.desktop.monitors.configFile at its own file, which replaces this
+# one wholesale: copy these sections and add the docked profiles after the
+# undocked ones.
 #
 # IMPORTANT: Profile order matters for tie-breaking!
 # When multiple profiles match with same score, HDM picks the one defined LAST.
@@ -19,7 +25,7 @@ object_path = "/org/freedesktop/UPower/devices/line_power_AC"
 #
 # Architecture:
 # - Undocked profiles: Separate profiles for lid open/closed (triggers suspend when closed)
-# - Docked profiles: Templates handle lid state (enable/disable laptop screen)
+# - Docked profiles (host-provided): Templates handle lid state (enable/disable laptop screen)
 # - workspace-manager.sh receives monitor descriptions as arguments
 # - No manual mode switching needed - fully automatic
 
@@ -48,39 +54,5 @@ post_apply_exec = "workspace-manager undocked"
 [profiles.undocked.conditions]
 lid_state = "Opened"
 [[profiles.undocked.conditions.required_monitors]]
-name = "eDP-1"
-monitor_tag = "laptop"
-
-# Docked at home - Samsung monitors (template handles lid state)
-[profiles.docked_home]
-config_file = "profiles/docked-home.lua"
-config_file_type = "template"
-post_apply_exec = "workspace-manager docked left right"
-
-[profiles.docked_home.conditions]
-[[profiles.docked_home.conditions.required_monitors]]
-description = "Samsung Electric Company S27H85x H4ZM300138"
-monitor_tag = "left"
-[[profiles.docked_home.conditions.required_monitors]]
-description = "Samsung Electric Company S27H85x H4ZKB00167"
-monitor_tag = "right"
-[[profiles.docked_home.conditions.required_monitors]]
-name = "eDP-1"
-monitor_tag = "laptop"
-
-# Docked at office - Dell monitors (template handles lid state)
-[profiles.docked_office]
-config_file = "profiles/docked-office.lua"
-config_file_type = "template"
-post_apply_exec = "workspace-manager docked left right"
-
-[profiles.docked_office.conditions]
-[[profiles.docked_office.conditions.required_monitors]]
-description = "Dell Inc. DELL P2723DE CC7FH14"
-monitor_tag = "left"
-[[profiles.docked_office.conditions.required_monitors]]
-description = "Dell Inc. DELL P2723DE 4C7FH14"
-monitor_tag = "right"
-[[profiles.docked_office.conditions.required_monitors]]
 name = "eDP-1"
 monitor_tag = "laptop"

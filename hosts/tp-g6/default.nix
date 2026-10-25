@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   inputs,
   ...
@@ -23,7 +24,23 @@ in {
   ];
 
   # Import shared configuration
-  inherit (hostConfig) hostname email laptop-scale;
+  inherit (hostConfig) username user-full-name hostname email laptop-scale;
+  flakePath = "/home/${hostConfig.username}/nix-config";
+  nix-config = {
+    ai = {
+      dispatcher.localModels = import ../assets/dispatcher-local-models.nix;
+      pi.modelsFile = ../assets/pi/models.json;
+    };
+    terminal.remoteHosts = ["mbp" "halo"];
+    desktop = {
+      # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
+      # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio
+      easyeffects.preset = "thinkpad-p14s-g5-linux";
+      avatar = ../assets/avatar.png;
+      monitors.configFile = ../assets/hyprdynamicmonitors/config.toml;
+    };
+  };
+  home-manager.users.${config.username}.imports = [../assets/ssh-fleet.nix];
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
 
@@ -40,7 +57,7 @@ in {
     enableLemonade = true;
     enableROCm = true; # Enable GPU/VRAM utilization
     enableVulkan = true; # Faster decode than ROCm on Strix Point 890M
-    lemonade.user = "noams";
+    lemonade.user = config.username;
   };
 
   users.users.noams = {

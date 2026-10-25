@@ -19,7 +19,7 @@ Project skills load on demand from `.agents/skills` (symlinked into `.claude/ski
 
 ## How configuration flows
 
-`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `username`, `email`, `hostname`, and the read-only `flakePath`. `lib/host-configs.nix` is the single source of truth for per-host settings and SSH public keys; NixOS hosts (`hosts/*/default.nix`) and the `homeConfigurations` aliases in `flake-modules/home-manager.nix` both take their values from it, using `inherit`. Home Manager modules read `osConfig`, so a new host needs an entry in `host-configs.nix`.
+`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `username`, `email`, `hostname`, and `flakePath`. `lib/host-configs.nix` is the single source of truth for per-host settings and SSH public keys; NixOS hosts (`hosts/*/default.nix`) and the `homeConfigurations` aliases in `flake-modules/home-manager.nix` both take their values from it, using `inherit`. Host-specific behaviour that shared modules must not infer from the hostname is a `nix-config.*` option in `options.nix` (e.g. `nix-config.ai.localServer.enable`, `nix-config.terminal.remoteHosts`), set in the host's `default.nix`; shared modules never compare `hostname` with a literal. Home Manager modules read `osConfig`, so a new host needs an entry in `host-configs.nix`.
 
 Gate features with `lib.optionals` or conditional imports on these options:
 

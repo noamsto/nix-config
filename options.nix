@@ -96,7 +96,6 @@
     user-full-name = lib.mkOption {
       type = lib.types.str;
       default = "Noam Stolero";
-      readOnly = true;
     };
     email = lib.mkOption {
       type = lib.types.str;
@@ -117,7 +116,58 @@
         if pkgs.stdenv.hostPlatform.isDarwin
         then "/Users/${config.username}/nix-config"
         else "/home/${config.username}/nix-config";
-      readOnly = true;
+    };
+    nix-config = {
+      ai = {
+        localServer.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether this host runs the local model server: pi defaults to it, and the remote client CLI for it is not installed.";
+        };
+        dispatcher.localModels = lib.mkOption {
+          type = lib.types.attrs;
+          default = {};
+          description = "Local model definitions passed verbatim to programs.dispatcher.localModels.";
+        };
+        pi.modelsFile = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          description = "File linked as ~/.pi/agent/models.json; null links nothing.";
+        };
+      };
+      terminal.remoteHosts = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "SSH aliases the tmux session picker bridges into.";
+      };
+      desktop = {
+        easyeffects.preset = lib.mkOption {
+          type = lib.types.nullOr (lib.types.enum ["thinkpad-p14s-g4-linux" "thinkpad-p14s-g5-linux"]);
+          default = null;
+          description = "Bundled ThinkPad EasyEffects preset set to install; null installs none.";
+        };
+        dataMount = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether this host mounts ~/Data, which adds a GTK bookmark for it.";
+        };
+        avatar = lib.mkOption {
+          type = lib.types.nullOr lib.types.path;
+          default = null;
+          description = "Image linked as ~/.face; null links nothing.";
+        };
+        monitors.configFile = lib.mkOption {
+          type = lib.types.path;
+          default = ./home/desktop/hyprland/services/hyprdynamicmonitors/config.toml;
+          defaultText = lib.literalExpression "./home/desktop/hyprland/services/hyprdynamicmonitors/config.toml";
+          description = "The hyprdynamicmonitors config.toml.";
+        };
+      };
+      hardware.thinkpad.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to apply the shared ThinkPad boot and hardware settings in nixos/hardware/thinkpad-common.nix.";
+      };
     };
   };
 }

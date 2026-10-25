@@ -1,9 +1,13 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }: let
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  mcpServers = import ../mcp-servers.nix {
+    inherit pkgs lib;
+    inherit (config.home) username;
+  };
 
   mcpAliases = {
     claude-frontend = "claude --mcp-config ~/.config/claude-code/mcp-playwright.json";

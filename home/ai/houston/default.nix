@@ -6,7 +6,6 @@
   inputs,
   ...
 }: let
-  isHalo = osConfig.hostname == "halo";
   enabled = osConfig.agentDashboard.enable;
   # houston only trusts Host values it can derive itself; the tsnet node's
   # name is not one of them.
@@ -174,7 +173,7 @@ in {
       };
     })
 
-    (lib.mkIf isHalo {
+    (lib.mkIf enabled {
       services.houston-dev-sync = {
         Unit.Description = "Build and deploy github:noamsto/houston main when houston dev mode is on";
         Service = {
@@ -199,5 +198,5 @@ in {
     })
   ];
 
-  home.packages = lib.mkIf isHalo [cli];
+  home.packages = lib.mkIf enabled [cli];
 }

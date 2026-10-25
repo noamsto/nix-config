@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  config,
   ...
 }: {
   programs = {
@@ -27,9 +28,9 @@
         # worktree root (worktrunk.worktreePath).
         whitelist = {
           prefix = [
-            "/home/noams/git/.worktrees"
+            "/home/${config.home.username}/git/.worktrees"
             # Legacy prefixes below stay until no host has worktrees left under the old location.
-            "/home/noams/Data/git/.worktrees"
+            "/home/${config.home.username}/Data/git/.worktrees"
           ];
         };
       };

@@ -1,8 +1,4 @@
-{
-  lib,
-  pkgs,
-  ...
-}: {
+{lib, ...}: {
   # force = true: HM's checkLinkTargets sees the regular file left by
   # copySshConfig (below) and would refuse to overwrite it. Forcing lets
   # linkGeneration replace it with a symlink, then copySshConfig converts
@@ -20,64 +16,29 @@
     #   IdentityFile — the location of your SSH key authentication file for the account.
     # format in details:
     #   https://www.ssh.com/academy/ssh/config
-    settings =
-      {
-        "*" = {
-          SendEnv = ["LANG" "LC_*"];
-          Include = "/etc/ssh/host_ssh.conf";
-          ForwardAgent = false;
-          AddKeysToAgent = "no";
-          Compression = false;
-          ServerAliveInterval = 0;
-          ServerAliveCountMax = 3;
-          HashKnownHosts = false;
-          UserKnownHostsFile = "~/.ssh/known_hosts";
-          ControlMaster = "no";
-          ControlPath = "~/.ssh/master-%r@%n:%p";
-          ControlPersist = "no";
-        };
-
-        "github.com" = {
-          HostName = "ssh.github.com";
-          Port = 443;
-          IdentityFile = "~/.ssh/id_ed25519";
-          IdentitiesOnly = true;
-        };
-
-        "naspi.local" = {
-          User = "noams";
-          IdentityFile = "~/.ssh/id_ed25519";
-          ForwardAgent = true;
-        };
-
-        # The Mac. Bare tailnet name via MagicDNS (works from any network,
-        # same as tp-g6); a Match block falls back to mDNS when the tailnet
-        # profile is switched and the name no longer resolves. First HostName
-        # wins in ssh_config, so the fallback is dag-ordered BEFORE this block.
-        "mbp" = {
-          HostName = "mbp-m4-pro";
-          User = "noams";
-          IdentityFile = "~/.ssh/id_ed25519";
-        };
-
-        # g6 (headless server). Tailnet and mDNS names match the hostname —
-        # same Match fallback pattern as mbp.
-        "tp-g6" = {
-          User = "noams";
-          IdentityFile = "~/.ssh/id_ed25519";
-        };
-      }
-      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        # getent fails when MagicDNS can't resolve the name (tailnet profile
-        # switched / tailscale down) — only then does .local take over.
-        # Linux-only: macOS has no getent, which would make the exec misfire.
-        "Match host mbp exec \"! getent hosts mbp-m4-pro\"" = lib.hm.dag.entryBefore ["mbp"] {
-          HostName = "mbp-m4-pro.local";
-        };
-        "Match host tp-g6 exec \"! getent hosts tp-g6\"" = lib.hm.dag.entryBefore ["tp-g6"] {
-          HostName = "tp-g6.local";
-        };
+    settings = {
+      "*" = {
+        SendEnv = ["LANG" "LC_*"];
+        Include = "/etc/ssh/host_ssh.conf";
+        ForwardAgent = false;
+        AddKeysToAgent = "no";
+        Compression = false;
+        ServerAliveInterval = 0;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
       };
+
+      "github.com" = {
+        HostName = "ssh.github.com";
+        Port = 443;
+        IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = true;
+      };
+    };
   };
 
   # Replace HM's symlink with a 600-permission copy.

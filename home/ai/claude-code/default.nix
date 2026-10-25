@@ -3,10 +3,14 @@
   lib,
   config,
   inputs,
+  osConfig,
   ...
 }: let
   # Shared MCP server definitions
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  mcpServers = import ../mcp-servers.nix {
+    inherit pkgs lib;
+    inherit (config.home) username;
+  };
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
 
   # Reviewer agents for Claude Code, Cursor and Codex: the dispatcher input's
@@ -254,24 +258,7 @@ in {
       fleetBudget = 16;
       engines = ["claude" "pi"];
       openrouter.monthlyTarget = 100;
-      # halo's resident Strata model; two sessions at 256K each.
-      # maxConcurrent 2 takes both slots; halo's assistant and interactive pi
-      # queue behind dispatch workers.
-      localModels."lemonade/Qwen3.8-Flash-Next-Strata" = {
-        baseUrl = "http://halo:13305/v1";
-        contextWindow = 262144;
-        # Thinking counts against pi's 16384 default output cap.
-        maxTokens = 32768;
-        # The BF16 mmproj loads apart from the quant, so this endpoint is
-        # vision-capable; unset, pi registers it text-only and a worker's
-        # screenshots never arrive.
-        input = ["text" "image"];
-        maxConcurrent = 2;
-        tiers = ["trivial" "standard"];
-        reasoning = true;
-        thinkingFormat = "qwen-chat-template";
-        effortThinking = {low = "off";};
-      };
+      inherit (osConfig.nix-config.ai.dispatcher) localModels;
     };
 
     # hookyard refuses to write through the settings.json symlink, so it

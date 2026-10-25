@@ -3,6 +3,7 @@
 {
   pkgs,
   lib,
+  username,
 }: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
 
@@ -72,14 +73,14 @@
       command = lib.getExe playwrightMcpAutomation;
       args = [];
       env = {
-        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
+        PLAYWRIGHT_BROWSERS_PATH = "/home/${username}/.cache/ms-playwright";
       };
     }
     else {
       command = lib.getExe pkgs.playwright-mcp;
       args = [];
       env = {
-        PLAYWRIGHT_BROWSERS_PATH = "/home/noams/.cache/ms-playwright";
+        PLAYWRIGHT_BROWSERS_PATH = "/home/${username}/.cache/ms-playwright";
       };
     };
 in {

@@ -31,7 +31,17 @@ in {
     ../../nixos/steam-console
   ];
 
-  inherit (hostConfig) hostname email;
+  inherit (hostConfig) username user-full-name hostname email;
+  flakePath = "/home/${hostConfig.username}/nix-config";
+  nix-config = {
+    ai = {
+      localServer.enable = true;
+      dispatcher.localModels = import ../assets/dispatcher-local-models.nix;
+      pi.modelsFile = ../assets/pi/models.json;
+    };
+    terminal.remoteHosts = ["tp-g6" "mbp"];
+  };
+  home-manager.users.${config.username}.imports = [../assets/ssh-fleet.nix];
   desktop.mode = hostConfig.desktop.mode;
   machine.type = hostConfig.machine.type;
   machine.serverMode = hostConfig.machine.serverMode;

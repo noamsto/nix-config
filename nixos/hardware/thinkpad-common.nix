@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  isThinkpad = builtins.match "thinkpad-.*" config.hostname != null;
+  isThinkpad = config.nix-config.hardware.thinkpad.enable;
 in {
   config = lib.mkIf isThinkpad {
     # Common boot settings for all ThinkPads

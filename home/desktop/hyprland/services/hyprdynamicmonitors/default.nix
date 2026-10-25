@@ -47,8 +47,10 @@
     preferLocalBuild = true;
   };
 
-  # Use config.toml directly (workspace-manager is in PATH, no substitutions needed)
-  configFile = ./config.toml;
+  # Used as-is (workspace-manager is in PATH, no substitutions needed). The
+  # default carries only undocked profiles; hosts with docked setups replace it
+  # via the option.
+  inherit (osConfig.nix-config.desktop.monitors) configFile;
 in {
   imports = [inputs.hyprdynamicmonitors.homeManagerModules.default];
 

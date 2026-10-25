@@ -10,10 +10,13 @@
 {
   inputs,
   config,
+  osConfig,
   lib,
   pkgs,
   ...
 }: let
+  inherit (osConfig.nix-config.desktop) avatar;
+
   noctaliaPackage = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Thin alias kept so scripts and keybinds don't hardcode a store path.
@@ -52,7 +55,7 @@ in {
       packages = [noctalia-ipc restore-wallpaper pkgs.gpu-screen-recorder pkgs.glib.bin];
 
       # Profile picture for Noctalia (symlinked to ~/.face)
-      file.".face".source = ./assets/avatar.png;
+      file.".face" = lib.mkIf (avatar != null) {source = avatar;};
 
       # The valent package ships its own XDG autostart entry, whose generated
       # app-…@autostart.service wins the ca.andyholmes.Valent bus name and leaves
@@ -344,7 +347,7 @@ in {
         # v4 pluginSettings.tailscale.compactMode -> widget show_counts (see
         # widget.tailscale above); sshUsername -> ssh_user. v4's
         # terminalCommand and defaultPeerAction have no v5 setting.
-        plugin_settings."davemhammer/tailscale".ssh_user = "noams";
+        plugin_settings."davemhammer/tailscale".ssh_user = config.home.username;
 
         # Ported from the v4 GUI layer (gui-settings.json), not the
         # Nix-written settings.json — the dock only ever lived in the GUI

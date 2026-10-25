@@ -4,7 +4,10 @@
   config,
   ...
 }: let
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  mcpServers = import ../mcp-servers.nix {
+    inherit pkgs lib;
+    inherit (config.home) username;
+  };
 
   amp-wrapped =
     if pkgs ? wrappers

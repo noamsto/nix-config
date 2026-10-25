@@ -6,7 +6,10 @@
   inputs,
   ...
 }: let
-  mcpServers = import ../mcp-servers.nix {inherit pkgs lib;};
+  mcpServers = import ../mcp-servers.nix {
+    inherit pkgs lib;
+    inherit (config.home) username;
+  };
 
   # Reviewer agents, from the one store tree ../claude-code/agents.nix builds.
   agents = import ../claude-code/agents.nix {

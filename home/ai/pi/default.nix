@@ -6,7 +6,8 @@
   osConfig,
   ...
 }: let
-  isHalo = osConfig.hostname == "halo";
+  isLocalServer = osConfig.nix-config.ai.localServer.enable;
+  inherit (osConfig.nix-config.ai.pi) modelsFile;
 
   piGuards = import ./guards.nix {
     inherit pkgs;
@@ -155,15 +156,22 @@
     # grep/find/ls ship off by default.
     defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls"];
     defaultProvider =
-      if isHalo
+      if isLocalServer
       then "Lemonade"
       else "openrouter";
     defaultModel =
-      if isHalo
+      if isLocalServer
       then "Qwen3.8-Flash-Next-Strata"
       else "deepseek/deepseek-v4.1-flash-1017";
   };
 in {
+  assertions = [
+    {
+      assertion = !isLocalServer || modelsFile != null;
+      message = "nix-config.ai.localServer.enable needs nix-config.ai.pi.modelsFile: pi's default provider (Lemonade) is defined only there.";
+    }
+  ];
+
   # The tool-call guards, as hookyard yard-mode `pre_tool` handlers (./guards.nix),
   # plus the dispatcher's own pi handlers generated from its hookyard.json. Both
   # are plain manifests: ../hookyard owns `enable` and the install pass and this
@@ -204,16 +212,16 @@ in {
       ".config/pi/web-search.json".text = builtins.toJSON {workflow = "none";};
     };
 
-    # The Lemonade server on halo is not a provider pi ships, so its models
-    # come from here. force = true because the hand-written file this replaces
-    # is a regular file HM would otherwise refuse to clobber. A store path
-    # rather than an out-of-store symlink: the symlink would resolve against
-    # the main checkout, leaving a switch run from a worktree with a dangling
-    # file. The halo default (Strata) is set in managedSettings above; the
-    # 27B and gpt-oss-120b cannot load beside the pinned Strata (not enough
-    # RAM), so using them means unloading Strata first.
-    file.".pi/agent/models.json" = {
-      source = ./models.json;
+    # A local Lemonade server is not a provider pi ships, so its models come
+    # from a host-supplied file. force = true because the hand-written file
+    # this replaces is a regular file HM would otherwise refuse to clobber. A
+    # store path rather than an out-of-store symlink: the symlink would resolve
+    # against the main checkout, leaving a switch run from a worktree with a
+    # dangling file. The local-server default (Strata) is set in managedSettings
+    # above; the 27B and gpt-oss-120b cannot load beside the pinned Strata (not
+    # enough RAM), so using them means unloading Strata first.
+    file.".pi/agent/models.json" = lib.mkIf (modelsFile != null) {
+      source = modelsFile;
       force = true;
     };
 

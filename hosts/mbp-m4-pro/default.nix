@@ -72,10 +72,17 @@ in {
     inputs.mac-app-util.darwinModules.default
   ];
 
-  # Custom options (from options.nix). Mirrors the NixOS hosts: username and
-  # user-full-name ride their options.nix defaults (readOnly), hostname is the
-  # single allowed definition for that readOnly option.
-  inherit (host) hostname email;
+  # Custom options (from options.nix). hostname is readOnly, so this is its
+  # single definition.
+  inherit (host) username user-full-name hostname email;
+  flakePath = "/Users/${host.username}/nix-config";
+  nix-config = {
+    ai = {
+      dispatcher.localModels = import ../assets/dispatcher-local-models.nix;
+      pi.modelsFile = ../assets/pi/models.json;
+    };
+    terminal.remoteHosts = ["tp-g6" "halo"];
+  };
   desktop.mode = host.desktop.mode;
   machine.type = host.machine.type;
 
@@ -518,6 +525,6 @@ in {
     # them. No help for TCC: the trampoline only launches the store binary, and
     # that's the process macOS records permissions against.
     sharedModules = [inputs.mac-app-util.homeManagerModules.default];
-    users.${host.username} = ../../home/noams.nix;
+    users.${host.username}.imports = [../../home/noams.nix ../assets/ssh-fleet.nix];
   };
 }
