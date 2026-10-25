@@ -111,6 +111,7 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 
 | Mistake | Symptom | Fix |
 |---|---|---|
+| Setting `initrd.systemd.enable = true` | Assertion: "Scripted initrd has been removed" — the option no longer exists | Delete it; systemd initrd is unconditional now, so TPM unlock still works |
 | Leaving `boot.loader.systemd-boot.enable = true` | Conflicts with Lanzaboote | Shared module does `lib.mkForce false` — don't re-enable |
 | Enrolling TPM without a recovery key | Locked out after BIOS update | Always enroll `--recovery-key` too |
 | Hand-typing `systemd-cryptenroll` with a guessed device | Wrong partition, or a stale path from a pre-disko layout | `just tpm-enroll` detects it |

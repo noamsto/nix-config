@@ -53,7 +53,6 @@ Add to your host's `default.nix` (e.g., `hosts/thinkpad-p14s-g5/default.nix`):
 
   # Secure Boot with Lanzaboote
   boot = {
-    initrd.systemd.enable = true; # Required for TPM unlock
     loader.systemd-boot.enable = lib.mkForce false; # Lanzaboote replaces systemd-boot
     lanzaboote = {
       enable = true;
