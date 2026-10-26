@@ -1,13 +1,15 @@
-{...}: {
+{applyKeyed, ...}: {
   imports = [
-    ./core
+    ../options.nix
+    (applyKeyed ../overlays)
+    (applyKeyed ./core)
     ./desktop
     ./hardware
     ./laptop
     ./packages.nix
     ./virtualization
-    ./xremap
+    (applyKeyed ./xremap)
     ./hyprland
-    ./services
+    (applyKeyed ./services)
   ];
 }

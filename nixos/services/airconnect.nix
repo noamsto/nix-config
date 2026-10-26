@@ -1,8 +1,7 @@
-{
+{inputs, ...}: {
   lib,
   pkgs,
   config,
-  inputs,
   ...
 }: let
   inherit (lib) mkEnableOption mkOption mkIf types getExe' optionals concatStringsSep;

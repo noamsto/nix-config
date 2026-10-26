@@ -7,6 +7,7 @@
   pkgs,
   modulesPath,
   inputs,
+  self,
   ...
 }: let
   hostConfigs = import ../../lib/host-configs.nix;
@@ -52,8 +53,8 @@
 in {
   imports = [
     (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
-    ../../nixos/core/nice-looking-console.nix
-    ../../nixos/core/iwd-known-networks.nix
+    self.nixosModules.nice-looking-console
+    self.nixosModules.iwd-known-networks
   ];
 
   nix-config.wifi.knownNetworksFile = wifiCredentials;

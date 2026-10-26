@@ -1,9 +1,8 @@
 # Secure Boot with Lanzaboote + TPM2 auto-unlock
 # Import this in hosts that need Secure Boot (currently g5, g6, halo)
-{
+{inputs, ...}: {
   lib,
   pkgs,
-  inputs,
   ...
 }: {
   imports = [inputs.lanzaboote.nixosModules.lanzaboote];

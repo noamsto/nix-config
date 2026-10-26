@@ -2,6 +2,7 @@
   config,
   pkgs,
   inputs,
+  self,
   ...
 }: let
   hostConfig = (import ../../lib/host-configs.nix).halo;
@@ -13,22 +14,20 @@ in {
     ./host_secrets.nix
     ./ops.nix
     ./assistant.nix
-    ../../nixos
+    self.nixosModules.default
     ../../home
-    ../../overlays
     ./agenix.nix
-    ../../options.nix
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
     inputs.nixos-hardware.nixosModules.common-gpu-amd
     inputs.nixos-hardware.nixosModules.common-pc
     inputs.nixos-hardware.nixosModules.common-pc-ssd
-    ../../nixos/core/lanzaboote.nix
-    ../../nixos/core/iwd-known-networks.nix
+    self.nixosModules.lanzaboote
+    self.nixosModules.iwd-known-networks
     inputs.nix-amd-ai.nixosModules.default
     inputs.prep.nixosModules.default
     inputs.hermes-agent.nixosModules.default
-    ../../nixos/steam-console
+    self.nixosModules.steam-console
   ];
 
   inherit (hostConfig) username user-full-name hostname email;

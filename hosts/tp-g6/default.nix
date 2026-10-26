@@ -2,6 +2,7 @@
   config,
   lib,
   inputs,
+  self,
   ...
 }: let
   hostConfig = (import ../../lib/host-configs.nix).tp-g6;
@@ -10,17 +11,15 @@ in {
   imports = [
     ./hardware-configuration.nix
     ./disko.nix
-    ../../nixos
+    self.nixosModules.default
     ../../home
-    ../../overlays
     ./agenix.nix
-    ../../options.nix
     ./host_secrets.nix
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-amd-gen6
     inputs.nix-amd-ai.nixosModules.default
-    ../../nixos/core/lanzaboote.nix
-    ../../nixos/hardware/udev-hwmon.nix
+    self.nixosModules.lanzaboote
+    self.nixosModules.udev-hwmon
   ];
 
   # Import shared configuration

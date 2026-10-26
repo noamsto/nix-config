@@ -1,6 +1,5 @@
-{
+{inputs, ...}: {
   config,
-  inputs,
   lib,
   ...
 }: let

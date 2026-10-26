@@ -1,8 +1,4 @@
-{
-  inputs,
-  config,
-  ...
-}: let
+{inputs, ...}: {config, ...}: let
   inherit (config.machine) isPC;
 in {
   imports = [

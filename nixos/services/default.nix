@@ -1,9 +1,9 @@
-{...}: {
+{applyKeyed, ...}: {
   imports = [
     ./tlp.nix
     ./tailscale.nix
-    ./airconnect.nix
-    ./jellyfin.nix
+    (applyKeyed ./airconnect.nix)
+    (applyKeyed ./jellyfin.nix)
     ./local-proxy.nix
     ./agent-dashboard.nix
     ./money-scout.nix

@@ -11,6 +11,7 @@
       imports = [
         ./flake-modules/development.nix
         ./flake-modules/nixos-systems.nix
+        ./flake-modules/exports.nix
         ./flake-modules/home-manager.nix
         ./flake-modules/darwin-systems.nix
         ./packages

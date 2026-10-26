@@ -1,4 +1,4 @@
-{
+{applyKeyed, ...}: {
   pkgs,
   config,
   lib,
@@ -6,14 +6,14 @@
 }: {
   imports = [
     ./networking.nix
-    ./nix.nix
+    (applyKeyed ./nix.nix)
     ./locale.nix
     ./bootloader.nix
     ./pc.nix
     ./users.nix
     ./nice-looking-console.nix
     ./auto-upgrade.nix
-    ./priors.nix
+    (applyKeyed ./priors.nix)
   ];
 
   users.defaultUserShell = pkgs.fish;

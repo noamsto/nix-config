@@ -9,11 +9,10 @@
 #
 # The binary and the trust file both come from the one hookyard input: priors
 # fails closed on a trust key it does not know, so they must not drift apart.
-{
+{inputs, ...}: {
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }: let
   cfg = config.priors;
