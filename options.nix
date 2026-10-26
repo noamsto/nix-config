@@ -91,15 +91,15 @@
     };
     username = lib.mkOption {
       type = lib.types.str;
-      default = "noams";
+      default = "user";
     };
     user-full-name = lib.mkOption {
       type = lib.types.str;
-      default = "Noam Stolero";
+      default = "Example User";
     };
     email = lib.mkOption {
       type = lib.types.str;
-      default = "noamstolero@gmail.com";
+      default = "user@example.com";
     };
     hostname = lib.mkOption {
       type = lib.types.str;

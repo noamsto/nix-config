@@ -1,6 +1,6 @@
 # NixOS system configurations
 {inputs, ...}: let
-  inherit (inputs) nixpkgs;
+  inherit (inputs) nixpkgs self;
 
   mkSystem = hostModule:
     nixpkgs.lib.nixosSystem {
@@ -16,6 +16,7 @@ in {
       tp-g6 = mkSystem ../hosts/tp-g6;
       halo = mkSystem ../hosts/halo;
       installer = mkSystem ../hosts/installer;
+      example = nixpkgs.lib.nixosSystem {modules = [(import ../hosts/example {inherit self;})];};
     };
   };
 }
