@@ -9,7 +9,7 @@ import json
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -109,7 +109,7 @@ def _scoutstatus(_args):
             lines.append(f"⚠️ **{label}**: {problem}")
             continue
         done = status[job].get("finishedAt")
-        at = datetime.fromisoformat(done.replace("Z", "+00:00")).astimezone(TZ).strftime("%H:%M") if done else "?"
+        at = datetime.fromisoformat(done).astimezone(TZ).strftime("%H:%M") if done else "?"
         lines.append(f"✅ **{label}**: ran today at {at}")
     for p in _requests():
         if _now() - p.stat().st_mtime > WAITING_MIN * 60:
@@ -146,7 +146,7 @@ def _in_flight():
 
 
 def _queue(kind, ticker):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stamp = now.strftime("%Y%m%dT%H%M%S")
     pending = len(_requests()) + len(_in_flight())
     if pending >= MAX_PENDING:
