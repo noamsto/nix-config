@@ -43,10 +43,7 @@
 
     # 3D modeling and animation
     blender
-    # Unstable's freecad has no cache hit since the python 3.14 default bump —
-    # its ifcopenshell dep rebuilds from source. Back to unstable once Hydra
-    # catches up.
-    stable.freecad
+    freecad
     # Native, not flatpak: GTK4 hands SVG icon decoding to glycin, which
     # re-spawns via `flatpak-spawn --sandbox`. On NixOS that nested sandbox
     # mounts the host root (no /usr/bin/prlimit), so the loader exits 1 and GTK
