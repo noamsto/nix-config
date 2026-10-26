@@ -81,7 +81,6 @@
     usbutils # lsusb
     libva-utils # vainfo — inspect VAAPI GPU codec support
     file-roller # GNOME archive manager
-    zr # custom flake input, Linux-only outputs
     (writeShellScriptBin "amdgpu_top" ''
       scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
       if [ "$scheme" = "'prefer-light'" ]; then
@@ -162,6 +161,8 @@ in {
 
       # Linear from the CLI (branch → issue, PRs); also powers lazytmux enrich
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.linear-cli
+
+      zr
 
       # Better system monitoring
       btop

@@ -9,7 +9,7 @@
 in {
   home = {
     sessionPath = ["$HOME/.local/bin"];
-    packages = lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.wtc];
+    packages = [pkgs.wtc];
 
     # Workaround for eza upstream bug: theme.yml is silently ignored unless
     # EZA_CONFIG_DIR is set (src/options/theme.rs returns default config when
