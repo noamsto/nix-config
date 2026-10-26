@@ -1,14 +1,14 @@
-{
+{applyKeyed, ...}: {
   imports = [
-    ./agent-skills
+    (applyKeyed ./agent-skills)
     ./amp
-    ./claude-code
-    ./cursor
-    ./deja-vu
-    ./hookyard
-    ./houston
+    (applyKeyed ./claude-code)
+    (applyKeyed ./cursor)
+    (applyKeyed ./deja-vu)
+    (applyKeyed ./hookyard)
+    (applyKeyed ./houston)
     ./mcp.nix
-    ./pi
+    (applyKeyed ./pi)
     ./priors
   ];
 }

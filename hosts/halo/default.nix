@@ -15,7 +15,7 @@ in {
     ./ops.nix
     ./assistant.nix
     self.nixosModules.default
-    ../../home
+    self.nixosModules.home
     ./agenix.nix
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate

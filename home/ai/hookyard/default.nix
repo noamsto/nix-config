@@ -17,12 +17,11 @@
 # from ${inputs.dispatcher}/hookyard.json are declared in ../pi/guards.nix and
 # contributed from ../pi/default.nix, which is the same contract seen from the
 # consumer's side — manifest paths, nothing more.
-{
+{inputs, ...}: {
   config,
   lib,
   osConfig,
   pkgs,
-  inputs,
   ...
 }: let
   aeye = import ./aeye.nix {

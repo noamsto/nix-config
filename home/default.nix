@@ -1,8 +1,8 @@
 {
-  config,
   inputs,
+  self,
   ...
-}: {
+}: {config, ...}: {
   imports = [
     inputs.home-manager.nixosModules.home-manager
   ];
@@ -10,8 +10,7 @@
     backupFileExtension = "bak";
     useUserPackages = true;
     useGlobalPkgs = true;
-    extraSpecialArgs = {inherit inputs;};
     # Home manager config (configures programs like firefox, zsh, eww, etc)
-    users.${config.username} = ./. + "/${config.username}.nix";
+    users.${config.username}.imports = [self.homeModules.default];
   };
 }

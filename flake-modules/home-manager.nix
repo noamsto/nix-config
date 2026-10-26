@@ -5,7 +5,7 @@
 #
 # Every host already wires HM as a NixOS or nix-darwin module with
 # `useUserPackages = true` (../home/default.nix, ../hosts/mbp-m4-pro). A second
-# standalone evaluation of ../home/noams.nix is therefore a *different* config
+# standalone evaluation of ../home/profile.nix is therefore a *different* config
 # that fights the embedded one over `~/.nix-profile`: standalone activation
 # installs `home-manager-path` there, embedded activation uninstalls it, so
 # `home.profileDirectory` follows whichever command ran last. Anything that
@@ -19,7 +19,11 @@
 #
 # Packages are deliberately not installed by this path. They live in the system
 # profile, so adding or removing one needs `nh os switch` / `nh darwin switch`.
-{config, ...}: let
+{
+  config,
+  inputs,
+  ...
+}: let
   # Two consumers read a different attribute off a homeConfigurations entry, so
   # both are exposed: nh builds `<name>.config.home.activationPackage`, while
   # `nix flake show`'s built-in schema insists on a top-level
@@ -36,6 +40,9 @@
   darwinHome = hostName:
     aliasOf config.flake.darwinConfigurations.${hostName}.config.home-manager.users.noams;
 in {
+  # Declares typed `flake.homeModules` and `flake.homeConfigurations`.
+  imports = [inputs.home-manager.flakeModules.home-manager];
+
   flake.homeConfigurations = {
     # Default configs for nh auto-detection (username@hostname)
     "noams@tp-g6" = nixosHome "tp-g6";

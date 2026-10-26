@@ -1,11 +1,11 @@
-{
+{applyKeyed, ...}: {
   osConfig,
   lib,
   ...
 }: {
   imports =
     [
-      ./theme
+      (applyKeyed ./theme)
       ./easyeffects
       ./wireplumber
       ./bt-headset
@@ -14,8 +14,8 @@
       ./obsidian.nix
     ]
     ++ lib.optionals (osConfig.desktop.mode == "hyprland") [
-      ./hyprland
-      ./noctalia
+      (applyKeyed ./hyprland)
+      (applyKeyed ./noctalia)
     ];
 
   # Hardware-accelerated video for Electron apps using system Electron

@@ -12,7 +12,7 @@ in {
     ./hardware-configuration.nix
     ./disko.nix
     self.nixosModules.default
-    ../../home
+    self.nixosModules.home
     ./agenix.nix
     ./host_secrets.nix
     inputs.disko.nixosModules.disko

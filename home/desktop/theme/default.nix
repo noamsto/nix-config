@@ -1,6 +1,6 @@
-{...}: {
+{applyKeyed, ...}: {
   imports = [
-    ./catppuccin.nix
+    (applyKeyed ./catppuccin.nix)
     ./gtk.nix
   ];
 

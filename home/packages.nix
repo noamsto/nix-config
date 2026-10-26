@@ -1,8 +1,7 @@
-{
+{inputs, ...}: {
   pkgs,
   osConfig,
   lib,
-  inputs,
   ...
 }: let
   # Electron picks its keyring backend from XDG_CURRENT_DESKTOP and doesn't

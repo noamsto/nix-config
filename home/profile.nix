@@ -1,4 +1,4 @@
-{
+{applyKeyed, ...}: {
   lib,
   pkgs,
   osConfig,
@@ -6,21 +6,21 @@
 }: {
   imports =
     [
-      ./packages.nix
+      (applyKeyed ./packages.nix)
       # Cross-platform theme module (palette color data + theme-toggle option).
       # Imported unconditionally so it's available on darwin too; the desktop
       # tree consumes the same palette for its GTK/catppuccin bits.
       ./theme
       ./desktop/youtube-music
-      ./terminal
+      (applyKeyed ./terminal)
       ./xdg
       ./git
-      ./direnv
+      (applyKeyed ./direnv)
       ./ssh
       ./nvim
       ./ipython
-      ./ai
-      ./nix-tools
+      (applyKeyed ./ai)
+      (applyKeyed ./nix-tools)
       # Darwin-only config; self-gates with mkIf internally (referencing pkgs in
       # `imports` would infinite-recurse, so it can't be a lib.optionals guard).
       ./darwin
@@ -28,7 +28,7 @@
       ./firefox
     ]
     ++ lib.optionals (osConfig.desktop.mode != "none") [
-      ./desktop
+      (applyKeyed ./desktop)
     ];
 
   home = {

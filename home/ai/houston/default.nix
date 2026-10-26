@@ -1,9 +1,8 @@
-{
+{inputs, ...}: {
   config,
   lib,
   osConfig,
   pkgs,
-  inputs,
   ...
 }: let
   enabled = osConfig.agentDashboard.enable;

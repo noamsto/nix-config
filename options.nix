@@ -24,7 +24,7 @@
     };
     # Deliberately NOT a `desktop.mode` value. `desktop.mode` governs whether
     # *this user* gets a desktop and drives the `home/desktop` import in
-    # home/noams.nix; the console session runs as a separate account, so none of
+    # home/profile.nix; the console session runs as a separate account, so none of
     # that should change. Orthogonal axis, not a fourth enum member.
     steamConsole = {
       enable = lib.mkOption {

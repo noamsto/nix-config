@@ -4,7 +4,7 @@
 # Locally-authored skills stay where they are: home/ai/claude-code/skills, which
 # out-of-store-symlinks them so they're editable without a rebuild. This module
 # is only for upstream skills we consume read-only.
-{inputs, ...}: {
+{inputs, ...}: {...}: {
   imports = [inputs.agent-skills-nix.homeManagerModules.default];
 
   programs.agent-skills = {
@@ -16,14 +16,16 @@
     # every harness on disk (and upstream's own installer) keeps skill dirs flat.
     # maxDepth pins that flatness so an upstream reorganisation surfaces as a
     # build failure instead of a silently nested path.
+    # `path`, not `input`: the module resolves an input name against an
+    # `inputs` module argument, which this flake does not pass to Home Manager.
     sources = {
       mattpocock-eng = {
-        input = "mattpocock-skills";
+        path = inputs.mattpocock-skills;
         subdir = "skills/engineering";
         filter.maxDepth = 1;
       };
       mattpocock-prod = {
-        input = "mattpocock-skills";
+        path = inputs.mattpocock-skills;
         subdir = "skills/productivity";
         filter.maxDepth = 1;
       };

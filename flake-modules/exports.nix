@@ -1,4 +1,4 @@
-# Exported flake outputs (nixosModules, overlays)
+# Exported flake outputs (nixosModules, homeModules, overlays)
 # A module applied to static args is a fresh value with no `key`, so the module
 # system cannot deduplicate it; importing `default` plus a group would declare
 # that group's options twice. Every application site, nested ones too, goes
@@ -29,14 +29,6 @@
     else keyed m;
   pubArgs = {inherit inputs self applyKeyed;};
 in {
-  # flake-parts' nixosModules option wraps every value in extra module levels;
-  # modules are collected breadth-first, so hosts importing through it would
-  # reorder list definitions and change their drvPaths. Undeclared, the
-  # exports pass through as plain values, without its `_class` check, and
-  # `flake.nixosModules` falls back to the freeform `flake` type, which takes
-  # one definition: every entry has to be defined in this file.
-  disabledModules = ["${inputs.flake-parts}/modules/nixosModules.nix"];
-
   flake = {
     nixosModules = {
       default = applyKeyed ../nixos;
@@ -55,6 +47,17 @@ in {
       udev-hwmon = ../nixos/hardware/udev-hwmon.nix;
       iwd-known-networks = ../nixos/core/iwd-known-networks.nix;
       nice-looking-console = ../nixos/core/nice-looking-console.nix;
+      home = applyKeyed ../home;
+    };
+
+    # Groups a consumer can import without the profile. `terminal` and
+    # `desktop` are left out: they read options declared by ../home/theme.
+    homeModules = {
+      default = applyKeyed ../home/profile.nix;
+      ai = applyKeyed ../home/ai;
+      git = ../home/git;
+      nvim = ../home/nvim;
+      ssh = ../home/ssh;
     };
 
     # lib/overlays.nix is a list; `nix flake check` wants a single overlay function.

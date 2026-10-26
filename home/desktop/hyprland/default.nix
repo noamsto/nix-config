@@ -1,4 +1,4 @@
-{
+{applyKeyed, ...}: {
   pkgs,
   config,
   lib,
@@ -7,9 +7,9 @@
 }: {
   imports = [
     ./gtk.nix
-    ./vicinae
+    (applyKeyed ./vicinae)
     ./terminal
-    ./services
+    (applyKeyed ./services)
     ./media
     ./utils
     ./settings
@@ -22,7 +22,7 @@
     ./scripts/sesh-launcher.nix
     ./scripts/theme-toggle.nix
     ./scripts/recording-post-processor.nix
-    ./scripts/accessibility-tools.nix
+    (applyKeyed ./scripts/accessibility-tools.nix)
     ./scripts/system-awake.nix
     ./scripts/system-awake-thermal-guard.nix
     ./scripts/aegis-lock-recover.nix

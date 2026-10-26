@@ -7,8 +7,7 @@
 #
 # NOTE: This module is only imported when desktop.mode == "hyprland"
 # (see home/desktop/default.nix), so no runtime check needed here.
-{
-  inputs,
+{inputs, ...}: {
   config,
   osConfig,
   lib,

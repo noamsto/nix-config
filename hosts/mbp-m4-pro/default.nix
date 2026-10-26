@@ -2,6 +2,7 @@
   config,
   inputs,
   pkgs,
+  self,
   ...
 }: let
   hostConfigs = import ../../lib/host-configs.nix;
@@ -526,6 +527,6 @@ in {
     # them. No help for TCC: the trampoline only launches the store binary, and
     # that's the process macOS records permissions against.
     sharedModules = [inputs.mac-app-util.homeManagerModules.default];
-    users.${host.username}.imports = [../../home/noams.nix ../assets/ssh-fleet.nix];
+    users.${host.username}.imports = [self.homeModules.default ../assets/ssh-fleet.nix];
   };
 }

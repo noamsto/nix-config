@@ -16,10 +16,9 @@
 # `index.Ensure` when the cached digest is older than its 60s TTL
 # (cmd/deja/hook_context.go). A timer would duplicate that and burn CPU when no
 # agent is running.
-{
+{inputs, ...}: {
   lib,
   pkgs,
-  inputs,
   ...
 }: let
   deja = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.deja-vu;

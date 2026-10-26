@@ -77,7 +77,7 @@ User explicitly prefers the HM-only path (CLAUDE.local.md) for config iterations
 
 The Mac host `mbp-m4-pro` (`darwinConfigurations.mbp-m4-pro`) works differently from the Linux hosts:
 
-- **Home Manager is integrated as a nix-darwin module** (`home-manager.darwinModules.home-manager`, `users.noams = home/noams.nix`), and `homeConfigurations."noams@mbp-m4-pro"` is an alias onto it rather than a standalone config. So `nh home switch` / `just hm` do work here for an HM-only pass; `nh os switch` is NixOS-only and does not apply. Use `nh darwin switch .` when the system itself changed.
+- **Home Manager is integrated as a nix-darwin module** (`home-manager.darwinModules.home-manager`, `users.noams.imports` includes `self.homeModules.default`, i.e. `home/profile.nix`), and `homeConfigurations."noams@mbp-m4-pro"` is an alias onto it rather than a standalone config. So `nh home switch` / `just hm` do work here for an HM-only pass; `nh os switch` is NixOS-only and does not apply. Use `nh darwin switch .` when the system itself changed.
 - `nh darwin switch` works without the path arg too — `NH_FLAKE` is set to the repo (see `home/ai/.../default.nix`).
 - **First switch / bootstrap** (before `darwin-rebuild` is on PATH): `nix run nix-darwin -- switch --flake ~/nix-config#mbp-m4-pro`. Full bootstrap steps live in `hosts/mbp-m4-pro/README.md`.
 - **Caches & Nix settings** are managed by **Determinate Nix** via `determinateNix.customSettings` in the host's `default.nix` — *not* `flake.nix:nixConfig`/`lib/caches.nix` (those are the Linux path). Linux-only caches (hyprland, noctalia, vicinae, yazi, etc.) are intentionally omitted on darwin.

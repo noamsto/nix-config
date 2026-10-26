@@ -1,6 +1,6 @@
-{...}: {
+{applyKeyed, ...}: {
   imports = [
-    ./hyprdynamicmonitors
+    (applyKeyed ./hyprdynamicmonitors)
     ./libinput-gestures.nix
   ];
   services = {

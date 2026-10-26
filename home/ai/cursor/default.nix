@@ -1,9 +1,8 @@
 # Cursor CLI module with shared MCP configuration
-{
+{inputs, ...}: {
   config,
   pkgs,
   lib,
-  inputs,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {
