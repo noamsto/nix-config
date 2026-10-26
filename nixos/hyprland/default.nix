@@ -6,7 +6,7 @@
 }: let
   isHypr = config.desktop.isHyprland;
 
-  # Strip the plain hyprland.desktop so display managers (tuigreet, sddm, gdm)
+  # Strip the plain hyprland.desktop so display managers (noctalia-greeter, sddm, gdm)
   # only offer hyprland-uwsm. symlinkJoin wraps the upstream package without
   # rebuilding — $out is a tree of symlinks to the real hyprland outputs, and
   # we remove just the one .desktop symlink. `override` is preserved (and
@@ -48,14 +48,27 @@ in {
       xfconf.enable = true;
     };
 
-    services = {
-      displayManager.defaultSession = "hyprland-uwsm";
+    services.displayManager = {
+      defaultSession = "hyprland-uwsm";
 
-      greetd = {
+      noctalia-greeter = {
         enable = true;
+        # Lets noctalia's Auto-Sync push wallpaper and palette without a prompt.
+        passwordlessSyncUsers = [config.username];
+        cursorTheme = {
+          package = pkgs.bibata-cursors;
+          name = "Bibata-Modern-Ice";
+        };
         settings = {
-          default_session = {
-            command = "${pkgs.tuigreet}/bin/tuigreet --time --time-format '%I:%M %p | %a • %h %d %Y' --theme border=magenta;text=cyan;prompt=cyan;time=white;action=blue;button=yellow;container=black;input=gray --asterisks --greeting 'Welcome to NixOS' --width 80 --container-padding 2 --prompt-padding 1 --remember --remember-user-session --user-menu";
+          session.default = "hyprland-uwsm";
+          user.default = config.username;
+          cursor.size = 20;
+          # login's fprintd runs before pam_unix with no timeout (pam-lid-check.nix):
+          # an empty submit starts the scan, and the reply watchdog must not fire
+          # while it waits for a finger.
+          auth = {
+            allow_empty_password = true;
+            request_timeout = 0;
           };
         };
       };
