@@ -28,7 +28,7 @@ not a bare `submodule { options = ...; }`, which has no `name` in scope.
 
 Generation. Per service, per path, one `handle` block; `"/"` emits `handle`
 with no matcher, every other path emits `handle <path>*` — the **prefix glob**
-naspi's comment insists on, so a bare `/v1` is proxied as well as `/v1/...`.
+another host's reverse proxy's comment insists on, so a bare `/v1` is proxied as well as `/v1/...`.
 `handle` rather than a bare matcher on `reverse_proxy`, because Caddy sorts
 `handle` blocks by matcher specificity and evaluates the matcher-less one last,
 so the root service cannot swallow another service's paths.
@@ -47,7 +47,7 @@ mangled log filename.
 
 The proxy body, exactly (the `transport http` wrapper is required —
 `response_header_timeout` is a subdirective of `transport`, not of
-`reverse_proxy`, per naspi's file):
+`reverse_proxy`, per another host's reverse proxy's file):
 
 ```
 handle /api/v1* {
@@ -86,7 +86,7 @@ block:
 ```nix
 services.localProxy = {
   enable = true;
-  hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"];
+  hostNames = [config.hostname "<host>.<tailnet>.ts.net" "<host-ip>" "localhost"];
   services = {
     houston = { port = 9090; paths = ["/"]; streaming = true; responseHeaderTimeout = "300s"; };
     lemonade = {

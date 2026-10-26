@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-NixOS and Home Manager configuration for personal laptops, using flake-parts. Desktop modes are KDE Plasma and Hyprland; x86_64-linux only. Raspberry Pi configs live in `noamsto/nix-rpi`.
+NixOS and Home Manager configuration for personal laptops, using flake-parts. Desktop modes are KDE Plasma and Hyprland; x86_64-linux only. Raspberry Pi configs live in a separate repo.
 
 ## Skills
 
 Project skills load on demand from `.agents/skills` (symlinked into `.claude/skills`). Call the matching one before running commands, since the gotchas live only there:
 
-- `nix-rebuild`: any `nh`, `nixos-rebuild`, `home-manager`, `nix flake`/`build`/`develop`/`fmt`, verifying a change, or debugging a failed build. Has the narrowest-check ladder and the `git add` gotcha.
+- `nix-rebuild`: verifying a change against the `example` host, running `nix flake`/`build`/`develop`/`fmt`, building real hosts from the private flake against this checkout, or debugging a failed build. Has the narrowest-check ladder and the `git add` gotcha.
 - `thinkfan-tuning`: `hardware.thinkpad.thinkfan`, fan curves, sensor paths.
 - `secure-boot-tpm`: Lanzaboote, Secure Boot keys, TPM2 LUKS enrollment (hosts importing `nixos/core/lanzaboote.nix`).
 - `nix-package-authoring`: new derivations under `packages/`, `nurl`/`nix-init`, `nix-locate`.
@@ -19,7 +19,7 @@ Project skills load on demand from `.agents/skills` (symlinked into `.claude/ski
 
 ## How configuration flows
 
-`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `username`, `email`, `hostname`, and `flakePath`. `lib/host-configs.nix` is the single source of truth for per-host settings and SSH public keys; NixOS hosts (`hosts/*/default.nix`) and the `homeConfigurations` aliases in `flake-modules/home-manager.nix` both take their values from it, using `inherit`. Host-specific behaviour that shared modules must not infer from the hostname is a `nix-config.*` option in `options.nix` (e.g. `nix-config.ai.localServer.enable`, `nix-config.terminal.remoteHosts`), set in the host's `default.nix`; shared modules never compare `hostname` with a literal. Home Manager modules read `osConfig`, so a new host needs an entry in `host-configs.nix`.
+`options.nix` defines the custom options: `desktop.mode` (none/kde/hyprland), `machine.type` (server/desktop/laptop), `username`, `email`, `hostname`, and `flakePath`. The real hosts and their per-host values live in the private flake, which imports this repo's exports (`nixosModules`, `homeModules`, `darwinModules`, `lib`; see `flake-modules/exports.nix`). `hosts/example` is the in-repo evaluation fixture. Host-specific behaviour that shared modules must not infer from the hostname is a `nix-config.*` option in `options.nix` (e.g. `nix-config.ai.localServer.enable`, `nix-config.terminal.remoteHosts`), set by the host; shared modules never compare `hostname` with a literal. Home Manager modules read `osConfig`, so host values are set as options in the host.
 
 Gate features with `lib.optionals` or conditional imports on these options:
 
@@ -27,12 +27,11 @@ Gate features with `lib.optionals` or conditional imports on these options:
 - Use the derived booleans instead of raw comparisons: `config.desktop.isEnabled`, `config.desktop.isHyprland`, `config.machine.isLaptop`, `config.machine.isPC`. Write `inherit (config.machine) isLaptop;` in let-bindings.
 - Use `config.flakePath` (NixOS) or `config.home.homeDirectory` (HM) instead of hardcoded paths.
 
-Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with desktop conditionals. NixOS modules go under `nixos/`, nix-darwin modules under `darwin/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, check both `nh os switch` and `nh home switch`.
+Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with desktop conditionals. NixOS modules go under `nixos/`, nix-darwin modules under `darwin/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, run `nix flake check` here, then build or switch the real hosts from the private flake.
 
 ## Secrets
 
-Agenix; encrypted files live in the private `mysecrets` flake input. Use `just secret-edit <name>`, `just secret-rekey`, `just secret-list` (or `agenix -e secrets/<name>.age`, `agenix -r`).
-Shared modules take secret paths as `nix-config.*` options (e.g. `nix-config.user.hashedPasswordFile`) that each host sets, instead of reading agenix config. `hosts/<host>/agenix.nix` imports the agenix module and sets the identity and the user password secret; declare other `age.secrets` in `hosts/<host>/host_secrets.nix`.
+Hosts and secrets live in the private flake; this repo has no secrets and no secret recipes. Shared modules take secret paths as `nix-config.*` options (e.g. `nix-config.user.hashedPasswordFile`) that the host sets, instead of reading a secrets backend's config.
 
 ## Gotchas
 

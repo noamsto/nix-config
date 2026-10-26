@@ -89,7 +89,7 @@ boot.initrd.luks.devices.root = {
 
 ```bash
 git add .
-nh os switch .
+nh os switch <private-flake>
 ```
 
 Keys are auto-generated to `/etc/secureboot/keys/`.
@@ -148,7 +148,7 @@ Enter your LUKS password when prompted.
 ### Step 8: Final Rebuild and Test
 
 ```bash
-nh os switch .
+nh os switch <private-flake>
 reboot
 ```
 
@@ -234,9 +234,7 @@ sudo systemd-cryptenroll \
 
 ## Current Hosts
 
-| Host | LUKS UUID | Status |
-|------|-----------|--------|
-| thinkpad-p14s-g5 | `8d260438-dcbf-414e-9f49-03b9c86cc8b9` | Configured |
+Per-host LUKS UUIDs are tracked in the private flake.
 
 ---
 

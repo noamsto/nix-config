@@ -21,7 +21,7 @@ in {
 
   config = lib.mkIf (config.networking.wireless.iwd.enable && credentials != null) {
     systemd.services.iwd-seed-networks = {
-      description = "Seed iwd known networks from mysecrets";
+      description = "Seed iwd known networks from the configured credentials file";
       wantedBy = ["multi-user.target"];
       # iwd reads this directory at startup, so it has to be populated first.
       before = ["iwd.service"];

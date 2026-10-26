@@ -40,8 +40,8 @@ in {
       download-buffer-size = 128 * 1024 * 1024; # 128 MiB
 
       # No post-build-hook: FlakeHub Cache only accepts pushes from trusted CI
-      # runners, so a laptop has nowhere to push. Use `just seed-host` to share
-      # locally-built paths between hosts instead.
+      # runners, so a laptop has nowhere to push. The private flake's `just seed-host`
+      # shares locally-built paths between hosts instead.
 
       # Use shared cache configuration from lib/caches.nix
       inherit (caches) substituters;

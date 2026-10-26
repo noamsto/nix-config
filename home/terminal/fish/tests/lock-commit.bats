@@ -1,7 +1,8 @@
 #!/usr/bin/env bats
 # Regression suite for the lock-commit fish function and the jq lock-diff
-# filter it drives. check.nix renders LOCK_COMMIT_FUNCTION exactly as Home
-# Manager installs it, so the tested artifact is the installed one.
+# filter it drives. check.nix renders the function as Home Manager does,
+# with a sample watch list (LOCK_COMMIT_FUNCTION) and an empty one
+# (LOCK_COMMIT_FUNCTION_UNWATCHED).
 #
 # Run: bats home/terminal/fish/tests/lock-commit.bats
 # or:  nix build .#checks.x86_64-linux.lock-commit
@@ -58,8 +59,9 @@ secrets_lock() { # <url> <rev> <lastModified> <outfile>
      root: "root", version: 7}' >"$4"
 }
 
-secrets_field() { # <old> <new> <secrets json> <field>
-  jq -c -f "$FILTER" --slurpfile new "$2" --argjson secrets "$3" <"$1" | jq -r --arg f "$4" '.[$f]'
+# <watched entries>: comma-separated entry objects.
+secrets_field() { # <old> <new> <watched entries> <field>
+  jq -c -f "$FILTER" --slurpfile new "$2" --argjson watched "[$3]" <"$1" | jq -r --arg f "$4" '.[$f]'
 }
 
 # The lazy.nvim lock is a flat map of plugin name -> {branch, commit}; build
@@ -245,6 +247,32 @@ JSON
   [ "${lines[1]}" = "  added: wifi" ]
 }
 
+@test "two watched inputs: only the one that changed contributes lines" {
+  secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 "$FIXTURES/old.json"
+  secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 "$FIXTURES/new.json"
+  for f in old new; do
+    jq '.nodes.root.inputs.other = "other" | .nodes.other = {locked: {type: "git", url: "ssh://git@example.invalid/o.git", rev: "3333333333333333333333333333333333333333", lastModified: 1600000000}}' \
+      "$FIXTURES/$f.json" >"$FIXTURES/$f.tmp"
+    mv "$FIXTURES/$f.tmp" "$FIXTURES/$f.json"
+  done
+  watched='{"input":"mysecrets","added":["wifi"],"updated":["token"],"removed":[],"commits":["2222222 feat: add wifi"]},{"input":"other","added":["zzz"],"updated":[],"removed":[],"commits":["9999999 feat: zzz"]}'
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$watched" subject
+  [ "$output" = "chore(secrets): add wifi, update token" ]
+  run secrets_field "$FIXTURES/old.json" "$FIXTURES/new.json" "$watched" body
+  [[ "$output" == *"  added: wifi"* ]]
+  [[ "$output" != *zzz* ]]
+  [[ "$output" != *9999999* ]]
+}
+
+@test "no watched argument: output matches the plain message" {
+  secrets_lock "ssh://git@example.invalid/s.git" "1111111111111111111111111111111111111111" 1600000000 "$FIXTURES/old.json"
+  secrets_lock "ssh://git@example.invalid/s.git" "2222222222222222222222222222222222222222" 1700000000 "$FIXTURES/new.json"
+  run field "$FIXTURES/old.json" "$FIXTURES/new.json" subject
+  [ "$output" = "chore(deps): update mysecrets" ]
+  run field "$FIXTURES/old.json" "$FIXTURES/new.json" body
+  [ "$output" = "- mysecrets: 1111111 → 2222222 (2020-09-13 → 2023-11-14)" ]
+}
+
 # --- the installed fish function ---
 
 @test "fish --no-execute accepts the rendered function" {
@@ -377,6 +405,20 @@ JSON
   [[ "$output" == *"chore(deps): update mysecrets"* ]]
 }
 
+@test "no watched inputs: a git input bump gets the plain message and no fetch" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "1111111111111111111111111111111111111111" 1600000000 "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "2222222222222222222222222222222222222222" 1700000000 "$repo/flake.lock"
+
+  run fish -c "cd '$repo'; source '${LOCK_COMMIT_FUNCTION_UNWATCHED:?}'; lock-commit --dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"could not fetch"* ]]
+  [[ "$output" == "chore(deps): update mysecrets"* ]]
+}
+
 # --- lazy.nvim lock ---
 
 @test "lazy-lock: updated plugins name themselves and list their revs" {
@@ -487,4 +529,75 @@ JSON
   run_lock_commit "$repo"
   [ "$status" -eq 1 ]
   [[ "$output" == *"no lock files found"* ]]
+}
+
+@test "watched input with a non-hex rev is not fetched" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "1111111111111111111111111111111111111111" 1600000000 "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "--output=$BATS_TEST_TMPDIR/x" 1700000000 "$repo/flake.lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"could not fetch"* ]]
+  [[ "$output" == "chore(deps): update mysecrets"* ]]
+  [ ! -e "$BATS_TEST_TMPDIR/x" ]
+}
+
+@test "watched input with an option-shaped url is not fetched" {
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  secrets_lock "file://$BATS_TEST_TMPDIR/missing" "1111111111111111111111111111111111111111" 1600000000 "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  secrets_lock "--upload-pack=touch $BATS_TEST_TMPDIR/pwned" "2222222222222222222222222222222222222222" 1700000000 "$repo/flake.lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"could not fetch"* ]]
+  [[ "$output" == "chore(deps): update mysecrets"* ]]
+  [ ! -e "$BATS_TEST_TMPDIR/pwned" ]
+}
+
+@test "second watched input: pairs its own glob and trims the suffix" {
+  other="$BATS_TEST_TMPDIR/other"
+  new_repo "$other"
+  git -C "$other" config uploadpack.allowFilter true
+  mkdir "$other/docs"
+  printf 'a\n' >"$other/notes.txt"
+  printf 'a\n' >"$other/docs/keep.md"
+  git -C "$other" add -A
+  git -C "$other" commit -qm init
+  old_rev=$(git -C "$other" rev-parse HEAD)
+  printf 'b\n' >"$other/docs/a.md"
+  printf 'b\n' >"$other/notes.txt"
+  printf 'b\n' >"$other/x.age"
+  git -C "$other" add -A
+  git -C "$other" commit -qm "docs: add a"
+  new_rev=$(git -C "$other" rev-parse HEAD)
+
+  repo="$BATS_TEST_TMPDIR/repo"
+  new_repo "$repo"
+  for f in old new; do
+    rev=$old_rev
+    [ "$f" = new ] && rev=$new_rev
+    jq -n --arg url "file://$other" --arg rev "$rev" '
+      {nodes: {root: {inputs: {other: "other"}},
+               other: {locked: {type: "git", url: $url, rev: $rev, lastModified: 1600000000}}},
+       root: "root", version: 7}' >"$FIXTURES/$f.json"
+  done
+  cp "$FIXTURES/old.json" "$repo/flake.lock"
+  git -C "$repo" add flake.lock
+  git -C "$repo" commit -qm init
+  cp "$FIXTURES/new.json" "$repo/flake.lock"
+
+  run_lock_commit "$repo" "--dry-run"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"added: docs/a"* ]]
+  [[ "$output" != *"a.md"* ]]
+  [[ "$output" != *notes* ]]
+  [[ "$output" != *keep* ]]
+  [[ "$output" != *x.age* ]]
 }

@@ -152,7 +152,7 @@
   # `upstreamHost` opts a single service into a rewrite.
   mkHandle = svc: path: let
     # Prefix glob (path* not path/*), so a bare /v1 is proxied along with
-    # /v1/...; naspi's reverse-proxy.nix hit this with /radarr vs /radarr/.
+    # /v1/...; another host's reverse proxy hit this with /radarr vs /radarr/.
     matcher =
       if path == "/"
       then ""

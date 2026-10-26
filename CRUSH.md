@@ -28,15 +28,15 @@ nix run home-manager/master -- switch --flake .#<config>  # Home Manager rebuild
 
 ### Module Structure
 - Entry points use `default.nix` files
-- Host configs in `hosts/` set options and import base modules
+- Real hosts live in the private flake and set options on top of this repo's exports; `hosts/example` is the evaluation fixture
 - Conditional imports based on `osConfig.desktop.mode`, `osConfig.machine.type`
 - Use descriptive let bindings for complex conditional logic
 
 ### File Organization
 - System-level: `nixos/` directory
 - User-level: `home/` directory  
-- Host-specific: `hosts/` directory
+- Host-specific: the private flake (`hosts/example` is the in-repo fixture)
 - Custom packages: `packages/` directory
-- Secrets: agenix, encrypted in the private `mysecrets` input. `hosts/<host>/agenix.nix` imports the agenix module and sets the identity and the user password secret; declare other `age.secrets` in `hosts/<host>/host_secrets.nix`.
+- Secrets: live in the private flake; shared modules take secret paths as `nix-config.*` options set by the host
 
 **Important**: Stage files with `git add` before testing - Nix flakes only see tracked files!

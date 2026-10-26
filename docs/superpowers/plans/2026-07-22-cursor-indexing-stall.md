@@ -16,7 +16,7 @@
 
 ## Problem
 
-`dispatch --agent cursor` on a large monorepo (`factify/mono`) hangs at startup:
+`dispatch --agent cursor` on a large monorepo hangs at startup:
 `cursor-agent` prints `cursor-retrieval: tracing to '…'` and then produces no
 output for 9+ minutes — its codebase retrieval/indexing pass chokes on the repo
 size and never reaches the task. On the crew bus the worker looks alive

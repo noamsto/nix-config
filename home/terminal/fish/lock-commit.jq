@@ -7,10 +7,11 @@
 #
 # Output: {"changed": bool, "subject": string, "body": string}
 #
-# Optional `--argjson secrets '{"input", "added", "updated", "removed",
-# "commits"}'` describes what moved inside a secrets input (names are .age
-# paths without the suffix, commits are "<short> <subject>" lines). When that
-# input is the only change, the subject names the secrets instead of the input.
+# Optional `--argjson watched '[{"input", "added", "updated", "removed",
+# "commits"}, …]'` describes what moved inside watched inputs (names are file
+# paths without the glob's suffix, commits are "<short> <subject>" lines).
+# When such an input is the only change, the subject names its files instead
+# of the input.
 #
 # Every list is sorted and every date is computed here in jq (strftime is UTC
 # on every platform), so the same lock diff always yields the same message.
@@ -57,7 +58,8 @@ def secret_lines($s):
   | map("\n" + .) | join("");
 
 ($new[0]) as $n |
-($ARGS.named.secrets // null) as $secrets |
+($ARGS.named.watched // []) as $watched |
+($watched | map({key: .input, value: .}) | from_entries) as $by_input |
 . as $o |
 (root_inputs($o)) as $oi |
 (root_inputs($n)) as $ni |
@@ -100,7 +102,7 @@ def secret_lines($s):
     (if (.old.locked.type? == "github" and .new.locked.type? == "github") then
        "\n  https://github.com/\(.new.locked.owner)/\(.new.locked.repo)/compare/\(.old.locked.rev)...\(.new.locked.rev)"
      else "" end) +
-    (if $secrets != null and .name == $secrets.input then secret_lines($secrets) else "" end)
+    (if $by_input[.name] != null then secret_lines($by_input[.name]) else "" end)
   elif .kind == "added" then
     "- \(.name): added (\(short_ref(.new)), \(lock_date(.new)))"
   else
@@ -108,11 +110,11 @@ def secret_lines($s):
   end
 )) as $change_lines |
 
-# A lone bump of the secrets input names the secrets; mixed with other
-# updates it stays a deps commit and the detail lives in the body.
-(if $secrets != null and $transitive == 0 and ($changes | length) == 1
-    and $changes[0].name == $secrets.input and $changes[0].kind == "updated" then
-   secret_subject($secrets)
+# A lone bump of a watched input names its files; mixed with other updates it
+# stays a deps commit and the detail lives in the body.
+(if $transitive == 0 and ($changes | length) == 1
+    and $by_input[$changes[0].name] != null and $changes[0].kind == "updated" then
+   secret_subject($by_input[$changes[0].name])
  elif ($changes | length) > 0 then
    ($changes | map(.name) | join(", ")) as $joined |
    ("chore(deps): update \($joined)") as $candidate |

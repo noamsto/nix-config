@@ -5,7 +5,6 @@ JSONB
 Justfile
 Localstack
 MacOS
-Naspi
 Noam
 OrderBy
 OrderByCoalesce

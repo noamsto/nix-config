@@ -16,7 +16,7 @@ HTTP entry point per machine replaces that.
 - `halo` — `serverMode = true`, headless under the TV, never moves, runs
   `lemond` (`hardware.amd-npu.lemonade`, port 13305) and runs the agents.
   Confirmed live on this box: `hostname` is `halo`, `lemond` listening on
-  `0.0.0.0:13305`, and `houston` listening on `100.92.49.55:9090` — the
+  `0.0.0.0:13305`, and `houston` listening on `<host-ip>:9090` — the
   tailnet address, **not** loopback (see Accepted risks).
 - `thinkpad-p14s-g6` — `serverMode = true`, but `lib/host-configs.nix` says
   "Temporarily running g6 as an always-on headless server". It is a laptop that
@@ -86,7 +86,7 @@ websocket paths**, not its UI.
 
 ### Subdomains have no DNS here
 
-MagicDNS resolves `halo` and `halo.tail68e513.ts.net` and has no wildcard under
+MagicDNS resolves `halo` and `<host>.<tailnet>.ts.net` and has no wildcard under
 a machine name. Avahi (`nixos/core/networking.nix`) publishes `halo.local` on
 the LAN only, never over Tailscale, and also has no subdomains. Per-service
 subdomains would need DNS work outside this repo.
@@ -116,7 +116,7 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
 2. **Path prefixes, not subdomains** — subdomains have no DNS. houston claims
    the root; lemonade claims its origin-root API and websocket paths. Nothing
    is prefix-stripped, so no registrant needs a base-path setting it does not
-   have. This is naspi's shape generalised: a service declares the paths it
+   have. This is another host's reverse proxy's shape generalised: a service declares the paths it
    owns and the module writes the `reverse_proxy` lines.
 
 3. **lemonade's UI is deliberately not proxied.** Two reasons: it redirects
@@ -125,7 +125,7 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
    would put houston's `Path=/` control cookie inside that page's reach.
    `http://halo:13305` keeps serving the UI to desktop browsers unchanged.
    Designed twice: the vhost already answers to two distinct names (`halo` and
-   `halo.tail68e513.ts.net`), which are distinct browser origins, so lemonade's
+   `<host>.<tailnet>.ts.net`), which are distinct browser origins, so lemonade's
    UI could take the root of the second name and dodge the cookie exposure
    entirely. Rejected anyway — the app-store redirect kills the phone case
    whichever name serves it, and making *which name you type* decide *which
@@ -141,7 +141,7 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
 5. **No dashboard page.** houston *is* the dashboard and it occupies the root.
 
 6. **Host header preserved** (Caddy's default). The vhost is addressed only by
-   names houston's gate accepts: `halo`, `halo.tail68e513.ts.net`, the tailnet
+   names houston's gate accepts: `halo`, `<host>.<tailnet>.ts.net`, the tailnet
    IP, `localhost`. `halo.local` is deliberately **not** served — houston would
    421 on it, since a `.local` name never enters its gate.
 
@@ -168,13 +168,13 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
   Registering a service is one attribute set; no `extraConfig` string editing.
 - **R3** The module assembles the Caddyfile body as one `handle` block per
   declared path (`handle` with no matcher for the `/` catch-all), using prefix
-  globs (`/api/v1*`, not `/api/v1/*`) per the naspi lesson. `handle` is used
+  globs (`/api/v1*`, not `/api/v1/*`) per the other host's lesson. `handle` is used
   rather than bare `reverse_proxy` matchers because Caddy sorts `handle` blocks
   by matcher specificity and evaluates the matcher-less one last, so the root
   service cannot swallow another service's paths.
 - **R4** `streaming = true` emits `flush_interval -1`.
   `responseHeaderTimeout` is a `nullOr str` defaulting to `null` (Caddy's own
-  default is no limit); both registrants set **`300s`**, the value naspi's
+  default is no limit); both registrants set **`300s`**, the value another host's reverse proxy's
   prior art uses.
 - **R5** Assertions: at most one service claims `/`; no path is claimed twice.
 - **R6** Plain HTTP only (`http://` site addresses, so automatic HTTPS stays
@@ -184,7 +184,7 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
   proxy, unauthenticated, to that network segment — not merely that it opens a
   port.
 - **R7** halo enables the module with
-  `hostNames = [config.hostname "halo.tail68e513.ts.net" "100.92.49.55" "localhost"]`
+  `hostNames = [config.hostname "<host>.<tailnet>.ts.net" "<host-ip>" "localhost"]`
   and registers:
   - `houston` — port 9090, `paths = ["/"]`, `streaming = true`,
     `responseHeaderTimeout = "300s"`;
@@ -234,10 +234,10 @@ scoping ports through `networking.firewall.interfaces.<iface>`.
   port. That fallback bypasses the proxy and reaches a port nothing opens.
   Realtime over the proxy is therefore best-effort.
 - **MagicDNS name is not guaranteed.** houston learns
-  `halo.tail68e513.ts.net` from a reverse lookup at startup with a 2s timeout;
+  `<host>.<tailnet>.ts.net` from a reverse lookup at startup with a 2s timeout;
   if that times out, requests to that name get a 421 until houston is restarted
   (its own `-hostname` flag is the documented cure). Bare `halo` is unaffected.
 - **houston must be restarted on loopback.** It is running today bound to
-  `100.92.49.55:9090`, not loopback, so the root will 502 until it is started
+  `<host-ip>:9090`, not loopback, so the root will 502 until it is started
   on its default `-addr`. That restart is the human's, after the rebuild, and
   it is the point of the issue: houston goes back to loopback-only.

@@ -68,9 +68,9 @@ in
     programs.aerospace = {
       enable = true;
       # The binary comes from the Homebrew cask so its TCC grants survive version
-      # bumps — rationale in hosts/mbp-m4-pro. Config stays here.
+      # bumps — rationale in the Mac host config (private flake). Config stays here.
       package = null;
-      # The module's agent would hardcode the store-path binary; hosts/mbp-m4-pro
+      # The module's agent would hardcode the store-path binary; the Mac host config (private flake)
       # declares one against /Applications instead. The toml still gets
       # start-at-login = false, so launchd remains the only starter.
       launchd.enable = false;

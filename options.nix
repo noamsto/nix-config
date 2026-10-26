@@ -135,10 +135,28 @@
           description = "File linked as ~/.pi/agent/models.json; null links nothing.";
         };
       };
-      terminal.remoteHosts = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [];
-        description = "SSH aliases the tmux session picker bridges into.";
+      terminal = {
+        remoteHosts = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "SSH aliases the tmux session picker bridges into.";
+        };
+        lockCommit.watchedInputs = lib.mkOption {
+          type = lib.types.listOf (lib.types.submodule {
+            options = {
+              input = lib.mkOption {
+                type = lib.types.strMatching "[A-Za-z0-9_-]+";
+                description = "Root flake input name.";
+              };
+              glob = lib.mkOption {
+                type = lib.types.strMatching "[A-Za-z0-9_.*/-]+";
+                description = "git pathspec of the files to name, e.g. \"*.age\".";
+              };
+            };
+          });
+          default = [];
+          description = "Flake inputs whose bumps lock-commit summarises by the changed files matching `glob`; each must be a git input it can fetch. A lone bump of a watched input is committed as chore(secrets): ….";
+        };
       };
       desktop = {
         easyeffects.preset = lib.mkOption {

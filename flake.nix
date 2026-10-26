@@ -12,8 +12,6 @@
         ./flake-modules/development.nix
         ./flake-modules/nixos-systems.nix
         ./flake-modules/exports.nix
-        ./flake-modules/home-manager.nix
-        ./flake-modules/darwin-systems.nix
         ./packages
       ];
 
@@ -78,42 +76,10 @@
     # recompiles it locally (~1h). Bump this rev only to upgrade it.
     nixpkgs-bambu.url = "github:nixos/nixpkgs/a7868a727837f3c09cee2ce0ca671c76b1589fed";
 
-    systems.url = "github:nix-systems/default-linux";
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
     # === macOS (nix-darwin) ===
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
-
-    # Makes nix-installed .app bundles show up in Spotlight/Launchpad by
-    # replacing their /nix/store symlinks with proper macOS aliases.
-    # NOTE: do NOT make its nixpkgs follow ours — mac-app-util is a Common Lisp
-    # app and pins a known-good nixpkgs; forcing our unstable nixpkgs breaks its
-    # SBCL/fare-quasiquote build on aarch64-darwin. The extra nixpkgs is the cost.
-    mac-app-util.url = "github:hraban/mac-app-util";
-
-    # Homebrew taps pinned for nix-homebrew (flake = false: plain source trees)
-    homebrew-core = {
-      url = "github:Homebrew/homebrew-core";
-      flake = false;
-    };
-    homebrew-cask = {
-      url = "github:Homebrew/homebrew-cask";
-      flake = false;
-    };
-    # Third-party tap for SwipeAerospace (3-finger swipe → AeroSpace workspace).
-    homebrew-mediosz = {
-      url = "github:mediosz/homebrew-tap";
-      flake = false;
-    };
-    # Upstream tap for AeroSpace itself (Developer ID-signed build).
-    homebrew-nikitabobko = {
-      url = "github:nikitabobko/homebrew-tap";
-      flake = false;
     };
 
     # === DEVELOPMENT INFRASTRUCTURE ===
@@ -187,11 +153,6 @@
     };
 
     # === SPECIALIZED HARDWARE ===
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     lanzaboote = {
       # Track master until a tag past v1.0.0 ships: v1.0.0 sets the removed
       # `boot.bootspec.enable`, which current nixpkgs rejects (bootspec is now
@@ -205,13 +166,6 @@
     determinate = {
       url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
       # Don't follow nixpkgs - leads to cache misses for FlakeHub Cache artifacts
-    };
-
-    agenix.url = "github:ryantm/agenix";
-
-    mysecrets = {
-      url = "git+ssh://git@github.com/noamsto/nix-secrets.git";
-      flake = false;
     };
 
     # === UTILITIES ===
@@ -301,25 +255,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # AMD AI: XRT, XDNA plugin, FastFlowLM, Lemonade (NPU + ROCm)
-    nix-amd-ai.url = "github:noamsto/nix-amd-ai";
-
-    # Interview study tracker served on halo. Private repo, hence git+ssh —
-    # `github:` would need an access token in the daemon's nix.conf.
-    prep = {
-      url = "git+ssh://git@github.com/noamsto/job-search.git";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Telegram relay for the portfolio scout, served on halo (see
-    # nixos/services/money-scout.nix and hosts/halo/default.nix).
+    # Telegram relay for the portfolio scout, served on a host via
+    # nixos/services/money-scout.nix.
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Web dashboard for tmux-hosted AI agents, served on halo (see
-    # home/ai/houston and hosts/halo/default.nix's localProxy wiring).
+    # Web dashboard for tmux-hosted AI agents, served on a host (see
+    # home/ai/houston).
     houston = {
       url = "github:noamsto/houston";
       inputs.nixpkgs.follows = "nixpkgs";

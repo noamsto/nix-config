@@ -49,13 +49,13 @@ boot = {
 
 Per-host hardware config enables TPM at the initrd:
 ```nix
-# hosts/<host>/hardware-configuration.nix
+# hardware-configuration.nix (the host's config in the private flake)
 boot.initrd.luks.devices.root.crypttabExtraOpts = ["tpm2-device=auto"];
 ```
 
 ## Adding to a new host
 
-1. Import the shared module in `hosts/<host>/default.nix`:
+1. Import the shared module in the host's config in the private flake:
    ```nix
    imports = [
      # ...
@@ -121,4 +121,4 @@ sudo journalctl -b | grep -iE 'tpm|lanzaboote' # boot-time unlock story
 
 - Rebuild workflow: see `nix-rebuild` skill
 - Fan control on same hosts: see `thinkfan-tuning` skill
-- Host-specific disko / migration notes: `hosts/tp-g6/disko.nix`
+- Host-specific disko / migration notes: live in the private flake

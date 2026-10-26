@@ -73,7 +73,7 @@ Use for one-shot experiments. If you find yourself reaching for `,` twice for th
 
 ## Index freshness
 
-`nix-index-database` ships a pre-built index — no manual `nix-index` run required; it updates on every HM switch. If `nix-locate` ever complains the index is stale, rerun `nh home switch .`.
+`nix-index-database` ships a pre-built index — no manual `nix-index` run required; it updates on every HM switch. If `nix-locate` ever complains the index is stale, rerun the Home Manager switch from the private flake.
 
 ## Common mistakes
 

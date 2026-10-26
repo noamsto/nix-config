@@ -23,5 +23,5 @@
   # ~/.config/homebrew/trust.json plus a `.lock` sibling, so a read-only store
   # symlink at that path would make brew abort with `Permission denied`. brew
   # owns the file now; activation points XDG_CONFIG_HOME here too — see
-  # hosts/mbp-m4-pro/default.nix.
+  # the Mac host config (private flake).
 }

@@ -193,7 +193,10 @@ in {
       __reload_theme
     '';
 
-    "fish/functions/lock-commit.fish".text = import ./lock-commit.nix {inherit pkgs;};
+    "fish/functions/lock-commit.fish".text = import ./lock-commit.nix {
+      inherit pkgs lib;
+      inherit (osConfig.nix-config.terminal.lockCommit) watchedInputs;
+    };
   };
 
   programs = {
@@ -312,11 +315,6 @@ in {
               # Arguments provided, pass them through to tmux
               command tmux $argv
             end
-          end
-
-          if test -f /etc/agenix/work_aliases.fish
-            echo "Loading Work Aliases"
-            source /etc/agenix/work_aliases.fish
           end
 
           ${lib.optionalString (hostEnvFile != null) ''

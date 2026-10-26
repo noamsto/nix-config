@@ -29,6 +29,9 @@
     else keyed m;
   pubArgs = {inherit inputs self applyKeyed;};
 in {
+  # Declares typed `flake.homeModules`.
+  imports = [inputs.home-manager.flakeModules.home-manager];
+
   flake = {
     nixosModules = {
       default = applyKeyed ../nixos;
