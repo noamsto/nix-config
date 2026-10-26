@@ -183,6 +183,44 @@
         default = null;
         description = "KEY=value file that interactive fish exports when it exists; null skips it.";
       };
+      ssh.onePasswordAgent = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Route SSH and git commit signing through the 1Password SSH agent, so no private key sits on disk. Needs the 1Password app (on NixOS, nixos/desktop/1password).";
+        };
+        publicKey = lib.mkOption {
+          type = lib.types.str;
+          description = "Public key (`ssh-ed25519 AAAA…`) 1Password serves for GitHub: written to ~/.ssh/1password.pub as github.com's IdentityFile, and git's default signing key.";
+        };
+        keys = lib.mkOption {
+          type = lib.types.listOf (lib.types.submodule {
+            options = lib.genAttrs ["item" "vault" "account"] (_:
+              lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+              });
+          });
+          default = [];
+          description = "`[[ssh-keys]]` entries of ~/.config/1Password/ssh/agent.toml, each selecting by item, vault and/or account. [] writes no file, so 1Password offers every key in the Personal and Private vaults.";
+        };
+      };
+      git = {
+        signingKey = lib.mkOption {
+          type = lib.types.str;
+          default =
+            if config.nix-config.ssh.onePasswordAgent.enable
+            then "key::${config.nix-config.ssh.onePasswordAgent.publicKey}"
+            else "~/.ssh/id_ed25519.pub";
+          defaultText = lib.literalExpression ''"key::''${nix-config.ssh.onePasswordAgent.publicKey}" with the 1Password agent, else "~/.ssh/id_ed25519.pub"'';
+          description = "git's `user.signingkey` for ssh signing: a public key path, or `key::` followed by a public key literal.";
+        };
+        allowedSigners = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "Lines of ~/.config/git/allowed_signers, each `<principal> <public key>`.";
+        };
+      };
     };
   };
 }

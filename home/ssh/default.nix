@@ -1,9 +1,19 @@
-{lib, ...}: {
-  # force = true: HM's checkLinkTargets sees the regular file left by
-  # copySshConfig (below) and would refuse to overwrite it. Forcing lets
-  # linkGeneration replace it with a symlink, then copySshConfig converts
-  # it back to a 600-permission copy.
-  home.file.".ssh/config".force = true;
+{
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}: let
+  agent = osConfig.nix-config.ssh.onePasswordAgent;
+in {
+  home.file = {
+    # force = true: HM's checkLinkTargets sees the regular file left by
+    # copySshConfig (below) and would refuse to overwrite it. Forcing lets
+    # linkGeneration replace it with a symlink, then copySshConfig converts
+    # it back to a 600-permission copy.
+    ".ssh/config".force = true;
+    ".ssh/1password.pub" = lib.mkIf agent.enable {text = agent.publicKey + "\n";};
+  };
 
   programs.ssh = {
     enable = true;
@@ -17,28 +27,52 @@
     # format in details:
     #   https://www.ssh.com/academy/ssh/config
     settings = {
-      "*" = {
-        SendEnv = ["LANG" "LC_*"];
-        Include = "/etc/ssh/host_ssh.conf";
-        ForwardAgent = false;
-        AddKeysToAgent = "no";
-        Compression = false;
-        ServerAliveInterval = 0;
-        ServerAliveCountMax = 3;
-        HashKnownHosts = false;
-        UserKnownHostsFile = "~/.ssh/known_hosts";
-        ControlMaster = "no";
-        ControlPath = "~/.ssh/master-%r@%n:%p";
-        ControlPersist = "no";
-      };
+      "*" =
+        {
+          SendEnv = ["LANG" "LC_*"];
+          Include = "/etc/ssh/host_ssh.conf";
+          ForwardAgent = false;
+          AddKeysToAgent = "no";
+          Compression = false;
+          ServerAliveInterval = 0;
+          ServerAliveCountMax = 3;
+          HashKnownHosts = false;
+          UserKnownHostsFile = "~/.ssh/known_hosts";
+          ControlMaster = "no";
+          ControlPath = "~/.ssh/master-%r@%n:%p";
+          ControlPersist = "no";
+        }
+        // lib.optionalAttrs agent.enable {
+          # Home Manager renders values with a bare toString, so the darwin path
+          # (which contains a space) carries its own double quotes.
+          IdentityAgent =
+            if pkgs.stdenv.hostPlatform.isDarwin
+            then ''"~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"''
+            else "~/.1password/agent.sock";
+        };
 
       "github.com" = {
         HostName = "ssh.github.com";
         Port = 443;
-        IdentityFile = "~/.ssh/id_ed25519";
+        # 1Password selects the key by its public half under IdentitiesOnly.
+        IdentityFile =
+          if agent.enable
+          then "~/.ssh/1password.pub"
+          else "~/.ssh/id_ed25519";
         IdentitiesOnly = true;
       };
     };
+  };
+
+  xdg.configFile."1Password/ssh/agent.toml" = lib.mkIf (agent.enable && agent.keys != []) {
+    # builtins.toJSON yields a quoted string, valid as a TOML basic string.
+    text =
+      lib.concatMapStringsSep "\n" (
+        key:
+          "[[ssh-keys]]\n"
+          + lib.concatMapStrings (field: lib.optionalString (key.${field} != null) "${field} = ${builtins.toJSON key.${field}}\n") ["item" "vault" "account"]
+      )
+      agent.keys;
   };
 
   # Replace HM's symlink with a 600-permission copy.

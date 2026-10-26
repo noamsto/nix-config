@@ -14,6 +14,12 @@
     halo = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGQ6DaFgFtOJJHI5KE3YklX2NS+wxRXfzPUIFUaTvh5u noams@halo";
   };
 
+  # git's allowed_signers lines (nix-config.git.allowedSigners) for the hosts here.
+  allowedSigners = [
+    "noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC"
+    "noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02"
+  ];
+
   tp-g6 = {
     username = "noams";
     user-full-name = "Noam Stolero";

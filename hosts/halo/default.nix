@@ -43,6 +43,7 @@ in {
     shell.hostEnvFile = "/etc/agenix/host_env.env";
     nix.accessTokensFile = config.age.secrets.nixAccessTokens.path;
     wifi.knownNetworksFile = "${inputs.mysecrets}/installer-wifi.json";
+    git.allowedSigners = (import ../../lib/host-configs.nix).allowedSigners;
   };
   home-manager.users.${config.username}.imports = [../assets/ssh-fleet.nix];
   desktop.mode = hostConfig.desktop.mode;

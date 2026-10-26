@@ -1,5 +1,10 @@
-{osConfig, ...}: let
-  signKey = "~/.ssh/id_ed25519.pub";
+{
+  lib,
+  osConfig,
+  pkgs,
+  ...
+}: let
+  agent = osConfig.nix-config.ssh.onePasswordAgent;
 in {
   imports = [
     ./lazygit.nix
@@ -10,10 +15,14 @@ in {
   # It's NOT managed by Home Manager since we need to write to it dynamically
   # The include.path directive in git settings below references this mutable file
 
-  xdg.configFile."git/allowed_signers".text = ''
-    noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKXagBGbjJ7dHNZWKvkCqd3FNshl4conuFDO03OXnNvC
-    noamstolero@gmail.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOs/38Sx3/0eq4ZHzy8fS6wNK+NljZEhEN9jtuJ6BR02
-  '';
+  assertions = [
+    {
+      assertion = agent.enable && pkgs.stdenv.hostPlatform.isLinux -> osConfig.programs._1password-gui.enable;
+      message = "nix-config.ssh.onePasswordAgent needs programs._1password-gui (nixos/desktop/1password): it runs the agent and ships op-ssh-sign.";
+    }
+  ];
+
+  xdg.configFile."git/allowed_signers".text = lib.concatMapStrings (line: line + "\n") osConfig.nix-config.git.allowedSigners;
   # basic configuration of git, please change to your own
   programs.git = {
     enable = true;
@@ -22,12 +31,18 @@ in {
     signing = {
       format = "ssh";
       signByDefault = true;
+      # 1Password's signer; on darwin only the app bundle ships it.
+      signer = lib.mkIf agent.enable (
+        if pkgs.stdenv.hostPlatform.isDarwin
+        then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+        else lib.getExe' osConfig.programs._1password-gui.package "op-ssh-sign"
+      );
     };
     settings = {
       user = {
         name = osConfig.user-full-name;
         inherit (osConfig) email;
-        signingkey = signKey;
+        signingkey = osConfig.nix-config.git.signingKey;
       };
       init = {
         defaultBranch = "main";

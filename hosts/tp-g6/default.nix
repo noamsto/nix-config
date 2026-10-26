@@ -41,6 +41,7 @@ in {
       avatar = ../assets/avatar.png;
       monitors.configFile = ../assets/hyprdynamicmonitors/config.toml;
     };
+    git.allowedSigners = (import ../../lib/host-configs.nix).allowedSigners;
   };
   home-manager.users.${config.username}.imports = [../assets/ssh-fleet.nix];
   desktop.mode = lib.mkDefault hostConfig.desktop.mode;

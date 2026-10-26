@@ -81,6 +81,7 @@ in {
     };
     terminal.remoteHosts = ["tp-g6" "halo"];
     shell.hostEnvFile = "/etc/agenix/host_env.env";
+    git.allowedSigners = hostConfigs.allowedSigners;
   };
   desktop.mode = host.desktop.mode;
   machine.type = host.machine.type;
