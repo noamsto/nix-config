@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   osConfig,
@@ -50,11 +49,6 @@
     # - CHROMIUM_USER_FLAGS
     # This ensures flags are available to all processes launched in the Hyprland session,
     # including applications started from launchers like Vicinae.
-  };
-
-  # FlakeHub authentication. On darwin `determinate-nixd login` handles it instead.
-  xdg.configFile = lib.mkIf (osConfig.nix-config.flakehub.authFile != null) {
-    "flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink osConfig.nix-config.flakehub.authFile;
   };
 
   # Let home Manager install and manage itself.

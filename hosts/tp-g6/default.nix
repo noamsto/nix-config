@@ -33,7 +33,6 @@ in {
     };
     terminal.remoteHosts = ["mbp" "halo"];
     user.hashedPasswordFile = config.age.secrets.noams_password.path;
-    flakehub.authFile = "/run/agenix/noams_flakehub";
     shell.hostEnvFile = "/etc/agenix/host_env.env";
     nix.accessTokensFile = config.age.secrets.nixAccessTokens.path;
     desktop = {

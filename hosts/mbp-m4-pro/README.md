@@ -80,11 +80,9 @@ darwin-rebuild switch --flake ~/nix-config#mbp-m4-pro
 nh darwin switch ~/nix-config
 ```
 
-## 7. FlakeHub Cache auth (replaces the Linux agenix symlink)
+## 7. FlakeHub Cache auth
 
-The Linux hosts read FlakeHub auth from an agenix secret at
-`/run/agenix/noams_flakehub`; that path doesn't exist on darwin and the symlink
-is gated off. Authenticate via Determinate instead:
+Authenticate to FlakeHub Cache via Determinate:
 
 ```sh
 sudo determinate-nixd login
