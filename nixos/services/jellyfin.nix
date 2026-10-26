@@ -57,7 +57,7 @@ in {
         type = types.nullOr types.path;
         default = null;
         description = ''
-          Path to the agenix secret holding the Jellarr API key as its raw
+          Path to the secret file holding the Jellarr API key as its raw
           value. The key is inserted into Jellyfin's database on first sync and
           exported to Jellarr through an environment file.
         '';
@@ -108,7 +108,7 @@ in {
             passwordSecret = mkOption {
               type = types.path;
               description = ''
-                Path to the agenix secret holding the user's password. Jellarr
+                Path to the secret file holding the user's password. Jellarr
                 only reads it when creating the user; it never resets an
                 existing user's password (upstream FR #51).
               '';

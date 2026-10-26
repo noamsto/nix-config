@@ -168,6 +168,26 @@
         default = false;
         description = "Whether to apply the shared ThinkPad boot and hardware settings in nixos/hardware/thinkpad-common.nix.";
       };
+      user.hashedPasswordFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "File holding the user's hashed password, read at activation; null sets none.";
+      };
+      nix.accessTokensFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "nix.conf fragment carrying `access-tokens`, `!include`d into the Nix configuration; null includes nothing (on darwin, null keeps the hand-written ~/.config/nix/access-tokens.conf).";
+      };
+      flakehub.authFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "File linked as ~/.config/flakehub/auth; null links nothing.";
+      };
+      shell.hostEnvFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "KEY=value file that interactive fish exports when it exists; null skips it.";
+      };
     };
   };
 }

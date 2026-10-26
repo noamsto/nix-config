@@ -82,6 +82,7 @@ in {
       pi.modelsFile = ../assets/pi/models.json;
     };
     terminal.remoteHosts = ["tp-g6" "halo"];
+    shell.hostEnvFile = "/etc/agenix/host_env.env";
   };
   desktop.mode = host.desktop.mode;
   machine.type = host.machine.type;

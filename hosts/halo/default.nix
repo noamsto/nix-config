@@ -16,7 +16,7 @@ in {
     ../../nixos
     ../../home
     ../../overlays
-    ../../secrets
+    ./agenix.nix
     ../../options.nix
     inputs.disko.nixosModules.disko
     inputs.nixos-hardware.nixosModules.common-cpu-amd-pstate
@@ -40,6 +40,11 @@ in {
       pi.modelsFile = ../assets/pi/models.json;
     };
     terminal.remoteHosts = ["tp-g6" "mbp"];
+    user.hashedPasswordFile = config.age.secrets.noams_password.path;
+    flakehub.authFile = "/run/agenix/noams_flakehub";
+    shell.hostEnvFile = "/etc/agenix/host_env.env";
+    nix.accessTokensFile = config.age.secrets.nixAccessTokens.path;
+    wifi.knownNetworksFile = "${inputs.mysecrets}/installer-wifi.json";
   };
   home-manager.users.${config.username}.imports = [../assets/ssh-fleet.nix];
   desktop.mode = hostConfig.desktop.mode;

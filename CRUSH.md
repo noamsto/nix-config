@@ -37,6 +37,6 @@ nix run home-manager/master -- switch --flake .#<config>  # Home Manager rebuild
 - User-level: `home/` directory  
 - Host-specific: `hosts/` directory
 - Custom packages: `packages/` directory
-- Secrets: `secrets/` directory (agenix encrypted)
+- Secrets: agenix, encrypted in the private `mysecrets` input. `hosts/<host>/agenix.nix` imports the agenix module and sets the identity and the user password secret; declare other `age.secrets` in `hosts/<host>/host_secrets.nix`.
 
 **Important**: Stage files with `git add` before testing - Nix flakes only see tracked files!

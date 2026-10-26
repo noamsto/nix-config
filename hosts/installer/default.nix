@@ -15,7 +15,8 @@
   # mysecrets is `flake = false`, so its contents are readable at eval time.
   # agenix cannot serve this: it decrypts at activation, which would mean
   # shipping a decryption key inside the image it is meant to protect.
-  networks = builtins.fromJSON (builtins.readFile "${inputs.mysecrets}/installer-wifi.json");
+  wifiCredentials = "${inputs.mysecrets}/installer-wifi.json";
+  networks = builtins.fromJSON (builtins.readFile wifiCredentials);
 
   # Keyed by index rather than SSID so the generated
   # /run/NetworkManager/system-connections/<key>.nmconnection filename stays
@@ -54,6 +55,8 @@ in {
     ../../nixos/core/nice-looking-console.nix
     ../../nixos/core/iwd-known-networks.nix
   ];
+
+  nix-config.wifi.knownNetworksFile = wifiCredentials;
 
   # Real hosts pick this up from their generated hardware-configuration.nix;
   # the installer has none, and mkSystem doesn't pass a `system` arg.

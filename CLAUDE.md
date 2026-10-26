@@ -32,6 +32,7 @@ Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packag
 ## Secrets
 
 Agenix; encrypted files live in the private `mysecrets` flake input. Use `just secret-edit <name>`, `just secret-rekey`, `just secret-list` (or `agenix -e secrets/<name>.age`, `agenix -r`).
+Shared modules take secret paths as `nix-config.*` options (e.g. `nix-config.user.hashedPasswordFile`) that each host sets, instead of reading agenix config. `hosts/<host>/agenix.nix` imports the agenix module and sets the identity and the user password secret; declare other `age.secrets` in `hosts/<host>/host_secrets.nix`.
 
 ## Gotchas
 

@@ -1,5 +1,6 @@
 {
   inputs,
+  config,
   lib,
   ...
 }: let
@@ -49,6 +50,10 @@ in {
       # All threads per build; the scheduling below keeps the host responsive.
       cores = 0;
     };
+
+    extraOptions = lib.mkIf (config.nix-config.nix.accessTokensFile != null) ''
+      !include ${config.nix-config.nix.accessTokensFile}
+    '';
 
     # Not `idle`: that starves builds outright while anything else is busy.
     daemonCPUSchedPolicy = "batch";

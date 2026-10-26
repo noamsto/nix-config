@@ -52,11 +52,9 @@
     # including applications started from launchers like Vicinae.
   };
 
-  # FlakeHub authentication (symlink to agenix-managed secret).
-  # Linux only: /run/agenix doesn't exist on darwin — FlakeHub auth there is
-  # handled by `determinate-nixd login`.
-  xdg.configFile = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
-    "flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink "/run/agenix/noams_flakehub";
+  # FlakeHub authentication. On darwin `determinate-nixd login` handles it instead.
+  xdg.configFile = lib.mkIf (osConfig.nix-config.flakehub.authFile != null) {
+    "flakehub/auth".source = config.lib.file.mkOutOfStoreSymlink osConfig.nix-config.flakehub.authFile;
   };
 
   # Let home Manager install and manage itself.

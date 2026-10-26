@@ -1,8 +1,11 @@
 {
   lib,
   pkgs,
+  osConfig,
   ...
-}: {
+}: let
+  inherit (osConfig.nix-config.shell) hostEnvFile;
+in {
   home.packages = with pkgs; [
     eza
     zoxide
@@ -316,16 +319,17 @@
             source /etc/agenix/work_aliases.fish
           end
 
-          if test -f /etc/agenix/host_env.env
-            echo "Loading Host Env"
-            # Fish can source bash-style env files
-            for line in (cat /etc/agenix/host_env.env)
-              if test -n "$line"; and not string match -q '#*' "$line"
-                set -gx (string split '=' -- "$line")
+          ${lib.optionalString (hostEnvFile != null) ''
+            if test -f ${hostEnvFile}
+              echo "Loading Host Env"
+              # Fish can source bash-style env files
+              for line in (cat ${hostEnvFile})
+                if test -n "$line"; and not string match -q '#*' "$line"
+                  set -gx (string split '=' -- "$line")
+                end
               end
             end
-          end
-
+          ''}
           abbr -a !! --position anywhere --function last_history_item
           abbr -a '!$' --position anywhere --function last_command_arg
           abbr -a sc 'sesh connect'

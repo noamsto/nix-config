@@ -13,7 +13,7 @@ in {
     ../../nixos
     ../../home
     ../../overlays
-    ../../secrets
+    ./agenix.nix
     ../../options.nix
     ./host_secrets.nix
     inputs.disko.nixosModules.disko
@@ -32,6 +32,10 @@ in {
       pi.modelsFile = ../assets/pi/models.json;
     };
     terminal.remoteHosts = ["mbp" "halo"];
+    user.hashedPasswordFile = config.age.secrets.noams_password.path;
+    flakehub.authFile = "/run/agenix/noams_flakehub";
+    shell.hostEnvFile = "/etc/agenix/host_env.env";
+    nix.accessTokensFile = config.age.secrets.nixAccessTokens.path;
     desktop = {
       # G6 has no dedicated EasyEffects preset; ArchWiki recommends the G5 set for it.
       # https://wiki.archlinux.org/title/Lenovo_ThinkPad_P14s_(AMD)_Gen_6 → Audio

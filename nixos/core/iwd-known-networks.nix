@@ -9,12 +9,17 @@
   lib,
   pkgs,
   config,
-  inputs,
   ...
 }: let
-  credentials = "${inputs.mysecrets}/installer-wifi.json";
+  credentials = config.nix-config.wifi.knownNetworksFile;
 in {
-  config = lib.mkIf config.networking.wireless.iwd.enable {
+  options.nix-config.wifi.knownNetworksFile = lib.mkOption {
+    type = lib.types.nullOr lib.types.path;
+    default = null;
+    description = "JSON list of `{ssid, psk}` objects seeded into iwd's known-network store. Read from the Nix store at boot; null seeds nothing.";
+  };
+
+  config = lib.mkIf (config.networking.wireless.iwd.enable && credentials != null) {
     systemd.services.iwd-seed-networks = {
       description = "Seed iwd known networks from mysecrets";
       wantedBy = ["multi-user.target"];
