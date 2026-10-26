@@ -28,9 +28,9 @@
         # worktree root (worktrunk.worktreePath).
         whitelist = {
           prefix = [
-            "/home/${config.home.username}/git/.worktrees"
+            "${config.home.homeDirectory}/git/.worktrees"
             # Legacy prefixes below stay until no host has worktrees left under the old location.
-            "/home/${config.home.username}/Data/git/.worktrees"
+            "${config.home.homeDirectory}/Data/git/.worktrees"
           ];
         };
       };

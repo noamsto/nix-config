@@ -7,6 +7,12 @@
 }: let
   helpers = import ./mcp-helpers.nix {inherit pkgs;};
 
+  homeRoot =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then "/Users"
+    else "/home";
+  homeDirectory = "${homeRoot}/${username}";
+
   # chromium is Linux-only in nixpkgs. On darwin, omit --executable-path so
   # playwright-mcp uses its own managed browser. The automation wrapper (and
   # any pkgs.chromium reference) must stay inside the Linux branch so darwin
@@ -73,14 +79,14 @@
       command = lib.getExe playwrightMcpAutomation;
       args = [];
       env = {
-        PLAYWRIGHT_BROWSERS_PATH = "/home/${username}/.cache/ms-playwright";
+        PLAYWRIGHT_BROWSERS_PATH = "${homeDirectory}/.cache/ms-playwright";
       };
     }
     else {
       command = lib.getExe pkgs.playwright-mcp;
       args = [];
       env = {
-        PLAYWRIGHT_BROWSERS_PATH = "/home/${username}/.cache/ms-playwright";
+        PLAYWRIGHT_BROWSERS_PATH = "${homeDirectory}/.cache/ms-playwright";
       };
     };
 in {
