@@ -11,7 +11,7 @@
   ...
 }: let
   hostConfigs = import ../../lib/host-configs.nix;
-  caches = import ../../lib/caches.nix;
+  inherit (self.lib) caches;
 
   # mysecrets is `flake = false`, so its contents are readable at eval time.
   # agenix cannot serve this: it decrypts at activation, which would mean

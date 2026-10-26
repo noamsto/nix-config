@@ -27,7 +27,7 @@ Gate features with `lib.optionals` or conditional imports on these options:
 - Use the derived booleans instead of raw comparisons: `config.desktop.isEnabled`, `config.desktop.isHyprland`, `config.machine.isLaptop`, `config.machine.isPC`. Write `inherit (config.machine) isLaptop;` in let-bindings.
 - Use `config.flakePath` (NixOS) or `config.home.homeDirectory` (HM) instead of hardcoded paths.
 
-Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with desktop conditionals. NixOS modules go under `nixos/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, check both `nh os switch` and `nh home switch`.
+Packages: system-wide ones go in `nixos/packages.nix`, user ones in `home/packages.nix` with desktop conditionals. NixOS modules go under `nixos/`, nix-darwin modules under `darwin/`, Home Manager modules under `home/`, each with a `default.nix` using `imports = [...]`. Binary caches are in `lib/caches.nix` and must stay in sync with the `nixConfig` in `flake.nix`. After system-wide changes, check both `nh os switch` and `nh home switch`.
 
 ## Secrets
 

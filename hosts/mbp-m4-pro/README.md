@@ -15,7 +15,7 @@ modules).
 Use the Determinate installer for macOS: <https://docs.determinate.systems/>
 This config sets `determinateNix.enable = true`, so Determinate manages Nix and
 nix-darwin's `nix.*` options are intentionally inert. Caches are declared via
-`determinateNix.customSettings` in `default.nix`.
+`determinateNix.customSettings` in `darwin/base.nix` (`darwinModules.base`).
 
 ## 2. Install Rosetta 2 (for `enableRosetta` casks)
 

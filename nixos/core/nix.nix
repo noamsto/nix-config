@@ -1,9 +1,13 @@
-{inputs, ...}: {
+{
+  inputs,
+  self,
+  ...
+}: {
   config,
   lib,
   ...
 }: let
-  caches = import ../../lib/caches.nix;
+  inherit (self.lib) caches;
 in {
   imports = [
     inputs.determinate.nixosModules.default

@@ -599,7 +599,7 @@ in {
         '';
         "plugins/money-scout/__init__.py" =
           builtins.replaceStrings ["@reportDir@"] [config.services.moneyScout.reportDir]
-          (builtins.readFile ../../nixos/services/money-scout-commands.py);
+          (builtins.readFile self.lib.files.money-scout-commands);
         "SOUL.md" = ''
           You are the portfolio scout for Noam on halo. You answer questions about the scout reports in /var/lib/money-scout — watch.txt (daily rule alerts), crowd.md (the opportunity digest), holdings.json and status.json.
           Be brief: the answer or the number first, then at most one line of why.

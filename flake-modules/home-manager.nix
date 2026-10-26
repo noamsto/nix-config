@@ -23,36 +23,22 @@
   config,
   inputs,
   ...
-}: let
-  # Two consumers read a different attribute off a homeConfigurations entry, so
-  # both are exposed: nh builds `<name>.config.home.activationPackage`, while
-  # `nix flake show`'s built-in schema insists on a top-level
-  # `activationPackage` and fails the whole command without it. A host's
-  # `home-manager.users.noams` is what a standalone config calls `.config`.
-  aliasOf = hmConfig: {
-    activationPackage = hmConfig.home.activationPackage;
-    config.home.activationPackage = hmConfig.home.activationPackage;
-  };
-
-  nixosHome = hostName:
-    aliasOf config.flake.nixosConfigurations.${hostName}.config.home-manager.users.noams;
-
-  darwinHome = hostName:
-    aliasOf config.flake.darwinConfigurations.${hostName}.config.home-manager.users.noams;
-in {
+}: {
   # Declares typed `flake.homeModules` and `flake.homeConfigurations`.
   imports = [inputs.home-manager.flakeModules.home-manager];
 
-  flake.homeConfigurations = {
+  flake.homeConfigurations = config.flake.lib.homeAliases {
+    user = "noams";
     # Default configs for nh auto-detection (username@hostname)
-    "noams@tp-g6" = nixosHome "tp-g6";
-    "noams@halo" = nixosHome "halo";
-    "noams@mbp-m4-pro" = darwinHome "mbp-m4-pro";
-
-    # Fallback for nh auto-detection (username only)
-    noams = nixosHome "tp-g6";
-
-    # Legacy names for compatibility
-    noams-hyprland = nixosHome "tp-g6";
+    hosts = {
+      inherit (config.flake.nixosConfigurations) tp-g6 halo;
+      inherit (config.flake.darwinConfigurations) mbp-m4-pro;
+    };
+    aliases = {
+      # Fallback for nh auto-detection (username only)
+      noams = "tp-g6";
+      # Legacy name for compatibility
+      noams-hyprland = "tp-g6";
+    };
   };
 }

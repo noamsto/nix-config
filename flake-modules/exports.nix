@@ -1,4 +1,4 @@
-# Exported flake outputs (nixosModules, homeModules, overlays)
+# Exported flake outputs (nixosModules, homeModules, darwinModules, overlays, lib)
 # A module applied to static args is a fresh value with no `key`, so the module
 # system cannot deduplicate it; importing `default` plus a group would declare
 # that group's options twice. Every application site, nested ones too, goes
@@ -60,7 +60,30 @@ in {
       ssh = ../home/ssh;
     };
 
+    # `default` leaves out `home`, as nixosModules.default does, but needs it (or
+    # the consumer's own Home Manager module): priors reads `home-manager.users`.
+    darwinModules = {
+      default = applyKeyed ../darwin;
+      options = ../options.nix;
+      priors = applyKeyed ../nixos/core/priors.nix;
+      overlays = applyKeyed ../overlays;
+      base = applyKeyed ../darwin/base.nix;
+      home = applyKeyed ../darwin/home.nix;
+    };
+
     # lib/overlays.nix is a list; `nix flake check` wants a single overlay function.
     overlays.default = lib.composeManyExtensions (import ../lib/overlays.nix inputs);
+
+    lib = {
+      caches = import ../lib/caches.nix;
+      homeAliases = import ../lib/home-aliases.nix {inherit lib;};
+      # Path literals, never "${self}/…": interpolating one copies only that
+      # file, so a consumer's drvPath doesn't change with every commit.
+      files = {
+        lock-commit-jq = ../home/terminal/fish/lock-commit.jq;
+        halo-completions = ../home/terminal/halo-completions.nix;
+        money-scout-commands = ../nixos/services/money-scout-commands.py;
+      };
+    };
   };
 }

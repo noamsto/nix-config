@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  self,
   ...
 }: let
   polkit = import ./ops-polkit.nix {inherit lib;};
@@ -28,7 +29,7 @@
     runtimeEnv = {
       FLAKE = config.flakePath;
       LEMOND_PORT = toString config.hardware.amd-npu.lemonade.port;
-      LOCK_COMMIT_FILTER = "${../../home/terminal/fish/lock-commit.jq}";
+      LOCK_COMMIT_FILTER = "${self.lib.files.lock-commit-jq}";
       OPS_REQUESTS = requestDir;
       OPS_STATE = stateDir;
     };
@@ -36,7 +37,7 @@
   };
 
   completions = pkgs.runCommand "halo-ops-completions" {} ''
-    install -Dm444 ${import ../../home/terminal/halo-completions.nix {
+    install -Dm444 ${import self.lib.files.halo-completions {
       inherit pkgs;
       command = "halo-ops";
       flake = config.flakePath;

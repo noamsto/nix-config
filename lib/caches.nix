@@ -1,5 +1,6 @@
 # Shared binary cache configuration
-# Used by both flake.nix (nixConfig) and nixos/core/nix.nix (nix.settings)
+# Used by flake.nix (nixConfig, as a literal copy) and, through self.lib.caches,
+# by nixos/core/nix.nix (nix.settings) and the installer
 {
   # Primary substituters - always used
   substituters = [
