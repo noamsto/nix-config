@@ -36,10 +36,7 @@ in {
     # FreeCAD MCP: talks to the addon's RPC server inside a running FreeCAD
     "claude-code/mcp-freecad.json".text = builtins.toJSON {
       mcpServers = {
-        freecad = mcpServers.helpers.mkUvxMcp {
-          package = "freecad-mcp";
-          args = ["--only-text-feedback"];
-        };
+        freecad = mcpServers.helpers.mkUvxMcp {package = "freecad-mcp";};
       };
     };
   };
