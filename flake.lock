@@ -403,11 +403,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1792843497,
-        "narHash": "sha256-sw8jYd8urUvGLg71j9nDtDtDFreR60wuQPLPT5H7M2o=",
+        "lastModified": 1792997739,
+        "narHash": "sha256-En8X58N2do2PdcLh1WHBmQqfcIqKpN+hng+99lj77ZM=",
         "owner": "noamsto",
         "repo": "dispatcher",
-        "rev": "a9f5d5fa16a8ee908824ff2f3410edd0f7ace8cc",
+        "rev": "143624039db88a5fc2c80048e408558935ebc107",
         "type": "github"
       },
       "original": {
