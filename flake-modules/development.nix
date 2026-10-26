@@ -85,6 +85,8 @@
           pkgs.just
           pkgs.statix
           pkgs.shellcheck
+          # Same derivation the git hook calls, so the two cannot drift.
+          config.pre-commit.settings.package
 
           # Package authoring helpers (see nix-package-authoring skill)
           pkgs.nurl # generate fetcher + hash from a URL
