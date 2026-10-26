@@ -580,3 +580,418 @@ run_guard_from() {
 cd docs for details' && git push origin main"
   assert_deny
 }
+
+# --- gate only commands that really run a push ---
+# The words `git push` / `gh pr create` inside quoted text or a heredoc body are
+# not a push; anything that executes (command start, wrapper, shell payload,
+# command substitution) still is. Each case runs on a feat branch with an
+# unreviewed source commit, so a gated command denies and an ungated one allows.
+
+_gated_fixture() {
+  git -C "$repo" checkout -qb feat
+  _source_commit
+}
+
+_assert_not_gated() {
+  _gated_fixture
+  run_guard "$1"
+  assert_allow
+}
+
+_assert_gated() {
+  _gated_fixture
+  run_guard "$1"
+  assert_deny
+}
+
+@test "gate: not gated, double-quoted echo text" {
+  _assert_not_gated 'echo "git push later"'
+}
+
+@test "gate: not gated, commit message that mentions the push" {
+  _assert_not_gated "git commit -m 'then git push'"
+}
+
+@test "gate: not gated, quoted heredoc body" {
+  _assert_not_gated "cat > plan.md <<'EOF'
+step 1
+git push origin feat
+EOF"
+}
+
+@test "gate: not gated, dash and double-quoted heredoc delimiters" {
+  _assert_not_gated "cat > a.md <<-EOF
+	git push
+	EOF
+cat > b.md <<\"EOT\"
+gh pr create
+EOT"
+}
+
+@test "gate: not gated, tool argument that mentions a push" {
+  _assert_not_gated 'some-tool --note "one git push --force-with-lease of x"'
+}
+
+@test "gate: not gated, quoted text naming gh pr create" {
+  _assert_not_gated 'echo "then gh pr create"'
+}
+
+@test "gate: not gated, printed push words" {
+  _assert_not_gated 'echo git push'
+}
+
+@test "gate: not gated, push words in a trailing comment" {
+  _assert_not_gated 'git add x # then git push'
+}
+
+@test "gate: not gated, heredoc inside a command substitution in a commit message" {
+  _assert_not_gated "git commit -m \"\$(cat <<'EOF'
+fix: don't run git push here
+EOF
+)\""
+}
+
+@test "gate: not gated, heredoc body then a non-push command" {
+  _assert_not_gated "cat > n.md <<'EOF'
+git push
+EOF
+ls"
+}
+
+@test "gate: gated, bare push" {
+  _assert_gated 'git push'
+}
+
+@test "gate: gated, push after cd" {
+  _assert_gated "cd $repo && git push origin b"
+}
+
+@test "gate: gated, env assignment prefix" {
+  _assert_gated 'FOO=1 git push'
+}
+
+@test "gate: gated, env wrapper with -C" {
+  _assert_gated "env git -C $repo push"
+}
+
+@test "gate: gated, timeout wrapper" {
+  _assert_gated 'timeout 60 git push'
+}
+
+@test "gate: gated, nix develop -c wrapper" {
+  _assert_gated 'nix develop -c git push'
+}
+
+@test "gate: gated, unknown wrapper" {
+  _assert_gated 'flock f git push'
+}
+
+@test "gate: gated, bash -c payload" {
+  _assert_gated "bash -c 'git push'"
+}
+
+@test "gate: gated, combined -lc flag and double quotes" {
+  _assert_gated 'bash -lc "git push"'
+}
+
+@test "gate: gated, absolute shell path with -ec" {
+  _assert_gated "/bin/bash -ec 'git push'"
+}
+
+@test "gate: gated, ssh payload" {
+  _assert_gated 'ssh h "git push"'
+}
+
+@test "gate: gated, eval payload" {
+  _assert_gated 'eval "git push"'
+}
+
+@test "gate: gated, command substitution" {
+  _assert_gated 'echo $(git push)'
+}
+
+@test "gate: gated, command substitution inside double quotes" {
+  _assert_gated 'echo "$(git push)"'
+}
+
+@test "gate: gated, backtick substitution" {
+  _assert_gated 'echo `git push`'
+}
+
+@test "gate: gated, gh pr create" {
+  _assert_gated 'gh pr create --fill'
+}
+
+@test "gate: gated, unbalanced quote with a push" {
+  _assert_gated 'echo "oops && git push origin main'
+}
+
+@test "gate: gated, unbalanced quote still resolves the cd target" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && echo \"oops && git push origin main"
+  assert_deny
+}
+
+@test "gate: gated, real push after a heredoc" {
+  _assert_gated "cat > n.md <<'EOF'
+git push
+EOF
+git push origin feat"
+}
+
+@test "gate: gated, push in an if body after a semicolon" {
+  _assert_gated "if cd $repo; then git push origin main; fi"
+}
+
+@test "gate: gated, push in a for body" {
+  _assert_gated 'for b in x; do git push; done'
+}
+
+@test "gate: gated, push on a later line" {
+  _assert_gated 'git add x
+git push'
+}
+
+@test "gate: gated, push between comments containing apostrophes" {
+  _assert_gated "# don't touch X
+git push origin main
+# won't retry"
+}
+
+@test "gate: gated, hash in a parameter length is not a comment" {
+  _assert_gated 'n=${#a[@]}; git push'
+}
+
+@test "gate: gated, shell fed a heredoc" {
+  _assert_gated "bash <<'EOF'
+git push
+EOF"
+}
+
+@test "gate: gated, shell fed a here-string" {
+  _assert_gated "bash <<< 'git push'"
+}
+
+@test "gate: gated, substitution in an unquoted heredoc body" {
+  _assert_gated "cat <<EOF
+\$(git push)
+EOF"
+}
+
+@test "gate: gated, heredoc piped into a shell" {
+  _assert_gated "cat <<'EOF' | bash
+git push
+EOF"
+}
+
+@test "gate: gated, quoted text piped into a shell" {
+  _assert_gated "echo 'git push' | sh"
+}
+
+@test "gate: gated, printed text piped into a shell" {
+  _assert_gated 'echo git push | sh'
+}
+
+@test "gate: gated, heredoc inside a substitution handed to bash -c" {
+  _assert_gated "bash -c \"\$(cat <<'EOF'
+git push
+EOF
+)\""
+}
+
+@test "gate: gated, non-ASCII message before the cd and push" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m 'שלום עולם' && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "gate: gated, non-ASCII message before a branch and tag push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "git commit -m 'שלום עולם' && git push origin main v1"
+  assert_deny
+}
+
+@test "gate: gated, push inside a shell payload next to a tag push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "bash -c 'git push origin main' && git push origin v1"
+  assert_deny
+}
+
+@test "gate: gated, tag push followed by a shell payload branch push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "git push origin v1 && bash -c 'git push origin main'"
+  assert_deny
+}
+
+@test "gate: allow, tag push inside a shell payload" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "bash -c 'git push origin v1'"
+  assert_allow
+}
+
+@test "gate: gated, command too large to mask" {
+  _gated_fixture
+  local big
+  big=$(head -c 40000 /dev/zero | tr '\0' x)
+  run_guard "git commit -m '$big' && git push origin feat"
+  assert_deny
+}
+
+# Constructs the scanner could misread as quoted text, a comment or a heredoc
+# body must not hide a push that really runs: it gives up and the raw text decides.
+
+@test "gate: gated, hash inside a parameter expansion is not a comment" {
+  _assert_gated 'line=${line%% #*}; git push'
+}
+
+@test "gate: gated, hash in a substitution pattern is not a comment" {
+  _assert_gated 'x=a; echo ${x/ #/} ; git push'
+}
+
+@test "gate: gated, hash after an escaped blank is not a comment" {
+  _assert_gated 'echo a\ #b; git push'
+}
+
+@test "gate: gated, escaped dollar before a quote is not ANSI-C quoting" {
+  _assert_gated "echo \\\$'a\\' ; git push #'"
+}
+
+@test "gate: gated, doubled dollar before a quote is not ANSI-C quoting" {
+  _assert_gated "echo \$\$'a\\' ; git push #'"
+}
+
+@test "gate: gated, heredoc delimiter quoted mid-word" {
+  _assert_gated "cat <<E\"OF\"
+x
+EOF
+git push
+E"
+}
+
+@test "gate: gated, heredoc delimiter with an escaped letter" {
+  _assert_gated "cat <<EO\\F
+x
+EOF
+git push
+EO\\F"
+}
+
+@test "gate: gated, shift in arithmetic is not a heredoc" {
+  _assert_gated 'echo $((1<<2))
+git push
+2'
+}
+
+@test "gate: gated, case branch inside a quoted substitution" {
+  _assert_gated 'echo "$(case a in a) git push ;; esac)"'
+}
+
+@test "gate: gated, printed text piped into a wrapped shell" {
+  _assert_gated 'echo git push | sudo sh'
+}
+
+@test "gate: gated, printed text piped through tee into a shell" {
+  _assert_gated 'echo git push | tee /dev/null | bash'
+}
+
+@test "gate: gated, printed text piped with |& into a shell" {
+  _assert_gated 'echo git push |& sh'
+}
+
+@test "gate: gated, quoted text piped with |& into a shell" {
+  _assert_gated "echo 'git push' |& sh"
+}
+
+@test "gate: gated, heredoc piped with |& into a shell" {
+  _assert_gated "cat <<'EOF' |& bash
+git push
+EOF"
+}
+
+@test "gate: gated, command with far more separators than the scanner handles" {
+  local many
+  many=$(head -c 20000 /dev/zero | tr '\0' ';')
+  _assert_gated "$many git push"
+}
+
+@test "gate: gated, heredoc delimiter with escaped letters" {
+  _assert_gated $'cat <<\\E\\O\nx\nEO\ngit push\nE\\O'
+}
+
+@test "gate: gated, line continuation inside an unquoted heredoc delimiter line" {
+  _assert_gated $'cat <<EOF\nx\nEO\\\nF\ngit push\nEOF'
+}
+
+@test "gate: gated, heredoc inside a substitution ended by the closing paren" {
+  _assert_gated $'x=$(cat <<EOF\nhi\nEOF)\ngit push\nEOF\n(:)#)'
+}
+
+@test "gate: gated, heredoc body read after a substitution on its line" {
+  _assert_gated $'cat <<EOF $(\ngit push\n)\nbody\nEOF\n(:)#)'
+}
+
+@test "gate: gated, shift in an arithmetic command is not a heredoc" {
+  _assert_gated $'(( z = 1<<y ))\ngit push\ny'
+}
+
+@test "gate: gated, shift in a parameter expansion is not a heredoc" {
+  _assert_gated $'echo ${x:1<<y }\ngit push\ny'
+}
+
+@test "gate: gated, case glued to an operator inside a quoted substitution" {
+  _assert_gated 'echo "$(true&&case x in x) git push;; esac)"'
+}
+
+@test "gate: gated, quote inside backquotes does not open a string" {
+  _assert_gated $'echo `echo \'`; git push # \''
+}
+
+@test "gate: gated, quotes nested in a double-quoted parameter expansion" {
+  _assert_gated $'echo "${x#\'"\'}"; git push; echo "${x#\'"\'}"'
+}
+
+@test "gate: gated, printed text in a subshell piped into a shell" {
+  _assert_gated '(echo git push) | sh'
+}
+
+@test "gate: gated, printed text with a redirect piped into a shell" {
+  _assert_gated 'echo git push 2>&1 | sh'
+}
+
+@test "gate: gated, printed text fed through process substitution" {
+  _assert_gated 'bash <(echo git push)'
+}
+
+@test "gate: gated, source reading a heredoc from stdin" {
+  _assert_gated $'. /dev/stdin <<\'X\'\ngit push\nX'
+}
+
+@test "gate: gated, command with far more braces than the scanner handles" {
+  local many
+  many=$(head -c 20000 /dev/zero | tr '\0' '}')
+  _assert_gated "echo $many; git push"
+}
+
+@test "gate: gated, long ANSI-C string before a push" {
+  local long
+  long=$(head -c 30000 /dev/zero | tr '\0' a)
+  _assert_gated "echo \$'$long'; git push"
+}
+
+@test "gate: gated, nested payload fan-out stays within the scan budget" {
+  local leaf cmd=""
+  leaf=$(for _ in $(seq 1 150); do printf 'aaa;'; done)
+  for _ in 1 2 3 4 5 6; do
+    cmd+="bash -c '$leaf'
+"
+  done
+  _assert_gated "${cmd}git push"
+}
