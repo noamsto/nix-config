@@ -60,6 +60,11 @@ in {
           then "~/.ssh/1password.pub"
           else "~/.ssh/id_ed25519";
         IdentitiesOnly = true;
+        # One key approval per burst of git operations instead of per operation.
+        # ServerAliveInterval drops a master left dead by suspend or a network change.
+        ControlMaster = "auto";
+        ControlPersist = "10m";
+        ServerAliveInterval = 30;
       };
     };
   };
