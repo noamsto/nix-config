@@ -68,6 +68,9 @@
   };
 
   inputs = {
+    # The wallpapers are LFS pointers: git+ fetches of this flake get them smudged; github: tarballs never do.
+    self.lfs = true;
+
     # === CORE SYSTEM ===
     # Use nixos-unstable for latest packages and features
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

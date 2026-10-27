@@ -50,6 +50,22 @@
 
         # Direct bats regression suite for the lock-commit fish function.
         lock-commit = import ../home/terminal/fish/check.nix {inherit pkgs;};
+
+        # Every locked input must come from a public URL scheme. A
+        # `github:<owner>/<private-repo>` node passes this walk, so CI also
+        # archives every input with no access tokens. URLs with embedded
+        # credentials also fail.
+        no-private-inputs = pkgs.runCommand "no-private-inputs" {nativeBuildInputs = [pkgs.jq];} ''
+          offenders=$(jq -c '[.nodes | to_entries[] | select(.value.locked != null)
+            | select(.value.locked | ((.type == "github" or .type == "gitlab"
+                or ((.url // "") | startswith("https://")))
+                and ((.url // "") | test("^[a-z+]+://[^/]*@|[?&][^=&]*(token|key|signature|credential|secret|password)[^=&]*="; "i") | not)) | not) | .key]' ${../flake.lock})
+          if [ "$offenders" != "[]" ]; then
+            echo "flake.lock nodes not fetched from a public URL: $offenders" >&2
+            exit 1
+          fi
+          touch $out
+        '';
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};

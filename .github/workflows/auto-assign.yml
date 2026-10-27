@@ -5,7 +5,9 @@ on:
     types: [opened]
 
 jobs:
+  # Skipped while the repo is private: Actions billing blocks these runs there; they run once the repo is public.
   assign:
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
