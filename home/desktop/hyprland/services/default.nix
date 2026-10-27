@@ -2,6 +2,7 @@
   imports = [
     (applyKeyed ./hyprdynamicmonitors)
     ./libinput-gestures.nix
+    ./polkit-agent-reregister.nix
   ];
   services = {
     # Hyprland polkit authentication agent
