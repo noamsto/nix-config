@@ -2,7 +2,13 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  restartDeterminateDaemon = pkgs.writeShellApplication {
+    name = "restart-determinate-daemon";
+    runtimeInputs = [pkgs.coreutils];
+    text = builtins.readFile ./restart-determinate-daemon.sh;
+  };
+in {
   imports = [inputs.determinate.darwinModules.default];
 
   nixpkgs.config.allowUnfree = true;
@@ -43,6 +49,12 @@
       ];
     };
   };
+
+  # The daemon reads nix.custom.conf only at startup, so a switch that changes
+  # it leaves the old settings live. postActivation runs after /etc is linked.
+  system.activationScripts.postActivation.text = ''
+    ${restartDeterminateDaemon}/bin/restart-determinate-daemon /etc/nix/nix.custom.conf /var/db/determinate-daemon-conf.sha256
+  '';
 
   # nix.gc.* is inert under Determinate for the same reason as nix.settings
   # above, and determinate-nixd ships no collector of its own — nothing prunes
