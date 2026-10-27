@@ -134,6 +134,11 @@
           default = null;
           description = "File linked as ~/.pi/agent/models.json; null links nothing.";
         };
+        openrouter.keyFile = lib.mkOption {
+          type = lib.types.nullOr (lib.types.strMatching "/.*");
+          default = null;
+          description = "Absolute path to a file holding only the OpenRouter API key, readable by the user. Set, the dispatcher reads the key from it and pi's auth.json gets an openrouter entry that runs cat on it; null changes nothing. A string, not a path, so the key never lands in the Nix store.";
+        };
       };
       terminal = {
         remoteHosts = lib.mkOption {

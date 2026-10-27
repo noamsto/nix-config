@@ -256,7 +256,10 @@ in {
       # load-average gate (1-min load > cores) still refuses new workers.
       fleetBudget = 16;
       engines = ["claude" "pi"];
-      openrouter.monthlyTarget = 100;
+      openrouter = {
+        monthlyTarget = 100;
+        inherit (osConfig.nix-config.ai.openrouter) keyFile;
+      };
       inherit (osConfig.nix-config.ai.dispatcher) localModels;
     };
 

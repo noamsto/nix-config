@@ -7,6 +7,12 @@
 }: let
   isLocalServer = osConfig.nix-config.ai.localServer.enable;
   inherit (osConfig.nix-config.ai.pi) modelsFile;
+  inherit (osConfig.nix-config.ai.openrouter) keyFile;
+  openrouterAuth = pkgs.writeShellApplication {
+    name = "pi-openrouter-auth";
+    runtimeInputs = [pkgs.jq pkgs.coreutils];
+    text = builtins.readFile ./openrouter-auth.sh;
+  };
 
   piGuards = import ./guards.nix {
     inherit pkgs;
@@ -232,5 +238,15 @@ in {
           | run ${pkgs.moreutils}/bin/sponge "$settings"
       fi
     '';
+
+    # pi rewrites auth.json itself, so Nix cannot own it; this upserts only the
+    # openrouter entry. The key never enters the file, only a `!cat` of its path.
+    # Dispatcher workers use ~/.pi/dispatcher-worker, whose auth.json crew links
+    # to the interactive one (the script writes through the link); a regular
+    # file left there before crew first seeds the dir is replaced by that link.
+    activation.piOpenrouterAuth = lib.mkIf (keyFile != null) (lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run ${lib.getExe openrouterAuth} ${lib.escapeShellArg keyFile} "$HOME/.pi/agent/auth.json"
+      run ${lib.getExe openrouterAuth} ${lib.escapeShellArg keyFile} "$HOME/.pi/dispatcher-worker/auth.json"
+    '');
   };
 }
