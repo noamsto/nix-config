@@ -5,6 +5,7 @@
   ...
 }: let
   agent = osConfig.nix-config.ssh.onePasswordAgent;
+  githubKey = osConfig.nix-config.ssh.githubKey;
 in {
   home.file = {
     # force = true: HM's checkLinkTargets sees the regular file left by
@@ -51,21 +52,28 @@ in {
             else "~/.1password/agent.sock";
         };
 
-      "github.com" = {
-        HostName = "ssh.github.com";
-        Port = 443;
-        # 1Password selects the key by its public half under IdentitiesOnly.
-        IdentityFile =
-          if agent.enable
-          then "~/.ssh/1password.pub"
-          else "~/.ssh/id_ed25519";
-        IdentitiesOnly = true;
-        # One key approval per burst of git operations instead of per operation.
-        # ServerAliveInterval drops a master left dead by suspend or a network change.
-        ControlMaster = "auto";
-        ControlPersist = "10m";
-        ServerAliveInterval = 30;
-      };
+      "github.com" =
+        {
+          HostName = "ssh.github.com";
+          Port = 443;
+          # 1Password selects the key by its public half under IdentitiesOnly.
+          IdentityFile =
+            if githubKey != null
+            then githubKey
+            else if agent.enable
+            then "~/.ssh/1password.pub"
+            else "~/.ssh/id_ed25519";
+          IdentitiesOnly = true;
+          # One key approval per burst of git operations instead of per operation.
+          # ServerAliveInterval drops a master left dead by suspend or a network change.
+          ControlMaster = "auto";
+          ControlPersist = "10m";
+          ServerAliveInterval = 30;
+        }
+        // lib.optionalAttrs (githubKey != null) {
+          # ssh reads the key file itself and never contacts the 1Password agent.
+          IdentityAgent = "none";
+        };
     };
   };
 

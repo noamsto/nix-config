@@ -31,8 +31,9 @@ in {
     signing = {
       format = "ssh";
       signByDefault = true;
-      # 1Password's signer; on darwin only the app bundle ships it.
-      signer = lib.mkIf agent.enable (
+      # 1Password's signer; on darwin only the app bundle ships it. An on-disk
+      # githubKey signs through git's default ssh-keygen.
+      signer = lib.mkIf (agent.enable && osConfig.nix-config.ssh.githubKey == null) (
         if pkgs.stdenv.hostPlatform.isDarwin
         then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
         else lib.getExe' osConfig.programs._1password-gui.package "op-ssh-sign"
