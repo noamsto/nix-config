@@ -22,6 +22,30 @@
       }
     else pkgs.claude-desktop-fhs;
 
+  # Bambu runs under XWayland and only picks up the dark theme through
+  # GTK_THEME, which Hyprland sets for apps it launches but a shell may lack or
+  # hold from before a theme toggle. Set it from the color-scheme theme-toggle
+  # keeps in dconf instead.
+  bambu-studio = let
+    launcher = pkgs.writeShellScript "bambu-studio" ''
+      scheme=$(dconf read /org/gnome/desktop/interface/color-scheme 2>/dev/null)
+      if [ "$scheme" = "'prefer-light'" ]; then
+        export GTK_THEME=Adwaita
+      else
+        export GTK_THEME=Adwaita:dark
+      fi
+      exec ${pkgs.bambu-studio}/bin/bambu-studio "$@"
+    '';
+  in
+    pkgs.symlinkJoin {
+      name = "bambu-studio-follow-theme";
+      paths = [pkgs.bambu-studio];
+      postBuild = ''
+        rm $out/bin/bambu-studio
+        ln -s ${launcher} $out/bin/bambu-studio
+      '';
+    };
+
   desktop-packages = with pkgs; [
     # Hyprland dynamic monitor management
     inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
