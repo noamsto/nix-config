@@ -1,5 +1,8 @@
 {pkgs, ...}: let
-  aegis-lock-recover = pkgs.writeShellScriptBin "aegis-lock-recover" (builtins.readFile ./aegis-lock-recover.sh);
+  withLockState = import ./aegis-lock-scripts.nix {inherit pkgs;};
 in {
-  home.packages = [aegis-lock-recover];
+  home.packages = [
+    (withLockState "aegis-lock-recover")
+    (withLockState "aegis-lock-guard")
+  ];
 }

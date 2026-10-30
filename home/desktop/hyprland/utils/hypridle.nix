@@ -5,6 +5,7 @@
   ...
 }: let
   brightnessctl = lib.getExe pkgs.brightnessctl;
+  aegis-lock-guard = import ../scripts/aegis-lock-scripts.nix {inherit pkgs;} "aegis-lock-guard";
 
   # Wrapper for loginctl lock-session with logging
   loginctl-lock = pkgs.writeShellScript "loginctl-lock-logged" ''
@@ -18,25 +19,13 @@
     ${pkgs.systemd}/bin/loginctl lock-session
     log "  loginctl returned: $?"
   '';
-
-  # A lid-close suspend delivers two Lock signals ~1s apart (logind Lock, then
-  # before_sleep_cmd re-issuing lock-session), so hypridle runs lock_cmd twice.
-  # Killing the incumbent would tear down the client currently holding the
-  # ext-session-lock, which leaves Hyprland on its "lock client died" screen
-  # with no way back except a TTY. A running instance already owns the lock.
-  aegis-lock-cmd = pkgs.writeShellScript "aegis-lock-cmd" ''
-    if ${pkgs.procps}/bin/pgrep -f 'quickshell.*aegis-lock' >/dev/null; then
-      exit 0
-    fi
-    exec aegis-lock
-  '';
 in {
   services.hypridle = {
     enable = true;
 
     settings = {
       general = {
-        lock_cmd = "${aegis-lock-cmd}";
+        lock_cmd = lib.getExe aegis-lock-guard;
         before_sleep_cmd = "${loginctl-lock}";
         # Display turn-on is handled by hyprdynamicmonitors-resume service
         # to ensure monitor configuration is stable before lockscreen renders

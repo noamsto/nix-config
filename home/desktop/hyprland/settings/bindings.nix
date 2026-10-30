@@ -7,6 +7,7 @@
   fileManager = "${lib.getExe pkgs.thunar}";
   browser = "${lib.getExe pkgs.firefox} -P personal";
   youtube-music = "${lib.getExe pkgs.pear-desktop}";
+  aegis-lock-guard = import ../scripts/aegis-lock-scripts.nix {inherit pkgs;} "aegis-lock-guard";
 
   # Run a program only if it's not already running
   runOnce = program: let
@@ -63,7 +64,7 @@ in {
     hl.bind("ALT + SPACE", hl.dsp.exec_cmd("vicinae vicinae://toggle"))
 
     -- === SYSTEM ===
-    hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("aegis-lock"))
+    hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("${lib.getExe aegis-lock-guard}"))
     hl.bind(mainMod .. " + ALT + T", hl.dsp.exec_cmd("theme-toggle toggle"))
     hl.bind(mainMod .. " + ALT + K", hl.dsp.exec_cmd("system-awake toggle-last"))
     -- Session/logout menu (Noctalia)

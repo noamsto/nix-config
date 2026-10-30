@@ -19,40 +19,6 @@ Usage: aegis-lock-recover [--status] [--force]
 EOF
 }
 
-# hypridle follows ext-session-lock via the lock-notify protocol, so its journal
-# is the compositor's view. logind's LockedHint is not: it stays "no" for a
-# compositor-side lock. Scoped to the running hypridle: an earlier invocation's
-# last word belongs to a session that no longer exists.
-lock_state() {
-  local invocation last
-  invocation=$(systemctl --user show -p InvocationID --value hypridle)
-  [[ -n $invocation ]] || {
-    echo unknown
-    return
-  }
-  last=$(journalctl --user "_SYSTEMD_INVOCATION_ID=$invocation" --no-pager 2>/dev/null |
-    grep -oE "Wayland session got (locked|unlocked)" |
-    tail -1)
-
-  case "$last" in
-  *"got locked") echo locked ;;
-  *"got unlocked") echo unlocked ;;
-  *) echo unknown ;;
-  esac
-}
-
-# Matched by executable name, not `pgrep -f`: an -f pattern also matches any
-# shell whose command line merely mentions it, this script's own caller included.
-lock_client_pids() {
-  local pid pids=()
-  while read -r pid; do
-    if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q "share/aegis-lock"; then
-      pids+=("$pid")
-    fi
-  done < <(pgrep -x 'qs|quickshell' || true)
-  echo "${pids[*]}"
-}
-
 hypr_vt() {
   local session
   for session in $(loginctl list-sessions --no-legend | awk '{print $1}'); do

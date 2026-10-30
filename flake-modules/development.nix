@@ -82,6 +82,10 @@
         # Direct bats regression suite for the xresources-apply script, against a
         # real Xvfb server + xrdb (fresh-X-server behaviour).
         xresources-apply = import ../home/desktop/hyprland/check.nix {inherit pkgs;};
+
+        # Direct bats regression suite for aegis-lock-guard: locks despite a
+        # lingering lock client, never replaces one while the session is locked.
+        aegis-lock-guard = import ../home/desktop/hyprland/aegis-lock-check.nix {inherit pkgs;};
       };
 
     devShells.default = pkgs.mkShell {

@@ -23,6 +23,8 @@
     exec ${noctaliaPackage}/bin/noctalia msg "$@"
   '';
 
+  aegis-lock-guard = import ../hyprland/scripts/aegis-lock-scripts.nix {inherit pkgs;} "aegis-lock-guard";
+
   # Script to restore wallpaper from saved state
   restore-wallpaper = pkgs.writeShellScriptBin "noctalia-restore-wallpaper" ''
     LAST_WP="$HOME/.local/state/noctalia/last-wallpaper"
@@ -388,7 +390,7 @@ in {
             # when lockscreen.enabled is false, before it reads `command`,
             # so that combination renders no button at all.
             action = "command";
-            command = "aegis-lock";
+            command = lib.getExe aegis-lock-guard;
             label = "Lock";
             glyph = "lock";
             shortcut = "1";
