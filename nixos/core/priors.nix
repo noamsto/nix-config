@@ -57,8 +57,9 @@ in {
     environment.systemPackages = [cfg.package];
     environment.etc."priors/trust.toml".source = (pkgs.formats.toml {}).generate "priors-trust.toml" {
       profile = "personal";
-      # priors rejects an empty list; this placeholder matches no real org.
-      work_orgs = ["example.invalid/none"];
+      # priors rejects an empty list. Its work-name tripwire matches the owner
+      # part as a whole word, so it must be a token prose won't contain.
+      work_orgs = ["example.invalid/priors-placeholder-no-work-org"];
       personal_orgs = ["github.com/noamsto"];
       work_names = cfg.workNames;
       trust_root = cfg.trustRoot;
