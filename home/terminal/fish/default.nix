@@ -197,6 +197,8 @@ in {
       inherit pkgs lib;
       inherit (osConfig.nix-config.terminal.lockCommit) watchedInputs;
     };
+
+    "fish/functions/secret-commit.fish".text = import ./secret-commit.nix {inherit pkgs;};
   };
 
   programs = {

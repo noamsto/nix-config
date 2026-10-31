@@ -54,6 +54,10 @@
         # Direct bats regression suite for the lock-commit fish function.
         lock-commit = import ../home/terminal/fish/check.nix {inherit pkgs;};
 
+        # Direct bats regression suite for the secret-commit fish function,
+        # including a real sops round trip on a throwaway age key.
+        secret-commit = import ../home/terminal/fish/secret-commit-check.nix {inherit pkgs;};
+
         # Every locked input must come from a public URL scheme. A
         # `github:<owner>/<private-repo>` node passes this walk, so CI also
         # archives every input with no access tokens. URLs with embedded
