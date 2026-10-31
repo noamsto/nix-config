@@ -32,11 +32,10 @@
         lane = "fire_and_forget";
       }
       {
-        id = "priors-provenance";
+        id = "priors-guard";
         exec = priors;
         events = ["pre_tool"];
         engines = ["claude-code" "codex" "cursor" "pi"];
-        match = ["Bash"];
         timeout_ms = 1000;
       }
     ];
