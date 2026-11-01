@@ -15,6 +15,8 @@
   lib,
   buildGoModule,
   fetchFromGitHub,
+  makeWrapper,
+  sqlite,
 }: let
   version = "0.21.4";
 in
@@ -45,6 +47,13 @@ in
 
     # Only cmd/deja is the binary; the module also holds scripts and tools.
     subPackages = ["cmd/deja"];
+
+    # deja reads the Hermes store (~/.hermes/state.db) through the `sqlite3` CLI.
+    # --prefix keeps the user's PATH so git and the other tools deja calls still resolve.
+    nativeBuildInputs = [makeWrapper];
+    postFixup = ''
+      wrapProgram $out/bin/deja --prefix PATH : ${lib.makeBinPath [sqlite]}
+    '';
 
     # Upstream's suite is not hermetic under the Nix sandbox: many tests shell
     # out to `git` or write into $HOME, and the check phase fails on them
