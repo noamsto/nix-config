@@ -2,9 +2,10 @@
   lib,
   config,
   pkgs,
+  utils,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf types genAttrs optionalAttrs;
+  inherit (lib) mkEnableOption mkOption mkIf types genAttrs optionalAttrs getExe;
   cfg = config.services.jellyfinHost;
   decl = cfg.declarative;
 
@@ -46,6 +47,17 @@ in {
       description = ''
         Interfaces to expose Jellyfin's HTTP and discovery ports on. Empty means
         tailnet-only reach, since `tailscale0` is already a trusted interface.
+      '';
+    };
+
+    knownProxies = mkOption {
+      type = types.listOf types.nonEmptyStr;
+      default = [];
+      example = ["192.0.2.10"];
+      description = ''
+        Reverse proxies whose `X-Forwarded-For` header Jellyfin trusts, as IP
+        addresses or hostnames. Written to `network.xml` before each start,
+        replacing any list set from the dashboard; empty leaves the file alone.
       '';
     };
 
@@ -170,8 +182,18 @@ in {
     # finds ROCm's ICD through OCL_ICD_VENDORS — hardware.graphics.extraPackages
     # sets library paths but installs no ICD. Without it ffmpeg's
     # `-init_hw_device opencl` fails and the transcode dies with exit 237.
-    systemd.services.jellyfin.environment.OCL_ICD_VENDORS =
-      mkIf decl.enable "${pkgs.rocmPackages.clr.icd}/etc/OpenCL/vendors";
+    systemd.services.jellyfin = {
+      environment.OCL_ICD_VENDORS =
+        mkIf decl.enable "${pkgs.rocmPackages.clr.icd}/etc/OpenCL/vendors";
+
+      serviceConfig.ExecStartPre = mkIf (cfg.knownProxies != []) [
+        (utils.escapeSystemdExecArgs ([
+            (getExe (import ./jellyfin-known-proxies.nix {inherit pkgs;}))
+            "${config.services.jellyfin.configDir}/network.xml"
+          ]
+          ++ cfg.knownProxies))
+      ];
+    };
     environment.sessionVariables.OCL_ICD_VENDORS =
       mkIf decl.enable "${pkgs.rocmPackages.clr.icd}/etc/OpenCL/vendors";
 
