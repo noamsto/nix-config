@@ -5,4 +5,5 @@ return {
       colorscheme = "catppuccin-mocha",
     },
   },
+  { "folke/tokyonight.nvim", enabled = false },
 }

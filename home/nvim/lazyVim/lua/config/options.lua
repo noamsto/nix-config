@@ -2,6 +2,13 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 
+vim.g.lazyvim_python_lsp = "pyrefly"
+-- Prettier formats only in projects with a prettier config.
+vim.g.lazyvim_prettier_needs_config = true
+-- eslint's format-on-save runs before conform, so in a treefmt project it
+-- would diverge from pre-commit.
+vim.g.lazyvim_eslint_auto_format = vim.fn.executable("treefmt") == 0
+
 local opt = vim.opt
 -- opt.spelllang = { "en" }
 opt.spelloptions = "camel"

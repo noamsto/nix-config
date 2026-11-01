@@ -28,24 +28,9 @@
       "--set"
       "NVIM_NOTTYFAST"
       "1"
-      "--suffix"
-      "LIBRARY_PATH"
-      ":"
-      "''${lib.makeLibraryPath [pkgs.stdenv.cc.cc pkgs.zlib]}"
-      "--suffix"
-      "PKG_CONFIG_PATH"
-      ":"
-      "''${lib.makeSearchPathOutput "dev" "lib/pkgconfig" [pkgs.stdenv.cc.cc pkgs.zlib]}"
-      "--set"
-      "LIBGIT2_PATH"
-      "${pkgs.libgit2.lib}/lib/libgit2.so"
       "--set"
       "SQLITE3_PATH"
       "${pkgs.sqlite.out}/lib/libsqlite3.so"
-      "--suffix"
-      "PATH"
-      ":"
-      (lib.makeBinPath [pkgs.nodejs])
     ];
     enable = true;
     defaultEditor = true;
@@ -53,68 +38,51 @@
     vimAlias = true;
     vimdiffAlias = true;
 
-    withPython3 = true;
-    withNodeJs = true;
+    withPython3 = false;
+    withNodeJs = false;
 
     extraPackages = with pkgs;
       [
-        #Basic
-        lua5_1
-        luajit
-        lua51Packages.luarocks
-        luajitPackages.lua-utils-nvim
-        cargo
         go
-        zig
-
-        # DB
-        sqlite
-
-        #-- Misc
-        tree-sitter # common language parser/highlighter
-
-        # Compilation
-        cmake
-        cmake-language-server
-        checkmake
+        gcc # required by nvim-treesitter
         gnumake
-        gcc # c/c++ compiler, required by nvim-treesitter!
-        llvmPackages.clang-unwrapped # c/c++ tools with clang-tools such as clangd
-        gdb
-        lldb
-
-        marksman # Markdown
-        hadolint
+        tree-sitter
         uv
 
-        # === ESSENTIAL LSP SERVERS (Better via Nix than Mason) ===
-        rust-analyzer # Rust
-        gopls # Go
-        golangci-lint-langserver # Go linting LSP
-        typescript-language-server # TypeScript/JavaScript
-        yaml-language-server # YAML
-        taplo # TOML
+        # LSP servers (Mason is disabled; Nix is the only source)
+        marksman
+        hadolint
+        pyrefly
+        vtsls
+        lua-language-server
+        gopls
+        golangci-lint-langserver
+        yaml-language-server
+        taplo
         bash-language-server
-        statix
-        nil # Nix LSP (nil_ls)
-        alejandra # Nix formatter
+        vscode-langservers-extracted # jsonls, eslint
+        dockerfile-language-server
+        docker-compose-language-service
+        nil
+        harper # harper-ls, commit messages
 
-        # === KEY FORMATTERS ===
-        rustfmt # Rust formatting
-        gotools # Go imports and formatting
-        prettier # Web formatting
+        # Linters and formatters
+        ruff
+        stylua
+        gofumpt
+        golangci-lint
+        gotools
+        shellcheck
         shfmt
+        statix
+        alejandra
+        prettier
+        markdown-toc
 
         mermaid-cli
-
-        # for images
-        imagemagick
-
-        #pdf preview
-        ghostscript
-
-        # latex render
-        tectonic
+        imagemagick # images
+        ghostscript # pdf preview
+        tectonic # latex render
       ]
       # inotify-tools is Linux-only (inotify is a Linux kernel API).
       ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [pkgs.inotify-tools];

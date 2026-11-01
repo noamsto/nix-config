@@ -23,7 +23,6 @@ vim.filetype.add({
     [".*/*.test.hcl"] = "atlas-test",
     [".*/*.plan.hcl"] = "atlas-plan",
     [".*/*.rule.hcl"] = "atlas-rule",
-    [".*/hyprland%.conf"] = "hyprlang",
   },
 })
 

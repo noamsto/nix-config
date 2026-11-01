@@ -1,9 +1,5 @@
+-- Nix provides every language server and formatter; Mason stays off.
 return {
-  "mason-org/mason.nvim",
-  opts = {
-    ensure_installed = { "markdownlint-cli2", "markdown-toc" },
-    ui = {
-      border = "rounded",
-    },
-  },
+  { "mason-org/mason.nvim", enabled = false },
+  { "mason-org/mason-lspconfig.nvim", enabled = false },
 }
