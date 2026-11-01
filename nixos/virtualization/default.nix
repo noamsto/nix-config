@@ -8,7 +8,6 @@
   desktop-packages = with pkgs; [
     distrobox
     distrobox-tui
-    qemu
   ];
 in {
   environment.systemPackages =

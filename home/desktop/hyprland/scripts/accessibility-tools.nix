@@ -28,7 +28,13 @@
 in {
   home.packages = [
     # OCR tool - select area and copy text
-    pkgs.normcap
+    # (English and Hebrew only: the default bundle ships every language, ~1 GB)
+    ((pkgs.normcap.override {
+        tesseract4 = pkgs.tesseract4.override {enableLanguages = ["eng" "heb"];};
+      }).overrideAttrs (old: {
+        # These tests OCR Chinese and Japanese, whose data is no longer built in.
+        disabledTests = old.disabledTests ++ ["test_remove_spaces_in_chi"];
+      }))
     # Streaming dictation, complementing voxtype's push-to-talk
     inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
   ];

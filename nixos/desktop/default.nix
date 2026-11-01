@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   imports = [
@@ -34,6 +35,13 @@
     services = {
       # Enable flatpak
       flatpak.enable = true;
+
+      # graphical-desktop.nix enables speechd by default; its espeak-ng pulls
+      # the MBROLA voice collection (~650 MB) that nothing here uses.
+      speechd.package = pkgs.speechd.override {
+        espeak = pkgs.espeak-ng.override {mbrolaSupport = false;};
+      };
+
       libinput = lib.mkIf config.machine.isLaptop {
         enable = true;
         touchpad = {
