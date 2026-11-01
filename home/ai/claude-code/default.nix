@@ -37,6 +37,7 @@
     text = builtins.readFile ./settings-merge.sh;
   };
   overlay = config.programs.hookyard.claudeOverlay.merged;
+  inherit (osConfig.nix-config.ai.claudeCode) autoModeAllow;
 
   # hookyard's envelope carries the engine payload verbatim under `.native`; the
   # guards' hookSpecificOutput is already hookyard's handler wire protocol.
@@ -124,11 +125,17 @@
     ];
   });
 
-  # --settings overlay: ONLY keys that need /nix/store paths.
-  # Everything else belongs in settings.json (symlinked to repo).
+  # --settings overlay: keys that need /nix/store paths, plus per-host values
+  # set through nix-config.* options. Everything else belongs in settings.json
+  # (symlinked to repo).
+  overlayJSON = settings:
+    builtins.toJSON (settings
+      // lib.optionalAttrs (autoModeAllow != []) {
+        autoMode.allow = ["$defaults"] ++ autoModeAllow;
+      });
   nix-settings-json = pkgs.writeTextFile {
     name = "claude-nix-settings.json";
-    text = builtins.toJSON {
+    text = overlayJSON {
       statusLine = {
         type = "command";
         command = "${claude-statusline}/bin/claude-statusline";

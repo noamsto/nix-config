@@ -5,6 +5,7 @@
   ...
 }: let
   inherit (osConfig.nix-config.shell) hostEnvFile;
+  inherit (osConfig.nix-config.terminal.tailscale) loginAccount;
 in {
   home.packages = with pkgs; [
     eza
@@ -238,8 +239,8 @@ in {
         # Tailscale (multi-account: `tailscale login` once per tailnet, then switch)
         tss = "tailscale status";
         tsl = "tailscale switch --list"; # profiles; current marked with *
-        # operator/routing live in nixos/services/tailscale.nix; these only flip per-profile accept-routes
-        tsp = "tailscale switch stellern@gmail.com && tailscale up && tailscale set --accept-routes=false";
+        # operator/routing live in nixos/services/tailscale.nix; this only flips per-profile accept-routes
+        tsp = lib.mkIf (loginAccount != null) "tailscale switch ${loginAccount} && tailscale up && tailscale set --accept-routes=false";
 
         # Git (aliases not covered by forgit)
         gsb = "git status -sb";

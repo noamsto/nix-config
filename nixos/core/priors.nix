@@ -39,17 +39,21 @@ in {
       default = "owner-admin";
       description = "Trust-file `trust_root`. `separate` turns attestation on, which also needs the priors-verify units this config does not deploy yet.";
     };
-    personalStore = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      default = {
-        id = "noamsto-priors-personal";
-        path = "${homeDirectory}/memory/personal";
-        # Port 443: these hosts reach GitHub ssh only through ssh.github.com:443
-        # (home/ssh), and priors' push ignores ~/.ssh/config, so the alias can't be used.
-        remote = "ssh://git@ssh.github.com:443/noamsto/priors-personal.git";
+    personalStore = {
+      id = lib.mkOption {
+        type = lib.types.str;
+        description = "The personal store's trust-file id.";
       };
-      description = "The personal store's trust-file pin; home/ai/priors clones from the same value.";
+      path = lib.mkOption {
+        type = lib.types.str;
+        default = "${homeDirectory}/memory/personal";
+        defaultText = lib.literalExpression ''"''${home.homeDirectory}/memory/personal"'';
+        description = "Where home/ai/priors clones the personal store.";
+      };
+      remote = lib.mkOption {
+        type = lib.types.str;
+        description = "Git URL home/ai/priors clones the personal store from. priors' push ignores ~/.ssh/config, so give a literal URL, not an ssh alias.";
+      };
     };
   };
 

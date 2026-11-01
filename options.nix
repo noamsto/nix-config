@@ -139,12 +139,22 @@
           default = null;
           description = "Absolute path to a file holding only the OpenRouter API key, readable by the user. Set, the dispatcher reads the key from it and pi's auth.json gets an openrouter entry that runs cat on it; null changes nothing. A string, not a path, so the key never lands in the Nix store.";
         };
+        claudeCode.autoModeAllow = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "Extra Claude Code auto-mode allow rules for this host, added to the --settings overlay after \"$defaults\"; empty adds nothing.";
+        };
       };
       terminal = {
         remoteHosts = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
           description = "SSH aliases the tmux session picker bridges into.";
+        };
+        tailscale.loginAccount = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Tailnet login account the `tsp` abbreviation switches to; null leaves `tsp` out.";
         };
         lockCommit.watchedInputs = lib.mkOption {
           type = lib.types.listOf (lib.types.submodule {

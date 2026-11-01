@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Claude Code keeps only the last --settings flag, so the wrapper merges the
-# caller's layers into its overlay. Hook arrays and permission lists concatenate;
-# layers that would null or retype them are rejected (add-only: a guard against
-# mistakes, not a security boundary, as callers can run the unwrapped binary).
+# caller's layers into its overlay. Hook arrays, permission lists and auto-mode
+# rule lists concatenate; layers that would null or retype the hooks or
+# permission lists are rejected (add-only: a guard against mistakes, not a
+# security boundary, as callers can run the unwrapped binary).
 # The output is content-addressed and never deleted: Claude reads (and may
 # re-read) it after the wrapper execs. The XDG runtime dir is tmpfs cleared at
 # logout; the fallback per-user $TMPDIR dir is left to OS temp cleaning.
@@ -39,7 +40,9 @@ merge_def='
       reduce ($b | keys_unsorted[]) as $k ($a;
         .[$k] = (if has($k) then merge(.[$k]; $b[$k]; $path + [$k]) else $b[$k] end))
     elif ($a | type) == "array" and ($b | type) == "array" and ($path | length) == 2
-         and ($path[0] == "hooks" or ($path[0] == "permissions" and ($path[1] | IN("allow", "deny", "ask")))) then
+         and ($path[0] == "hooks"
+              or ($path[0] == "permissions" and ($path[1] | IN("allow", "deny", "ask")))
+              or ($path[0] == "autoMode" and ($path[1] | IN("environment", "allow", "soft_deny", "hard_deny")))) then
       $a + $b
     else $b end;'
 

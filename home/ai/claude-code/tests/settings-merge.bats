@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 # Regression suite for settings-merge.sh: deep-merges the nix overlay with the
-# caller's --settings layers, concatenating hooks and permission rules, and
+# caller's --settings layers, concatenating hooks, permission rules and
+# auto-mode rule lists, and
 # rejects layers that would remove overlay hooks or rules. Run directly:
 #   bats home/ai/claude-code/tests/settings-merge.bats
 # or: nix build .#checks.x86_64-linux.deslop-guard
@@ -22,6 +23,7 @@ setup() {
   },
   "statusLine": {"type": "command", "command": "overlay-status"},
   "permissions": {"allow": ["Bash(ls *)"], "deny": ["Bash(rm -rf *)"]},
+  "autoMode": {"allow": ["$defaults", "overlay rule"]},
   "model": "opus",
   "env": {"A": "1"}
 }
@@ -65,6 +67,13 @@ assert_fail() {
     and .permissions.deny == ["Bash(rm -rf *)"]
     and .model == "sonnet"
     and .env == {"A": "1", "B": "2"}' "$output"
+}
+
+@test "autoMode rule lists concatenate after the overlay's" {
+  merge '{"autoMode":{"allow":["caller rule"],"environment":["caller env"]}}'
+  [ "$status" -eq 0 ]
+  jq -e '.autoMode.allow == ["$defaults", "overlay rule", "caller rule"]
+    and .autoMode.environment == ["caller env"]' "$output"
 }
 
 @test "layers apply in order: a later scalar wins" {

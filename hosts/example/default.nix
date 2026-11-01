@@ -11,4 +11,9 @@
   ];
 
   hostname = "example";
+
+  priors.personalStore = {
+    id = "example-personal-store";
+    remote = "ssh://git@example.invalid/example/personal-store.git";
+  };
 }

@@ -25,7 +25,7 @@ in {
     mediaShare = mkOption {
       type = types.nullOr types.str;
       default = null;
-      example = "192.168.3.6:/media/storage";
+      example = "192.0.2.6:/media/storage";
       description = ''
         NFS export mounted read-only as the media library. Read-only keeps the
         exporting host's *arr stack the sole writer, so its hardlinked imports

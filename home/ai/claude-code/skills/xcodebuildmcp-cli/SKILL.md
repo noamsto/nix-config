@@ -65,9 +65,9 @@ Verified on Xcode 26.3 / iOS 26.3 simulators. Three things the CLI's own
 - **The daemon caches env at start.** After any toolchain change, restart it —
   a fresh command alone won't pick the change up.
 
-`toddl` is Expo (CNG): `apps/mobile/ios` is gitignored prebuild output, so run
-`expo prebuild` before pointing project-level tools at the workspace, and expect
-the generated project to be replaced rather than edited.
+Expo projects using CNG keep the native `ios` directory as gitignored prebuild
+output, so run `expo prebuild` before pointing project-level tools at the
+workspace, and expect the generated project to be replaced rather than edited.
 
 ## Exit Criteria
 

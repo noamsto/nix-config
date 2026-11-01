@@ -117,10 +117,7 @@
       "**Local workspace**: Work is isolated with Worktrunk git worktrees. Local reads and reversible edits inside the active worktree are routine; other repositories, the home directory, and system paths are outside project scope unless the task requires them.",
       "**Sensitive data**: Personal data, confidential business data, credentials, encrypted-secret plaintext, private keys, authentication state, and files from private external sources remain sensitive and may only be shared with an explicitly authorized audience."
     ],
-    "allow": [
-      "$defaults",
-      "**Feature Flag Writes (Toddl PostHog)**: The Toddl PostHog project (us.posthog.com, project 427198) is the toddl repository's own feature-flag service. Changing a flag there is allowed when the user's message in the session names the flag and the change. Deleting a flag is not covered."
-    ]
+    "allow": ["$defaults"]
   },
   "fallbackModel": ["claude-sonnet-4-6"],
   "enabledPlugins": {

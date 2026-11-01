@@ -7,6 +7,5 @@
     ./local-proxy.nix
     ./agent-dashboard.nix
     ./money-scout.nix
-    ./toddl-issue-intake.nix
   ];
 }

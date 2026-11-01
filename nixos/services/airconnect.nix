@@ -74,7 +74,7 @@ in {
     interface = mkOption {
       type = types.nullOr types.str;
       default = null;
-      example = "192.168.3.50";
+      example = "192.0.2.50";
       description = "Network interface name or IP to bind to (airconnect -b). Null lets it auto-select.";
     };
 
