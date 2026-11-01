@@ -32,6 +32,17 @@ in
 
     vendorHash = null;
 
+    # The session-start digest tells the agent to "call recall_context", a tool
+    # only `deja mcp` provides, and no agent here registers it. 0.21.4 has no
+    # shell form; newer upstream (#4596) swaps one in only when the hook payload
+    # carries `deja_shell`, which hookyard's envelope cannot send. `deja show` is
+    # read-only. --replace-fail makes an upstream rewording break the build
+    # rather than revert silently.
+    postPatch = ''
+      substituteInPlace cmd/deja/hook_context.go \
+        --replace-fail 'call recall_context with' 'run `deja show` in the shell with'
+    '';
+
     # Only cmd/deja is the binary; the module also holds scripts and tools.
     subPackages = ["cmd/deja"];
 
