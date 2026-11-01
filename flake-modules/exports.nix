@@ -88,7 +88,6 @@ in {
         lock-commit-jq = ../home/terminal/fish/lock-commit.jq;
         secret-commit-jq = ../home/terminal/fish/secret-commit.jq;
         halo-completions = ../home/terminal/halo-completions.nix;
-        money-scout-commands = ../nixos/services/money-scout-commands.py;
       };
     };
   };

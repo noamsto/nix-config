@@ -256,8 +256,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Telegram relay for the portfolio scout, served on a host via
-    # nixos/services/money-scout.nix.
+    # Hermes agent gateway. Nothing here uses it; the private host flake
+    # follows this input, so keep it pinned even though it looks unused.
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
