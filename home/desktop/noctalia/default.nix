@@ -348,7 +348,12 @@ in {
         # v4 pluginSettings.tailscale.compactMode -> widget show_counts (see
         # widget.tailscale above); sshUsername -> ssh_user. v4's
         # terminalCommand and defaultPeerAction have no v5 setting.
-        plugin_settings."davemhammer/tailscale".ssh_user = config.home.username;
+        plugin_settings."davemhammer/tailscale" = {
+          ssh_user = config.home.username;
+          # Peers that wake briefly from sleep (macOS DarkWake) flap online/offline
+          # every few minutes; one notification per flap is noise.
+          notify_on_peer_change = false;
+        };
 
         # Ported from the v4 GUI layer (gui-settings.json), not the
         # Nix-written settings.json — the dock only ever lived in the GUI
