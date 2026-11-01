@@ -37,7 +37,7 @@ lanzaboote = {
 
 ### 2. Host Configuration
 
-Add to your host's `default.nix` (e.g., `hosts/thinkpad-p14s-g5/default.nix`):
+Add to the host's `default.nix` in the private host flake:
 
 ```nix
 {

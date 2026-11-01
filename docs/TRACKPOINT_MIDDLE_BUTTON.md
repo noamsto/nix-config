@@ -34,9 +34,9 @@ services.udev.extraRules = lib.mkIf (config.machine.type == "laptop") ''
 '';
 ```
 
-## Current Status: UNTESTED
+## Current Status: Applied (`nixos/desktop/default.nix`)
 
-The udev rule has been added but **not yet applied**. Need to:
+The udev rule is applied in `nixos/desktop/default.nix`. It has not been tested. Need to:
 
 1. Run `nh os switch .` to rebuild system
 2. Either reboot OR run:

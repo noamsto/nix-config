@@ -30,7 +30,7 @@ in {
     enable = true;
     settings = lib.listToAttrs (map (name: {
         name = "git/${name}";
-        value.checkout = "git clone git@github.com:noamsto/${name}.git ${name}";
+        value.checkout = "git clone ssh://git@github.com/noamsto/${name}.git ${name}";
       })
       ossRepos);
   };

@@ -176,11 +176,10 @@ cat /proc/acpi/wakeup
 
 | Feature | Solution | Location |
 |---------|----------|----------|
-| Block AC spurious wake | `acpi.ec_no_wakeup=1` | `hosts/thinkpad-p14s-g5/hardware-configuration.nix` |
+| Block AC spurious wake | `acpi.ec_no_wakeup=1` | host config in the private host flake |
 | Logitech USB wake | udev rule disable autosuspend | `nixos/core/pc.nix` |
 | Phantom monitors on resume | hyprdynamicmonitors-resume service | `nixos/laptop/suspend-handling.nix` |
 | Lockscreen crash prevention | Enable eDP-1 before DPMS on | `nixos/laptop/suspend-handling.nix` |
-| Power profile switching | auto-power-profile service | `nixos/services/auto-power-profile.nix` |
 | Lid close suspend | Detached setsid handler with debounce | `home/.../scripts/workspace-manager.sh` |
 
 ## References

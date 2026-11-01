@@ -52,17 +52,12 @@ This document explains the touchpad gesture optimizations for both fluid workflo
 - Preferences → Input → Emulate 3 Button Mouse: OFF (not needed with clickfinger)
 - Navigation style: Set to your preference
 
-### Bambu Studio (Flatpak)
+### Bambu Studio
 **Working touchpad gestures:**
 - ✅ **2-finger pinch** → Zoom viewport (confirmed working!)
 - ✅ **2-finger drag** → Pan viewport
 - ✅ **3-finger tap + drag** → Rotate view (using clickfinger middle-click)
 - ✅ **Scroll** → Zoom (finer control with scroll_factor = 0.6)
-
-**Flatpak permissions check (if gestures don't work):**
-```bash
-flatpak override --user --socket=wayland com.bambulab.BambuStudio
-```
 
 ## Testing Your Configuration
 
