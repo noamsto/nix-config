@@ -10,6 +10,7 @@
       ./wireplumber
       ./bt-headset
       ./mpv.nix
+      ./brave-claude.nix
       ./kdenlive.nix
       ./obsidian.nix
     ]
