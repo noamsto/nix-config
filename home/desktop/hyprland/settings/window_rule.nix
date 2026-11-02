@@ -212,8 +212,10 @@
         no_close_for = 2000;
       }
       {
+        # browser automation drives Brave in the background; its focus requests would switch workspaces
         match = {class = "^(Brave-browser|brave-browser)$";};
         no_close_for = 2000;
+        suppress_event = "maximize activate activatefocus";
       }
       {
         match = {class = "^(chromium)$";};
