@@ -154,22 +154,45 @@ in {
           exit
       end
 
-      set -g __tty_logout_timeout 120
+      set -g __tty_logout_timeout 300
+      set -g __tty_idle_tty (tty)
 
-      function __tty_idle_logout_reset --on-event fish_prompt
+      function __tty_idle_logout_stop
           if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
               kill $__tty_idle_timer_pid 2>/dev/null
           end
+          set -e __tty_idle_timer_pid
+      end
 
-          fish -c "sleep $__tty_logout_timeout; kill -HUP $fish_pid 2>/dev/null" &
+      # The timer runs only while fish sits at a prompt (stopped in preexec),
+      # and measures idle time from the tty's atime, which the kernel advances
+      # whenever input is read from it, so typing without Enter counts.
+      function __tty_idle_logout_start --on-event fish_prompt
+          __tty_idle_logout_stop
+
+          fish -c '
+              set -l start (date +%s)
+              while kill -0 $argv[3] 2>/dev/null
+                  set -l last (stat -c %X $argv[1] 2>/dev/null; or echo 0)
+                  test $last -lt $start; and set last $start
+                  set -l idle (math (date +%s) - $last)
+                  if test $idle -ge $argv[2]
+                      kill -HUP $argv[3] 2>/dev/null
+                      exit
+                  end
+                  sleep (math $argv[2] - $idle)
+              end
+          ' $__tty_idle_tty $__tty_logout_timeout $fish_pid &
           set -g __tty_idle_timer_pid $last_pid
           disown $__tty_idle_timer_pid 2>/dev/null
       end
 
+      function __tty_idle_logout_pause --on-event fish_preexec
+          __tty_idle_logout_stop
+      end
+
       function __tty_idle_logout_cleanup --on-event fish_exit
-          if set -q __tty_idle_timer_pid; and test -n "$__tty_idle_timer_pid"
-              kill $__tty_idle_timer_pid 2>/dev/null
-          end
+          __tty_idle_logout_stop
       end
     '';
 
