@@ -5,6 +5,7 @@
   ...
 }: let
   brightnessctl = lib.getExe pkgs.brightnessctl;
+  dpmsOn = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })' 2>/dev/null || true";
   aegis-lock-guard = import ../scripts/aegis-lock-scripts.nix {inherit pkgs;} "aegis-lock-guard";
 
   # Wrapper for loginctl lock-session with logging
@@ -31,6 +32,8 @@ in {
         # to ensure monitor configuration is stable before lockscreen renders
         after_sleep_cmd = "";
         ignore_dbus_inhibit = false;
+        # The DPMS listener's on-resume is skipped when an inhibitor toggle re-registers listeners
+        on_unlock_cmd = dpmsOn;
       };
 
       listener =
@@ -56,7 +59,7 @@ in {
           {
             timeout = 360; # 1 minute after lock
             on-timeout = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"off\" })' 2>/dev/null || true";
-            on-resume = "${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = \"on\" })' 2>/dev/null || true";
+            on-resume = dpmsOn;
           }
         ]
         # In server mode the box must stay awake for SSH/tmux — drop idle suspend.

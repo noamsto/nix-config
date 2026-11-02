@@ -117,6 +117,11 @@ in {
           # Allow a new lockscreen to take over if the previous one crashed
           # (e.g. Noctalia dies during monitor topology change on undock)
           allow_session_lock_restore = true;
+
+          # Input must wake the display even when hypridle's DPMS resume is skipped
+          # (idle-inhibitor toggles re-register its listeners and drop the resume).
+          key_press_enables_dpms = true;
+          mouse_move_enables_dpms = true;
         };
 
         render = {
