@@ -6,7 +6,7 @@ This file provides guidance for coding agents working with this NixOS configurat
 
 ```bash
 nix develop              # Enter development shell with all tools
-nix fmt                  # Format all code (alejandra + prettier + ruff + shellcheck)
+nix fmt                  # Format all code with treefmt (alejandra, ruff, statix, deadnix, shellcheck, shfmt, prettier)
 nix flake check          # Validate flake configuration and run checks
 nh os switch .           # Rebuild system (preferred over nixos-rebuild)
 nh os build .            # Build without switching

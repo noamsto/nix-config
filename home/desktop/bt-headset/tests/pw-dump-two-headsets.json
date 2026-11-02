@@ -1,24 +1,265 @@
 [
-  {"id":60,"type":"PipeWire:Interface:Device","info":{"props":{"device.api":"alsa","device.name":"alsa_card.usb-Microsoft_LifeCam","device.description":"LifeCam HD-3000","media.class":"Audio/Device"},"params":{"EnumProfile":[{"index":0,"name":"off","description":"Off","priority":0,"available":"yes","classes":[]},{"index":1,"name":"input:mono-fallback","description":"Mono Input","priority":1,"available":"yes","classes":[]}],"Profile":[{"index":1,"name":"input:mono-fallback","description":"Mono Input","priority":1,"available":"yes","classes":[],"save":true}]}}},
-  {"id":90,"type":"PipeWire:Interface:Device","info":{"props":{"device.api":"bluez5","device.name":"bluez_card.11_11_11_11_11_11","device.description":"WH-1000XM4","device.id":90,"api.bluez5.address":"11:11:11:11:11:11","media.class":"Audio/Device"},"params":{"EnumProfile":[
-    {"index":0,"name":"off","description":"Off","priority":0,"available":"yes","classes":[]},
-    {"index":1,"name":"a2dp-sink-sbc","description":"High Fidelity Playback (A2DP Sink, codec SBC)","priority":129,"available":"yes","classes":[]},
-    {"index":2,"name":"a2dp-sink","description":"High Fidelity Playback (A2DP Sink, codec LDAC)","priority":131,"available":"yes","classes":[]},
-    {"index":3,"name":"a2dp-sink-aac","description":"High Fidelity Playback (A2DP Sink, codec AAC)","priority":130,"available":"yes","classes":[]},
-    {"index":4,"name":"headset-head-unit-cvsd","description":"Headset Head Unit (HSP/HFP, codec CVSD)","priority":1,"available":"yes","classes":[]},
-    {"index":5,"name":"headset-head-unit","description":"Headset Head Unit (HSP/HFP, codec mSBC)","priority":2,"available":"yes","classes":[]},
-    {"index":6,"name":"headset-head-unit-lc3_swb","description":"Headset Head Unit (HSP/HFP, codec LC3-SWB)","priority":3,"available":"no","classes":[]}
-  ],"Profile":[{"index":1,"name":"a2dp-sink-sbc","description":"High Fidelity Playback (A2DP Sink, codec SBC)","priority":129,"available":"yes","classes":[],"save":true}]}}},
-  {"id":95,"type":"PipeWire:Interface:Device","info":{"props":{"device.api":"bluez5","device.name":"bluez_card.22_22_22_22_22_22","device.description":"Jabra Evolve","device.id":95,"api.bluez5.address":"22:22:22:22:22:22","media.class":"Audio/Device"},"params":{"EnumProfile":[
-    {"index":0,"name":"off","description":"Off","priority":0,"available":"yes","classes":[]},
-    {"index":1,"name":"a2dp-sink","description":"High Fidelity Playback (A2DP Sink, codec SBC)","priority":129,"available":"yes","classes":[]},
-    {"index":2,"name":"headset-head-unit","description":"Headset Head Unit (HSP/HFP, codec mSBC)","priority":2,"available":"yes","classes":[]}
-  ],"Profile":[{"index":2,"name":"headset-head-unit","description":"Headset Head Unit (HSP/HFP, codec mSBC)","priority":2,"available":"yes","classes":[],"save":true}]}}},
-  {"id":100,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"alsa_output.usb-Microsoft_LifeCam.analog-stereo","media.class":"Audio/Sink","device.id":60}}},
-  {"id":110,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"bluez_output.22_22_22_22_22_22.1","media.class":"Audio/Sink","device.id":95}}},
-  {"id":111,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"bluez_input.22_22_22_22_22_22","media.class":"Audio/Source","device.id":95,"bluez5.loopback":true}}},
-  {"id":112,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"bluez_input.22_22_22_22_22_22.0","media.class":"Audio/Source","device.id":95,"api.bluez5.internal":true}}},
-  {"id":120,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"bluez_output.11_11_11_11_11_11.1","media.class":"Audio/Sink","device.id":"90"}}},
-  {"id":121,"type":"PipeWire:Interface:Node","info":{"props":{"node.name":"bluez_input.11_11_11_11_11_11","media.class":"Audio/Source","device.id":"90","bluez5.loopback":true}}},
-  {"id":50,"type":"PipeWire:Interface:Metadata","props":{"metadata.name":"default"},"metadata":[{"subject":0,"key":"default.audio.sink","type":"Spa:String:JSON","value":{"name":"bluez_output.22_22_22_22_22_22.1"}}]}
+  {
+    "id": 60,
+    "type": "PipeWire:Interface:Device",
+    "info": {
+      "props": {
+        "device.api": "alsa",
+        "device.name": "alsa_card.usb-Microsoft_LifeCam",
+        "device.description": "LifeCam HD-3000",
+        "media.class": "Audio/Device"
+      },
+      "params": {
+        "EnumProfile": [
+          {
+            "index": 0,
+            "name": "off",
+            "description": "Off",
+            "priority": 0,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 1,
+            "name": "input:mono-fallback",
+            "description": "Mono Input",
+            "priority": 1,
+            "available": "yes",
+            "classes": []
+          }
+        ],
+        "Profile": [
+          {
+            "index": 1,
+            "name": "input:mono-fallback",
+            "description": "Mono Input",
+            "priority": 1,
+            "available": "yes",
+            "classes": [],
+            "save": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": 90,
+    "type": "PipeWire:Interface:Device",
+    "info": {
+      "props": {
+        "device.api": "bluez5",
+        "device.name": "bluez_card.11_11_11_11_11_11",
+        "device.description": "WH-1000XM4",
+        "device.id": 90,
+        "api.bluez5.address": "11:11:11:11:11:11",
+        "media.class": "Audio/Device"
+      },
+      "params": {
+        "EnumProfile": [
+          {
+            "index": 0,
+            "name": "off",
+            "description": "Off",
+            "priority": 0,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 1,
+            "name": "a2dp-sink-sbc",
+            "description": "High Fidelity Playback (A2DP Sink, codec SBC)",
+            "priority": 129,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 2,
+            "name": "a2dp-sink",
+            "description": "High Fidelity Playback (A2DP Sink, codec LDAC)",
+            "priority": 131,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 3,
+            "name": "a2dp-sink-aac",
+            "description": "High Fidelity Playback (A2DP Sink, codec AAC)",
+            "priority": 130,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 4,
+            "name": "headset-head-unit-cvsd",
+            "description": "Headset Head Unit (HSP/HFP, codec CVSD)",
+            "priority": 1,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 5,
+            "name": "headset-head-unit",
+            "description": "Headset Head Unit (HSP/HFP, codec mSBC)",
+            "priority": 2,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 6,
+            "name": "headset-head-unit-lc3_swb",
+            "description": "Headset Head Unit (HSP/HFP, codec LC3-SWB)",
+            "priority": 3,
+            "available": "no",
+            "classes": []
+          }
+        ],
+        "Profile": [
+          {
+            "index": 1,
+            "name": "a2dp-sink-sbc",
+            "description": "High Fidelity Playback (A2DP Sink, codec SBC)",
+            "priority": 129,
+            "available": "yes",
+            "classes": [],
+            "save": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": 95,
+    "type": "PipeWire:Interface:Device",
+    "info": {
+      "props": {
+        "device.api": "bluez5",
+        "device.name": "bluez_card.22_22_22_22_22_22",
+        "device.description": "Jabra Evolve",
+        "device.id": 95,
+        "api.bluez5.address": "22:22:22:22:22:22",
+        "media.class": "Audio/Device"
+      },
+      "params": {
+        "EnumProfile": [
+          {
+            "index": 0,
+            "name": "off",
+            "description": "Off",
+            "priority": 0,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 1,
+            "name": "a2dp-sink",
+            "description": "High Fidelity Playback (A2DP Sink, codec SBC)",
+            "priority": 129,
+            "available": "yes",
+            "classes": []
+          },
+          {
+            "index": 2,
+            "name": "headset-head-unit",
+            "description": "Headset Head Unit (HSP/HFP, codec mSBC)",
+            "priority": 2,
+            "available": "yes",
+            "classes": []
+          }
+        ],
+        "Profile": [
+          {
+            "index": 2,
+            "name": "headset-head-unit",
+            "description": "Headset Head Unit (HSP/HFP, codec mSBC)",
+            "priority": 2,
+            "available": "yes",
+            "classes": [],
+            "save": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": 100,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "alsa_output.usb-Microsoft_LifeCam.analog-stereo",
+        "media.class": "Audio/Sink",
+        "device.id": 60
+      }
+    }
+  },
+  {
+    "id": 110,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "bluez_output.22_22_22_22_22_22.1",
+        "media.class": "Audio/Sink",
+        "device.id": 95
+      }
+    }
+  },
+  {
+    "id": 111,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "bluez_input.22_22_22_22_22_22",
+        "media.class": "Audio/Source",
+        "device.id": 95,
+        "bluez5.loopback": true
+      }
+    }
+  },
+  {
+    "id": 112,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "bluez_input.22_22_22_22_22_22.0",
+        "media.class": "Audio/Source",
+        "device.id": 95,
+        "api.bluez5.internal": true
+      }
+    }
+  },
+  {
+    "id": 120,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "bluez_output.11_11_11_11_11_11.1",
+        "media.class": "Audio/Sink",
+        "device.id": "90"
+      }
+    }
+  },
+  {
+    "id": 121,
+    "type": "PipeWire:Interface:Node",
+    "info": {
+      "props": {
+        "node.name": "bluez_input.11_11_11_11_11_11",
+        "media.class": "Audio/Source",
+        "device.id": "90",
+        "bluez5.loopback": true
+      }
+    }
+  },
+  {
+    "id": 50,
+    "type": "PipeWire:Interface:Metadata",
+    "props": { "metadata.name": "default" },
+    "metadata": [
+      {
+        "subject": 0,
+        "key": "default.audio.sink",
+        "type": "Spa:String:JSON",
+        "value": { "name": "bluez_output.22_22_22_22_22_22.1" }
+      }
+    ]
+  }
 ]

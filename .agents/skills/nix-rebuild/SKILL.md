@@ -113,7 +113,7 @@ PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin build <private-flake>
 
 ## Devshell (`nix develop` / `just dev`)
 
-Provides: `nh`, `home-manager`, `nom`, `nixos-anywhere`, `just`, `prettier`, `statix`, `shellcheck`, `jq`, `tokei`, plus pre-commit hooks (alejandra, ruff, shfmt, shellcheck via treefmt).
+Provides: `nh`, `home-manager`, `nom`, `nixos-anywhere`, `just`, `prettier`, `statix`, `shellcheck`, `jq`, `tokei`, plus pre-commit hooks (`treefmt` running alejandra, ruff, statix, deadnix, shellcheck, shfmt and prettier; plus check-json, check-merge-conflicts and betterleaks).
 
 Aliases inside the shell: `nbuild` = `nom build`, `dev-stats` = project stats via tokei+git.
 

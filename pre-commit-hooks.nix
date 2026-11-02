@@ -6,17 +6,11 @@
       settings.excludes = ["flake.lock"];
 
       settings.hooks = {
-        alejandra.enable = true;
-        statix.enable = true;
-        deadnix.enable = true;
+        treefmt.enable = true;
         # A mangled claude-code/settings.json is live the moment it lands on disk
         # (mkOutOfStoreSymlink), so these only stop it spreading to other hosts.
         check-json.enable = true;
         check-merge-conflicts.enable = true;
-        prettier = {
-          enable = true;
-          excludes = [".js" ".md" ".ts"];
-        };
         # git-hooks.nix ships no betterleaks hook, hence the literal entry.
         # `git --pre-commit --staged` scans what is about to be committed
         # rather than the whole history, so it stays fast on every commit.

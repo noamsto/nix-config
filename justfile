@@ -9,7 +9,7 @@ default:
 # Development & Validation
 # =============================================================================
 
-# Format all code using alejandra and other formatters
+# Format all code with treefmt (alejandra, ruff, statix, deadnix, shellcheck, shfmt, prettier)
 fmt:
     nix fmt
 

@@ -159,21 +159,27 @@
       programs = {
         alejandra.enable = true;
         ruff.enable = true;
-        deadnix.enable = false;
+        statix.enable = true;
+        deadnix = {
+          enable = true;
+          # NixOS/HM modules destructure `{ config, lib, pkgs, ... }:`, so keep
+          # those pattern names: without this deadnix rewrites the signatures.
+          no-lambda-pattern-names = true;
+        };
         shellcheck.enable = true;
         shfmt = {
           enable = true;
           indent_size = 2;
         };
-      };
-    };
-
-    formatter = pkgs.alejandra;
-
-    # Pre-commit configuration
-    pre-commit.settings = {
-      hooks = {
-        treefmt.enable = true;
+        prettier = {
+          enable = true;
+          # Markdown, JS and TS are left to their own tools; JSON is in scope
+          # here (the old hook's `(.js|…)` regex skipped it by accident).
+          # `home/nvim/` is owned by the unmerged #778 branch (vendored LazyVim
+          # JSON), and a generated npm lockfile feeds `fetchNpmDeps`, whose
+          # pinned `npmDepsHash` is whitespace-sensitive.
+          excludes = ["*.md" "*.js" "*.ts" "home/nvim/**" "**/package-lock.json"];
+        };
       };
     };
   };
