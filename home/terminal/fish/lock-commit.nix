@@ -19,11 +19,10 @@
           return 1
       end
 
-      # Known lockfiles: Nix flake inputs and lazy.nvim plugin pins. Each is
-      # diffed against HEAD on its own and committed as its own change, so a
-      # bump of one never sweeps in the other.
-      set -l lock_paths flake.lock home/nvim/lazyVim/lazy-lock.json
-      set -l lock_filters ${./lock-commit.jq} ${./lock-commit-nvim.jq}
+      # Known lockfiles, each diffed against HEAD on its own and committed as
+      # its own change.
+      set -l lock_paths flake.lock
+      set -l lock_filters ${./lock-commit.jq}
 
       set -l watched_inputs ${lib.escapeShellArgs (map (w: w.input) watchedInputs)}
       set -l watched_globs ${lib.escapeShellArgs (map (w: w.glob) watchedInputs)}

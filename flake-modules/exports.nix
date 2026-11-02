@@ -61,7 +61,7 @@ in {
       default = applyKeyed ../home/profile.nix;
       ai = applyKeyed ../home/ai;
       git = ../home/git;
-      nvim = ../home/nvim;
+      nvim = applyKeyed ../home/nvim;
       ssh = ../home/ssh;
     };
 

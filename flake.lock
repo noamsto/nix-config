@@ -2409,6 +2409,22 @@
         "type": "github"
       }
     },
+    "resolved-nvim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791376447,
+        "narHash": "sha256-GNSUJVAGriNaEgm/xfJyhaU7UDvMB6bOLeamAmElWYs=",
+        "owner": "noamsto",
+        "repo": "resolved.nvim",
+        "rev": "c913dd81469ca846b960a877f3b1212d97748a03",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noamsto",
+        "repo": "resolved.nvim",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "aegis-lock": "aegis-lock",
@@ -2441,6 +2457,8 @@
         "noctalia": "noctalia",
         "pre-commit-hooks": "pre-commit-hooks",
         "resolved": "resolved",
+        "resolved-nvim": "resolved-nvim",
+        "smart-splits-backend-tmux": "smart-splits-backend-tmux",
         "tmux-og": "tmux-og",
         "treefmt-nix": "treefmt-nix_8",
         "vicinae": "vicinae",
@@ -2489,6 +2507,22 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "smart-splits-backend-tmux": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790943526,
+        "narHash": "sha256-RcJdM6wFHZOEOK+cXVIT10anktqGgIilPmojFpdY+4g=",
+        "owner": "smart-splits-nvim",
+        "repo": "backend-tmux",
+        "rev": "9e9e6aa9b3eb7a8d3896a993611622ac97abff52",
+        "type": "github"
+      },
+      "original": {
+        "owner": "smart-splits-nvim",
+        "repo": "backend-tmux",
         "type": "github"
       }
     },

@@ -1,18 +1,7 @@
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
-  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
-  if vim.v.shell_error ~= 0 then
-    vim.api.nvim_echo({
-      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
-      { out, "WarningMsg" },
-      { "\nPress any key to exit..." },
-    }, true, {})
-    vim.fn.getchar()
-    os.exit(1)
-  end
-end
-vim.opt.rtp:prepend(lazypath)
+-- Nix serves lazy.nvim, every plugin and the treesitter parsers from the store
+-- (vim.g.lazy_nix, set in home/nvim/default.nix); lazy.nvim only loads them.
+local nix = vim.g.lazy_nix
+vim.opt.rtp:prepend(nix.plugins .. "/lazy.nvim")
 
 require("lazy").setup({
   spec = {
@@ -20,6 +9,9 @@ require("lazy").setup({
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     -- import/override with your plugins
     { import = "plugins" },
+    -- LazyVim counts a parser as installed only under install_dir and installs the
+    -- rest from the network.
+    { "nvim-treesitter/nvim-treesitter", opts = { install_dir = nix.parsers } },
   },
   defaults = {
     -- By default, only LazyVim plugins will be lazy-loaded. Your custom plugins will load during startup.
@@ -30,12 +22,15 @@ require("lazy").setup({
     version = false, -- always use the latest git commit
     -- version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  install = { colorscheme = { "catppuccin", "habamax" } },
+  -- "" matches every plugin URL, so each one loads from <plugins>/<name>; lazy never
+  -- clones, builds or locks local plugins.
+  dev = { path = nix.plugins, patterns = { "" }, fallback = false },
+  install = { missing = false, colorscheme = { "catppuccin", "habamax" } },
+  -- Written after any :Lazy task; the default would land in the HM-managed ~/.config/nvim.
+  lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
   rocks = { enabled = false }, -- no remaining plugin needs luarocks
-  checker = {
-    enabled = true, -- check for plugin updates periodically
-    notify = false, -- notify on update
-  }, -- automatically check for plugin updates
+  checker = { enabled = false },
+  change_detection = { enabled = false },
   ui = {
     border = "rounded",
   },

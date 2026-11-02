@@ -3,66 +3,23 @@
 A starter template for [LazyVim](https://github.com/LazyVim/LazyVim).
 Refer to the [documentation](https://lazyvim.github.io/installation) to get started.
 
-## Migrating from the old Home Manager layout (pre-Apr 2026)
+## How this config is served
 
-The old config symlinked the entire `~/.config/nvim` directory to this
-`lazyVim/` folder in one shot:
+- `home/nvim/default.nix` links `lua/`, `lazyvim.json`, `.neoconf.json` and
+  `stylua.toml` from the Nix store. It passes lazy.nvim a farm of
+  `pkgs.vimPlugins` (lazy's `dev` option) plus a treesitter parser dir, so
+  lazy.nvim never clones, installs or updates.
+- Adding a plugin: add its spec under `lua/plugins/` and map its lazy.nvim name
+  (the repo name, or the spec's `name`) to a package in the `plugins` attrset in
+  `home/nvim/default.nix`. A plugin missing from nixpkgs gets a `flake = false`
+  input and `buildPlugin`.
+- Treesitter parsers: the `nvim-treesitter.withPlugins` list in
+  `home/nvim/default.nix` must cover LazyVim's resolved `ensure_installed`.
+- Extras: edit `lazyvim.json`; `:LazyExtras` can't save into the store.
+- Updates: `nix flake update` (nixpkgs, or the plugin's input), not
+  `:Lazy update`. There is no `lazy-lock.json`.
+- One-time cleanup after the first switch to this layout:
 
-```nix
-xdg.configFile."nvim".source = mkOutOfStoreSymlink ".../lazyVim";
-```
-
-Recent Home Manager versions auto-generate `~/.config/nvim/init.lua` from
-`programs.neovim`, which conflicts with a whole-directory symlink. The new
-layout (see `home/nvim/default.nix`) symlinks each child individually
-(`nvim/lua`, `nvim/lazyvim.json`, `nvim/lazy-lock.json`, `nvim/.neoconf.json`,
-`nvim/stylua.toml`) and moves the LazyVim bootstrap into
-`programs.neovim.initLua`.
-
-**`init.lua` is no longer needed in this repo** — HM writes it to
-`~/.config/nvim/init.lua` itself.
-
-### Symptom: "Too many levels of symbolic links"
-
-After switching configs, you may see a circular symlink loop:
-
-```
-repo/home/nvim/lazyVim/lua
-  → /nix/store/…-home-manager-files/.config/nvim/lua
-  → /nix/store/…-hm_lua
-  → repo/home/nvim/lazyVim/lua   (loop)
-```
-
-**Root cause:** the *stale* `~/.config/nvim` symlink from the old HM
-generation still points into this repo directory. When the new HM
-generation writes per-file symlinks at `~/.config/nvim/<file>`, it follows
-that stale symlink and ends up writing the symlinks *into the repo*,
-creating a cycle with `mkOutOfStoreSymlink`.
-
-### Fix
-
-1. Remove the stale top-level symlink and any in-repo symlinks that were
-   accidentally created:
-
-   ```fish
-   gtrash put ~/.config/nvim
-   cd ~/nix-config/home/nvim/lazyVim
-   # Delete any files that are now symlinks into /nix/store (check with `ls -la`)
-   gtrash put init.lua lua lazy-lock.json lazyvim.json .neoconf.json stylua.toml
-   # Restore the originals if you had renamed them to .bak
-   mv lua.bak lua
-   mv lazy-lock.json.bak lazy-lock.json
-   mv lazyvim.json.bak lazyvim.json
-   mv .neoconf.json.bak .neoconf.json
-   mv stylua.toml.bak stylua.toml
-   ```
-
-2. Rebuild:
-
-   ```fish
-   nh home switch .
-   ```
-
-After activation, `~/.config/nvim` should be a real directory containing
-symlinks into `/nix/store/…-home-manager-files/.config/nvim/…`, which in
-turn point back to files in this repo. No loop.
+  ```fish
+  gtrash put ~/.local/share/nvim/lazy ~/.local/share/nvim/site/parser ~/.local/share/nvim/site/parser-info ~/.local/share/nvim/site/queries
+  ```

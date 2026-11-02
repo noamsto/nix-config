@@ -303,5 +303,15 @@
       url = "github:noamsto/jellarr/49b15afca3e51d2fa69b398283a960c6ea421c4e";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # === NEOVIM PLUGINS (not in nixpkgs) ===
+    resolved-nvim = {
+      url = "github:noamsto/resolved.nvim";
+      flake = false;
+    };
+    smart-splits-backend-tmux = {
+      url = "github:smart-splits-nvim/backend-tmux";
+      flake = false;
+    };
   };
 }

@@ -88,6 +88,17 @@
         # Runs jellyfin-known-proxies against a missing, populated and
         # element-less network.xml, plus an idempotent rerun.
         jellyfin-known-proxies = import ../nixos/services/jellyfin-known-proxies-check.nix {inherit pkgs;};
+      }
+      // lib.optionalAttrs (system == "x86_64-linux") {
+        # The Nix-served LazyVim config, headless in the sandbox (x86_64-linux: the
+        # example host's system).
+        nvim-lazy = import ../home/nvim/check.nix {
+          inherit pkgs;
+          hmConfig = let
+            inherit (inputs.self.nixosConfigurations.example) config;
+          in
+            config.home-manager.users.${config.username};
+        };
       };
 
     devShells.default = pkgs.mkShell {

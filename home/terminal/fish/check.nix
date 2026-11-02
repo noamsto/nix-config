@@ -38,7 +38,6 @@ in
     export LOCK_COMMIT_FUNCTION=${pkgs.writeText "lock-commit.fish" lockCommitFunction}
     export LOCK_COMMIT_FUNCTION_UNWATCHED=${pkgs.writeText "lock-commit-unwatched.fish" lockCommitFunctionUnwatched}
     export LOCK_COMMIT_FILTER=${./lock-commit.jq}
-    export LOCK_COMMIT_NVIM_FILTER=${./lock-commit-nvim.jq}
     bats --tap ${./tests/lock-commit.bats}
     touch $out
   ''

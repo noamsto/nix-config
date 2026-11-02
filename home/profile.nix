@@ -17,7 +17,7 @@
       ./git
       (applyKeyed ./direnv)
       ./ssh
-      ./nvim
+      (applyKeyed ./nvim)
       ./ipython
       (applyKeyed ./ai)
       (applyKeyed ./nix-tools)
