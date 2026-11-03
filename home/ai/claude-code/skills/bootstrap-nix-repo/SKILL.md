@@ -1,6 +1,6 @@
 ---
 name: bootstrap-nix-repo
-description: Use when starting a new project repo (Go, Rust, Node, generic) that needs a Nix flake, direnv, devShell, treefmt and pre-commit, following Noam's conventions.
+description: Use when starting a new project repo (Go, Rust, Node, Python, generic) that needs a Nix flake, direnv, devShell, treefmt and pre-commit, following Noam's conventions.
 ---
 
 # Bootstrap a Nix Repo
@@ -19,6 +19,7 @@ New project repos follow one house pattern: **flake-parts, inline `perSystem`, a
 | Go | `pkgs.buildGoModule` | inline in `perSystem` |
 | Rust | `crane` + `rust-overlay` | `craneLib.buildPackage` / `craneLib.devShell` |
 | Node/TS | `pkgs.buildNpmPackage` or devshell-only | `nodejs_22` + `pnpm` |
+| Python | uv + Nix devShell | see the `bootstrap-python-project` skill |
 | Formatting | `treefmt-nix` flakeModule | add when the repo has code worth formatting |
 | Pre-commit | `git-hooks-nix` flakeModule | add only when you want hooks; it generates `.pre-commit-config.yaml` |
 | direnv | `.envrc` → `use flake` | enhanced variant only if `.env.local` is needed |
@@ -233,3 +234,4 @@ Evidence: a CI audit cut nix-amd-ai#247 from 9m09s to 4m54s, prdash#161 from 5�
 - Adding a package to **this** `nix-config` repo → `nix-package-authoring` skill (inside nix-config)
 - Rebuilding / switching → `nix-rebuild` skill (inside nix-config)
 - The repo already has a working flake — just edit it
+- A Python project → `bootstrap-python-project` skill (uv devShell, ruff, pyrefly, prek, CI)
