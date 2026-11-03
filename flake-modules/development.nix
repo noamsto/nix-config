@@ -79,6 +79,9 @@
         # greetd IPC against the real PAM chain: a typed password never waits on
         # the fingerprint reader; only an empty submit uses it.
         greetd-pam = import ../nixos/hyprland/greetd-pam-test.nix {inherit pkgs;};
+        # Drives the real keyring TPM unlock units in a VM: one unlock per new
+        # keyring control socket, and a broken PCR 7 seal notifies once.
+        keyring-tpm-unlock = import ../nixos/hyprland/keyring-tpm-unlock-test.nix {inherit pkgs;};
         bt-headset-mode = import ../home/desktop/bt-headset/check.nix {inherit pkgs;};
         # Direct bats regression suite for the xresources-apply script, against a
         # real Xvfb server + xrdb (fresh-X-server behaviour).
