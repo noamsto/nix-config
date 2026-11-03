@@ -30,7 +30,7 @@ in {
       # (mirrors nixos/core/nix.nix). Safe: user is trusted above.
       accept-flake-config = true;
       extra-substituters = [
-        "https://cache.flakehub.com"
+        "https://install.determinate.systems"
         "https://nix-community.cachix.org"
         "https://nixpkgs-unfree.cachix.org"
         "https://claude-code.cachix.org"
