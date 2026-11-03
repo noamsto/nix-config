@@ -18,8 +18,9 @@
   lidCheckRule = {
     enable = true;
     # ignore=ignore is load-bearing: pam_exec returns PAM_IGNORE at setcred, and
-    # unmapped that becomes the stack's result. greetd substacks login and treats
-    # a PAM_IGNORE setcred as fatal, so the greeter never starts.
+    # unmapped that becomes the stack's result. greetd's auth chain copies this
+    # rule (greetd-pam.nix) and treats a PAM_IGNORE setcred as fatal, so the
+    # greeter never starts.
     control = "[success=ignore ignore=ignore default=1 perm_denied=1 auth_err=1]";
     modulePath = "${pkgs.pam}/lib/security/pam_exec.so";
     args = ["quiet" "seteuid" (toString lidCheckScript)];

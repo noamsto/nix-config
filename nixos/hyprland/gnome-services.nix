@@ -18,8 +18,7 @@ in
     };
 
     programs.seahorse.enable = true;
-    # Keyring unlock on password logins. Note: greetd's PAM file substacks
-    # `login`, so keyring/fprintd rules here apply to the greeter too — setting
-    # them on the greetd service itself is a no-op.
+    # Keyring unlock on password logins. greetd's auth chain copies this rule
+    # (greetd-pam.nix), and greetd's session stack still includes login.
     security.pam.services.login.enableGnomeKeyring = true;
   }

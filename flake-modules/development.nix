@@ -76,6 +76,9 @@
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         steam-console-idle = import ../nixos/steam-console/idle-test.nix {inherit pkgs;};
+        # greetd IPC against the real PAM chain: a typed password never waits on
+        # the fingerprint reader; only an empty submit uses it.
+        greetd-pam = import ../nixos/hyprland/greetd-pam-test.nix {inherit pkgs;};
         bt-headset-mode = import ../home/desktop/bt-headset/check.nix {inherit pkgs;};
         # Direct bats regression suite for the xresources-apply script, against a
         # real Xvfb server + xrdb (fresh-X-server behaviour).

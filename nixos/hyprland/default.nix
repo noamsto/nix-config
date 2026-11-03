@@ -33,7 +33,7 @@
   in
     wrap pkgs.hyprland;
 in {
-  imports = [./gnome-services.nix ./keyring-tpm-unlock.nix];
+  imports = [./gnome-services.nix ./keyring-tpm-unlock.nix ./greetd-pam.nix];
   config = lib.mkIf isHypr {
     programs = {
       hyprland = {
@@ -63,9 +63,9 @@ in {
           session.default = "hyprland-uwsm";
           user.default = config.username;
           cursor.size = 20;
-          # login's fprintd runs before pam_unix with no timeout (pam-lid-check.nix):
-          # an empty submit starts the scan, and the reply watchdog must not fire
-          # while it waits for a finger.
+          # An empty submit starts the fingerprint scan (greetd-pam.nix); a typed
+          # password never waits on the reader. request_timeout = 0 because three
+          # 30 s fprintd tries can outlast the greeter's 60 s reply watchdog.
           auth = {
             allow_empty_password = true;
             request_timeout = 0;
