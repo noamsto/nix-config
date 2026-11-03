@@ -3,12 +3,12 @@ return {
   "neovim/nvim-lspconfig",
   opts = {
     servers = {
-      nil_ls = {
+      nil_ls = { enabled = false },
+      nixd = {
         settings = {
-          ["nil"] = {
-            formatting = {
-              command = { "alejandra" },
-            },
+          nixd = {
+            nixpkgs = { expr = "import <nixpkgs> { }" },
+            formatting = { command = { "alejandra" } },
           },
         },
       },

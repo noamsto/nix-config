@@ -177,7 +177,7 @@ in {
         vscode-langservers-extracted # jsonls, eslint
         dockerfile-language-server
         docker-compose-language-service
-        nil
+        nixd
         harper # harper-ls, commit messages
 
         # Linters and formatters

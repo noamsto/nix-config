@@ -33,6 +33,15 @@ for _, name in ipairs({ "resolved.nvim", "backend-tmux", "blink.cmp" }) do
   end
 end
 
+-- LazyVim's nix extra enables nil_ls by default; pin the nixd swap here.
+local servers = require("lazy.core.plugin").values(Config.plugins["nvim-lspconfig"], "opts", false).servers
+if not (servers.nil_ls and servers.nil_ls.enabled == false) then
+  fail("nil_ls not disabled")
+end
+if not (servers.nixd and servers.nixd.settings.nixd.nixpkgs.expr == "import <nixpkgs> { }") then
+  fail("nixd not configured")
+end
+
 -- lazy.nvim always creates this root, so no clones means empty, not absent.
 local cloned = vim.fn.readdir(vim.fn.stdpath("data") .. "/lazy")
 if #cloned > 0 then
