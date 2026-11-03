@@ -98,18 +98,6 @@ inputs: [
     });
   })
 
-  # Hyprland 0.56.2 resets m_draggingTiled only inside updateDragWindow(), but
-  # dragBegin() has three early returns (unmapped window / no workspace / drag
-  # rejected on a fullscreen workspace) that skip it. dragEnd() then runs with a
-  # stale true and calls changeFloatingMode() on a window this drag never
-  # floated -> SEGV in CDwindleAlgorithm::addTarget. Upstream PR #15833 (fixes
-  # #15789) is merged to master but unreleased. Drop once nixpkgs carries >0.56.2.
-  (_final: prev: {
-    hyprland = prev.hyprland.overrideAttrs (old: {
-      patches = (old.patches or []) ++ [./patches/hyprland-drag-tiled-reset.patch];
-    });
-  })
-
   # sesh builds with Go 1.27 and rebuilds go-mockery with it for its preBuild,
   # but mockery 3.8.0 vendors golang.org/x/tools v0.49.0, which can't decode
   # Go 1.27.2 export data (v5 > 4), so both mockery's checks and sesh's mock
