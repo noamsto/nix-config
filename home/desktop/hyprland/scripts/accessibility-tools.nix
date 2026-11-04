@@ -5,26 +5,9 @@
   ...
 }: let
   palette = config.theme.palette.dark;
-  voxtype =
-    (pkgs.voxtype.override {
-      vulkanSupport = true;
-      onnxSupport = true;
-    })
-    .overrideAttrs (old: {
-      # nixpkgs enables no OSD feature, so the recording indicator never
-      # renders. Drop once nixpkgs grows an osdSupport flag.
-      #
-      # buildRustPackage snapshots buildFeatures into cargo*Features at call
-      # time and the cargo hooks read only those — appending to buildFeatures
-      # here builds green and silently omits the binary.
-      #
-      # gtk4 stays built as the launcher's fallback: it substitutes
-      # automatically if the quickshell frontend cannot start.
-      cargoBuildFeatures = old.cargoBuildFeatures ++ ["osd-gtk4"];
-      cargoCheckFeatures = old.cargoCheckFeatures ++ ["osd-gtk4"];
-      buildInputs = old.buildInputs ++ [pkgs.gtk4 pkgs.gtk4-layer-shell];
-      nativeBuildInputs = old.nativeBuildInputs ++ [pkgs.wrapGAppsHook4];
-    });
+  voxtype = pkgs.voxtype.override {
+    onnxSupport = true;
+  };
 in {
   home.packages = [
     # OCR tool - select area and copy text
@@ -41,7 +24,7 @@ in {
 
   services.voxtype = {
     enable = true;
-    # Vulkan accelerates the whisper engine; ONNX provides parakeet
+    # ONNX provides parakeet
     package = voxtype;
     # Also puts wtype + wl-clipboard on the service PATH for text injection
     wayland.display = "wayland-1";
