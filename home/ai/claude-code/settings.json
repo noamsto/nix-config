@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "skillListingBudgetFraction": 0.02,
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(just *)",
+      "Bash(curl *)",
+      "Bash(shellcheck *)",
+      "Bash(prettier *)",
+      "Bash(go *)",
+      "Bash(golangci-lint *)",
+      "Bash(buf *)",
+      "Bash(sqlc *)",
+      "Bash(atlas migrate *)",
+      "Bash(pg_isready *)",
+      "Bash(ssh *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(which *)",
+      "Bash(pwd)",
+      "Bash(echo *)",
+      "Bash(jq *)",
+      "Bash(sleep *)",
+      "Bash(mkdir *)",
+      "Bash(wc *)",
+      "Bash(cd *)",
+      "Bash(templ *)",
+      "Bash(docker *)",
+      "Bash(psql *)",
+      "Bash(uv *)",
+      "Bash(ps *)",
+      "Bash(pre-commit *)",
+      "Bash(direnv *)",
+      "Bash(process-compose *)",
+      "Bash(pc *)",
+      "Bash(diff *)",
+      "Bash(speakeasy *)",
+      "Bash(nix *)",
+      "Bash(temporal *)",
+      "Bash(mv *)",
+      "Bash(sed *)",
+      "Bash(time *)",
+      "Bash(mockery *)",
+      "Bash(staticcheck *)",
+      "Bash(sqruff *)",
+      "Bash(python3 *)",
+      "Bash(env)",
+      "Bash(op *)",
+      "Bash(gtrash *)",
+      "Bash(nh *)",
+      "Bash(tmux *)",
+      "Bash(cp *)",
+      "Bash(touch *)",
+      "Bash(stat *)",
+      "Bash(readlink *)",
+      "Bash(realpath *)",
+      "Bash(date *)",
+      "Bash(basename *)",
+      "Bash(dirname *)",
+      "Bash(pgrep *)",
+      "Bash(journalctl *)",
+      "Bash(systemctl *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(tr *)",
+      "Bash(cut *)",
+      "Bash(tee *)",
+      "Bash(xargs *)",
+      "Bash(test *)",
+      "Bash(type *)",
+      "Bash(nom *)",
+      "Bash(tokei *)",
+      "Bash(home-manager *)",
+      "Bash(git add:*)",
+      "Bash(tmux list-keys:*)",
+      "Bash(npm:*)",
+      "Bash(nix-prefetch-url:*)",
+      "Read(**/.claude/plugins/**)",
+      "mcp__claude_ai_Linear__*",
+      "mcp__claude_ai_Notion__*",
+      "mcp__plugin_pg_pg-aiguide__*",
+      "mcp__plugin_claude-code-home-manager_tavily__*",
+      "mcp__plugin_claude-code-home-manager_context7__*",
+      "mcp__plugin_claude-code-home-manager_firefox-devtools__*",
+      "mcp__plugin_claude-code-home-manager_playwright__*",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "defaultMode": "auto"
+  },
+  "autoMode": {
+    "environment": [
+      "**Primary use of Claude Code**: Software development, repository maintenance, and declarative NixOS, nix-darwin, and Home Manager configuration.",
+      "**Work tracking**: Repositories use GitHub Issues. Creating or modifying tickets, issues, comments, or pull requests is an external write and must be within the user's requested workflow.",
+      "**Repository visibility**: Do not infer visibility from the owner or organization. Check the configured remote's visibility when an action depends on whether a repository is public or private.",
+      "**Trusted repo**: The git repository where the session started and the remotes already configured for it. Files read from another repository retain their original trust boundary even if copied into the session repository.",
+      "**Source control**: The session repository and its existing configured remotes only. A remote added or repointed during the session is a new destination, not an implicitly trusted one.",
+      "**Cloud and deployment scope**: No cloud account, Kubernetes cluster, namespace, production service, or deployment target is globally trusted. Derive scope from the repository and the user's request; names containing `prod` or `production` are sensitive targets.",
+      "**Secrets management**: This Nix configuration uses agenix; the `op` CLI and provider-specific credential stores may also be available. Secret stores and credential files are sensitive sources, and their presence does not authorize reading or exporting them.",
+      "**Internal sharing and services**: No paste service, bucket, registry, internal domain, or cross-repository destination is globally trusted. Treat them as external unless the user or repository establishes the destination for the task.",
+      "**Host containment**: Claude Code runs on an ordinary developer machine with open internet access, not an isolated container. Host, instance-metadata, node, and cluster credentials are never task credentials unless the user explicitly places that identity in scope.",
+      "**Local workspace**: Work is isolated with Worktrunk git worktrees. Local reads and reversible edits inside the active worktree are routine; other repositories, the home directory, and system paths are outside project scope unless the task requires them.",
+      "**Sensitive data**: Personal data, confidential business data, credentials, encrypted-secret plaintext, private keys, authentication state, and files from private external sources remain sensitive and may only be shared with an explicitly authorized audience."
+    ],
+    "allow": ["$defaults"]
+  },
+  "fallbackModel": ["claude-sonnet-4-6"],
+  "enabledPlugins": {
+    "superpowers@superpowers-dev": true,
+    "context-efficient-tools@xdg-claude": true,
+    "refactoring-agent@xdg-claude": true,
+    "commit-commands@claude-code-plugins": true,
+    "frontend-design@claude-plugins-official": true,
+    "agent-smith@agent-smith": true,
+    "resolved@resolved": true
+  },
+  "extraKnownMarketplaces": {
+    "samber": {
+      "source": {
+        "source": "github",
+        "repo": "samber/cc"
+      }
+    },
+    "xdg-claude": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/xdg/xdg-claude.git"
+      }
+    },
+    "superpowers-dev": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/obra/superpowers.git"
+      }
+    },
+    "aiguide": {
+      "source": {
+        "source": "github",
+        "repo": "timescale/pg-aiguide"
+      }
+    },
+    "claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-code"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "jezweb-skills": {
+      "source": {
+        "source": "github",
+        "repo": "jezweb/claude-skills"
+      }
+    },
+    "marketingskills": {
+      "source": {
+        "source": "github",
+        "repo": "coreyhaines31/marketingskills"
+      }
+    },
+    "duckdb-skills": {
+      "source": {
+        "source": "github",
+        "repo": "duckdb/duckdb-skills"
+      }
+    },
+    "agent-smith": {
+      "source": {
+        "source": "github",
+        "repo": "noamsto/agent-smith"
+      }
+    },
+    "resolved": {
+      "source": {
+        "source": "github",
+        "repo": "noamsto/resolved"
+      }
+    }
+  },
+  "sandbox": {
+    "enabled": false,
+    "network": {
+      "allowedDomains": ["*"],
+      "allowLocalBinding": true
+    }
+  },
+  "feedbackSurveyRate": 0,
+  "syntaxHighlightingDisabled": false,
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
+  "theme": "auto",
+  "editorMode": "vim",
+  "teammateMode": "in-process",
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "additionalDirectories": ["~/.claude/plugins/cache"],
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    }
+  }
+}

@@ -1,0 +1,79 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Push runs get a group each: GitHub cancels a pending run whenever a newer one
+# queues, and a cancelled push run on main would leave its range unscanned.
+concurrency:
+  group: check-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Skipped while the repo is private: Actions billing blocks these jobs there; they run once the repo is public.
+  check:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters are used.
+          extra-conf: accept-flake-config = true
+
+      - name: Every input fetches anonymously
+        shell: bash
+        # Fresh store and fetcher cache so nothing already fetched satisfies a
+        # node; access-tokens '' overrides the token the installer writes to nix.conf.
+        # Substitution is off too, so a cache can't stand in for a fetch the public can't make.
+        run: |
+          env -u NIX_CONFIG GIT_SSH_COMMAND=false XDG_CACHE_HOME="$(mktemp -d)" nix flake archive --json --store "$(mktemp -d)" --option access-tokens '' --option substituters '' --option accept-flake-config false > /dev/null
+
+      - name: Flake check
+        run: nix flake check -L
+
+  secrets:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Scan new commits for secrets
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        # Only the new range: older history is gated elsewhere.
+        # git log -p prints no patch for merges, so a conflict resolution would go unscanned.
+        run: |
+          if [[ "$EVENT" == pull_request ]]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [[ "$BEFORE" =~ ^0+$ ]]; then
+            range="-1 $AFTER"
+          else
+            if ! git cat-file -e "$BEFORE^{commit}"; then
+              git fetch --no-tags origin "$BEFORE" || true
+            fi
+            if ! git cat-file -e "$BEFORE^{commit}"; then
+              echo "cannot resolve push range $BEFORE..$AFTER; scan it manually" >&2
+              exit 1
+            fi
+            range="$BEFORE..$AFTER"
+          fi
+          nix run --inputs-from . nixpkgs#betterleaks -- git --log-opts="--diff-merges=first-parent $range" --redact --no-banner .

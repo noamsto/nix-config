@@ -1,0 +1,451 @@
+{pkgs, ...}: let
+  # Wraps `timeout Ns systemd-inhibit ... sleep infinity`. On natural timer
+  # expiry — and only then — manually triggers suspend if the lid is closed.
+  # workspace-manager.sh skips its lid-close suspend handler whenever our
+  # inhibit is held, and HDM only fires on lid edge transitions, so without
+  # this nothing re-evaluates "lid is still closed" once the inhibit lifts.
+  #
+  # `set -e` is deliberately omitted: we capture `timeout`'s exit code in
+  # `$?` to distinguish natural expiry (rc=124) from external SIGTERM, and
+  # `set -e` would abort before the assignment runs.
+  system-awake-session = pkgs.writeShellScript "system-awake-session" ''
+    #!/usr/bin/env bash
+    set -uo pipefail
+    duration="$1"
+    tag="$2"
+    scope="$3"
+    label="$4"
+    state_file="''${XDG_RUNTIME_DIR:-/tmp}/system-awake.state.json"
+
+    ${pkgs.coreutils}/bin/timeout "''${duration}s" \
+      ${pkgs.systemd}/bin/systemd-inhibit \
+      --what=sleep:handle-lid-switch \
+      --who=hyprland \
+      --why="$tag ($scope $label)" \
+      --mode=block \
+      ${pkgs.coreutils}/bin/sleep infinity
+    rc=$?
+
+    (( rc == 124 )) || exit 0
+    # cmd_off / cmd_extend remove $state_file before pkill, so its absence
+    # signals user-initiated termination racing our natural expiry.
+    [[ -f "$state_file" ]] || exit 0
+
+    lid_closed=0
+    if ${pkgs.glib}/bin/gdbus call --system \
+        --dest org.freedesktop.UPower \
+        --object-path /org/freedesktop/UPower \
+        --method org.freedesktop.DBus.Properties.Get \
+        org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'; then
+      lid_closed=1
+    else
+      for f in /proc/acpi/button/lid/*/state; do
+        [[ -e "$f" ]] || continue
+        ${pkgs.gnugrep}/bin/grep -qi closed "$f" 2>/dev/null && lid_closed=1
+        break
+      done
+    fi
+    if (( lid_closed )); then
+      ${pkgs.systemd}/bin/systemctl suspend || true
+    fi
+  '';
+
+  # Keep-awake backend. Cycles of states:
+  #   off | {partial,full} × {30m, 1h, 2h, 4h, 8h, unlimited}
+  #
+  # Subcommands:
+  #   start <seconds|unlimited> --scope=<partial|full>
+  #   extend <seconds>
+  #   off
+  #   status [--json]
+  #   label
+  #   toggle-last     (activate last {duration,scope} combo, or off if already on)
+  #
+  # State lives in two files:
+  #   $XDG_RUNTIME_DIR/system-awake.state.json  (active session, cleared on reboot)
+  #   $XDG_STATE_HOME/system-awake/last.json    (last {duration_seconds,scope}, persists across reboots)
+  system-awake = pkgs.writeShellScriptBin "system-awake" ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    STATE_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+    STATE_FILE="$STATE_DIR/system-awake.state.json"
+    PERSIST_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/system-awake"
+    LAST_FILE="$PERSIST_DIR/last.json"
+    TAG="noams-system-awake"
+    WRAPPER_NAME="system-awake-session"
+    SCHEMA_VERSION=1
+
+    mkdir -p "$PERSIST_DIR"
+
+    notify() {
+      ${pkgs.libnotify}/bin/notify-send -i "$1" "Keep Awake" "$2" -t 2500 || true
+    }
+
+    guard_start() {
+      ${pkgs.systemd}/bin/systemctl --user start system-awake-thermal-guard.service 2>/dev/null || true
+    }
+    guard_stop() {
+      ${pkgs.systemd}/bin/systemctl --user stop system-awake-thermal-guard.service 2>/dev/null || true
+    }
+
+    # Write the state JSON atomically.
+    write_state() {
+      local scope="$1" duration_label="$2" end_epoch="$3" pid="$4" started="$5"
+      local tmp
+      tmp=$(mktemp "$STATE_FILE.XXXXXX")
+      ${pkgs.jq}/bin/jq -n \
+        --arg schema "$SCHEMA_VERSION" \
+        --arg scope "$scope" \
+        --arg duration_label "$duration_label" \
+        --argjson end_epoch "$end_epoch" \
+        --argjson pid "$pid" \
+        --argjson started "$started" \
+        '{active:true, schema:($schema|tonumber), scope:$scope, duration_label:$duration_label, end_epoch:$end_epoch, pid:$pid, started_epoch:$started}' \
+        > "$tmp"
+      mv "$tmp" "$STATE_FILE"
+    }
+
+    write_last() {
+      local duration_seconds="$1" scope="$2" duration_label="$3"
+      local tmp
+      tmp=$(mktemp "$LAST_FILE.XXXXXX")
+      ${pkgs.jq}/bin/jq -n \
+        --argjson duration_seconds "$duration_seconds" \
+        --arg scope "$scope" \
+        --arg duration_label "$duration_label" \
+        '{duration_seconds:$duration_seconds, scope:$scope, duration_label:$duration_label}' \
+        > "$tmp"
+      mv "$tmp" "$LAST_FILE"
+    }
+
+    # Format seconds as a compact duration label.
+    format_label() {
+      local seconds="$1"
+      if [[ "$seconds" == "unlimited" ]]; then
+        echo "∞"
+      elif (( seconds >= 3600 )); then
+        local h=$(( seconds / 3600 )) m=$(( (seconds % 3600) / 60 ))
+        if (( m == 0 )); then
+          printf '%dh\n' "$h"
+        else
+          printf '%dh%02dm\n' "$h" "$m"
+        fi
+      else
+        printf '%dm\n' $(( seconds / 60 ))
+      fi
+    }
+
+    # Returns 0 if a tagged inhibitor process is alive, 1 otherwise.
+    # Uses pgrep on the unique tag instead of trusting a captured PID,
+    # because `setsid -f` detaches the grandchild and $! is the dying parent.
+    inhibitor_pid() {
+      pgrep -f "systemd-inhibit.*$TAG" 2>/dev/null | head -1
+    }
+
+    is_active() {
+      [[ -f "$STATE_FILE" ]] || return 1
+      [[ -n "$(inhibitor_pid)" ]]
+    }
+
+    # Wait for any tagged inhibitor processes to actually die.
+    # pgrep returns matches in ascending PID order, so if we race a dying
+    # old process against a newly-spawned one, head -1 would pick the dying
+    # PID. Callers must ensure cleanup is synchronous w.r.t. process death.
+    wait_inhibitor_gone() {
+      local _
+      for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+        pgrep -f "systemd-inhibit.*$TAG" >/dev/null 2>&1 || return 0
+        sleep 0.05
+      done
+    }
+
+    # Order matters: kill the session wrapper first so a natural-expiry
+    # race can't reach its post-cleanup `systemctl suspend`. The wrapper's
+    # argv contains $WRAPPER_NAME but not "systemd-inhibit", so the inhibitor
+    # pattern alone wouldn't match it.
+    kill_session() {
+      pkill -f "$WRAPPER_NAME" 2>/dev/null || true
+      pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
+    }
+
+    cleanup_inactive() {
+      rm -f "$STATE_FILE"
+      kill_session
+      wait_inhibitor_gone
+      guard_stop
+    }
+
+    # Start a new inhibit session. Stops any existing session first.
+    # If $3 is "silent" the user-facing notify is suppressed — used by the
+    # plugin when reconfiguring an already-active session so the user doesn't
+    # get a toast per click.
+    cmd_start() {
+      local duration="$1" scope="$2" silent="''${3:-}"
+      local label_duration start_epoch end_epoch pid
+
+      if [[ "$scope" != "partial" && "$scope" != "full" ]]; then
+        echo "error: --scope must be partial or full" >&2
+        exit 2
+      fi
+
+      # Silent cleanup of any previous session (no "Disabled" notification).
+      cleanup_inactive
+
+      start_epoch=$(date +%s)
+      if [[ "$duration" == "unlimited" ]]; then
+        label_duration="unlimited"
+        end_epoch="null"
+        setsid -f ${pkgs.systemd}/bin/systemd-inhibit \
+          --what=sleep:handle-lid-switch \
+          --who=hyprland \
+          --why="$TAG ($scope unlimited)" \
+          --mode=block \
+          sleep infinity >/dev/null 2>&1 &
+        write_last -1 "$scope" "∞"
+      else
+        if ! [[ "$duration" =~ ^[0-9]+$ ]] || (( duration < 1 )); then
+          # Explicitly reject 0: `timeout 0s` in GNU coreutils means "no limit",
+          # which would silently produce an unlimited session instead of erroring.
+          echo "error: duration must be a positive integer (seconds) or 'unlimited'" >&2
+          exit 2
+        fi
+        label_duration=$(format_label "$duration")
+        end_epoch=$(( start_epoch + duration ))
+        setsid -f ${system-awake-session} "$duration" "$TAG" "$scope" "$label_duration" >/dev/null 2>&1 &
+        write_last "$duration" "$scope" "$label_duration"
+      fi
+
+      # Wait briefly for setsid's grandchild to register, then capture the real PID.
+      sleep 0.1
+      pid=$(inhibitor_pid)
+      if [[ -z "$pid" ]]; then
+        echo "warning: failed to detect inhibitor PID; aborting" >&2
+        cleanup_inactive
+        exit 1
+      fi
+
+      write_state "$scope" "$label_duration" "$end_epoch" "$pid" "$start_epoch"
+      guard_start
+      if [[ "$silent" != "silent" ]]; then
+        notify "weather-clear" "Enabled: $scope · $label_duration"
+      fi
+    }
+
+    # Extend the active session by N seconds. Does NOT update last.json
+    # (user's original picked duration is preserved for toggle-last).
+    cmd_extend() {
+      local delta="$1" silent="''${2:-}"
+      if ! is_active; then
+        echo "error: no active session to extend" >&2
+        exit 1
+      fi
+      if ! [[ "$delta" =~ ^[0-9]+$ ]]; then
+        echo "error: extend expects a positive integer (seconds)" >&2
+        exit 2
+      fi
+
+      local end_epoch scope started_epoch
+      end_epoch=$(${pkgs.jq}/bin/jq -r '.end_epoch' "$STATE_FILE")
+      scope=$(${pkgs.jq}/bin/jq -r '.scope' "$STATE_FILE")
+      started_epoch=$(${pkgs.jq}/bin/jq -r '.started_epoch' "$STATE_FILE")
+
+      if [[ "$end_epoch" == "null" ]]; then
+        [[ "$silent" != "silent" ]] && notify "weather-clear" "Already unlimited"
+        return 0
+      fi
+
+      local now new_end new_duration new_label pid
+      now=$(date +%s)
+      new_end=$(( end_epoch + delta ))
+      new_duration=$(( new_end - now ))
+      if (( new_duration <= 0 )); then
+        cmd_off
+        return 0
+      fi
+      new_label=$(format_label "$(( new_end - started_epoch ))")
+
+      # Wipe state and tear down old session without touching last.json/notification.
+      # Removing the state file before pkill lets the wrapper's post-rc check
+      # detect a concurrent natural expiry and bail out before suspending.
+      rm -f "$STATE_FILE"
+      kill_session
+      wait_inhibitor_gone
+
+      setsid -f ${system-awake-session} "$new_duration" "$TAG" "$scope" "$new_label extended" >/dev/null 2>&1 &
+
+      sleep 0.1
+      pid=$(inhibitor_pid)
+      if [[ -z "$pid" ]]; then
+        echo "warning: failed to detect inhibitor PID after extend" >&2
+        cleanup_inactive
+        exit 1
+      fi
+
+      write_state "$scope" "$new_label" "$new_end" "$pid" "$started_epoch"
+      # Defensive: guard service should already be running, but restart if crashed.
+      guard_start
+      [[ "$silent" != "silent" ]] && notify "weather-clear" "Extended to $new_label"
+      return 0
+    }
+
+    cmd_off() {
+      local silent="''${1:-}"
+      if [[ -f "$STATE_FILE" && "$silent" != "silent" ]]; then
+        notify "weather-clear-night" "Disabled"
+      fi
+      cleanup_inactive
+    }
+
+    cmd_status() {
+      local json=0
+      if [[ "''${1:-}" == "--json" ]]; then json=1; fi
+
+      # Self-heal: if state file says active but PID is gone, wipe it.
+      if [[ -f "$STATE_FILE" ]] && ! is_active; then
+        cleanup_inactive
+      fi
+
+      if [[ ! -f "$STATE_FILE" ]]; then
+        if (( json )); then
+          echo '{"active":false}'
+        else
+          echo "off"
+        fi
+        return 0
+      fi
+
+      # Self-heal: timeout ticked past end_epoch but process is still alive
+      # (shouldn't happen with `timeout Ns`, but guard anyway).
+      local now end_epoch
+      now=$(date +%s)
+      end_epoch=$(${pkgs.jq}/bin/jq -r '.end_epoch' "$STATE_FILE")
+      if [[ "$end_epoch" != "null" ]] && (( now >= end_epoch )); then
+        cleanup_inactive
+        if (( json )); then
+          echo '{"active":false}'
+        else
+          echo "off"
+        fi
+        return 0
+      fi
+
+      if (( json )); then
+        cat "$STATE_FILE"
+      else
+        local scope duration_label
+        scope=$(${pkgs.jq}/bin/jq -r '.scope' "$STATE_FILE")
+        duration_label=$(${pkgs.jq}/bin/jq -r '.duration_label' "$STATE_FILE")
+        if [[ "$end_epoch" == "null" ]]; then
+          printf '%s unlimited\n' "$scope"
+        else
+          local mins=$(( (end_epoch - now) / 60 ))
+          printf '%s %s (%dm left)\n' "$scope" "$duration_label" "$mins"
+        fi
+      fi
+    }
+
+    cmd_label() {
+      if [[ ! -f "$STATE_FILE" ]] || ! is_active; then
+        cleanup_inactive
+        return 0
+      fi
+      local end_epoch now remaining mins
+      end_epoch=$(${pkgs.jq}/bin/jq -r '.end_epoch' "$STATE_FILE")
+      if [[ "$end_epoch" == "null" ]]; then
+        echo "∞"
+        return 0
+      fi
+      now=$(date +%s)
+      remaining=$(( end_epoch - now ))
+      if (( remaining <= 0 )); then
+        cleanup_inactive
+        return 0
+      fi
+      mins=$(( remaining / 60 ))
+      if (( mins >= 60 )); then
+        printf '%dh%02dm\n' $(( mins / 60 )) $(( mins % 60 ))
+      else
+        printf '%dm\n' "$mins"
+      fi
+    }
+
+    cmd_toggle_last() {
+      local silent="''${1:-}"
+      if is_active; then
+        cmd_off "$silent"
+        return 0
+      fi
+      if [[ ! -f "$LAST_FILE" ]]; then
+        # No history — sensible first-time default.
+        cmd_start 1800 partial "$silent"
+        return 0
+      fi
+      local seconds scope
+      seconds=$(${pkgs.jq}/bin/jq -r '.duration_seconds' "$LAST_FILE")
+      scope=$(${pkgs.jq}/bin/jq -r '.scope' "$LAST_FILE")
+      if [[ "$seconds" == "-1" ]]; then
+        cmd_start unlimited "$scope" "$silent"
+      else
+        cmd_start "$seconds" "$scope" "$silent"
+      fi
+    }
+
+    # --- Dispatch ----------------------------------------------------------
+
+    if (( $# == 0 )); then
+      set -- toggle-last
+    fi
+
+    cmd="$1"; shift || true
+
+    case "$cmd" in
+      start)
+        __duration=""; __scope=""; __silent=""
+        for arg in "$@"; do
+          case "$arg" in
+            --scope=*) __scope="''${arg#--scope=}" ;;
+            --silent)  __silent="silent" ;;
+            *)         __duration="$arg" ;;
+          esac
+        done
+        if [[ -z "$__duration" || -z "$__scope" ]]; then
+          echo "usage: system-awake start <seconds|unlimited> --scope=<partial|full> [--silent]" >&2
+          exit 2
+        fi
+        cmd_start "$__duration" "$__scope" "$__silent"
+        ;;
+      extend)
+        [[ $# -ge 1 ]] || { echo "usage: system-awake extend <seconds> [--silent]" >&2; exit 2; }
+        __delta="$1"; shift
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_extend "$__delta" "$__silent"
+        ;;
+      off)
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_off "$__silent"
+        ;;
+      status)         cmd_status "''${1:-}" ;;
+      label)          cmd_label ;;
+      toggle-last)
+        __silent=""
+        for arg in "$@"; do
+          [[ "$arg" == "--silent" ]] && __silent="silent"
+        done
+        cmd_toggle_last "$__silent"
+        ;;
+      *)
+        echo "usage: system-awake [start|extend|off|status|label|toggle-last] [args]" >&2
+        exit 2
+        ;;
+    esac
+  '';
+in {
+  home.packages = [system-awake];
+}
