@@ -305,6 +305,36 @@ in {
         # empty directory, so pointing at one would dangle on a fresh clone.
       }
       // skillSymlinks;
+
+    # The LSP plugin recommender ignores the .lsp.json that home-manager
+    # writes, and its opt-out key lives in the mutable ~/.claude.json, not in
+    # either settings layer. Activation runs under `set -eu`, so every step
+    # that can fail sits in a condition and warns instead of aborting.
+    activation.claudeLspRecommendationDisabled = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      file="$HOME/.claude.json"
+      tmp=""
+      if [[ -v DRY_RUN ]]; then
+        echo "claude: would set lspRecommendationDisabled in $file"
+      elif [ -L "$file" ]; then
+        warnEcho "claude: $file is a symlink; not setting lspRecommendationDisabled"
+      elif [ ! -e "$file" ]; then
+        if ! { tmp=$(${pkgs.coreutils}/bin/mktemp "$file.XXXXXX") \
+          && ${pkgs.jq}/bin/jq -n '{lspRecommendationDisabled: true}' > "$tmp" \
+          && ${pkgs.coreutils}/bin/mv -f "$tmp" "$file"; }; then
+          warnEcho "claude: could not create $file with lspRecommendationDisabled"
+        fi
+      elif ! ${pkgs.jq}/bin/jq -e 'type == "object"' "$file" > /dev/null 2>&1; then
+        warnEcho "claude: $file is not a JSON object; leaving it untouched"
+      elif ${pkgs.jq}/bin/jq -e '.lspRecommendationDisabled == true' "$file" > /dev/null 2>&1; then
+        verboseEcho "claude: lspRecommendationDisabled already set"
+      elif ! { tmp=$(${pkgs.coreutils}/bin/mktemp "$file.XXXXXX") \
+        && ${pkgs.jq}/bin/jq '.lspRecommendationDisabled = true' "$file" > "$tmp" \
+        && ${pkgs.coreutils}/bin/chmod --reference="$file" "$tmp" \
+        && ${pkgs.coreutils}/bin/mv -f "$tmp" "$file"; }; then
+        warnEcho "claude: could not set lspRecommendationDisabled in $file"
+      fi
+      [ -z "$tmp" ] || ${pkgs.coreutils}/bin/rm -f "$tmp" || true
+    '';
   };
 
   programs.claude-code = {
