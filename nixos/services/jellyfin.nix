@@ -212,8 +212,12 @@ in {
           "x-systemd.idle-timeout=600"
           # soft: an unreachable server should fail the read, not park Jellyfin
           # in uninterruptible sleep the way the default hard mount would.
+          # timeo/retrans are tuned short so an outage fails each access in
+          # ~10 s instead of ~45 s (systemd's switch-time automount stat); the
+          # cost is that a brief server or wifi blip now fails a read sooner.
           "soft"
-          "timeo=150"
+          "timeo=50"
+          "retrans=1"
         ];
       };
     };
