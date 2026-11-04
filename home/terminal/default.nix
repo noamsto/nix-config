@@ -217,6 +217,7 @@ in {
             "\${custom.git_branch_smart}"
             "\${custom.git_wt}"
             "$git_status"
+            "$python"
             "$cmd_duration"
             "$line_break"
             "$character"
@@ -288,6 +289,12 @@ in {
             diverged = "⇕";
             up_to_date = "";
             stashed = "≡";
+          };
+
+          python = {
+            format = "[🐍 $version( \\($virtualenv\\))]($style) ";
+            style = "bold yellow";
+            detect_extensions = [];
           };
 
           cmd_duration = {
