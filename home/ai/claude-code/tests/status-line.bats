@@ -34,6 +34,10 @@ _cache() {
     >"$OG_AGENT_USAGE_DIR/claude.json"
 }
 
+_render_json() {
+  printf '%s' "$1" | bash -euo pipefail "$SCRIPT"
+}
+
 @test "monthly reset earlier than 7d caps the countdown" {
   _cache $((2 * 86400 + 3600))
   run _render
@@ -104,6 +108,44 @@ _cache() {
   printf '{"monthly": {"reset_at": "%s"}}' "$(($(date +%s) + 86400))" >"$OG_AGENT_USAGE_DIR/claude.json"
   run _render
   [[ $output == *"7d 60% (5d"* ]]
+}
+
+@test "seven_day alone renders the 7d window without a five-hour window" {
+  local zap now json
+  zap=$(printf '\xE2\x9A\xA1')
+  now=$(date +%s)
+  json=$(jq -n --argjson r "$((now + 3 * 86400 + 3600))" '{rate_limits: {seven_day: {used_percentage: 46, resets_at: $r}}}')
+  run _render_json "$json"
+  [[ $output == *"$zap"* ]]
+  [[ $output == *"7d 46% (3d"* ]]
+}
+
+@test "no rate_limits prints no usage segment" {
+  local zap
+  zap=$(printf '\xE2\x9A\xA1')
+  run _render_json '{}'
+  [[ $output != *"$zap"* ]]
+}
+
+@test "five-hour present keeps 7d hidden at 46%" {
+  local zap now json
+  zap=$(printf '\xE2\x9A\xA1')
+  now=$(date +%s)
+  json=$(jq -n --argjson r "$((now + 5 * 86400 + 3600))" \
+    '{rate_limits: {five_hour: {used_percentage: 10, resets_at: ($r - 400000)}, seven_day: {used_percentage: 46, resets_at: $r}}}')
+  run _render_json "$json"
+  [[ $output == *"$zap"* ]]
+  [[ $output != *"7d 46%"* ]]
+}
+
+@test "five-hour present shows 7d above 50%" {
+  local zap now json
+  zap=$(printf '\xE2\x9A\xA1')
+  now=$(date +%s)
+  json=$(jq -n --argjson r "$((now + 5 * 86400 + 3600))" \
+    '{rate_limits: {five_hour: {used_percentage: 10, resets_at: ($r - 400000)}, seven_day: {used_percentage: 76, resets_at: $r}}}')
+  run _render_json "$json"
+  [[ $output == *"7d 76%"* ]]
 }
 
 # --- Context measured against the auto-compact trigger ---

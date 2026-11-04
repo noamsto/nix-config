@@ -236,7 +236,7 @@ if ((ac_off == 1)); then
 fi
 
 # --- Rate limits ---
-# Format: ⚡ 56% (32m) · 7d 76% (15h)
+# Formats: ⚡ 56% (32m) · 7d 76% (15h)  |  ⚡ 7d 46% (3d)
 if [[ -n $r5_pct ]]; then
   r5i=${r5_pct%%.*}
   rc=$(color_pct "$r5i")
@@ -255,6 +255,13 @@ if [[ -n $r5_pct ]]; then
     fi
   fi
 
+  out+=" | $zap $part"
+elif [[ -n $r7_pct ]]; then
+  # No five-hour window: the 7d window is the only one, so show it regardless of share
+  r7i=${r7_pct%%.*}
+  part="$(color_pct "$r7i")7d ${r7i}%"
+  [[ -n $r7_reset ]] && part+=" ($(fmt_countdown "${r7_reset%%.*}"))"
+  part+="$R"
   out+=" | $zap $part"
 fi
 
