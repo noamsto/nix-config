@@ -264,7 +264,7 @@ in {
       fleetBudget = 16;
       engines = ["claude" "pi"];
       openrouter = {
-        monthlyTarget = 100;
+        monthlyTarget = 30;
         inherit (osConfig.nix-config.ai.openrouter) keyFile;
       };
       inherit (osConfig.nix-config.ai.dispatcher) localModels;
