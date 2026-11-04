@@ -91,6 +91,10 @@
         # lingering lock client, never replaces one while the session is locked.
         aegis-lock-guard = import ../home/desktop/hyprland/aegis-lock-check.nix {inherit pkgs;};
 
+        # Runs workspace-manager undocked with noctalia dead: it must still reload
+        # Hyprland instead of dying on the pgrep lookup.
+        workspace-manager = import ../home/desktop/hyprland/workspace-manager-check.nix {inherit pkgs;};
+
         # Runs jellyfin-known-proxies against a missing, populated and
         # element-less network.xml, plus an idempotent rerun.
         jellyfin-known-proxies = import ../nixos/services/jellyfin-known-proxies-check.nix {inherit pkgs;};

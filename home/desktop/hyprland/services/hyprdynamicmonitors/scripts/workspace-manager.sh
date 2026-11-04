@@ -54,7 +54,7 @@ get_noctalia_pid() {
   # Noctalia's binary is wrapped (exec -a); comm is truncated to the
   # wrapped ELF's name, so match argv[0] instead, anchored to exclude
   # noctalia-ipc / noctalia msg invocations.
-  pgrep -f '/bin/noctalia$' | head -1
+  pgrep -f '/bin/noctalia$' | head -1 || true
 }
 
 # Resolve monitor identifier to actual Hyprland monitor name
@@ -287,7 +287,7 @@ configure_undocked() {
 
       get_noctalia_pid() {
         # Wrapped binary: comm is truncated, match argv[0] instead (see get_noctalia_pid above)
-        pgrep -f '/bin/noctalia\$' | head -1
+        pgrep -f '/bin/noctalia\$' | head -1 || true
       }
 
       has_external_monitors() {

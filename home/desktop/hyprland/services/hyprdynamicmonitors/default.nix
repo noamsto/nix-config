@@ -4,25 +4,9 @@
   osConfig,
   ...
 }: let
-  # Create workspace-manager script with proper dependencies
-  workspaceManager = pkgs.writeShellApplication {
-    name = "workspace-manager";
-    runtimeInputs = [
-      pkgs.glib # provides gdbus for lid state checking
-      pkgs.procps # provides pgrep for the noctalia liveness probe
-      (import ../../scripts/xresources-apply.nix {inherit pkgs;}) # Xft.dpi profile apply/record
-    ];
-    # In server mode the box stays awake with the lid closed — skip the
-    # undocked-lid-closed suspend handler (mirrors the system-awake guard).
-    text =
-      ''
-        readonly SERVER_MODE=${
-          if osConfig.machine.serverMode or false
-          then "1"
-          else "0"
-        }
-      ''
-      + builtins.readFile ./scripts/workspace-manager.sh;
+  workspaceManager = import ./workspace-manager.nix {
+    inherit pkgs;
+    serverMode = osConfig.machine.serverMode or false;
   };
 
   # Get laptop scale from host config (defaults to 1.25)

@@ -32,7 +32,9 @@ in {
 
           # Find the ACTIVE Hyprland socket (most recently modified, not alphabetically first)
           # Old stale sockets may exist; ls -t sorts by modification time
-          export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/$USER_UID/hypr/ 2>/dev/null | head -1)
+          # shellcheck disable=SC2012 # ls -t: newest socket dir by mtime
+          HYPRLAND_INSTANCE_SIGNATURE=$(ls -t "/run/user/$USER_UID/hypr/" 2>/dev/null | head -1)
+          export HYPRLAND_INSTANCE_SIGNATURE
 
           if [ -z "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
             log "No Hyprland socket found, exiting"
@@ -52,8 +54,11 @@ in {
           # the window. The trap covers every exit path, since leaving HDM stopped
           # loses monitor management entirely.
           start_hdm() {
+            local out rc
             log "Starting hyprdynamicmonitors.service..."
-            ${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host start hyprdynamicmonitors.service 2>/dev/null || true
+            out=$(${pkgs.systemd}/bin/systemctl --user --machine=${config.username}@.host start hyprdynamicmonitors.service 2>&1)
+            rc=$?
+            log "hyprdynamicmonitors start (rc=$rc): $out"
           }
           trap start_hdm EXIT
 
@@ -72,30 +77,90 @@ in {
           # Log current monitor state and count monitors
           log "Monitor state at resume (Hyprland):"
           initial_monitor_count=$(${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq 'length' 2>/dev/null || echo 0)
-          ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read line; do log "$line"; done
+          ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read -r line; do log "$line"; done
           log "Initial Hyprland monitor count: $initial_monitor_count"
 
           # Log DRM connector status
           log "DRM connector status:"
           for status_file in /sys/class/drm/card*/status; do
             if [ -f "$status_file" ]; then
-              connector=$(basename $(dirname "$status_file"))
+              connector=$(basename "$(dirname "$status_file")")
               connector_name=''${connector#card?-}
               status=$(cat "$status_file")
               log "  $connector_name: $status"
             fi
           done
 
+          log_monitors() {
+            ${pkgs.hyprland}/bin/hyprctl monitors all -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read -r line; do log "$line"; done
+          }
+
+          # enabled | disabled | absent | query-failed
+          edp_state() {
+            local s
+            s=$(${pkgs.hyprland}/bin/hyprctl monitors all -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '[.[] | select(.name == "eDP-1")] | if length == 0 then "absent" elif .[0].disabled then "disabled" else "enabled" end' 2>/dev/null)
+            printf '%s\n' "''${s:-query-failed}"
+          }
+
+          # eDP-1 enabled and no phantom connector still enabled in Hyprland;
+          # sets unhealthy_reason when not
+          unhealthy_reason=""
+          display_healthy() {
+            local name state
+            state=$(edp_state)
+            if [ "$state" != "enabled" ]; then
+              unhealthy_reason="eDP-1 $state"
+              return 1
+            fi
+            for name in $phantoms; do
+              if ${pkgs.hyprland}/bin/hyprctl monitors all -j 2>/dev/null | ${pkgs.jq}/bin/jq -e --arg n "$name" 'any(.[]; .name == $n and .disabled == false)' &>/dev/null; then
+                unhealthy_reason="phantom $name still enabled"
+                return 1
+              fi
+            done
+            return 0
+          }
+
+          wait_healthy() {
+            local _
+            for _ in $(seq "$1"); do
+              display_healthy && return 0
+              sleep 0.5
+            done
+            return 1
+          }
+
+          # eval only registers a monitor rule; Hyprland re-applies it to an output it
+          # holds disabled only on reload.
+          ensure_display() {
+            local out rc
+            if wait_healthy 10; then
+              log "Display healthy after HDM restart"
+            else
+              log "Display unhealthy after HDM restart ($unhealthy_reason); reloading Hyprland config"
+              out=$(${pkgs.hyprland}/bin/hyprctl reload 2>&1)
+              rc=$?
+              log "Hyprland reload (rc=$rc): $out"
+              out=$(${pkgs.hyprland}/bin/hyprctl dispatch 'hl.dsp.dpms({ action = "on" })' 2>&1)
+              log "DPMS on after reload: $out"
+              wait_healthy 6 || true
+            fi
+            log "Final eDP-1 state: $(edp_state)"
+            log_monitors
+          }
+
           # Disable monitors that DRM reports as disconnected (phantoms in Hyprland)
           log "Disabling phantom monitors..."
+          phantoms=""
           for status_file in /sys/class/drm/card*/status; do
             if [ -f "$status_file" ]; then
-              connector=$(basename $(dirname "$status_file"))
+              connector=$(basename "$(dirname "$status_file")")
               connector_name=''${connector#card?-}
               status=$(cat "$status_file")
 
               if [ "$status" = "disconnected" ] && [ "$connector_name" != "Writeback-1" ]; then
                 log "  Disabling phantom: $connector_name"
+                phantoms="$phantoms $connector_name"
                 ${pkgs.hyprland}/bin/hyprctl eval "hl.monitor({ output = \"$connector_name\", disabled = true })" 2>/dev/null || true
               fi
             fi
@@ -106,15 +171,17 @@ in {
           # to avoid wrong layout / rendering on the closed screen before HDM applies the profile.
           # Only force-enable eDP-1 as fallback when no other monitors are connected.
           lid_closed=false
-          if ${pkgs.gnugrep}/bin/grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
-            lid_closed=true
-          fi
+          for f in /proc/acpi/button/lid/*/state; do
+            [ -e "$f" ] || continue
+            ${pkgs.gnugrep}/bin/grep -q closed "$f" && lid_closed=true
+            break
+          done
 
           # Count non-eDP connected monitors from DRM
           other_connected=0
           for status_file in /sys/class/drm/card*/status; do
             if [ -f "$status_file" ]; then
-              connector=$(basename $(dirname "$status_file"))
+              connector=$(basename "$(dirname "$status_file")")
               connector_name=''${connector#card?-}
               status=$(cat "$status_file")
               if [ "$status" = "connected" ] && [ "$connector_name" != "eDP-1" ] && [ "$connector_name" != "Writeback-1" ]; then
@@ -129,14 +196,16 @@ in {
             log "Lid closed with external monitors present, skipping eDP-1 enable"
           else
             log "Enabling eDP-1 before DPMS on (lid open or no other monitors)..."
-            ${pkgs.hyprland}/bin/hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "preferred", position = "auto", scale = ${config.laptop-scale} })' 2>/dev/null || true
+            out=$(${pkgs.hyprland}/bin/hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "preferred", position = "auto", scale = ${config.laptop-scale} })' 2>&1)
+            rc=$?
+            log "eDP-1 rule eval (rc=$rc): $out"
           fi
 
           sleep 0.3
 
           # Check monitor state after adjustment
           log "Monitor state after resume adjustment:"
-          ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read line; do log "$line"; done
+          ${pkgs.hyprland}/bin/hyprctl monitors -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.[] | "  \(.name): \(.width)x\(.height) disabled=\(.disabled)"' 2>&1 | while read -r line; do log "$line"; done
 
           # Turn displays on
           log "Turning DPMS on..."
@@ -144,7 +213,17 @@ in {
 
           sleep 0.2
 
-          # HDM is started by the EXIT trap above.
+          # Start HDM now rather than at exit: monitors.lua holds the stale pre-suspend
+          # profile until it renders, and a reload before that would re-disable eDP-1.
+          # Verify only with the lid open: lid closed without externals goes on to HDM's
+          # undocked_lid_closed suspend, and a long oneshot there risks re-suspending
+          # mid-activation.
+          trap - EXIT
+          start_hdm
+          if [ "$lid_closed" = "false" ]; then
+            ensure_display
+          fi
+
           log "=== Resume handler completed ==="
         '';
       };
