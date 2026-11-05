@@ -1,0 +1,39 @@
+{{- $left := index .MonitorsByTag "left" -}}
+{{- $right := index .MonitorsByTag "right" -}}
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- hdm: left={{$left.Name}} right={{$right.Name}} laptop={{$laptop.Name}}
+-- Docked at home - Samsung monitors with dynamic lid handling
+-- Template automatically enables/disables laptop screen based on lid state
+-- Uses .MonitorsByTag for gen5/gen6 compatibility
+-- Rendered by hyprdynamicmonitors; required from startup.lua (Hyprland has no hl.source()).
+-- The `-- hdm:` header above is parsed by workspace-manager.sh — keep it first.
+
+-- Samsung monitors (always enabled when docked at home)
+hl.monitor({ output = "{{$left.Name}}", mode = "2560x1440@60", position = "0x0", scale = 1.0 })
+hl.monitor({ output = "{{$right.Name}}", mode = "2560x1440@60", position = "2560x0", scale = 1.0 })
+
+-- Laptop screen (lid-aware) - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
+{{if isLidClosed}}
+hl.monitor({ output = "{{$laptop.Name}}", disabled = true })
+{{else}}
+hl.monitor({ output = "{{$laptop.Name}}", mode = "preferred", position = "5120x0", scale = @laptopScale@ })
+{{end}}
+
+-- Workspace assignments - left monitor (WS 1-4)
+hl.workspace_rule({ workspace = 1, monitor = "{{$left.Name}}", default = true, default_name = "dev" })
+hl.workspace_rule({ workspace = 2, monitor = "{{$left.Name}}", default_name = "web" })
+hl.workspace_rule({ workspace = 3, monitor = "{{$left.Name}}" })
+hl.workspace_rule({ workspace = 4, monitor = "{{$left.Name}}" })
+
+-- Workspace assignments - right monitor (WS 5-8)
+hl.workspace_rule({ workspace = 5, monitor = "{{$right.Name}}", default = true, default_name = "comms" })
+hl.workspace_rule({ workspace = 6, monitor = "{{$right.Name}}" })
+hl.workspace_rule({ workspace = 7, monitor = "{{$right.Name}}" })
+hl.workspace_rule({ workspace = 8, monitor = "{{$right.Name}}" })
+
+-- Workspace 9 - laptop screen when lid open, else right monitor (clamshell)
+{{if isLidClosed}}
+hl.workspace_rule({ workspace = 9, monitor = "{{$right.Name}}", default_name = "media" })
+{{else}}
+hl.workspace_rule({ workspace = 9, monitor = "{{$laptop.Name}}", default_name = "media" })
+{{end}}

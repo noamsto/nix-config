@@ -1,0 +1,997 @@
+#!/usr/bin/env bats
+# Regression suite for deslop-guard.sh: the non-source short-circuit (a branch
+# whose diff against its deslop base touches only non-source paths may push
+# without /deslop), the tag-only push exemption, and the nothing-to-push case
+# for a branch behind its upstream. Source paths and branch pushes keep the
+# gate. Run directly:
+#   bats home/ai/claude-code/tests/deslop-guard.bats
+# or: nix build .#checks.x86_64-linux.deslop-guard
+
+bats_require_minimum_version 1.5.0
+
+setup() {
+  GUARD=${GUARD:-$BATS_TEST_DIRNAME/../deslop-guard.sh}
+  export HOME="$BATS_TEST_TMPDIR/home"
+  export TMPDIR="$BATS_TEST_TMPDIR/tmp"
+  # Ignore the host's git config so the fixture is hermetic (a global
+  # commit.gpgsign/ssh signing key would otherwise break the sandbox).
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+  export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t
+  export GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
+  mkdir -p "$HOME" "$TMPDIR"
+  repo="$BATS_TEST_TMPDIR/repo"
+  mkdir -p "$repo"
+  git -C "$repo" init -q -b main
+  printf 'base\n' >"$repo/README.md"
+  git -C "$repo" add README.md
+  git -C "$repo" commit -qm base
+}
+
+_feed() {
+  printf '%s' "$1" | bash "$GUARD"
+}
+
+run_guard() {
+  local json
+  json=$(jq -n --arg c "$1" --arg cwd "$repo" \
+    '{tool_name:"Bash",tool_input:{command:$c},session_id:"deslop-guard-test",cwd:$cwd}')
+  run --separate-stderr _feed "$json"
+}
+
+assert_allow() {
+  [ "$status" -eq 0 ]
+  [ -z "$output" ] || {
+    echo "expected allow, got: $output"
+    return 1
+  }
+}
+
+assert_deny() {
+  [ "$status" -eq 0 ]
+  jq -e '.hookSpecificOutput.permissionDecision == "deny"' <<<"$output" >/dev/null || {
+    echo "expected deny, got: $output"
+    return 1
+  }
+}
+
+# --- allow: every changed path is non-source ---
+
+@test "allow: branch diff is only app.json" {
+  git -C "$repo" checkout -qb feat
+  mkdir -p "$repo/apps/mobile"
+  printf '{"v":2}\n' >"$repo/apps/mobile/app.json"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm json
+  run_guard 'git push origin feat'
+  assert_allow
+}
+
+@test "allow: mixed non-source set (md, yaml, png, lock, docs)" {
+  git -C "$repo" checkout -qb feat
+  mkdir -p "$repo/docs"
+  printf '# changelog\n' >"$repo/CHANGELOG.md"
+  printf 'a: 1\n' >"$repo/ci.yaml"
+  printf 'y\n' >"$repo/flow.yml"
+  printf 'PNG' >"$repo/logo.png"
+  printf '{"locked":true}\n' >"$repo/flake.lock"
+  printf '# guide\n' >"$repo/docs/guide.md"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm mixed
+  run_guard 'git push'
+  assert_allow
+}
+
+@test "allow: deleted non-source file" {
+  printf '{"v":1}\n' >"$repo/app.json"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm seed
+  git -C "$repo" checkout -qb feat
+  git -C "$repo" rm -q app.json
+  git -C "$repo" commit -qm del
+  run_guard 'git push'
+  assert_allow
+}
+
+@test "allow: non-source path with a space" {
+  git -C "$repo" checkout -qb feat
+  printf '{"v":1}\n' >"$repo/my data.json"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm space
+  run_guard 'git push'
+  assert_allow
+}
+
+@test "allow: non-source path with a newline" {
+  git -C "$repo" checkout -qb feat
+  printf '{"v":1}\n' >"$repo/a"$'\n'"b.json"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm newline
+  run_guard 'git push'
+  assert_allow
+}
+
+# --- deny: a source file is present ---
+
+@test "deny: one shell script among JSON changes" {
+  git -C "$repo" checkout -qb feat
+  printf '{"v":1}\n' >"$repo/app.json"
+  printf '#!/bin/sh\ntrue\n' >"$repo/run.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm mixed
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: one nix file among JSON changes" {
+  git -C "$repo" checkout -qb feat
+  printf '{"v":1}\n' >"$repo/app.json"
+  printf '{}\n' >"$repo/flake.nix"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm mixed
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: one TypeScript file among JSON changes" {
+  git -C "$repo" checkout -qb feat
+  printf '{"v":1}\n' >"$repo/app.json"
+  printf 'export const x = 1;\n' >"$repo/x.ts"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm mixed
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: deleted source file" {
+  printf 'true\n' >"$repo/keep.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm seed
+  git -C "$repo" checkout -qb feat
+  git -C "$repo" rm -q keep.sh
+  git -C "$repo" commit -qm del
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: source renamed to non-source" {
+  printf 'true\n' >"$repo/old.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm seed
+  git -C "$repo" checkout -qb feat
+  git -C "$repo" mv old.sh old.md
+  git -C "$repo" commit -qm rename
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: empty diff keeps today's behaviour" {
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: base cannot be resolved (no main, no upstream)" {
+  rm -rf "$repo"
+  mkdir -p "$repo"
+  git -C "$repo" init -q -b topic
+  printf '{"v":1}\n' >"$repo/app.json"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm json
+  run_guard 'git push'
+  assert_deny
+}
+
+# --- bypass stays working ---
+
+@test "allow: inline bypass with a source change" {
+  git -C "$repo" checkout -qb feat
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+  run_guard 'ALLOW_PUSH_WITHOUT_DESLOP=1 git push'
+  assert_allow
+}
+
+@test "allow: env bypass with a source change" {
+  git -C "$repo" checkout -qb feat
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+  export ALLOW_PUSH_WITHOUT_DESLOP=1
+  run_guard 'git push'
+  assert_allow
+}
+
+# --- tag-only pushes ---
+
+_with_remote() {
+  git init -q --bare -b main "$BATS_TEST_TMPDIR/remote.git"
+  git -C "$repo" remote add origin "$BATS_TEST_TMPDIR/remote.git"
+  git -C "$repo" push -q -u origin main
+}
+
+_source_commit() {
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+}
+
+@test "allow: push of an existing tag" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag created earlier in the same command" {
+  _source_commit
+  run_guard 'git tag -a v1 -m "deploy: ship it" && git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag created via git -C earlier in the same command" {
+  _source_commit
+  run_guard "git -C $repo tag v1; git -C $repo push origin v1"
+  assert_allow
+}
+
+@test "allow: tag push with 2>&1 and a pipe" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 2>&1 | tail -2'
+  assert_allow
+}
+
+@test "allow: tag push with spaced and file redirections" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 > /dev/null 2> err.log &>> all.log'
+  assert_allow
+}
+
+@test "allow: same-command tag push with redirect (issue repro)" {
+  _source_commit
+  run_guard 'git tag -a v0.0.0-test -m test && git push origin v0.0.0-test 2>&1 | tail -2'
+  assert_allow
+}
+
+@test "allow: tag named push-x is not mistaken for the push word" {
+  _source_commit
+  git -C "$repo" tag push-x
+  run_guard 'git push origin push-x'
+  assert_allow
+}
+
+@test "allow: issue repro: cd into the repo, tag a commit-ish, push with 2>&1 | tail" {
+  _two_checkouts
+  # A same-named branch in the cwd checkout means only the cd'd repo allows.
+  git -C "$clean" branch v1.4.4.8-renderer
+  run_guard_from "$clean" "cd $repo && git tag v1.4.4.8-renderer origin/main && git push origin v1.4.4.8-renderer 2>&1 | tail -3"
+  assert_allow
+}
+
+@test "allow: existing tag push with a bare 2>&1 and no pipe" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 2>&1'
+  assert_allow
+}
+
+@test "allow: lightweight tag created earlier in the same command" {
+  _source_commit
+  run_guard 'git tag v1 && git push origin v1'
+  assert_allow
+}
+
+@test "allow: same-command annotated tag on a commit-ish" {
+  _with_remote
+  _source_commit
+  run_guard 'git tag -a v1 -m "msg" origin/main && git push origin v1'
+  assert_allow
+}
+
+@test "allow: tag deleted then pushed when it already exists as a tag" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git tag -d v1 && git push origin v1'
+  assert_allow
+}
+
+@test "deny: branch push" {
+  _source_commit
+  git -C "$repo" checkout -qb feat
+  run_guard 'git push origin feat'
+  assert_deny
+}
+
+@test "deny: mixed tag and branch refspecs" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 main'
+  assert_deny
+}
+
+@test "deny: unknown ref is not a tag" {
+  _source_commit
+  run_guard 'git push origin v1'
+  assert_deny
+}
+
+@test "deny: tag creation only in a non-creating command" {
+  _source_commit
+  run_guard 'echo git tag main; git push origin main'
+  assert_deny
+}
+
+@test "deny: tag list/delete does not create the tag" {
+  _source_commit
+  run_guard 'git tag -d main && git push origin main'
+  assert_deny
+}
+
+@test "deny: tag push followed by a branch push" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 && git push origin main'
+  assert_deny
+}
+
+@test "deny: tag push chained with gh pr create" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1 && gh pr create --fill'
+  assert_deny
+}
+
+@test "deny: --follow-tags carries commits" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push --follow-tags origin v1'
+  assert_deny
+}
+
+@test "deny: tag delete does not create a non-branch tag" {
+  _source_commit
+  run_guard 'git tag -d v1 && git push origin v1'
+  assert_deny
+}
+
+@test "deny: same-command tag but a branch is pushed" {
+  _source_commit
+  run_guard 'git tag v1 && git push origin main'
+  assert_deny
+}
+
+@test "deny: bare git push with 2>&1" {
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  run_guard 'git push 2>&1'
+  assert_deny
+}
+
+# --- branch behind upstream ---
+
+_behind_upstream() {
+  _with_remote
+  printf 'true\n' >"$repo/up.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm up
+  git -C "$repo" push -q origin main
+  git -C "$repo" reset -q --hard HEAD~1
+}
+
+@test "allow: branch behind upstream with nothing to push" {
+  _behind_upstream
+  run_guard 'git push'
+  assert_allow
+}
+
+@test "allow: current-branch push behind upstream by name" {
+  _behind_upstream
+  run_guard 'git push origin main'
+  assert_allow
+}
+
+@test "deny: behind upstream plus a local source commit" {
+  _behind_upstream
+  _source_commit
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: up-to-date branch pushed to another destination" {
+  _with_remote
+  printf 'true\n' >"$repo/x.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm sh
+  git -C "$repo" push -q origin main
+  run_guard 'git push origin HEAD:release'
+  assert_deny
+}
+
+@test "deny: gh pr create on a branch equal to its upstream" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" push -q -u origin feat
+  run_guard 'gh pr create --fill'
+  assert_deny
+}
+
+# --- bypass probes ---
+
+@test "allow: redirect glued to the tag refspec" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1>/dev/null'
+  assert_allow
+}
+
+@test "deny: branch push on a later line after a tag push" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard $'git push origin v1\ngit push origin main'
+  assert_deny
+}
+
+@test "deny: tag pushed to a branch destination" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1:refs/heads/main'
+  assert_deny
+}
+
+@test "deny: new tag pushed to a branch destination" {
+  _source_commit
+  run_guard 'git tag v9 && git push origin v9:refs/heads/main'
+  assert_deny
+}
+
+@test "deny: peeled tag source" {
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard 'git push origin v1^{}:main'
+  assert_deny
+}
+
+@test "deny: tag that never gets created shadows a branch" {
+  _source_commit
+  run_guard 'false && git tag main; git push origin main'
+  assert_deny
+}
+
+@test "deny: --trailer value is not the tag name" {
+  _source_commit
+  run_guard 'git tag --trailer main v1; git push origin main'
+  assert_deny
+}
+
+@test "deny: --all under the upstream exemption" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" checkout -q main
+  run_guard 'git push --all origin'
+  assert_deny
+}
+
+@test "deny: second push chained after an up-to-date push" {
+  _with_remote
+  git -C "$repo" checkout -qb feat
+  _source_commit
+  git -C "$repo" checkout -q main
+  run_guard 'git push origin main && git push origin feat'
+  assert_deny
+}
+
+# --- repo resolution: the push's own -C / nearest preceding cd ---
+
+# `clean` is up to date with origin; `repo` has an unpushed source commit.
+_two_checkouts() {
+  _with_remote
+  clean="$BATS_TEST_TMPDIR/clean"
+  git clone -q "$BATS_TEST_TMPDIR/remote.git" "$clean"
+  _source_commit
+}
+
+@test "deny: push in a dirty checkout after git -C on a clean one" {
+  _two_checkouts
+  run_guard "git -C $clean fetch && git -C $repo push origin main"
+  assert_deny
+}
+
+@test "deny: push in a dirty checkout after cd to a clean one" {
+  _two_checkouts
+  run_guard "cd $clean && git fetch && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "deny: push's own -C wins over an unrelated cd" {
+  _two_checkouts
+  run_guard "cd $clean && git -C $repo push origin main"
+  assert_deny
+}
+
+@test "allow: push's own -C on a clean checkout after git -C on a dirty one" {
+  _two_checkouts
+  run_guard "git -C $repo fetch && git -C $clean push origin main"
+  assert_allow
+}
+
+# cwd is the clean checkout, so a cd that goes unrecognised falls back to it.
+run_guard_from() {
+  local json
+  json=$(jq -n --arg c "$2" --arg cwd "$1" \
+    '{tool_name:"Bash",tool_input:{command:$c},session_id:"deslop-guard-test",cwd:$cwd}')
+  run --separate-stderr _feed "$json"
+}
+
+@test "deny: cd inside a brace group" {
+  _two_checkouts
+  run_guard_from "$clean" "{ cd $repo; git push origin main; }"
+  assert_deny
+}
+
+@test "deny: cd in an if condition" {
+  _two_checkouts
+  run_guard_from "$clean" "if cd $repo; then git push origin main; fi"
+  assert_deny
+}
+
+@test "deny: chained relative cd" {
+  _two_checkouts
+  mkdir "$repo/sub"
+  run_guard_from "$clean" "cd $repo && cd sub && git push origin main"
+  assert_deny
+}
+
+@test "deny: cd-like text inside a quoted commit message" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && git commit -m 'x; cd $clean' && git push origin main"
+  assert_deny
+}
+
+@test "deny: double-quoted args before and after the cd" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m \"a\" && cd $repo && git commit -m \"b\" && git push origin main"
+  assert_deny
+}
+
+@test "deny: single-quoted args around a ;-separated cd" {
+  _two_checkouts
+  run_guard_from "$clean" "echo 'hi'; cd $repo; echo 'x'; git push origin main"
+  assert_deny
+}
+
+@test "deny: quoted cd path followed by a quoted separator" {
+  _two_checkouts
+  run_guard_from "$clean" "cd '$repo' && git commit -m 'x; y' && git push origin main"
+  assert_deny
+}
+
+@test "deny: git push text inside an earlier quoted message" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m \"note: git push later\" && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "deny: cd-like line inside a multi-line quoted message" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && git commit -m 'first
+cd docs for details' && git push origin main"
+  assert_deny
+}
+
+# --- gate only commands that really run a push ---
+# The words `git push` / `gh pr create` inside quoted text or a heredoc body are
+# not a push; anything that executes (command start, wrapper, shell payload,
+# command substitution) still is. Each case runs on a feat branch with an
+# unreviewed source commit, so a gated command denies and an ungated one allows.
+
+_gated_fixture() {
+  git -C "$repo" checkout -qb feat
+  _source_commit
+}
+
+_assert_not_gated() {
+  _gated_fixture
+  run_guard "$1"
+  assert_allow
+}
+
+_assert_gated() {
+  _gated_fixture
+  run_guard "$1"
+  assert_deny
+}
+
+@test "gate: not gated, double-quoted echo text" {
+  _assert_not_gated 'echo "git push later"'
+}
+
+@test "gate: not gated, commit message that mentions the push" {
+  _assert_not_gated "git commit -m 'then git push'"
+}
+
+@test "gate: not gated, quoted heredoc body" {
+  _assert_not_gated "cat > plan.md <<'EOF'
+step 1
+git push origin feat
+EOF"
+}
+
+@test "gate: not gated, dash and double-quoted heredoc delimiters" {
+  _assert_not_gated "cat > a.md <<-EOF
+	git push
+	EOF
+cat > b.md <<\"EOT\"
+gh pr create
+EOT"
+}
+
+@test "gate: not gated, tool argument that mentions a push" {
+  _assert_not_gated 'some-tool --note "one git push --force-with-lease of x"'
+}
+
+@test "gate: not gated, quoted text naming gh pr create" {
+  _assert_not_gated 'echo "then gh pr create"'
+}
+
+@test "gate: not gated, printed push words" {
+  _assert_not_gated 'echo git push'
+}
+
+@test "gate: not gated, push words in a trailing comment" {
+  _assert_not_gated 'git add x # then git push'
+}
+
+@test "gate: not gated, heredoc inside a command substitution in a commit message" {
+  _assert_not_gated "git commit -m \"\$(cat <<'EOF'
+fix: don't run git push here
+EOF
+)\""
+}
+
+@test "gate: not gated, heredoc body then a non-push command" {
+  _assert_not_gated "cat > n.md <<'EOF'
+git push
+EOF
+ls"
+}
+
+@test "gate: gated, bare push" {
+  _assert_gated 'git push'
+}
+
+@test "gate: gated, push after cd" {
+  _assert_gated "cd $repo && git push origin b"
+}
+
+@test "gate: gated, env assignment prefix" {
+  _assert_gated 'FOO=1 git push'
+}
+
+@test "gate: gated, env wrapper with -C" {
+  _assert_gated "env git -C $repo push"
+}
+
+@test "gate: gated, timeout wrapper" {
+  _assert_gated 'timeout 60 git push'
+}
+
+@test "gate: gated, nix develop -c wrapper" {
+  _assert_gated 'nix develop -c git push'
+}
+
+@test "gate: gated, unknown wrapper" {
+  _assert_gated 'flock f git push'
+}
+
+@test "gate: gated, bash -c payload" {
+  _assert_gated "bash -c 'git push'"
+}
+
+@test "gate: gated, combined -lc flag and double quotes" {
+  _assert_gated 'bash -lc "git push"'
+}
+
+@test "gate: gated, absolute shell path with -ec" {
+  _assert_gated "/bin/bash -ec 'git push'"
+}
+
+@test "gate: gated, ssh payload" {
+  _assert_gated 'ssh h "git push"'
+}
+
+@test "gate: gated, eval payload" {
+  _assert_gated 'eval "git push"'
+}
+
+@test "gate: gated, command substitution" {
+  _assert_gated 'echo $(git push)'
+}
+
+@test "gate: gated, command substitution inside double quotes" {
+  _assert_gated 'echo "$(git push)"'
+}
+
+@test "gate: gated, backtick substitution" {
+  _assert_gated 'echo `git push`'
+}
+
+@test "gate: gated, gh pr create" {
+  _assert_gated 'gh pr create --fill'
+}
+
+@test "gate: gated, unbalanced quote with a push" {
+  _assert_gated 'echo "oops && git push origin main'
+}
+
+@test "gate: gated, unbalanced quote still resolves the cd target" {
+  _two_checkouts
+  run_guard_from "$clean" "cd $repo && echo \"oops && git push origin main"
+  assert_deny
+}
+
+@test "gate: gated, real push after a heredoc" {
+  _assert_gated "cat > n.md <<'EOF'
+git push
+EOF
+git push origin feat"
+}
+
+@test "gate: gated, push in an if body after a semicolon" {
+  _assert_gated "if cd $repo; then git push origin main; fi"
+}
+
+@test "gate: gated, push in a for body" {
+  _assert_gated 'for b in x; do git push; done'
+}
+
+@test "gate: gated, push on a later line" {
+  _assert_gated 'git add x
+git push'
+}
+
+@test "gate: gated, push between comments containing apostrophes" {
+  _assert_gated "# don't touch X
+git push origin main
+# won't retry"
+}
+
+@test "gate: gated, hash in a parameter length is not a comment" {
+  _assert_gated 'n=${#a[@]}; git push'
+}
+
+@test "gate: gated, shell fed a heredoc" {
+  _assert_gated "bash <<'EOF'
+git push
+EOF"
+}
+
+@test "gate: gated, shell fed a here-string" {
+  _assert_gated "bash <<< 'git push'"
+}
+
+@test "gate: gated, substitution in an unquoted heredoc body" {
+  _assert_gated "cat <<EOF
+\$(git push)
+EOF"
+}
+
+@test "gate: gated, heredoc piped into a shell" {
+  _assert_gated "cat <<'EOF' | bash
+git push
+EOF"
+}
+
+@test "gate: gated, quoted text piped into a shell" {
+  _assert_gated "echo 'git push' | sh"
+}
+
+@test "gate: gated, printed text piped into a shell" {
+  _assert_gated 'echo git push | sh'
+}
+
+@test "gate: gated, heredoc inside a substitution handed to bash -c" {
+  _assert_gated "bash -c \"\$(cat <<'EOF'
+git push
+EOF
+)\""
+}
+
+@test "gate: gated, non-ASCII message before the cd and push" {
+  _two_checkouts
+  run_guard_from "$clean" "git commit -m 'שלום עולם' && cd $repo && git push origin main"
+  assert_deny
+}
+
+@test "gate: gated, non-ASCII message before a branch and tag push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "git commit -m 'שלום עולם' && git push origin main v1"
+  assert_deny
+}
+
+@test "gate: gated, push inside a shell payload next to a tag push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "bash -c 'git push origin main' && git push origin v1"
+  assert_deny
+}
+
+@test "gate: gated, tag push followed by a shell payload branch push" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "git push origin v1 && bash -c 'git push origin main'"
+  assert_deny
+}
+
+@test "gate: allow, tag push inside a shell payload" {
+  _with_remote
+  _source_commit
+  git -C "$repo" tag v1
+  run_guard "bash -c 'git push origin v1'"
+  assert_allow
+}
+
+@test "gate: gated, command too large to mask" {
+  _gated_fixture
+  local big
+  big=$(head -c 40000 /dev/zero | tr '\0' x)
+  run_guard "git commit -m '$big' && git push origin feat"
+  assert_deny
+}
+
+# Constructs the scanner could misread as quoted text, a comment or a heredoc
+# body must not hide a push that really runs: it gives up and the raw text decides.
+
+@test "gate: gated, hash inside a parameter expansion is not a comment" {
+  _assert_gated 'line=${line%% #*}; git push'
+}
+
+@test "gate: gated, hash in a substitution pattern is not a comment" {
+  _assert_gated 'x=a; echo ${x/ #/} ; git push'
+}
+
+@test "gate: gated, hash after an escaped blank is not a comment" {
+  _assert_gated 'echo a\ #b; git push'
+}
+
+@test "gate: gated, escaped dollar before a quote is not ANSI-C quoting" {
+  _assert_gated "echo \\\$'a\\' ; git push #'"
+}
+
+@test "gate: gated, doubled dollar before a quote is not ANSI-C quoting" {
+  _assert_gated "echo \$\$'a\\' ; git push #'"
+}
+
+@test "gate: gated, heredoc delimiter quoted mid-word" {
+  _assert_gated "cat <<E\"OF\"
+x
+EOF
+git push
+E"
+}
+
+@test "gate: gated, heredoc delimiter with an escaped letter" {
+  _assert_gated "cat <<EO\\F
+x
+EOF
+git push
+EO\\F"
+}
+
+@test "gate: gated, shift in arithmetic is not a heredoc" {
+  _assert_gated 'echo $((1<<2))
+git push
+2'
+}
+
+@test "gate: gated, case branch inside a quoted substitution" {
+  _assert_gated 'echo "$(case a in a) git push ;; esac)"'
+}
+
+@test "gate: gated, printed text piped into a wrapped shell" {
+  _assert_gated 'echo git push | sudo sh'
+}
+
+@test "gate: gated, printed text piped through tee into a shell" {
+  _assert_gated 'echo git push | tee /dev/null | bash'
+}
+
+@test "gate: gated, printed text piped with |& into a shell" {
+  _assert_gated 'echo git push |& sh'
+}
+
+@test "gate: gated, quoted text piped with |& into a shell" {
+  _assert_gated "echo 'git push' |& sh"
+}
+
+@test "gate: gated, heredoc piped with |& into a shell" {
+  _assert_gated "cat <<'EOF' |& bash
+git push
+EOF"
+}
+
+@test "gate: gated, command with far more separators than the scanner handles" {
+  local many
+  many=$(head -c 20000 /dev/zero | tr '\0' ';')
+  _assert_gated "$many git push"
+}
+
+@test "gate: gated, heredoc delimiter with escaped letters" {
+  _assert_gated $'cat <<\\E\\O\nx\nEO\ngit push\nE\\O'
+}
+
+@test "gate: gated, line continuation inside an unquoted heredoc delimiter line" {
+  _assert_gated $'cat <<EOF\nx\nEO\\\nF\ngit push\nEOF'
+}
+
+@test "gate: gated, heredoc inside a substitution ended by the closing paren" {
+  _assert_gated $'x=$(cat <<EOF\nhi\nEOF)\ngit push\nEOF\n(:)#)'
+}
+
+@test "gate: gated, heredoc body read after a substitution on its line" {
+  _assert_gated $'cat <<EOF $(\ngit push\n)\nbody\nEOF\n(:)#)'
+}
+
+@test "gate: gated, shift in an arithmetic command is not a heredoc" {
+  _assert_gated $'(( z = 1<<y ))\ngit push\ny'
+}
+
+@test "gate: gated, shift in a parameter expansion is not a heredoc" {
+  _assert_gated $'echo ${x:1<<y }\ngit push\ny'
+}
+
+@test "gate: gated, case glued to an operator inside a quoted substitution" {
+  _assert_gated 'echo "$(true&&case x in x) git push;; esac)"'
+}
+
+@test "gate: gated, quote inside backquotes does not open a string" {
+  _assert_gated $'echo `echo \'`; git push # \''
+}
+
+@test "gate: gated, quotes nested in a double-quoted parameter expansion" {
+  _assert_gated $'echo "${x#\'"\'}"; git push; echo "${x#\'"\'}"'
+}
+
+@test "gate: gated, printed text in a subshell piped into a shell" {
+  _assert_gated '(echo git push) | sh'
+}
+
+@test "gate: gated, printed text with a redirect piped into a shell" {
+  _assert_gated 'echo git push 2>&1 | sh'
+}
+
+@test "gate: gated, printed text fed through process substitution" {
+  _assert_gated 'bash <(echo git push)'
+}
+
+@test "gate: gated, source reading a heredoc from stdin" {
+  _assert_gated $'. /dev/stdin <<\'X\'\ngit push\nX'
+}
+
+@test "gate: gated, command with far more braces than the scanner handles" {
+  local many
+  many=$(head -c 20000 /dev/zero | tr '\0' '}')
+  _assert_gated "echo $many; git push"
+}
+
+@test "gate: gated, long ANSI-C string before a push" {
+  local long
+  long=$(head -c 30000 /dev/zero | tr '\0' a)
+  _assert_gated "echo \$'$long'; git push"
+}
+
+@test "gate: gated, nested payload fan-out stays within the scan budget" {
+  local leaf cmd=""
+  leaf=$(for _ in $(seq 1 150); do printf 'aaa;'; done)
+  for _ in 1 2 3 4 5 6; do
+    cmd+="bash -c '$leaf'
+"
+  done
+  _assert_gated "${cmd}git push"
+}

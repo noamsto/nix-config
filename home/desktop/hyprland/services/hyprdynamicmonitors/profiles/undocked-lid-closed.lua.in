@@ -1,0 +1,23 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+-- hdm: laptop={{$laptop.Name}}
+-- Undocked with lid closed - laptop only, triggers suspend via workspace-manager.
+-- Must stay in sync with undocked.lua.in — HDM skips post_apply_exec when the
+-- rendered monitors.lua is byte-identical to the previous profile's output,
+-- so this file MUST render differently from undocked.lua (hence this comment).
+-- Uses .MonitorsByTag for gen5/gen6 compatibility
+-- Rendered by hyprdynamicmonitors; required from startup.lua (Hyprland has no hl.source()).
+-- The `-- hdm:` header above is parsed by workspace-manager.sh — keep it first.
+
+-- Laptop screen configuration - scale @laptopScale@ (gen5: 2.0, gen6: 1.25)
+hl.monitor({ output = "{{$laptop.Name}}", mode = "preferred", position = "0x0", scale = @laptopScale@ })
+
+-- Named workspaces on laptop
+hl.workspace_rule({ workspace = 1, monitor = "{{$laptop.Name}}", default = true, default_name = "dev" })
+hl.workspace_rule({ workspace = 2, monitor = "{{$laptop.Name}}", default_name = "web" })
+hl.workspace_rule({ workspace = 3, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 4, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 5, monitor = "{{$laptop.Name}}", default_name = "comms" })
+hl.workspace_rule({ workspace = 6, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 7, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 8, monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = 9, monitor = "{{$laptop.Name}}", default_name = "media" })

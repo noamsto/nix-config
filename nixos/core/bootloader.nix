@@ -1,0 +1,25 @@
+{pkgs, ...}: {
+  boot = {
+    consoleLogLevel = 3;
+    kernelParams = [
+      "quiet"
+      "splash"
+      "systemd.show_status=auto"
+      "rd.udev.log_level=3"
+    ];
+    loader = {
+      systemd-boot = {
+        enable = true;
+        configurationLimit = 4; # 512 MiB ESP holds ~5 Lanzaboote generations at ~88 MiB each
+        consoleMode = "auto";
+      };
+      efi.canTouchEfiVariables = true;
+    };
+    plymouth = {
+      enable = true;
+      font = "${pkgs.jetbrains-mono}/share/fonts/truetype/JetBrainsMono-Regular.ttf";
+      themePackages = [(pkgs.catppuccin-plymouth.override {variant = "mocha";})];
+      theme = "catppuccin-mocha";
+    };
+  };
+}

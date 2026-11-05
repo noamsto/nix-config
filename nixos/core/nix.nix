@@ -1,0 +1,72 @@
+{
+  inputs,
+  self,
+  ...
+}: {
+  config,
+  lib,
+  ...
+}: let
+  inherit (self.lib) caches;
+in {
+  imports = [
+    inputs.determinate.nixosModules.default
+  ];
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  nix = {
+    # To protect nix-shell agains GC (development env)
+    settings = {
+      keep-outputs = true;
+      keep-derivations = true;
+
+      # Manual optimise storage: nix-store --optimise
+      # https://nixos.org/manual/nix/stable/command-ref/conf-file.html#conf-auto-optimise-store
+      auto-optimise-store = true;
+      builders-use-substitutes = true;
+
+      # enable flakes globally
+      experimental-features = ["nix-command" "flakes"];
+
+      # @wheel is trusted, so a flake's nixConfig could add substituters and
+      # signing keys unprompted; the caches this config needs come from
+      # lib/caches.nix below.
+      accept-flake-config = false;
+
+      # allow sudo users to mark the following values as trusted
+      allowed-users = ["@wheel"];
+      trusted-users = ["@wheel"];
+
+      download-buffer-size = 128 * 1024 * 1024; # 128 MiB
+
+      # No post-build-hook: there is no cache a laptop can push to. The private
+      # flake's `just seed-host` shares locally-built paths between hosts instead.
+
+      # Use shared cache configuration from lib/caches.nix
+      inherit (caches) substituters;
+      trusted-public-keys = caches.trustedPublicKeys;
+      extra-substituters = caches.extraSubstituters;
+      extra-trusted-public-keys = caches.extraTrustedPublicKeys;
+
+      # All threads per build; the scheduling below keeps the host responsive.
+      cores = 0;
+    };
+
+    extraOptions = lib.mkIf (config.nix-config.nix.accessTokensFile != null) ''
+      !include ${config.nix-config.nix.accessTokensFile}
+    '';
+
+    # Not `idle`: that starves builds outright while anything else is busy.
+    daemonCPUSchedPolicy = "batch";
+    daemonIOSchedClass = "idle";
+  };
+
+  systemd.services.nix-daemon.serviceConfig = {
+    Nice = 19;
+    # Throttles builds before they push the desktop into swap: 30% of a 54 GiB
+    # laptop is the ~16 GiB desktop working set measured during a big build.
+    MemoryHigh = lib.mkDefault "70%";
+  };
+}
