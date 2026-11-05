@@ -135,7 +135,7 @@
     # Must follow: a quickshell built from another nixpkgs can fail EGL init
     # against the host's /run/opengl-driver, and the lock client then aborts.
     aegis-lock = {
-      url = "https://flakehub.com/f/noamsto/aegis-lock/*.tar.gz";
+      url = "github:noamsto/aegis-lock";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
