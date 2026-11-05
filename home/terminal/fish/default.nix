@@ -239,6 +239,7 @@ in {
 
       shellAliases = {
         ll = "eza -l --icons --git";
+        llp = "eza -l --icons --git --absolute=on";
         tree = "eza --tree --icons";
         update = "sudo nixos-rebuild switch";
         ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
