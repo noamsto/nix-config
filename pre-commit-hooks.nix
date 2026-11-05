@@ -3,7 +3,6 @@
 
   perSystem = {pkgs, ...}: {
     pre-commit = {
-      # git-hooks.nix keys off the package's pname, so this swaps the runner.
       settings.package = pkgs.prek;
       settings.excludes = ["flake.lock"];
 
