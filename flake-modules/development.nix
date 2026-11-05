@@ -212,7 +212,9 @@
           # `home/nvim/` is owned by the unmerged #778 branch (vendored LazyVim
           # JSON), and a generated npm lockfile feeds `fetchNpmDeps`, whose
           # pinned `npmDepsHash` is whitespace-sensitive.
-          excludes = ["*.md" "*.js" "*.ts" "home/nvim/**" "**/package-lock.json"];
+          # pins.json is machine-written by scripts/update-bot in json.dumps form;
+          # reformatting it would fail the next round's treefmt check.
+          excludes = ["pins.json" "*.md" "*.js" "*.ts" "home/nvim/**" "**/package-lock.json"];
         };
       };
     };
