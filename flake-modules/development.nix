@@ -144,10 +144,11 @@
       name = "dots";
       DIRENV_LOG_FORMAT = "";
       shellHook = ''
-        # prek moves a foreign hook to <hook>.legacy and keeps chaining it, so a
-        # stale git-lfs pre-push hook would survive the install. Drop it first.
+        # prek chains a foreign pre-push as .legacy, and the stale git-lfs post-*
+        # shims fail git checkout/commit/merge when git-lfs is missing. Drop them
+        # first; the guard only removes stock git-lfs shims.
         hooks_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/hooks
-        for h in pre-push pre-push.legacy; do
+        for h in pre-push pre-push.legacy post-checkout post-commit post-merge; do
           if [ -f "$hooks_dir/$h" ] && grep -qE 'git[ -]lfs' "$hooks_dir/$h"; then
             rm -f "$hooks_dir/$h"
             echo "removed stale git-lfs hook: $hooks_dir/$h"
