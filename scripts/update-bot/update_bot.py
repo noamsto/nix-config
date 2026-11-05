@@ -203,7 +203,6 @@ def cmd_analyze(args) -> None:
     failures = []
     for r in roots:
         drv = r["drv"]
-        target = None
         if maps(cur, drv):
             target = drv
         else:

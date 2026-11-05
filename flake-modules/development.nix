@@ -45,6 +45,14 @@
         # Direct bats regression suite for the pi openrouter auth.json upsert script.
         pi-openrouter-auth = import ../home/ai/pi/openrouter-auth-check.nix {inherit pkgs;};
 
+        # Unit tests of the flake-update bot's pin selection and failure-to-attr logic.
+        update-bot = pkgs.runCommand "update-bot-tests" {nativeBuildInputs = [pkgs.python3];} ''
+          cp -r ${../scripts/update-bot} src
+          chmod -R u+w src
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover src
+          touch $out
+        '';
+
         # Direct bats regression suite for the secret-read, git-identity and pgrep-self-match guard scripts.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
 

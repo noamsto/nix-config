@@ -195,6 +195,21 @@ class NormalizeDrvsTest(unittest.TestCase):
         )
         self.assertEqual(got[f"{H['sp']}-system-path.drv"]["propagatedBuildInputs"], [RG_OUT])
 
+    def test_v4_null_build_inputs(self):
+        x, bash = "a" * 32, "b" * 32
+        doc = {
+            "version": 4,
+            "derivations": {
+                f"{x}-x-1.0.drv": v4_drv(
+                    "x-1.0",
+                    {"out": f"{x}-x-1.0"},
+                    structured={"buildInputs": [f"/nix/store/{bash}-bash-5.3-dev", None]},
+                ),
+            },
+        }
+        got = botcore.normalize_drvs(doc)
+        self.assertEqual(got[f"{x}-x-1.0.drv"]["buildInputs"], [f"{bash}-bash-5.3-dev"])
+
 
 class ClassifyLeafTest(unittest.TestCase):
     def setUp(self):

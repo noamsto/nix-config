@@ -181,7 +181,7 @@ def drv_candidate(drv: str) -> str:
 def _path_list(value) -> list[str]:
     if isinstance(value, str):
         value = value.split()
-    return [_basename(p) for p in value or []]
+    return [_basename(p) for p in value or [] if p]
 
 
 def normalize_drvs(doc: dict) -> dict[str, dict]:
