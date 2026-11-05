@@ -82,6 +82,52 @@ class ParseLogTest(unittest.TestCase):
         log = f"error: Cannot build '{drv}'.\n       Reason: timed out after 3600 seconds.\n"
         self.assertEqual(botcore.parse_log(log), {"roots": [], "depFailed": []})
 
+    def test_forged_error_after_odd_line_break_is_not_a_root(self):
+        real = "/nix/store/" + "a" * 32 + "-real-1.0.drv"
+        fake = "/nix/store/" + "b" * 32 + "-victim-1.0.drv"
+        for sep in ("\x0b", "\x0c", "\x1c", "\x85", " ", " "):
+            with self.subTest(sep=repr(sep)):
+                log = (
+                    f"error: Cannot build '{real}'.\n"
+                    "       Reason: builder failed with exit code 1.\n"
+                    f"       > output{sep}error: builder for '{fake}' failed with exit code 1\r\n"
+                    "       > done\n"
+                )
+                got = botcore.parse_log(log)
+                self.assertEqual([r["drv"] for r in got["roots"]], [real])
+                self.assertIn("> done", got["roots"][0]["excerpt"])
+
+
+class FailedStepsTest(unittest.TestCase):
+    EXPECTED = ("checks", "packages", "example")
+
+    def test_all_success(self):
+        steps = {s: {"outcome": "success", "conclusion": "success"} for s in self.EXPECTED}
+        self.assertEqual(botcore.failed_steps(steps, self.EXPECTED), [])
+
+    def test_failure_skipped_cancelled(self):
+        steps = {
+            "checks": {"outcome": "failure"},
+            "packages": {"outcome": "skipped"},
+            "example": {"outcome": "cancelled"},
+        }
+        self.assertEqual(botcore.failed_steps(steps, self.EXPECTED), list(self.EXPECTED))
+
+    def test_missing_step(self):
+        steps = {"checks": {"outcome": "success"}, "packages": {"outcome": "success"}}
+        self.assertEqual(botcore.failed_steps(steps, self.EXPECTED), ["example"])
+
+    def test_empty_or_malformed_steps(self):
+        for steps in ({}, None, [], {"checks": "success", "packages": {}, "example": None}):
+            with self.subTest(steps=steps):
+                self.assertEqual(botcore.failed_steps(steps, self.EXPECTED), list(self.EXPECTED))
+
+    def test_why_names_the_outcome(self):
+        self.assertTrue(botcore.step_failure_why("checks", "skipped").startswith("step checks was skipped without"))
+        self.assertTrue(botcore.step_failure_why("checks", "cancelled").startswith("step checks was cancelled without"))
+        self.assertTrue(botcore.step_failure_why("checks", "failure").startswith("step checks failed without"))
+        self.assertIn("no recorded outcome", botcore.step_failure_why("checks", None))
+
 
 class DrvCandidateTest(unittest.TestCase):
     def test_cases(self):
@@ -325,7 +371,7 @@ def reports(fails_by_job=None, jobs=JOBS):
 
 
 class DecideTest(unittest.TestCase):
-    def decide(self, reps, attempt="combined", round_=1, cur_pins=None, base_pins=None):
+    def decide(self, reps, attempt="combined", round_=1, cur_pins=None, base_pins=None, nixpkgs_moved=True):
         base_pins = base_pins if base_pins is not None else load("pins-base.json")
         return botcore.decide(
             attempt=attempt,
@@ -336,6 +382,7 @@ class DecideTest(unittest.TestCase):
             base_pins=base_pins,
             cur_pins=cur_pins if cur_pins is not None else botcore.drop_auto_pins(base_pins),
             nixpkgs_rev=NP_NEW,
+            nixpkgs_moved=nixpkgs_moved,
             today=TODAY,
             run_url=RUN,
         )
@@ -408,8 +455,19 @@ class DecideTest(unittest.TestCase):
     def test_pinned_still_failing_blocks(self):
         got = self.decide(reports({"check": [failure("slack")]}))
         self.assertBlocked(got, "slack: pinned-still-failing")
-        self.assertEqual(got["failures"][0]["why"], "pinned-still-failing")
+        self.assertTrue(got["failures"][0]["why"].startswith("pinned-still-failing (the pin did not take effect"))
         self.assertEqual(got["failures"][0]["system"], "x86_64-linux")
+
+    def test_base_comparison_unavailable_blocks(self):
+        got = self.decide(reports({"check": [failure("btop", notCausedByUpdate=None)]}))
+        self.assertBlocked(got, "btop: base comparison unavailable")
+
+    def test_nixpkgs_unchanged_blocks(self):
+        got = self.decide(reports({"check": [failure("btop")]}), nixpkgs_moved=False)
+        self.assertBlocked(got, "nixpkgs unchanged; the failure comes from a non-nixpkgs input")
+
+    def test_nixpkgs_unchanged_still_lands_when_green(self):
+        self.assertEqual(self.decide(reports(), nixpkgs_moved=False)["action"], "land")
 
     def test_missing_report_blocks(self):
         got = self.decide(reports(jobs=["check", "darwin"]))
@@ -543,6 +601,12 @@ class RenderIssueBodyTest(unittest.TestCase):
         self.assertIn(f'`{{"attr": "btop", "mode": "hold", "reason": "leaf", "since": "{TODAY}"}}`', body)
         self.assertIn("- mapped: no", body)
         self.assertEqual(body.count('"mode": "hold"'), 1)
+
+    def test_fence_outgrows_backtick_runs(self):
+        cases = {"plain": "```", "a ``` b": "````", "x ````` y `` z": "``````", "`": "```"}
+        for text_, fence in cases.items():
+            with self.subTest(text=text_):
+                self.assertEqual(botcore._fenced(text_), [fence, text_, fence])
 
     def test_interaction_and_inputs_hint(self):
         reps = {"inputs": reports({"aarch64-linux": [failure(None, leaf=False, why="eval error")]})}

@@ -21,6 +21,9 @@
       config.allowUnfree = true;
     };
 
+    # The hosts' pkgs (overlays + allowUnfree), for scripts/update-bot's failure-to-attr mapping.
+    legacyPackages = pkgs;
+
     checks =
       {
         # pi's hookyard guard manifest, end to end: the locked hookyard binary

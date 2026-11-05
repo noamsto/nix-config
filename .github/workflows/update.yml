@@ -87,10 +87,11 @@ jobs:
 
   # The halves run only after the combined tree stayed red after pinning: a green
   # combined tree is the common case and costs one attempt; the split only isolates
-  # which side broke, so each half can still land or block on its own.
+  # which side broke, so each half can still land or block on its own. They also
+  # need both sides changed: a half equal to the combined tree would only repeat it.
   split-nixpkgs:
     needs: [prepare, combined]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
     uses: ./.github/workflows/update-attempt.yml
     with:
       attempt: nixpkgs
@@ -100,7 +101,7 @@ jobs:
 
   split-inputs:
     needs: [prepare, combined]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.inputs-changed == 'true' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
     uses: ./.github/workflows/update-attempt.yml
     with:
       attempt: inputs

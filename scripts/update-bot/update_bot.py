@@ -107,50 +107,74 @@ def nix_str(value: str) -> str:
     return json.dumps(value).replace("${", "\\${")
 
 
-def eval_candidates(flake_dir: str, system: str, cands: list[str], current: bool) -> dict:
-    """One nix eval for every candidate; {} when eval fails or nothing to ask."""
-    if not cands:
-        return {}
-    host = system == "x86_64-linux"
-    expr = f"""
-let
-  f = builtins.getFlake {nix_str("git+file://" + flake_dir)};
-  system = {nix_str(system)};
-  pkgs = import f.inputs.nixpkgs {{
-    inherit system;
-    overlays = import (f.outPath + "/lib/overlays.nix") f.inputs;
-    config.allowUnfree = true;
-  }};
-  host = {"f.nixosConfigurations.example.pkgs" if host else "null"};
-  fb = {"import f.inputs.nixpkgs-fallback { inherit system; config.allowUnfree = true; }" if current else "null"};
-  drvOf = set: c:
-    let r = builtins.tryEval (
-      if set != null && set ? ${{c}}
-      then builtins.unsafeDiscardStringContext set.${{c}}.drvPath
+class EvalFailed(Exception):
+    pass
+
+
+REV_RE = re.compile(r"^[0-9a-f]{40}$")
+
+# Per candidate: its drvPath in `set`, or null when absent, not a derivation
+# (nixos, lib, config) or failing with a catchable error.
+DRV_APPLY = """set: let
+  cands = builtins.fromJSON @CANDS@;
+  drvOf = c: let
+    r = builtins.tryEval (
+      if set ? ${c}
+      then let v = set.${c}; in
+        if builtins.isAttrs v && v ? drvPath
+        then builtins.unsafeDiscardStringContext v.drvPath
+        else null
       else null);
-    in if r.success then r.value else null;
-  has = set: c:
-    let r = builtins.tryEval (set != null && set ? ${{c}});
-    in r.success && r.value;
-  cands = builtins.fromJSON {nix_str(json.dumps(cands))};
-in builtins.listToAttrs (map (c: {{
-  name = c;
-  value = {{
-    drv = drvOf pkgs c;
-    hostDrv = drvOf host c;
-    inFallback = {"has fb c" if current else "false"};
-  }};
-}}) cands)
-"""
-    proc = sh([*NIX, "eval", "--impure", "--json", "--expr", expr], check=False)
+  in if r.success then r.value else null;
+in builtins.listToAttrs (map (c: { name = c; value = drvOf c; }) cands)"""
+
+HAS_APPLY = """set: let
+  cands = builtins.fromJSON @CANDS@;
+  has = c: let r = builtins.tryEval (set ? ${c}); in r.success && r.value;
+in builtins.listToAttrs (map (c: { name = c; value = has c; }) cands)"""
+
+
+def nix_apply(installable: str, template: str, cands: list[str]) -> dict:
+    """Pure `nix eval --apply` of template over installable; raises EvalFailed."""
+    fn = template.replace("@CANDS@", nix_str(json.dumps(cands)))
+    proc = sh([*NIX, "eval", "--json", installable, "--apply", fn], check=False)
     if proc.returncode != 0:
-        print(f"nix eval failed for {flake_dir}:\n{proc.stderr[-2000:]}", file=sys.stderr)
-        return {}
+        print(f"nix eval failed for {installable}:\n{proc.stderr[-2000:]}", file=sys.stderr)
+        lines = [line for line in proc.stderr.splitlines() if line.strip()]
+        raise EvalFailed(lines[-1].strip() if lines else f"exit {proc.returncode}")
     return json.loads(proc.stdout)
 
 
-def referrers(drv: str) -> list[str]:
+def drv_table(flake_dir: str, system: str, cands: list[str]) -> dict[str, set[str]]:
+    """cand -> drvPaths it evaluates to in the hosts' pkgs of flake_dir."""
+    if not cands:
+        return {}
+    flake = "git+file://" + flake_dir
+    installables = [f"{flake}#legacyPackages.{system}"]
+    if system == "x86_64-linux":
+        installables.append(f"{flake}#nixosConfigurations.example.pkgs")
+    table: dict[str, set[str]] = {c: set() for c in cands}
+    for installable in installables:
+        for cand, drv in nix_apply(installable, DRV_APPLY, cands).items():
+            if isinstance(drv, str):
+                table.setdefault(cand, set()).add(drv)
+    return table
+
+
+def fallback_table(system: str, cands: list[str]) -> dict[str, bool]:
+    """cand -> whether the locked nixpkgs-fallback has it."""
+    rev = botcore.locked_rev(read_json("flake.lock"), "nixpkgs-fallback") or ""
+    if not REV_RE.match(rev):
+        raise EvalFailed(f"no 40-hex nixpkgs-fallback rev in flake.lock: {rev!r}")
+    installable = f"github:nixos/nixpkgs/{rev}#legacyPackages.{system}"
+    return nix_apply(installable, HAS_APPLY, cands)
+
+
+def referrers(drv: str) -> list[str] | None:
     proc = sh(["nix-store", "--query", "--referrers", drv], check=False)
+    if proc.returncode != 0:
+        print(f"nix-store --query --referrers {drv} failed:\n{proc.stderr[-2000:]}", file=sys.stderr)
+        return None
     return [
         line.strip()
         for line in proc.stdout.splitlines()
@@ -158,33 +182,55 @@ def referrers(drv: str) -> list[str]:
     ]
 
 
-def drv_info(entry: dict | None) -> set[str]:
-    return {v for v in (entry or {}).values() if isinstance(v, str)}
+def blank_failure(drv: str, why: str, excerpt: str = "") -> dict:
+    return {
+        "drv": drv,
+        "attr": None,
+        "leaf": False,
+        "notCausedByUpdate": False,
+        "missingInFallback": False,
+        "why": why,
+        "logExcerpt": excerpt,
+    }
 
 
 def cmd_analyze(args) -> None:
-    steps = json.loads(args.steps_json or "{}")
+    try:
+        steps = json.loads(args.steps_json or "{}")
+    except json.JSONDecodeError:
+        steps = {}
+    if not isinstance(steps, dict):
+        steps = {}
+    expected = args.expected_steps.split()
+    if not expected:
+        sys.exit("analyze: --expected-steps is empty")
+    failed = botcore.failed_steps(steps, expected)
     logs = pathlib.Path(args.logs)
-    failed_steps = [s for s, v in steps.items() if v.get("outcome") == "failure"]
+
+    def outcome(step: str):
+        entry = steps.get(step)
+        return entry.get("outcome") if isinstance(entry, dict) else None
 
     roots, dep_failed, no_root_steps, seen = [], set(), [], set()
-    for step in failed_steps:
+    for step in failed:
+        # A skipped or missing step never ran, so any log for it is stale.
         log = logs / f"{step}.log"
-        parsed = botcore.parse_log(log.read_text(errors="replace") if log.exists() else "")
+        ran = outcome(step) in ("failure", "cancelled") and log.exists()
+        parsed = botcore.parse_log(log.read_text(errors="replace") if ran else "")
         dep_failed.update(parsed["depFailed"])
-        new = [r for r in parsed["roots"] if r["drv"] not in seen]
         if not parsed["roots"]:
             no_root_steps.append(step)
-        for r in new:
-            seen.add(r["drv"])
-            roots.append(r)
+        for r in parsed["roots"]:
+            if r["drv"] not in seen:
+                seen.add(r["drv"])
+                roots.append(r)
 
     # FOD hop: an unmapped fixed-output hash failure is attributed to the
     # failed dependents that consume it.
     dependents: dict[str, list[str]] = {}
     for r in roots:
         if r["kind"] == "hash":
-            dependents[r["drv"]] = [d for d in referrers(r["drv"]) if d in dep_failed]
+            dependents[r["drv"]] = [d for d in referrers(r["drv"]) or [] if d in dep_failed]
 
     cand_of: dict[str, str] = {}
     for drv in [r["drv"] for r in roots] + [d for ds in dependents.values() for d in ds]:
@@ -193,54 +239,54 @@ def cmd_analyze(args) -> None:
             cand_of[drv] = cand
     cands = sorted(set(cand_of.values()))
 
-    cur = eval_candidates(str(pathlib.Path.cwd()), args.system, cands, True)
-    base = eval_candidates(str(pathlib.Path(args.base_dir).resolve()), args.system, cands, False)
+    def attempt(fn, *a):
+        try:
+            return fn(*a), None
+        except EvalFailed as e:
+            return {}, str(e)
+
+    cur, cur_err = attempt(drv_table, str(pathlib.Path.cwd()), args.system, cands)
+    base, base_err = attempt(drv_table, str(pathlib.Path(args.base_dir).resolve()), args.system, cands)
+    fallback, fallback_err = attempt(fallback_table, args.system, cands) if cands else ({}, None)
 
     def maps(table: dict, drv: str) -> bool:
         cand = cand_of.get(drv)
-        return cand is not None and drv in drv_info(table.get(cand))
+        return cand is not None and drv in table.get(cand, set())
 
     failures = []
     for r in roots:
         drv = r["drv"]
+        if cur_err is not None:
+            failures.append(blank_failure(drv, f"nix eval of candidates failed: {cur_err}", r["excerpt"]))
+            continue
         if maps(cur, drv):
             target = drv
         else:
             target = next((d for d in dependents.get(drv, []) if maps(cur, d)), None)
-        failure = {
-            "drv": drv,
-            "attr": None,
-            "leaf": False,
-            "notCausedByUpdate": False,
-            "missingInFallback": False,
-            "why": "unmapped: no top-level package attr builds this derivation",
-            "logExcerpt": r["excerpt"],
-        }
+        failure = blank_failure(drv, "unmapped: no top-level package attr builds this derivation", r["excerpt"])
         if target:
             attr = cand_of[target]
             failure["attr"] = attr
-            failure["notCausedByUpdate"] = maps(base, target)
-            failure["missingInFallback"] = not cur[attr].get("inFallback", False)
             failure["leaf"], failure["why"] = leaf_of(attr, target)
+            if base_err is None:
+                failure["notCausedByUpdate"] = maps(base, target)
+            else:
+                failure["notCausedByUpdate"] = None
+                failure["why"] += f"; base eval failed: {base_err}"
+            if fallback_err is None:
+                failure["missingInFallback"] = not fallback.get(attr, False)
+            else:
+                failure["missingInFallback"] = True
+                failure["why"] += f"; nixpkgs-fallback eval failed: {fallback_err}"
         failures.append(failure)
 
     for step in no_root_steps:
-        failures.append(
-            {
-                "drv": "",
-                "attr": None,
-                "leaf": False,
-                "notCausedByUpdate": False,
-                "missingInFallback": False,
-                "why": f"step {step} failed without a failed derivation (eval or structural error)",
-                "logExcerpt": "",
-            }
-        )
+        failures.append(blank_failure("", botcore.step_failure_why(step, outcome(step))))
 
     report = {
         "system": args.system,
         "job": args.job,
-        "ok": not failed_steps and not roots,
+        "ok": not failed and not roots,
         "failures": failures,
     }
     write(args.out, json.dumps(report, indent=2) + "\n")
@@ -248,6 +294,8 @@ def cmd_analyze(args) -> None:
 
 def leaf_of(attr: str, drv: str) -> tuple[bool, str]:
     refs = referrers(drv)
+    if refs is None:
+        return False, "could not query referrers: nix-store --query --referrers failed (see the job log)"
     proc = sh([*NIX, "derivation", "show", drv, *refs], check=False)
     if proc.returncode != 0:
         return False, f"could not inspect derivation graph: {proc.stderr.strip()[-200:]}"
@@ -270,6 +318,8 @@ def cmd_decide(args) -> None:
     ]
     tree_lock = read_json(tree / "flake.lock")
     cur_pins = read_json(tree / "pins.json", {"frozenInputs": [], "pins": []})
+    nixpkgs_rev = botcore.locked_rev(tree_lock, "nixpkgs") or ""
+    base_rev = botcore.locked_rev(read_json("flake.lock"), "nixpkgs") or ""
     decision = botcore.decide(
         attempt=args.attempt,
         round_=args.round,
@@ -278,7 +328,8 @@ def cmd_decide(args) -> None:
         expected_jobs=args.expected_jobs.split(),
         base_pins=read_json("pins.json", {"frozenInputs": [], "pins": []}),
         cur_pins=cur_pins,
-        nixpkgs_rev=botcore.locked_rev(tree_lock, "nixpkgs") or "",
+        nixpkgs_rev=nixpkgs_rev,
+        nixpkgs_moved=bool(nixpkgs_rev) and nixpkgs_rev != base_rev,
         today=today(),
         run_url=run_url(),
     )
@@ -391,6 +442,7 @@ def main() -> None:
         job={},
         logs={},
         steps_json={},
+        expected_steps={},
         base_dir={},
         out={},
     )

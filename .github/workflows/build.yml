@@ -129,7 +129,7 @@ jobs:
         if: ${{ always() && inputs.report }}
         env:
           STEPS: ${{ toJSON(steps) }}
-        run: python3 scripts/update-bot/update_bot.py analyze --system x86_64-linux --job check --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+        run: python3 scripts/update-bot/update_bot.py analyze --system x86_64-linux --job check --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --expected-steps "checks packages devshells formatter example flake-check" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
 
       - name: Upload report
         if: ${{ always() && inputs.report }}
@@ -190,7 +190,7 @@ jobs:
         if: ${{ always() && inputs.report }}
         env:
           STEPS: ${{ toJSON(steps) }}
-        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-darwin --job darwin --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-darwin --job darwin --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --expected-steps "darwin-packages" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
 
       - name: Upload report
         if: ${{ always() && inputs.report }}
@@ -271,7 +271,7 @@ jobs:
         if: ${{ always() && inputs.report }}
         env:
           STEPS: ${{ toJSON(steps) }}
-        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-linux --job aarch64-linux --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-linux --job aarch64-linux --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --expected-steps "rpi4 arm-packages arm-devshells" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
 
       - name: Upload report
         if: ${{ always() && inputs.report }}

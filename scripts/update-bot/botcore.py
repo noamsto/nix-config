@@ -72,6 +72,12 @@ _HASH_MISMATCH = re.compile(r"^error: hash mismatch in fixed-output derivation "
 _LEGACY_BUILDER = re.compile(r"^error: builder for " + _DRV + r" failed")
 _LEGACY_DEPS = re.compile(r"^error: \d+ dependencies of derivation " + _DRV + r" failed")
 _STORE_HASH = re.compile(r"^[0-9a-z]{32}-")
+_BACKTICKS = re.compile(r"`+")
+
+PINNED_STILL_FAILING = (
+    "pinned-still-failing (the pin did not take effect — e.g. a later overlay in"
+    " lib/overlays.nix defines this attr — or the fallback build fails too)"
+)
 
 
 def _root_inputs(lock: dict) -> dict:
@@ -120,12 +126,38 @@ def dump_pins(pins_doc: dict) -> str:
     return json.dumps(pins_doc, indent=2) + "\n"
 
 
+def failed_steps(steps: dict, expected: list[str]) -> list[str]:
+    """Fail closed: an expected step that is missing or did not succeed
+    (failure, skipped after a setup failure, cancelled on timeout) failed."""
+    if not isinstance(steps, dict):
+        steps = {}
+    return [
+        s
+        for s in expected
+        if not isinstance(steps.get(s), dict) or steps[s].get("outcome") != "success"
+    ]
+
+
+def step_failure_why(step: str, outcome) -> str:
+    if outcome is None:
+        return f"step {step} has no recorded outcome (it never ran)"
+    verb = {
+        "failure": "failed",
+        "skipped": "was skipped",
+        "cancelled": "was cancelled",
+    }.get(outcome, f"ended {outcome}")
+    return f"step {step} {verb} without a failed derivation (eval, setup or structural error)"
+
+
 def _clean(line: str) -> str:
     return _ATTR_PREFIX.sub("", _ANSI.sub("", line), count=1).rstrip()
 
 
 def parse_log(text: str) -> dict:
-    lines = [_clean(line) for line in text.splitlines()]
+    # Only "\n" ends a line: splitlines() also breaks on \x0b, \x0c, \x1c-\x1e,
+    # \x85 and U+2028/9, which builder output can contain to forge an
+    # unindented error line.
+    lines = [_clean(line.removesuffix("\r")) for line in text.split("\n")]
     roots, dep_failed, seen = [], [], set()
 
     def block(i: int) -> list[str]:
@@ -230,6 +262,8 @@ def _block_reason(f: dict, pinned: set[str]) -> str:
         return "unmapped"
     if f["attr"] in pinned:
         return "pinned-still-failing"
+    if f["notCausedByUpdate"] is None:
+        return "base comparison unavailable"
     if f["notCausedByUpdate"]:
         return "not caused by the update"
     if f["missingInFallback"]:
@@ -249,6 +283,7 @@ def decide(
     base_pins: dict,
     cur_pins: dict,
     nixpkgs_rev: str,
+    nixpkgs_moved: bool,
     today: str,
     run_url: str,
 ) -> dict:
@@ -259,7 +294,7 @@ def decide(
             f = {**f, "system": r["system"], "job": r["job"]}
             f["block"] = _block_reason(f, pinned)
             if f["block"] == "pinned-still-failing":
-                f["why"] = "pinned-still-failing"
+                f["why"] = PINNED_STILL_FAILING
             failures.append(f)
 
     def result(action: str, why: str, pins: dict = cur_pins) -> dict:
@@ -273,6 +308,10 @@ def decide(
         return result("land", "all builds passed")
     if attempt not in ("combined", "nixpkgs"):
         return result("block", f"the {attempt} attempt never repins")
+    if failures and not nixpkgs_moved:
+        return result(
+            "block", "nixpkgs unchanged; the failure comes from a non-nixpkgs input"
+        )
     if round_ >= max_rounds:
         return result("block", f"round cap reached ({round_}/{max_rounds})")
     if not failures:
@@ -422,7 +461,8 @@ def render_pr_body(
 
 
 def _fenced(text: str) -> list[str]:
-    fence = "````" if "```" in text else "```"
+    longest = max((len(m) for m in _BACKTICKS.findall(text)), default=0)
+    fence = "`" * max(3, longest + 1)
     return [fence, text, fence]
 
 

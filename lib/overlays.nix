@@ -2,6 +2,10 @@
 inputs: [
   # First on purpose: later overlays customize via `prev`, so they wrap the
   # fallback package. An empty pins list never forces the fallback input.
+  # The pin ignores `prev`, so a pinned attr also drops any customization from
+  # overlays applied before this list (e.g. another module's `nixpkgs.overlays`
+  # entry), and a later overlay that sets the attr outright (llm-agents,
+  # mcp-servers-nix, ...) overrides the pin.
   (final: _prev: let
     inherit (builtins.fromJSON (builtins.readFile ../pins.json)) pins;
     fallback = import inputs.nixpkgs-fallback {
