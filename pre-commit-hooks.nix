@@ -3,6 +3,8 @@
 
   perSystem = {pkgs, ...}: {
     pre-commit = {
+      # git-hooks.nix keys off the package's pname, so this swaps the runner.
+      settings.package = pkgs.prek;
       settings.excludes = ["flake.lock"];
 
       settings.hooks = {
@@ -21,6 +23,26 @@
           language = "system";
           pass_filenames = false;
           # The global flake.lock exclude would otherwise skip a commit that stages only flake.lock.
+          always_run = true;
+        };
+        # Scans every local branch and tag not yet on the remote, plus the pushed
+        # sha (prek sets TO to it and leaves FROM unset on a root-commit first
+        # push). A leak on any unpushed ref therefore blocks the push.
+        # `stages` is only pre-push, so `prek run --all-files` (the flake check)
+        # never runs it.
+        betterleaks-pre-push = {
+          enable = true;
+          name = "betterleaks-pre-push";
+          entry = let
+            wrapper = pkgs.writeShellApplication {
+              name = "pre-push-leak-check";
+              runtimeInputs = [pkgs.betterleaks pkgs.git pkgs.coreutils];
+              text = ''exec ${./scripts/pre-push-leak-check.sh} "$@"'';
+            };
+          in "${wrapper}/bin/pre-push-leak-check";
+          language = "system";
+          stages = ["pre-push"];
+          pass_filenames = false;
           always_run = true;
         };
       };
