@@ -145,11 +145,16 @@ def nix_apply(installable: str, template: str, cands: list[str]) -> dict:
     return json.loads(proc.stdout)
 
 
+def flake_url(flake_dir: str) -> str:
+    """git+file URL for flake_dir. ?shallow=1 keeps nix from needing revCount on shallow CI checkouts."""
+    return "git+file://" + flake_dir + "?shallow=1"
+
+
 def drv_table(flake_dir: str, system: str, cands: list[str]) -> dict[str, set[str]]:
     """cand -> drvPaths it evaluates to in the hosts' pkgs of flake_dir."""
     if not cands:
         return {}
-    flake = "git+file://" + flake_dir
+    flake = flake_url(flake_dir)
     installables = [f"{flake}#legacyPackages.{system}"]
     if system == "x86_64-linux":
         installables.append(f"{flake}#nixosConfigurations.example.pkgs")
