@@ -26,7 +26,10 @@ jobs:
 
       # Before Nix is installed: it grows the Nix volume by repurposing the
       # runner's spare disk. The full build below does not fit in the stock free space.
+      # The anonymous-fetch step below uses a fresh store on /, which needs more than the default 2 GB.
       - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
+        with:
+          root-safe-haven: 10240
 
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
