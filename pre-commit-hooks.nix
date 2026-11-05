@@ -3,6 +3,7 @@
 
   perSystem = {pkgs, ...}: {
     pre-commit = {
+      settings.package = pkgs.prek;
       settings.excludes = ["flake.lock"];
 
       settings.hooks = {
