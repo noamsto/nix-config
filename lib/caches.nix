@@ -13,6 +13,8 @@
     "https://lazytmux.cachix.org"
     "https://dispatcher.cachix.org"
     "https://jovian-nixos.cachix.org"
+    # CI builds every flake output and pushes it here (.github/workflows/check.yml)
+    "https://noamsto-nix-config.cachix.org"
   ];
 
   # Extra substituters - lower priority
@@ -38,6 +40,7 @@
     "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
     "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
     "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
+    "noamsto-nix-config.cachix.org-1:PpdRnna/Ra45BpDw7k2QJoDx1XpWBKQ5aJdTr3A1HbI="
   ];
 
   # Keys for extra substituters
