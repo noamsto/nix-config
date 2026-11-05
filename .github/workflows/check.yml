@@ -9,14 +9,13 @@ permissions:
   contents: read
 
 env:
-  # nix-fast-build builds by .drv path, and a flake's nixConfig only applies to
-  # commands given a flake ref, so accept-flake-config alone never reaches those
-  # builds: without these, the Pi kernel compiles instead of substituting.
-  # SYNC: Keep in sync with lib/caches.nix.
-  NIX_EXTRA_CONF: |
-    accept-flake-config = true
-    extra-substituters = https://install.determinate.systems https://vicinae.cachix.org https://nix-amd-ai.cachix.org https://wtc.cachix.org https://noctalia.cachix.org https://lazytmux.cachix.org https://dispatcher.cachix.org https://jovian-nixos.cachix.org https://noamsto-nix-config.cachix.org https://nixpkgs-unfree.cachix.org https://nix-community.cachix.org https://yazi.cachix.org https://nixos-raspberrypi.cachix.org https://cache.numtide.com
-    extra-trusted-public-keys = cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM= cache.flakehub.com-4:Asi8qIv291s0aYLyH6IOnr5Kf6+OF14WVjkE6t3xMio= vicinae.cachix.org-1:1kDrfienkGHPYbkpNj1mWTr7Fm1+zcenzgTizIcI3oc= nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4X9A7pvaBmhQ= wtc.cachix.org-1:rXr2jpSoAtqezDz8xK/gPMjH2Rgyda0zOErfk3N5WnI= noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg= dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A= jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo= noamsto-nix-config.cachix.org-1:PpdRnna/Ra45BpDw7k2QJoDx1XpWBKQ5aJdTr3A1HbI= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs= yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k= nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+  # Cachix caches to substitute from. `cachix use` (run by cachix-action) writes a
+  # `substituters =` line to the user's nix.conf, which replaces anything the
+  # installer's extra-conf adds, and nix-fast-build builds by .drv path where the
+  # flake's nixConfig does not apply. extraPullNames is the only route that sticks:
+  # without nixos-raspberrypi here, the Pi kernel compiles instead of substituting.
+  # SYNC: Keep in sync with the cachix.org entries of lib/caches.nix.
+  CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,nix-community,yazi,nixos-raspberrypi
 
 # Push runs get a group each: GitHub cancels a pending run whenever a newer one
 # queues, and a cancelled push run on main would leave its range unscanned.
@@ -41,7 +40,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           # So the flake's nixConfig substituters are used.
-          extra-conf: ${{ env.NIX_EXTRA_CONF }}
+          extra-conf: accept-flake-config = true
 
       - name: Free space
         run: df -h
@@ -52,6 +51,7 @@ jobs:
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
           authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
           skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
 
@@ -89,11 +89,12 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           # So the flake's nixConfig substituters are used.
-          extra-conf: ${{ env.NIX_EXTRA_CONF }}
+          extra-conf: accept-flake-config = true
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
           authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
           skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
 
@@ -115,7 +116,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
           # So the flake's nixConfig substituters (incl. nixos-raspberrypi) are used.
-          extra-conf: ${{ env.NIX_EXTRA_CONF }}
+          extra-conf: accept-flake-config = true
 
       # Informational only: shows whether a cold kernel build is short of disk.
       # nothing-but-nix is not used: unverified on arm runners.
@@ -125,6 +126,7 @@ jobs:
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
           authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
           skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
 
