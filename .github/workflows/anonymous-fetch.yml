@@ -1,0 +1,41 @@
+name: Anonymous fetch
+
+# Own workflow so it runs beside the build, and only when an input can have changed.
+on:
+  pull_request:
+    paths: [flake.nix, flake.lock]
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so an input that went private or vanished upstream is still caught.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anonymous-fetch-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Skipped while the repo is private, like the jobs in check.yml.
+  anonymous-fetch:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters are used.
+          extra-conf: accept-flake-config = true
+
+      - name: Every input fetches anonymously
+        shell: bash
+        # Fresh store and fetcher cache so nothing already fetched satisfies a
+        # node; access-tokens '' overrides the token the installer writes to nix.conf.
+        # Substitution is off too, so a cache can't stand in for a fetch the public can't make.
+        run: |
+          env -u NIX_CONFIG GIT_SSH_COMMAND=false XDG_CACHE_HOME="$(mktemp -d)" nix flake archive --json --store "$(mktemp -d)" --option access-tokens '' --option substituters '' --option accept-flake-config false > /dev/null
