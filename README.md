@@ -5,20 +5,21 @@ A reusable NixOS, nix-darwin and Home Manager library built with
 (`hosts/example`). The author's real machines live in a separate private flake
 that imports this one as an input.
 
-Supported systems: `x86_64-linux` and `aarch64-darwin` (the darwin modules).
+Supported systems: `x86_64-linux`, `aarch64-linux` (Raspberry Pi) and
+`aarch64-darwin` (the darwin modules).
 `desktop.mode` is `none` or `hyprland`.
 
 ## Exported outputs
 
 | Output | Attributes |
 | --- | --- |
-| `nixosModules` | `default`, `options`, `core`, `desktop`, `hyprland`, `laptop`, `hardware`, `services`, `steam-console`, `virtualization`, `xremap`, `overlays`, `lanzaboote`, `udev-hwmon`, `iwd-known-networks`, `nice-looking-console`, `home` |
+| `nixosModules` | `default`, `options`, `core`, `desktop`, `hyprland`, `laptop`, `hardware`, `services`, `steam-console`, `virtualization`, `xremap`, `overlays`, `lanzaboote`, `udev-hwmon`, `iwd-known-networks`, `nice-looking-console`, `rpi`, `home` |
 | `homeModules` | `default`, `ai`, `git`, `nvim`, `ssh` |
 | `darwinModules` | `default`, `options`, `priors`, `overlays`, `base`, `home` |
 | `overlays` | `default` |
 | `lib` | `caches`, `homeAliases`, `files` |
-| `packages` | `deja-vu`, `gh-repo-defaults`, `linear-cli`, `pi-lens`, `pi-vim`, `pi-web-access`, `rpiv-todo` on all systems; `airconnect`, `claude-squad`, `halo-wlan0-suspend-repro`, `sherpa-dictate` on Linux only |
-| `nixosConfigurations` | `example` |
+| `packages` | `deja-vu`, `gh-repo-defaults`, `linear-cli`, `pi-lens`, `pi-vim`, `pi-web-access`, `rpiv-todo` on all systems; `claude-squad`, `halo-wlan0-suspend-repro`, `sherpa-dictate` on Linux only; `airconnect` on `x86_64-linux` only |
+| `nixosConfigurations` | `example`, `example-rpi4` (aarch64-linux Raspberry Pi 4) |
 | `checks`, `formatter`, `devShells` | per system, defined in `flake-modules/development.nix` |
 
 Modules are assembled in `flake-modules/exports.nix`; packages in
@@ -69,6 +70,50 @@ complete, evaluable reference.
   `nix-config.wallpapers.default` (image for hyprpaper; falls back to a nixos-artwork wallpaper) and
   `nix-config.wallpapers.directory` (images linked as `~/Pictures/Wallpapers`;
   `null` links nothing).
+
+## Raspberry Pi
+
+`nixosModules.rpi` is a generic headless Raspberry Pi base: board support from
+[nixos-raspberrypi](https://github.com/nvmd/nixos-raspberrypi), a wheel user
+with SSH keys, key-only sshd, DHCP networking and this library's caches. Set
+`nix-config.rpi.board` (`rpi4`) and `nix-config.rpi.sshAuthorizedKeys`, plus
+`username` and `hostname`; none has a default. Without
+`nix-config.user.hashedPasswordFile` the user has no password and wheel gets
+passwordless sudo; setting the file turns the sudo password back on.
+
+Build the host with `nixos-raspberrypi.lib.nixosSystem` (not
+`nixpkgs.lib.nixosSystem`): the board modules need the `nixos-raspberrypi`
+specialArg it injects. `hosts/example-rpi4` is the complete reference. It
+evaluates this repo's modules against nixos-raspberrypi's own nixpkgs, on
+purpose, so its kernel stays cacheable.
+
+```nix
+{
+  inputs.nix-config.url = "github:noamsto/nix-config";
+  # Follow this flake's input so you get the exact kernel its CI caches.
+  inputs.nixos-raspberrypi.follows = "nix-config/nixos-raspberrypi";
+
+  outputs = {nixos-raspberrypi, nix-config, ...}: {
+    nixosConfigurations.mypi = nixos-raspberrypi.lib.nixosSystem {
+      modules = [
+        nix-config.nixosModules.rpi
+        {
+          hostname = "mypi";
+          username = "me";
+          nix-config.rpi = {
+            board = "rpi4";
+            sshAuthorizedKeys = ["ssh-ed25519 AAAA... me@example.invalid"];
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+CI builds `example-rpi4` natively on an `aarch64-linux` runner and pushes it to
+`noamsto-nix-config.cachix.org` from `main`. The `nixos-raspberrypi.cachix.org`
+cache is in `lib.caches` too.
 
 ## Checking
 

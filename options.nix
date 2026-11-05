@@ -214,6 +214,16 @@
         default = false;
         description = "Whether to apply the shared ThinkPad boot and hardware settings in nixos/hardware/thinkpad-common.nix.";
       };
+      rpi = {
+        board = lib.mkOption {
+          type = lib.types.enum ["rpi4"];
+          description = "Raspberry Pi board nixosModules.rpi targets. No default: the host must say which board it is.";
+        };
+        sshAuthorizedKeys = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "SSH public keys allowed to log in as `username` on a Raspberry Pi host. No default: sshd is key-only, so an empty list locks the host out.";
+        };
+      };
       user.hashedPasswordFile = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
