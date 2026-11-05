@@ -1,0 +1,16 @@
+these 3 derivations will be built:
+  /nix/store/0c4wq3ihhxk3gdz6xyrcmfd0y42f8xrc-oldleaf-0.9.drv
+  /nix/store/1p8kx0j0x3vl1r9y0rbn3w2ah0hzr3zv-oldthing-src.drv
+  /nix/store/2s9hb6rmgb1wqwm8xqzk9zq7b9n6c9jx-oldparent-1.0.drv
+building '/nix/store/0c4wq3ihhxk3gdz6xyrcmfd0y42f8xrc-oldleaf-0.9.drv'...
+error: builder for '/nix/store/0c4wq3ihhxk3gdz6xyrcmfd0y42f8xrc-oldleaf-0.9.drv' failed with exit code 2;
+       last 3 log lines:
+       > configuring
+       > compiling
+       > make: *** [Makefile:12: all] Error 1
+       For full logs, run 'nix log /nix/store/0c4wq3ihhxk3gdz6xyrcmfd0y42f8xrc-oldleaf-0.9.drv'.
+error: hash mismatch in fixed-output derivation '/nix/store/1p8kx0j0x3vl1r9y0rbn3w2ah0hzr3zv-oldthing-src.drv':
+         specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+            got:    sha256-c8s4WKaHqElMozIwUwFigvPa051Cz2LKTnndoqrH2aw=
+error: 1 dependencies of derivation '/nix/store/2s9hb6rmgb1wqwm8xqzk9zq7b9n6c9jx-oldparent-1.0.drv' failed to build
+error: builder for '/nix/store/0c4wq3ihhxk3gdz6xyrcmfd0y42f8xrc-oldleaf-0.9.drv' failed with exit code 2

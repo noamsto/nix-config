@@ -1,0 +1,49 @@
+warning: unknown setting 'eval-cores'
+warning: unknown setting 'lazy-trees'
+INFO:nix_fast_build.processes:run nix-eval-jobs --gc-roots-dir /tmp/nfb-eval/gcroots --force-recurse --max-memory-size 4096 --workers 24 --option keep-going true --impure /build/fail2.nix
+INFO:nix_fast_build.workers:builds: 0
+warning: unknown setting 'bash-prompt-prefix'
+warning: unknown setting 'eval-cores'
+warning: unknown setting 'lazy-trees'
+warning: unknown setting 'upgrade-nix-store-path-url'
+warning: unknown setting 'bash-prompt-prefix'
+warning: unknown setting 'eval-cores'
+warning: unknown setting 'lazy-trees'
+warning: unknown setting 'upgrade-nix-store-path-url'
+▶ ok started
+▶ parent started
+warning: unknown setting 'bash-prompt-prefix'
+warning: unknown setting 'eval-cores'
+warning: unknown setting 'lazy-trees'
+warning: unknown setting 'upgrade-nix-store-path-url'
+INFO:nix_fast_build.workers:builds: 4
+✔  ok (6s)
+ok> [35;1mwarning:[0m unknown setting 'eval-cores'[0m
+ok> [35;1mwarning:[0m unknown setting 'lazy-trees'[0m
+ok> linking "/nix/store/xn3c49yrl6mvpcz31419w5253yrc82ic-fine-1.0" to "/nix/store/.links/1mrj2mqlrppvk2g5k4xhp0q7dgiavh8w8kbaiiy5fj1i5n8nspsn"
+INFO:nix_fast_build.workers:builds: 2
+✘  parent failed after 11s (rc=1)
+parent> [35;1mwarning:[0m unknown setting 'eval-cores'[0m
+parent> [35;1mwarning:[0m unknown setting 'lazy-trees'[0m
+parent> compiling
+parent> boom2
+parent> [31;1merror:[0m Cannot build '[35;1m/nix/store/11rbaa0hnw861gkwmimn2fx7sg80c983-brokenleaf-1.1.drv[0m'.[0m
+parent>        Reason: [31;1mbuilder failed with exit code 3[0m.[0m
+parent>        Output paths:
+parent>          [35;1m/nix/store/6pszbhawhr65881h4qi8qigaw5rl9cx8-brokenleaf-1.1[0m[0m
+parent>        Last 2 log lines:
+parent>        > compiling
+parent>        > boom2
+parent>        For full logs, run:
+parent>          [1mnix log /nix/store/11rbaa0hnw861gkwmimn2fx7sg80c983-brokenleaf-1.1.drv[0m[0m
+parent> [31;1merror:[0m hash mismatch in fixed-output derivation '[35;1m/nix/store/4b5mwsfc21j6wslbr5ns19w9162fn0qc-thing2-src.drv[0m':[0m
+parent>          specified: [35;1msha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=[0m[0m
+parent>             got:    [35;1msha256-O7Krtp67J/v+Y8djliTG7F4zG4QaW8jD68ELkoXpCHc=[0m[0m
+parent> [31;1merror:[0m Cannot build '[35;1m/nix/store/x16zfwrilkgdmhvkv83wyb11qvlqxxv5-parent-2.1.drv[0m'.[0m
+parent>        Reason: [31;1m2 dependencies failed[0m.[0m
+parent>        Output paths:
+parent>          [35;1m/nix/store/n8kbvd2bmpwcdwh428sk60pavxc166lx-parent-2.1[0m[0m
+✘ end of log for parent · nix log /nix/store/x16zfwrilkgdmhvkv83wyb11qvlqxxv5-parent-2.1.drv
+WARNING:nix_fast_build.build:build parent exited with 1 (attempt 1/1)
+ERROR:nix_fast_build:BUILD: 1 successes, 1 failures
+ERROR:nix_fast_build:Failed attributes: parent

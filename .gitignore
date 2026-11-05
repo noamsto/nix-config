@@ -8,3 +8,6 @@ result*
 
 # subagent-driven-development scratch (progress ledger)
 .superpowers/
+
+# Python bytecode from running scripts/update-bot tests
+__pycache__/

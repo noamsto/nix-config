@@ -1,0 +1,23 @@
+these 3 derivations will be built:
+  /nix/store/gw7q3cfj1dxlixzdmdwmpf1yh3ianckl-brokenleaf-1.0.drv
+  /nix/store/i4b3d3sv0cfqdmi66x3ixidjld64c3wd-thing-src.drv
+  /nix/store/k8b9d984i8m81g8q3ygxl034av0bid96-parent-2.0.drv
+building '/nix/store/gw7q3cfj1dxlixzdmdwmpf1yh3ianckl-brokenleaf-1.0.drv'...
+building '/nix/store/i4b3d3sv0cfqdmi66x3ixidjld64c3wd-thing-src.drv'...
+error: Cannot build '/nix/store/gw7q3cfj1dxlixzdmdwmpf1yh3ianckl-brokenleaf-1.0.drv'.
+       Reason: builder failed with exit code 2.
+       Output paths:
+         /nix/store/89nrd3x5272k74zpb0rgwsv69kwg5hsd-brokenleaf-1.0
+       Last 2 log lines:
+       > compiling
+       > boom
+       For full logs, run:
+         nix log /nix/store/gw7q3cfj1dxlixzdmdwmpf1yh3ianckl-brokenleaf-1.0.drv
+error: hash mismatch in fixed-output derivation '/nix/store/i4b3d3sv0cfqdmi66x3ixidjld64c3wd-thing-src.drv':
+         specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+            got:    sha256-c8s4WKaHqElMozIwUwFigvPa051Cz2LKTnndoqrH2aw=
+❌ 
+error: Cannot build '/nix/store/k8b9d984i8m81g8q3ygxl034av0bid96-parent-2.0.drv'.
+       Reason: 2 dependencies failed.
+       Output paths:
+         /nix/store/kcha6lv9xia8q8cvn7jrfcid19wx8ik0-parent-2.0
