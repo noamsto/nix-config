@@ -119,7 +119,7 @@ Aliases inside the shell: `nbuild` = `nom build`, `dev-stats` = project stats vi
 
 ## Binary caches
 
-Pre-configured in `flake.nix:nixConfig` and mirrored in `lib/caches.nix` — **keep them in sync when editing either**. Active caches: `cache.nixos.org`, `cache.flakehub.com`, `hyprland.cachix.org`, `vicinae.cachix.org`, `claude-code.cachix.org`, `nixpkgs-unfree.cachix.org`, `nix-community.cachix.org`, `yazi.cachix.org`, `numtide.cachix.org`.
+Pre-configured in `flake.nix:nixConfig` and mirrored in `lib/caches.nix` — **keep them in sync when editing either**. Active substituters: `cache.nixos.org`, `install.determinate.systems`, `vicinae.cachix.org`, `nix-amd-ai.cachix.org`, `wtc.cachix.org`, `noctalia.cachix.org`, `lazytmux.cachix.org`, `dispatcher.cachix.org`, `jovian-nixos.cachix.org`, `noamsto-nix-config.cachix.org`, plus the extra substituters `nixpkgs-unfree.cachix.org`, `nix-community.cachix.org`, `yazi.cachix.org`, `nixos-raspberrypi.cachix.org`, `cache.numtide.com`. The FlakeHub signing keys stay trusted because `install.determinate.systems` signs with them; `cache.flakehub.com` itself is not a substituter.
 
 No manual config needed; they apply automatically.
 
