@@ -1,5 +1,30 @@
 # Reusable overlays for both NixOS and standalone Home Manager
 inputs: [
+  # First on purpose: later overlays customize via `prev`, so they wrap the
+  # fallback package. An empty pins list never forces the fallback input.
+  # The pin ignores `prev`, so a pinned attr also drops any customization from
+  # overlays applied before this list (e.g. another module's `nixpkgs.overlays`
+  # entry), and a later overlay that sets the attr outright (llm-agents,
+  # mcp-servers-nix, ...) overrides the pin.
+  (final: _prev: let
+    inherit (builtins.fromJSON (builtins.readFile ../pins.json)) pins;
+    fallback = import inputs.nixpkgs-fallback {
+      inherit (final.stdenv.hostPlatform) system;
+      config.allowUnfree = true;
+    };
+    pinned = p:
+      if builtins.match ".*[.].*" p.attr != null
+      then throw "pins.json: '${p.attr}' is nested; only top-level attrs can be pinned"
+      else if !(fallback ? ${p.attr})
+      then throw "pins.json: '${p.attr}' is missing from nixpkgs-fallback"
+      else fallback.${p.attr};
+  in
+    builtins.listToAttrs (map (p: {
+        name = p.attr;
+        value = pinned p;
+      })
+      pins))
+
   (final: _: {
     stable = import inputs.nixpkgs-stable {
       inherit (final.stdenv.hostPlatform) system;

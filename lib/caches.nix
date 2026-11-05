@@ -13,7 +13,7 @@
     "https://lazytmux.cachix.org"
     "https://dispatcher.cachix.org"
     "https://jovian-nixos.cachix.org"
-    # CI builds every flake output and pushes it here (.github/workflows/check.yml)
+    # CI builds every flake output and pushes it here (.github/workflows/build.yml)
     "https://noamsto-nix-config.cachix.org"
   ];
 

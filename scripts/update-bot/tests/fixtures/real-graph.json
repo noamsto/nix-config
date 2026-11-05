@@ -1,0 +1,633 @@
+{
+  "targets": {
+    "ripgrep": {
+      "drv": {
+        "name": "ripgrep-15.2.0",
+        "outputs": {
+          "out": "yn2n603bacr51pigr0d9ldx7bcd51vlh-ripgrep-15.2.0"
+        },
+        "buildInputs": ["ir81clyh96ribjk07srpwbp8igwd0lr2-pcre2-10.49-dev"],
+        "propagatedBuildInputs": []
+      },
+      "referrers": [
+        {
+          "name": "vimplugin-luajit2.1-grug-far.nvim-1.6.78-1",
+          "outputs": {
+            "out": "qjqyv08y3m4s1hi84l2klk9ghfz1icxx-vimplugin-luajit2.1-grug-far.nvim-1.6.78-1"
+          },
+          "buildInputs": [
+            "njpammdmzgs7nwyfqncvv0bh4crnwj3f-luarocks_bootstrap-3.13.0"
+          ],
+          "propagatedBuildInputs": [
+            "k5n0h079afl26rppwz1ca98d2rwdjcwf-luajit-2.1.1785763465"
+          ]
+        },
+        {
+          "name": "grug-far.nvim-luarocks-config.lua",
+          "outputs": {
+            "out": "l6rb2i595i4rsa3yyj8vlrj0lzddz3lv-grug-far.nvim-luarocks-config.lua"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "pi-1.5.0",
+          "outputs": {
+            "out": "gi56jcwlnh9z7y4jsdvmiycdxp6pgq42-pi-1.5.0"
+          },
+          "buildInputs": [
+            "axiicpnijqgmj403jpqga6k0j1sqypjj-libxcb-1.17.0-dev",
+            "j1j9b0w3mhpccdli73ycj5w7nf6fkzqz-nodejs-24.21.0"
+          ],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "amp",
+          "outputs": {
+            "out": "r2r96fh9lzqj72czzp7d7ygxfqkq136j-amp"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "amp-0.0.1793764839-g19a5bc",
+          "outputs": {
+            "out": "rbav3ll8xy0x18kybjb5bqykx867v2d4-amp-0.0.1793764839-g19a5bc"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "ripgrep-15.2.0_fish-completions",
+          "outputs": {
+            "out": "vg84i7ndssh2sp41286ppj03gl7g4isz-ripgrep-15.2.0_fish-completions"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "grug-far.nvim-luarocks-config.lua",
+          "outputs": {
+            "out": "94jdbpggljmw90lc659ixp12xjjnpzy6-grug-far.nvim-luarocks-config.lua"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "television-wrapped-0.15.9",
+          "outputs": {
+            "out": "m7wxgzg4imdj72imkyka5bkx8szsn0a0-television-wrapped-0.15.9"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "man-paths",
+          "outputs": {
+            "out": "dca54nnk3xxvcx24njhr29bc1sj31mpw-man-paths"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "luajit2.1-grug-far.nvim-1.6.78-1",
+          "outputs": {
+            "out": "ppzq62vyw3sjxd0mws4jllbcvqga3ip7-luajit2.1-grug-far.nvim-1.6.78-1"
+          },
+          "buildInputs": [
+            "njpammdmzgs7nwyfqncvv0bh4crnwj3f-luarocks_bootstrap-3.13.0"
+          ],
+          "propagatedBuildInputs": [
+            "k5n0h079afl26rppwz1ca98d2rwdjcwf-luajit-2.1.1785763465"
+          ]
+        },
+        {
+          "name": "yazi-26.9.1",
+          "outputs": {
+            "out": "qklx69df7ffy70sl65sjl8cpivpc09rc-yazi-26.9.1"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "system-path",
+          "outputs": {
+            "out": "qlsyzp76arh0j4pskng6l6s7mzhffbmc-system-path"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        }
+      ]
+    },
+    "btop": {
+      "drv": {
+        "name": "btop-1.4.8",
+        "outputs": {
+          "out": "nciqb105qbcpwx2b6ms94slr7gg1y26w-btop-1.4.8"
+        },
+        "buildInputs": [],
+        "propagatedBuildInputs": []
+      },
+      "referrers": [
+        {
+          "name": "btop-1.4.8-fish-completions",
+          "outputs": {
+            "out": "hx4h6xfqmwsk4375plbn4sq3d3rplnki-btop-1.4.8-fish-completions"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "tmux-wrapper-bin",
+          "outputs": {
+            "out": "5c4d8dszbnib6lxv1k3h1a61wzn60xy7-tmux-wrapper-bin"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "home-manager-path",
+          "outputs": {
+            "out": "pc9n6ncxx5vhma53pxb4q2mcgiq6c4jw-home-manager-path"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "man-paths",
+          "outputs": {
+            "out": "yw5vk1b004hn5jqynpqzzdqjg8zdl3dj-man-paths"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        }
+      ]
+    },
+    "bat": {
+      "drv": {
+        "name": "bat-0.26.1",
+        "outputs": {
+          "out": "0a7fqffjdr8fnjmh5hryacwnzln87hjn-bat-0.26.1"
+        },
+        "buildInputs": [
+          "f89pkzhgfq4v051ygn8arcs8q4m5cr6s-libgit2-1.9.7-dev",
+          "a76rmqrp6l3w6h9pppfwzb3s6dzi0y4g-zlib-1.3.2-dev"
+        ],
+        "propagatedBuildInputs": []
+      },
+      "referrers": [
+        {
+          "name": "bat-0.26.1-fish-completions",
+          "outputs": {
+            "out": "a58980r2c6mai16469yfzp8qg3fgr2km-bat-0.26.1-fish-completions"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "home-manager-path",
+          "outputs": {
+            "out": "pc9n6ncxx5vhma53pxb4q2mcgiq6c4jw-home-manager-path"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "television-wrapped-0.15.9",
+          "outputs": {
+            "out": "m7wxgzg4imdj72imkyka5bkx8szsn0a0-television-wrapped-0.15.9"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "hm-session-vars.sh",
+          "outputs": {
+            "out": "1xffsvc2q4mhhs1l73hrnrhliny38m3h-hm-session-vars.sh"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "man-paths",
+          "outputs": {
+            "out": "dca54nnk3xxvcx24njhr29bc1sj31mpw-man-paths"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "man-paths",
+          "outputs": {
+            "out": "yw5vk1b004hn5jqynpqzzdqjg8zdl3dj-man-paths"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "bat-0.26.1_fish-completions",
+          "outputs": {
+            "out": "gjg7a3fjzj11p27s1phfcr9m55p9vqp8-bat-0.26.1_fish-completions"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "activation-script",
+          "outputs": {
+            "out": "7bhy4r9sjwfdx6k68pra99vdik9n5d8q-activation-script"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "system-path",
+          "outputs": {
+            "out": "qlsyzp76arh0j4pskng6l6s7mzhffbmc-system-path"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        }
+      ]
+    },
+    "openssl": {
+      "drv": {
+        "name": "openssl-3.5.9",
+        "outputs": {
+          "bin": "gvglnxscmvx4mh9my0cy0xgi0l1z6l9s-openssl-3.5.9-bin",
+          "debug": "1p4ymb7zxp7l0awxfq8rj5ld55npqfz1-openssl-3.5.9-debug",
+          "dev": "wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev",
+          "doc": "k8vhywagkl9qry09ws7w5y0y5i90xcwj-openssl-3.5.9-doc",
+          "man": "93m0p3cd6x015pb45zy19m4x86mwhpac-openssl-3.5.9-man",
+          "out": "lazac5vw20j0pyahzbaxz8z8hyf7m9zf-openssl-3.5.9"
+        },
+        "buildInputs": [],
+        "propagatedBuildInputs": []
+      },
+      "referrers": [
+        {
+          "name": "thrift-0.24.0",
+          "outputs": {
+            "out": "ibglj3kkaj2jzqg1y4x9aaykqkn8zrbx-thrift-0.24.0"
+          },
+          "buildInputs": ["46anxcbxwp1jj2d3lpjbdvkvs2vw7zmf-boost-1.91.0-dev"],
+          "propagatedBuildInputs": [
+            "myy7xhwi6dhkydcad3nlwwlclihz8h54-libevent-2.1.13-dev",
+            "wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev",
+            "a76rmqrp6l3w6h9pppfwzb3s6dzi0y4g-zlib-1.3.2-dev"
+          ]
+        },
+        {
+          "name": "net-snmp-5.9.5.2",
+          "outputs": {
+            "bin": "kb0xri3hpczk6a9nmh8nc6cbc825d36n-net-snmp-5.9.5.2-bin",
+            "dev": "zbw7cfkag62kp5wc45rrppmh63jlw13l-net-snmp-5.9.5.2-dev",
+            "lib": "sn26irh38c7fjm1srbkk9lbd576ix8nr-net-snmp-5.9.5.2-lib",
+            "out": "2dn5a0aafjbf7a797ib7899disb7kxiy-net-snmp-5.9.5.2"
+          },
+          "buildInputs": ["wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev"],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "azure-sdk-for-cpp-identity-1.13.3",
+          "outputs": {
+            "dev": "pl6azpr267lwipwx0ww4cgmxzi3788xx-azure-sdk-for-cpp-identity-1.13.3-dev",
+            "out": "fq0c07v02s3gwmdj6xngfna5chns96nr-azure-sdk-for-cpp-identity-1.13.3"
+          },
+          "buildInputs": ["wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev"],
+          "propagatedBuildInputs": [
+            "7kri4nnnf4qqwg7kxzvmqq7ih1yqv6ym-azure-sdk-for-cpp-core-1.16.3-dev"
+          ]
+        },
+        {
+          "name": "libgit2-1.9.7",
+          "outputs": {
+            "dev": "f89pkzhgfq4v051ygn8arcs8q4m5cr6s-libgit2-1.9.7-dev",
+            "lib": "hsbx1hya0qvmsj13vphbvciz9mk1kd21-libgit2-1.9.7-lib",
+            "out": "zk4fqrgz38h5c5bgg97m1cwvm3gi0s50-libgit2-1.9.7"
+          },
+          "buildInputs": [
+            "a76rmqrp6l3w6h9pppfwzb3s6dzi0y4g-zlib-1.3.2-dev",
+            "f995x45394l89346wpwkpc08fxj8glvg-libssh2-1.11.1-dev",
+            "wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev",
+            "ir81clyh96ribjk07srpwbp8igwd0lr2-pcre2-10.49-dev",
+            "ys7p69vgwc7yirbh3rmdf4jdj4vjqs2v-llhttp-9.4.3-dev"
+          ],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "efl-1.28.1",
+          "outputs": {
+            "out": "71wb2s5cr7s115a1v1bg73vbvmfzkir0-efl-1.28.1"
+          },
+          "buildInputs": [
+            "nbdi0r6jklg8r7lnzz5pw51aa1h1fhih-fontconfig-2.18.3-dev",
+            "jpnd5wfvvva2hp63wl348ldxgl4lk25a-freetype-2.14.3-dev",
+            "w31zgyvxajp9sxi12h57cyyqwk473w08-giflib-6.1.3",
+            "83xd689yld0y8lgk0fc06f542yid4yh7-glib-2.88.3-dev",
+            "iz7m7xwpjf0h77ijlpsvxlsyv5ak1a7v-gst-libav-1.28.7",
+            "al990hng5mc9m851i7lip274ggp677lr-gst-plugins-base-1.28.7-dev",
+            "zqyl36q4wgr2qib8k9qdcpv6gv6g8m7l-gst-plugins-good-1.28.7-dev",
+            "n0h0iqvqgxsjf9xj9q5s58pi6k75fz0i-gstreamer-1.28.7-dev",
+            "h851npvxnij0yy4in4f1rckg0lcdix74-ibus-1.5.34-dev",
+            "7gm24cv1yy7d225qjswxwmr6b02ik884-libglvnd-1.7.0-dev",
+            "27jrn36s7jkk6xv6vgi9kq8shkybafp1-libpng-apng-1.6.59-dev",
+            "l8a9m498a7vbpd3i04hwjmbbml2lwjzr-libpulseaudio-17.0-dev",
+            "qi0whsif4mi6a0d88d51qk4fa6bgns89-libsndfile-1.2.2-dev",
+            "jawgvnzmbifiv7iq74r0f0hz5vlkkhqf-libtiff-4.7.2-dev",
+            "l3h34sipmkdqipjwn5x87izrr5v9bgq0-lz4-1.10.0-dev",
+            "3k2pvsrj5i50b5ix8vnzkx4q3nqv0blw-mesa-gl-headers-25.1.0",
+            "wps4g7kaj73d2zs53a5cfimw1bnb3c99-openssl-3.5.9-dev",
+            "gybvjdl14lbgym7958hkigsr3xwb4c7l-systemd-262-dev",
+            "ng72w7jyv63g1jpifggb62ydq2krpbrm-systemd-minimal-libs-262-dev",
+            "4gslphcdzp6rcxq5n0zqjc5xjczyw32w-wayland-protocols-1.49",
+            "69z94i0332zi2n18vqjx19i2cwn99q3a-libx11-1.8.14-dev",
+            "aq127zj3z2b8lz7g22sfn7532vmld8py-libxcursor-1.2.3-dev",
+            "ysvdkrs0mb3wn66fd2jkf2110r6nycvv-xorgproto-2025.1",
+            "a76rmqrp6l3w6h9pppfwzb3s6dzi0y4g-zlib-1.3.2-dev"
+          ],
+          "propagatedBuildInputs": [
+            "b7z0xrx8693jg547rwfi3fazvrm1wkyk-sdl2-compat-2.32.74-dev",
+            "2i6275l3cc1y4iy7gi6p6v4h51wlr1xs-alsa-lib-1.2.16.1-dev",
+            "rrqfwbhq5i9pk5v7pbax9y2p48mza8la-bullet-3.25",
+            "zxvysjs44vl0hh0iqmh1s9jfjv9725x9-curl-8.22.0-dev",
+            "n03diw9l5lrcv91hh6vdqzp79dlgcddg-dbus-1.16.2-dev",
+            "n03diw9l5lrcv91hh6vdqzp79dlgcddg-dbus-1.16.2-dev",
+            "4dx6wab65vn5362ydc64wshqc2zq1m7f-doxygen-1.17.0",
+            "5m6pqb4gihxwzj174k7s0xparwbvv8xa-expat-2.9.0-dev",
+            "k0malw5z08ryv3sb5y2pygfwcmvfpmm7-fribidi-1.0.17-dev",
+            "6y6bfs896dwa3jdngcxj08zqp6qx58nk-ghostscript-with-X-10.08.0",
+            "skgmcaidl16rg8ivyd5s9206jws0wfy0-harfbuzz-14.5.1-dev",
+            "sck2vf1lpq094c3v8bkcsjr5pb42ikz8-hicolor-icon-theme-0.18-dev",
+            "241psni8gvnllp7mjjgwqacr8mw0039v-jbig2dec-0.20",
+            "bvfayc21wafivfm336sis18p2f5dq1s1-libdrm-2.4.134-dev",
+            "b1l7xgbsd30sxxyg4ky013j2y4m4xrww-mesa-libgbm-26.1.3",
+            "1m4v8vwk0rrbnsyxjbxhjsx311plglin-libinput-1.31.3-dev",
+            "bknqdwimgfpajqyarn8hs6fm08zn86cn-libjpeg-turbo-3.2.0-dev",
+            "pig5szlpmmmm27p3nc3yj0g3nrm1l6xp-libraw-0.22.3-dev",
+            "m7299l839if9wq7n32qnjmxda6yaiqf3-librsvg-2.62.3-dev",
+            "yadg7vj9qwd7syqwpcc0zzvpg26r5snv-libspectre-0.2.12",
+            "xg48dl68ar4ivqlid9rbdi3wz1q33fv6-libwebp-1.6.0",
+            "5pq7mhgzqn8qgv41ff6dj3c2rhkqgalx-libxkbcommon-1.13.2-dev",
+            "6r8z3z505vmzxrwx9z4619whsi2wfxwf-lua-5.2.4",
+            "cviqxqkqiqq3wh500fcnhixnyx72y7xd-mint-x-icons-1.8.1",
+            "yv6v34pnxv2yndcj92x10a50wccdbj8m-openjpeg-2.5.4-dev",
+            "8rs8ymgz1hvd2f1m8yvm9gan7jb5np8d-poppler-glib-26.10.0-dev",
+            "0aqmqd8xfnxchvnpifqw3l4i89rymc07-util-linux-2.42.4-dev",
+            "yxzfyllyg8ghjpywdv8z9489d32mjq4x-wayland-1.26.0-dev",
+            "h9j7pvr76p226j2sd72nlmhcl5wlvfjs-libxscrnsaver-1.2.5",
+            "iydhm2vdrsiczz8ij7vg4016lfm9b1mf-libxcomposite-0.4.7-dev",
+            "cf8slhpcm3s7wnqy83lxj4jn1iy99zdw-libxdamage-1.1.7-dev",
+            "vf9s4g5b6ph328qy7rwpq35dv95fdwmc-libxext-1.3.7-dev",
+            "l51w3h45m9542fcbf1izbqhnvslsvs91-libxfixes-6.0.2-dev",
+            "qsxr22p245q5rqi7kdj9cskgzil6w5ms-libxi-1.8.4-dev",
+            "nh4ry1p8akd1h4cwjibv9pn3ip4wsh33-libxinerama-1.1.6-dev",
+            "50dzchwhxy44zlkqxyas88dhrmbnyvax-libxrandr-1.5.5-dev",
+            "dw7dv51r11rk9kqpq8hasviafs132vzq-libxrender-0.9.13-dev",
+            "i16gl3mqqn816xfn1lmp5k6yiq1z75ka-libxtst-1.2.5",
+            "axiicpnijqgmj403jpqga6k0j1sqypjj-libxcb-1.17.0-dev"
+          ]
+        },
+        {
+          "name": "python3.14-pyopenssl-26.4.0",
+          "outputs": {
+            "dev": "q4kzq1mnsw2kvm3dcz93bmy13ws5i1yx-python3.14-pyopenssl-26.4.0-dev",
+            "dist": "v0xqc5jbb4i4x6lwc2lxw26525jkn7nj-python3.14-pyopenssl-26.4.0-dist",
+            "doc": "x8vy24kdsiim93dwshrfqia1yz1ldx0k-python3.14-pyopenssl-26.4.0-doc",
+            "out": "6x55h1znhj6sch1xms8f1y6vbpbl56zp-python3.14-pyopenssl-26.4.0"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "0w4wam3pjqija61hk2cwirahisw51nb2-python3.14-cryptography-50.0.2",
+            "16ci48rw59pvq3hdgcgkjhycj17rmyz5-python3.14-typing-extensions-4.16.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "nix-store-tests-run",
+          "outputs": {
+            "out": "8456lh1k0m0svm7szqnv5iqsv715p75d-nix-store-tests-run"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "linux-6.18.60",
+          "outputs": {
+            "dev": "wxzm8naavxk8q0zpwvp9lqv2b4z93qsy-linux-6.18.60-dev",
+            "modules": "718gy34dy9dsc3bv669agsfwz2a9z1qc-linux-6.18.60-modules",
+            "out": "3gdls3p9zs0zhm8053gpias7s705d150-linux-6.18.60"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "linux-config-6.18.60",
+          "outputs": {
+            "out": "hjccaxk2rpxn728pdijgd20pd40v8rds-linux-config-6.18.60"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "ld-library-path",
+          "outputs": {
+            "out": "gkgc1grnab8xq1k6sg8q7rgixmy058zv-ld-library-path"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        }
+      ]
+    },
+    "python3Packages.pyyaml": {
+      "drv": {
+        "name": "python3.14-pyyaml-6.0.3",
+        "outputs": {
+          "dist": "344a2mxic6di6gbryvv3xallya8wgxs1-python3.14-pyyaml-6.0.3-dist",
+          "out": "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3"
+        },
+        "buildInputs": ["2wlpnlk88r3y1dir79ibzvhkz446b8bw-libyaml-0.2.5-dev"],
+        "propagatedBuildInputs": [
+          "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+        ]
+      },
+      "referrers": [
+        {
+          "name": "python3.14-gftools-0.10.7",
+          "outputs": {
+            "dist": "krjncnrzlh2fl2m2mpbh7vpifamzbpvs-python3.14-gftools-0.10.7-dist",
+            "out": "xbgbap87nmcdkhyls85lym31s4412x62-python3.14-gftools-0.10.7"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "b7ibh8pa1g5g136i3gxhq8bsax963ni4-python3.14-absl-py-2.5.0",
+            "lnb68srxc870gah8fs537lqdfm2z7hrq-python3.14-afdko-5.0.1",
+            "17xs0saxn6f6wqwmxcycwgdqi2l0i1fq-python3.14-axisregistry-0.4.20",
+            "wgbdqvjzy2mpp10impp561r7z9gblgph-python3.14-beautifulsoup4-4.15.0",
+            "chk1385rm63afax89z9hz1z5cj6bwqrl-python3.14-brotli-1.2.0",
+            "zmp216v62164zj04sz3laz6v2zhicivr-python3.14-ffmpeg-python-0.2.0-unstable-2022-07-11",
+            "3cn411862672h8j422afafsp4p3qqn9y-python3.14-fontfeatures-1.9.0",
+            "7n4visbrmcki4pvsaddrm8r37ngi4mp4-python3.14-fontmake-3.12.2",
+            "wv23bsan99hdags1rnyil6ix84kqba5p-python3.14-fonttools-4.63.0",
+            "byb9h85macn85dxc44nrisck4klvcdqq-python3.14-gflanguages-0.7.11",
+            "cnwi54kqig09gc7xkpvmff601rbl7ygn-python3.14-gfmetadata-0.2.5",
+            "c4wbgl7h3c1zqvis4jlbb9csv1kf412v-python3.14-gfsubsets-2025.11.04",
+            "3l1xpy68axmcjrym8dg6vp0n5pbq8zq0-python3.14-glyphsets-1.1.3",
+            "jm47kc40ag3nb6rlm1q1zwvdg835qgf6-python3.14-glyphslib-6.16.1",
+            "vs7vim6hikgc35m7gl2a4vys6dg99kd0-python3.14-jinja2-3.1.6",
+            "x01g5b2qia4axj4rxnbb8cvnc18pmmrh-python3.14-nanoemoji-0.16.0",
+            "8pw8ra9jlr8j1c0ky34h73lah761d3s2-python3.14-networkx-3.6.1",
+            "pidm1sz8h0l8glzkvvdy9h2312z4437a-python3.14-ninja-1.13.2",
+            "q6a8scf4i6z02zj44dxlhdbbvcigwxvh-python3.14-ots-python-9.1.0",
+            "a7xsj1z1csb5y1i51jcskj3fca5sa2z8-python3.14-packaging-26.3",
+            "b2nrcnylfq9mq6r3j31q5pl3ydgfhm22-python3.14-pillow-12.3.0",
+            "0zxmqm8gd5l067lrgx1kpfck61mqp30d-python3.14-protobuf-7.36.2",
+            "6815r3bzdws8dn0wp0rxcbhym739v8j1-python3.14-pygit2-1.20.1",
+            "3gx1m4jd847vksdmpjaw2l7mp83prxyz-python3.14-pygithub-2.8.1",
+            "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3",
+            "k08xy0a5hw7pg3g4w4vk72ifb8glinpc-python3.14-requests-2.34.2",
+            "5p4vh7na8v6sm5p1jb7a579i0g80512w-python3.14-rich-15.0.0",
+            "xf7j0kiw0xcp1i136243a7cj26g5851b-python3.14-ruamel-yaml-0.19.1",
+            "cnxykln8dz23mgm9lxsxg2qq3a1rcyx8-python3.14-strictyaml-1.7.3",
+            "s6nyq6yp4gpaxk85mv2pvz1flqb5a0av-python3.14-tabulate-0.10.0",
+            "axhdg1m0zhx11fh7ag1w3d9vl1ijvcbg-python3.14-ttfautohint-py-0.6.1",
+            "fdr40sqg64wlfapplmqzfd7j5rhpbn54-python3.14-ufomerge-1.9.8",
+            "d2kcj6zpzh416shald4g1x1slxfbwggz-python3.14-unidecode-1.4.0",
+            "8cd5hgrjyyddj5hyblakdp9dl43sbjan-python3.14-vharfbuzz-0.3.1",
+            "f0ldsnpb3c8fz0cmb1nwxcs5ssz42cqw-python3.14-vttlib-0.12.1",
+            "jcwb0jd1fq5gdlgqnk5wl5hqjw3a99nh-python3.14-gitpython-3.1.62",
+            "p7mh4xdmx120b2yw7qg1qfbwlkw1mv0p-python3.14-cattrs-26.1.0",
+            "mwb286ll51bfv0wiklxbaj6ydaq471s7-python3.14-orjson-3.12.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3.14-dask-2026.8.0",
+          "outputs": {
+            "dist": "gd78m8ix2kizi88cqmjjj4vzbligx62x-python3.14-dask-2026.8.0-dist",
+            "out": "ianw2gfgxdnkbq4q0i278yvv602jk177-python3.14-dask-2026.8.0"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "rjkqrhc0r5anv1q2nc7qadslgi4kj5iy-python3.14-click-8.4.2",
+            "sqxmplj41pqph3r26qkpcgwgjz5rhbk8-python3.14-cloudpickle-3.1.2",
+            "gvcv21vp7c4ij558gsh9a389q4k3c747-python3.14-fsspec-2026.7.0",
+            "6nw41srqaki01q95n3wpkhihq32sf4gb-python3.14-importlib-metadata-9.0.0",
+            "a7xsj1z1csb5y1i51jcskj3fca5sa2z8-python3.14-packaging-26.3",
+            "m9j5ajgza3fb8gr8lnc3335hj8zwd3j2-python3.14-partd-1.4.2",
+            "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3",
+            "n7l95wqaqcl21dg2mq7wd6d54jy6cl9l-python3.14-toolz-1.1.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3.14-myst-parser-5.1.0-unstable-2026-07-12",
+          "outputs": {
+            "dist": "am1fsz02k4l1qyrqashkd7v22n5jx7jl-python3.14-myst-parser-5.1.0-unstable-2026-07-12-dist",
+            "out": "47aa3wdm5yp0byvh86vv1w6c9xhf22xs-python3.14-myst-parser-5.1.0-unstable-2026-07-12"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "sl2xj9laf61526510yvvfkywxdm06g5v-python3.14-docutils-0.23",
+            "vs7vim6hikgc35m7gl2a4vys6dg99kd0-python3.14-jinja2-3.1.6",
+            "9hdhzwbaji4zpdpwkkj2yb0qqvbj7nnf-python3.14-markdown-it-py-4.2.0",
+            "3i6hgb3mq8dzjzasmxs25rf8mg3d734i-python3.14-mdit-py-plugins-0.6.1",
+            "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3",
+            "0qxqh3avyhmkdj4jhlx75lj4ajy38li6-python3.14-sphinx-9.1.0",
+            "16ci48rw59pvq3hdgcgkjhycj17rmyz5-python3.14-typing-extensions-4.16.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3.14-vcrpy-8.3.0",
+          "outputs": {
+            "dist": "rqa0vw2xnc7dswa5vzsqghgw999zfkw2-python3.14-vcrpy-8.3.0-dist",
+            "out": "a20ch12hkg1qh5ymhrr4hv6qj0dim1zx-python3.14-vcrpy-8.3.0"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3",
+            "3lc9v39gw3zfzi2ibk76f017vhx8hfw6-python3.14-six-1.17.0",
+            "q2n37ah7crichqzf43kr8fvyprjr3x1g-python3.14-urllib3-2.7.0",
+            "1a3gji0gvzvlhh6l1qs7711fp5x7ac1y-python3.14-wrapt-2.2.2",
+            "bqwjas7dss03sd0l2a9nwd52pszmi3p9-python3.14-yarl-1.24.5",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3.14-pytest-regressions-2.11.0",
+          "outputs": {
+            "dist": "11wcwvv422bpi4ml0yzwhz9r0j3kffhl-python3.14-pytest-regressions-2.11.0-dist",
+            "out": "4j3hpwjmrpd8wik0z502iaajdhcg5m2d-python3.14-pytest-regressions-2.11.0"
+          },
+          "buildInputs": [
+            "1p2fja7y7dy76d7jbkrc51wrlssdz6zf-python3.14-pytest-9.1.1"
+          ],
+          "propagatedBuildInputs": [
+            "lpwzd3mfmqssym11fbncm9r9r1zcxhn6-python3.14-pytest-datadir-1.8.0",
+            "4w3qqylc0gssfarw7ydjm4r73n7b97wm-python3.14-pyyaml-6.0.3",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3-3.14.8-env",
+          "outputs": {
+            "out": "ycmm0436ygawg2vbz7bndx8kdbxv0ix7-python3-3.14.8-env"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": []
+        },
+        {
+          "name": "python3.14-cattrs-26.1.0",
+          "outputs": {
+            "dist": "6lln1x5q63i85x7br170c9lm8h6ld6kc-python3.14-cattrs-26.1.0-dist",
+            "out": "p7mh4xdmx120b2yw7qg1qfbwlkw1mv0p-python3.14-cattrs-26.1.0"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "89b8yk2k1qlyixmpy4bclnxr5jzy7cw9-python3.14-attrs-26.1.0",
+            "16ci48rw59pvq3hdgcgkjhycj17rmyz5-python3.14-typing-extensions-4.16.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "python3.14-markdown-3.10.3",
+          "outputs": {
+            "dist": "6b2j8dkmvzmzqz9s6ng6n5q3r1xkbhm9-python3.14-markdown-3.10.3-dist",
+            "out": "qar3snl46j4dmpvnfmkn135aqcrb63az-python3.14-markdown-3.10.3"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        },
+        {
+          "name": "mesa-libgbm-26.1.3",
+          "outputs": {
+            "out": "b1l7xgbsd30sxxyg4ky013j2y4m4xrww-mesa-libgbm-26.1.3"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "bvfayc21wafivfm336sis18p2f5dq1s1-libdrm-2.4.134-dev"
+          ]
+        },
+        {
+          "name": "python3.14-trio-0.34.0",
+          "outputs": {
+            "dist": "x07k4j4d5mb854s2a7l7ihbklh4vhxjs-python3.14-trio-0.34.0-dist",
+            "out": "cmjq2y221zbc9rlnyjmq5fbsndp3dzzq-python3.14-trio-0.34.0"
+          },
+          "buildInputs": [],
+          "propagatedBuildInputs": [
+            "89b8yk2k1qlyixmpy4bclnxr5jzy7cw9-python3.14-attrs-26.1.0",
+            "0jlci0gnz2xfd3pqgiiznnb5jl8qbgfw-python3.14-idna-3.18",
+            "w5rzb3l3154507qkh2nhaara0j6la992-python3.14-outcome-1.3.0.post0",
+            "hz1j7w9rlpmmm0p9hz3x9lx607mkjzcc-python3.14-sniffio-1.3.1",
+            "fngghd5kv3m4c6b35hxy6mqp1r1cxsh4-python3.14-sortedcontainers-2.4.0",
+            "xahxrjs30p3mw0a42bqg9ikgkikskw8m-python3-3.14.8"
+          ]
+        }
+      ]
+    }
+  }
+}

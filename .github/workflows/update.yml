@@ -1,0 +1,299 @@
+name: Update inputs
+
+on:
+  schedule:
+    # 02:00 UTC: lands well before the private host flake's 05:30 UTC gate picks up main.
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+# Trust invariant: schedule and dispatch runs only, on main only (every job gates
+# on github.ref). Every job checks out this run's own github.sha (the default
+# checkout); the only other bytes are flake.lock/pins.json artifacts produced by
+# this run's jobs. Never the bot branch or a PR head.
+#
+# Job conditions: GitHub's implicit success() skips a job whenever any ancestor
+# was skipped, so every job after prepare starts with !cancelled() and checks the
+# results and outputs it depends on explicitly.
+jobs:
+  prepare:
+    if: ${{ github.ref == 'refs/heads/main' && !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    outputs:
+      combined-changed: ${{ steps.prepare.outputs.combined-changed }}
+      nixpkgs-changed: ${{ steps.prepare.outputs.nixpkgs-changed }}
+      inputs-changed: ${{ steps.prepare.outputs.inputs-changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: accept-flake-config = true
+
+      - name: Prepare trees
+        id: prepare
+        run: python3 scripts/update-bot/update_bot.py prepare --out "$RUNNER_TEMP/trees"
+
+      - name: Upload combined tree
+        if: ${{ steps.prepare.outputs.combined-changed == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tree-combined-0
+          path: ${{ runner.temp }}/trees/combined
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload nixpkgs tree
+        if: ${{ steps.prepare.outputs.nixpkgs-changed == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tree-nixpkgs-0
+          path: ${{ runner.temp }}/trees/nixpkgs
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload inputs tree
+        if: ${{ steps.prepare.outputs.inputs-changed == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tree-inputs-0
+          path: ${{ runner.temp }}/trees/inputs
+          if-no-files-found: error
+          retention-days: 7
+
+  # An unchanged combined tree ends the run: no build, PR or issue.
+  combined:
+    needs: prepare
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' }}
+    uses: ./.github/workflows/update-attempt.yml
+    with:
+      attempt: combined
+      tree-artifact: tree-combined-0
+    # Only build.yml uses the token (cachix push). This workflow runs on schedule or
+    # dispatch on main and never builds PR code; the ref check keeps the token
+    # withheld even if that ever changes.
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+
+  # Only after the combined tree stayed red, and only when both sides changed (a
+  # half equal to the combined tree would repeat it). Each half lands or blocks
+  # on its own.
+  split-nixpkgs:
+    needs: [prepare, combined]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
+    uses: ./.github/workflows/update-attempt.yml
+    with:
+      attempt: nixpkgs
+      tree-artifact: tree-nixpkgs-0
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+
+  split-inputs:
+    needs: [prepare, combined]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
+    uses: ./.github/workflows/update-attempt.yml
+    with:
+      attempt: inputs
+      tree-artifact: tree-inputs-0
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+
+  finalize:
+    needs: [prepare, combined, split-nixpkgs, split-inputs]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      land: ${{ steps.finalize.outputs.land }}
+      blocked: ${{ steps.finalize.outputs.blocked }}
+      land-tree: ${{ steps.finalize.outputs.land-tree }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # A skipped or failed attempt has empty outputs, which finalize reads as not run.
+      - name: Finalize
+        id: finalize
+        env:
+          COMBINED: ${{ needs.combined.outputs.result }}
+          NIXPKGS: ${{ needs.split-nixpkgs.outputs.result }}
+          INPUTS: ${{ needs.split-inputs.outputs.result }}
+          COMBINED_TREE: ${{ needs.combined.outputs.tree-artifact }}
+          NIXPKGS_TREE: ${{ needs.split-nixpkgs.outputs.tree-artifact }}
+          INPUTS_TREE: ${{ needs.split-inputs.outputs.tree-artifact }}
+        run: |
+          python3 scripts/update-bot/update_bot.py finalize --combined "$COMBINED" --nixpkgs "$NIXPKGS" --inputs "$INPUTS"
+          land=$(jq -r .land final.json)
+          case "$land" in
+            combined) tree="$COMBINED_TREE" ;;
+            nixpkgs) tree="$NIXPKGS_TREE" ;;
+            inputs) tree="$INPUTS_TREE" ;;
+            *) tree="" ;;
+          esac
+          echo "land-tree=$tree" >>"$GITHUB_OUTPUT"
+
+      - name: Upload final
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: update-final
+          path: final.json
+          if-no-files-found: error
+          retention-days: 7
+
+  land:
+    needs: [finalize]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.finalize.result == 'success' && needs.finalize.outputs.land != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: accept-flake-config = true
+
+      - name: Download tree
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.finalize.outputs.land-tree }}
+          path: ${{ runner.temp }}/tree
+
+      - name: Apply tree
+        run: |
+          cp "$RUNNER_TEMP/tree/flake.lock" "$RUNNER_TEMP/tree/pins.json" .
+          git show HEAD:flake.lock >"$RUNNER_TEMP/base-lock.json"
+          git show HEAD:pins.json >"$RUNNER_TEMP/base-pins.json"
+
+      - name: Advance fallback
+        id: fallback
+        run: python3 scripts/update-bot/update_bot.py advance-fallback --base-lock "$RUNNER_TEMP/base-lock.json"
+
+      - name: PR body
+        env:
+          ATTEMPT: ${{ needs.finalize.outputs.land }}
+          ADVANCED: ${{ steps.fallback.outputs.advanced }}
+        run: |
+          python3 scripts/update-bot/update_bot.py pr-body --attempt "$ATTEMPT" \
+            --base-lock "$RUNNER_TEMP/base-lock.json" --base-pins "$RUNNER_TEMP/base-pins.json" \
+            --advanced "$ADVANCED" --out "$RUNNER_TEMP/pr-body.md"
+
+      - name: Commit
+        id: commit
+        env:
+          ATTEMPT: ${{ needs.finalize.outputs.land }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.nix flake.lock pins.json
+          if git diff --cached --quiet; then
+            echo "::notice::nothing to land: the $ATTEMPT tree matches main"
+            echo "committed=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "chore(flake): update inputs ($ATTEMPT)"
+          echo "committed=true" >>"$GITHUB_OUTPUT"
+
+      - name: Push branch
+        if: ${{ steps.commit.outputs.committed == 'true' }}
+        run: git push --force origin HEAD:refs/heads/bot/flake-update
+
+      - name: Open or update PR
+        id: pr
+        if: ${{ steps.commit.outputs.committed == 'true' }}
+        run: |
+          n=$(gh pr list --head bot/flake-update --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$n" ]]; then
+            gh pr edit "$n" --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            url=$(gh pr create --base main --head bot/flake-update --title "chore(flake): update inputs" --body-file "$RUNNER_TEMP/pr-body.md")
+            n=$(gh pr view "$url" --json number --jq .number)
+          fi
+          echo "number=$n" >>"$GITHUB_OUTPUT"
+
+      # Merge only onto the commit this run built against; if main moved, the PR
+      # stays open and the next run refreshes it. A GITHUB_TOKEN merge does not
+      # trigger check.yml, which is why the attempt builds pushed to cachix.
+      - name: Merge
+        id: merge
+        if: ${{ steps.commit.outputs.committed == 'true' }}
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          main=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [[ "$main" == "$RUN_SHA" ]]; then
+            gh pr merge "$PR" --squash --match-head-commit "$(git rev-parse HEAD)" --delete-branch
+            echo "merged=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "::warning::main moved since this run started; PR #$PR left open"
+            echo "merged=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Close blocked issue
+        if: ${{ steps.merge.outputs.merged == 'true' && needs.finalize.outputs.land == 'combined' }}
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          for n in $(gh issue list --label update-blocked --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "The combined update landed in #$PR."
+          done
+
+  # One open update-blocked issue, its body replaced each run the combined tree
+  # does not land (also when a half landed).
+  blocked:
+    needs: [finalize]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.finalize.result == 'success' && needs.finalize.outputs.blocked == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # One subdirectory per report artifact; issue-body keeps each attempt's last round.
+      - name: Download reports
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: report-*
+          merge-multiple: false
+          path: ${{ runner.temp }}/reports
+
+      - name: Download final
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: update-final
+          path: ${{ runner.temp }}/final
+
+      - name: Issue body
+        run: |
+          mkdir -p "$RUNNER_TEMP/reports"
+          python3 scripts/update-bot/update_bot.py issue-body --final "$RUNNER_TEMP/final/final.json" \
+            --reports "$RUNNER_TEMP/reports" --out "$RUNNER_TEMP/issue.md"
+
+      - name: Open or update issue
+        run: |
+          gh label create update-blocked --color B60205 --description "Nightly flake update could not land" --force
+          n=$(gh issue list --label update-blocked --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$n" ]]; then
+            gh issue edit "$n" --body-file "$RUNNER_TEMP/issue.md"
+          else
+            gh issue create --title "Nightly flake update blocked" --label update-blocked --body-file "$RUNNER_TEMP/issue.md"
+          fi

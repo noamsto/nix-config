@@ -72,6 +72,10 @@
     # recompiles it locally (~1h). Bump this rev only to upgrade it.
     nixpkgs-bambu.url = "github:nixos/nixpkgs/a7868a727837f3c09cee2ce0ca671c76b1589fed";
 
+    # Last nixpkgs rev where every pinned package (see pins.json) built. Only
+    # scripts/update-bot moves it.
+    nixpkgs-fallback.url = "github:nixos/nixpkgs/0bb2eedc20e4739f29e8045034f2828ad7054f8f";
+
     # === macOS (nix-darwin) ===
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";

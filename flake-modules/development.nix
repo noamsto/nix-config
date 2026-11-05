@@ -21,6 +21,9 @@
       config.allowUnfree = true;
     };
 
+    # The hosts' pkgs (overlays + allowUnfree), for scripts/update-bot's failure-to-attr mapping.
+    legacyPackages = pkgs;
+
     checks =
       {
         # pi's hookyard guard manifest, end to end: the locked hookyard binary
@@ -44,6 +47,14 @@
 
         # Direct bats regression suite for the pi openrouter auth.json upsert script.
         pi-openrouter-auth = import ../home/ai/pi/openrouter-auth-check.nix {inherit pkgs;};
+
+        # Unit tests of the flake-update bot's pin selection and failure-to-attr logic.
+        update-bot = pkgs.runCommand "update-bot-tests" {nativeBuildInputs = [pkgs.python3];} ''
+          cp -r ${../scripts/update-bot} src
+          chmod -R u+w src
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover src
+          touch $out
+        '';
 
         # Direct bats regression suite for the secret-read, git-identity and pgrep-self-match guard scripts.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
@@ -212,7 +223,9 @@
           # `home/nvim/` is owned by the unmerged #778 branch (vendored LazyVim
           # JSON), and a generated npm lockfile feeds `fetchNpmDeps`, whose
           # pinned `npmDepsHash` is whitespace-sensitive.
-          excludes = ["*.md" "*.js" "*.ts" "home/nvim/**" "**/package-lock.json"];
+          # pins.json is machine-written by scripts/update-bot in json.dumps form;
+          # reformatting it would fail the next round's treefmt check.
+          excludes = ["pins.json" "*.md" "*.js" "*.ts" "home/nvim/**" "**/package-lock.json"];
         };
       };
     };

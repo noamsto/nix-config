@@ -45,4 +45,6 @@ Hosts and secrets live in the private flake; this repo has no secrets and no sec
 
 - Nested Wayland compositors need their own `XDG_RUNTIME_DIR`, or a later `nh os switch` can fail activation. See the `nested-wayland` skill.
 
+- Inputs update nightly via `.github/workflows/update.yml` (logic in `scripts/update-bot/`). A nixpkgs package that breaks on a bump is pinned to the `nixpkgs-fallback` input through `pins.json` (the pin overlay is first in `lib/overlays.nix`). Hold a package by hand with a `"mode": "hold"` entry (top-level attrs only), freeze an input with `frozenInputs`, and never move `nixpkgs-fallback` by hand: the bot advances it only when no pins remain.
+
 Run `just --list` for the command recipes.

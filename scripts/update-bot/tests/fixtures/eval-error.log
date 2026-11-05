@@ -1,0 +1,17 @@
+error:
+       … while evaluating the attribute 'config.system.build.toplevel'
+         at /nix/store/l8g1x0h5c3y8xw0xrkr3cq5z7kgm1q3d-source/nixos/modules/system/activation/top-level.nix:71:12:
+           70|   system.build = {
+           71|     toplevel = if config.system.build.toplevel-unchecked then 1 else 2;
+             |            ^
+           72|   };
+
+       … while evaluating definitions from `/nix/store/9w3k2hv5yqgk7b2c9r5xk3c3y1x1v0bq-source/home/packages.nix':
+
+       error: attribute 'x' missing
+       at /nix/store/9w3k2hv5yqgk7b2c9r5xk3c3y1x1v0bq-source/home/packages.nix:14:5:
+           13|   home.packages = [
+           14|     pkgs.x
+             |     ^
+           15|   ];
+       Did you mean one of xz, xq or xh?

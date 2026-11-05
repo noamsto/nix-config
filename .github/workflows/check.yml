@@ -8,15 +8,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # Cachix caches to substitute from. `cachix use` (run by cachix-action) writes a
-  # `substituters =` line to the user's nix.conf, which replaces anything the
-  # installer's extra-conf adds, and nix-fast-build builds by .drv path where the
-  # flake's nixConfig does not apply. extraPullNames is the only route that sticks:
-  # without nixos-raspberrypi here, the Pi kernel compiles instead of substituting.
-  # SYNC: Keep in sync with the cachix.org entries of lib/caches.nix.
-  CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,nix-community,yazi,nixos-raspberrypi
-
 # Push runs get a group each: GitHub cancels a pending run whenever a newer one
 # queues, and a cancelled push run on main would leave its range unscanned.
 concurrency:
@@ -24,122 +15,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Skipped while the repo is private: Actions billing blocks these jobs there; they run once the repo is public.
-  check:
-    if: ${{ !github.event.repository.private }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      # Before Nix is installed: it grows the Nix volume by repurposing the
-      # runner's spare disk. The full build below does not fit in the stock free space.
-      - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
-
-      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
-        with:
-          # So the flake's nixConfig substituters are used.
-          extra-conf: accept-flake-config = true
-
-      - name: Free space
-        run: df -h
-
-      # Pushes only on main. The token is withheld from every other run, so PR code
-      # (same-repo branches get secrets) cannot read it and push into the trusted cache.
-      # An empty token makes the action read-only rather than failing.
-      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
-        with:
-          name: noamsto-nix-config
-          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
-
-      # nix-fast-build (from the flake's locked nixpkgs) evaluates in parallel and
-      # builds only what no substituter has; any failed attr fails the job.
-      - name: Build checks
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#checks.x86_64-linux
-
-      - name: Build packages
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#packages.x86_64-linux
-
-      - name: Build devShells
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#devShells.x86_64-linux
-
-      - name: Build formatter
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#formatter.x86_64-linux
-
-      # One job at a time: priors' CPU-bound property tests time out (10m) when they share
-      # the runner with parallel builds.
-      - name: Build example host
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 -f .#nixosConfigurations.example.config.system.build.toplevel
-
-      # The checks were built or confirmed cached above; this keeps flake check's
-      # structural validation of modules, overlays and apps without rebuilding.
-      - name: Flake check (structure)
-        run: nix flake check -L --no-build
-
-  # Only what the Mac uses: its packages, no checks, devShells or formatter.
-  darwin:
-    if: ${{ !github.event.repository.private }}
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
-        with:
-          # So the flake's nixConfig substituters are used.
-          extra-conf: accept-flake-config = true
-
-      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
-        with:
-          name: noamsto-nix-config
-          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
-
-      # packages.aarch64-darwin is exactly deja-vu, gh-repo-defaults, linear-cli,
-      # pi-lens, pi-vim, pi-web-access and rpiv-todo.
-      - name: Build packages
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#packages.aarch64-darwin
-
-  # Native ARM build of the Raspberry Pi example host, kernel included, pushed to
-  # Cachix so Pi hosts built on this library substitute it instead of compiling.
-  aarch64-linux:
-    if: ${{ !github.event.repository.private }}
-    runs-on: ubuntu-24.04-arm
-    # A cold kernel build is long; GitHub's hard limit is 6 h.
-    timeout-minutes: 360
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
-        with:
-          # So the flake's nixConfig substituters (incl. nixos-raspberrypi) are used.
-          extra-conf: accept-flake-config = true
-
-      # Informational only: shows whether a cold kernel build is short of disk.
-      # nothing-but-nix is not used: unverified on arm runners.
-      - name: Disk space
-        run: df -h
-
-      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
-        with:
-          name: noamsto-nix-config
-          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
-
-      - name: Build example Raspberry Pi 4 host
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel
-
-      - name: Build packages
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#packages.aarch64-linux
-
-      # Not checks.aarch64-linux: it includes NixOS VM tests, which need KVM that
-      # the arm runner may not offer; the x86_64 job already runs the checks.
-      - name: Build devShells
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#devShells.aarch64-linux
+  # Pushes only on main. The token is withheld from every other run, so PR code
+  # (same-repo branches get secrets) cannot read it and push into the trusted cache.
+  # An empty token makes the action read-only rather than failing.
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      push-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
 
   secrets:
     if: ${{ !github.event.repository.private }}
