@@ -156,6 +156,14 @@ in {
           show_hidden = false;
           show_symlink = true;
         };
+        # FreeCAD projects are zip containers, so yazi sniffs application/zip.
+        # Match by name first so they open with the desktop default (FreeCAD).
+        open.prepend_rules = [
+          {
+            url = "*.{FCStd,fcstd,FCSTD}";
+            use = ["open" "reveal"];
+          }
+        ];
         plugin = {
           prepend_fetchers = [
             {
