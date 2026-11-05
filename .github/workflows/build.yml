@@ -1,0 +1,283 @@
+name: Build
+
+on:
+  workflow_call:
+    inputs:
+      push-cache:
+        type: boolean
+        default: false
+      tree-artifact:
+        type: string
+        default: ""
+      report:
+        type: boolean
+        default: false
+      report-name:
+        type: string
+        default: ""
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  # Cachix caches to substitute from. `cachix use` (run by cachix-action) writes a
+  # `substituters =` line to the user's nix.conf, which replaces anything the
+  # installer's extra-conf adds, and nix-fast-build builds by .drv path where the
+  # flake's nixConfig does not apply. extraPullNames is the only route that sticks:
+  # without nixos-raspberrypi here, the Pi kernel compiles instead of substituting.
+  # SYNC: Keep in sync with the cachix.org entries of lib/caches.nix.
+  CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,nix-community,yazi,nixos-raspberrypi
+
+jobs:
+  # Skipped while the repo is private: Actions billing blocks these jobs there; they run once the repo is public.
+  check:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Prepare step logs
+        run: mkdir -p "$RUNNER_TEMP/logs"
+
+      # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      - name: Base worktree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+
+      - name: Download tree
+        if: ${{ inputs.tree-artifact != '' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.tree-artifact }}
+          path: ${{ runner.temp }}/tree
+
+      - name: Apply tree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: cp "$RUNNER_TEMP/tree/flake.lock" "$RUNNER_TEMP/tree/pins.json" .
+
+      # Before Nix is installed: it grows the Nix volume by repurposing the
+      # runner's spare disk. The full build below does not fit in the stock free space.
+      - uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters are used.
+          extra-conf: accept-flake-config = true
+
+      - name: Free space
+        run: df -h
+
+      # Pushes only when the caller passes push-cache and the token (check.yml: push to
+      # main). Otherwise the token is empty, so PR code (same-repo branches get secrets)
+      # cannot read it and push into the trusted cache. An empty token makes the action
+      # read-only rather than failing.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
+          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
+          skipPush: ${{ !inputs.push-cache }}
+
+      # nix-fast-build (from the flake's locked nixpkgs) evaluates in parallel and
+      # builds only what no substituter has; any failed attr fails the job.
+      - name: Build checks
+        id: checks
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#checks.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/checks.log"
+
+      - name: Build packages
+        id: packages
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/packages.log"
+
+      - name: Build devShells
+        id: devshells
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/devshells.log"
+
+      - name: Build formatter
+        id: formatter
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#formatter.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/formatter.log"
+
+      # One job at a time: priors' CPU-bound property tests time out (10m) when they share
+      # the runner with parallel builds.
+      - name: Build example host
+        id: example
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/example.log"
+
+      # The checks were built or confirmed cached above; this keeps flake check's
+      # structural validation of modules, overlays and apps without rebuilding.
+      - name: Flake check (structure)
+        id: flake-check
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix flake check -L --no-build 2>&1 | tee "$RUNNER_TEMP/logs/flake-check.log"
+
+      - name: Analyze failures
+        if: ${{ always() && inputs.report }}
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python3 scripts/update-bot/update_bot.py analyze --system x86_64-linux --job check --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+
+      - name: Upload report
+        if: ${{ always() && inputs.report }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.report-name }}-check
+          path: ${{ runner.temp }}/report
+          if-no-files-found: error
+          retention-days: 7
+
+  # Only what the Mac uses: its packages, no checks, devShells or formatter.
+  darwin:
+    if: ${{ !github.event.repository.private }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare step logs
+        run: mkdir -p "$RUNNER_TEMP/logs"
+
+      # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      - name: Base worktree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+
+      - name: Download tree
+        if: ${{ inputs.tree-artifact != '' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.tree-artifact }}
+          path: ${{ runner.temp }}/tree
+
+      - name: Apply tree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: cp "$RUNNER_TEMP/tree/flake.lock" "$RUNNER_TEMP/tree/pins.json" .
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters are used.
+          extra-conf: accept-flake-config = true
+
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
+          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
+          skipPush: ${{ !inputs.push-cache }}
+
+      # packages.aarch64-darwin is exactly deja-vu, gh-repo-defaults, linear-cli,
+      # pi-lens, pi-vim, pi-web-access and rpiv-todo.
+      - name: Build packages
+        id: darwin-packages
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-darwin 2>&1 | tee "$RUNNER_TEMP/logs/darwin-packages.log"
+
+      - name: Analyze failures
+        if: ${{ always() && inputs.report }}
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-darwin --job darwin --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+
+      - name: Upload report
+        if: ${{ always() && inputs.report }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.report-name }}-darwin
+          path: ${{ runner.temp }}/report
+          if-no-files-found: error
+          retention-days: 7
+
+  # Native ARM build of the Raspberry Pi example host, kernel included, pushed to
+  # Cachix so Pi hosts built on this library substitute it instead of compiling.
+  aarch64-linux:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-24.04-arm
+    # A cold kernel build is long; GitHub's hard limit is 6 h.
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Prepare step logs
+        run: mkdir -p "$RUNNER_TEMP/logs"
+
+      # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      - name: Base worktree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+
+      - name: Download tree
+        if: ${{ inputs.tree-artifact != '' }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.tree-artifact }}
+          path: ${{ runner.temp }}/tree
+
+      - name: Apply tree
+        if: ${{ inputs.tree-artifact != '' }}
+        run: cp "$RUNNER_TEMP/tree/flake.lock" "$RUNNER_TEMP/tree/pins.json" .
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters (incl. nixos-raspberrypi) are used.
+          extra-conf: accept-flake-config = true
+
+      # Informational only: shows whether a cold kernel build is short of disk.
+      # nothing-but-nix is not used: unverified on arm runners.
+      - name: Disk space
+        run: df -h
+
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: noamsto-nix-config
+          extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
+          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
+          skipPush: ${{ !inputs.push-cache }}
+
+      - name: Build example Raspberry Pi 4 host
+        id: rpi4
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/rpi4.log"
+
+      - name: Build packages
+        id: arm-packages
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-packages.log"
+
+      # Not checks.aarch64-linux: it includes NixOS VM tests, which need KVM that
+      # the arm runner may not offer; the x86_64 job already runs the checks.
+      - name: Build devShells
+        id: arm-devshells
+        shell: bash
+        continue-on-error: ${{ inputs.report }}
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
+
+      - name: Analyze failures
+        if: ${{ always() && inputs.report }}
+        env:
+          STEPS: ${{ toJSON(steps) }}
+        run: python3 scripts/update-bot/update_bot.py analyze --system aarch64-linux --job aarch64-linux --logs "$RUNNER_TEMP/logs" --steps-json "$STEPS" --base-dir "$RUNNER_TEMP/base" --out "$RUNNER_TEMP/report/report.json"
+
+      - name: Upload report
+        if: ${{ always() && inputs.report }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.report-name }}-aarch64-linux
+          path: ${{ runner.temp }}/report
+          if-no-files-found: error
+          retention-days: 7
