@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-NixOS and Home Manager configuration for personal laptops, using flake-parts. Desktop modes are Hyprland or none (headless); x86_64-linux only. Raspberry Pi configs live in a separate repo.
+NixOS and Home Manager configuration for personal laptops, using flake-parts. Desktop modes are Hyprland or none (headless); x86_64-linux and aarch64-linux (a generic Raspberry Pi base, `nixosModules.rpi`, plus the `example-rpi4` host), and aarch64-darwin for the darwin modules. Real Pi hosts live in the private flake.
 
 ## Skills
 

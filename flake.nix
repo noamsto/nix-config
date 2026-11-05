@@ -5,6 +5,7 @@
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
         "x86_64-linux"
+        "aarch64-linux"
         "aarch64-darwin"
       ];
 
@@ -30,6 +31,7 @@
       "https://wtc.cachix.org"
       "https://nixpkgs-unfree.cachix.org"
       "https://nix-community.cachix.org"
+      "https://nixos-raspberrypi.cachix.org"
       "https://yazi.cachix.org"
       "https://noctalia.cachix.org"
       "https://lazytmux.cachix.org"
@@ -49,6 +51,7 @@
       "wtc.cachix.org-1:rXr2jpSoAtqezDz8xK/gPMjH2Rgyda0zOErfk3N5WnI="
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
       "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
       "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
@@ -153,6 +156,13 @@
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Raspberry Pi kernel, firmware and boot loader (see nixos/rpi, hosts/example-rpi4).
+    # Deliberately no `inputs.nixpkgs.follows`: its binary cache
+    # (nixos-raspberrypi.cachix.org) is built against its own locked nixpkgs, so
+    # following ours would turn every kernel into a cache miss. Consumers make
+    # their own `nixos-raspberrypi` input follow this one to get the same kernel.
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     # === SECURITY & SECRETS ===
     # Security-critical - immediate updates

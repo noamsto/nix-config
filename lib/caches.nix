@@ -22,6 +22,8 @@
     "https://nixpkgs-unfree.cachix.org"
     "https://nix-community.cachix.org"
     "https://yazi.cachix.org"
+    # Raspberry Pi kernels; CI also pushes the example-rpi4 closure to our own cache
+    "https://nixos-raspberrypi.cachix.org"
 
     # llm-agents.nix publishes here, NOT numtide.cachix.org
     "https://cache.numtide.com"
@@ -48,6 +50,7 @@
     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     "nixpkgs-unfree.cachix.org-1:hqvoInulhbV4nJ9yJOEr+4wxhDV4xq2d1DK7S6Nj6rs="
     "yazi.cachix.org-1:Dcdz63NZKfvUCbDGngQDAZq6kOroIrFoyO064uvLh8k="
+    "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
 
     "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
   ];

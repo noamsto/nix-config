@@ -50,6 +50,7 @@ in {
       udev-hwmon = ../nixos/hardware/udev-hwmon.nix;
       iwd-known-networks = ../nixos/core/iwd-known-networks.nix;
       nice-looking-console = ../nixos/core/nice-looking-console.nix;
+      rpi = applyKeyed ../nixos/rpi;
       home = applyKeyed ../home;
     };
 
