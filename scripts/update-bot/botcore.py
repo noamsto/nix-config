@@ -126,7 +126,7 @@ def dump_pins(pins_doc: dict) -> str:
     return json.dumps(pins_doc, indent=2) + "\n"
 
 
-def failed_steps(steps: dict, expected: list[str]) -> list[str]:
+def failed_steps(steps: object, expected: list[str]) -> list[str]:
     """Fail closed: an expected step that is missing or did not succeed
     (failure, skipped after a setup failure, cancelled on timeout) failed."""
     if not isinstance(steps, dict):
