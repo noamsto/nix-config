@@ -59,8 +59,10 @@ jobs:
       - name: Build formatter
         run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#formatter.x86_64-linux
 
+      # One job at a time: priors' CPU-bound property tests time out (10m) when they share
+      # the runner with parallel builds.
       - name: Build example host
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached -f .#nixosConfigurations.example.config.system.build.toplevel
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 -f .#nixosConfigurations.example.config.system.build.toplevel
 
       # The checks were built or confirmed cached above; this keeps flake check's
       # structural validation of modules, overlays and apps without rebuilding.
