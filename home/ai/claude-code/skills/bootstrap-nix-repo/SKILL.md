@@ -127,6 +127,8 @@ Wire `config.treefmt.build.wrapper` into the devShell `packages` so `treefmt` is
 Add input `git-hooks-nix.url = "github:cachix/git-hooks.nix";` (follows nixpkgs), `imports = [inputs.git-hooks-nix.flakeModule];`, then in `perSystem`:
 
 ```nix
+pre-commit.settings.package = pkgs.prek;
+
 pre-commit.settings.hooks = {
   statix.enable = true;
   deadnix.enable = true;
