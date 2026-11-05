@@ -136,6 +136,7 @@
           pkgs.tokei # Code statistics (lightweight and useful for dev-stats)
 
           pkgs.home-manager
+          pkgs.cachix
         ]
         # Remote NixOS installer — Linux-only, irrelevant on the darwin devShell.
         ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
