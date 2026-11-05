@@ -80,6 +80,18 @@ nix eval .#nixosConfigurations.example.config.system.build.toplevel.drvPath
 
 `just --list` shows the other recipes.
 
+## Development
+
+Git hooks are run by [prek](https://github.com/j178/prek) and installed for both
+commit and push when you enter the dev shell (`nix develop` or direnv). Commits
+run formatting and basic checks plus a betterleaks scan of the staged changes;
+pushes run a betterleaks scan of the commits being pushed
+(`scripts/pre-push-leak-check.sh`). The push check scans every local branch and
+tag not yet on the remote, plus HEAD, so a leak on any unpushed ref blocks the
+push. A second refspec naming a bare commit sha is not covered. Run
+`nix shell nixpkgs#betterleaks nixpkgs#prek -c bash scripts/test-pre-push-leak-check.sh`
+to test the push check.
+
 ## Caution
 
 - The AI-agent settings under `home/ai/` are tuned for the author's own trust
