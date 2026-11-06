@@ -206,7 +206,10 @@ jobs:
             echo "committed=false" >>"$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "chore(flake): update inputs ($ATTEMPT)"
+          # GitHub holds pull_request runs on bot PRs for manual approval; they
+          # expire as failures. This run already builds everything it merges, so
+          # the PR head carries [skip ci] to suppress those runs.
+          git commit -m "chore(flake): update inputs ($ATTEMPT) [skip ci]"
           echo "committed=true" >>"$GITHUB_OUTPUT"
 
       - name: Push branch
