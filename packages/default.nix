@@ -11,6 +11,7 @@
         deja-vu = pkgs.callPackage ./deja-vu.nix {};
         gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
+        lock-commit = pkgs.callPackage ./lock-commit.nix {};
         inherit (pkgs.callPackage ./pi-extensions {}) pi-lens pi-vim pi-web-access rpiv-todo;
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

@@ -206,10 +206,37 @@ jobs:
             echo "committed=false" >>"$GITHUB_OUTPUT"
             exit 0
           fi
+          # The commit message comes from lock-commit (the same message the
+          # interactive `lock-commit` writes). Message generation never blocks
+          # landing: on any failure the plain subject with an empty body stands.
+          subject="chore(flake): update inputs ($ATTEMPT)"
+          body=""
+          if ! git diff --cached --quiet -- flake.lock; then
+            if msg=$(nix run .#lock-commit -- --dry-run 2>"$RUNNER_TEMP/lock-commit.err") && [[ -n "$msg" ]]; then
+              subject=$(head -n1 <<<"$msg")
+              body=$(tail -n +3 <<<"$msg")
+            else
+              echo "::warning::lock-commit failed; using the plain commit message"
+              cat "$RUNNER_TEMP/lock-commit.err" || true
+            fi
+          fi
+          extra=""
+          if ! git diff --cached --quiet -- pins.json; then
+            extra="Updates pins.json."
+          fi
+          if ! git diff --cached --quiet -- flake.nix; then
+            extra+="${extra:+ }Advances nixpkgs-fallback."
+          fi
+          if [[ -n "$extra" ]]; then
+            body+="${body:+$'\n\n'}$extra"
+          fi
+          printf '%s' "$subject" >"$RUNNER_TEMP/commit-subject.txt"
+          printf '%s' "$body" >"$RUNNER_TEMP/commit-body.txt"
           # GitHub holds pull_request runs on bot PRs for manual approval; they
           # expire as failures. This run already builds everything it merges, so
-          # the PR head carries [skip ci] to suppress those runs.
-          git commit -m "chore(flake): update inputs ($ATTEMPT) [skip ci]"
+          # the PR head carries [skip ci] to suppress those runs; the squash
+          # commit on main does not (the merge step passes its own subject).
+          git commit -m "$subject [skip ci]" -m "$body"
           echo "committed=true" >>"$GITHUB_OUTPUT"
 
       - name: Push branch
@@ -241,7 +268,8 @@ jobs:
         run: |
           main=$(git ls-remote origin refs/heads/main | cut -f1)
           if [[ "$main" == "$RUN_SHA" ]]; then
-            gh pr merge "$PR" --squash --match-head-commit "$(git rev-parse HEAD)" --delete-branch
+            gh pr merge "$PR" --squash --match-head-commit "$(git rev-parse HEAD)" --delete-branch \
+              --subject "$(<"$RUNNER_TEMP/commit-subject.txt") (#$PR)" --body "$(<"$RUNNER_TEMP/commit-body.txt")"
             echo "merged=true" >>"$GITHUB_OUTPUT"
           else
             echo "::warning::main moved since this run started; PR #$PR left open"
