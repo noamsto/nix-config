@@ -74,7 +74,7 @@
 
     # Last nixpkgs rev where every pinned package (see pins.json) built. Only
     # scripts/update-bot moves it.
-    nixpkgs-fallback.url = "github:nixos/nixpkgs/0bb2eedc20e4739f29e8045034f2828ad7054f8f";
+    nixpkgs-fallback.url = "github:nixos/nixpkgs/1d060086d60cb76a40cf37109f979d88a5bd6396";
 
     # === macOS (nix-darwin) ===
     nix-darwin = {
