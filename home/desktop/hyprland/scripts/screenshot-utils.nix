@@ -5,8 +5,6 @@
   sattyCopyPathScript = builtins.readFile ./sh/satty-copy-path.sh;
   # Satty wrapper for grimblast - converts positional arg to --filename
   sattyWrapperScript = builtins.readFile ./sh/satty-wrapper.sh;
-  # Grimblast edit wrapper - uses save instead of edit to unfreeze screen
-  grimblastEditWrapperScript = builtins.readFile ./sh/grimblast-edit-wrapper.sh;
 in {
   home.packages = [
     # Screenshot helper script with proper scaling and satty integration
@@ -21,8 +19,8 @@ in {
     # Satty wrapper for grimblast - converts positional arg to --filename flag
     (pkgs.writeShellScriptBin "satty-wrapper" sattyWrapperScript)
 
-    # Grimblast edit wrapper - takes screenshot and opens in satty without keeping screen frozen
-    (pkgs.writeShellScriptBin "grimblast-satty" grimblastEditWrapperScript)
+    # Area screenshot: copies, then offers satty from the notification
+    (pkgs.writeShellScriptBin "screenshot-area" (builtins.readFile ./sh/screenshot-area.sh))
 
     # System toggles
     (pkgs.writeShellScriptBin "system-toggles" (builtins.readFile ./sh/system-toggles.sh))
