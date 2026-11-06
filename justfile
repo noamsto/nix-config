@@ -17,9 +17,52 @@ fmt:
 check:
     nix flake check
 
-# Update all flake inputs
+# Dispatches .github/workflows/update.yml on main, follows the run, then
+# fast-forwards a local main. Exits non-zero if the run failed.
+# Run the update bot on demand (takes tens of minutes)
 update:
-    nix flake update
+    #!/usr/bin/env bash
+    set -euo pipefail
+    branch=$(git branch --show-current)
+    dispatched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    out=$(gh workflow run update.yml --ref main 2>&1) || { echo "$out" >&2; exit 1; }
+    echo "$out"
+    id=$(grep -oE 'actions/runs/[0-9]+' <<<"$out" | head -n1 | grep -oE '[0-9]+' || true)
+    # Fallback: the oldest dispatch run of update.yml on main created since we dispatched (ours, unless a concurrent dispatch raced us)
+    for _ in 1 2 3 4 5 6; do
+        [ -n "$id" ] && break
+        sleep 5
+        id=$(gh run list --workflow update.yml --event workflow_dispatch --branch main --limit 10 \
+            --json databaseId,createdAt \
+            --jq "[.[] | select(.createdAt >= \"$dispatched_at\")] | sort_by(.createdAt) | .[0].databaseId // empty")
+    done
+    if [ -z "$id" ]; then
+        echo "❌ Could not find the dispatched run; see: gh run list --workflow update.yml" >&2
+        exit 1
+    fi
+    run_url=$(gh run view "$id" --json url --jq .url)
+    echo "🔗 Update run: $run_url"
+    status=0
+    gh run watch "$id" --exit-status || status=$?
+    if [ "$status" -ne 0 ]; then
+        echo "❌ Update run failed: $run_url" >&2
+        echo "🚧 Open update-blocked issues:" >&2
+        gh issue list --label update-blocked || true
+        exit "$status"
+    fi
+    echo "✅ Update run succeeded: $run_url"
+    if [ "$branch" = main ]; then
+        git pull --ff-only
+    else
+        echo "ℹ️  You are on '$branch', not main, and main has moved."
+        echo "   To pick up the bump: git switch main && git pull --ff-only"
+    fi
+
+# Bypasses the bot (no build, cache push, fallback pins or lock commit): for testing
+# a specific bump on a branch or offline. Pass input names to bump only those.
+# Bump flake inputs locally, skipping the update bot
+update-local *inputs:
+    nix flake update {{inputs}}
 
 # Enter development shell
 dev:
@@ -163,6 +206,7 @@ help:
     @echo "🔧 Maintenance:"
     @echo "just fmt              # Format code"
     @echo "just clean            # Clean build artifacts"
-    @echo "just update           # Update flake inputs"
+    @echo "just update           # Run the update bot on demand (tens of minutes)"
+    @echo "just update-local     # Bump flake inputs locally, skipping the bot"
     @echo ""
     @echo "📖 Run 'just --list' for all available commands"
