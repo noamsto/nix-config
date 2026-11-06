@@ -28,7 +28,7 @@ update:
     out=$(gh workflow run update.yml --ref main 2>&1) || { echo "$out" >&2; exit 1; }
     echo "$out"
     id=$(grep -oE 'actions/runs/[0-9]+' <<<"$out" | head -n1 | grep -oE '[0-9]+' || true)
-    # Fallback: the newest dispatch run of update.yml on main created since we dispatched
+    # Fallback: the oldest dispatch run of update.yml on main created since we dispatched (ours, unless a concurrent dispatch raced us)
     for _ in 1 2 3 4 5 6; do
         [ -n "$id" ] && break
         sleep 5
