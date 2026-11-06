@@ -144,7 +144,7 @@ in {
 
     -- === SCREENSHOTS ===
     -- Print is remapped from SUPER+SHIFT+S via xremap
-    hl.bind("Print", hl.dsp.exec_cmd("grimblast-satty"))
+    hl.bind("Print", hl.dsp.exec_cmd("screenshot-area"))
     hl.bind("ALT + SHIFT + S", hl.dsp.exec_cmd("screenshot-menu"))
 
     -- === ACCESSIBILITY ===
