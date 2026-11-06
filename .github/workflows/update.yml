@@ -2,8 +2,9 @@ name: Update inputs
 
 on:
   schedule:
-    # 02:00 UTC: lands well before the private host flake's 05:30 UTC gate picks up main.
-    - cron: "0 2 * * *"
+    # 02:17 UTC: off the hour, because GitHub delays or drops top-of-hour schedules under load.
+    # Still lands well before the private host flake's 05:30 UTC gate picks up main.
+    - cron: "17 2 * * *"
   workflow_dispatch:
 
 permissions:
@@ -205,7 +206,10 @@ jobs:
             echo "committed=false" >>"$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "chore(flake): update inputs ($ATTEMPT)"
+          # GitHub holds pull_request runs on bot PRs for manual approval; they
+          # expire as failures. This run already builds everything it merges, so
+          # the PR head carries [skip ci] to suppress those runs.
+          git commit -m "chore(flake): update inputs ($ATTEMPT) [skip ci]"
           echo "committed=true" >>"$GITHUB_OUTPUT"
 
       - name: Push branch
