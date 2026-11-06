@@ -211,15 +211,24 @@ jobs:
           # landing: on any failure the plain subject with an empty body stands.
           subject="chore(flake): update inputs ($ATTEMPT)"
           body=""
-          if msg=$(nix run .#lock-commit -- --dry-run 2>"$RUNNER_TEMP/lock-commit.err") && [[ -n "$msg" ]]; then
-            subject=$(head -n1 <<<"$msg")
-            body=$(tail -n +3 <<<"$msg")
-          else
-            echo "::warning::lock-commit failed; using the plain commit message"
-            cat "$RUNNER_TEMP/lock-commit.err" || true
+          if ! git diff --cached --quiet -- flake.lock; then
+            if msg=$(nix run .#lock-commit -- --dry-run 2>"$RUNNER_TEMP/lock-commit.err") && [[ -n "$msg" ]]; then
+              subject=$(head -n1 <<<"$msg")
+              body=$(tail -n +3 <<<"$msg")
+            else
+              echo "::warning::lock-commit failed; using the plain commit message"
+              cat "$RUNNER_TEMP/lock-commit.err" || true
+            fi
           fi
-          if ! git diff --cached --quiet -- pins.json flake.nix; then
-            body+=$'\n\nAlso updates pins.json and the nixpkgs-fallback pin.'
+          extra=""
+          if ! git diff --cached --quiet -- pins.json; then
+            extra="Updates pins.json."
+          fi
+          if ! git diff --cached --quiet -- flake.nix; then
+            extra+="${extra:+ }Advances nixpkgs-fallback."
+          fi
+          if [[ -n "$extra" ]]; then
+            body+="${body:+$'\n\n'}$extra"
           fi
           printf '%s' "$subject" >"$RUNNER_TEMP/commit-subject.txt"
           printf '%s' "$body" >"$RUNNER_TEMP/commit-body.txt"
