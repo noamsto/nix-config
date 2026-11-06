@@ -22,7 +22,7 @@
     "https://nixpkgs-unfree.cachix.org"
     "https://nix-community.cachix.org"
     "https://yazi.cachix.org"
-    # Raspberry Pi kernels; CI also pushes the example-rpi4 closure to our own cache
+    # Raspberry Pi kernels; CI also pushes the example-rpi4 closure and kernel headers (dev) to our own cache
     "https://nixos-raspberrypi.cachix.org"
 
     # llm-agents.nix publishes here, NOT numtide.cachix.org
