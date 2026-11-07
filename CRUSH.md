@@ -28,7 +28,7 @@ nix run home-manager/master -- switch --flake .#<config>  # Home Manager rebuild
 
 ### Module Structure
 - Entry points use `default.nix` files
-- Real hosts live in the private flake and set options on top of this repo's exports; `hosts/example` is the evaluation fixture
+- Real hosts live in the private flake and set options on top of this repo's exports; `hosts/example` (headless) and `hosts/example-desktop` (Hyprland, eval only) are the evaluation fixtures
 - Conditional imports based on `osConfig.desktop.mode`, `osConfig.machine.type`
 - Use descriptive let bindings for complex conditional logic
 

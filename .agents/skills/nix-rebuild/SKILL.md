@@ -52,7 +52,7 @@ This applies to **every** build path: `nh`, `nix build`, `nix flake check`. With
 
 ## Which rebuild path?
 
-- **Checking a change in this repo** -> the narrowest check below against `example`.
+- **Checking a change in this repo** -> the narrowest check below against `example`; for changes under `home/desktop`, `nixos/desktop`, `nixos/hyprland` or `nixos/laptop`, also eval `example-desktop` (eval only, never build it).
 - **Needs a real host** (host-specific wiring, package set, activation) -> private flake with `--override-input nix-config git+file:$PWD`.
 - **Any package added or removed**, including from a flake input bump -> full system switch from the private flake; verify the bump with the narrowest check first.
 - **User config only** (shell, editor, dotfiles, services) -> the private flake's HM-only path is enough.
@@ -84,7 +84,7 @@ PATH="/nix/var/nix/profiles/default/bin:$PATH" nh darwin build <private-flake>
 
 ## Available configs
 
-- **In this repo:** `nixosConfigurations.example` only.
+- **In this repo:** `nixosConfigurations.example` (headless), `example-desktop` (Hyprland laptop, eval only) and `example-rpi4`.
 - **Real hosts and Home Manager aliases:** defined in the private flake. None of the HM aliases are standalone; each is an alias onto its host's embedded HM, so there is one evaluation per host.
 
 ## Debugging failed builds
