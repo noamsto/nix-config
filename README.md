@@ -19,7 +19,7 @@ Supported systems: `x86_64-linux`, `aarch64-linux` (Raspberry Pi) and
 | `overlays` | `default` |
 | `lib` | `caches`, `homeAliases`, `files` |
 | `packages` | `deja-vu`, `gh-repo-defaults`, `linear-cli`, `pi-lens`, `pi-vim`, `pi-web-access`, `rpiv-todo` on all systems; `claude-squad`, `halo-wlan0-suspend-repro`, `sherpa-dictate` on Linux only; `airconnect` on `x86_64-linux` only |
-| `nixosConfigurations` | `example`, `example-rpi4` (aarch64-linux Raspberry Pi 4) |
+| `nixosConfigurations` | `example`, `example-desktop` (Hyprland laptop, eval only), `example-rpi4` (aarch64-linux Raspberry Pi 4) |
 | `checks`, `formatter`, `devShells` | per system, defined in `flake-modules/development.nix` |
 
 Modules are assembled in `flake-modules/exports.nix`; packages in
