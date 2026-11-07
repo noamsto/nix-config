@@ -16,7 +16,7 @@
 
   asrModel = fetchzip {
     url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2";
-    hash = "sha256-3zMIAaTYBJZB8rXgaxHZdgBqBbrrLLN7USLH+JNTaDY=";
+    hash = "sha256-L8nTk6JQ4IafAC3vostdnMVGlvZn9yN/BtmJtZzvI0k=";
   };
 in
   writeShellApplication {
