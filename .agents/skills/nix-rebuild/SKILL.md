@@ -7,7 +7,7 @@ description: Use when rebuilding NixOS, nix-darwin or Home Manager, running nh, 
 
 ## Overview
 
-This repo is a public library built on **flake-parts**. Its flake has one host, `nixosConfigurations.example` (username `user`), used as the evaluation fixture. The real hosts (NixOS laptops, the nix-darwin Mac) and their Home Manager aliases live in the **private flake**, which imports this repo as its `nix-config` input.
+This repo is a public library built on **flake-parts**. Its flake has two x86_64 evaluation fixtures, `nixosConfigurations.example` (headless, username `user`) and `example-desktop` (Hyprland laptop, evaluated only, never built), plus `example-rpi4`. The real hosts (NixOS laptops, the nix-darwin Mac) and their Home Manager aliases live in the **private flake**, which imports this repo as its `nix-config` input.
 
 - **In this repo:** verify with `.#nixosConfigurations.example` and `nix flake check`. No `nh`, no `just switch`/`hm`/`build` (those recipes live in the private flake).
 - **Real hosts:** build or switch from the private flake, pointing its `nix-config` input at this checkout to test local changes:
