@@ -10,8 +10,13 @@
   piVersion = "1.5.0";
   system = stdenv.hostPlatform.system;
 
-  # Default (non-JIT) build. Hashes come from the release's SHA256SUMS, whose
-  # ssh signature was checked against keys/release.pub (see update.sh).
+  # Default (non-JIT) build. Hashes come from the release's SHA256SUMS. When
+  # bumping, verify SHA256SUMS.sshsig first (namespace pi-bolt-release; key is
+  # RELEASE_SSH_KEY in upstream install.sh / keys/release.pub):
+  #   ssh-keygen -Y verify -f allowed_signers -I pi-bolt -n pi-bolt-release \
+  #     -s SHA256SUMS.sshsig < SHA256SUMS
+  # with allowed_signers = `pi-bolt namespaces="pi-bolt-release" <RELEASE_SSH_KEY>`,
+  # then convert each sum with `nix hash convert --hash-algo sha256 --to sri`.
   platforms = {
     x86_64-linux = {
       target = "linux-x64";
@@ -59,7 +64,7 @@ in
       # the remote-control service is deliberately not set up here.
       case "\''${1:-}" in
         update|compile)
-          echo "pi-bolt ${version} is managed by Nix (nix-config packages/pi-bolt); bump it there." >&2
+          echo "pi-bolt ${version} is managed by Nix (nix-config packages/pi-bolt); bump it there (extensions: use pi update)." >&2
           exit 1
           ;;
         service)
