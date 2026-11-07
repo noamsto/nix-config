@@ -120,40 +120,60 @@
   # repo-specific skills live in .agents/skills, symlinked into .claude/skills).
   #
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
-  pi-wrapper = pkgs.writeTextFile {
-    name = "pi";
-    executable = true;
-    destination = "/bin/pi";
-    # A moved upstream path otherwise surfaces only as pi refusing to start.
-    meta.mainProgram = "pi";
-    checkPhase = "${pkgs.runtimeShell} -n \"$target\"\n" + lib.concatMapStringsSep "\n" (e: "test -e ${e} || { echo 'missing pi extension: ${e}' >&2; exit 1; }") extensions;
-    text = ''
-      #!${pkgs.runtimeShell}
-      # Pass pi subcommands straight to the real binary — the injected --skill / --prompt-template
-      # flags put options before the subcommand, which pi rejects (subcommand must be argv[1]).
-      case "''\${1:-}" in
-        install|remove|uninstall|update|list|config|auth|mcp)
-          exec -a pi ${pkgs.pi}/bin/pi "$@"
-          ;;
-      esac
-      personal=()
-      if [ -z "''${CREW_WORKER_ID:-}" ]; then
-        export PI_LENS_CONFIG_PATH=${piLensConfig}
-        export PI_LENS_DISABLE_LSP_INSTALL=1
-        export PI_LENS_DISABLE_TOOL_INSTALL=1
-        personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)${lib.optionalString (config.programs.dispatcher.agentBrowser.package != null) ''
+  #
+  # mkPiWrapper wraps either build: pi (pkgs.pi) or the ahead-of-time compiled
+  # pi-bolt, which reads the same ~/.pi/agent config.
+  mkPiWrapper = {
+    name,
+    bin,
+    extraSubcommands ? "",
+  }:
+    pkgs.writeTextFile {
+      inherit name;
+      executable = true;
+      destination = "/bin/${name}";
+      # A moved upstream path otherwise surfaces only as pi refusing to start.
+      meta.mainProgram = name;
+      checkPhase = "${pkgs.runtimeShell} -n \"$target\"\n" + lib.concatMapStringsSep "\n" (e: "test -e ${e} || { echo 'missing pi extension: ${e}' >&2; exit 1; }") extensions;
+      text = ''
+        #!${pkgs.runtimeShell}
+        # Pass pi subcommands straight to the real binary — the injected --skill / --prompt-template
+        # flags put options before the subcommand, which pi rejects (subcommand must be argv[1]).
+        case "''\${1:-}" in
+          install|remove|uninstall|update|list|config|auth|mcp${extraSubcommands})
+            exec -a ${name} ${bin} "$@"
+            ;;
+        esac
+        personal=()
+        if [ -z "''${CREW_WORKER_ID:-}" ]; then
+          export PI_LENS_CONFIG_PATH=${piLensConfig}
+          export PI_LENS_DISABLE_LSP_INSTALL=1
+          export PI_LENS_DISABLE_TOOL_INSTALL=1
+          personal=(${personalExtensions} --lens-guard --skill ${aeye.tree}/adapters/pi/skills --prompt-template ${subagentDir}/prompts)${lib.optionalString (config.programs.dispatcher.agentBrowser.package != null) ''
 
-        personal+=(--skill ${config.home.sessionVariables.DISPATCHER_SKILLS_DIR}/agent-browser)''}
-      fi
-      # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
-      export PI_USER_ARGC=$#
-      exec -a pi ${pkgs.pi}/bin/pi \
-        "''${personal[@]}" \
-        --skill "$HOME/.claude/skills" \
-        --skill ${xdg-claude}/context-efficient-tools/skills \
-        --prompt-template "$HOME/.claude/commands" \
-        "$@"
-    '';
+          personal+=(--skill ${config.home.sessionVariables.DISPATCHER_SKILLS_DIR}/agent-browser)''}
+        fi
+        # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
+        export PI_USER_ARGC=$#
+        exec -a ${name} ${bin} \
+          "''${personal[@]}" \
+          --skill "$HOME/.claude/skills" \
+          --skill ${xdg-claude}/context-efficient-tools/skills \
+          --prompt-template "$HOME/.claude/commands" \
+          "$@"
+      '';
+    };
+
+  pi-wrapper = mkPiWrapper {
+    name = "pi";
+    bin = "${pkgs.pi}/bin/pi";
+  };
+
+  # Opt-in alongside pi; dispatcher workers keep resolving `pi`.
+  pi-bolt-wrapper = mkPiWrapper {
+    name = "pi-bolt";
+    bin = lib.getExe localPkgs.pi-bolt;
+    extraSubcommands = "|service|doctor|compile";
   };
 
   # Workers get their settings.json from dispatcher, not this activation.
@@ -185,7 +205,7 @@ in {
   programs.hookyard.manifests = [piGuards.manifest piGuards.dispatcherManifest];
 
   home = {
-    packages = [pi-wrapper];
+    packages = [pi-wrapper pi-bolt-wrapper];
 
     # Global instructions. pi's only machine-wide context channel: it reads
     # ~/.pi/agent/AGENTS.md plus AGENTS.md/CLAUDE.md walking up from cwd, and

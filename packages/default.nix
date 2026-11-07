@@ -12,6 +12,7 @@
         gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
         lock-commit = pkgs.callPackage ./lock-commit.nix {};
+        pi-bolt = pkgs.callPackage ./pi-bolt {};
         inherit (pkgs.callPackage ./pi-extensions {}) pi-lens pi-vim pi-web-access rpiv-todo;
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
