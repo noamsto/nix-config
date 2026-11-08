@@ -176,12 +176,17 @@ in {
         };
 
         plugins = {
-          auto_update = "all";
+          auto_update = "official";
           enabled = [
             "noctalia/bongocat"
             "8bury/mini-docker"
             "noctalia/screen_recorder"
             "davemhammer/tailscale"
+            "raycursive/github-prs"
+            "lfdominguez/claude-sessions"
+            "pozzoo/hassio"
+            "mindnbytes/nix-status"
+            "noctalia/timer"
           ];
         };
 
@@ -223,6 +228,11 @@ in {
             "mini_docker"
             "screen_recorder"
             "tailscale"
+            "github_prs"
+            "claude_sessions"
+            "hassio"
+            "nix_status"
+            "timer"
             "privacy"
             "caffeine"
             "notifications"
@@ -312,6 +322,11 @@ in {
           bongocat.type = "noctalia/bongocat:cat";
           mini_docker.type = "8bury/mini-docker:mini-docker";
           screen_recorder.type = "noctalia/screen_recorder:recorder";
+          github_prs.type = "raycursive/github-prs:bar";
+          claude_sessions.type = "lfdominguez/claude-sessions:bar";
+          hassio.type = "pozzoo/hassio:status";
+          nix_status.type = "mindnbytes/nix-status:status";
+          timer.type = "noctalia/timer:bar";
 
           tailscale = {
             type = "davemhammer/tailscale:status";
