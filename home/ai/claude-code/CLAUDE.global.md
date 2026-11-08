@@ -26,8 +26,8 @@
 - Claude Code settings, hooks, and plugin changes in nix-config: the
   `claude-code-settings` skill there explains the two settings layers.
 - When a task needs Claude in Chrome (a logged-in web console), start
-  the browser yourself with Bash `run_in_background`: `brave-claude` on macOS,
-  `chromium-claude` on a Linux desktop. Then wait
+  the browser yourself with Bash `run_in_background`: `chromium-claude` on a
+  Linux desktop. Then wait
   for `list_connected_browsers` (or `tabs_context_mcp`) to answer. Never ask the
   user to open it. The user still types passwords and sign-ins. If the command is
   missing or the extension doesn't connect within about a minute, fall back to
