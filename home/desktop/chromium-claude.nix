@@ -4,25 +4,25 @@
   config,
   ...
 }: let
-  # Over SSH, brave must not run in the login session: it would block the caller
+  # Over SSH, Chromium must not run in the login session: it would block the caller
   # and die with it. WAYLAND_DISPLAY can't tell the cases apart (it is a universal
   # fish variable, so SSH shells have it too); the user manager does have the
-  # graphical session's environment, so systemd-run starts it there. Brave's
+  # graphical session's environment, so systemd-run starts it there. Chromium's
   # singleton hands off to an already-running instance.
-  brave-claude = pkgs.writeShellApplication {
-    name = "brave-claude";
+  chromium-claude = pkgs.writeShellApplication {
+    name = "chromium-claude";
     runtimeInputs = [pkgs.systemd];
     text = ''
-      brave=${lib.getExe config.programs.brave.finalPackage}
+      chromium=${lib.getExe config.programs.chromium.finalPackage}
 
       if [ -z "''${SSH_CONNECTION:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
-        exec "$brave" "$@"
+        exec "$chromium" "$@"
       fi
 
-      exec systemd-run --user --collect "$brave" "$@"
+      exec systemd-run --user --collect "$chromium" "$@"
     '';
   };
 in
   lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
-    home.packages = [brave-claude];
+    home.packages = [chromium-claude];
   }

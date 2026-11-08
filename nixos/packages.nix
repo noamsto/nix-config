@@ -46,7 +46,6 @@
     wlr-randr
     gpu-viewer
     wluma
-    brave # Uses overlay from lib/overlays.nix for Wayland flags
     brightnessctl
     ddcutil
     ddcui # GUI for ddcutil monitor control

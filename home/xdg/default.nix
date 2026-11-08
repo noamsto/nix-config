@@ -15,14 +15,14 @@
   primaryBrowser = "firefox-${firefoxProfile}.desktop";
   inherit (pkgs.stdenv.hostPlatform) isLinux;
 
-  # Routes Meet links to Brave and every other link to the primary Firefox.
+  # Routes Meet links to Chromium and every other link to the primary Firefox.
   # Both launchers come from the packages the MIME entries already use, so the
-  # per-profile Firefox and the Wayland flags on Brave keep applying.
+  # per-profile Firefox and the Wayland flags on Chromium keep applying.
   browserRouter = pkgs.writeShellApplication {
     name = "browser-router";
     runtimeInputs = [pkgs.coreutils];
     text = ''
-      brave=${lib.getExe config.programs.brave.finalPackage}
+      chromium=${lib.getExe config.programs.chromium.finalPackage}
       firefox=${lib.getExe config.programs.firefox.finalPackage}
       firefox_profile=(-P ${firefoxProfile})
 
@@ -51,7 +51,7 @@
 
       # Detach so the router exits immediately, as a MIME handler should.
       if [ "''${#meet_urls[@]}" -gt 0 ]; then
-        nohup "$brave" "''${meet_urls[@]}" >/dev/null 2>&1 &
+        nohup "$chromium" "''${meet_urls[@]}" >/dev/null 2>&1 &
       fi
       if [ "''${#other_urls[@]}" -gt 0 ]; then
         nohup "$firefox" "''${firefox_profile[@]}" "''${other_urls[@]}" >/dev/null 2>&1 &
@@ -170,11 +170,11 @@ in {
         "x-scheme-handler/slack" = "slack.desktop;Slack.desktop;";
         "x-scheme-handler/roblox-studio-auth" = "org.vinegarhq.Vinegar.desktop;";
 
-        # Browsers - profile-specific Firefox primary, plain Firefox and Brave as fallbacks
-        "text/html" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
-        "x-scheme-handler/http" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
-        "x-scheme-handler/https" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
-        "application/xhtml+xml" = "${primaryBrowser};firefox.desktop;brave-browser.desktop;";
+        # Browsers - profile-specific Firefox primary, plain Firefox and Chromium as fallbacks
+        "text/html" = "${primaryBrowser};firefox.desktop;chromium-browser.desktop;";
+        "x-scheme-handler/http" = "${primaryBrowser};firefox.desktop;chromium-browser.desktop;";
+        "x-scheme-handler/https" = "${primaryBrowser};firefox.desktop;chromium-browser.desktop;";
+        "application/xhtml+xml" = "${primaryBrowser};firefox.desktop;chromium-browser.desktop;";
 
         # Image editing - add GIMP as alternative
         "image/jpeg" = "org.gnome.eog.desktop;gimp.desktop;";
