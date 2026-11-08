@@ -96,7 +96,7 @@ jobs:
           \`Check\` may need manual approval on this bot PR before merging.
           EOF
           title="chore(pi-bolt): bump to $NEW"
-          n=$(gh pr list --head bot/pi-bolt-bump --state open --json number --jq '.[0].number // empty')
+          n=$(gh pr list --head bot/pi-bolt-bump --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository | not)) | .[0].number // empty')
           if [ -n "$n" ]; then
             gh pr edit "$n" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md"
           else
