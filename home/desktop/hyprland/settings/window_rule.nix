@@ -258,7 +258,11 @@
           class = "^(chromium|chromium-browser)$";
           initial_title = ".*";
         };
-        workspace = "2 silent";
+        workspace = "3 silent";
+      }
+      {
+        match = {class = "^(FreeCAD|org\\.freecad\\.FreeCAD|bambu-studio|BambuStudio)$";};
+        workspace = "4";
       }
       {
         match = {class = "^(slack|Slack)$";};
