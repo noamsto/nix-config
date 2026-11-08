@@ -135,17 +135,18 @@
       }
       {
         match = {
-          class = "^(Brave-browser|brave-browser)$";
+          class = "^(chromium|chromium-browser)$";
           title = "^(Picture-in-Picture)$";
         };
         float = true;
+        pin = true;
         no_initial_focus = true;
         size = "400 225";
         move = "100%-420 100%-245";
       }
       {
         match = {
-          class = "^(Brave-browser|brave-browser)$";
+          class = "^(chromium|chromium-browser)$";
           title = "^(.*Picture.in.Picture.*)$";
         };
         float = true;
@@ -153,19 +154,10 @@
       }
       {
         match = {
-          class = "^(Brave-browser|brave-browser)$";
+          class = "^(chromium|chromium-browser)$";
           title = "^(.*meet\\.google\\.com.*)$";
         };
         float = true;
-      }
-      {
-        match = {
-          class = "^(chromium)$";
-          title = "^(Picture-in-Picture)$";
-        };
-        float = true;
-        pin = true;
-        no_initial_focus = true;
       }
       {
         match = {title = "^(Firefox — Sharing Indicator)$";};
@@ -212,14 +204,10 @@
         no_close_for = 2000;
       }
       {
-        # browser automation drives Brave in the background; its focus requests would switch workspaces
-        match = {class = "^(Brave-browser|brave-browser)$";};
+        # browser automation drives Chromium in the background; its focus requests would switch workspaces
+        match = {class = "^(chromium|chromium-browser)$";};
         no_close_for = 2000;
         suppress_event = "maximize activate activatefocus";
-      }
-      {
-        match = {class = "^(chromium)$";};
-        no_close_for = 2000;
       }
       {
         match = {
@@ -234,24 +222,13 @@
       }
       {
         match = {
-          class = "^(Brave-browser)$";
+          class = "^(chromium|chromium-browser)$";
           title = "^(.*YouTube.*)$";
         };
         idle_inhibit = "focus";
       }
       {
-        match = {class = "^(Brave-browser)$";};
-        idle_inhibit = "fullscreen";
-      }
-      {
-        match = {
-          class = "^(chromium)$";
-          title = "^(.*YouTube.*)$";
-        };
-        idle_inhibit = "focus";
-      }
-      {
-        match = {class = "^(chromium)$";};
+        match = {class = "^(chromium|chromium-browser)$";};
         idle_inhibit = "fullscreen";
       }
       {
@@ -278,13 +255,9 @@
       }
       {
         match = {
-          class = "^(brave-browser)$";
+          class = "^(chromium|chromium-browser)$";
           initial_title = ".*";
         };
-        workspace = "2 silent";
-      }
-      {
-        match = {class = "^(chromium)$";};
         workspace = "2 silent";
       }
       {

@@ -130,17 +130,22 @@
 
   # Meet links clicked inside Firefox never reach the desktop URL handler, so
   # External Application Button redirects those navigations to a native host
-  # that opens them in Brave. The add-on's own helper (com.add0n.node) is an
-  # unmanaged Node install that runs arbitrary commands; this stand-in speaks
-  # the same wire protocol but ignores the requested command and only ever
-  # launches Brave on one validated meet.google.com URL.
+  # that opens them in the Meet browser (Brave on macOS, Chromium on Linux).
+  # The add-on's own helper (com.add0n.node) is an unmanaged Node install that
+  # runs arbitrary commands; this stand-in speaks the same wire protocol but
+  # ignores the requested command and only ever launches that browser on one
+  # validated meet.google.com URL.
+  meetBrowser =
+    if isDarwin
+    then "Brave"
+    else "Chromium";
   externalApplicationId = "{65b77238-bb05-470a-a445-ec0efe1d66c4}";
   # LaunchServices rather than exec'ing the app binary, so Brave (not Firefox)
   # is the responsible process for its camera/mic grants.
-  braveLauncher =
+  meetLauncher =
     if isDarwin
     then "/usr/bin/open"
-    else lib.getExe config.programs.brave.finalPackage;
+    else lib.getExe config.programs.chromium.finalPackage;
   meetToBraveHost = pkgs.writers.writePython3Bin "meet-to-brave-host" {flakeIgnore = ["E501"];} ''
     import json
     import re
@@ -149,7 +154,7 @@
     import sys
     from urllib.parse import urlsplit
 
-    BRAVE = "${braveLauncher}"
+    LAUNCHER = "${meetLauncher}"
 
 
     def read_message():
@@ -195,7 +200,7 @@
             reply({"code": 1, "stdout": "", "stderr": "refused: not an https://meet.google.com URL"})
         else:
             subprocess.Popen(
-                [BRAVE, ${lib.optionalString isDarwin ''"-b", "com.brave.Browser", ''}url],
+                [LAUNCHER, ${lib.optionalString isDarwin ''"-b", "com.brave.Browser", ''}url],
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -207,7 +212,7 @@
   '';
   meetToBraveManifest = pkgs.writeText "com.add0n.node.json" (builtins.toJSON {
     name = "com.add0n.node";
-    description = "Open Meet links in Brave";
+    description = "Open Meet links in ${meetBrowser}";
     path = lib.getExe meetToBraveHost;
     type = "stdio";
     allowed_extensions = [externalApplicationId];

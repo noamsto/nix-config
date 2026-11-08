@@ -11,7 +11,6 @@ DND_MUTE_APPS=(
   "Microsoft Teams"
   "Chromium"
   "Google Chrome"
-  "Brave"
   "firefox"
 )
 

@@ -43,12 +43,11 @@
     # check warns spuriously on this unstable-tracking setup.
     enableNixpkgsReleaseCheck = false;
 
-    # NOTE: Chromium-based browser flags (Brave, Chromium, Chrome, Edge, Vivaldi)
-    # are configured in home/desktop/hyprland/settings/default.nix as Hyprland env variables:
-    # - BRAVE_USER_FLAGS
-    # - CHROMIUM_USER_FLAGS
-    # This ensures flags are available to all processes launched in the Hyprland session,
-    # including applications started from launchers like Vicinae.
+    # NOTE: Chromium's own flags live in programs.chromium.commandLineArgs
+    # (home/desktop/default.nix), since the nixpkgs wrapper does not read
+    # CHROMIUM_USER_FLAGS. The env var set in
+    # home/desktop/hyprland/settings/default.nix only reaches other Chromium-based
+    # browsers (Chrome, Edge, Vivaldi) started from the Hyprland session.
   };
 
   # Let home Manager install and manage itself.

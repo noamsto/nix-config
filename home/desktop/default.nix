@@ -10,7 +10,7 @@
       ./wireplumber
       ./bt-headset
       ./mpv.nix
-      ./brave-claude.nix
+      ./chromium-claude.nix
       ./kdenlive.nix
       ./obsidian.nix
     ]
@@ -31,15 +31,12 @@
   programs = {
     obs-studio.enable = true;
 
-    brave = {
-      enable = true;
-      # NOTE: Command-line flags are applied via overlay in lib/overlays.nix
-      # Also set via BRAVE_USER_FLAGS env var in Hyprland as a fallback
-    };
-
     chromium = {
+      enable = true;
       commandLineArgs = [
         "--disable-features=WaylandWpColorManagerV1"
+        # AMD Radeon 780M PDF rendering artifacts: https://issues.chromium.org/40184451
+        "--disable-accelerated-2d-canvas"
       ];
     };
   };

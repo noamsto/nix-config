@@ -181,7 +181,6 @@ in {
       hl.env("GTK_THEME", "Adwaita:dark") -- theme-toggle updates at runtime
       -- --disable-accelerated-2d-canvas: AMD Radeon 780M PDF rendering artifacts
       -- https://issues.chromium.org/40184451
-      hl.env("BRAVE_USER_FLAGS", "--disable-accelerated-2d-canvas")
       hl.env("CHROMIUM_USER_FLAGS", "--disable-accelerated-2d-canvas")
       hl.env("QS_ICON_THEME", "${iconThemeName}")
 

@@ -22,11 +22,6 @@
       };
     };
 
-    # Brave is only the agent browser here, and Shields breaks ad and analytics consoles.
-    environment.etc."brave/policies/managed/shields.json".text = builtins.toJSON {
-      BraveShieldsDisabledForUrls = ["https://*" "http://*"];
-    };
-
     # Enable Qt system-wide for proper QML module resolution
     # qt5ct works with Kvantum on non-KDE desktops (Hyprland)
     # Kvantum handles style (widget colors), qt5ct handles platform integration
