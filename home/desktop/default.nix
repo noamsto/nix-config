@@ -33,6 +33,9 @@
 
     chromium = {
       enable = true;
+      extensions = [
+        "fcoeoabgfenejglbffodgkkbkcdhcgfn" # Claude in Chrome
+      ];
       commandLineArgs = [
         "--disable-features=WaylandWpColorManagerV1"
         # AMD Radeon 780M PDF rendering artifacts: https://issues.chromium.org/40184451
