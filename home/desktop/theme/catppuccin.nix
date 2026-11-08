@@ -34,7 +34,6 @@ in {
     autoEnable = false;
     flavor = "mocha";
 
-    brave.enable = true;
     # Firefox skipped: nix module sets fixed flavor, incompatible with dynamic theming
     gtk.icon.enable = false; # Using Papirus (set in gtk.nix)
     kvantum.enable = true;
