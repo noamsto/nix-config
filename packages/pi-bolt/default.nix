@@ -7,16 +7,10 @@
   runtimeShell,
 }: let
   version = "1.1.4";
-  piVersion = "1.5.0";
   system = stdenv.hostPlatform.system;
 
-  # Default (non-JIT) build. Hashes come from the release's SHA256SUMS. When
-  # bumping, verify SHA256SUMS.sshsig first (namespace pi-bolt-release; key is
-  # RELEASE_SSH_KEY in upstream install.sh / keys/release.pub):
-  #   ssh-keygen -Y verify -f allowed_signers -I pi-bolt -n pi-bolt-release \
-  #     -s SHA256SUMS.sshsig < SHA256SUMS
-  # with allowed_signers = `pi-bolt namespaces="pi-bolt-release" <RELEASE_SSH_KEY>`,
-  # then convert each sum with `nix hash convert --hash-algo sha256 --to sri`.
+  # Default (non-JIT) build. Do not edit version or hashes by hand: bump.sh
+  # verifies the release signature against allowed_signers and rewrites them.
   platforms = {
     x86_64-linux = {
       target = "linux-x64";
@@ -79,7 +73,7 @@ in
     '';
 
     meta = {
-      description = "Pi ${piVersion} compiled ahead of time into one native executable";
+      description = "Pi compiled ahead of time into one native executable";
       homepage = "https://github.com/opensec-git/Pi-Bolt";
       license = lib.licenses.mit;
       sourceProvenance = [lib.sourceTypes.binaryNativeCode];
