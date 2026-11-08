@@ -1,0 +1,104 @@
+name: Bump pi-bolt
+
+on:
+  schedule:
+    # 06:43 UTC: off the hour, because GitHub delays or drops top-of-hour schedules under load.
+    - cron: "43 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pi-bolt-bump
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+# Schedule and dispatch runs only, on main only. The bump script verifies the
+# release's SSH signature before touching packages/pi-bolt/default.nix. The PR
+# is never merged here: GitHub may hold Check on bot PRs for manual approval, and
+# a human merges every bump.
+jobs:
+  bump:
+    if: ${{ github.ref == 'refs/heads/main' && !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: accept-flake-config = true
+
+      - name: Bump
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: packages/pi-bolt/bump.sh
+
+      - name: Build proof
+        if: ${{ steps.bump.outputs.changed == 'true' }}
+        run: nix build -L --no-link .#pi-bolt
+
+      - name: Cross-platform assets
+        if: ${{ steps.bump.outputs.changed == 'true' }}
+        run: |
+          for s in aarch64-linux aarch64-darwin; do
+            hash=$(nix eval --raw ".#packages.$s.pi-bolt.src.outputHash")
+            url=$(nix eval --raw ".#packages.$s.pi-bolt.src.url")
+            nix store prefetch-file --hash-type sha256 --expected-hash "$hash" "$url"
+          done
+
+      - name: Commit and push
+        if: ${{ steps.bump.outputs.changed == 'true' }}
+        env:
+          NEW: ${{ steps.bump.outputs.new }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/pi-bolt/default.nix
+          git commit -m "chore(pi-bolt): bump to $NEW"
+          # Skip the push when the remote branch already carries identical content,
+          # so a manual Check approval on it is not discarded. A missing remote
+          # branch (first run) falls through to the push.
+          if git ls-remote --exit-code --heads origin bot/pi-bolt-bump >/dev/null 2>&1 \
+            && git fetch --quiet origin bot/pi-bolt-bump \
+            && remote=$(git rev-parse --verify --quiet "FETCH_HEAD:packages/pi-bolt/default.nix") \
+            && [ "$remote" = "$(git rev-parse HEAD:packages/pi-bolt/default.nix)" ]; then
+            echo "bot/pi-bolt-bump already has this default.nix; skipping push"
+          else
+            git push --force origin HEAD:refs/heads/bot/pi-bolt-bump
+          fi
+
+      - name: Open or refresh PR
+        if: ${{ steps.bump.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OLD: ${{ steps.bump.outputs.old }}
+          NEW: ${{ steps.bump.outputs.new }}
+          TAG: ${{ steps.bump.outputs.tag }}
+        run: |
+          cat > "$RUNNER_TEMP/pr-body.md" <<EOF
+          Bumps pi-bolt from $OLD to $NEW.
+
+          - Signature: \`SHA256SUMS.sshsig\` verified (namespace \`pi-bolt-release\`) against the key committed in \`packages/pi-bolt/allowed_signers\`, and the signed \`# pi-bolt $NEW\` line matched the release tag.
+          - Build: \`nix build .#pi-bolt\` passed on x86_64-linux.
+          - Cross-platform: aarch64-linux and aarch64-darwin assets prefetched against their expected hashes.
+          - Release: https://github.com/opensec-git/Pi-Bolt/releases/tag/$TAG
+
+          \`Check\` may need manual approval on this bot PR before merging.
+          EOF
+          title="chore(pi-bolt): bump to $NEW"
+          n=$(gh pr list --head bot/pi-bolt-bump --state open --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then
+            gh pr edit "$n" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            gh pr create --base main --head bot/pi-bolt-bump --title "$title" --body-file "$RUNNER_TEMP/pr-body.md"
+          fi
