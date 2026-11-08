@@ -16,7 +16,7 @@ This is a flake-parts-based NixOS + nix-darwin config with:
 - `nixos/` — system-level NixOS (Linux) modules
 - `darwin/` — shared nix-darwin modules, exported as `darwinModules.*` (`base`: Determinate Nix, caches, fonts, core CLI; `home`: the HM bridge); host-only settings live in the private flake
 - `home/` — Home Manager modules; `home/darwin/` holds macOS-only HM modules (nh, aerospace, karabiner)
-- `hosts/` — the `example` evaluation fixture only; the real hosts (`tp-g6`, `halo`, `mbp-m4-pro`) and secrets live in the private flake that imports this repo's exports
+- `hosts/` — the `example`, `example-desktop` (eval-only Hyprland) and `example-rpi4` evaluation fixtures only; the real hosts (`tp-g6`, `halo`, `mbp-m4-pro`) and secrets live in the private flake that imports this repo's exports
 - Shared modules take secret paths as `nix-config.*` options set by the host
 
 **Key derived options to use** (never raw comparisons):
