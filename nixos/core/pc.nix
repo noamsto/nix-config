@@ -19,7 +19,6 @@ in {
           alsa.enable = true;
           alsa.support32Bit = true;
           pulse.enable = true;
-          jack.enable = true;
           # Stream to AirPlay (RAOP) wifi speakers — they show up as normal
           # PipeWire sinks. raopOpenFirewall only opens the timing/control ports;
           # the discover module lives in the package's pipewire.conf.avail and is
