@@ -64,14 +64,18 @@ STALE_FLAG = "⚠ missing security fixes"
 EXCERPT_LINES = 30
 
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
-# nix-fast-build prefixes every nix line with "<attr>> ".
-_ATTR_PREFIX = re.compile(r"^[^\s>]+> ")
+# nix-fast-build prefixes every nix line with "<attr>> ". The attr is empty
+# for a single-target build (-f .#<attr> with one attr), leaving a bare "> ".
+# Only one prefix is stripped per line (count=1), so builder output cannot
+# forge a root by echoing its own "> " prefix.
+_ATTR_PREFIX = re.compile(r"^[^\s>]*> ")
 _DRV = r"'(/nix/store/[^']+\.drv)'"
 _CANNOT_BUILD = re.compile(r"^error: Cannot build " + _DRV)
 _HASH_MISMATCH = re.compile(r"^error: hash mismatch in fixed-output derivation " + _DRV)
 _LEGACY_BUILDER = re.compile(r"^error: builder for " + _DRV + r" failed")
 _LEGACY_DEPS = re.compile(r"^error: \d+ dependencies of derivation " + _DRV + r" failed")
 _STORE_HASH = re.compile(r"^[0-9a-z]{32}-")
+_DEPS_FAILED = re.compile(r"\b\d+ dependenc(?:y|ies) failed")
 _BACKTICKS = re.compile(r"`+")
 
 PINNED_STILL_FAILING = (
@@ -186,7 +190,7 @@ def parse_log(text: str) -> dict:
             )
             if "builder failed" in reason:
                 add_root(m[1], "builder", i)
-            elif "dependencies failed" in reason:
+            elif _DEPS_FAILED.search(reason):
                 add_dep(m[1])
         elif m := _HASH_MISMATCH.match(line):
             add_root(m[1], "hash", i)
