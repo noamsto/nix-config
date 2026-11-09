@@ -45,7 +45,7 @@ jobs:
 
       - name: Build proof
         if: ${{ steps.bump.outputs.changed == 'true' }}
-        run: nix build -L --no-link .#pi-bolt
+        run: nix build -L --no-link .#pi-bolt .#pi-bolt-compiled
 
       - name: Cross-platform assets
         if: ${{ steps.bump.outputs.changed == 'true' }}
@@ -89,7 +89,7 @@ jobs:
           Bumps pi-bolt from $OLD to $NEW.
 
           - Signature: \`SHA256SUMS.sshsig\` verified (namespace \`pi-bolt-release\`) against the key committed in \`packages/pi-bolt/allowed_signers\`, and the signed \`# pi-bolt $NEW\` line matched the release tag.
-          - Build: \`nix build .#pi-bolt\` passed on x86_64-linux.
+          - Build: \`nix build .#pi-bolt .#pi-bolt-compiled\` passed on x86_64-linux.
           - Cross-platform: aarch64-linux and aarch64-darwin assets prefetched against their expected hashes.
           - Release: https://github.com/opensec-git/Pi-Bolt/releases/tag/$TAG
 

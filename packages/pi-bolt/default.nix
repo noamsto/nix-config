@@ -26,6 +26,19 @@
     };
   };
   platform = platforms.${system} or (throw "pi-bolt: unsupported system ${system}");
+
+  # Compile kit and bun runtime for ./compiled.nix, consumed only on x86_64-linux.
+  # bump.sh rewrites these hashes under the same signature check.
+  compileAssets = {
+    kit = {
+      target = "kit-linux-x64";
+      hash = "sha256-6JCb3+2Uo20OxLJ7PTYnsGznSQB16YWl2HFTRLvrTQ0=";
+    };
+    runtime = {
+      target = "runtime-linux-x64";
+      hash = "sha256-Z79HShxuIGWeAxLMiN0vW9qf1Ja6RLWHTinjRQZv+x0=";
+    };
+  };
 in
   stdenv.mkDerivation {
     pname = "pi-bolt";
@@ -75,6 +88,13 @@ in
       chmod +x $out/bin/pi-bolt
       runHook postInstall
     '';
+
+    passthru.compileAssets = lib.mapAttrs (_: asset:
+      fetchurl {
+        url = "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v${version}/pi-bolt-${asset.target}.tar.gz";
+        inherit (asset) hash;
+      })
+    compileAssets;
 
     meta = {
       description = "Pi compiled ahead of time into one native executable";

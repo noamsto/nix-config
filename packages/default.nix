@@ -1,5 +1,8 @@
 {lib, ...}: {
-  perSystem = {pkgs, ...}: {
+  perSystem = {pkgs, ...}: let
+    piExtensions = pkgs.callPackage ./pi-extensions {};
+    pi-bolt = pkgs.callPackage ./pi-bolt {};
+  in {
     # linear-cli ships prebuilt binaries for both linux and darwin, and the pi
     # extensions are portable npm packages, so both live outside the Linux-only
     # guard below and build on every system.
@@ -12,8 +15,17 @@
         gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
         lock-commit = pkgs.callPackage ./lock-commit.nix {};
-        pi-bolt = pkgs.callPackage ./pi-bolt {};
-        inherit (pkgs.callPackage ./pi-extensions {}) pi-lens pi-vim pi-web-access rpiv-todo;
+        inherit pi-bolt;
+        inherit (piExtensions) pi-lens pi-vim pi-web-access rpiv-todo;
+        pi-bolt-compiled = pkgs.callPackage ./pi-bolt/compiled.nix {
+          inherit pi-bolt;
+          extensions = [
+            "${piExtensions.pi-lens}/lib/node_modules/pi-lens"
+            "${piExtensions.pi-vim}/lib/node_modules/pi-vim"
+            "${piExtensions.pi-web-access}/lib/node_modules/pi-web-access"
+            "${piExtensions.rpiv-todo}/lib/node_modules/@juicesharp/rpiv-todo"
+          ];
+        };
       }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         claude-squad = pkgs.callPackage ./claude-squad {};
