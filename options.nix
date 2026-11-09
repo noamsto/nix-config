@@ -107,17 +107,23 @@
           peer's `-peer-token-file` and symlinked to houston's own API token,
           replacing a generated one. A string, so the secret stays out of the
           Nix store. While the file is missing or empty houston does not start.
+          houston reads its own token only at startup, so rotating this file
+          needs a houston restart on every host.
         '';
       };
       listenAddress = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
         description = ''
-          HOST:PORT passed as `-addr`; null keeps houston's 127.0.0.1:9090. A
-          peer should bind its tailnet address: the service retries until the
-          address is up, whereas a wildcard bind can start before the tailnet
-          and houston reads its own allowed Host names only at startup. On a
-          host using `services.localProxy`, which proxies to 127.0.0.1:9090, it
+          HOST:PORT passed as `-addr`; null keeps houston's 127.0.0.1:9090.
+          houston hands its API token to any client that reaches this address
+          with a Host it allows, its own Tailscale addresses included. A
+          non-loopback bind therefore makes network reach the only gate, and
+          with a shared `tokenFile` that client can use every peer: restrict
+          the port, for example with Tailscale ACLs. Prefer a tailnet address
+          to a wildcard: a wildcard can start before the tailnet is up, and
+          houston reads its own allowed Host names only at startup. On a host
+          using `services.localProxy`, which proxies to 127.0.0.1:9090, it
           must still listen there.
         '';
       };
