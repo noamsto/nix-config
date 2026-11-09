@@ -97,7 +97,7 @@ in {
   # Always-on viewer behind services.localProxy on agentDashboard hosts. Binds
   # 127.0.0.1:7757 only; the proxy is the sole way in. Lingering for the user
   # comes from nixos/core/users.nix, so this runs without a login session.
-  systemd.user.services.hookyard-serve = lib.mkIf osConfig.agentDashboard.enable {
+  systemd.user.services.hookyard-serve = lib.mkIf (osConfig.agentDashboard.enable && pkgs.stdenv.hostPlatform.isLinux) {
     Unit.Description = "hookyard serve - hook event viewer";
     Service = {
       ExecStart = "${config.programs.hookyard.package}/bin/hookyard serve --port 7757";
