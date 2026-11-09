@@ -99,7 +99,7 @@
   # Dispatcher workers resolve bare `pi` to this same wrapper (stock pi even
   # when piBoltAsPi is on, since CREW_WORKER_ID is set); these load only in
   # interactive sessions.
-  extensions = [
+  baseExtensions = [
     "${localPkgs.pi-lens}/lib/node_modules/pi-lens"
     "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
     "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
@@ -115,6 +115,11 @@
     # native subagent mechanism, and dispatcher owns that claim.
     "${subagentDir}/index.ts"
   ];
+  # Reports run state to houston over its local socket, in order. Interactive
+  # sessions only, like the rest of this list: workers keep the hook path.
+  extensions =
+    baseExtensions
+    ++ lib.optional osConfig.agentDashboard.enable "${inputs.houston}/contrib/pi-mod/houston.ts";
   personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") extensions;
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The

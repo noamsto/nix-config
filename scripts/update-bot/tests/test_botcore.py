@@ -56,6 +56,37 @@ class ParseLogTest(unittest.TestCase):
         self.assertIn("Reason: builder failed with exit code 3.", got["roots"][0]["excerpt"])
         self.assertNotIn("end of log", got["roots"][0]["excerpt"])
 
+    def test_single_target_bare_prefix_and_singular_dependency_reason(self):
+        got = botcore.parse_log(text("nix-fast-build-single.log"))
+        self.assertEqual(
+            [(r["kind"], botcore.drv_candidate(r["drv"])) for r in got["roots"]],
+            [("builder", "tectonic"), ("builder", "hyprlock")],
+        )
+        self.assertEqual(
+            drv_names(got["depFailed"]), ["neovim-0.12.6.drv", "vicinae-0.20.1.drv"]
+        )
+        for root in got["roots"]:
+            self.assertNotIn("\x1b", root["excerpt"])
+            self.assertTrue(root["excerpt"].startswith("error: Cannot build '/nix/store/"))
+        self.assertIn("Reason: builder failed with exit code 101.", got["roots"][0]["excerpt"])
+        self.assertIn(">   thread 'main' panicked", got["roots"][0]["excerpt"])
+
+    def test_bare_prefix_forged_builder_line_is_not_a_root(self):
+        victim = "/nix/store/" + "b" * 32 + "-victim-1.0.drv"
+        for forged in (f"> > error: Cannot build '{victim}'.", f"> pkg> error: Cannot build '{victim}'."):
+            with self.subTest(line=forged):
+                log = (
+                    forged + "\n"
+                    "       Reason: builder failed with exit code 1.\n"
+                    "> done\n"
+                )
+                self.assertEqual(botcore.parse_log(log), {"roots": [], "depFailed": []})
+
+    def test_singular_dependency_reason_in_plain_output(self):
+        drv = "/nix/store/" + "c" * 32 + "-parent-2.0.drv"
+        log = f"error: Cannot build '{drv}'.\n       Reason: 1 dependency failed.\n"
+        self.assertEqual(botcore.parse_log(log), {"roots": [], "depFailed": [drv]})
+
     def test_legacy_forms_and_dedupe(self):
         got = botcore.parse_log(text("legacy.log"))
         self.assertEqual(
