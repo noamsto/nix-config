@@ -32,11 +32,11 @@
   compileAssets = {
     kit = {
       target = "kit-linux-x64";
-      hash = "sha256-6JCb3+2Uo20OxLJ7PTYnsGznSQB16YWl2HFTRLvrTQ0=";
+      hash = "sha256-jTl2zmvecRsnS5oMCPuAZdL9KeLl1qHsjVnw3Wg+95s=";
     };
     runtime = {
       target = "runtime-linux-x64";
-      hash = "sha256-Z79HShxuIGWeAxLMiN0vW9qf1Ja6RLWHTinjRQZv+x0=";
+      hash = "sha256-iocH/hZxGpHTOTZFDNUKxuJm75nmnjwJ5SZlJUKi1J8=";
     };
   };
 in
@@ -45,6 +45,7 @@ in
     inherit version;
 
     src = fetchurl {
+      name = "pi-bolt-${version}-${platform.target}.tar.xz";
       url = "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v${version}/pi-bolt-${platform.target}.tar.xz";
       inherit (platform) hash;
     };
@@ -91,6 +92,7 @@ in
 
     passthru.compileAssets = lib.mapAttrs (_: asset:
       fetchurl {
+        name = "pi-bolt-${version}-${asset.target}.tar.gz";
         url = "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v${version}/pi-bolt-${asset.target}.tar.gz";
         inherit (asset) hash;
       })
