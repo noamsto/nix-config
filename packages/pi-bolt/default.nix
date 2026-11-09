@@ -6,7 +6,7 @@
   libxcb,
   runtimeShell,
 }: let
-  version = "1.1.4";
+  version = "1.1.7";
   system = stdenv.hostPlatform.system;
 
   # Default (non-JIT) build. Do not edit version or hashes by hand: bump.sh
@@ -14,15 +14,15 @@
   platforms = {
     x86_64-linux = {
       target = "linux-x64";
-      hash = "sha256-yrD3hRt/FR/e0jZb023DO3j9NRPU4S8I5wpK1VWrdZs=";
+      hash = "sha256-SiOr6Pn/hyklkZ15Xrzu/E9aSaSl8jAc0Ca/Mzr8qmY=";
     };
     aarch64-linux = {
       target = "linux-arm64";
-      hash = "sha256-Ke9XRyEEAAb/yooudJgvlgpAVCtccn/MYlOf+WWf0o0=";
+      hash = "sha256-H2a7hVCiBqQo/LHI2Dt90di0KTvuA/BuuvfqWteWu34=";
     };
     aarch64-darwin = {
       target = "darwin-arm64";
-      hash = "sha256-Celf5elnwEiIkhPOmAdyXLrjxHMd5+eRmXHfUkHSv4k=";
+      hash = "sha256-bWl/XKjDmTv2Oh6/Xrfos3QA2VGOJZuZMeoDyfcPF1k=";
     };
   };
   platform = platforms.${system} or (throw "pi-bolt: unsupported system ${system}");
