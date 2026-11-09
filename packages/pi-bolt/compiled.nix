@@ -7,8 +7,8 @@
 }: let
   settings = writeText "pi-bolt-compile-settings.json" (builtins.toJSON {inherit extensions;});
 
-  # The compile only runs on x86_64-linux (the only target with compile assets
-  # packaged); elsewhere this is plain pi-bolt.
+  # Plain pi-bolt elsewhere: only x86_64-linux has been built and tested, and
+  # darwin has a code-signing constraint (see ./default.nix).
   drv =
     if stdenv.hostPlatform.system == "x86_64-linux"
     then
@@ -20,16 +20,17 @@
             description = "Pi-Bolt with Pi extensions compiled in ahead of time";
           };
 
-        # Facts that are not obvious:
-        # - compile writes next to the install it runs from, so it needs a
-        #   writable copy (the store original is read-only).
-        # - compile ends with an `rm` of its `.compile-*` scratch dir that hits
-        #   EACCES in the sandbox, after the build already succeeded; only that
-        #   exact error is tolerated, and `Built Pi-Bolt` is still required.
-        # - the runtime is autoPatchelf'd first because the compile runs
-        #   `pi --help` and the sandbox has no /lib64 loader.
-        # - the doctor "compiled in" stand-in match relies on the extension
-        #   store paths and mtimes being identical at build and run time.
+        # `compile` writes beside the install it runs from, hence the writable
+        # copy. It then fails removing its `.compile-*` folder, whose staged
+        # store extensions are read-only, after writing a complete --out; only
+        # that exact error is tolerated.
+        #
+        # The runtime is patched first because `compile` validates its output
+        # with `pi --help` and the sandbox has no /lib64 loader.
+        #
+        # A compiled-in extension is used only while the path, size and mtime
+        # of its sources match, which store paths keep the same at build and
+        # run time.
         postInstall =
           (old.postInstall or "")
           + ''
