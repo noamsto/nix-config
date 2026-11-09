@@ -86,7 +86,40 @@
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`.";
+        description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`. On macOS only houston runs, as a launchd agent; `hookyard serve` and the proxy are Linux-only.";
+      };
+      peers = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        description = ''
+          Peer houstons to mirror, name to URL, passed as `-peer NAME=URL`.
+          Names match `^[a-z0-9][a-z0-9-]{0,62}$` and are not `local`; plain
+          `http` is accepted only for loopback, Tailscale addresses and
+          `.ts.net` names. houston validates both at startup. One list can be
+          deployed to every host: a peer that is this host is refused as `self`.
+        '';
+      };
+      tokenFile = lib.mkOption {
+        type = lib.types.nullOr (lib.types.strMatching "^/.*");
+        default = null;
+        description = ''
+          Absolute path of the token shared by every houston. Used as each
+          peer's `-peer-token-file` and symlinked to houston's own API token,
+          replacing a generated one. A string, so the secret stays out of the
+          Nix store. While the file is missing or empty houston does not start.
+        '';
+      };
+      listenAddress = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          HOST:PORT passed as `-addr`; null keeps houston's 127.0.0.1:9090. A
+          peer should bind its tailnet address: the service retries until the
+          address is up, whereas a wildcard bind can start before the tailnet
+          and houston reads its own allowed Host names only at startup. On a
+          host using `services.localProxy`, which proxies to 127.0.0.1:9090, it
+          must still listen there.
+        '';
       };
     };
     username = lib.mkOption {
