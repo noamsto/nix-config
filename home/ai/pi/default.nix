@@ -25,7 +25,7 @@
   # Set to false to restore the stock-pi wrapper exactly.
   piBoltAsPi = true;
   # The Pi-Bolt binary, defined once; `pi` (when switched on) and `pi-bolt` share it.
-  piBoltBin = lib.getExe localPkgs.pi-bolt;
+  piBoltBin = lib.getExe localPkgs.pi-bolt-compiled;
 
   # aeye's pi adapter, a self-contained hookyard "build mode" package: its own
   # bin/hookyard router and table cover session_start guidance/reset, resume
@@ -99,22 +99,22 @@
   # Dispatcher workers resolve bare `pi` to this same wrapper (stock pi even
   # when piBoltAsPi is on, since CREW_WORKER_ID is set); these load only in
   # interactive sessions.
-  baseExtensions = [
-    "${localPkgs.pi-lens}/lib/node_modules/pi-lens"
-    "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
-    "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
-    "${localPkgs.rpiv-todo}/lib/node_modules/@juicesharp/rpiv-todo"
-    # Capture + D2 renders into the carousel. Its scripts resolve aeye,
-    # tmux-claude-images and resvg from PATH (lazytmux's carouselDiagramTools)
-    # and jq from the system profile. A worker writing the manifest would land
-    # its images in the outer session's carousel (noamsto/aeye#235), so it
-    # belongs here rather than loading unconditionally.
-    "${aeye.tree}/adapters/pi"
-    # Delegation to child pi processes with their own context windows. Workers
-    # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
-    # native subagent mechanism, and dispatcher owns that claim.
-    "${subagentDir}/index.ts"
-  ];
+  # pi-lens, pi-vim, pi-web-access and rpiv-todo: defined in packages/default.nix
+  # and compiled into Pi-Bolt there; everything below loads from its files.
+  baseExtensions =
+    localPkgs.pi-bolt-compiled.compiledExtensions
+    ++ [
+      # Capture + D2 renders into the carousel. Its scripts resolve aeye,
+      # tmux-claude-images and resvg from PATH (lazytmux's carouselDiagramTools)
+      # and jq from the system profile. A worker writing the manifest would land
+      # its images in the outer session's carousel (noamsto/aeye#235), so it
+      # belongs here rather than loading unconditionally.
+      "${aeye.tree}/adapters/pi"
+      # Delegation to child pi processes with their own context windows. Workers
+      # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
+      # native subagent mechanism, and dispatcher owns that claim.
+      "${subagentDir}/index.ts"
+    ];
   # Reports run state to houston over its local socket, in order. Interactive
   # sessions only, like the rest of this list: workers keep the hook path.
   extensions =

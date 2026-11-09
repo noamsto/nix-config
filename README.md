@@ -18,7 +18,7 @@ Supported systems: `x86_64-linux`, `aarch64-linux` (Raspberry Pi) and
 | `darwinModules` | `default`, `options`, `priors`, `overlays`, `base`, `home` |
 | `overlays` | `default` |
 | `lib` | `caches`, `homeAliases`, `files` |
-| `packages` | `deja-vu`, `gh-repo-defaults`, `linear-cli`, `pi-bolt`, `pi-lens`, `pi-vim`, `pi-web-access`, `rpiv-todo` on all systems; `claude-squad`, `halo-wlan0-suspend-repro`, `sherpa-dictate` on Linux only; `airconnect` on `x86_64-linux` only |
+| `packages` | `deja-vu`, `gh-repo-defaults`, `linear-cli`, `pi-bolt`, `pi-bolt-compiled`, `pi-lens`, `pi-vim`, `pi-web-access`, `rpiv-todo` on all systems; `claude-squad`, `halo-wlan0-suspend-repro`, `sherpa-dictate` on Linux only; `airconnect` on `x86_64-linux` only |
 | `nixosConfigurations` | `example`, `example-desktop` (Hyprland laptop, eval only), `example-rpi4` (aarch64-linux Raspberry Pi 4) |
 | `checks`, `formatter`, `devShells` | per system, defined in `flake-modules/development.nix` |
 
