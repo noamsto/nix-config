@@ -234,9 +234,8 @@ in {
 
   home.packages = lib.mkIf linuxEnabled [cli];
 
-  # houston reads the file behind this link on every start. force replaces
-  # the token houston generated before a shared one was configured. The path
-  # is literal because houston ignores XDG_STATE_HOME.
+  # force replaces the token houston generated before a shared one was
+  # configured. The path is literal because houston ignores XDG_STATE_HOME.
   home.file.".local/state/houston/token" = lib.mkIf (enabled && tokenFile != null) {
     source = config.lib.file.mkOutOfStoreSymlink tokenFile;
     force = true;
