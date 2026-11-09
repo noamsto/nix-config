@@ -66,8 +66,9 @@ EXCERPT_LINES = 30
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 # nix-fast-build prefixes every nix line with "<attr>> ". The attr is empty
 # for a single-target build (-f .#<attr> with one attr), leaving a bare "> ".
-# Only one prefix is stripped per line (count=1), so builder output cannot
-# forge a root by echoing its own "> " prefix.
+# The pattern is anchored at line start (no re.MULTILINE), so it matches at
+# most once: only the outermost "<attr>> " is stripped, and an echoed inner
+# "> " or "pkg> " survives and cannot match ^error:.
 _ATTR_PREFIX = re.compile(r"^[^\s>]*> ")
 _DRV = r"'(/nix/store/[^']+\.drv)'"
 _CANNOT_BUILD = re.compile(r"^error: Cannot build " + _DRV)
