@@ -62,7 +62,7 @@
             "$TMPDIR/compiled/pi" doctor --offline >"$TMPDIR/doctor.txt"
             sed -n '/^Extensions/,/^Packages/p' "$TMPDIR/doctor.txt"
             for e in ${lib.escapeShellArgs extensions}; do
-              grep -F "$e/" "$TMPDIR/doctor.txt" | grep -q 'compiled in' \
+              grep -F "$e/" "$TMPDIR/doctor.txt" | grep -Eq '^[[:space:]]*compiled in[[:space:]]' \
                 || { echo "extension not compiled in: $e" >&2; exit 1; }
             done
 
