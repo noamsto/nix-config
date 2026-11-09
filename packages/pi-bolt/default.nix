@@ -66,7 +66,11 @@ in
           exit 1
           ;;
       esac
-      exec -a pi-bolt $out/libexec/pi-bolt/pi "\$@"
+      # The pi wrapper sets PI_BOLT_ARGV0=pi so process matchers see \`pi\`; read it
+      # once and clear it so child processes and a nested \`pi-bolt\` keep their own name.
+      argv0=\''${PI_BOLT_ARGV0:-pi-bolt}
+      unset PI_BOLT_ARGV0
+      exec -a "\$argv0" $out/libexec/pi-bolt/pi "\$@"
       SCRIPT
       chmod +x $out/bin/pi-bolt
       runHook postInstall
