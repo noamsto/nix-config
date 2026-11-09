@@ -1,0 +1,12 @@
+[2m>[0m [31;1merror:[0m Cannot build '[35;1m/nix/store/0123456789abcdfghijklmnpqrsvwxyz-tectonic-0.17.0.drv[0m'.[0m
+[2m>[0m       Reason: [31;1mbuilder failed with exit code 101[0m.[0m
+[2m>[0m       Last 25 log lines:
+[2m>[0m       >   thread 'main' panicked
+[2m>[0m [31;1merror:[0m Cannot build '[35;1m/nix/store/zyxwvsrqpnmlkjhgfdcba98765432100-neovim-0.12.6.drv[0m'.[0m
+[2m>[0m       Reason: [31;1m1 dependency failed[0m.[0m
+[2m>[0m [31;1merror:[0m Cannot build '[35;1m/nix/store/1a2b3c4d5f6g7h8i9j0k1l2m3n4p5q6r-hyprlock-0.5.0.drv[0m'.[0m
+[2m>[0m       Reason: [31;1mbuilder failed with exit code 1[0m.[0m
+[2m>[0m       Last 3 log lines:
+[2m>[0m       > linking failed
+[2m>[0m [31;1merror:[0m Cannot build '[35;1m/nix/store/r6q5p4n3m2l1k0j9i8h7g6f5d4c3b2a1-vicinae-0.20.1.drv[0m'.[0m
+[2m>[0m       Reason: [31;1m2 dependencies failed[0m.[0m
