@@ -6,6 +6,7 @@ import datetime
 import fnmatch
 import json
 import re
+from collections.abc import Iterable
 
 ALWAYS_EXCLUDED = ("nixpkgs-fallback", "nixpkgs-bambu")
 
@@ -159,6 +160,8 @@ def _clean(line: str) -> str:
 
 
 def parse_log(text: str) -> dict:
+    """Parse failures out of text. Only feed it Nix-authored text: builder
+    output can print lines that look exactly like Nix's own error blocks."""
     # Only "\n" ends a line: splitlines() also breaks on \x0b, \x0c, \x1c-\x1e,
     # \x85 and U+2028/9, which builder output can contain to forge an
     # unindented error line.
@@ -200,6 +203,50 @@ def parse_log(text: str) -> dict:
         elif m := _LEGACY_DEPS.match(line):
             add_dep(m[1])
     return {"roots": roots, "depFailed": dep_failed}
+
+
+def parse_internal_json(lines: Iterable[str]) -> dict:
+    """Failures from a `--log-format internal-json` stream (`@nix {...}` lines).
+
+    Only level-0 `msg` records are candidates: builder output arrives as `result`
+    type 101 and is echoed inside a Nix error indented, so it never starts a
+    message line. A builder can still print an `@nix` msg record that Nix
+    re-emits, so a root also needs a Nix-authored `start` type 105 for its drv
+    (Nix drops builder-printed ones). The last record per drv wins: Nix reports
+    a failure after the builder exits."""
+    started: set[str] = set()
+    msgs: list[str] = []
+    for line in lines:
+        if not line.startswith("@nix "):
+            continue
+        try:
+            rec = json.loads(line[5:])
+        except ValueError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        if rec.get("action") == "start" and rec.get("type") == 105:
+            fields = rec.get("fields")
+            if isinstance(fields, list) and fields and isinstance(fields[0], str):
+                started.add(fields[0])
+        elif (
+            rec.get("action") == "msg"
+            and rec.get("level") == 0
+            and isinstance(rec.get("msg"), str)
+        ):
+            msgs.append(rec["msg"])
+
+    roots, dep_failed, seen = [], [], set()
+    for msg in reversed(msgs):
+        parsed = parse_log(msg)
+        for root in reversed(parsed["roots"]):
+            if root["drv"] not in seen and root["drv"] in started:
+                roots.append(root)
+            seen.add(root["drv"])
+        for drv in reversed(parsed["depFailed"]):
+            if drv not in dep_failed:
+                dep_failed.append(drv)
+    return {"roots": roots[::-1], "depFailed": dep_failed[::-1]}
 
 
 def _basename(path: str) -> str:

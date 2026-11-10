@@ -89,25 +89,33 @@ jobs:
         id: checks
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#checks.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/checks.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/checks.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#checks.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/checks.log"
 
       - name: Build packages
         id: packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/packages.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/packages.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/packages.log"
 
       - name: Build devShells
         id: devshells
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/devshells.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/devshells.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/devshells.log"
 
       - name: Build formatter
         id: formatter
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#formatter.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/formatter.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/formatter.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#formatter.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/formatter.log"
 
       # One job at a time: priors' CPU-bound property tests time out (10m) when they share
       # the runner with parallel builds.
@@ -115,7 +123,9 @@ jobs:
         id: example
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/example.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/example.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached --max-jobs 1 ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/example.log"
 
       # The checks were built or confirmed cached above; this keeps flake check's
       # structural validation of modules, overlays and apps without rebuilding.
@@ -184,7 +194,9 @@ jobs:
         id: darwin-packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-darwin 2>&1 | tee "$RUNNER_TEMP/logs/darwin-packages.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/darwin-packages.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-darwin 2>&1 | tee "$RUNNER_TEMP/logs/darwin-packages.log"
 
       - name: Analyze failures
         if: ${{ always() && inputs.report }}
@@ -251,13 +263,17 @@ jobs:
         id: rpi4
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/rpi4.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/rpi4.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/rpi4.log"
 
       - name: Build packages
         id: arm-packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-packages.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/arm-packages.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-packages.log"
 
       # Not checks.aarch64-linux: it includes NixOS VM tests, which need KVM that
       # the arm runner may not offer; the x86_64 job already runs the checks.
@@ -265,7 +281,9 @@ jobs:
         id: arm-devshells
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
+        env:
+          NFB_JSON_DIR: ${{ runner.temp }}/logs/arm-devshells.nix-json
+        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --nix "$GITHUB_WORKSPACE/scripts/update-bot/nix-json-tee" --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
 
       - name: Analyze failures
         if: ${{ always() && inputs.report }}
