@@ -6,6 +6,10 @@
   ...
 }: let
   enabled = osConfig.agentDashboard.enable;
+  inherit (osConfig.agentDashboard) peers tokenFile listenAddress;
+  inherit (pkgs.stdenv.hostPlatform) isDarwin isLinux;
+  # Home Manager rejects systemd.user on Darwin.
+  linuxEnabled = enabled && isLinux;
   # houston only trusts Host values it can derive itself; the tsnet node's
   # name is not one of them.
   hostnameArgs = lib.optionals (osConfig.services.localProxy.tailscale.enable or false) ["-hostname" osConfig.services.localProxy.tailscale.fqdn];
@@ -23,6 +27,52 @@
       exec ${houstonPkg}/bin/houston "$@"
     '';
   };
+
+  # A dangling token symlink makes houston generate a token and write it
+  # through the link, leaving it running with a token no other host holds.
+  # Exiting instead lets the supervisor retry until the secret exists. Kept
+  # out of `launcher`: `houston hook` runs through it and needs no token.
+  requireToken = pkgs.writeShellApplication {
+    name = "houston-require-token";
+    text = ''
+      token_file=${lib.escapeShellArg tokenFile}
+      if [[ ! -s "$token_file" ]]; then
+        echo "houston: token file $token_file is missing or empty, not starting" >&2
+        exit 1
+      fi
+      exec ${launcher}/bin/houston "$@"
+    '';
+  };
+
+  serverBin =
+    if tokenFile == null
+    then "${launcher}/bin/houston"
+    else "${requireToken}/bin/houston-require-token";
+
+  serverArgs =
+    hostnameArgs
+    ++ lib.optionals (listenAddress != null) ["-addr" listenAddress]
+    ++ lib.concatLists (lib.mapAttrsToList (name: url:
+      ["-peer" "${name}=${url}"]
+      ++ lib.optionals (tokenFile != null) ["-peer-token-file" "${name}=${tokenFile}"])
+    peers);
+
+  # tmuxPackage first: houston must see the same tmux binary version
+  # the user's tmux server runs, or control mode breaks on a
+  # client/server version mismatch.
+  #
+  # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
+  # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
+  # wrapping them (dispatcher flake.nix).
+  servicePath = lib.makeBinPath [
+    config.programs.tmux-og.tmuxPackage
+    pkgs.git
+    pkgs.gh
+    pkgs.worktrunk
+    pkgs.direnv
+    inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
+    inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
+  ];
 
   # Passes hookyard's normalized envelope straight to houston: houston
   # detects the envelope by its `engine` field and reads the event from
@@ -121,7 +171,7 @@ in {
   programs.hookyard.manifests = lib.mkIf enabled [manifest];
 
   systemd.user = lib.mkMerge [
-    (lib.mkIf enabled {
+    (lib.mkIf linuxEnabled {
       services.houston = {
         Unit = {
           Description = "Houston - mission control for AI coding agents in tmux";
@@ -133,26 +183,11 @@ in {
         };
 
         Service = {
-          ExecStart = lib.concatStringsSep " " (["${launcher}/bin/houston"] ++ hostnameArgs);
+          ExecStart = lib.replaceStrings ["%"] ["%%"] (lib.escapeShellArgs ([serverBin] ++ serverArgs));
           Restart = "on-failure";
           RestartSec = 5;
           Environment = [
-            # tmuxPackage first: houston must see the same tmux binary version
-            # the user's tmux server runs, or control mode breaks on a
-            # client/server version mismatch.
-            #
-            # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
-            # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
-            # wrapping them (dispatcher flake.nix).
-            "PATH=${lib.makeBinPath [
-              config.programs.tmux-og.tmuxPackage
-              pkgs.git
-              pkgs.gh
-              pkgs.worktrunk
-              pkgs.direnv
-              inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
-              inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
-            ]}"
+            "PATH=${servicePath}"
             # Matches tmux-startup.service's own TMUX_TMPDIR=%t, so both resolve
             # the same runtime dir (/run/user/1000) and therefore the same socket.
             "TMUX_TMPDIR=%t"
@@ -172,7 +207,7 @@ in {
       };
     })
 
-    (lib.mkIf enabled {
+    (lib.mkIf linuxEnabled {
       services.houston-dev-sync = {
         Unit.Description = "Build and deploy github:noamsto/houston main when houston dev mode is on";
         Service = {
@@ -197,5 +232,29 @@ in {
     })
   ];
 
-  home.packages = lib.mkIf enabled [cli];
+  home.packages = lib.mkIf linuxEnabled [cli];
+
+  # force replaces the token houston generated before a shared one was
+  # configured. The path is literal because houston ignores XDG_STATE_HOME.
+  home.file.".local/state/houston/token" = lib.mkIf (enabled && tokenFile != null) {
+    source = config.lib.file.mkOutOfStoreSymlink tokenFile;
+    force = true;
+  };
+
+  # No TMUX_TMPDIR, unlike the systemd unit: on Darwin the tmux server uses
+  # its default /tmp/tmux-$UID socket, and tmux ignores launchd's TMPDIR.
+  # The default gui domain matches tmux-startup, so gh and dispatch run in the
+  # same session as the user's panes. KeepAlive retries until the tailnet
+  # address and the secret are up.
+  launchd.agents.houston = lib.mkIf (enabled && isDarwin) {
+    enable = true;
+    config = {
+      ProgramArguments = [serverBin] ++ serverArgs;
+      RunAtLoad = true;
+      KeepAlive = true;
+      EnvironmentVariables.PATH = servicePath;
+      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/houston.log";
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/houston.log";
+    };
+  };
 }

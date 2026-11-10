@@ -21,6 +21,12 @@
   lspServers = import ../lsp-servers.nix {inherit pkgs;};
   localPkgs = inputs.self.packages.${pkgs.stdenv.hostPlatform.system};
 
+  # The one switch: when true, the interactive `pi` command runs Pi-Bolt.
+  # Set to false to restore the stock-pi wrapper exactly.
+  piBoltAsPi = true;
+  # The Pi-Bolt binary, defined once; `pi` (when switched on) and `pi-bolt` share it.
+  piBoltBin = lib.getExe localPkgs.pi-bolt-compiled;
+
   # aeye's pi adapter, a self-contained hookyard "build mode" package: its own
   # bin/hookyard router and table cover session_start guidance/reset, resume
   # backfill, post_tool capture and the /aeye command. It never touches the
@@ -90,24 +96,30 @@
     done
   '';
 
-  # Dispatcher workers resolve bare `pi` to this same wrapper; these load only
-  # in interactive sessions.
-  extensions = [
-    "${localPkgs.pi-lens}/lib/node_modules/pi-lens"
-    "${localPkgs.pi-vim}/lib/node_modules/pi-vim"
-    "${localPkgs.pi-web-access}/lib/node_modules/pi-web-access"
-    "${localPkgs.rpiv-todo}/lib/node_modules/@juicesharp/rpiv-todo"
-    # Capture + D2 renders into the carousel. Its scripts resolve aeye,
-    # tmux-claude-images and resvg from PATH (lazytmux's carouselDiagramTools)
-    # and jq from the system profile. A worker writing the manifest would land
-    # its images in the outer session's carousel (noamsto/aeye#235), so it
-    # belongs here rather than loading unconditionally.
-    "${aeye.tree}/adapters/pi"
-    # Delegation to child pi processes with their own context windows. Workers
-    # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
-    # native subagent mechanism, and dispatcher owns that claim.
-    "${subagentDir}/index.ts"
-  ];
+  # Dispatcher workers resolve bare `pi` to this same wrapper (stock pi even
+  # when piBoltAsPi is on, since CREW_WORKER_ID is set); these load only in
+  # interactive sessions.
+  # pi-lens, pi-vim, pi-web-access and rpiv-todo: defined in packages/default.nix
+  # and compiled into Pi-Bolt there; everything below loads from its files.
+  baseExtensions =
+    localPkgs.pi-bolt-compiled.compiledExtensions
+    ++ [
+      # Capture + D2 renders into the carousel. Its scripts resolve aeye,
+      # tmux-claude-images and resvg from PATH (lazytmux's carouselDiagramTools)
+      # and jq from the system profile. A worker writing the manifest would land
+      # its images in the outer session's carousel (noamsto/aeye#235), so it
+      # belongs here rather than loading unconditionally.
+      "${aeye.tree}/adapters/pi"
+      # Delegation to child pi processes with their own context windows. Workers
+      # are excluded deliberately: WORKER_PROTOCOL tells a pi worker it has no
+      # native subagent mechanism, and dispatcher owns that claim.
+      "${subagentDir}/index.ts"
+    ];
+  # Reports run state to houston over its local socket, in order. Interactive
+  # sessions only, like the rest of this list: workers keep the hook path.
+  extensions =
+    baseExtensions
+    ++ lib.optional osConfig.agentDashboard.enable "${inputs.houston}/contrib/pi-mod/houston.ts";
   personalExtensions = lib.concatMapStringsSep " " (e: "-e ${e}") extensions;
 
   # pi rewrites ~/.pi/agent/settings.json itself, so nix can't own it. The
@@ -122,10 +134,15 @@
   # exec -a pi: argv[0] so ps and tmux show `pi`, not the store wrapper.
   #
   # mkPiWrapper wraps either build: pi (pkgs.pi) or the ahead-of-time compiled
-  # pi-bolt, which reads the same ~/.pi/agent config.
+  # pi-bolt, which reads the same ~/.pi/agent config. With boltBin set, the
+  # non-subcommand launch runs boltBin when CREW_WORKER_ID is empty (interactive)
+  # and bin otherwise (workers); with boltBin null the script is unchanged.
+  # PI_BOLT_ARGV0 makes the pi-bolt shim keep argv[0] as `pi`, so tmux-og's
+  # pane_current_command match (pi) still recognises the process.
   mkPiWrapper = {
     name,
     bin,
+    boltBin ? null,
     extraSubcommands ? "",
   }:
     pkgs.writeTextFile {
@@ -154,8 +171,18 @@
           personal+=(--skill ${config.home.sessionVariables.DISPATCHER_SKILLS_DIR}/agent-browser)''}
         fi
         # "$@" is always last, so the caller's args are exactly the last $PI_USER_ARGC argv entries — lets tmux-og's resume stamp (noamsto/tmux-og#666) replay only those.
-        export PI_USER_ARGC=$#
-        exec -a ${name} ${bin} \
+        export PI_USER_ARGC=$#${lib.optionalString (boltBin != null) ''
+
+          bin=${bin}
+          if [ -z "''${CREW_WORKER_ID:-}" ]; then
+            bin=${boltBin}
+            export PI_BOLT_ARGV0=${name}
+          fi''}
+        exec -a ${name} ${
+          if boltBin == null
+          then bin
+          else ''"$bin"''
+        } \
           "''${personal[@]}" \
           --skill "$HOME/.claude/skills" \
           --skill ${xdg-claude}/context-efficient-tools/skills \
@@ -167,12 +194,16 @@
   pi-wrapper = mkPiWrapper {
     name = "pi";
     bin = "${pkgs.pi}/bin/pi";
+    boltBin =
+      if piBoltAsPi
+      then piBoltBin
+      else null;
   };
 
-  # Opt-in alongside pi; dispatcher workers keep resolving `pi`.
+  # Always available by name, whatever piBoltAsPi says.
   pi-bolt-wrapper = mkPiWrapper {
     name = "pi-bolt";
-    bin = lib.getExe localPkgs.pi-bolt;
+    bin = piBoltBin;
     extraSubcommands = "|service|doctor|compile";
   };
 

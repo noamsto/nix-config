@@ -9,7 +9,7 @@
 set -euo pipefail
 
 repo=opensec-git/Pi-Bolt
-targets="linux-x64 linux-arm64 darwin-arm64"
+targets="linux-x64 linux-arm64 darwin-arm64 kit-linux-x64 runtime-linux-x64"
 script_dir=$(dirname "$(readlink -f "$0")")
 nix_file=$script_dir/default.nix
 
@@ -100,7 +100,10 @@ signed_line=$(awk 'index($0, "# pi-bolt ") == 1' "$sums")
 
 pairs=""
 for target in $targets; do
-  name=pi-bolt-$target.tar.xz
+  case $target in
+  kit-* | runtime-*) name=pi-bolt-$target.tar.gz ;;
+  *) name=pi-bolt-$target.tar.xz ;;
+  esac
   count=$(awk -v name="$name" '$2 == name { c++ } END { print c + 0 }' "$sums")
   [ "$count" -eq 1 ] || die "expected exactly one line for $name, found $count"
   read -r fields hex < <(awk -v name="$name" '$2 == name { print NF, $1 }' "$sums")

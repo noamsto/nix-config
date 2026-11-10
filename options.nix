@@ -86,7 +86,46 @@
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`.";
+        description = "Run houston and `hookyard serve` as user services and register them on `services.localProxy`. On macOS only houston runs, as a launchd agent; `hookyard serve` and the proxy are Linux-only.";
+      };
+      peers = lib.mkOption {
+        type = lib.types.attrsOf lib.types.str;
+        default = {};
+        description = ''
+          Peer houstons to mirror, name to URL, passed as `-peer NAME=URL`.
+          Names match `^[a-z0-9][a-z0-9-]{0,62}$` and are not `local`; plain
+          `http` is accepted only for loopback, Tailscale addresses and
+          `.ts.net` names. houston validates both at startup. One list can be
+          deployed to every host: a peer that is this host is refused as `self`.
+        '';
+      };
+      tokenFile = lib.mkOption {
+        type = lib.types.nullOr (lib.types.strMatching "^/.*");
+        default = null;
+        description = ''
+          Absolute path of the token shared by every houston. Used as each
+          peer's `-peer-token-file` and symlinked to houston's own API token,
+          replacing a generated one. A string, so the secret stays out of the
+          Nix store. While the file is missing or empty houston does not start.
+          houston reads its own token only at startup, so rotating this file
+          needs a houston restart on every host.
+        '';
+      };
+      listenAddress = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          HOST:PORT passed as `-addr`; null keeps houston's 127.0.0.1:9090.
+          houston hands its API token to any client that reaches this address
+          with a Host it allows, its own Tailscale addresses included. A
+          non-loopback bind therefore makes network reach the only gate, and
+          with a shared `tokenFile` that client can use every peer: restrict
+          the port, for example with Tailscale ACLs. Prefer a tailnet address
+          to a wildcard: a wildcard can start before the tailnet is up, and
+          houston reads its own allowed Host names only at startup. On a host
+          using `services.localProxy`, which proxies to 127.0.0.1:9090, it
+          must still listen there.
+        '';
       };
     };
     username = lib.mkOption {

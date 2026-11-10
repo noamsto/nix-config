@@ -6,7 +6,7 @@
   libxcb,
   runtimeShell,
 }: let
-  version = "1.1.4";
+  version = "1.1.7";
   system = stdenv.hostPlatform.system;
 
   # Default (non-JIT) build. Do not edit version or hashes by hand: bump.sh
@@ -14,24 +14,38 @@
   platforms = {
     x86_64-linux = {
       target = "linux-x64";
-      hash = "sha256-yrD3hRt/FR/e0jZb023DO3j9NRPU4S8I5wpK1VWrdZs=";
+      hash = "sha256-SiOr6Pn/hyklkZ15Xrzu/E9aSaSl8jAc0Ca/Mzr8qmY=";
     };
     aarch64-linux = {
       target = "linux-arm64";
-      hash = "sha256-Ke9XRyEEAAb/yooudJgvlgpAVCtccn/MYlOf+WWf0o0=";
+      hash = "sha256-H2a7hVCiBqQo/LHI2Dt90di0KTvuA/BuuvfqWteWu34=";
     };
     aarch64-darwin = {
       target = "darwin-arm64";
-      hash = "sha256-Celf5elnwEiIkhPOmAdyXLrjxHMd5+eRmXHfUkHSv4k=";
+      hash = "sha256-bWl/XKjDmTv2Oh6/Xrfos3QA2VGOJZuZMeoDyfcPF1k=";
     };
   };
   platform = platforms.${system} or (throw "pi-bolt: unsupported system ${system}");
+
+  # Compile kit and bun runtime for ./compiled.nix, consumed only on x86_64-linux.
+  # bump.sh rewrites these hashes under the same signature check.
+  compileAssets = {
+    kit = {
+      target = "kit-linux-x64";
+      hash = "sha256-jTl2zmvecRsnS5oMCPuAZdL9KeLl1qHsjVnw3Wg+95s=";
+    };
+    runtime = {
+      target = "runtime-linux-x64";
+      hash = "sha256-iocH/hZxGpHTOTZFDNUKxuJm75nmnjwJ5SZlJUKi1J8=";
+    };
+  };
 in
   stdenv.mkDerivation {
     pname = "pi-bolt";
     inherit version;
 
     src = fetchurl {
+      name = "pi-bolt-${version}-${platform.target}.tar.xz";
       url = "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v${version}/pi-bolt-${platform.target}.tar.xz";
       inherit (platform) hash;
     };
@@ -66,11 +80,23 @@ in
           exit 1
           ;;
       esac
-      exec -a pi-bolt $out/libexec/pi-bolt/pi "\$@"
+      # The pi wrapper sets PI_BOLT_ARGV0=pi so process matchers see \`pi\`; read it
+      # once and clear it so child processes and a nested \`pi-bolt\` keep their own name.
+      argv0=\''${PI_BOLT_ARGV0:-pi-bolt}
+      unset PI_BOLT_ARGV0
+      exec -a "\$argv0" $out/libexec/pi-bolt/pi "\$@"
       SCRIPT
       chmod +x $out/bin/pi-bolt
       runHook postInstall
     '';
+
+    passthru.compileAssets = lib.mapAttrs (_: asset:
+      fetchurl {
+        name = "pi-bolt-${version}-${asset.target}.tar.gz";
+        url = "https://github.com/opensec-git/Pi-Bolt/releases/download/bolt-v${version}/pi-bolt-${asset.target}.tar.gz";
+        inherit (asset) hash;
+      })
+    compileAssets;
 
     meta = {
       description = "Pi compiled ahead of time into one native executable";
