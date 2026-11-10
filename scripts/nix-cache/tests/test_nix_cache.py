@@ -533,6 +533,46 @@ class VerifyArgsTest(unittest.TestCase):
             self.assertIn(path, args)
 
 
+class RcloneBinaryTest(unittest.TestCase):
+    def resolve(self, runner_temp, make_base=False):
+        calls = []
+
+        def fake_run(argv, **_kwargs):
+            calls.append(argv)
+            return types.SimpleNamespace(
+                returncode=0, stdout="/nix/store/x-rclone\n", stderr=""
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {}
+            if runner_temp:
+                env["RUNNER_TEMP"] = tmp
+                if make_base:
+                    os.mkdir(os.path.join(tmp, "base"))
+            with mock.patch.dict(os.environ, env):
+                if not runner_temp:
+                    os.environ.pop("RUNNER_TEMP", None)
+                with mock.patch.object(nc.subprocess, "run", fake_run):
+                    path = nc.rclone_binary()
+            return path, calls[0], tmp
+
+    def test_base_tree_lock_when_base_exists(self):
+        path, argv, tmp = self.resolve(True, make_base=True)
+        self.assertEqual(
+            argv[argv.index("--inputs-from") + 1],
+            f"git+file://{tmp}/base?shallow=1",
+        )
+        self.assertEqual(path, "/nix/store/x-rclone/bin/rclone")
+
+    def test_checkout_lock_without_base(self):
+        _, argv, _ = self.resolve(True)
+        self.assertEqual(argv[argv.index("--inputs-from") + 1], ".")
+
+    def test_checkout_lock_without_runner_temp(self):
+        _, argv, _ = self.resolve(False)
+        self.assertEqual(argv[argv.index("--inputs-from") + 1], ".")
+
+
 class LocalPathInfoTest(unittest.TestCase):
     def run_info(self, payload):
         path = f"/nix/store/{base('a')}"

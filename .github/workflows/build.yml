@@ -59,9 +59,13 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/logs"
 
       # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      # Also the trusted lock for tools run while cache credentials are reachable
+      # (nix-fast-build here, rclone in nix_cache.py).
       - name: Base worktree
         if: ${{ inputs.tree-artifact != '' }}
-        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD
+          echo "TOOLS_FLAKE=git+file://$RUNNER_TEMP/base?shallow=1" >> "$GITHUB_ENV"
 
       - name: Download tree
         if: ${{ inputs.tree-artifact != '' }}
@@ -104,31 +108,32 @@ jobs:
         continue-on-error: ${{ inputs.report }}
         run: python3 scripts/nix-cache/nix_cache.py substituter
 
-      # nix-fast-build (from the flake's locked nixpkgs) evaluates in parallel and
-      # builds only what no substituter has; any failed attr fails the job.
+      # nix-fast-build (from the flake's locked nixpkgs, the pre-bump lock on
+      # update-bot runs) evaluates in parallel and builds only what no substituter
+      # has; any failed attr fails the job.
       - name: Build checks
         id: checks
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#checks.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/checks.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#checks.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/checks.log"
 
       - name: Build packages
         id: packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/packages.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/packages.log"
 
       - name: Build devShells
         id: devshells
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/devshells.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/devshells.log"
 
       - name: Build formatter
         id: formatter
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#formatter.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/formatter.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#formatter.x86_64-linux 2>&1 | tee "$RUNNER_TEMP/logs/formatter.log"
 
       # One job at a time: priors' CPU-bound property tests time out (10m) when they share
       # the runner with parallel builds.
@@ -136,7 +141,7 @@ jobs:
         id: example
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/example.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached --max-jobs 1 ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/example.log"
 
       # The checks were built or confirmed cached above; this keeps flake check's
       # structural validation of modules, overlays and apps without rebuilding.
@@ -184,9 +189,13 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/logs"
 
       # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      # Also the trusted lock for tools run while cache credentials are reachable
+      # (nix-fast-build here, rclone in nix_cache.py).
       - name: Base worktree
         if: ${{ inputs.tree-artifact != '' }}
-        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD
+          echo "TOOLS_FLAKE=git+file://$RUNNER_TEMP/base?shallow=1" >> "$GITHUB_ENV"
 
       - name: Download tree
         if: ${{ inputs.tree-artifact != '' }}
@@ -222,7 +231,7 @@ jobs:
         id: darwin-packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-darwin 2>&1 | tee "$RUNNER_TEMP/logs/darwin-packages.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-darwin 2>&1 | tee "$RUNNER_TEMP/logs/darwin-packages.log"
 
       # As in the check job: signed upload to R2, push-cache only.
       - name: Push to R2
@@ -263,9 +272,13 @@ jobs:
         run: mkdir -p "$RUNNER_TEMP/logs"
 
       # Pristine base checkout for the analyzer, taken before the tree is copied over.
+      # Also the trusted lock for tools run while cache credentials are reachable
+      # (nix-fast-build here, rclone in nix_cache.py).
       - name: Base worktree
         if: ${{ inputs.tree-artifact != '' }}
-        run: git worktree add --detach "$RUNNER_TEMP/base" HEAD
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD
+          echo "TOOLS_FLAKE=git+file://$RUNNER_TEMP/base?shallow=1" >> "$GITHUB_ENV"
 
       - name: Download tree
         if: ${{ inputs.tree-artifact != '' }}
@@ -304,13 +317,13 @@ jobs:
         id: rpi4
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/rpi4.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#nixosConfigurations.example-rpi4.config.system.build.toplevel 2>&1 | tee "$RUNNER_TEMP/logs/rpi4.log"
 
       - name: Build packages
         id: arm-packages
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-packages.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#packages.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-packages.log"
 
       # Not checks.aarch64-linux: it includes NixOS VM tests, which need KVM that
       # the arm runner may not offer; the x86_64 job already runs the checks.
@@ -318,7 +331,7 @@ jobs:
         id: arm-devshells
         shell: bash
         continue-on-error: ${{ inputs.report }}
-        run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
+        run: nix run --inputs-from "${TOOLS_FLAKE:-.}" nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
 
       # As in the check job: signed upload to R2, push-cache only; also force-includes
       # the Pi kernel's out, dev and modules outputs. After a failed Pi build they

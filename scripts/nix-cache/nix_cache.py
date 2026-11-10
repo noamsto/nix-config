@@ -224,6 +224,22 @@ REPO_ROOT = os.path.dirname(
 )
 
 
+def tools_flake():
+    """Flake whose lock resolves the tools run with cache credentials.
+
+    On update-bot runs build.yml keeps the pre-bump tree at $RUNNER_TEMP/base and
+    the checkout carries the freshly bumped flake.lock, so tools come from the
+    base tree; elsewhere the checkout itself is trusted.
+    """
+    runner_temp = os.environ.get("RUNNER_TEMP")
+    base = os.path.join(runner_temp, "base") if runner_temp else None
+    if base and os.path.isdir(base):
+        # SYNC: same URL form as flake_url() in scripts/update-bot/update_bot.py;
+        # ?shallow=1 because the CI checkouts are shallow.
+        return "git+file://" + base + "?shallow=1"
+    return "."
+
+
 def extend_nix_config(existing, url, public_key):
     """NIX_CONFIG value with the R2 cache appended after any existing value."""
     lines = [existing.rstrip("\n")] if existing.strip() else []
@@ -493,7 +509,7 @@ def stage(paths, stubs, stage_dir, key_text):
 
 def rclone_binary():
     """rclone from the store, resolved with no credentials in the environment
-    so that evaluating a bumped input can never see them."""
+    and from the pre-bump lock on update-bot runs (tools_flake())."""
     proc = subprocess.run(
         [
             "nix",
@@ -501,7 +517,7 @@ def rclone_binary():
             "--no-link",
             "--print-out-paths",
             "--inputs-from",
-            ".",
+            tools_flake(),
             "nixpkgs#rclone.out",
         ],
         capture_output=True,
