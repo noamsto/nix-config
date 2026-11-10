@@ -270,7 +270,7 @@ def cmd_analyze(args) -> None:
         for drv, r in found.items():
             valid = valid_outputs(drv)
             if valid is True:
-                continue  # it built fine: not a failure
+                continue
             reported = True
             if drv not in seen:
                 seen.add(drv)
