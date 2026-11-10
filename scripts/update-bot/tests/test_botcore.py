@@ -158,6 +158,31 @@ class ParseInternalJsonTest(unittest.TestCase):
 
     def test_forged_fixture(self):
         lines = text("nix-fast-build-forged.jsonl").splitlines()
+        # The forgeries must stay in the fixture, or the rejections below prove nothing.
+        records = [json.loads(line[5:]) for line in lines if line.startswith("@nix ")]
+        self.assertTrue(
+            any(
+                r["action"] == "msg" and r["level"] == 0 and "victim-1.0.drv" in r["msg"]
+                for r in records
+            )
+        )
+        self.assertTrue(
+            any(
+                r["action"] == "result"
+                and r["type"] == 101
+                and any("victim-1.0.drv" in f for f in r["fields"])
+                for r in records
+            )
+        )
+        self.assertTrue(
+            any(
+                r["action"] == "msg"
+                and r["level"] == 0
+                and "Cannot build" in r["msg"]
+                and "sibling-1.0.drv" in r["msg"]
+                for r in records
+            )
+        )
         got = botcore.parse_internal_json(lines)
         self.assertEqual(
             [(n, r["kind"]) for n, r in zip(drv_names([r["drv"] for r in got["roots"]]), got["roots"])],

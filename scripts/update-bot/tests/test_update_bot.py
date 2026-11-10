@@ -17,6 +17,7 @@ THING_SRC = STORE + "2w363vsifryj0m759inbsmcqk38lv88v-thing-src.drv"
 PARENT = STORE + "bmls4mj1s0nn0sg46k2yxaqkwi7r7f4a-parent-2.0.drv"
 SIBLING = STORE + "50rd1r4qpglmr9bd47ksa45wph2zr44l-sibling-1.0.drv"
 VICTIM = STORE + "0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv"
+YDRV = STORE + "abcdfghijklmnpqrsvwxyz0123456789-ywhy-1.0.drv"
 
 
 class FlakeUrlTest(unittest.TestCase):
@@ -90,10 +91,51 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual([f["drv"] for f in failures], [""])
         self.assertIn("without a failed derivation", failures[0]["why"])
 
-    def test_unverifiable_roots_are_dropped(self):
+    def test_unverifiable_root_fails_closed(self):
+        self.stage()
+        failures = {
+            f["drv"]: f
+            for f in self.analyze(
+                valid={GENUINE: False, THING_SRC: None, PARENT: False, SIBLING: True}
+            )
+        }
+        # SIBLING built fine and is dropped; THING_SRC could not be checked.
+        self.assertEqual(sorted(failures), sorted([GENUINE, THING_SRC]))
+        self.assertEqual(failures[GENUINE]["attr"], "genuine")
+        blank = failures[THING_SRC]
+        self.assertIsNone(blank["attr"])
+        self.assertIn("store check inconclusive", blank["why"])
+        self.assertTrue(blank["logExcerpt"].startswith("error: hash mismatch"))
+
+    def test_all_roots_unverifiable_are_blank_failures(self):
         self.stage()
         failures = self.analyze(valid={})
-        self.assertEqual([f["drv"] for f in failures], [""])
+        self.assertEqual(
+            sorted(f["drv"] for f in failures), sorted([GENUINE, THING_SRC, SIBLING])
+        )
+        for f in failures:
+            self.assertIsNone(f["attr"])
+            self.assertIn("store check inconclusive", f["why"])
+
+    def test_capture_files_are_parsed_independently(self):
+        forged = f"error: hash mismatch in fixed-output derivation '{YDRV}':\n         got: x"
+        genuine = f"error: Cannot build '{YDRV}'.\n       Reason: builder failed with exit code 1."
+        start = {"action": "start", "type": 105, "level": 3, "id": 1, "fields": [YDRV, "", 1, 1]}
+        forged_file = ["@nix " + json.dumps({"action": "msg", "level": 0, "msg": forged})]
+        genuine_file = [
+            "@nix " + json.dumps(start),
+            "@nix " + json.dumps({"action": "msg", "level": 0, "msg": genuine}),
+        ]
+        for forged_name, genuine_name in (("nix.ZZZZZZ", "nix.AAAAAA"), ("nix.AAAAAA", "nix.ZZZZZZ")):
+            with self.subTest(forged=forged_name):
+                shutil.rmtree(self.logs / "example.nix-json", ignore_errors=True)
+                dest = self.logs / "example.nix-json"
+                dest.mkdir()
+                for name, lines in ((forged_name, forged_file), (genuine_name, genuine_file)):
+                    (dest / name).write_text("".join(f"{line}\n" for line in lines))
+                failures = self.analyze(valid={YDRV: False})
+                self.assertEqual([f["drv"] for f in failures], [YDRV])
+                self.assertTrue(failures[0]["logExcerpt"].startswith("error: Cannot build"))
 
 
 class OutputsValidTest(unittest.TestCase):

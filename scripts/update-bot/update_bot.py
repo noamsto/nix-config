@@ -200,12 +200,16 @@ def blank_failure(drv: str, why: str, excerpt: str = "") -> dict:
     }
 
 
-def capture_lines(capture: pathlib.Path) -> Iterator[str]:
-    """Lines of every file the nix-json-tee wrapper wrote for a step."""
+def capture_streams(capture: pathlib.Path) -> Iterator[Iterator[str]]:
+    """One line stream per file the nix-json-tee wrapper wrote for a step.
+
+    Each file is a single `nix build` invocation, so each is parsed on its own:
+    file names are random, so only the order inside a file is chronological.
+    Consume a stream before advancing to the next."""
     for path in sorted(capture.glob("*")):
         if path.is_file():
             with path.open(errors="replace") as fh:
-                yield from fh
+                yield fh
 
 
 def outputs_valid(drv: str) -> bool | None:
@@ -244,26 +248,36 @@ def cmd_analyze(args) -> None:
 
     checked: dict[str, bool | None] = {}
 
-    def failed_drv(drv: str) -> bool:
+    def valid_outputs(drv: str) -> bool | None:
         if drv not in checked:
             checked[drv] = outputs_valid(drv)
-        return checked[drv] is False
+        return checked[drv]
 
-    roots, dep_failed, no_root_steps, seen = [], set(), [], set()
+    roots, unverified, dep_failed, no_root_steps, seen = [], [], set(), [], set()
     for step in failed:
         # Only a failed step's capture is trusted: a cancelled step (timeout
         # kill) leaves drvs without outputs that a builder could have named.
         capture = logs / f"{step}.nix-json"
         ran = outcome(step) == "failure" and capture.is_dir()
-        parsed = botcore.parse_internal_json(capture_lines(capture) if ran else [])
-        dep_failed.update(parsed["depFailed"])
-        kept = [r for r in parsed["roots"] if failed_drv(r["drv"])]
-        if not kept:
+        # One parse per file (one nix invocation each); first file wins per drv.
+        found: dict[str, dict] = {}
+        for stream in capture_streams(capture) if ran else ():
+            parsed = botcore.parse_internal_json(stream)
+            dep_failed.update(parsed["depFailed"])
+            for r in parsed["roots"]:
+                found.setdefault(r["drv"], r)
+        reported = False
+        for drv, r in found.items():
+            valid = valid_outputs(drv)
+            if valid is True:
+                continue  # it built fine: not a failure
+            reported = True
+            if drv not in seen:
+                seen.add(drv)
+                # None: cannot tell whether Nix really failed it, so fail closed.
+                (unverified if valid is None else roots).append(r)
+        if not reported:
             no_root_steps.append(step)
-        for r in kept:
-            if r["drv"] not in seen:
-                seen.add(r["drv"])
-                roots.append(r)
 
     # FOD hop: an unmapped fixed-output hash failure is attributed to the
     # failed dependents that consume it.
@@ -271,7 +285,7 @@ def cmd_analyze(args) -> None:
     for r in roots:
         if r["kind"] == "hash":
             dependents[r["drv"]] = [
-                d for d in referrers(r["drv"]) or [] if d in dep_failed and failed_drv(d)
+                d for d in referrers(r["drv"]) or [] if d in dep_failed and valid_outputs(d) is False
             ]
 
     cand_of: dict[str, str] = {}
@@ -321,6 +335,10 @@ def cmd_analyze(args) -> None:
                 failure["missingInFallback"] = True
                 failure["why"] += f"; nixpkgs-fallback eval failed: {fallback_err}"
         failures.append(failure)
+
+    for r in unverified:
+        why = "could not verify that Nix failed to build this derivation (store check inconclusive)"
+        failures.append(blank_failure(r["drv"], why, r["excerpt"]))
 
     for step in no_root_steps:
         failures.append(blank_failure("", botcore.step_failure_why(step, outcome(step))))
