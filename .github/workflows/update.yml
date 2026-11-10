@@ -80,11 +80,14 @@ jobs:
     with:
       attempt: combined
       tree-artifact: tree-combined-0
-    # Only build.yml uses the token (cachix push). This workflow runs on schedule or
-    # dispatch on main and never builds PR code; the ref check keeps the token
-    # withheld even if that ever changes.
+    # Only build.yml uses the token and keys (the Cachix and R2 pushes). This
+    # workflow runs on schedule or dispatch on main and never builds PR code; the
+    # ref check keeps them withheld even if that ever changes.
     secrets:
       CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+      NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
+      R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
+      R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
 
   # Only after the combined tree stayed red, and only when both sides changed (a
   # half equal to the combined tree would repeat it). Each half lands or blocks
@@ -98,6 +101,9 @@ jobs:
       tree-artifact: tree-nixpkgs-0
     secrets:
       CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+      NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
+      R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
+      R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
 
   split-inputs:
     needs: [prepare, combined]
@@ -108,6 +114,9 @@ jobs:
       tree-artifact: tree-inputs-0
     secrets:
       CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+      NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
+      R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
+      R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
 
   finalize:
     needs: [prepare, combined, split-nixpkgs, split-inputs]
@@ -258,7 +267,7 @@ jobs:
 
       # Merge only onto the commit this run built against; if main moved, the PR
       # stays open and the next run refreshes it. A GITHUB_TOKEN merge does not
-      # trigger check.yml, which is why the attempt builds pushed to cachix.
+      # trigger check.yml, which is why the attempt builds pushed to Cachix and R2.
       - name: Merge
         id: merge
         if: ${{ steps.commit.outputs.committed == 'true' }}

@@ -38,6 +38,7 @@
       "https://dispatcher.cachix.org"
       "https://jovian-nixos.cachix.org"
       "https://noamsto-nix-config.cachix.org"
+      "https://nix-cache.stole.ro"
 
       # llm-agents.nix publishes here, NOT numtide.cachix.org
       "https://cache.numtide.com"
@@ -58,6 +59,7 @@
       "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
       "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
       "noamsto-nix-config.cachix.org-1:PpdRnna/Ra45BpDw7k2QJoDx1XpWBKQ5aJdTr3A1HbI="
+      "nix-config-r2-1:1+Z5eRY6UHUp3dthhOJFtoXXVz378jvZ0hT4TDwNyPU="
 
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];

@@ -17,6 +17,12 @@ on:
     secrets:
       CACHIX_AUTH_TOKEN:
         required: false
+      NIX_CACHE_SIGNING_KEY:
+        required: false
+      R2_ACCESS_KEY_ID:
+        required: false
+      R2_SECRET_ACCESS_KEY:
+        required: false
     outputs:
       result:
         description: land or block
@@ -37,8 +43,8 @@ defaults:
 # decide output it depends on explicitly.
 jobs:
   # Every round pushes what it built, green or not: the bot's GITHUB_TOKEN merge
-  # does not trigger check.yml on main, so this is the only cache push for the
-  # update, and later rounds substitute what earlier rounds built.
+  # does not trigger check.yml on main, so this is the only push to Cachix and R2
+  # for the update, and later rounds substitute what earlier rounds built.
   build-1:
     uses: ./.github/workflows/build.yml
     with:
@@ -48,6 +54,9 @@ jobs:
       report-name: report-${{ inputs.attempt }}-1
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
   decide-1:
     needs: build-1
@@ -111,6 +120,9 @@ jobs:
       report-name: report-${{ inputs.attempt }}-2
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
   decide-2:
     needs: [decide-1, build-2]
@@ -171,6 +183,9 @@ jobs:
       report-name: report-${{ inputs.attempt }}-3
     secrets:
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
   # Round 3 is the cap: decide never repins here, so there is no next tree.
   decide-3:
