@@ -1,7 +1,15 @@
 # Shared binary cache configuration
 # Used by flake.nix (nixConfig, as a literal copy) and, through self.lib.caches,
 # by nixos/core/nix.nix (nix.settings) and the installer
-{
+let
+  # Cloudflare R2 bucket nix-config-cache, served over a custom domain; CI signs uploads with this key (scripts/nix-cache)
+  r2 = {
+    url = "https://nix-cache.stole.ro";
+    publicKey = "nix-config-r2-1:1+Z5eRY6UHUp3dthhOJFtoXXVz378jvZ0hT4TDwNyPU=";
+  };
+in {
+  inherit r2;
+
   # Primary substituters - always used
   substituters = [
     "https://cache.nixos.org"
@@ -13,8 +21,9 @@
     "https://lazytmux.cachix.org"
     "https://dispatcher.cachix.org"
     "https://jovian-nixos.cachix.org"
-    # CI builds every flake output and pushes it here (.github/workflows/build.yml)
+    # CI pushes its builds to both this Cachix cache and the R2 cache below (.github/workflows/build.yml); Cachix stays until R2 is proven
     "https://noamsto-nix-config.cachix.org"
+    r2.url
   ];
 
   # Extra substituters - lower priority
@@ -43,6 +52,7 @@
     "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
     "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
     "noamsto-nix-config.cachix.org-1:PpdRnna/Ra45BpDw7k2QJoDx1XpWBKQ5aJdTr3A1HbI="
+    r2.publicKey
   ];
 
   # Keys for extra substituters
