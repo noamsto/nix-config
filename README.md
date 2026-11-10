@@ -111,9 +111,12 @@ purpose, so its kernel stays cacheable.
 }
 ```
 
-CI builds `example-rpi4` natively on an `aarch64-linux` runner and pushes it to
-`noamsto-nix-config.cachix.org` from `main`. The `nixos-raspberrypi.cachix.org`
-cache is in `lib.caches` too.
+CI builds `example-rpi4` natively on an `aarch64-linux` runner and pushes it from
+`main` to both `noamsto-nix-config.cachix.org` and the R2 cache
+`nix-cache.stole.ro`. The R2 cache is signed with the project's own key and only
+receives paths no upstream cache serves, plus the Raspberry Pi kernel outputs.
+Cachix stays until R2 is proven. The `nixos-raspberrypi.cachix.org` cache is in
+`lib.caches` too.
 
 ## Checking
 

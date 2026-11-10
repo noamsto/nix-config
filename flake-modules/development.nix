@@ -56,6 +56,15 @@
           touch $out
         '';
 
+        # Unit tests of the R2 binary-cache tool; build.yml is copied in for the roots.json consistency test.
+        nix-cache = pkgs.runCommand "nix-cache-tests" {nativeBuildInputs = [pkgs.python3];} ''
+          cp -r ${../scripts/nix-cache} src
+          chmod -R u+w src
+          cp ${../.github/workflows/build.yml} src/build.yml
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover src
+          touch $out
+        '';
+
         # Direct bats regression suite for the secret-read, git-identity and pgrep-self-match guard scripts.
         agent-hooks = import ../home/ai/agent-hooks/check.nix {inherit pkgs;};
 

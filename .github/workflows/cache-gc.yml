@@ -1,0 +1,53 @@
+name: Cache GC
+
+# Mark-and-sweep garbage collection of the R2 binary cache
+# (scripts/nix-cache/nix_cache.py gc). A dry-run report unless deletion is asked
+# for: on the schedule by the repository variable NIX_CACHE_GC_DELETE = 'true', on
+# a dispatch by its delete input alone. Uses the R2 credentials only, never the
+# signing key.
+on:
+  schedule:
+    # 08:17 UTC: after the 02:17 update run has pushed its builds.
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+    inputs:
+      delete:
+        description: Delete unreachable objects; unset means a dry-run report, whatever NIX_CACHE_GC_DELETE says
+        type: boolean
+        default: false
+      force:
+        description: Allow deleting more than 60% of objects
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cache-gc
+  cancel-in-progress: false
+
+env:
+  # SYNC: same values as .github/workflows/build.yml.
+  R2_BUCKET: nix-config-cache
+  R2_ENDPOINT: https://0940b7dd4fd2fb385eefe2ab9ac8daf0.r2.cloudflarestorage.com
+
+jobs:
+  gc:
+    # main only: a dispatch from another branch gets no run, so no branch's code sees the credentials.
+    if: ${{ github.ref == 'refs/heads/main' && !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          # So the flake's nixConfig substituters are used.
+          extra-conf: accept-flake-config = true
+
+      - name: Collect garbage
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: python3 scripts/nix-cache/nix_cache.py gc ${{ (github.event_name == 'workflow_dispatch' && inputs.delete || github.event_name == 'schedule' && vars.NIX_CACHE_GC_DELETE == 'true') && '--delete' || '' }} ${{ inputs.force && '--force' || '' }}

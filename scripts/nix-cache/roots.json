@@ -1,0 +1,31 @@
+{
+  "check": {
+    "system": "x86_64-linux",
+    "roots": [
+      "checks.x86_64-linux",
+      "packages.x86_64-linux",
+      "devShells.x86_64-linux",
+      "formatter.x86_64-linux",
+      "nixosConfigurations.example.config.system.build.toplevel"
+    ],
+    "pins": []
+  },
+  "darwin": {
+    "system": "aarch64-darwin",
+    "roots": ["packages.aarch64-darwin"],
+    "pins": []
+  },
+  "aarch64-linux": {
+    "system": "aarch64-linux",
+    "roots": [
+      "nixosConfigurations.example-rpi4.config.system.build.toplevel",
+      "packages.aarch64-linux",
+      "devShells.aarch64-linux"
+    ],
+    "pins": [
+      "nixosConfigurations.example-rpi4.config.boot.kernelPackages.kernel.out",
+      "nixosConfigurations.example-rpi4.config.boot.kernelPackages.kernel.dev",
+      "nixosConfigurations.example-rpi4.config.boot.kernelPackages.kernel.modules"
+    ]
+  }
+}
