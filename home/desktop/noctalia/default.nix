@@ -186,7 +186,6 @@ in {
             "lfdominguez/claude-sessions"
             "pozzoo/hassio"
             "mindnbytes/nix-status"
-            "noctalia/timer"
           ];
         };
 
@@ -225,33 +224,41 @@ in {
           center = ["workspaces"];
           end = [
             "tray"
-            "mini_docker"
-            "screen_recorder"
-            "tailscale"
-            "github_prs"
-            "claude_sessions"
-            "hassio"
-            "nix_status"
-            "timer"
-            "privacy"
-            "caffeine"
-            "notifications"
-            "network"
-            "bluetooth"
-            "brightness"
-            "output_volume"
-            "keyboard_layout"
-            "battery"
+            "group:dev"
+            "group:homenet"
+            "group:toggles"
+            "group:connectivity"
+            "group:hardware"
             "control-center"
           ];
 
           # v4's SystemMonitor was a single widget drawing three stats in one
           # pill. v5's sysmon renders one stat each, so regroup them into a
-          # shared capsule.
+          # shared capsule. The right-hand widgets are grouped by function.
           capsule_group = [
             {
               id = "sysmon";
               members = ["cpu" "temp" "ram"];
+            }
+            {
+              id = "dev";
+              members = ["claude_sessions" "github_prs" "nix_status" "mini_docker"];
+            }
+            {
+              id = "homenet";
+              members = ["hassio" "tailscale"];
+            }
+            {
+              id = "toggles";
+              members = ["screen_recorder" "privacy" "caffeine" "notifications"];
+            }
+            {
+              id = "connectivity";
+              members = ["network" "bluetooth" "keyboard_layout"];
+            }
+            {
+              id = "hardware";
+              members = ["brightness" "output_volume" "battery"];
             }
           ];
         };
@@ -326,7 +333,6 @@ in {
           claude_sessions.type = "lfdominguez/claude-sessions:bar";
           hassio.type = "pozzoo/hassio:status";
           nix_status.type = "mindnbytes/nix-status:status";
-          timer.type = "noctalia/timer:bar";
 
           tailscale = {
             type = "davemhammer/tailscale:status";
