@@ -927,7 +927,7 @@ def list_objects(remote, rclone, env):
 
 
 def fetch_narinfos(keys, base_url, fetch=fetch_text):
-    """key -> text for each narinfo that exists; a 404 means it just vanished."""
+    """key -> text for each narinfo that exists; a key answering 404 is left out."""
     keys = list(keys)
     base = base_url.rstrip("/")
     with concurrent.futures.ThreadPoolExecutor(MAX_CONCURRENCY) as pool:

@@ -321,8 +321,8 @@ jobs:
         run: nix run --inputs-from . nixpkgs#nix-fast-build -- --no-nom --skip-cached ${{ inputs.report && '--option keep-going true' || '' }} -f .#devShells.aarch64-linux 2>&1 | tee "$RUNNER_TEMP/logs/arm-devshells.log"
 
       # As in the check job: signed upload to R2, push-cache only; also force-includes
-      # the Pi kernel's out, dev and modules outputs.
-      # When the Pi build did not succeed, pins are only substituted, never compiled a second time here.
+      # the Pi kernel's out, dev and modules outputs. After a failed Pi build they
+      # are only substituted, never compiled a second time here.
       - name: Push to R2
         if: ${{ inputs.push-cache && !cancelled() }}
         continue-on-error: ${{ inputs.report }}
