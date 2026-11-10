@@ -1,9 +1,10 @@
 name: Cache GC
 
 # Mark-and-sweep garbage collection of the R2 binary cache
-# (scripts/nix-cache/nix_cache.py gc). A dry-run report unless the repository
-# variable NIX_CACHE_GC_DELETE is 'true' or a dispatch asks for deletion. Uses the
-# R2 credentials only, never the signing key.
+# (scripts/nix-cache/nix_cache.py gc). A dry-run report unless deletion is asked
+# for: on the schedule by the repository variable NIX_CACHE_GC_DELETE = 'true', on
+# a dispatch by its delete input alone. Uses the R2 credentials only, never the
+# signing key.
 on:
   schedule:
     # 08:17 UTC: after the 02:17 update run has pushed its builds.
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       delete:
-        description: Delete unreachable objects (default is a dry-run report)
+        description: Delete unreachable objects; unset means a dry-run report, whatever NIX_CACHE_GC_DELETE says
         type: boolean
         default: false
       force:
@@ -49,4 +50,4 @@ jobs:
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: python3 scripts/nix-cache/nix_cache.py gc ${{ (vars.NIX_CACHE_GC_DELETE == 'true' || inputs.delete) && '--delete' || '' }} ${{ inputs.force && '--force' || '' }}
+        run: python3 scripts/nix-cache/nix_cache.py gc ${{ (github.event_name == 'workflow_dispatch' && inputs.delete || github.event_name == 'schedule' && vars.NIX_CACHE_GC_DELETE == 'true') && '--delete' || '' }} ${{ inputs.force && '--force' || '' }}

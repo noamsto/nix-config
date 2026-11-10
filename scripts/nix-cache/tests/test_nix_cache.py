@@ -1,8 +1,13 @@
+import argparse
+import contextlib
 import datetime
 import http.client
+import io
 import json
 import os
 import re
+import tempfile
+import types
 import unittest
 import urllib.error
 from pathlib import Path
@@ -374,6 +379,92 @@ class PlanGcTest(unittest.TestCase):
         self.assertNotIn("README", deleted)
         self.assertNotIn("sub/dir.narinfo", deleted)
 
+    def texts_with_refs(self, refs_by_char, chars="abcdfg"):
+        return {
+            f"{H[c]}.narinfo": narinfo_text(
+                c, [base(r) for r in refs_by_char.get(c, ())]
+            )
+            for c in chars
+        }
+
+    def test_reference_of_grace_kept_narinfo_is_kept(self):
+        # a (2 days, inside grace) references b (10 days); neither is live.
+        objs = self.pair("a", age=2 * DAY) + self.pair("b") + self.pair("c")
+        texts = self.texts_with_refs({"a": "b"}, "abc")
+        plan = self.plan(objs, texts=texts, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['c']}.narinfo"])
+        self.assertEqual(plan.delete_nars, [f"nar/{H['c']}.nar.zst"])
+
+    def test_reference_closure_is_transitive(self):
+        objs = (
+            self.pair("a", age=DAY)
+            + self.pair("b", age=5 * DAY)
+            + self.pair("c", age=6 * DAY)
+            + self.pair("d")
+        )
+        texts = self.texts_with_refs({"a": "b", "b": "c"}, "abcd")
+        plan = self.plan(objs, texts=texts, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['d']}.narinfo"])
+
+    def test_self_and_unlisted_references_are_ignored(self):
+        objs = self.pair("a") + self.pair("b", age=DAY)
+        texts = self.texts_with_refs({"a": "ak", "b": "b"}, "ab")
+        plan = self.plan(objs, texts=texts, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+
+    def test_budget_does_not_evict_referenced_narinfo(self):
+        # a (newer) references b (older). 40 bytes retained, budget 30: only
+        # a may go; the older b is referenced by a kept narinfo until then.
+        objs = self.pair("a", age=2 * DAY) + self.pair(
+            "b", age=2 * DAY + datetime.timedelta(hours=5)
+        )
+        texts = self.texts_with_refs({"a": "b"}, "ab")
+        plan = self.plan(objs, texts=texts, budget=30, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+        self.assertEqual(plan.delete_nars, [f"nar/{H['a']}.nar.zst"])
+        self.assertEqual(plan.retained_bytes, 20)
+
+    def test_budget_eviction_frees_references_in_turn(self):
+        objs = self.pair("a", age=2 * DAY) + self.pair(
+            "b", age=2 * DAY + datetime.timedelta(hours=5)
+        )
+        texts = self.texts_with_refs({"a": "b"}, "ab")
+        plan = self.plan(objs, texts=texts, budget=0, force=True)
+        self.assertEqual(
+            plan.delete_narinfos, [f"{H['a']}.narinfo", f"{H['b']}.narinfo"]
+        )
+        self.assertEqual(plan.retained_bytes, 0)
+
+    def test_budget_never_evicts_reference_of_live_narinfo(self):
+        objs = self.pair("a", age=DAY) + self.pair("b", age=2 * DAY)
+        texts = self.texts_with_refs({"a": "b"}, "ab")
+        plan = self.plan(objs, texts=texts, live={H["a"]}, budget=0, force=True)
+        self.assertEqual((plan.delete_narinfos, plan.delete_nars), ([], []))
+
+    def test_abort_listed_narinfo_without_text(self):
+        objs = self.pair("a") + self.pair("b")
+        texts = {f"{H['b']}.narinfo": narinfo_text("b")}
+        plan = self.plan(objs, texts=texts, force=True)
+        self.assertIn(f"{H['a']}.narinfo", plan.abort_reason)
+        self.assertEqual((plan.delete_narinfos, plan.delete_nars), ([], []))
+
+    def test_young_nar_of_budget_evicted_narinfo_is_kept(self):
+        objs = [
+            obj(f"{H['a']}.narinfo", age=2 * DAY),
+            obj(f"nar/{H['a']}.nar.zst", age=datetime.timedelta(minutes=30)),
+        ] + self.pair("b")
+        plan = self.plan(objs, live={H["b"]}, budget=0, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+        self.assertNotIn(f"nar/{H['a']}.nar.zst", plan.delete_nars)
+
+    def test_young_orphan_nar_kept_even_with_zero_budget(self):
+        objs = self.pair("a") + [
+            obj("nar/orphan.nar.zst", age=datetime.timedelta(minutes=30))
+        ]
+        plan = self.plan(objs, budget=0, force=True)
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+        self.assertEqual(plan.delete_nars, [f"nar/{H['a']}.nar.zst"])
+
 
 class ApplyGcTest(unittest.TestCase):
     def test_narinfos_deleted_before_nars_and_relisted_nar_survives(self):
@@ -508,6 +599,380 @@ class ParseModtimeTest(unittest.TestCase):
         self.assertEqual(got, NOW)
 
 
+CACHES = nc.Caches("https://r2.example", "r2-key:PUB", ["https://up.example"])
+
+
+def proc(returncode=0, stdout=""):
+    return types.SimpleNamespace(returncode=returncode, stdout=stdout, stderr="")
+
+
+class LookupTest(unittest.TestCase):
+    def kind(self, remote=(), local=False):
+        def fetch(url):
+            for base_url in remote:
+                if url == f"{base_url}/{H['a']}.narinfo":
+                    return narinfo_text("a")
+            return None
+
+        def local_fake(hash_):
+            return nc.parse_narinfo(narinfo_text("a")) if local else None
+
+        return nc.lookup(H["a"], CACHES, fetch=fetch, local=local_fake)[0]
+
+    def test_r2_wins_over_upstream(self):
+        self.assertEqual(
+            self.kind(remote=["https://up.example", "https://r2.example"], local=True),
+            "r2",
+        )
+
+    def test_upstream_before_local(self):
+        self.assertEqual(self.kind(remote=["https://up.example"], local=True), "upstream")
+
+    def test_local_before_legacy(self):
+        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE], local=True), "local")
+
+    def test_legacy_only(self):
+        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE]), "legacy")
+
+    def test_nowhere_is_absent(self):
+        self.assertEqual(self.kind(), "absent")
+
+
+class WalkTest(unittest.TestCase):
+    def test_fetch_error_propagates_instead_of_reading_absent(self):
+        def lookup_fn(hash_):
+            raise nc.FetchError("boom")
+
+        with self.assertRaises(nc.FetchError):
+            nc.walk([f"/nix/store/{base('a')}"], lookup_fn)
+
+
+class RealiseTest(unittest.TestCase):
+    def run_realise(self, pins, build_pins=True, failing=()):
+        calls = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append(cmd)
+            if cmd[:2] == ["nix", "build"] and cmd[-1] in {f".#{p}" for p in failing}:
+                return proc(1)
+            if cmd[0] == "nix-store" and "--check-validity" in cmd:
+                return proc(0, "/nix/store/x-invalid\n")
+            return proc(0)
+
+        err = io.StringIO()
+        with mock.patch.object(nc.subprocess, "run", fake_run), contextlib.redirect_stderr(err):
+            invalid = nc.realise(pins, ["/nix/store/x-invalid"], build_pins=build_pins)
+        return calls, invalid, err.getvalue()
+
+    def builds(self, calls):
+        return [c for c in calls if c[:2] == ["nix", "build"]]
+
+    def test_default_builds_pins_normally(self):
+        calls, _, _ = self.run_realise(["p1"])
+        self.assertEqual(self.builds(calls), [["nix", "build", "--no-link", ".#p1"]])
+
+    def test_no_build_pins_substitutes_only(self):
+        calls, _, _ = self.run_realise(["p1", "p2"], build_pins=False)
+        for cmd in self.builds(calls):
+            self.assertEqual(cmd[3:5], ["--max-jobs", "0"])
+        self.assertEqual(len(self.builds(calls)), 2)
+
+    def test_failed_pin_is_reported_and_others_still_realised(self):
+        for build_pins in (True, False):
+            calls, invalid, err = self.run_realise(
+                ["p1", "p2"], build_pins=build_pins, failing=["p1"]
+            )
+            self.assertIn("error: building pin p1 failed", err)
+            self.assertEqual(len(self.builds(calls)), 2)
+            self.assertTrue(any(c[0] == "nix-store" for c in calls))
+            self.assertEqual(invalid, {"/nix/store/x-invalid"})
+
+
+def enter_fake_repo(stack):
+    """Point nc.REPO_ROOT at a temp repo holding a minimal roots.json, so the
+    commands never depend on the real checkout (absent in the Nix sandbox)."""
+    root = stack.enter_context(tempfile.TemporaryDirectory())
+    os.makedirs(os.path.join(root, "scripts/nix-cache"))
+    jobs = {"aarch64-linux": {"roots": [], "pins": ["sel"]}}
+    with open(os.path.join(root, "scripts/nix-cache/roots.json"), "w") as handle:
+        json.dump(jobs, handle)
+    stack.enter_context(mock.patch.object(nc, "REPO_ROOT", root))
+
+
+class CmdPushTest(unittest.TestCase):
+    def args(self, **over):
+        values = {
+            "job": "aarch64-linux",
+            "stage_only": None,
+            "no_build_pins": False,
+            "r2_bucket": "bucket",
+            "r2_endpoint": "https://endpoint",
+            "secrets": {
+                "NIX_CACHE_SIGNING_KEY": "SECRET-KEY-MATERIAL",
+                "R2_ACCESS_KEY_ID": "id",
+                "R2_SECRET_ACCESS_KEY": "secret",
+            },
+        }
+        values.update(over)
+        return argparse.Namespace(**values)
+
+    def run_push(self, args, **patches):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.ExitStack() as stack:
+            enter_fake_repo(stack)
+            for name, value in patches.items():
+                stack.enter_context(mock.patch.object(nc, name, value))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            code = nc.cmd_push(args)
+        return code, out.getvalue(), err.getvalue()
+
+    def unreachable(self, name):
+        return mock.Mock(side_effect=AssertionError(f"{name} reached"))
+
+    def test_stage_only_without_signing_key_fails_before_any_io(self):
+        code, _, err = self.run_push(
+            self.args(stage_only="/stage", secrets={}),
+            load_caches=self.unreachable("load_caches"),
+            eval_pins=self.unreachable("eval_pins"),
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("NIX_CACHE_SIGNING_KEY", err)
+
+    def test_signing_key_must_match_published_public_key(self):
+        code, out, err = self.run_push(
+            self.args(),
+            load_caches=lambda root: CACHES,
+            public_key_of=lambda key: "other-key:PUB",
+            eval_pins=self.unreachable("eval_pins"),
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("does not match", err)
+        self.assertIn(CACHES.public_key, err)
+        self.assertNotIn("SECRET-KEY-MATERIAL", out + err)
+
+    def test_stage_only_skips_public_key_check(self):
+        code, _, _ = self.run_push(
+            self.args(stage_only="/stage"),
+            load_caches=lambda root: CACHES,
+            public_key_of=self.unreachable("public_key_of"),
+            eval_pins=lambda selectors: {},
+            eval_roots=lambda selectors: [],
+            walk=lambda roots, fn: {},
+        )
+        self.assertEqual(code, 0)
+
+    def test_pin_missing_from_r2_after_run_exits_one_and_is_reported(self):
+        pin_path = f"/nix/store/{base('a', 'kernel')}"
+        nodes = {H["a"]: node("a", "absent", name="kernel")}
+        with mock.patch.object(nc.subprocess, "run", lambda cmd, **kw: proc(0)):
+            code, _, err = self.run_push(
+                self.args(no_build_pins=True),
+                load_caches=lambda root: CACHES,
+                public_key_of=lambda key: CACHES.public_key,
+                eval_pins=lambda selectors: {"sel": pin_path},
+                eval_roots=lambda selectors: [],
+                walk=lambda roots, fn: nodes,
+                realise=lambda pins, paths, build_pins=True: {pin_path},
+            )
+        self.assertEqual(code, 1)
+        self.assertIn("pin", err)
+        self.assertIn("kernel", err)
+
+
+class GcCommandTest(unittest.TestCase):
+    def args(self):
+        return argparse.Namespace(
+            secrets={"R2_ACCESS_KEY_ID": "id", "R2_SECRET_ACCESS_KEY": "secret"},
+            r2_bucket="bucket",
+            r2_endpoint="https://endpoint",
+            force=False,
+            grace_days=3,
+            budget_bytes=BIG,
+            delete=True,
+        )
+
+    def run_gc(self, listings, fetches, holes=(), live=()):
+        deletes = []
+        list_calls = iter(listings)
+        fetch_calls = iter(fetches)
+        out, err = io.StringIO(), io.StringIO()
+        patches = {
+            "load_caches": lambda root: CACHES,
+            "mark": lambda jobs, fn: (set(live), set(), set(holes)),
+            "rclone_binary": lambda: "/fake/rclone",
+            "r2_env": lambda endpoint, creds: {},
+            "list_objects": lambda remote, rclone, env: next(list_calls),
+            "fetch_narinfos": lambda keys, base_url, fetch=None: next(fetch_calls),
+            "rclone_delete": lambda keys, remote, rclone, env: deletes.append(
+                list(keys)
+            ),
+        }
+        with contextlib.ExitStack() as stack:
+            enter_fake_repo(stack)
+            for name, value in patches.items():
+                stack.enter_context(mock.patch.object(nc, name, value))
+            stack.enter_context(contextlib.redirect_stdout(out))
+            stack.enter_context(contextlib.redirect_stderr(err))
+            code = nc.cmd_gc(self.args())
+        return code, out.getvalue(), deletes
+
+    def old_pair_listing(self):
+        return [
+            obj(f"{H['a']}.narinfo"),
+            obj(f"nar/{H['a']}.nar.zst"),
+            obj(f"{H['b']}.narinfo"),
+            obj(f"nar/{H['b']}.nar.zst"),
+        ]
+
+    def texts(self):
+        return {f"{H[c]}.narinfo": narinfo_text(c) for c in "ab"}
+
+    def test_every_abort_exits_one_with_error_and_listed_bytes(self):
+        code, out, deletes = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], holes={H["c"]}, live={H["b"]}
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: reference found on no cache", out)
+        self.assertIn("40 bytes", out)
+        self.assertEqual(deletes, [])
+
+    def test_relist_with_unfetchable_listed_narinfo_stops_before_nars(self):
+        new_listing = self.old_pair_listing() + [obj(f"{H['c']}.narinfo", age=0 * DAY)]
+        code, _, deletes = self.run_gc(
+            [self.old_pair_listing(), new_listing],
+            [self.texts(), {}],
+            live={H["b"]},
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(deletes, [[f"{H['a']}.narinfo"]])
+
+
+class PublicKeyOfTest(unittest.TestCase):
+    def test_returns_stripped_stdout_and_feeds_secret_on_stdin(self):
+        seen = {}
+
+        def run(cmd, **kwargs):
+            seen["cmd"], seen["kwargs"] = cmd, kwargs
+            return proc(0, "name:PUB\n")
+
+        self.assertEqual(nc.public_key_of("name:SECRET", run=run), "name:PUB")
+        self.assertEqual(seen["cmd"], ["nix", "key", "convert-secret-to-public"])
+        self.assertEqual(seen["kwargs"]["input"], "name:SECRET")
+        self.assertTrue(seen["kwargs"]["capture_output"])
+        self.assertTrue(seen["kwargs"]["text"])
+        self.assertNotIn("name:SECRET", " ".join(seen["cmd"]))
+
+    def test_nonzero_exit_is_none(self):
+        self.assertIsNone(nc.public_key_of("x", run=lambda cmd, **kw: proc(1, "junk")))
+
+
+class RcloneInputsFromTest(unittest.TestCase):
+    def test_base_checkout_lock_preferred(self):
+        seen = []
+
+        def isfile(path):
+            seen.append(path)
+            return True
+
+        got = nc.rclone_inputs_from({"RUNNER_TEMP": "/tmp/rt"}, isfile)
+        self.assertEqual(got, "/tmp/rt/base")
+        self.assertEqual(seen, ["/tmp/rt/base/flake.lock"])
+
+    def test_no_base_checkout_uses_current(self):
+        self.assertEqual(nc.rclone_inputs_from({"RUNNER_TEMP": "/tmp/rt"}, lambda p: False), ".")
+
+    def test_no_runner_temp_uses_current(self):
+        for env in ({}, {"RUNNER_TEMP": ""}):
+            self.assertEqual(nc.rclone_inputs_from(env, lambda p: True), ".")
+
+
+class UploadTest(unittest.TestCase):
+    CREDS = types.MappingProxyType(
+        {"R2_ACCESS_KEY_ID": "AKID-VALUE", "R2_SECRET_ACCESS_KEY": "SECRET-VALUE"}
+    )
+
+    def run_upload(self, results):
+        calls = []
+        queue = list(results)
+
+        def fake_run(cmd, **kwargs):
+            calls.append((cmd, kwargs))
+            return proc(queue.pop(0))
+
+        with tempfile.TemporaryDirectory() as stage_dir:
+            os.mkdir(os.path.join(stage_dir, "nar"))
+            with mock.patch.object(nc, "rclone_binary", lambda: "/fake/rclone"), \
+                    mock.patch.object(nc.subprocess, "run", fake_run):
+                try:
+                    nc.upload(stage_dir, "bucket", "endpoint.example", self.CREDS)
+                    error = None
+                except RuntimeError as err:
+                    error = err
+        return calls, error, stage_dir
+
+    def test_nars_then_narinfos_with_credentials_only_in_env(self):
+        calls, error, stage_dir = self.run_upload([0, 0])
+        self.assertIsNone(error)
+        self.assertEqual(len(calls), 2)
+        nar_cmd, narinfo_cmd = calls[0][0], calls[1][0]
+        self.assertEqual(nar_cmd[:3], ["/fake/rclone", "copy", f"{stage_dir}/nar"])
+        self.assertIn("r2:bucket/nar", nar_cmd)
+        self.assertIn("*.narinfo", narinfo_cmd)
+        self.assertIn("r2:bucket", narinfo_cmd)
+        for cmd, kwargs in calls:
+            joined = " ".join(cmd)
+            self.assertNotIn("AKID-VALUE", joined)
+            self.assertNotIn("SECRET-VALUE", joined)
+            self.assertEqual(kwargs["env"]["RCLONE_CONFIG_R2_ACCESS_KEY_ID"], "AKID-VALUE")
+            self.assertEqual(
+                kwargs["env"]["RCLONE_CONFIG_R2_SECRET_ACCESS_KEY"], "SECRET-VALUE"
+            )
+
+    def test_failed_nar_copy_raises_before_narinfo_copy(self):
+        calls, error, _ = self.run_upload([1, 0])
+        self.assertIsInstance(error, RuntimeError)
+        self.assertEqual(len(calls), 1)
+
+
+class StageTest(unittest.TestCase):
+    def run_stage(self, returncode):
+        seen = {}
+
+        def fake_run(cmd, **kwargs):
+            url = next(a for a in cmd if a.startswith("file://"))
+            key_file = re.search(r"secret-key=([^&]+)", url).group(1)
+            seen["key_file"] = key_file
+            seen["key_existed"] = os.path.exists(key_file)
+            seen["stub_existed"] = os.path.exists(os.path.join(stage_dir, f"{H['c']}.narinfo"))
+            return proc(returncode)
+
+        with tempfile.TemporaryDirectory() as stage_dir:
+            with mock.patch.object(nc.subprocess, "run", fake_run):
+                try:
+                    nc.stage(
+                        ["/nix/store/x"], {H["c"]: narinfo_text("c")}, stage_dir, "KEY"
+                    )
+                    error = None
+                except RuntimeError as err:
+                    error = err
+            leftovers = os.listdir(stage_dir)
+        return seen, error, leftovers
+
+    def test_stubs_and_key_file_removed_after_copy(self):
+        seen, error, leftovers = self.run_stage(0)
+        self.assertIsNone(error)
+        self.assertTrue(seen["key_existed"] and seen["stub_existed"])
+        self.assertFalse(os.path.exists(seen["key_file"]))
+        self.assertEqual(leftovers, [])
+
+    def test_stubs_and_key_file_removed_when_copy_fails(self):
+        seen, error, leftovers = self.run_stage(1)
+        self.assertIsInstance(error, RuntimeError)
+        self.assertFalse(os.path.exists(seen["key_file"]))
+        self.assertEqual(leftovers, [])
+
+
 class RootsTest(unittest.TestCase):
     def build_yml(self):
         here = Path(nc.__file__).resolve().parent
@@ -519,14 +984,22 @@ class RootsTest(unittest.TestCase):
                 return candidate.read_text()
         self.fail("build.yml not found beside nix_cache.py or in .github/workflows")
 
-    def test_every_root_selector_is_built_by_workflow(self):
+    def jobs_sections(self, workflow):
+        """job name -> its section of build.yml (top-level keys under jobs:)."""
+        _, _, jobs = workflow.partition("\njobs:\n")
+        parts = re.split(r"^  ([A-Za-z0-9_-]+):\s*$", jobs, flags=re.MULTILINE)
+        return dict(zip(parts[1::2], parts[2::2]))
+
+    def test_every_root_selector_is_built_by_workflow_job(self):
         roots = json.loads((Path(nc.__file__).parent / "roots.json").read_text())
-        workflow = self.build_yml()
+        sections = self.jobs_sections(self.build_yml())
         self.assertTrue(roots)
         for job, spec in roots.items():
-            for selector in spec["roots"]:
-                pattern = r"-f \.#" + re.escape(selector) + r"(\s|$)"
-                self.assertRegex(workflow, pattern, f"{job}: {selector}")
+            self.assertIn(job, sections)
+            section = sections[job]
+            built = set(re.findall(r"-f \.#(\S+)", section))
+            self.assertEqual(built, set(spec["roots"]), job)
+            self.assertIn(f"nix_cache.py push --job {job}", section)
 
 
 if __name__ == "__main__":

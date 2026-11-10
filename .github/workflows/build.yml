@@ -322,6 +322,7 @@ jobs:
 
       # As in the check job: signed upload to R2, push-cache only; also force-includes
       # the Pi kernel's out, dev and modules outputs.
+      # When the Pi build did not succeed, pins are only substituted, never compiled a second time here.
       - name: Push to R2
         if: ${{ inputs.push-cache && !cancelled() }}
         continue-on-error: ${{ inputs.report }}
@@ -329,7 +330,7 @@ jobs:
           NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: python3 scripts/nix-cache/nix_cache.py push --job aarch64-linux
+        run: python3 scripts/nix-cache/nix_cache.py push --job aarch64-linux ${{ steps.rpi4.outcome != 'success' && '--no-build-pins' || '' }}
 
       - name: Analyze failures
         if: ${{ always() && inputs.report }}

@@ -7,6 +7,7 @@ import concurrent.futures
 import dataclasses
 import datetime
 import glob
+import heapq
 import http.client
 import json
 import os
@@ -335,10 +336,6 @@ class Verdict:
     warnings: list
 
 
-class RealiseError(Exception):
-    pass
-
-
 def compute_need(nodes, pin_hashes):
     """Hashes to upload, and hashes found on no source. A pin is needed unless
     R2 has it, even when an upstream serves it: the kernel outputs must exist
@@ -410,15 +407,19 @@ def chunked(items, size=500):
         yield items[start : start + size]
 
 
-def realise(pins, need_paths):
+def realise(pins, need_paths, build_pins=True):
     """Build pins by selector, then substitute or build the need paths.
-    Returns the full store paths that stayed invalid."""
+    Returns the full store paths that stayed invalid. A pin that fails to
+    build is reported and skipped, so the other paths still get uploaded; the
+    final classification fails the run because that pin is not in R2. Without
+    `build_pins` a pin is only substituted (`--max-jobs 0`)."""
     for selector in pins:
-        proc = subprocess.run(
-            ["nix", "build", "--no-link", f".#{selector}"], check=False
-        )
+        cmd = ["nix", "build", "--no-link"]
+        if not build_pins:
+            cmd += ["--max-jobs", "0"]
+        proc = subprocess.run([*cmd, f".#{selector}"], check=False)
         if proc.returncode != 0:
-            raise RealiseError(f"building pin {selector} failed")
+            print(f"error: building pin {selector} failed", file=sys.stderr)
     for chunk in chunked(need_paths):
         subprocess.run(
             ["nix-store", "--realise", "--ignore-unknown", *chunk],
@@ -435,6 +436,21 @@ def realise(pins, need_paths):
         )
         invalid += proc.stdout.split()
     return set(invalid)
+
+
+def public_key_of(secret, run=subprocess.run):
+    """Public half of a Nix secret key, or None when Nix rejects it. Neither
+    the secret nor the child's stderr is ever printed."""
+    proc = run(
+        ["nix", "key", "convert-secret-to-public"],
+        input=secret,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip()
 
 
 def stage(paths, stubs, stage_dir, key_text):
@@ -475,9 +491,23 @@ def stage(paths, stubs, stage_dir, key_text):
                 os.unlink(stub_file)
 
 
+def rclone_inputs_from(environ, isfile=os.path.isfile):
+    """Flake whose lock resolves rclone. The binary receives the R2
+    credentials, so on update-bot runs (which copy a freshly bumped flake.lock
+    into the checkout) use the pristine base checkout that the workflow keeps
+    at $RUNNER_TEMP/base; otherwise the checkout itself."""
+    runner_temp = environ.get("RUNNER_TEMP")
+    if runner_temp:
+        base_dir = os.path.join(runner_temp, "base")
+        if isfile(os.path.join(base_dir, "flake.lock")):
+            return base_dir
+    return "."
+
+
 def rclone_binary():
     """rclone from the store, resolved with no credentials in the environment
-    so that evaluating a bumped input can never see them."""
+    so that evaluating a bumped input can never see them, from the pre-bump
+    lock when the workflow kept one (see `rclone_inputs_from`)."""
     proc = subprocess.run(
         [
             "nix",
@@ -485,7 +515,7 @@ def rclone_binary():
             "--no-link",
             "--print-out-paths",
             "--inputs-from",
-            ".",
+            rclone_inputs_from(os.environ),
             "nixpkgs#rclone.out",
         ],
         capture_output=True,
@@ -620,6 +650,13 @@ def cmd_push(args):
     job = jobs[args.job]
 
     caches = load_caches(REPO_ROOT)
+    # A throwaway --stage-only key is never published, so only a real push
+    # must sign with the key behind the published public key.
+    if not stage_only and public_key_of(key) != caches.public_key:
+        return fail(
+            "NIX_CACHE_SIGNING_KEY does not match the public key in "
+            f"lib/caches.nix ({caches.public_key})"
+        )
     r2_prefix = caches.r2_url.rstrip("/") + "/"
 
     def fetch(url):
@@ -644,7 +681,9 @@ def cmd_push(args):
                 s for s, p in pins.items() if nodes[hash_of(p)].kind != "r2"
             ]
             invalid = realise(
-                missing_pins, [store_path(nodes[h]) for h in sorted(need.paths)]
+                missing_pins,
+                [store_path(nodes[h]) for h in sorted(need.paths)],
+                build_pins=not args.no_build_pins,
             )
             # Realising makes paths local and reveals the references of a pin
             # that was found nowhere, so look again.
@@ -676,7 +715,7 @@ def cmd_push(args):
 
         if uploaded:
             nodes = walk(root_paths, lookup_fn)
-    except (FetchError, EvalError, RealiseError, RuntimeError) as err:
+    except (FetchError, EvalError, RuntimeError) as err:
         return fail(str(err))
 
     verdict = classify(uploaded, nodes, pin_hashes)
@@ -744,16 +783,18 @@ def plan_gc(
     """Pure planner. Only `*.narinfo` at the root and `nar/*` are ever counted
     or deleted; `nix-cache-info` and anything else is ignored."""
     counted = [o for o in objects if is_narinfo_key(o.key) or o.key.startswith("nar/")]
-    # A listed narinfo without text vanished before it was fetched.
-    narinfos = {
-        o.key: o for o in counted if is_narinfo_key(o.key) and o.key in narinfo_text
-    }
+    narinfos = {o.key: o for o in counted if is_narinfo_key(o.key)}
     nars = {o.key: o for o in counted if o.key.startswith("nar/")}
     total_bytes = sum(o.size for o in counted)
 
     def abort(reason):
         return GcPlan([], [], total_bytes, reason)
 
+    # Pushes only add objects and GC runs serialised, so a listed narinfo that
+    # cannot be fetched is an anomaly; its nar would lose its only reference.
+    unfetched = sorted(set(narinfos) - set(narinfo_text))
+    if unfetched:
+        return abort("listed narinfo without text: " + ", ".join(unfetched))
     if not narinfos:
         return abort("the listing has no narinfos")
     present = {k[: -len(".narinfo")] for k in narinfos}
@@ -767,15 +808,33 @@ def plan_gc(
 
     live = live_hashes | pin_hashes
     url_of = {k: narinfo_url(narinfo_text[k]) for k in narinfos}
+    refs_of = {}
+    for k in narinfos:
+        try:
+            refs = parse_narinfo(narinfo_text[k]).references
+            keys = {hash_of(r) + ".narinfo" for r in refs}
+        except (KeyError, ValueError):
+            return abort(f"unparseable narinfo: {k}")
+        refs_of[k] = {r for r in keys if r != k and r in narinfos}
 
     def age(obj):
         return now - obj.mtime
 
-    kept = {
-        k
-        for k, o in narinfos.items()
-        if k[: -len(".narinfo")] in live or age(o) <= grace
-    }
+    def is_live(k):
+        return k[: -len(".narinfo")] in live
+
+    kept = {k for k, o in narinfos.items() if is_live(k) or age(o) <= grace}
+    # A kept narinfo must keep everything it references.
+    stack = list(kept)
+    while stack:
+        for ref in refs_of[stack.pop()]:
+            if ref not in kept:
+                kept.add(ref)
+                stack.append(ref)
+    referrers = dict.fromkeys(kept, 0)
+    for k in kept:
+        for ref in refs_of[k]:
+            referrers[ref] += 1
     refcount = {}
     for k in kept:
         refcount[url_of[k]] = refcount.get(url_of[k], 0) + 1
@@ -784,18 +843,15 @@ def plan_gc(
         nars[k].size for k in kept_nars
     )
 
+    def evictable(k):
+        return not is_live(k) and age(narinfos[k]) >= GC_HOUR and referrers[k] == 0
+
     if retained > budget:
-        evictable = sorted(
-            (
-                k
-                for k in kept
-                if k[: -len(".narinfo")] not in live and age(narinfos[k]) >= GC_HOUR
-            ),
-            key=lambda k: narinfos[k].mtime,
-        )
-        for k in evictable:
-            if retained <= budget:
-                break
+        # Oldest first; evicting a narinfo can free the ones it references.
+        heap = [(narinfos[k].mtime, k) for k in kept if evictable(k)]
+        heapq.heapify(heap)
+        while heap and retained > budget:
+            _, k = heapq.heappop(heap)
             kept.discard(k)
             retained -= narinfos[k].size
             url = url_of[k]
@@ -803,6 +859,10 @@ def plan_gc(
             if refcount[url] == 0 and url in kept_nars and age(nars[url]) >= GC_HOUR:
                 kept_nars.discard(url)
                 retained -= nars[url].size
+            for ref in refs_of[k]:
+                referrers[ref] -= 1
+                if evictable(ref):
+                    heapq.heappush(heap, (narinfos[ref].mtime, ref))
     if retained > budget:
         orphans = sorted(
             (
@@ -933,7 +993,7 @@ def cmd_gc(args):
             (o.key for o in objects if is_narinfo_key(o.key)), caches.r2_url
         )
     except (FetchError, EvalError, RuntimeError) as err:
-        print(f"::warning::gc aborted: {err}")
+        print(f"::error::gc aborted: {err}")
         return fail(str(err))
 
     plan = plan_gc(
@@ -942,8 +1002,9 @@ def cmd_gc(args):
         datetime.timedelta(days=args.grace_days), args.budget_bytes,
     )
     if plan.abort_reason:
-        print(f"::warning::gc aborted: {plan.abort_reason}")
-        return 0
+        print(f"::error::gc aborted: {plan.abort_reason}")
+        print(f"listed {plan.retained_bytes} bytes")
+        return 1
 
     sizes = {o.key: o.size for o in objects}
     print(
@@ -965,7 +1026,11 @@ def cmd_gc(args):
         ]
         for key in current:
             if key not in texts:
-                texts.update(fetch_narinfos([key], caches.r2_url))
+                fetched = fetch_narinfos([key], caches.r2_url)
+                if key not in fetched:
+                    # Listed but unfetchable: deleting nars now could orphan it.
+                    raise RuntimeError(f"listed narinfo {key} could not be fetched")
+                texts.update(fetched)
         return {
             u for u in (narinfo_url(texts[k]) for k in current if k in texts) if u
         }
@@ -985,6 +1050,7 @@ def build_parser():
     p = sub.add_parser("push", help="upload missing closure paths to R2")
     p.add_argument("--job", required=True)
     p.add_argument("--stage-only", metavar="DIR", help="stage and sign into DIR; R2 treated as empty, no upload or verify")
+    p.add_argument("--no-build-pins", action="store_true", help="substitute pins only; never compile them")
     p.add_argument("--r2-bucket", default=os.environ.get("R2_BUCKET"))
     p.add_argument("--r2-endpoint", default=os.environ.get("R2_ENDPOINT"))
     p.set_defaults(func=cmd_push)
