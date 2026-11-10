@@ -491,23 +491,9 @@ def stage(paths, stubs, stage_dir, key_text):
                 os.unlink(stub_file)
 
 
-def rclone_inputs_from(environ, isfile=os.path.isfile):
-    """Flake whose lock resolves rclone. The binary receives the R2
-    credentials, so on update-bot runs (which copy a freshly bumped flake.lock
-    into the checkout) use the pristine base checkout that the workflow keeps
-    at $RUNNER_TEMP/base; otherwise the checkout itself."""
-    runner_temp = environ.get("RUNNER_TEMP")
-    if runner_temp:
-        base_dir = os.path.join(runner_temp, "base")
-        if isfile(os.path.join(base_dir, "flake.lock")):
-            return base_dir
-    return "."
-
-
 def rclone_binary():
     """rclone from the store, resolved with no credentials in the environment
-    so that evaluating a bumped input can never see them, from the pre-bump
-    lock when the workflow kept one (see `rclone_inputs_from`)."""
+    so that evaluating a bumped input can never see them."""
     proc = subprocess.run(
         [
             "nix",
@@ -515,7 +501,7 @@ def rclone_binary():
             "--no-link",
             "--print-out-paths",
             "--inputs-from",
-            rclone_inputs_from(os.environ),
+            ".",
             "nixpkgs#rclone.out",
         ],
         capture_output=True,
@@ -652,11 +638,15 @@ def cmd_push(args):
     caches = load_caches(REPO_ROOT)
     # A throwaway --stage-only key is never published, so only a real push
     # must sign with the key behind the published public key.
-    if not stage_only and public_key_of(key) != caches.public_key:
-        return fail(
-            "NIX_CACHE_SIGNING_KEY does not match the public key in "
-            f"lib/caches.nix ({caches.public_key})"
-        )
+    if not stage_only:
+        derived = public_key_of(key)
+        if derived is None:
+            return fail("nix could not derive a public key from NIX_CACHE_SIGNING_KEY")
+        if derived != caches.public_key:
+            return fail(
+                "NIX_CACHE_SIGNING_KEY does not match the public key in "
+                f"lib/caches.nix ({caches.public_key})"
+            )
     r2_prefix = caches.r2_url.rstrip("/") + "/"
 
     def fetch(url):
@@ -1038,6 +1028,7 @@ def cmd_gc(args):
     try:
         apply_gc(plan, remote, rclone, env, relist)
     except (FetchError, RuntimeError) as err:
+        print(f"::error::gc aborted: {err}")
         return fail(str(err))
     return 0
 

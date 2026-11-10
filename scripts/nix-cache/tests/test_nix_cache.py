@@ -256,6 +256,17 @@ class PlanGcTest(unittest.TestCase):
         self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
         self.assertEqual(plan.delete_nars, [f"nar/{H['a']}.nar.zst"])
 
+    def test_unparseable_narinfo_aborts_without_deleting(self):
+        objs = self.pair("a") + self.pair("b")
+        texts = {
+            f"{H['a']}.narinfo": "URL: nar/x.nar.zst\n",
+            f"{H['b']}.narinfo": narinfo_text("b"),
+        }
+        plan = self.plan(objs, texts=texts)
+        self.assertTrue(plan.abort_reason.startswith("unparseable narinfo"))
+        self.assertEqual(plan.delete_narinfos, [])
+        self.assertEqual(plan.delete_nars, [])
+
     def test_pin_older_than_grace_kept(self):
         objs = self.pair("a", age=100 * DAY) + self.pair("b")
         plan = self.plan(objs, pins={H["a"]}, force=True)
@@ -751,6 +762,45 @@ class CmdPushTest(unittest.TestCase):
         self.assertIn(CACHES.public_key, err)
         self.assertNotIn("SECRET-KEY-MATERIAL", out + err)
 
+    def test_underivable_public_key_has_its_own_message(self):
+        code, out, err = self.run_push(
+            self.args(),
+            load_caches=lambda root: CACHES,
+            public_key_of=lambda key: None,
+            eval_pins=self.unreachable("eval_pins"),
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("could not derive a public key", err)
+        self.assertNotIn("does not match", err)
+        self.assertNotIn("SECRET-KEY-MATERIAL", out + err)
+
+    def run_build_pins(self, no_build_pins):
+        pin_path = f"/nix/store/{base('a', 'kernel')}"
+        nodes = {H["a"]: node("a", "absent", name="kernel")}
+        seen = []
+
+        def realise(pins, paths, build_pins=True):
+            seen.append(build_pins)
+            return {pin_path}
+
+        with mock.patch.object(nc.subprocess, "run", lambda cmd, **kw: proc(0)):
+            self.run_push(
+                self.args(no_build_pins=no_build_pins),
+                load_caches=lambda root: CACHES,
+                public_key_of=lambda key: CACHES.public_key,
+                eval_pins=lambda selectors: {"sel": pin_path},
+                eval_roots=lambda selectors: [],
+                walk=lambda roots, fn: nodes,
+                realise=realise,
+            )
+        return seen
+
+    def test_no_build_pins_flag_disables_building_pins(self):
+        self.assertEqual(self.run_build_pins(True), [False])
+
+    def test_pins_are_built_by_default(self):
+        self.assertEqual(self.run_build_pins(False), [True])
+
     def test_stage_only_skips_public_key_check(self):
         code, _, _ = self.run_push(
             self.args(stage_only="/stage"),
@@ -839,12 +889,13 @@ class GcCommandTest(unittest.TestCase):
 
     def test_relist_with_unfetchable_listed_narinfo_stops_before_nars(self):
         new_listing = self.old_pair_listing() + [obj(f"{H['c']}.narinfo", age=0 * DAY)]
-        code, _, deletes = self.run_gc(
+        code, out, deletes = self.run_gc(
             [self.old_pair_listing(), new_listing],
             [self.texts(), {}],
             live={H["b"]},
         )
         self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: listed narinfo", out)
         self.assertEqual(deletes, [[f"{H['a']}.narinfo"]])
 
 
@@ -865,26 +916,6 @@ class PublicKeyOfTest(unittest.TestCase):
 
     def test_nonzero_exit_is_none(self):
         self.assertIsNone(nc.public_key_of("x", run=lambda cmd, **kw: proc(1, "junk")))
-
-
-class RcloneInputsFromTest(unittest.TestCase):
-    def test_base_checkout_lock_preferred(self):
-        seen = []
-
-        def isfile(path):
-            seen.append(path)
-            return True
-
-        got = nc.rclone_inputs_from({"RUNNER_TEMP": "/tmp/rt"}, isfile)
-        self.assertEqual(got, "/tmp/rt/base")
-        self.assertEqual(seen, ["/tmp/rt/base/flake.lock"])
-
-    def test_no_base_checkout_uses_current(self):
-        self.assertEqual(nc.rclone_inputs_from({"RUNNER_TEMP": "/tmp/rt"}, lambda p: False), ".")
-
-    def test_no_runner_temp_uses_current(self):
-        for env in ({}, {"RUNNER_TEMP": ""}):
-            self.assertEqual(nc.rclone_inputs_from(env, lambda p: True), ".")
 
 
 class UploadTest(unittest.TestCase):
