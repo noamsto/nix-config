@@ -1,4 +1,17 @@
 {
   "frozenInputs": [],
-  "pins": []
+  "pins": [
+    {
+      "attr": "pyrefly",
+      "mode": "hold",
+      "reason": "fails to build on nixos-unstable; fix NixOS/nixpkgs#584733 is not in the channel yet (#68)",
+      "since": "2026-11-11"
+    },
+    {
+      "attr": "tectonic",
+      "mode": "hold",
+      "reason": "tectonic-unwrapped panics in AWS-LC on nixos-unstable; fix NixOS/nixpkgs#584783 is not in the channel yet (#68)",
+      "since": "2026-11-11"
+    }
+  ]
 }
