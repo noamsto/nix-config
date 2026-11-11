@@ -6,6 +6,13 @@ on:
     # Still lands well before the private host flake's 05:30 UTC gate picks up main.
     - cron: "17 2 * * *"
   workflow_dispatch:
+    inputs:
+      # Set only by the run that finds main moved and starts its replacement; that
+      # replacement starts no further run if main moves again.
+      rerun:
+        description: Fresh run started because main moved during the previous run
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -166,6 +173,8 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+    outputs:
+      dispatch: ${{ steps.main.outputs.dispatch }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -248,13 +257,23 @@ jobs:
           git commit -m "$subject [skip ci]" -m "$body"
           echo "committed=true" >>"$GITHUB_OUTPUT"
 
-      - name: Push branch
+      # A lock built against an old main can conflict with it or miss newer
+      # pins.json entries, so a moved main skips publishing (the blocked job still
+      # reports this run's build) and a fresh run builds on the new main.
+      - name: Check main
+        id: main
         if: ${{ steps.commit.outputs.committed == 'true' }}
+        env:
+          RERUN: ${{ inputs.rerun || false }}
+        run: python3 scripts/update-bot/update_bot.py check-main --run-sha "$GITHUB_SHA" --rerun "$RERUN"
+
+      - name: Push branch
+        if: ${{ steps.commit.outputs.committed == 'true' && steps.main.outputs.moved == 'false' }}
         run: git push --force origin HEAD:refs/heads/bot/flake-update
 
       - name: Open or update PR
         id: pr
-        if: ${{ steps.commit.outputs.committed == 'true' }}
+        if: ${{ steps.commit.outputs.committed == 'true' && steps.main.outputs.moved == 'false' }}
         run: |
           n=$(gh pr list --head bot/flake-update --state open --json number --jq '.[0].number // empty')
           if [[ -n "$n" ]]; then
@@ -265,12 +284,14 @@ jobs:
           fi
           echo "number=$n" >>"$GITHUB_OUTPUT"
 
-      # Merge only onto the commit this run built against; if main moved, the PR
-      # stays open and the next run refreshes it. A GITHUB_TOKEN merge does not
-      # trigger check.yml, which is why the attempt builds pushed to Cachix and R2.
+      # Merge only onto the commit this run built against. "Check main" already
+      # skipped a main that moved before the push; this still covers main moving
+      # between the push and here, where the PR stays open and the next run
+      # refreshes it. A GITHUB_TOKEN merge does not trigger check.yml, which is
+      # why the attempt builds pushed to Cachix and R2.
       - name: Merge
         id: merge
-        if: ${{ steps.commit.outputs.committed == 'true' }}
+        if: ${{ steps.commit.outputs.committed == 'true' && steps.main.outputs.moved == 'false' }}
         env:
           PR: ${{ steps.pr.outputs.number }}
           RUN_SHA: ${{ github.sha }}
@@ -293,6 +314,26 @@ jobs:
           for n in $(gh issue list --label update-blocked --state open --json number --jq '.[].number'); do
             gh issue close "$n" --comment "The combined update landed in #$PR."
           done
+
+  # Main moved during the run, so land published nothing: start one fresh run.
+  # A separate job keeps actions: write away from land, which runs code from the
+  # freshly updated inputs (nix run .#lock-commit); the token could otherwise
+  # dispatch cache-gc with deletion. This job runs nothing from the repo.
+  # GITHUB_TOKEN may start workflow_dispatch runs (a documented exception to
+  # "events triggered by the GITHUB_TOKEN do not create new workflow runs"); the
+  # new run queues in the update concurrency group until this one ends.
+  redispatch:
+    needs: [land]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.dispatch == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Start fresh run
+        run: gh workflow run update.yml --ref main -f rerun=true
 
   # One open update-blocked issue, its body replaced each run the combined tree
   # does not land (also when a half landed).

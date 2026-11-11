@@ -693,6 +693,31 @@ class FinalizeTest(unittest.TestCase):
                 )
 
 
+class MainMovedTest(unittest.TestCase):
+    OLD = "a" * 40
+    NEW = "b" * 40
+
+    def test_not_moved_publishes(self):
+        for rerun in (False, True):
+            with self.subTest(rerun=rerun):
+                self.assertEqual(
+                    botcore.main_moved(self.OLD, self.OLD, rerun),
+                    {"moved": False, "dispatch": False},
+                )
+
+    def test_moved_skips_and_dispatches(self):
+        self.assertEqual(
+            botcore.main_moved(self.OLD, self.NEW, False),
+            {"moved": True, "dispatch": True},
+        )
+
+    def test_moved_during_a_rerun_skips_without_dispatching(self):
+        self.assertEqual(
+            botcore.main_moved(self.OLD, self.NEW, True),
+            {"moved": True, "dispatch": False},
+        )
+
+
 class FallbackAdvanceTest(unittest.TestCase):
     def setUp(self):
         self.base, self.new = load("lock-base.json"), load("lock-new.json")
