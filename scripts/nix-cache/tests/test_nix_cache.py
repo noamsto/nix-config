@@ -295,15 +295,11 @@ class PlanGcTest(unittest.TestCase):
         )
         self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
 
-    def test_future_last_live_counts_as_now(self):
-        # Clamped to now it ages from now on; unclamped it would be negative,
-        # keeping the narinfo and exempting it from budget eviction for good.
+    def test_future_last_live_ages_once_update_last_live_has_clamped_it(self):
+        # The write-side clamp (update_last_live) is what keeps a future stamp
+        # from pinning a narinfo for good: carried forward, it ages from the
+        # run that clamped it. Four days later it is past grace and deleted.
         objs = self.pair("a", age=30 * DAY) + self.pair("b", age=30 * DAY)
-        plan = self.plan(
-            objs, budget=20,
-            last_live={H["a"]: NOW + 400 * DAY, H["b"]: NOW - DAY},
-        )
-        self.assertEqual(plan.delete_narinfos, [f"{H['b']}.narinfo"])
         later = NOW + 4 * DAY
         plan = nc.plan_gc(
             objs, {f"{H[c]}.narinfo": narinfo_text(c) for c in "ab"}, set(), set(),

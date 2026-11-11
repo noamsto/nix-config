@@ -788,8 +788,12 @@ GC_STATE_VERSION = 1
 
 def update_last_live(previous, live_hashes, present_hashes, now):
     """Pure. The last-live map after a GC run: every live hash seen now, every
-    earlier entry kept (never later than `now`), and entries for hashes no longer
-    in R2 dropped."""
+    earlier entry kept, and entries for hashes no longer in R2 dropped. A kept
+    entry is clamped to `now`: a stamp in the future (clock skew, a hand-edited
+    state) would otherwise give a negative age, keeping the narinfo and exempting
+    it from budget eviction for good. Clamped, it ages from this run on. The
+    clamp trusts this runner's clock: a clock days behind would pull real
+    stamps back too, which costs cache misses, never wrong keeps."""
     updated = {h: min(t, now) for h, t in previous.items() if h in present_hashes}
     for hash_ in live_hashes & present_hashes:
         updated[hash_] = now
@@ -864,11 +868,9 @@ def plan_gc(
     def age(obj):
         return now - obj.mtime
 
-    # A narinfo's reference point: its upload, or later the last time it was
-    # live. A last-live time in the future (clock skew, a hand-edited state)
-    # counts as now: it must not make a narinfo unevictable for good.
+    # A narinfo's reference point: its upload, or later the last time it was live.
     seen = {
-        k: max(o.mtime, min(last_live.get(k[: -len(".narinfo")], o.mtime), now))
+        k: max(o.mtime, last_live.get(k[: -len(".narinfo")], o.mtime))
         for k, o in narinfos.items()
     }
 
