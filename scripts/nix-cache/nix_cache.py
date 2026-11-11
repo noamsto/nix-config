@@ -782,12 +782,54 @@ def narinfo_url(text):
     return None
 
 
+GC_STATE_KEY = "gc-state.json"
+GC_STATE_VERSION = 1
+
+
+def update_last_live(previous, live_hashes, present_hashes, now):
+    """Pure. The last-live map after a GC run: every live hash seen now, every
+    earlier entry kept, and entries for hashes no longer in R2 dropped. A kept
+    entry is clamped to `now`: a stamp in the future (clock skew, a hand-edited
+    state) would otherwise give a negative age, keeping the narinfo and exempting
+    it from budget eviction for good. Clamped, it ages from this run on. The
+    clamp trusts this runner's clock: a clock days behind would pull real
+    stamps back too, which costs cache misses, never wrong keeps."""
+    updated = {h: min(t, now) for h, t in previous.items() if h in present_hashes}
+    for hash_ in live_hashes & present_hashes:
+        updated[hash_] = now
+    return updated
+
+
+def encode_gc_state(last_live):
+    stamps = {h: t.isoformat() for h, t in sorted(last_live.items())}
+    return json.dumps({"version": GC_STATE_VERSION, "last_live": stamps}, indent=1)
+
+
+def decode_gc_state(text):
+    """hash -> aware datetime. A state that cannot be read raises RuntimeError:
+    falling back to an empty map would silently measure grace from upload time."""
+    try:
+        data = json.loads(text)
+        if data["version"] != GC_STATE_VERSION:
+            raise ValueError(f"unknown version {data['version']!r}")
+        return {h: parse_modtime(t) for h, t in data["last_live"].items()}
+    except (
+        KeyError, TypeError, AttributeError, ValueError, OverflowError, RecursionError
+    ) as err:
+        raise RuntimeError(
+            f"{GC_STATE_KEY} is unreadable ({err}); fix or delete it in the bucket"
+        ) from err
+
+
 def plan_gc(
     objects, narinfo_text, live_hashes, pin_hashes, reference_holes, force, now,
-    grace, budget,
+    grace, budget, last_live=None,
 ):
     """Pure planner. Only `*.narinfo` at the root and `nar/*` are ever counted
-    or deleted; `nix-cache-info` and anything else is ignored."""
+    or deleted; `nix-cache-info` and anything else is ignored. `last_live` maps
+    a store hash to when GC last saw it live: a narinfo's grace runs from the
+    later of its upload and that time."""
+    last_live = last_live or {}
     counted = [o for o in objects if is_narinfo_key(o.key) or o.key.startswith("nar/")]
     narinfos = {o.key: o for o in counted if is_narinfo_key(o.key)}
     nars = {o.key: o for o in counted if o.key.startswith("nar/")}
@@ -826,10 +868,19 @@ def plan_gc(
     def age(obj):
         return now - obj.mtime
 
+    # A narinfo's reference point: its upload, or later the last time it was live.
+    seen = {
+        k: max(o.mtime, last_live.get(k[: -len(".narinfo")], o.mtime))
+        for k, o in narinfos.items()
+    }
+
+    def narinfo_age(k):
+        return now - seen[k]
+
     def is_live(k):
         return k[: -len(".narinfo")] in live
 
-    kept = {k for k, o in narinfos.items() if is_live(k) or age(o) <= grace}
+    kept = {k for k in narinfos if is_live(k) or narinfo_age(k) <= grace}
     # A kept narinfo must keep everything it references.
     stack = list(kept)
     while stack:
@@ -844,17 +895,21 @@ def plan_gc(
     refcount = {}
     for k in kept:
         refcount[url_of[k]] = refcount.get(url_of[k], 0) + 1
+    # Nar grace stays on upload time: a nar that a kept narinfo references is
+    # kept through refcount, and a narinfo's last-live time can only keep that
+    # narinfo, so it never rescues a nar nothing kept references. Upload time
+    # is what covers a nar whose narinfo has not landed yet.
     kept_nars = {k for k, o in nars.items() if k in refcount or age(o) <= grace}
     retained = sum(narinfos[k].size for k in kept) + sum(
         nars[k].size for k in kept_nars
     )
 
     def evictable(k):
-        return not is_live(k) and age(narinfos[k]) >= GC_HOUR and referrers[k] == 0
+        return not is_live(k) and narinfo_age(k) >= GC_HOUR and referrers[k] == 0
 
     if retained > budget:
         # Oldest first; evicting a narinfo can free the ones it references.
-        heap = [(narinfos[k].mtime, k) for k in kept if evictable(k)]
+        heap = [(seen[k], k) for k in kept if evictable(k)]
         heapq.heapify(heap)
         while heap and retained > budget:
             _, k = heapq.heappop(heap)
@@ -868,7 +923,7 @@ def plan_gc(
             for ref in refs_of[k]:
                 referrers[ref] -= 1
                 if evictable(ref):
-                    heapq.heappush(heap, (narinfos[ref].mtime, ref))
+                    heapq.heappush(heap, (seen[ref], ref))
     if retained > budget:
         orphans = sorted(
             (
@@ -942,6 +997,43 @@ def list_objects(remote, rclone, env):
     ]
 
 
+def read_gc_state(objects, remote, rclone, env):
+    """hash -> last-live datetime; an object absent from the listing is an
+    empty map (the first run)."""
+    if not any(o.key == GC_STATE_KEY for o in objects):
+        return {}
+    proc = subprocess.run(
+        [rclone, "cat", f"{remote}/{GC_STATE_KEY}"],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"rclone cat {GC_STATE_KEY} failed: {proc.stderr.strip()}")
+    return decode_gc_state(proc.stdout)
+
+
+def write_gc_state(last_live, remote, rclone, env):
+    fd, path = tempfile.mkstemp(prefix="nix-cache-gc-state-")
+    try:
+        with os.fdopen(fd, "w") as handle:
+            handle.write(encode_gc_state(last_live) + "\n")
+        proc = subprocess.run(
+            [rclone, "copyto", path, f"{remote}/{GC_STATE_KEY}"],
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"rclone copyto {GC_STATE_KEY} failed: {proc.stderr.strip()}"
+            )
+    finally:
+        os.unlink(path)
+
+
 def fetch_narinfos(keys, base_url, fetch=fetch_text):
     """key -> text for each narinfo that exists; a key answering 404 is left out."""
     keys = list(keys)
@@ -998,15 +1090,28 @@ def cmd_gc(args):
         texts = fetch_narinfos(
             (o.key for o in objects if is_narinfo_key(o.key)), caches.r2_url
         )
+        last_live = read_gc_state(objects, remote, rclone, env)
     except (FetchError, EvalError, RuntimeError) as err:
         print(f"::error::gc aborted: {err}")
         return fail(str(err))
 
+    now = datetime.datetime.now(datetime.UTC)
     plan = plan_gc(
-        objects, texts, live, pin_hashes, holes, args.force,
-        datetime.datetime.now(datetime.UTC),
-        datetime.timedelta(days=args.grace_days), args.budget_bytes,
+        objects, texts, live, pin_hashes, holes, args.force, now,
+        datetime.timedelta(days=args.grace_days), args.budget_bytes, last_live,
     )
+    # Recorded on every run, dry runs and aborts included: the live set is
+    # valid either way, and a state that skipped them would leave the first
+    # deleting run measuring grace from upload time. A write failure ends the
+    # run before anything is deleted.
+    present = {o.key[: -len(".narinfo")] for o in objects if is_narinfo_key(o.key)}
+    try:
+        write_gc_state(
+            update_last_live(last_live, live, present, now), remote, rclone, env
+        )
+    except RuntimeError as err:
+        print(f"::error::gc aborted: {err}")
+        return fail(str(err))
     if plan.abort_reason:
         print(f"::error::gc aborted: {plan.abort_reason}")
         print(f"listed {plan.retained_bytes} bytes")

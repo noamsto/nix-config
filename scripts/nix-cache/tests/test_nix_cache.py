@@ -232,7 +232,7 @@ def obj(key, size=10, age=10 * DAY):
 
 class PlanGcTest(unittest.TestCase):
     def plan(self, objects, texts=None, live=(), pins=(), holes=(), force=False,
-             budget=BIG):
+             budget=BIG, last_live=None):
         if texts is None:
             texts = {
                 o.key: narinfo_text(o.key[:32]) for o in objects
@@ -240,8 +240,81 @@ class PlanGcTest(unittest.TestCase):
             }
         return nc.plan_gc(
             objects, texts, set(live), set(pins), set(holes), force, NOW, GRACE,
-            budget,
+            budget, last_live,
         )
+
+    def test_last_live_inside_grace_keeps_long_uploaded_narinfo(self):
+        # Uploaded 30 days ago, last live 1 day ago, not live now: the kernel
+        # scenario of issue #81.
+        objs = (
+            self.pair("a", age=30 * DAY) + self.pair("b") + self.pair("c")
+            + self.pair("d")
+        )
+        plan = self.plan(
+            objs, live={H["b"], H["d"]}, last_live={H["a"]: NOW - DAY}
+        )
+        self.assertIsNone(plan.abort_reason)
+        self.assertNotIn(f"{H['a']}.narinfo", plan.delete_narinfos)
+        self.assertNotIn(f"nar/{H['a']}.nar.zst", plan.delete_nars)
+        self.assertEqual(plan.delete_narinfos, [f"{H['c']}.narinfo"])
+
+    def test_last_live_outside_grace_is_deleted(self):
+        objs = (
+            self.pair("a", age=30 * DAY) + self.pair("b") + self.pair("c")
+            + self.pair("d")
+        )
+        plan = self.plan(
+            objs, live={H["b"], H["d"]}, last_live={H["a"]: NOW - 5 * DAY}
+        )
+        self.assertEqual(
+            plan.delete_narinfos, [f"{H['a']}.narinfo", f"{H['c']}.narinfo"]
+        )
+        self.assertIn(f"nar/{H['a']}.nar.zst", plan.delete_nars)
+
+    def test_no_state_entry_measures_from_upload(self):
+        objs = self.pair("a", age=30 * DAY) + self.pair("b") + self.pair("c", age=DAY)
+        plan = self.plan(objs, live={H["b"]}, last_live={H["c"]: NOW - 30 * DAY})
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+
+    def test_last_live_older_than_upload_does_not_shorten_grace(self):
+        objs = self.pair("a", age=DAY) + self.pair("b")
+        plan = self.plan(objs, live={H["b"]}, last_live={H["a"]: NOW - 30 * DAY})
+        self.assertNotIn(f"{H['a']}.narinfo", plan.delete_narinfos)
+
+    def test_budget_evicts_longest_not_live_first(self):
+        # b was uploaded long ago but last live 3 hours ago, a was uploaded 5
+        # hours ago: by upload time b is oldest, by last-live time a is.
+        objs = (
+            self.pair("a", age=datetime.timedelta(hours=5))
+            + self.pair("b", age=30 * DAY)
+        )
+        plan = self.plan(
+            objs,
+            budget=20,
+            last_live={H["a"]: NOW - 2 * DAY, H["b"]: NOW - datetime.timedelta(hours=3)},
+        )
+        self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+
+    def test_future_last_live_ages_once_update_last_live_has_clamped_it(self):
+        # The write-side clamp (update_last_live) is what keeps a future stamp
+        # from pinning a narinfo for good: carried forward, it ages from the
+        # run that clamped it. Four days later it is past grace and deleted.
+        objs = self.pair("a", age=30 * DAY) + self.pair("b", age=30 * DAY)
+        later = NOW + 4 * DAY
+        plan = nc.plan_gc(
+            objs, {f"{H[c]}.narinfo": narinfo_text(c) for c in "ab"}, set(), set(),
+            set(), True, later, GRACE, BIG,
+            nc.update_last_live({H["a"]: NOW + 400 * DAY}, set(), {H["a"]}, NOW),
+        )
+        self.assertIn(f"{H['a']}.narinfo", plan.delete_narinfos)
+
+    def test_gc_state_object_is_never_planned_for_deletion(self):
+        state = obj(nc.GC_STATE_KEY, 5, age=100 * DAY)
+        plan = self.plan([state] + self.pair("a") + self.pair("b"), live={H["b"]})
+        self.assertIsNone(plan.abort_reason)
+        self.assertNotIn(nc.GC_STATE_KEY, plan.delete_narinfos + plan.delete_nars)
+        # Not counted either: retained bytes are the 20 of the live pair.
+        self.assertEqual(plan.retained_bytes, 20)
 
     def pair(self, char, age=10 * DAY, size=10):
         return [
@@ -475,6 +548,99 @@ class PlanGcTest(unittest.TestCase):
         plan = self.plan(objs, budget=0, force=True)
         self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
         self.assertEqual(plan.delete_nars, [f"nar/{H['a']}.nar.zst"])
+
+
+class LastLiveStateTest(unittest.TestCase):
+    def test_live_hashes_stamped_now_and_others_kept(self):
+        updated = nc.update_last_live(
+            {"a": NOW - DAY, "b": NOW - 2 * DAY}, {"b", "c"}, {"a", "b", "c"}, NOW
+        )
+        self.assertEqual(updated, {"a": NOW - DAY, "b": NOW, "c": NOW})
+
+    def test_entries_for_hashes_gone_from_r2_are_dropped(self):
+        updated = nc.update_last_live(
+            {"a": NOW - DAY, "gone": NOW - DAY}, {"a", "also-gone"}, {"a"}, NOW
+        )
+        self.assertEqual(updated, {"a": NOW})
+
+    def test_future_stamps_are_clamped_to_now(self):
+        updated = nc.update_last_live({"a": NOW + 400 * DAY}, set(), {"a"}, NOW)
+        self.assertEqual(updated, {"a": NOW})
+
+    def test_deeply_nested_state_text_is_unreadable_not_a_crash(self):
+        with self.assertRaises(RuntimeError):
+            nc.decode_gc_state("[" * 100000)
+
+    def test_previous_map_is_not_mutated(self):
+        previous = {"a": NOW - DAY}
+        nc.update_last_live(previous, {"a"}, {"a"}, NOW)
+        self.assertEqual(previous, {"a": NOW - DAY})
+
+    def test_round_trip(self):
+        state = {"a": NOW, "b": NOW - 3 * DAY}
+        self.assertEqual(nc.decode_gc_state(nc.encode_gc_state(state)), state)
+
+    def test_unreadable_state_raises_instead_of_reading_empty(self):
+        for text in ("", "not json", "[]", '{"version": 2, "last_live": {}}',
+                     '{"version": 1}', '{"version": 1, "last_live": {"a": "x"}}',
+                     '{"version": 1, "last_live": []}'):
+            with self.subTest(text=text), self.assertRaises(RuntimeError):
+                nc.decode_gc_state(text)
+
+    def test_absent_state_object_reads_empty_without_rclone(self):
+        with mock.patch.object(nc.subprocess, "run") as run:
+            state = nc.read_gc_state([obj("a.narinfo")], "r2:b", "/fake/rclone", {})
+        self.assertEqual(state, {})
+        run.assert_not_called()
+
+    def test_state_is_read_with_rclone_cat(self):
+        text = nc.encode_gc_state({"a": NOW})
+        with mock.patch.object(
+            nc.subprocess, "run", return_value=proc(stdout=text)
+        ) as run:
+            state = nc.read_gc_state([obj(nc.GC_STATE_KEY)], "r2:b", "/fake/rclone", {})
+        self.assertEqual(state, {"a": NOW})
+        self.assertEqual(
+            run.call_args.args[0], ["/fake/rclone", "cat", "r2:b/gc-state.json"]
+        )
+
+    def test_failed_read_raises(self):
+        with (
+            mock.patch.object(nc.subprocess, "run", return_value=proc(1)),
+            self.assertRaises(RuntimeError),
+        ):
+            nc.read_gc_state([obj(nc.GC_STATE_KEY)], "r2:b", "/fake/rclone", {})
+
+    def test_write_copies_a_temp_file_and_removes_it(self):
+        seen = {}
+
+        def run(cmd, **kwargs):
+            seen["cmd"] = cmd
+            with open(cmd[2]) as handle:
+                seen["body"] = handle.read()
+            return proc()
+
+        with mock.patch.object(nc.subprocess, "run", run):
+            nc.write_gc_state({"a": NOW}, "r2:b", "/fake/rclone", {})
+        self.assertEqual(seen["cmd"][:2] + seen["cmd"][3:], [
+            "/fake/rclone", "copyto", "r2:b/gc-state.json",
+        ])
+        self.assertEqual(nc.decode_gc_state(seen["body"]), {"a": NOW})
+        self.assertFalse(os.path.exists(seen["cmd"][2]))
+
+    def test_failed_write_raises_and_removes_the_temp_file(self):
+        seen = {}
+
+        def run(cmd, **kwargs):
+            seen["path"] = cmd[2]
+            return proc(1)
+
+        with (
+            mock.patch.object(nc.subprocess, "run", run),
+            self.assertRaises(RuntimeError),
+        ):
+            nc.write_gc_state({"a": NOW}, "r2:b", "/fake/rclone", {})
+        self.assertFalse(os.path.exists(seen["path"]))
 
 
 class ApplyGcTest(unittest.TestCase):
@@ -871,7 +1037,7 @@ class CmdPushTest(unittest.TestCase):
 
 
 class GcCommandTest(unittest.TestCase):
-    def args(self):
+    def args(self, delete=True):
         return argparse.Namespace(
             secrets={"R2_ACCESS_KEY_ID": "id", "R2_SECRET_ACCESS_KEY": "secret"},
             r2_bucket="bucket",
@@ -879,11 +1045,32 @@ class GcCommandTest(unittest.TestCase):
             force=False,
             grace_days=3,
             budget_bytes=BIG,
-            delete=True,
+            delete=delete,
         )
 
-    def run_gc(self, listings, fetches, holes=(), live=()):
+    def run_gc(self, listings, fetches, holes=(), live=(), state=None,
+               write_error=None, read_error=None, delete=True):
+        """Returns (code, stdout, deletes); `self.events` is the ordered log of
+        state writes and deletes, `self.writes` the states written."""
         deletes = []
+        self.events = []
+        self.writes = []
+
+        def write_state(last_live, remote, rclone, env):
+            if write_error:
+                raise RuntimeError(write_error)
+            self.writes.append(dict(last_live))
+            self.events.append("write")
+
+        def read_state(objects, remote, rclone, env):
+            if read_error:
+                raise RuntimeError(read_error)
+            return dict(state or {})
+
+        def delete_keys(keys, remote, rclone, env):
+            deletes.append(list(keys))
+            self.events.append("delete")
+
         list_calls = iter(listings)
         fetch_calls = iter(fetches)
         out, err = io.StringIO(), io.StringIO()
@@ -894,9 +1081,9 @@ class GcCommandTest(unittest.TestCase):
             "r2_env": lambda endpoint, creds: {},
             "list_objects": lambda remote, rclone, env: next(list_calls),
             "fetch_narinfos": lambda keys, base_url, fetch=None: next(fetch_calls),
-            "rclone_delete": lambda keys, remote, rclone, env: deletes.append(
-                list(keys)
-            ),
+            "rclone_delete": delete_keys,
+            "read_gc_state": read_state,
+            "write_gc_state": write_state,
         }
         with contextlib.ExitStack() as stack:
             enter_fake_repo(stack)
@@ -904,7 +1091,7 @@ class GcCommandTest(unittest.TestCase):
                 stack.enter_context(mock.patch.object(nc, name, value))
             stack.enter_context(contextlib.redirect_stdout(out))
             stack.enter_context(contextlib.redirect_stderr(err))
-            code = nc.cmd_gc(self.args())
+            code = nc.cmd_gc(self.args(delete))
         return code, out.getvalue(), deletes
 
     def old_pair_listing(self):
@@ -926,6 +1113,69 @@ class GcCommandTest(unittest.TestCase):
         self.assertIn("::error::gc aborted: reference found on no cache", out)
         self.assertIn("40 bytes", out)
         self.assertEqual(deletes, [])
+
+    def test_dry_run_writes_the_updated_state_and_deletes_nothing(self):
+        listing = self.old_pair_listing() + [obj(nc.GC_STATE_KEY, 5)]
+        code, out, deletes = self.run_gc(
+            [listing], [self.texts()], live={H["b"]}, delete=False,
+            state={H["a"]: NOW - DAY, "x" * 32: NOW - DAY},
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("dry run", out)
+        self.assertEqual(deletes, [])
+        self.assertEqual(len(self.writes), 1)
+        written = self.writes[0]
+        # a keeps its old stamp, b is stamped now, the hash gone from R2 is dropped.
+        self.assertEqual(written[H["a"]], NOW - DAY)
+        self.assertLess(abs(datetime.datetime.now(UTC) - written[H["b"]]),
+                        datetime.timedelta(minutes=5))
+        self.assertNotIn("x" * 32, written)
+
+    def test_state_keeps_a_long_uploaded_path_that_stopped_being_live(self):
+        code, _, deletes = self.run_gc(
+            [self.old_pair_listing()],
+            [self.texts()],
+            live={H["b"]},
+            state={H["a"]: datetime.datetime.now(UTC) - DAY},
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual([keys for keys in deletes if keys], [])
+
+    def test_state_write_failure_aborts_before_any_delete(self):
+        code, out, deletes = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], live={H["b"]},
+            write_error="rclone copyto gc-state.json failed: boom",
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: rclone copyto gc-state.json failed", out)
+        self.assertEqual(deletes, [])
+        self.assertEqual(self.events, [])
+
+    def test_state_is_written_before_the_first_delete(self):
+        code, _, _ = self.run_gc(
+            [self.old_pair_listing(), self.old_pair_listing()], [self.texts()],
+            live={H["b"]},
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(self.events[0], "write")
+        self.assertIn("delete", self.events)
+
+    def test_state_is_written_when_the_plan_aborts(self):
+        code, _, _ = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], holes={H["c"]}, live={H["b"]}
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(len(self.writes), 1)
+        self.assertIn(H["b"], self.writes[0])
+
+    def test_unreadable_state_aborts_before_any_delete(self):
+        code, out, deletes = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], live={H["b"]},
+            read_error="gc-state.json is unreadable (bad)",
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: gc-state.json is unreadable", out)
+        self.assertEqual((deletes, self.events), ([], []))
 
     def test_relist_with_unfetchable_listed_narinfo_stops_before_nars(self):
         new_listing = self.old_pair_listing() + [obj(f"{H['c']}.narinfo", age=0 * DAY)]
