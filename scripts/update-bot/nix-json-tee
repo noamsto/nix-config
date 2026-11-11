@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# `nix-fast-build --nix` wrapper: runs nix unchanged and, for a build that logs
+# with `--log-format internal-json`, also copies that stream (nix's stderr) to
+# "$NFB_JSON_DIR/nix.<random>". update-bot reads it to learn which derivations
+# Nix itself reported as failed. Without NFB_JSON_DIR it is a plain exec.
+tee_json=
+prev=
+for arg in "$@"; do
+  if [ "$arg" = --log-format=internal-json ] ||
+    { [ "$prev" = --log-format ] && [ "$arg" = internal-json ]; }; then
+    tee_json=1
+  fi
+  prev=$arg
+done
+
+if [ -n "$tee_json" ] && [ -n "${NFB_JSON_DIR:-}" ]; then
+  # Without a capture the bot finds no failed derivation and blocks the bump.
+  if mkdir -p "$NFB_JSON_DIR" && capture=$(mktemp "$NFB_JSON_DIR/nix.XXXXXX"); then
+    exec nix "$@" 2> >(tee "$capture" >&2)
+  fi
+fi
+exec nix "$@"

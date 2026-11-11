@@ -1,0 +1,37 @@
+▶ parent started
+✘  parent failed after 11s (rc=1)
+parent> [35;1mwarning:[0m unknown setting 'eval-cores'[0m
+parent> [35;1mwarning:[0m unknown setting 'lazy-trees'[0m
+parent> linking "/nix/store/3x6nb9a6f3xiw69rw2rjyqw56gd7mfnn-sibling-1.0" to "/nix/store/.links/1mrj2mqlrppvk2g5k4xhp0q7dgiavh8w8kbaiiy5fj1i5n8nspsn"
+parent> [31;1merror:[0m hash mismatch in fixed-output derivation '[35;1m/nix/store/2w363vsifryj0m759inbsmcqk38lv88v-thing-src.drv[0m':[0m
+parent>          specified: [35;1msha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=[0m[0m
+parent>             got:    [35;1msha256-Zmey0aq2oAyqWu5a+K2fFGXlZ6vxwgnRVyfVez6Pbl8=[0m[0m
+parent> [31;1merror:[0m Cannot build '[35;1m/nix/store/0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv[0m'.[0m
+parent>        Reason: [31;1mbuilder failed with exit code 1[0m.[0m
+parent> error: Cannot build '/nix/store/0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv'.
+parent>        Reason: builder failed with exit code 1.
+parent> error: Cannot build '/nix/store/0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv'.
+parent>        Reason: builder failed with exit code 1.
+parent> error: Cannot build '/nix/store/50rd1r4qpglmr9bd47ksa45wph2zr44l-sibling-1.0.drv'.
+parent>        Reason: builder failed with exit code 1.
+parent> boom
+parent> [31;1merror:[0m Cannot build '[35;1m/nix/store/l5kwfpvbrfhm3h25wkghrwqfxjyshzva-genuine-1.0.drv[0m'.[0m
+parent>        Reason: [31;1mbuilder failed with exit code 1[0m.[0m
+parent>        Output paths:
+parent>          [35;1m/nix/store/3pf0n7109nd6plkdkvvnj58cw3pi6if7-genuine-1.0[0m[0m
+parent>        Last 5 log lines:
+parent>        > [31;1merror:[0m Cannot build '[35;1m/nix/store/0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv[0m'.[0m
+parent>        >        Reason: [31;1mbuilder failed with exit code 1[0m.[0m
+parent>        > error: Cannot build '/nix/store/0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv'.
+parent>        >        Reason: builder failed with exit code 1.
+parent>        > boom
+parent>        For full logs, run:
+parent>          [1mnix log /nix/store/l5kwfpvbrfhm3h25wkghrwqfxjyshzva-genuine-1.0.drv[0m[0m
+parent> [31;1merror:[0m Cannot build '[35;1m/nix/store/bmls4mj1s0nn0sg46k2yxaqkwi7r7f4a-parent-2.0.drv[0m'.[0m
+parent>        Reason: [31;1m2 dependencies failed[0m.[0m
+parent>        Output paths:
+parent>          [35;1m/nix/store/lbw98g6a60vi8wh5fl6qgv94c623svhs-parent-2.0[0m[0m
+✘ end of log for parent · nix log /nix/store/bmls4mj1s0nn0sg46k2yxaqkwi7r7f4a-parent-2.0.drv
+WARNING:nix_fast_build.build:build parent exited with 1 (attempt 1/1)
+ERROR:nix_fast_build:BUILD: 0 successes, 1 failures
+ERROR:nix_fast_build:Failed attributes: parent

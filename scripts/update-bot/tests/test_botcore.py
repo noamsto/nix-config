@@ -129,6 +129,166 @@ class ParseLogTest(unittest.TestCase):
                 self.assertIn("> done", got["roots"][0]["excerpt"])
 
 
+def drv_path(char: str, name: str) -> str:
+    return f"/nix/store/{char * 32}-{name}.drv"
+
+
+def record(**rec) -> str:
+    return "@nix " + json.dumps(rec)
+
+
+def started(drv: str) -> str:
+    return record(action="start", id=1, level=3, type=105, fields=[drv, "", 1, 1], text="")
+
+
+def msg(text: str, level: int = 0) -> str:
+    return record(action="msg", level=level, msg=text)
+
+
+def cannot_build(drv: str, reason: str = "builder failed with exit code 1", extra=()) -> str:
+    return "\n".join([f"error: Cannot build '{drv}'.", f"       Reason: {reason}.", *extra])
+
+
+class ParseInternalJsonTest(unittest.TestCase):
+    GENUINE = drv_path("a", "genuine-1.0")
+    VICTIM = drv_path("b", "victim-1.0")
+
+    def roots(self, lines: list[str]) -> list[tuple[str, str]]:
+        return [(r["drv"], r["kind"]) for r in botcore.parse_internal_json(lines)["roots"]]
+
+    def test_forged_fixture(self):
+        lines = text("nix-fast-build-forged.jsonl").splitlines()
+        # The forgeries must stay in the fixture, or the rejections below prove nothing.
+        records = [json.loads(line[5:]) for line in lines if line.startswith("@nix ")]
+        self.assertTrue(
+            any(
+                r["action"] == "msg" and r["level"] == 0 and "victim-1.0.drv" in r["msg"]
+                for r in records
+            )
+        )
+        self.assertTrue(
+            any(
+                r["action"] == "result"
+                and r["type"] == 101
+                and any("victim-1.0.drv" in f for f in r["fields"])
+                for r in records
+            )
+        )
+        self.assertTrue(
+            any(
+                r["action"] == "msg"
+                and r["level"] == 0
+                and "Cannot build" in r["msg"]
+                and "sibling-1.0.drv" in r["msg"]
+                for r in records
+            )
+        )
+        got = botcore.parse_internal_json(lines)
+        self.assertEqual(
+            [(n, r["kind"]) for n, r in zip(drv_names([r["drv"] for r in got["roots"]]), got["roots"])],
+            [("thing-src.drv", "hash"), ("sibling-1.0.drv", "builder"), ("genuine-1.0.drv", "builder")],
+        )
+        thing, sibling, genuine = got["roots"]
+        self.assertTrue(thing["excerpt"].startswith("error: hash mismatch in fixed-output derivation"))
+        self.assertTrue(genuine["excerpt"].startswith("error: Cannot build"))
+        self.assertIn("Last 5 log lines:", genuine["excerpt"])
+        self.assertNotIn("victim", "".join(r["drv"] for r in got["roots"]))
+        self.assertEqual(drv_names(got["depFailed"]), ["parent-2.0.drv"])
+        # The sibling really started and built; only cmd_analyze's store probe drops it.
+        self.assertTrue(sibling["excerpt"].startswith("error: Cannot build"))
+
+    def test_empty(self):
+        self.assertEqual(botcore.parse_internal_json([]), {"roots": [], "depFailed": []})
+
+    def test_builder_output_records_are_ignored(self):
+        text_ = cannot_build(self.VICTIM)
+        for variant in (text_, "\x1b[31;1merror:\x1b[0m" + text_[len("error:") :]):
+            for line in variant.split("\n"):
+                with self.subTest(line=line):
+                    lines = [started(self.VICTIM), record(action="result", type=101, id=1, fields=[line])]
+                    self.assertEqual(botcore.parse_internal_json(lines)["roots"], [])
+
+    def test_echoed_builder_text_is_not_a_root(self):
+        echo = [f"       > {line}" for line in cannot_build(self.VICTIM).split("\n")]
+        genuine = cannot_build(self.GENUINE, extra=["       Last 3 log lines:", *echo])
+        lines = [started(self.GENUINE), started(self.VICTIM), msg(genuine)]
+        self.assertEqual(self.roots(lines), [(self.GENUINE, "builder")])
+
+    def test_odd_line_breaks_in_an_echo_stay_in_the_block(self):
+        for sep in ("\x0b", "\x0c", "\x1c", "\x85", " ", " "):
+            with self.subTest(sep=repr(sep)):
+                echo = f"       > out{sep}{cannot_build(self.VICTIM).splitlines()[0]}"
+                genuine = cannot_build(self.GENUINE, extra=[echo, "       > done"])
+                lines = [started(self.GENUINE), started(self.VICTIM), msg(genuine)]
+                (root,) = botcore.parse_internal_json(lines)["roots"]
+                self.assertEqual(root["drv"], self.GENUINE)
+                self.assertIn("> done", root["excerpt"])
+
+    def test_malformed_records_are_ignored(self):
+        junk = [
+            "",
+            "garbage",
+            "@nix",
+            "@nix not json",
+            "@nix []",
+            "@nix 5",
+            "@nix null",
+            'warning: {"action":"msg","level":0}',
+            msg(cannot_build(self.GENUINE), level=1),
+            msg(cannot_build(self.GENUINE), level=3),
+            record(action="msg", level=0),
+            record(action="msg", level=0, msg=5),
+            record(action="msg", msg=cannot_build(self.GENUINE)),
+            record(action="start", type=105),
+            record(action="start", type=105, fields=[]),
+            record(action="start", type=105, fields=[5]),
+            record(action="start", type=104, fields=[self.GENUINE]),
+            record(action="result", type=105, fields=[self.GENUINE]),
+        ]
+        lines = [started(self.GENUINE), *junk, msg(cannot_build(self.GENUINE), level=1)]
+        self.assertEqual(botcore.parse_internal_json(lines), {"roots": [], "depFailed": []})
+        lines = [*junk, msg(cannot_build(self.GENUINE))]
+        self.assertEqual(botcore.parse_internal_json(lines), {"roots": [], "depFailed": []})
+        lines = [*junk, started(self.GENUINE), msg(cannot_build(self.GENUINE))]
+        self.assertEqual(self.roots(lines), [(self.GENUINE, "builder")])
+
+    def test_root_without_a_nix_start_record_is_dropped(self):
+        lines = [started(self.GENUINE), msg(cannot_build(self.GENUINE)), msg(cannot_build(self.VICTIM))]
+        self.assertEqual(self.roots(lines), [(self.GENUINE, "builder")])
+
+    def test_dependency_failures_need_no_start_record(self):
+        parent = drv_path("c", "parent-2.0")
+        lines = [msg(cannot_build(parent, "2 dependencies failed"))]
+        self.assertEqual(botcore.parse_internal_json(lines), {"roots": [], "depFailed": [parent]})
+
+    def test_last_record_per_drv_wins(self):
+        forged = f"error: hash mismatch in fixed-output derivation '{self.GENUINE}':\n         got: x"
+        real = cannot_build(self.GENUINE, extra=["       Last 1 log lines:", "       > boom"])
+        lines = [started(self.GENUINE), msg(forged), msg(real)]
+        (root,) = botcore.parse_internal_json(lines)["roots"]
+        self.assertEqual(root["kind"], "builder")
+        self.assertIn("> boom", root["excerpt"])
+
+    def test_root_order_is_stream_order(self):
+        drvs = [drv_path(c, f"p{c}-1.0") for c in "xyz"]
+        lines = [*(started(d) for d in drvs), *(msg(cannot_build(d)) for d in drvs)]
+        self.assertEqual([d for d, _ in self.roots(lines)], drvs)
+
+    def test_each_message_is_parsed_alone(self):
+        other = drv_path("c", "other-1.0")
+        crafted = "       > padding\n       > more"
+        lines = [
+            started(self.GENUINE),
+            msg(cannot_build(self.GENUINE)),
+            msg(crafted),
+            started(other),
+            msg(cannot_build(other)),
+        ]
+        got = botcore.parse_internal_json(lines)["roots"]
+        self.assertEqual([r["drv"] for r in got], [self.GENUINE, other])
+        self.assertNotIn("padding", got[0]["excerpt"])
+
+
 class FailedStepsTest(unittest.TestCase):
     EXPECTED = ("checks", "packages", "example")
 
