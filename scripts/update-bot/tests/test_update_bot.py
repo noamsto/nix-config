@@ -156,7 +156,7 @@ class WrapperHopTest(unittest.TestCase):
         records = [start, *({"action": "msg", "level": 0, "msg": m} for m in (built, dep))]
         (capture / "nix.AAAAAA").write_text("".join(f"@nix {json.dumps(r)}\n" for r in records))
 
-    def analyze(self, referrers, attrs, base_attrs=None) -> list[dict]:
+    def analyze(self, referrers, attrs, base_attrs=None, wrapper_built=False) -> list[dict]:
         # By default the base lacks the wrapper's attr, so the update caused the failure.
         base_attrs = base_attrs or {}
         base_dir = str(self.tmp / "base")
@@ -180,7 +180,9 @@ class WrapperHopTest(unittest.TestCase):
             mock.patch.object(update_bot, "fallback_table", lambda s, c: dict.fromkeys(c, True)),
             mock.patch.object(update_bot, "referrers", referrers),
             mock.patch.object(update_bot, "leaf_of", lambda a, d: (True, "leaf")),
-            mock.patch.object(update_bot, "outputs_valid", lambda d: False, create=True),
+            mock.patch.object(
+                update_bot, "outputs_valid", lambda d: wrapper_built and d == FOO_WRAPPED, create=True
+            ),
         ):
             update_bot.cmd_analyze(args)
         return json.loads(out.read_text())["failures"]
@@ -232,8 +234,22 @@ class WrapperHopTest(unittest.TestCase):
         self.assertIsNone(f["attr"])
         self.assertIn("unmapped", f["why"])
 
-    def test_dependent_that_did_not_fail_does_not_map(self):
+    def test_no_referrer_does_not_map(self):
         (f,) = self.analyze(lambda d: [], {FOO_WRAPPED: "foo"})
+        self.assertIsNone(f["attr"])
+        self.assertIn("unmapped", f["why"])
+
+    def test_dependent_whose_outputs_are_valid_does_not_map(self):
+        # Reported as dependency-failed, but the store has its outputs.
+        (f,) = self.analyze(self.wrapper_referrers, {FOO_WRAPPED: "foo"}, wrapper_built=True)
+        self.assertIsNone(f["attr"])
+        self.assertIn("unmapped", f["why"])
+
+    def test_dependent_not_reported_dependency_failed_does_not_map(self):
+        capture = self.tmp / "logs" / "example.nix-json" / "nix.AAAAAA"
+        kept = [line for line in capture.read_text().splitlines() if FOO_WRAPPED not in line]
+        capture.write_text("".join(f"{line}\n" for line in kept))
+        (f,) = self.analyze(self.wrapper_referrers, {FOO_WRAPPED: "foo"})
         self.assertIsNone(f["attr"])
         self.assertIn("unmapped", f["why"])
 
