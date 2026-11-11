@@ -81,7 +81,7 @@ in {
         files.preferences = {
           autoIndexing = false;
           excludedPaths = ".git;node_modules;result";
-          paths = "~/Documents;~/Desktop;~/vaults;~/notes;~/nix-config";
+          paths = "~/Documents;~/Desktop;~/vaults;~/notes;${osConfig.nix-config.checkoutPath}";
         };
       };
     });

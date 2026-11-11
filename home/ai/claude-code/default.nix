@@ -236,7 +236,7 @@
       name = ".claude/skills/${name}";
       value.source =
         config.lib.file.mkOutOfStoreSymlink
-        "${config.home.homeDirectory}/nix-config/home/ai/claude-code/skills/${name}";
+        "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/skills/${name}";
     })
     skillNames);
 in {
@@ -284,22 +284,22 @@ in {
     file =
       {
         ".claude/CLAUDE.md".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+          config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/CLAUDE.global.md";
         # Engine-neutral conventions imported by CLAUDE.global.md via
         # @~/.claude/AGENTS.shared.md. The same file backs ~/.cursor/rules
         # (see ../cursor).
         ".claude/AGENTS.shared.md".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+          config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/AGENTS.shared.md";
         # Profile overlay imported by CLAUDE.global.md via @~/.claude/CLAUDE.profile.md.
         # Always present so the import never silently no-ops.
         ".claude/CLAUDE.profile.md".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.personal.md";
+          config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/CLAUDE.personal.md";
         ".claude/settings.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/settings.json";
+          config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/settings.json";
         # Mirrored to ~/.cursor/agents from the cursor module.
         ".claude/agents".source = agents;
         ".claude/commands".source =
-          config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/commands";
+          config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/commands";
         # No `.claude/workflows` symlink: spec-plan-critic.js was the only
         # workflow and it moved to the dispatcher plugin. Git does not track an
         # empty directory, so pointing at one would dangle on a fresh clone.

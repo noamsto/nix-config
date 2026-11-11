@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  osConfig,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {
@@ -32,7 +33,7 @@ in {
 
   # Amp reads AGENTS.md (primary) or CLAUDE.md (fallback) — share Claude's global instructions
   home.file.".config/AGENTS.md".source =
-    config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/claude-code/CLAUDE.global.md";
+    config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/claude-code/CLAUDE.global.md";
 
   xdg.configFile."amp/settings.json".text = builtins.toJSON {
     "amp.terminal.theme" = "catppuccin-mocha";

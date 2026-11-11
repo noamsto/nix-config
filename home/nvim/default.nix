@@ -2,6 +2,7 @@
   pkgs,
   config,
   lib,
+  osConfig,
   ...
 }: let
   vp = pkgs.vimPlugins;
@@ -125,7 +126,7 @@ in {
     "nvim/.neoconf.json".source = ./lazyVim/.neoconf.json;
     "nvim/stylua.toml".source = ./lazyVim/stylua.toml;
     # harper-ls writes added words to this file, so it stays a live link into the repo.
-    "harper-ls/dictionary.txt".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/nvim/harper-dictionary.txt";
+    "harper-ls/dictionary.txt".source = config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/nvim/harper-dictionary.txt";
   };
 
   programs.neovim = {

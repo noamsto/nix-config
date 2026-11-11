@@ -157,6 +157,21 @@
         else "/home/${config.username}/nix-config";
     };
     nix-config = {
+      checkoutPath = lib.mkOption {
+        type = lib.types.str;
+        default =
+          if pkgs.stdenv.hostPlatform.isDarwin
+          then "/Users/${config.username}/nix-config"
+          else "/home/${config.username}/nix-config";
+        defaultText = lib.literalExpression ''"/home/''${config.username}/nix-config" ("/Users/..." on Darwin)'';
+        description = ''
+          Absolute path of the working copy of this repo. Home Manager modules
+          link files out of it (Claude Code settings, commands and skills, pi,
+          Cursor and Amp shared instructions, the Harper dictionary) so edits
+          apply without a rebuild. Set it when the checkout is not at the
+          default; a missing directory makes activation print a warning.
+        '';
+      };
       ai = {
         localServer.enable = lib.mkOption {
           type = lib.types.bool;

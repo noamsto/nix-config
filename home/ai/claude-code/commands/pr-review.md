@@ -197,7 +197,7 @@ For each gap from Step 3, report it plainly:
 
 Then ask whether to create one. **On yes:**
 
-1. Draft the new reviewer at `~/nix-config/home/ai/claude-code/agents/<x>-reviewer.md`, modeled on the generated `~/.claude/agents/go-reviewer.md` (still readable):
+1. Draft the new reviewer at `home/ai/claude-code/agents/<x>-reviewer.md` in the nix-config checkout (`nix-config.checkoutPath`), modeled on the generated `~/.claude/agents/go-reviewer.md` (still readable):
    - Frontmatter: `name`, a `description` ending in "Use for all `<lang>` code changes.", `tools: ["Read", "Grep", "Glob", "Bash"]`, `model: sonnet`.
    - Body: a focused `<lang>` reviewer system prompt (idioms, common bugs, the language's lint/vet tooling, the "When invoked" steps pattern).
    - It takes effect only after `git add` and `nh home switch`; `~/.claude/agents` is a read-only store symlink, so a write there fails, and a git-based flake sees only tracked files, so the switch ignores an untracked draft.
