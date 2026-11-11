@@ -429,6 +429,26 @@ def cmd_finalize(args) -> None:
     set_output("blocked", "true" if final["blocked"] else "false")
 
 
+def cmd_check_main(args) -> None:
+    out = sh(["git", "ls-remote", "origin", "refs/heads/main"]).stdout
+    main = out.split("\t", 1)[0].strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", main):
+        sys.exit(f"could not read origin main from ls-remote: {out!r}")
+    decision = botcore.main_moved(args.run_sha, main, args.rerun == "true")
+    if decision["moved"]:
+        outcome = (
+            "starting a fresh run"
+            if decision["dispatch"]
+            else "this is a re-run, not starting another"
+        )
+        print(
+            f"::notice::main moved from {args.run_sha} to {main} during this run; "
+            f"not publishing, {outcome}"
+        )
+    set_output("moved", "true" if decision["moved"] else "false")
+    set_output("dispatch", "true" if decision["dispatch"] else "false")
+
+
 # --- advance-fallback / bodies ---------------------------------------------
 
 
@@ -536,6 +556,12 @@ def main() -> None:
         out={},
     )
     add("finalize", cmd_finalize, combined={}, nixpkgs={}, inputs={})
+    add(
+        "check-main",
+        cmd_check_main,
+        run_sha={},
+        rerun={"choices": ["true", "false"]},
+    )
     add("advance-fallback", cmd_advance_fallback, base_lock={})
     add(
         "pr-body",

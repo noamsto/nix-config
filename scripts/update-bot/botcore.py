@@ -406,6 +406,17 @@ def finalize(results: dict[str, str]) -> dict:
     }
 
 
+def main_moved(run_sha: str, main_sha: str, rerun: bool) -> dict:
+    """Publish only onto the commit this run built against.
+
+    A moved main skips publishing and, unless this run is itself a re-run,
+    starts one fresh run; a re-run that finds main moved again starts nothing,
+    so a busy main cannot chain runs.
+    """
+    moved = run_sha != main_sha
+    return {"moved": moved, "dispatch": moved and not rerun}
+
+
 def fallback_advance(pins_doc: dict, base_lock: dict, new_lock: dict) -> str | None:
     new = locked_rev(new_lock, "nixpkgs")
     if (

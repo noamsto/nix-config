@@ -28,6 +28,49 @@ class FlakeUrlTest(unittest.TestCase):
         self.assertEqual(update_bot.flake_url("/x/y"), "git+file:///x/y?shallow=1")
 
 
+class CheckMainTest(unittest.TestCase):
+    OLD = "a" * 40
+    NEW = "b" * 40
+
+    def run_check(self, ls_remote: str, rerun: str):
+        proc = subprocess.CompletedProcess([], 0, stdout=ls_remote, stderr="")
+        with (
+            mock.patch.object(update_bot, "sh", return_value=proc),
+            mock.patch.object(update_bot, "set_output") as out,
+            mock.patch("builtins.print") as printed,
+        ):
+            update_bot.cmd_check_main(Namespace(run_sha=self.OLD, rerun=rerun))
+        notices = [c.args[0] for c in printed.call_args_list]
+        return dict(c.args for c in out.call_args_list), notices
+
+    def test_not_moved_publishes(self):
+        outputs, notices = self.run_check(f"{self.OLD}\trefs/heads/main\n", "false")
+        self.assertEqual(outputs, {"moved": "false", "dispatch": "false"})
+        self.assertEqual(notices, [])
+
+    def test_moved_skips_and_dispatches(self):
+        outputs, notices = self.run_check(f"{self.NEW}\trefs/heads/main\n", "false")
+        self.assertEqual(outputs, {"moved": "true", "dispatch": "true"})
+        self.assertEqual(
+            notices,
+            [
+                (
+                    f"::notice::main moved from {self.OLD} to {self.NEW} during this run; "
+                    "not publishing, starting a fresh run"
+                )
+            ],
+        )
+
+    def test_moved_during_a_rerun_skips_without_dispatching(self):
+        outputs, notices = self.run_check(f"{self.NEW}\trefs/heads/main\n", "true")
+        self.assertEqual(outputs, {"moved": "true", "dispatch": "false"})
+        self.assertIn("not starting another", notices[0])
+
+    def test_unreadable_ls_remote_fails_closed(self):
+        with self.assertRaises(SystemExit):
+            self.run_check("", "false")
+
+
 class AnalyzeTest(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
