@@ -8,6 +8,7 @@ import unittest
 from argparse import Namespace
 from unittest import mock
 
+import botcore
 import update_bot
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
@@ -18,6 +19,8 @@ PARENT = STORE + "bmls4mj1s0nn0sg46k2yxaqkwi7r7f4a-parent-2.0.drv"
 SIBLING = STORE + "50rd1r4qpglmr9bd47ksa45wph2zr44l-sibling-1.0.drv"
 VICTIM = STORE + "0123456789abcdfghijklmnpqrsvwxyz-victim-1.0.drv"
 YDRV = STORE + "abcdfghijklmnpqrsvwxyz0123456789-ywhy-1.0.drv"
+FOO = STORE + "1111111111111111111111111111111a-foo-1.0.drv"
+FOO_WRAPPED = STORE + "2222222222222222222222222222222b-foo-wrapped-1.0.drv"
 
 
 class FlakeUrlTest(unittest.TestCase):
@@ -136,6 +139,103 @@ class AnalyzeTest(unittest.TestCase):
                 failures = self.analyze(valid={YDRV: False})
                 self.assertEqual([f["drv"] for f in failures], [YDRV])
                 self.assertTrue(failures[0]["logExcerpt"].startswith("error: Cannot build"))
+
+
+class WrapperHopTest(unittest.TestCase):
+    """A failed inner drv whose top-level attr is a wrapper that depends on it."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        capture = self.tmp / "logs" / "example.nix-json"
+        capture.mkdir(parents=True)
+        start = {"action": "start", "type": 105, "level": 3, "id": 1, "fields": [FOO, "", 1, 1]}
+        built = f"error: Cannot build '{FOO}'.\n       Reason: builder failed with exit code 1."
+        dep = f"error: Cannot build '{FOO_WRAPPED}'.\n       Reason: 1 dependency failed."
+        records = [start, *({"action": "msg", "level": 0, "msg": m} for m in (built, dep))]
+        (capture / "nix.AAAAAA").write_text("".join(f"@nix {json.dumps(r)}\n" for r in records))
+
+    def analyze(self, referrers, attrs, base_attrs=None) -> list[dict]:
+        # By default the base lacks the wrapper's attr, so the update caused the failure.
+        base_attrs = base_attrs or {}
+        base_dir = str(self.tmp / "base")
+
+        def drv_table(flake_dir, system, cands):
+            owned = base_attrs if flake_dir == base_dir else attrs
+            return {c: {d for d, a in owned.items() if a == c} for c in cands}
+
+        out = self.tmp / "report.json"
+        args = Namespace(
+            system="x86_64-linux",
+            job="check",
+            logs=str(self.tmp / "logs"),
+            steps_json=json.dumps({"example": {"outcome": "failure"}}),
+            expected_steps="example",
+            base_dir=base_dir,
+            out=str(out),
+        )
+        with (
+            mock.patch.object(update_bot, "drv_table", drv_table),
+            mock.patch.object(update_bot, "fallback_table", lambda s, c: dict.fromkeys(c, True)),
+            mock.patch.object(update_bot, "referrers", referrers),
+            mock.patch.object(update_bot, "leaf_of", lambda a, d: (True, "leaf")),
+            mock.patch.object(update_bot, "outputs_valid", lambda d: False, create=True),
+        ):
+            update_bot.cmd_analyze(args)
+        return json.loads(out.read_text())["failures"]
+
+    @staticmethod
+    def wrapper_referrers(d):
+        return [FOO_WRAPPED] if d == FOO else []
+
+    def test_failed_inner_drv_maps_to_the_wrapping_attr(self):
+        (f,) = self.analyze(self.wrapper_referrers, {FOO_WRAPPED: "foo"})
+        self.assertEqual((f["drv"], f["attr"]), (FOO, "foo"))
+        self.assertTrue(f["leaf"])
+        self.assertFalse(f["notCausedByUpdate"])
+        self.assertFalse(f["missingInFallback"])
+        self.assertNotIn("unmapped", f["why"])
+
+    def test_wrapper_already_building_on_base_is_not_caused_by_the_update(self):
+        (f,) = self.analyze(self.wrapper_referrers, {FOO_WRAPPED: "foo"}, base_attrs={FOO_WRAPPED: "foo"})
+        self.assertTrue(f["notCausedByUpdate"])
+
+    def test_decide_repins_the_wrapping_attr(self):
+        failures = self.analyze(self.wrapper_referrers, {FOO_WRAPPED: "foo"})
+        reps = [{"system": "x86_64-linux", "job": "check", "ok": False, "failures": failures}]
+        empty = {"frozenInputs": [], "pins": []}
+        got = botcore.decide(
+            attempt="combined",
+            round_=1,
+            max_rounds=3,
+            reports=reps,
+            expected_jobs=["check"],
+            base_pins=empty,
+            cur_pins=empty,
+            nixpkgs_rev="b" * 40,
+            nixpkgs_moved=True,
+            today="2026-11-05",
+            run_url="https://example.invalid/run",
+        )
+        self.assertEqual(got["action"], "repin")
+        self.assertEqual([p["attr"] for p in got["pins"]["pins"]], ["foo"])
+
+    def test_root_without_a_matching_dependent_stays_unmapped(self):
+        (f,) = self.analyze(self.wrapper_referrers, {})
+        self.assertIsNone(f["attr"])
+        self.assertIn("unmapped", f["why"])
+
+    def test_candidate_attr_building_an_unrelated_drv_stays_unmapped(self):
+        other = STORE + "3333333333333333333333333333333c-foo-1.0.drv"
+        (f,) = self.analyze(self.wrapper_referrers, {other: "foo"})
+        self.assertIsNone(f["attr"])
+        self.assertIn("unmapped", f["why"])
+
+    def test_dependent_that_did_not_fail_does_not_map(self):
+        (f,) = self.analyze(lambda d: [], {FOO_WRAPPED: "foo"})
+        self.assertIsNone(f["attr"])
+        self.assertIn("unmapped", f["why"])
 
 
 class OutputsValidTest(unittest.TestCase):

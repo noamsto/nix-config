@@ -279,14 +279,18 @@ def cmd_analyze(args) -> None:
         if not reported:
             no_root_steps.append(step)
 
+    dependents: dict[str, list[str]] = {}
+
+    def failed_dependents(drv: str) -> list[str]:
+        if drv not in dependents:
+            dependents[drv] = [d for d in referrers(drv) or [] if d in dep_failed and valid_outputs(d) is False]
+        return dependents[drv]
+
     # FOD hop: an unmapped fixed-output hash failure is attributed to the
     # failed dependents that consume it.
-    dependents: dict[str, list[str]] = {}
     for r in roots:
         if r["kind"] == "hash":
-            dependents[r["drv"]] = [
-                d for d in referrers(r["drv"]) or [] if d in dep_failed and valid_outputs(d) is False
-            ]
+            failed_dependents(r["drv"])
 
     cand_of: dict[str, str] = {}
     for drv in [r["drv"] for r in roots] + [d for ds in dependents.values() for d in ds]:
@@ -309,6 +313,15 @@ def cmd_analyze(args) -> None:
         cand = cand_of.get(drv)
         return cand is not None and drv in table.get(cand, set())
 
+    def wrapped_by(table: dict, root: str) -> str | None:
+        # Wrapper hop: the root's own candidate attr evaluates to a failed
+        # dependent of the root (tectonic -> tectonic-wrapped over the failed
+        # tectonic-unwrapped), so the attr builds the root only indirectly.
+        cand = cand_of.get(root)
+        if cand is None:
+            return None
+        return next((d for d in failed_dependents(root) if d in table.get(cand, set())), None)
+
     failures = []
     for r in roots:
         drv = r["drv"]
@@ -317,15 +330,20 @@ def cmd_analyze(args) -> None:
             continue
         if maps(cur, drv):
             target = drv
+            attr = cand_of[drv]
         else:
             target = next((d for d in dependents.get(drv, []) if maps(cur, d)), None)
+            if target:
+                attr = cand_of[target]
+            else:
+                target = wrapped_by(cur, drv)
+                attr = cand_of.get(drv)
         failure = blank_failure(drv, "unmapped: no top-level package attr builds this derivation", r["excerpt"])
-        if target:
-            attr = cand_of[target]
+        if target and attr:
             failure["attr"] = attr
             failure["leaf"], failure["why"] = leaf_of(attr, target)
             if base_err is None:
-                failure["notCausedByUpdate"] = maps(base, target)
+                failure["notCausedByUpdate"] = target in base.get(attr, set())
             else:
                 failure["notCausedByUpdate"] = None
                 failure["why"] += f"; base eval failed: {base_err}"
