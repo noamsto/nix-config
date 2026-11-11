@@ -3,6 +3,7 @@
   config,
   pkgs,
   lib,
+  osConfig,
   ...
 }: let
   mcpServers = import ../mcp-servers.nix {
@@ -63,7 +64,7 @@ in {
       # are followed, so this points at the same file claude imports and codex reads
       # as ~/.codex/AGENTS.md. Out-of-store to stay editable without a rebuild.
       ".cursor/rules/shared-conventions.mdc".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+        config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/AGENTS.shared.md";
 
       # Same reviewer/specialist agents as Claude Code / Codex. Cursor docs also
       # read ~/.claude/agents, but the CLI only reliably discovers project-level

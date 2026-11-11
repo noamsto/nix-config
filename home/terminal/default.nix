@@ -82,7 +82,7 @@ in {
     startupSession = {
       enable = true;
       name = "nix-config";
-      directory = "${config.home.homeDirectory}/nix-config";
+      directory = osConfig.nix-config.checkoutPath;
       terminal.emulator = "kitty";
       # A serverMode host is reached over ssh with no graphical login, so the
       # default graphical-session.target gating never fires and no tmux server

@@ -1,6 +1,7 @@
 {applyKeyed, ...}: {
   imports = [
     (applyKeyed ./agent-skills)
+    ../checkout-check.nix
     ./amp
     (applyKeyed ./claude-code)
     (applyKeyed ./cursor)

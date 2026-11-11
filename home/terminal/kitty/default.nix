@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  osConfig,
   ...
 }: let
   inherit (config.theme) palette;
@@ -130,10 +131,15 @@ in {
       # apps inherit launchd's minimal PATH (no nix profile), so prepend the
       # per-user profile bin — otherwise `tmux` isn't found and the window closes
       # on launch. The profile path resolves the lazytmux-wrapped tmux.
-      shell =
-        if pkgs.stdenv.hostPlatform.isDarwin
-        then "${pkgs.fish}/bin/fish -l -c 'set -gx PATH /etc/profiles/per-user/${config.home.username}/bin $PATH; tmux attach -t nix-config || tmux new -As nix-config -c $HOME/nix-config'"
-        else "${pkgs.fish}/bin/fish -l -c 'systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c $HOME/nix-config'";
+      shell = let
+        checkout = lib.escapeShellArg osConfig.nix-config.checkoutPath;
+        # The fish command is escaped as one argument, so the path's own
+        # quoting nests safely inside it.
+        fishCmd =
+          if pkgs.stdenv.hostPlatform.isDarwin
+          then "set -gx PATH /etc/profiles/per-user/${config.home.username}/bin $PATH; tmux attach -t nix-config || tmux new -As nix-config -c ${checkout}"
+          else "systemctl --user start tmux-startup.service && TMUX_TMPDIR=/run/user/$(id -u) tmux attach -t nix-config || TMUX_TMPDIR=/run/user/$(id -u) tmux new -As nix-config -c ${checkout}";
+      in "${pkgs.fish}/bin/fish -l -c ${lib.escapeShellArg fishCmd}";
     };
 
     keybindings = {

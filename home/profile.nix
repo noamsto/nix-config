@@ -17,6 +17,7 @@
       ./git
       (applyKeyed ./direnv)
       ./ssh
+      ./checkout-check.nix
       (applyKeyed ./nvim)
       ./ipython
       (applyKeyed ./ai)

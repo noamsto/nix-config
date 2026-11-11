@@ -245,7 +245,7 @@ in {
     # cursor loads as a rule.
     file = {
       ".pi/agent/AGENTS.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nix-config/home/ai/AGENTS.shared.md";
+        config.lib.file.mkOutOfStoreSymlink "${osConfig.nix-config.checkoutPath}/home/ai/AGENTS.shared.md";
 
       # The subagent extension resolves its roster as $PI_CODING_AGENT_DIR/agents
       # with no CLI flag to redirect it, so unlike the skills above this one

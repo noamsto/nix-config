@@ -56,8 +56,8 @@ in {
 
     # Groups a consumer can import without the profile. `terminal` and
     # `desktop` are left out: they read options declared by ../home/theme.
-    # `git` and `ssh` read `nix-config.*` through `osConfig`, so the system
-    # must import `options`.
+    # `git`, `ssh`, `ai` and `nvim` read `nix-config.*` through `osConfig`, so
+    # the system must import `options`.
     homeModules = {
       default = applyKeyed ../home/profile.nix;
       ai = applyKeyed ../home/ai;

@@ -41,7 +41,7 @@ PRs or issues.
 - Run `shellcheck` after creating/editing shell scripts; fix all findings.
 - A nested Hyprland needs its own `XDG_RUNTIME_DIR` and an absolute parent
   `WAYLAND_DISPLAY`, otherwise it clobbers the live systemd user environment.
-  Launch and repair steps: `~/nix-config/.agents/skills/nested-wayland/SKILL.md`.
+  Launch and repair steps: `.agents/skills/nested-wayland/SKILL.md` in the nix-config checkout.
 - If a Nerd Font glyph fails to render, use a variable with its intended icon
   name in a comment (e.g. `# nerd: nf-md-folder`); the user supplies the glyph.
 
