@@ -282,7 +282,8 @@ class PlanGcTest(unittest.TestCase):
         self.assertNotIn(f"{H['a']}.narinfo", plan.delete_narinfos)
 
     def test_budget_evicts_longest_not_live_first(self):
-        # a was uploaded last but last live earliest, so it goes first.
+        # b was uploaded long ago but last live 3 hours ago, a was uploaded 5
+        # hours ago: by upload time b is oldest, by last-live time a is.
         objs = (
             self.pair("a", age=datetime.timedelta(hours=5))
             + self.pair("b", age=30 * DAY)
@@ -293,6 +294,23 @@ class PlanGcTest(unittest.TestCase):
             last_live={H["a"]: NOW - 2 * DAY, H["b"]: NOW - datetime.timedelta(hours=3)},
         )
         self.assertEqual(plan.delete_narinfos, [f"{H['a']}.narinfo"])
+
+    def test_future_last_live_counts_as_now(self):
+        # Clamped to now it ages from now on; unclamped it would be negative,
+        # keeping the narinfo and exempting it from budget eviction for good.
+        objs = self.pair("a", age=30 * DAY) + self.pair("b", age=30 * DAY)
+        plan = self.plan(
+            objs, budget=20,
+            last_live={H["a"]: NOW + 400 * DAY, H["b"]: NOW - DAY},
+        )
+        self.assertEqual(plan.delete_narinfos, [f"{H['b']}.narinfo"])
+        later = NOW + 4 * DAY
+        plan = nc.plan_gc(
+            objs, {f"{H[c]}.narinfo": narinfo_text(c) for c in "ab"}, set(), set(),
+            set(), True, later, GRACE, BIG,
+            nc.update_last_live({H["a"]: NOW + 400 * DAY}, set(), {H["a"]}, NOW),
+        )
+        self.assertIn(f"{H['a']}.narinfo", plan.delete_narinfos)
 
     def test_gc_state_object_is_never_planned_for_deletion(self):
         state = obj(nc.GC_STATE_KEY, 5, age=100 * DAY)
@@ -548,6 +566,14 @@ class LastLiveStateTest(unittest.TestCase):
             {"a": NOW - DAY, "gone": NOW - DAY}, {"a", "also-gone"}, {"a"}, NOW
         )
         self.assertEqual(updated, {"a": NOW})
+
+    def test_future_stamps_are_clamped_to_now(self):
+        updated = nc.update_last_live({"a": NOW + 400 * DAY}, set(), {"a"}, NOW)
+        self.assertEqual(updated, {"a": NOW})
+
+    def test_deeply_nested_state_text_is_unreadable_not_a_crash(self):
+        with self.assertRaises(RuntimeError):
+            nc.decode_gc_state("[" * 100000)
 
     def test_previous_map_is_not_mutated(self):
         previous = {"a": NOW - DAY}

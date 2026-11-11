@@ -788,8 +788,9 @@ GC_STATE_VERSION = 1
 
 def update_last_live(previous, live_hashes, present_hashes, now):
     """Pure. The last-live map after a GC run: every live hash seen now, every
-    earlier entry kept, and entries for hashes no longer in R2 dropped."""
-    updated = {h: t for h, t in previous.items() if h in present_hashes}
+    earlier entry kept (never later than `now`), and entries for hashes no longer
+    in R2 dropped."""
+    updated = {h: min(t, now) for h, t in previous.items() if h in present_hashes}
     for hash_ in live_hashes & present_hashes:
         updated[hash_] = now
     return updated
@@ -808,7 +809,9 @@ def decode_gc_state(text):
         if data["version"] != GC_STATE_VERSION:
             raise ValueError(f"unknown version {data['version']!r}")
         return {h: parse_modtime(t) for h, t in data["last_live"].items()}
-    except (KeyError, TypeError, AttributeError, ValueError) as err:
+    except (
+        KeyError, TypeError, AttributeError, ValueError, OverflowError, RecursionError
+    ) as err:
         raise RuntimeError(
             f"{GC_STATE_KEY} is unreadable ({err}); fix or delete it in the bucket"
         ) from err
@@ -861,9 +864,11 @@ def plan_gc(
     def age(obj):
         return now - obj.mtime
 
-    # A narinfo's reference point: its upload, or later the last time it was live.
+    # A narinfo's reference point: its upload, or later the last time it was
+    # live. A last-live time in the future (clock skew, a hand-edited state)
+    # counts as now: it must not make a narinfo unevictable for good.
     seen = {
-        k: max(o.mtime, last_live.get(k[: -len(".narinfo")], o.mtime))
+        k: max(o.mtime, min(last_live.get(k[: -len(".narinfo")], o.mtime), now))
         for k, o in narinfos.items()
     }
 
