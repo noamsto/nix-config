@@ -5,9 +5,7 @@
   ...
 }: let
   palette = config.theme.palette.dark;
-  voxtype = pkgs.voxtype.override {
-    onnxSupport = true;
-  };
+  voxtype = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.onnx;
 in {
   home.packages = [
     # OCR tool - select area and copy text
@@ -33,7 +31,7 @@ in {
     environment = {
       # The launcher searches --qml-path, then this, then XDG data dirs; the
       # QML tree ships in the source but nixpkgs installs none of it.
-      VOXTYPE_OSD_QML_PATH = "${voxtype.src}/quickshell";
+      VOXTYPE_OSD_QML_PATH = "${inputs.voxtype}/quickshell";
 
       # The module's own PATH covers only coreutils/which plus the wayland
       # typing tools, and systemd lets a later Environment= line win — so
