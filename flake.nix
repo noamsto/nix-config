@@ -78,6 +78,17 @@
     # scripts/update-bot moves it.
     nixpkgs-fallback.url = "github:nixos/nixpkgs/f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
 
+    # nixpkgs' voxtype onnx variant does not build and Hydra never builds it;
+    # upstream's CI builds .#onnx on every release. No nixpkgs follows on
+    # purpose: current nixpkgs' cargo-setup-hook (cargoUseSystemLibs) forces
+    # system oniguruma/sqlite and breaks the build. Nix ignores a dependency's
+    # own flake.lock, so pin the nixpkgs rev upstream's lock (and CI) uses.
+    # Restore the follows once upstream's lock moves past that change.
+    voxtype = {
+      url = "github:peteonrails/voxtype";
+      inputs.nixpkgs.url = "github:nixos/nixpkgs/9fbb54b33e91ee4ca368e35a78e0613c720600b3";
+    };
+
     # === macOS (nix-darwin) ===
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";
