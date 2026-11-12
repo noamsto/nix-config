@@ -183,7 +183,6 @@ in {
             "noctalia/screen_recorder"
             "davemhammer/tailscale"
             "raycursive/github-prs"
-            "lfdominguez/claude-sessions"
             "pozzoo/hassio"
             "mindnbytes/nix-status"
           ];
@@ -242,7 +241,7 @@ in {
             }
             {
               id = "dev";
-              members = ["claude_sessions" "github_prs" "nix_status" "mini_docker"];
+              members = ["github_prs" "nix_status" "mini_docker"];
             }
             {
               id = "homenet";
@@ -330,7 +329,6 @@ in {
           mini_docker.type = "8bury/mini-docker:mini-docker";
           screen_recorder.type = "noctalia/screen_recorder:recorder";
           github_prs.type = "raycursive/github-prs:bar";
-          claude_sessions.type = "lfdominguez/claude-sessions:bar";
           hassio.type = "pozzoo/hassio:status";
           nix_status.type = "mindnbytes/nix-status:status";
 
