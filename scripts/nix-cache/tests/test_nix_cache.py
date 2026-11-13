@@ -805,6 +805,44 @@ class LocalPathInfoTest(unittest.TestCase):
         self.assertEqual(info.references, [base("b"), base("a")])
 
 
+class LoadCachesTest(unittest.TestCase):
+    def run_load(self):
+        payload = {
+            "r2": {"url": "https://r2.example", "publicKey": "r2-key:PUB"},
+            "substituters": ["https://r2.example", "https://a.example"],
+            "extraSubstituters": ["https://b.example"],
+            "trustedPublicKeys": ["r2-key:PUB", "a-key:PUB"],
+            "extraTrustedPublicKeys": ["b-key:PUB"],
+        }
+        cmds = []
+
+        def fake_run_json(cmd, error=RuntimeError):
+            cmds.append(list(cmd))
+            return payload
+
+        with mock.patch.object(nc, "run_json", side_effect=fake_run_json):
+            caches = nc.load_caches("/repo")
+        return caches, cmds[0]
+
+    def test_maps_r2_upstreams_and_keys(self):
+        caches, _ = self.run_load()
+        self.assertEqual(caches.r2_url, "https://r2.example")
+        self.assertEqual(caches.public_key, "r2-key:PUB")
+        self.assertEqual(caches.upstreams, ["https://a.example", "https://b.example"])
+        self.assertEqual(caches.keys, ["r2-key:PUB", "a-key:PUB", "b-key:PUB"])
+
+    def test_apply_expression_selects_key_attributes(self):
+        _, cmd = self.run_load()
+        apply = cmd[cmd.index("--apply") + 1]
+        for attr in (
+            "substituters",
+            "extraSubstituters",
+            "trustedPublicKeys",
+            "extraTrustedPublicKeys",
+        ):
+            self.assertIn(f"c.{attr}", apply)
+
+
 class NixConfigTest(unittest.TestCase):
     def test_existing_value_kept_and_two_lines_appended(self):
         out = nc.extend_nix_config(
