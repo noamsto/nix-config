@@ -15,8 +15,6 @@ on:
         type: string
         required: true
     secrets:
-      CACHIX_AUTH_TOKEN:
-        required: false
       NIX_CACHE_SIGNING_KEY:
         required: false
       R2_ACCESS_KEY_ID:
@@ -43,7 +41,7 @@ defaults:
 # decide output it depends on explicitly.
 jobs:
   # Every round pushes what it built, green or not: the bot's GITHUB_TOKEN merge
-  # does not trigger check.yml on main, so this is the only push to Cachix and R2
+  # does not trigger check.yml on main, so this is the only push to R2
   # for the update, and later rounds substitute what earlier rounds built.
   build-1:
     uses: ./.github/workflows/build.yml
@@ -53,7 +51,6 @@ jobs:
       report: true
       report-name: report-${{ inputs.attempt }}-1
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -119,7 +116,6 @@ jobs:
       report: true
       report-name: report-${{ inputs.attempt }}-2
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -182,7 +178,6 @@ jobs:
       report: true
       report-name: report-${{ inputs.attempt }}-3
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
       NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}

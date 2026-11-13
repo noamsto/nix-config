@@ -15,16 +15,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Pushes only on main. The token and the R2 signing key and credentials are
-  # withheld from every other run, so PR code (same-repo branches get secrets) cannot
-  # read them and push into the trusted caches. An empty token makes cachix-action
-  # read-only rather than failing, and the R2 push step does not run without push-cache.
+  # Pushes only on main. The R2 signing key and credentials are withheld from every
+  # other run, so PR code (same-repo branches get secrets) cannot read them and push
+  # into the trusted cache; the R2 push step does not run without push-cache.
   build:
     uses: ./.github/workflows/build.yml
     with:
       push-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
       NIX_CACHE_SIGNING_KEY: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
       R2_ACCESS_KEY_ID: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
       R2_SECRET_ACCESS_KEY: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}

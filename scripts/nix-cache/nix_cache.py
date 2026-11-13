@@ -20,7 +20,6 @@ import time
 import urllib.error
 import urllib.request
 
-LEGACY_CACHE = "https://noamsto-nix-config.cachix.org"
 USER_AGENT = "nix-config-nix-cache/1"
 MAX_CONCURRENCY = 8
 STORE_DIR = "/nix/store"
@@ -135,9 +134,8 @@ def load_caches(repo_root):
         ]
     )
     r2_url = data["r2"]["url"]
-    skip = (r2_url, LEGACY_CACHE)
     upstreams = [
-        s for s in data["substituters"] + data["extraSubstituters"] if s not in skip
+        s for s in data["substituters"] + data["extraSubstituters"] if s != r2_url
     ]
     return Caches(r2_url, data["r2"]["publicKey"], upstreams)
 
@@ -178,9 +176,6 @@ def lookup(hash_, caches, fetch=fetch_text, local=local_path_info):
     info = local(hash_)
     if info is not None:
         return "local", info
-    text = fetch(f"{LEGACY_CACHE}/{hash_}.narinfo")
-    if text is not None:
-        return "legacy", parse_narinfo(text)
     return "absent", None
 
 
@@ -358,7 +353,7 @@ def compute_need(nodes, pin_hashes):
     in R2 itself. A pin found nowhere is built by `realise`, so it is needed."""
     paths, unresolved = set(), set()
     for hash_, node in nodes.items():
-        if node.kind in ("local", "legacy"):
+        if node.kind == "local":
             paths.add(hash_)
         elif node.kind == "upstream":
             if hash_ in pin_hashes:
@@ -597,7 +592,7 @@ def classify(uploaded, nodes, pin_hashes):
             failures.append(f"pin {node.name} is not in R2")
         elif hash_ in uploaded:
             failures.append(f"{node.name} was uploaded but is not in R2")
-        elif node.kind in ("absent", "local", "legacy"):
+        elif node.kind in ("absent", "local"):
             warnings.append(node.name)
     return Verdict(failures, warnings)
 

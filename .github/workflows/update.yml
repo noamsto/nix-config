@@ -87,11 +87,10 @@ jobs:
     with:
       attempt: combined
       tree-artifact: tree-combined-0
-    # Only build.yml uses the token and keys (the Cachix and R2 pushes). This
+    # Only build.yml uses the keys (the R2 push). This
     # workflow runs on schedule or dispatch on main and never builds PR code; the
     # ref check keeps them withheld even if that ever changes.
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
       NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
       R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
       R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
@@ -107,7 +106,6 @@ jobs:
       attempt: nixpkgs
       tree-artifact: tree-nixpkgs-0
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
       NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
       R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
       R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
@@ -120,7 +118,6 @@ jobs:
       attempt: inputs
       tree-artifact: tree-inputs-0
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
       NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
       R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
       R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
@@ -288,7 +285,7 @@ jobs:
       # skipped a main that moved before the push; this still covers main moving
       # between the push and here, where the PR stays open and the next run
       # refreshes it. A GITHUB_TOKEN merge does not trigger check.yml, which is
-      # why the attempt builds pushed to Cachix and R2.
+      # why the attempt builds pushed to R2.
       - name: Merge
         id: merge
         if: ${{ steps.commit.outputs.committed == 'true' && steps.main.outputs.moved == 'false' }}

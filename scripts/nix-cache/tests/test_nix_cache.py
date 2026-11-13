@@ -41,7 +41,7 @@ def narinfo_text(char, refs=(), url=None, name="pkg"):
 
 def node(char, kind, refs=(), parents=(), name="pkg"):
     info = None
-    if kind in ("r2", "upstream", "local", "legacy"):
+    if kind in ("r2", "upstream", "local"):
         info = nc.parse_narinfo(narinfo_text(char, refs, name=name))
         info.references = list(refs)
     return nc.Node(base(char, name), kind, info, set(parents))
@@ -140,9 +140,9 @@ class ComputeNeedTest(unittest.TestCase):
         self.assertEqual(need.paths, set())
         self.assertEqual(need.unresolved, {H["a"]})
 
-    def test_local_and_legacy_are_needed(self):
-        nodes = {H["a"]: node("a", "local"), H["b"]: node("b", "legacy")}
-        self.assertEqual(nc.compute_need(nodes, set()).paths, {H["a"], H["b"]})
+    def test_local_is_needed(self):
+        nodes = {H["a"]: node("a", "local")}
+        self.assertEqual(nc.compute_need(nodes, set()).paths, {H["a"]})
 
 
 class StubRefsTest(unittest.TestCase):
@@ -845,11 +845,10 @@ class LookupTest(unittest.TestCase):
     def test_upstream_before_local(self):
         self.assertEqual(self.kind(remote=["https://up.example"], local=True), "upstream")
 
-    def test_local_before_legacy(self):
-        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE], local=True), "local")
-
-    def test_legacy_only(self):
-        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE]), "legacy")
+    def test_cachix_only_path_is_absent(self):
+        self.assertEqual(
+            self.kind(remote=["https://retired.cachix.org"]), "absent"
+        )
 
     def test_nowhere_is_absent(self):
         self.assertEqual(self.kind(), "absent")
