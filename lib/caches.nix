@@ -21,8 +21,7 @@ in {
     "https://lazytmux.cachix.org"
     "https://dispatcher.cachix.org"
     "https://jovian-nixos.cachix.org"
-    # CI pushes its builds to both this Cachix cache and the R2 cache below (.github/workflows/build.yml); Cachix stays until R2 is proven
-    "https://noamsto-nix-config.cachix.org"
+    # CI pushes this repo's own builds to the R2 cache only (r2 below, .github/workflows/build.yml)
     r2.url
   ];
 
@@ -51,7 +50,6 @@ in {
     "lazytmux.cachix.org-1:8P28D3LZAKqPlkEGKzRRU9gon3rgBv4u8/4VWRn6TCg="
     "dispatcher.cachix.org-1:OjkT5jt+C70rFMG3/BfWLlsY25j18cxQo4p4yn23F0A="
     "jovian-nixos.cachix.org-1:mAWLjAxLNlfxAnozUjOqGj4AxQwCl7MXwOfu7msVlAo="
-    "noamsto-nix-config.cachix.org-1:PpdRnna/Ra45BpDw7k2QJoDx1XpWBKQ5aJdTr3A1HbI="
     r2.publicKey
   ];
 

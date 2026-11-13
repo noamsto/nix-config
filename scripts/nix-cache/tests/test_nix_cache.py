@@ -41,7 +41,7 @@ def narinfo_text(char, refs=(), url=None, name="pkg"):
 
 def node(char, kind, refs=(), parents=(), name="pkg"):
     info = None
-    if kind in ("r2", "upstream", "local", "legacy"):
+    if kind in ("r2", "upstream", "local"):
         info = nc.parse_narinfo(narinfo_text(char, refs, name=name))
         info.references = list(refs)
     return nc.Node(base(char, name), kind, info, set(parents))
@@ -140,9 +140,53 @@ class ComputeNeedTest(unittest.TestCase):
         self.assertEqual(need.paths, set())
         self.assertEqual(need.unresolved, {H["a"]})
 
-    def test_local_and_legacy_are_needed(self):
-        nodes = {H["a"]: node("a", "local"), H["b"]: node("b", "legacy")}
-        self.assertEqual(nc.compute_need(nodes, set()).paths, {H["a"], H["b"]})
+    def test_local_is_needed(self):
+        nodes = {H["a"]: node("a", "local")}
+        self.assertEqual(nc.compute_need(nodes, set()).paths, {H["a"]})
+
+
+class MarkTest(unittest.TestCase):
+    def run_mark(self, nodes):
+        """Pins and the selector root are fixed, so `nodes` is all that varies."""
+        pins = {"pin": f"/nix/store/{base('a')}"}
+        root = f"/nix/store/{base('b')}"
+        walked = []
+
+        def fake_walk(roots, lookup_fn):
+            walked.append(roots)
+            return nodes
+
+        jobs = {"aarch64-linux": {"roots": ["sel"], "pins": ["pin"]}}
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.object(nc, "eval_pins", lambda sel: pins))
+            stack.enter_context(
+                mock.patch.object(nc, "eval_selector", lambda sel: {"": root})
+            )
+            stack.enter_context(mock.patch.object(nc, "walk", fake_walk))
+            live, pin_hashes, holes = nc.mark(jobs, lambda hash_: None)
+        self.roots = walked
+        return live, pin_hashes, holes
+
+    def test_walk_gets_pin_and_root_paths(self):
+        self.run_mark({})
+        self.assertEqual(self.roots, [[f"/nix/store/{base('a')}", f"/nix/store/{base('b')}"]])
+
+    def test_absent_with_a_parent_is_a_hole(self):
+        _, _, holes = self.run_mark({H["c"]: node("c", "absent", parents=[H["b"]])})
+        self.assertEqual(holes, {H["c"]})
+
+    def test_absent_without_parents_is_not_a_hole(self):
+        _, _, holes = self.run_mark({H["c"]: node("c", "absent")})
+        self.assertEqual(holes, set())
+
+    def test_r2_node_is_live(self):
+        live, _, _ = self.run_mark({H["c"]: node("c", "r2")})
+        self.assertIn(H["c"], live)
+
+    def test_pin_path_is_live_and_pinned(self):
+        live, pin_hashes, _ = self.run_mark({})
+        self.assertEqual(pin_hashes, {H["a"]})
+        self.assertIn(H["a"], live)
 
 
 class StubRefsTest(unittest.TestCase):
@@ -763,26 +807,110 @@ class LocalPathInfoTest(unittest.TestCase):
 
 class NixConfigTest(unittest.TestCase):
     def test_existing_value_kept_and_two_lines_appended(self):
-        out = nc.extend_nix_config("max-jobs = 4\n", "https://c", "k:1")
+        out = nc.extend_nix_config(
+            "max-jobs = 4\n",
+            ["https://r2.example", "https://up.example"],
+            ["r2-key:PUB", "up-key:PUB"],
+        )
         self.assertEqual(
             out.splitlines(),
             [
                 "max-jobs = 4",
-                "extra-substituters = https://c",
-                "extra-trusted-public-keys = k:1",
+                "extra-substituters = https://r2.example https://up.example",
+                "extra-trusted-public-keys = r2-key:PUB up-key:PUB",
             ],
         )
 
     def test_empty_existing(self):
-        out = nc.extend_nix_config("", "https://c", "k:1")
+        out = nc.extend_nix_config(
+            "",
+            ["https://r2.example", "https://up.example"],
+            ["r2-key:PUB", "up-key:PUB"],
+        )
         self.assertEqual(
             out.splitlines(),
-            ["extra-substituters = https://c", "extra-trusted-public-keys = k:1"],
+            [
+                "extra-substituters = https://r2.example https://up.example",
+                "extra-trusted-public-keys = r2-key:PUB up-key:PUB",
+            ],
+        )
+
+    def test_duplicates_are_dropped_order_preserving(self):
+        out = nc.extend_nix_config(
+            "",
+            ["https://up.example", "https://r2.example", "https://up.example"],
+            ["up-key:PUB", "r2-key:PUB", "up-key:PUB"],
+        )
+        self.assertEqual(
+            out.splitlines(),
+            [
+                "extra-substituters = https://up.example https://r2.example",
+                "extra-trusted-public-keys = up-key:PUB r2-key:PUB",
+            ],
         )
 
     def test_github_env_heredoc(self):
         out = nc.render_github_env("NIX_CONFIG", "a\nb\n", delimiter="EOF_X")
         self.assertEqual(out, "NIX_CONFIG<<EOF_X\na\nb\nEOF_X\n")
+
+
+class CmdSubstituterTest(unittest.TestCase):
+    def setUp(self):
+        self.stack = contextlib.ExitStack()
+        self.addCleanup(self.stack.close)
+        tmp = self.stack.enter_context(tempfile.TemporaryDirectory())
+        self.env_file = os.path.join(tmp, "github_env")
+        self.stack.enter_context(
+            mock.patch.dict(os.environ, {"GITHUB_ENV": self.env_file})
+        )
+        self.stack.enter_context(
+            mock.patch.object(
+                nc,
+                "load_caches",
+                lambda root: nc.Caches(
+                    "https://r2.example",
+                    "r2-key:PUB",
+                    ["https://up.example"],
+                    ["up-key:PUB"],
+                ),
+            )
+        )
+        self.stack.enter_context(
+            mock.patch.object(
+                nc, "fetch_text", lambda url: f"StoreDir: {nc.STORE_DIR}"
+            )
+        )
+
+    def run_substituter(self, config_show, sentinel=""):
+        out, err = io.StringIO(), io.StringIO()
+        runs = mock.Mock(side_effect=[proc(0, config_show), proc(0, sentinel)])
+        with (
+            mock.patch.object(nc.subprocess, "run", runs),
+            contextlib.redirect_stdout(out),
+            contextlib.redirect_stderr(err),
+        ):
+            code = nc.cmd_substituter(argparse.Namespace())
+        return code, out.getvalue(), err.getvalue()
+
+    def test_publishes_every_cache_and_key(self):
+        code, _, _ = self.run_substituter(
+            "https://r2.example https://up.example\n",
+            "querying info about '/nix/store/xxx' on 'https://r2.example'\n",
+        )
+        self.assertEqual(code, 0)
+        content = Path(self.env_file).read_text()
+        for value in (
+            "https://r2.example",
+            "https://up.example",
+            "r2-key:PUB",
+            "up-key:PUB",
+        ):
+            self.assertIn(value, content)
+
+    def test_missing_substituter_fails(self):
+        code, _, err = self.run_substituter("https://r2.example\n")
+        self.assertEqual(code, 1)
+        self.assertIn("https://up.example", err)
 
 
 class MatchingLinesTest(unittest.TestCase):
@@ -844,12 +972,6 @@ class LookupTest(unittest.TestCase):
 
     def test_upstream_before_local(self):
         self.assertEqual(self.kind(remote=["https://up.example"], local=True), "upstream")
-
-    def test_local_before_legacy(self):
-        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE], local=True), "local")
-
-    def test_legacy_only(self):
-        self.assertEqual(self.kind(remote=[nc.LEGACY_CACHE]), "legacy")
 
     def test_nowhere_is_absent(self):
         self.assertEqual(self.kind(), "absent")

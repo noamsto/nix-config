@@ -20,7 +20,6 @@ import time
 import urllib.error
 import urllib.request
 
-LEGACY_CACHE = "https://noamsto-nix-config.cachix.org"
 USER_AGENT = "nix-config-nix-cache/1"
 MAX_CONCURRENCY = 8
 STORE_DIR = "/nix/store"
@@ -56,6 +55,7 @@ class Caches:
     r2_url: str
     public_key: str
     upstreams: list
+    keys: list = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
@@ -121,7 +121,9 @@ def run_json(cmd, error=RuntimeError):
 def load_caches(repo_root):
     apply = (
         "c: { r2 = c.r2; substituters = c.substituters; "
-        "extraSubstituters = c.extraSubstituters; }"
+        "extraSubstituters = c.extraSubstituters; "
+        "trustedPublicKeys = c.trustedPublicKeys; "
+        "extraTrustedPublicKeys = c.extraTrustedPublicKeys; }"
     )
     data = run_json(
         [
@@ -135,11 +137,12 @@ def load_caches(repo_root):
         ]
     )
     r2_url = data["r2"]["url"]
-    skip = (r2_url, LEGACY_CACHE)
+    skip = (r2_url,)
     upstreams = [
         s for s in data["substituters"] + data["extraSubstituters"] if s not in skip
     ]
-    return Caches(r2_url, data["r2"]["publicKey"], upstreams)
+    keys = [*data["trustedPublicKeys"], *data["extraTrustedPublicKeys"]]
+    return Caches(r2_url, data["r2"]["publicKey"], upstreams, keys)
 
 
 def eval_selector(selector):
@@ -178,9 +181,6 @@ def lookup(hash_, caches, fetch=fetch_text, local=local_path_info):
     info = local(hash_)
     if info is not None:
         return "local", info
-    text = fetch(f"{LEGACY_CACHE}/{hash_}.narinfo")
-    if text is not None:
-        return "legacy", parse_narinfo(text)
     return "absent", None
 
 
@@ -240,11 +240,13 @@ def tools_flake():
     return "."
 
 
-def extend_nix_config(existing, url, public_key):
-    """NIX_CONFIG value with the R2 cache appended after any existing value."""
+def extend_nix_config(existing, substituters, keys):
+    """NIX_CONFIG value with every configured cache's substituter and public
+    key appended after any existing value. Each list is space-joined after
+    order-preserving de-duplication."""
     lines = [existing.rstrip("\n")] if existing.strip() else []
-    lines.append(f"extra-substituters = {url}")
-    lines.append(f"extra-trusted-public-keys = {public_key}")
+    lines.append(f"extra-substituters = {' '.join(dict.fromkeys(substituters))}")
+    lines.append(f"extra-trusted-public-keys = {' '.join(dict.fromkeys(keys))}")
     return "\n".join(lines) + "\n"
 
 
@@ -280,9 +282,11 @@ def fail(message):
 def cmd_substituter(args):
     caches = load_caches(REPO_ROOT)
     url = caches.r2_url
+    substituters = [caches.r2_url, *caches.upstreams]
+    keys = [caches.public_key, *caches.keys]
     child_env = dict(os.environ)
     child_env["NIX_CONFIG"] = extend_nix_config(
-        child_env.get("NIX_CONFIG", ""), url, caches.public_key
+        child_env.get("NIX_CONFIG", ""), substituters, keys
     )
     env_file = child_env.get("GITHUB_ENV")
     if env_file:
@@ -298,9 +302,11 @@ def cmd_substituter(args):
     )
     if proc.returncode != 0:
         return fail(f"nix config show substituters failed: {proc.stderr.strip()}")
-    if url not in proc.stdout.split():
+    missing = [s for s in substituters if s not in proc.stdout.split()]
+    if missing:
         return fail(
-            f"{url} is not in the effective substituters: {proc.stdout.strip()}"
+            f"{', '.join(missing)} is not in the effective substituters: "
+            f"{proc.stdout.strip()}"
         )
 
     try:
@@ -358,7 +364,7 @@ def compute_need(nodes, pin_hashes):
     in R2 itself. A pin found nowhere is built by `realise`, so it is needed."""
     paths, unresolved = set(), set()
     for hash_, node in nodes.items():
-        if node.kind in ("local", "legacy"):
+        if node.kind == "local":
             paths.add(hash_)
         elif node.kind == "upstream":
             if hash_ in pin_hashes:
@@ -597,7 +603,7 @@ def classify(uploaded, nodes, pin_hashes):
             failures.append(f"pin {node.name} is not in R2")
         elif hash_ in uploaded:
             failures.append(f"{node.name} was uploaded but is not in R2")
-        elif node.kind in ("absent", "local", "legacy"):
+        elif node.kind in ("absent", "local"):
             warnings.append(node.name)
     return Verdict(failures, warnings)
 
@@ -1157,7 +1163,10 @@ def cmd_gc(args):
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("substituter", help="add the R2 cache as an extra substituter and prove Nix queries it")
+    p = sub.add_parser(
+        "substituter",
+        help="add every configured cache as an extra substituter and prove Nix queries R2",
+    )
     p.set_defaults(func=cmd_substituter)
     p = sub.add_parser("push", help="upload missing closure paths to R2")
     p.add_argument("--job", required=True)
