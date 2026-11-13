@@ -201,11 +201,8 @@ jobs:
           # So the flake's nixConfig substituters are used.
           extra-conf: accept-flake-config = true
 
-      # As in the check job: adds every lib/caches.nix cache — the R2 cache and the
-      # third-party substituters — through NIX_CONFIG `extra-substituters`/
-      # `extra-trusted-public-keys`, the only route that sticks because nix-fast-build
-      # builds by .drv path where the flake's nixConfig does not apply. The step fails
-      # unless Nix really queries R2.
+      # As in the check job: every lib/caches.nix cache through NIX_CONFIG, and it
+      # fails unless Nix really queries R2.
       - name: Configure substituters
         continue-on-error: ${{ inputs.report }}
         run: python3 scripts/nix-cache/nix_cache.py substituter
@@ -288,11 +285,8 @@ jobs:
       - name: Disk space
         run: df -h
 
-      # As in the check job: adds every lib/caches.nix cache — the R2 cache and the
-      # third-party substituters — through NIX_CONFIG `extra-substituters`/
-      # `extra-trusted-public-keys`, the only route that sticks because nix-fast-build
-      # builds by .drv path where the flake's nixConfig does not apply. The step fails
-      # unless Nix really queries R2.
+      # As in the check job: every lib/caches.nix cache through NIX_CONFIG, and it
+      # fails unless Nix really queries R2.
       - name: Configure substituters
         continue-on-error: ${{ inputs.report }}
         run: python3 scripts/nix-cache/nix_cache.py substituter
