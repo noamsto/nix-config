@@ -16,8 +16,6 @@ on:
         type: string
         default: ""
     secrets:
-      CACHIX_AUTH_TOKEN:
-        required: false
       NIX_CACHE_SIGNING_KEY:
         required: false
       R2_ACCESS_KEY_ID:
@@ -29,7 +27,8 @@ permissions:
   contents: read
 
 env:
-  # Cachix caches to substitute from. `cachix use` (run by cachix-action) writes a
+  # Cachix caches to substitute from (pull-only: nothing pushes to Cachix; the
+  # action's required `name` is nix-community, with skipPush). `cachix use` (run by cachix-action) writes a
   # `substituters =` line to the user's nix.conf, which replaces anything the
   # installer's extra-conf adds, and nix-fast-build builds by .drv path where the
   # flake's nixConfig does not apply. extraPullNames is the only route that sticks
@@ -38,7 +37,7 @@ env:
   # `extra-substituters` by the Configure R2 substituter step, which a nix.conf
   # `substituters =` line cannot drop.
   # SYNC: Keep in sync with the cachix.org entries of lib/caches.nix.
-  CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,nix-community,yazi,nixos-raspberrypi
+  CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,yazi,nixos-raspberrypi
   # R2 cache (lib/caches.nix r2): public bucket name and S3 endpoint. The signing
   # key and write credentials reach only the Push to R2 steps.
   # SYNC: same values as .github/workflows/cache-gc.yml.
@@ -90,16 +89,12 @@ jobs:
       - name: Free space
         run: df -h
 
-      # Cachix pushes only when the caller passes push-cache and the token (check.yml:
-      # push to main); the R2 push below follows the same gate. Otherwise the token is
-      # empty, so PR code (same-repo branches get secrets) cannot read it and push into
-      # the trusted cache. An empty token makes the action read-only rather than failing.
+      # Pull-only Cachix setup; the R2 push below runs only when the caller passes push-cache.
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
-          name: noamsto-nix-config
+          name: nix-community
           extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ !inputs.push-cache }}
+          skipPush: true
 
       # cachix use rewrites nix.conf's substituters and nix-fast-build ignores the
       # flake's nixConfig, so the R2 cache goes in through NIX_CONFIG (exported via
@@ -225,10 +220,9 @@ jobs:
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
-          name: noamsto-nix-config
+          name: nix-community
           extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ !inputs.push-cache }}
+          skipPush: true
 
       # As in the check job: adds R2 through NIX_CONFIG and proves Nix queries it.
       - name: Configure R2 substituter
@@ -271,7 +265,7 @@ jobs:
           retention-days: 7
 
   # Native ARM build of the Raspberry Pi example host, kernel included, pushed to
-  # Cachix and R2 so Pi hosts built on this library substitute it instead of compiling.
+  # R2 so Pi hosts built on this library substitute it instead of compiling.
   aarch64-linux:
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-24.04-arm
@@ -315,10 +309,9 @@ jobs:
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
-          name: noamsto-nix-config
+          name: nix-community
           extraPullNames: ${{ env.CACHIX_PULL_NAMES }}
-          authToken: ${{ inputs.push-cache && secrets.CACHIX_AUTH_TOKEN || '' }}
-          skipPush: ${{ !inputs.push-cache }}
+          skipPush: true
 
       # As in the check job: adds R2 through NIX_CONFIG and proves Nix queries it.
       - name: Configure R2 substituter
