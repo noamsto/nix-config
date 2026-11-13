@@ -36,7 +36,7 @@ env:
   # instead of substituting. The R2 cache is added through NIX_CONFIG
   # `extra-substituters` by the Configure R2 substituter step, which a nix.conf
   # `substituters =` line cannot drop.
-  # SYNC: Keep in sync with the cachix.org entries of lib/caches.nix.
+  # SYNC: the cachix.org entries of lib/caches.nix, minus nix-community (the `name` of the three cachix-action steps).
   CACHIX_PULL_NAMES: vicinae,nix-amd-ai,wtc,noctalia,lazytmux,dispatcher,jovian-nixos,nixpkgs-unfree,yazi,nixos-raspberrypi
   # R2 cache (lib/caches.nix r2): public bucket name and S3 endpoint. The signing
   # key and write credentials reach only the Push to R2 steps.
