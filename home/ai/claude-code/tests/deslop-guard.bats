@@ -1,9 +1,10 @@
 #!/usr/bin/env bats
 # Regression suite for deslop-guard.sh: the non-source short-circuit (a branch
 # whose diff against its deslop base touches only non-source paths may push
-# without /deslop), the tag-only push exemption, and the nothing-to-push case
-# for a branch behind its upstream. Source paths and branch pushes keep the
-# gate. Run directly:
+# without /deslop), the clean-refspec push exemption (tags, deletions, sources
+# whose commits are all on a remote, `refs/upstream/*`), and the nothing-to-push
+# case for a branch behind its upstream. Source paths and pushes of commits on
+# no remote keep the gate. Run directly:
 #   bats home/ai/claude-code/tests/deslop-guard.bats
 # or: nix build .#checks.x86_64-linux.deslop-guard
 
@@ -398,12 +399,22 @@ _behind_upstream() {
   assert_deny
 }
 
-@test "deny: up-to-date branch pushed to another destination" {
+@test "allow: up-to-date branch pushed to another destination" {
+  # Every commit is already on the remote, so nothing new leaves the machine.
   _with_remote
-  printf 'true\n' >"$repo/x.sh"
-  git -C "$repo" add -A
-  git -C "$repo" commit -qm sh
+  _source_commit
   git -C "$repo" push -q origin main
+  run_guard 'git push origin HEAD:release'
+  assert_allow
+}
+
+@test "deny: pushed to another destination with an extra unpushed commit" {
+  _with_remote
+  _source_commit
+  git -C "$repo" push -q origin main
+  printf 'true\n' >"$repo/y.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm more
   run_guard 'git push origin HEAD:release'
   assert_deny
 }
@@ -994,4 +1005,211 @@ EOF"
 "
   done
   _assert_gated "${cmd}git push"
+}
+
+# --- pushes that carry no new local commits ---
+
+@test "allow: refs/upstream mirror of fetched commits" {
+  _with_remote
+  git -C "$repo" checkout -q --detach
+  printf 'true\n' >"$repo/third.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm third
+  git -C "$repo" update-ref refs/upstream/gpu HEAD
+  git -C "$repo" checkout -q main
+  _source_commit
+  run_guard 'git push origin refs/upstream/gpu:refs/heads/gpu'
+  assert_allow
+}
+
+@test "allow: force-with-lease reset to an older commit on a remote" {
+  _with_remote
+  old=$(git -C "$repo" rev-parse HEAD)
+  _source_commit
+  git -C "$repo" push -q origin main
+  bad=$(git -C "$repo" rev-parse HEAD)
+  printf 'true\n' >"$repo/y.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm more
+  run_guard "git push --force-with-lease=main:$bad origin $old:refs/heads/main"
+  assert_allow
+}
+
+@test "allow: remote-tracking ref pushed to another branch" {
+  _with_remote
+  git -C "$repo" checkout -q -b feat/x
+  _source_commit
+  git -C "$repo" push -q -u origin feat/x
+  git -C "$repo" fetch -q origin
+  git -C "$repo" checkout -q main
+  _source_commit
+  run_guard 'git push origin origin/feat/x:refs/heads/gpu'
+  assert_allow
+}
+
+@test "allow: branch deletion refspec" {
+  _with_remote
+  _source_commit
+  run_guard 'git push origin :refs/heads/old'
+  assert_allow
+}
+
+@test "deny: refspec source with a local-only commit" {
+  _with_remote
+  git -C "$repo" checkout -q -b feat
+  _source_commit
+  run_guard 'git push origin feat:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: bare git push with a local-only commit" {
+  _with_remote
+  _source_commit
+  run_guard 'git push'
+  assert_deny
+}
+
+@test "deny: push with no remote configured" {
+  _source_commit
+  run_guard 'git push origin HEAD:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: local-only ref outside refs/heads" {
+  _with_remote
+  _source_commit
+  git -C "$repo" update-ref refs/stash HEAD
+  git -C "$repo" reset -q --hard HEAD~1
+  run_guard 'git push origin refs/stash:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: unresolvable refspec source" {
+  _with_remote
+  _source_commit
+  run_guard 'git push origin nosuchref:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: globbed refspec source" {
+  _with_remote
+  _source_commit
+  run_guard 'git push origin refs/heads/*:refs/heads/*'
+  assert_deny
+}
+
+@test "deny: message names the source of a src:dst refspec" {
+  _with_remote
+  git -C "$repo" checkout -q -b feat
+  _source_commit
+  run_guard 'git push origin feat:refs/heads/x'
+  assert_deny
+  jq -e '.hookSpecificOutput.permissionDecisionReason | contains("the pushed ref (feat)")' <<<"$output" >/dev/null
+}
+
+@test "deny: message names the branch for a bare push" {
+  _with_remote
+  _source_commit
+  run_guard 'git push'
+  assert_deny
+  jq -e '.hookSpecificOutput.permissionDecisionReason | contains("this branch (main)")' <<<"$output" >/dev/null
+}
+
+@test "deny: -o value does not hide a bare push of local commits" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push -o ci.skip origin'
+  assert_deny
+}
+
+@test "deny: --push-option value does not hide a bare push of local commits" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push --push-option ci.skip origin'
+  assert_deny
+}
+
+@test "deny: -fo value does not hide a bare push and is not named as the ref" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push -fo ci.skip origin'
+  assert_deny
+  jq -e '.hookSpecificOutput.permissionDecisionReason | contains("pushed ref (origin)") | not' <<<"$output" >/dev/null
+}
+
+@test "deny: --receive-pack value does not hide a bare push of local commits" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push --receive-pack git-receive-pack origin'
+  assert_deny
+}
+
+@test "deny: --repo value does not hide a push of local commits" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push --repo origin HEAD'
+  assert_deny
+}
+
+@test "deny: --recurse-submodules value does not hide a bare push of local commits" {
+  _with_remote
+  git -C "$repo" remote set-head origin main
+  _source_commit
+  run_guard 'git push --recurse-submodules check origin'
+  assert_deny
+}
+
+@test "deny: refs/upstream source that does not exist" {
+  _with_remote
+  _source_commit
+  run_guard 'git push origin refs/upstream/missing:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: forced refspec source with a local-only commit" {
+  _with_remote
+  git -C "$repo" checkout -q -b feat
+  _source_commit
+  run_guard 'git push origin +feat:refs/heads/x'
+  assert_deny
+}
+
+@test "deny: option-like refspec source" {
+  _with_remote
+  _source_commit
+  git -C "$repo" update-ref refs/heads/-n0 HEAD
+  run_guard 'git push origin +-n0:x'
+  assert_deny
+}
+
+@test "deny: non-commit refspec source to a tag" {
+  _with_remote
+  _source_commit
+  run_guard 'git push origin HEAD^{tree}:refs/tags/x'
+  assert_deny
+}
+
+@test "allow: reset to a commit already on a remote" {
+  _with_remote
+  _source_commit
+  git -C "$repo" push -q origin main
+  printf 'true\n' >"$repo/y.sh"
+  git -C "$repo" add -A
+  git -C "$repo" commit -qm more
+  run_guard 'git push origin HEAD~1:refs/heads/main'
+  assert_allow
+}
+
+@test "deny: message names a bare-name refspec" {
+  _with_remote
+  git -C "$repo" checkout -q -b feat
+  _source_commit
+  run_guard 'git push origin feat'
+  assert_deny
+  jq -e '.hookSpecificOutput.permissionDecisionReason | contains("the pushed ref (feat)")' <<<"$output" >/dev/null
 }
