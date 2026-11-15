@@ -10,7 +10,6 @@ in {
   home.packages = with pkgs; [
     eza
     zoxide
-    grc
     nix-search-tv
   ];
 
@@ -305,10 +304,6 @@ in {
         {
           name = "forgit";
           inherit (forgit) src;
-        }
-        {
-          name = "grc";
-          inherit (grc) src;
         }
         {
           name = "fzf-fish";
