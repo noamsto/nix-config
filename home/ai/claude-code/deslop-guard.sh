@@ -695,13 +695,14 @@ if [[ $any_gh == true ]]; then
   fi
 fi
 
-# Tag-only pushes carry no branch commits to review, so the deslop gate doesn't
-# apply — the deploy flow here is all tag pushes (`git push origin v*-…`). Skip
-# the gate when every pushed refspec resolves to a tag (or deletes one) and no
-# flag drags commits along. A tag created earlier in the same command counts:
-# this hook runs before the command, so the ref doesn't exist yet. Bare
-# `git push` (current branch), any branch refspec, --follow-tags/--all/--mirror/
-# --branches, a second push, and `gh pr create` fall through to the gate.
+# Pushes that carry no new local commits have nothing for the deslop gate to
+# review — the deploy flow here is all tag pushes (`git push origin v*-…`).
+# Skip the gate when every pushed refspec is clean (see refspec_clean: a tag, a
+# deletion, or a source already on a remote) and no flag drags commits along. A
+# tag created earlier in the same command counts: this hook runs before the
+# command, so the ref doesn't exist yet. Bare `git push` (current branch), a
+# source with commits on no remote, --follow-tags/--all/--mirror/--branches, a
+# second push, and `gh pr create` fall through to the gate.
 # Tag names a segment creates: `git [globals] tag [flags] <name>`, skipping
 # list/delete/verify modes.
 created_tags_in() {
@@ -736,7 +737,7 @@ created_tags_in() {
 }
 
 is_push=false
-refspecs=() push_remote=""
+refspecs=() push_remote="" push_src=""
 if ((sel >= 0)) && [[ ${eff_kind[sel]} == push ]]; then
   is_push=true
   before=${eff:0:hit_at}
@@ -767,10 +768,46 @@ if ((sel >= 0)) && [[ ${eff_kind[sel]} == push ]]; then
     return 1
   }
 
+  # A refspec is clean when pushing it sends no new local commit: a tag, a
+  # deletion, a source whose commits are all on some remote (covers resets to an
+  # older commit and mirroring a remote-tracking ref), or a resolvable
+  # `refs/upstream/*` source, which holds commits fetched from elsewhere that no
+  # remote-tracking ref covers (a hand-made ref there with local commits slips
+  # through). Any failure to resolve the source (glob, unknown ref, no remotes)
+  # is not clean (rc 1); rc 2 is a remote name misread as a refspec.
+  refspec_clean() {
+    local ref=$1 src=$2 dst=$3 oid unpushed r remotes
+    if [[ $ref != *:* ]]; then
+      # A remote name here means an option's value was misread as the remote.
+      remotes=$(git -C "$target" remote 2>/dev/null) || return 1
+      while IFS= read -r r; do
+        [[ $r == "$ref" ]] && return 2
+      done <<<"$remotes"
+    fi
+    [[ $ref == *:* && -z $src && -n $dst ]] && return 0
+    if [[ $src != *[~^*]* && ($ref != *:* || $dst == refs/tags/*) ]]; then
+      [[ $src == refs/tags/* ]] && return 0
+      [[ -n $src ]] && is_tag "$src" && return 0
+    fi
+    if [[ $src == refs/upstream/* ]] &&
+      git -C "$target" rev-parse --verify --quiet "$src^{commit}" >/dev/null 2>&1; then
+      return 0
+    fi
+    oid=$(git -C "$target" rev-parse --verify --quiet --end-of-options "$src^{commit}" 2>/dev/null) || return 1
+    unpushed=$(git -C "$target" rev-list --max-count=1 "$oid" --not --remotes 2>/dev/null) || return 1
+    [[ -z $unpushed ]]
+  }
+
   read -ra ptoks <<<"$args"
-  carries_commits=false saw_remote=false saw_refspec=false tag_only=true
+  carries_commits=false saw_remote=false saw_refspec=false all_clean=true
+  skip_value=false
   for tok in "${ptoks[@]}"; do
+    if [[ $skip_value == true ]]; then
+      skip_value=false # value of the preceding option, not a remote or refspec
+      continue
+    fi
     case $tok in
+    -o | --push-option | --repo | --receive-pack | --exec | --recurse-submodules) skip_value=true ;;
     --follow-tags | --all | --mirror | --branches) carries_commits=true ;;
     --tags) saw_refspec=true ;; # all tags, no branch
     -*) : ;;                    # other flags (-f, --force-with-lease, …)
@@ -783,20 +820,17 @@ if ((sel >= 0)) && [[ ${eff_kind[sel]} == push ]]; then
         refspecs+=("$tok")
         ref=${tok#+}                 # strip force '+'
         src=${ref%%:*} dst=${ref#*:} # split a src:dst refspec
-        if [[ $src == *[~^*]* ]]; then
-          tag_only=false # peeled/globbed source may resolve to a branch tip
-        elif [[ $ref == *:* && $dst != refs/tags/* ]]; then
-          tag_only=false # destination must be a tag (also covers deletions)
-        elif [[ -z $src ]]; then
-          :
-        elif [[ $src != refs/tags/* ]] && ! is_tag "$src"; then
-          tag_only=false # branch or unknown ref
+        rc=0
+        refspec_clean "$ref" "$src" "$dst" || rc=$?
+        if ((rc != 0)); then
+          all_clean=false
+          [[ $rc == 1 && -n $src && -z $push_src ]] && push_src=$src
         fi
       fi
       ;;
     esac
   done
-  if [[ $carries_commits == false && $saw_refspec == true && $tag_only == true &&
+  if [[ $carries_commits == false && $saw_refspec == true && $all_clean == true &&
     $other_gated == false ]]; then
     exit 0
   fi
@@ -884,10 +918,13 @@ else
   fi
 fi
 
-jq -n --arg branch "$branch" '{
+target_desc="this branch ($branch)"
+[[ -n $push_src ]] && target_desc="the pushed ref ($push_src)"
+
+jq -n --arg target_desc "$target_desc" '{
   hookSpecificOutput: {
     hookEventName: "PreToolUse",
     permissionDecision: "deny",
-    permissionDecisionReason: ("Run the deslop skill on this branch (\($branch)) before pushing or opening a PR. Invoke the /deslop skill, commit the cleanup, then retry. Set ALLOW_PUSH_WITHOUT_DESLOP=1 to bypass.")
+    permissionDecisionReason: ("Run the deslop skill on \($target_desc) before pushing or opening a PR. Invoke the /deslop skill, commit the cleanup, then retry. Set ALLOW_PUSH_WITHOUT_DESLOP=1 to bypass.")
   }
 }'
