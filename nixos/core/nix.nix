@@ -50,7 +50,7 @@ in {
       extra-substituters = caches.extraSubstituters;
       extra-trusted-public-keys = caches.extraTrustedPublicKeys;
 
-      # All threads per build; the scheduling below keeps the host responsive.
+      # All threads per build; the slice weight below keeps the host responsive.
       cores = 0;
     };
 
@@ -63,7 +63,12 @@ in {
     daemonIOSchedClass = "idle";
   };
 
+  # Nice only ranks tasks inside one cgroup; the slice weight is what lets builds
+  # yield to user.slice. A weight, not `idle`, so builds keep a share under load.
+  systemd.slices.nix-build.sliceConfig.CPUWeight = lib.mkDefault 20;
+
   systemd.services.nix-daemon.serviceConfig = {
+    Slice = "nix-build.slice";
     Nice = 19;
     # Throttles builds before they push the desktop into swap: 30% of a 54 GiB
     # laptop is the ~16 GiB desktop working set measured during a big build.
