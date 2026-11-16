@@ -29,6 +29,7 @@
     inherit (vp) friendly-snippets;
     "gitsigns.nvim" = vp.gitsigns-nvim;
     "grug-far.nvim" = vp.grug-far-nvim;
+    "inc-rename.nvim" = vp.inc-rename-nvim;
     "lazy.nvim" = vp.lazy-nvim;
     "lazydev.nvim" = vp.lazydev-nvim;
     "lualine.nvim" = vp.lualine-nvim;
