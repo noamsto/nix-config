@@ -6,6 +6,7 @@
   makeBinaryWrapper,
   makeDesktopItem,
   runCommand,
+  nerd-fonts,
   fribidi,
   brotli,
   libxrender,
@@ -68,26 +69,10 @@
     preCheck =
       old.preCheck
       + ''
-        # Known to fail in the build sandbox (ssh copy-permission checks).
-        substituteInPlace kitty_tests/ssh.py \
-          --replace-fail 'def test_ssh_copy_directory_permissions' 'def no_test_ssh_copy_directory_permissions'
-
-        # Known to fail in the build sandbox (shell integration needs a real interactive shell).
-        substituteInPlace kitty_tests/shell_integration.py \
-          --replace-fail 'def test_fish_integration' 'def no_test_fish_integration' \
-          --replace-fail 'def test_bash_integration' 'def no_test_bash_integration'
-
-        # Known to fail in the build sandbox.
-        substituteInPlace kittens/ssh/main_test.go \
-          --replace-fail 'func TestSSHChangeColors(t *testing.T) {' 'func TestSSHChangeColors(t *testing.T) {
-        	t.Skip("fails in the build sandbox")'
-
-        # The sandbox has no system fonts: fontconfig lists no families and finds no
-        # private-use symbol fallback font (pua_ligature_char fails).
-        substituteInPlace kitty_tests/fonts.py \
-          --replace-fail 'def test_font_selection_api' 'def no_test_font_selection_api' \
-          --replace-fail 'def test_symbol_space_ligature_stops_at_level_change' 'def no_test_symbol_space_ligature_stops_at_level_change' \
-          --replace-fail 'def test_render_line_unchanged_by_levels_path' 'def no_test_render_line_unchanged_by_levels_path'
+        # Give the sandbox a font; fontconfig's default fonts.conf reads $XDG_DATA_HOME/fonts.
+        export XDG_DATA_HOME=$TMPDIR/xdg
+        mkdir -p $XDG_DATA_HOME/fonts
+        ln -s ${nerd-fonts.symbols-only}/share/fonts/truetype $XDG_DATA_HOME/fonts/
       '';
   });
 
