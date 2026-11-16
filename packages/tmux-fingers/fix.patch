@@ -1,6 +1,7 @@
 diff --git a/tmux-fingers.tmux b/tmux-fingers.tmux
 --- a/tmux-fingers.tmux
 +++ b/tmux-fingers.tmux
+@@ -1,44 +1,5 @@
  #!/usr/bin/env bash
  
 -CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
