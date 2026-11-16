@@ -48,6 +48,7 @@
       source-serif
 
       # nerdfonts
+      nerd-fonts.caskaydia-cove
       nerd-fonts.fira-code
       nerd-fonts.jetbrains-mono
       nerd-fonts.symbols-only
