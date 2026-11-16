@@ -205,6 +205,8 @@
     pkgs.writeShellScriptBin "claude" ''
       export DISABLE_INSTALLATION_CHECKS=1
       export DISABLE_UPDATES=1
+      # Lets Claude Code emit OSC 8 hyperlinks inside tmux so fingers can hint them.
+      export FORCE_HYPERLINK=1
       export CLAUDE_CODE_CERT_STORE=''${CLAUDE_CODE_CERT_STORE:-bundled}
       # D2 diagrams (aeye diagrams.sh): bundle d2's own font so resvg
       # renders text, and follow the desktop light/dark scheme for the theme.
