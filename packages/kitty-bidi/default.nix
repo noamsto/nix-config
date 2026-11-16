@@ -21,8 +21,8 @@
   src = fetchFromGitHub {
     owner = "noamsto";
     repo = "kitty";
-    rev = "93bcc7796518f55c564207c8b6cef6fe2c73335c";
-    hash = "sha256-gjFWzOGHpwySJiwaLbimEURHkGTrewgu44HrAEm0t6U=";
+    rev = "1f81d50b37a5e34f70ab588a7f8c75fa5a4c0e6a";
+    hash = "sha256-5nMfRBkDa2R3mbbMeTNA5xvD/wQFAVwg2r4hQMb75aU=";
   };
 
   unwrapped = kitty.overrideAttrs (old: {
@@ -33,7 +33,7 @@
       ((buildGo126Module {
         pname = "kitty-bidi-go-modules";
         inherit src version;
-        vendorHash = "sha256-6E7C5DrbFSerYPY1bi8S4/itW4k67Qie262yl010OBg=";
+        vendorHash = "sha256-5wgAGak7sXy5MlgPoQA/vGnq2CKnS0kjugiV77tDDj4=";
       }))
       goModules
       ;
