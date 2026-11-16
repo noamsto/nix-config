@@ -77,6 +77,8 @@ in {
       bold_italic_font = "FiraCode Nerd Font Bold Italic";
       font_size = 12;
       font_features = "Fira +zero +ss01";
+      # Fira Code has no Hebrew glyphs; Cascadia's Hebrew is monospace.
+      symbol_map = "U+0590-U+05FF,U+FB1D-U+FB4F CaskaydiaCove Nerd Font Mono";
 
       confirm_os_window_close = 0;
       hide_window_decorations = "titlebar-only";
