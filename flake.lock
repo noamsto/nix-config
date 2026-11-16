@@ -344,11 +344,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794773283,
-        "narHash": "sha256-Wr42ro29zZMPGxtWWAH9waDTiY+Zccpa3PGWRlcMN9o=",
+        "lastModified": 1794818549,
+        "narHash": "sha256-eRWs/lDJihnGzkyznh/Sx4DoyHRwf1A2qCcReXF1fbk=",
         "owner": "noamsto",
         "repo": "dispatcher",
-        "rev": "a7dff96e6b71f162b09542e6fbfe150512af25ea",
+        "rev": "1cb1f0e4a8699d23701a3343a449c04fa1db77d4",
         "type": "github"
       },
       "original": {
@@ -1257,11 +1257,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1794810164,
-        "narHash": "sha256-u1Z1FUPl8yJM7X4JYQHKJiLnMTdFRptpNkXtF85H304=",
+        "lastModified": 1794821112,
+        "narHash": "sha256-PcaRodK/PHjNtyrfhWSS78x+0zgvuSURMUgJjm3zStY=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "aa6d201dfdd530b4bcc4df377181b6e7170e17eb",
+        "rev": "e42008dae42d647ee5a263dbbd95893d9fbdbaab",
         "type": "github"
       },
       "original": {
@@ -2154,11 +2154,11 @@
     },
     "nixpkgs_12": {
       "locked": {
-        "lastModified": 1794386569,
-        "narHash": "sha256-x9sADJvoVG0L6RejZB+/BB4YiGZFBZrfTlhF4uBq1tQ=",
+        "lastModified": 1794537146,
+        "narHash": "sha256-Wpz/7x/YWnDIBu7yj6ixe8j6fIMsidd9Y+o1PqPF3iM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d4f25a3e562008648d45bcf2d70bcc7422cad84e",
+        "rev": "d5cc6833999746cffdfe0598f7bc801a57b887a9",
         "type": "github"
       },
       "original": {
@@ -2408,11 +2408,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1794226748,
-        "narHash": "sha256-RACPRGWtGfnNhORkf89vwbkak7Hpc+PPpBU4q7PEvEU=",
+        "lastModified": 1794767920,
+        "narHash": "sha256-NS+XHVfiqtiVIS/XFkNuB534X6D9yHkpl0aq+U6kgiA=",
         "owner": "noamsto",
         "repo": "prdash",
-        "rev": "1d9966b2efa1c0dbf1456a83caaa50719b9b3973",
+        "rev": "9a4c22e0069f39fd37c75643627f523952ab9f5a",
         "type": "github"
       },
       "original": {
@@ -2792,11 +2792,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1794813393,
-        "narHash": "sha256-UFcRGfVwmS7e9JGpg4kjz644qN7v8Vf0pqqYYZMBZ70=",
+        "lastModified": 1794822509,
+        "narHash": "sha256-6ebDE78MCxtXrl92gAm2RZBaYph+eq2YazLJ6wya7pQ=",
         "owner": "noamsto",
         "repo": "tmux-og",
-        "rev": "a009ee79cb18ae0d0ab877b7c809afb9ed388dca",
+        "rev": "7e6113ff2ac66be7632edbff27b70917fbac4806",
         "type": "github"
       },
       "original": {
