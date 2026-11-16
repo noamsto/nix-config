@@ -62,7 +62,7 @@ update:
 # a specific bump on a branch or offline. Pass input names to bump only those.
 # Bump flake inputs locally, skipping the update bot
 update-local *inputs:
-    nix flake update {{inputs}}
+    nix flake update --accept-flake-config {{inputs}}
 
 # Enter development shell
 dev:
