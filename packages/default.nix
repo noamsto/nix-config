@@ -30,6 +30,8 @@
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         claude-squad = pkgs.callPackage ./claude-squad {};
         halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
+        kitty-bidi = pkgs.callPackage ./kitty-bidi {};
+        kitty-bidi-unwrapped = (pkgs.callPackage ./kitty-bidi {}).unwrapped;
         sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
       }
       # AirConnect ships only static x86_64-linux binaries (meta.platforms), so

@@ -1,4 +1,8 @@
-{inputs, ...}: {
+{
+  inputs,
+  applyKeyed,
+  ...
+}: {
   config,
   lib,
   osConfig,
@@ -23,7 +27,7 @@ in {
   imports = [
     inputs.tmux-og.homeManagerModules.default
     ./foot
-    ./kitty
+    (applyKeyed ./kitty)
     ./fish
     ./bash
     ./process_compose

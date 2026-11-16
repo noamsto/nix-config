@@ -1,4 +1,4 @@
-{
+{inputs, ...}: {
   pkgs,
   lib,
   config,
@@ -6,6 +6,10 @@
   ...
 }: let
   inherit (config.theme) palette;
+  kittyBidi =
+    osConfig.nix-config.terminal.kittyBidi.enable
+    && pkgs.stdenv.hostPlatform.isLinux
+    && osConfig.desktop.isEnabled;
 
   mkKittyTheme = p: ''
     foreground              ${p.text}
@@ -53,6 +57,39 @@
     color15 ${p.subtext0}
   '';
 in {
+  home.packages = lib.optionals kittyBidi [inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.kitty-bidi];
+
+  # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
+  # fork; stock kitty and other terminals never receive them.
+  #
+  # tmux draws on the alternate screen, where kitty saves and clears the bidi
+  # mode. Inside tmux the sequence goes through passthrough before every
+  # prompt (the tmux client-attached hook below covers the attach itself).
+  # KITTY_BIDI is copied into the session env on attach, so reading it tells
+  # whether the client attached right now is a kitty-bidi window.
+  programs = {
+    fish.interactiveShellInit = lib.mkIf kittyBidi ''
+      if set -q KITTY_BIDI; and not set -q TMUX
+        printf '\e[8h\e[?2501h'
+      end
+
+      function __kitty_bidi_tmux --on-event fish_prompt
+        set -q TMUX; or return
+        tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'; or return
+        printf '\ePtmux;\e\e[8h\e\e[?2501h\e\\'
+      end
+    '';
+
+    # Attaching enters the alternate screen and kitty clears the bidi mode, but
+    # no prompt is drawn then, so the hook re-sends it straight to the attaching
+    # client's tty (no passthrough needed) when that client set KITTY_BIDI. The
+    # -c test skips control-mode clients, which have no tty.
+    tmux-og.extraConfig = lib.mkIf kittyBidi ''
+      set -ga update-environment KITTY_BIDI
+      set-hook -g client-attached[90] 'run-shell -b "tmux show-environment -t #{q:hook_session} KITTY_BIDI | grep -q ^KITTY_BIDI= && [ -c #{q:hook_client} ] && printf \"\\033[8h\\033[?2501h\" > #{q:hook_client}"'
+    '';
+  };
+
   programs.kitty = {
     enable = true;
     # darwin takes the binary from the Homebrew cask so its TCC grants survive
