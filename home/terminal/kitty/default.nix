@@ -1,4 +1,4 @@
-{
+{inputs, ...}: {
   pkgs,
   lib,
   config,
@@ -6,6 +6,10 @@
   ...
 }: let
   inherit (config.theme) palette;
+  kittyBidi =
+    osConfig.nix-config.terminal.kittyBidi.enable
+    && pkgs.stdenv.hostPlatform.isLinux
+    && osConfig.desktop.isEnabled;
 
   mkKittyTheme = p: ''
     foreground              ${p.text}
@@ -53,6 +57,14 @@
     color15 ${p.subtext0}
   '';
 in {
+  home.packages = lib.optionals kittyBidi [inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.kitty-bidi];
+
+  # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
+  # fork; stock kitty and other terminals never receive them.
+  programs.fish.interactiveShellInit = lib.mkIf kittyBidi ''
+    if set -q KITTY_BIDI; printf '\e[8h\e[?2501h'; end
+  '';
+
   programs.kitty = {
     enable = true;
     # darwin takes the binary from the Homebrew cask so its TCC grants survive

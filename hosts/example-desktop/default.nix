@@ -18,6 +18,7 @@
 
   desktop.mode = "hyprland";
   machine.type = "laptop";
+  nix-config.terminal.kittyBidi.enable = true;
 
   priors.personalStore = {
     id = "example-personal-store";

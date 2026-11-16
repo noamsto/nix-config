@@ -200,6 +200,11 @@
         };
       };
       terminal = {
+        kittyBidi.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Install an opt-in `kitty-bidi` terminal (the noamsto/kitty gpu fork with bidi support) beside the regular kitty. Linux hosts with a desktop only; ignored elsewhere.";
+        };
         remoteHosts = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
