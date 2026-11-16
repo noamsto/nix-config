@@ -61,9 +61,27 @@ in {
 
   # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
   # fork; stock kitty and other terminals never receive them.
-  programs.fish.interactiveShellInit = lib.mkIf kittyBidi ''
-    if set -q KITTY_BIDI; printf '\e[8h\e[?2501h'; end
-  '';
+  #
+  # tmux draws on the alternate screen, where kitty saves and clears the bidi
+  # mode, so inside tmux the sequence goes through passthrough before every
+  # prompt: it survives a reattach, a window switch or a pane becoming visible.
+  # KITTY_BIDI is copied into the session env on attach, so reading it tells
+  # whether the client attached right now is a kitty-bidi window.
+  programs = {
+    fish.interactiveShellInit = lib.mkIf kittyBidi ''
+      if set -q KITTY_BIDI; and not set -q TMUX
+        printf '\e[8h\e[?2501h'
+      end
+
+      function __kitty_bidi_tmux --on-event fish_prompt
+        set -q TMUX; or return
+        tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'; or return
+        printf '\ePtmux;\e\e[8h\e\e[?2501h\e\\'
+      end
+    '';
+
+    tmux-og.extraConfig = lib.mkIf kittyBidi "set -ga update-environment KITTY_BIDI";
+  };
 
   programs.kitty = {
     enable = true;
