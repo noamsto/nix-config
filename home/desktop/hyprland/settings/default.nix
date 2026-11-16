@@ -107,8 +107,6 @@ in {
           # that would swallow the terminal if swallowing were enabled.
           swallow_regex = "^(foot|kitty|com\\.mitchellh\\.ghostty)$";
 
-          layers_hog_keyboard_focus = true;
-
           # Honor xdg-activation tokens from launchers (walker/vicinae), browsers
           # opening links, password managers, etc. — switches workspace + focuses
           # the requesting window instead of dropping the request.
@@ -123,6 +121,8 @@ in {
           key_press_enables_dpms = true;
           mouse_move_enables_dpms = true;
         };
+
+        layers.layers_hog_keyboard_focus = true;
 
         render = {
           direct_scanout = true;
