@@ -63,8 +63,8 @@ in {
   # fork; stock kitty and other terminals never receive them.
   #
   # tmux draws on the alternate screen, where kitty saves and clears the bidi
-  # mode, so inside tmux the sequence goes through passthrough before every
-  # prompt: it survives a reattach, a window switch or a pane becoming visible.
+  # mode. Inside tmux the sequence goes through passthrough before every
+  # prompt (the tmux client-attached hook below covers the attach itself).
   # KITTY_BIDI is copied into the session env on attach, so reading it tells
   # whether the client attached right now is a kitty-bidi window.
   programs = {
@@ -80,7 +80,13 @@ in {
       end
     '';
 
-    tmux-og.extraConfig = lib.mkIf kittyBidi "set -ga update-environment KITTY_BIDI";
+    # Attaching enters the alternate screen and kitty clears the bidi mode, but
+    # no prompt is drawn then, so the hook re-sends it straight to the attaching
+    # client's tty (no passthrough needed) when that client set KITTY_BIDI.
+    tmux-og.extraConfig = lib.mkIf kittyBidi ''
+      set -ga update-environment KITTY_BIDI
+      set-hook -g client-attached[90] 'run-shell -b "tmux show-environment -t #{q:hook_session} KITTY_BIDI | grep -q ^KITTY_BIDI= && printf \"\\033[8h\\033[?2501h\" > #{q:hook_client}"'
+    '';
   };
 
   programs.kitty = {
