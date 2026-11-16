@@ -82,10 +82,11 @@ in {
 
     # Attaching enters the alternate screen and kitty clears the bidi mode, but
     # no prompt is drawn then, so the hook re-sends it straight to the attaching
-    # client's tty (no passthrough needed) when that client set KITTY_BIDI.
+    # client's tty (no passthrough needed) when that client set KITTY_BIDI. The
+    # -c test skips control-mode clients, which have no tty.
     tmux-og.extraConfig = lib.mkIf kittyBidi ''
       set -ga update-environment KITTY_BIDI
-      set-hook -g client-attached[90] 'run-shell -b "tmux show-environment -t #{q:hook_session} KITTY_BIDI | grep -q ^KITTY_BIDI= && printf \"\\033[8h\\033[?2501h\" > #{q:hook_client}"'
+      set-hook -g client-attached[90] 'run-shell -b "tmux show-environment -t #{q:hook_session} KITTY_BIDI | grep -q ^KITTY_BIDI= && [ -c #{q:hook_client} ] && printf \"\\033[8h\\033[?2501h\" > #{q:hook_client}"'
     '';
   };
 
