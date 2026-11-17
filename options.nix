@@ -205,6 +205,11 @@
           default = false;
           description = "Install an opt-in `kitty-bidi` terminal (the noamsto/kitty gpu fork with bidi support) beside the regular kitty. Linux hosts with a desktop only; ignored elsewhere.";
         };
+        bidiShell.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Make fish send the terminal bidi mode (`CSI 8 h`, `CSI ? 2501 h`) on every prompt inside tmux, so a kitty-bidi client attached on another machine (tmux-og's remote mirror) tracks it per pane. Installs nothing and adds no prompt marks; needs no desktop. Implied by `kittyBidi.enable` on Linux desktop hosts.";
+        };
         remoteHosts = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
