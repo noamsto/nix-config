@@ -87,10 +87,12 @@ in {
   # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
   # fork; stock kitty and other terminals never receive them.
   #
-  # Inside tmux the fork's per-client bidi feature handles the outer terminal,
-  # so panes get the plain sequences, no passthrough. KITTY_BIDI is copied
-  # into the session env on attach, so reading it tells whether the client
-  # attached right now is a kitty-bidi window.
+  # Inside tmux the sequences go to the pane unconditionally on kitty-bidi
+  # hosts: the fork tracks the mode per pane and emits isolates only to
+  # clients with the bidi feature (a client without it sees upstream's output
+  # unchanged), so a pane mirrored onto another host's tmux still sets its
+  # mode. KITTY_BIDI is copied into the session env on attach and is read
+  # only by the prompt-mark predicate.
   #
   # kitty-bidi reports the same TERM as stock kitty, so a terminal-features
   # entry cannot tell them apart. `-T bidi` is per client, and wrapping the
@@ -103,7 +105,6 @@ in {
 
       function __kitty_bidi_tmux --on-event fish_prompt
         set -q TMUX; or return
-        tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'; or return
         printf '\e[8h\e[?2501h'
       end
 
