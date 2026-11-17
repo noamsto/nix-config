@@ -222,18 +222,22 @@ in {
           palette = "catppuccin_mocha";
 
           # Minimal format - only what matters
-          format = lib.concatStrings [
-            "$nix_shell"
-            "$direnv"
-            "$directory"
-            "\${custom.git_branch_smart}"
-            "\${custom.git_wt}"
-            "$git_status"
-            "$python"
-            "$cmd_duration"
-            "$line_break"
-            "$character"
-          ];
+          format = lib.concatStrings (
+            [
+              "$nix_shell"
+              "$direnv"
+              "$directory"
+              "\${custom.git_branch_smart}"
+              "\${custom.git_wt}"
+              "$git_status"
+              "$python"
+              "$cmd_duration"
+              "$line_break"
+            ]
+            ++ lib.optional config.terminal.kittyBidi.prompt "\${env_var.KITTY_BIDI_LRM}"
+            ++ ["$character"]
+            ++ lib.optional config.terminal.kittyBidi.prompt "\${env_var.KITTY_BIDI_FSI}"
+          );
 
           nix_shell = {
             format = "[❄ $state]($style) ";
@@ -389,6 +393,16 @@ in {
             username.show_always = true;
             hostname.ssh_only = false;
           })
+        (lib.mkIf config.terminal.kittyBidi.prompt {
+          env_var.KITTY_BIDI_LRM = {
+            variable = "KITTY_BIDI_LRM";
+            format = "$env_value";
+          };
+          env_var.KITTY_BIDI_FSI = {
+            variable = "KITTY_BIDI_FSI";
+            format = "$env_value";
+          };
+        })
       ];
     };
 
