@@ -21,8 +21,8 @@
   src = fetchFromGitHub {
     owner = "noamsto";
     repo = "kitty";
-    rev = "c0725725865cab5c0b7fb26b26ad0ff4b9002a38";
-    hash = "sha256-HUPkBbqygj9AUPUyigXGbnHWFmEmBNRwmpEN5FvhJ2o=";
+    rev = "71c6d5fb84cfef9f82ed56ead7794ef86cc1bb9c";
+    hash = "sha256-wl3AcB0LQe+uzUVI3JbaAk8dEekA0P+3FWR0nG8S4As=";
   };
 
   unwrapped = kitty.overrideAttrs (old: {
