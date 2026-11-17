@@ -57,6 +57,19 @@
     color15 ${p.subtext0}
   '';
 in {
+  imports = [
+    {
+      options.terminal.kittyBidi.prompt = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        internal = true;
+        description = "Whether the starship prompt carries the kitty-bidi marks.";
+      };
+    }
+  ];
+
+  terminal.kittyBidi.prompt = kittyBidi;
+
   home.packages = lib.optionals kittyBidi [inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.kitty-bidi];
 
   # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
@@ -77,6 +90,27 @@ in {
         set -q TMUX; or return
         tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'; or return
         printf '\ePtmux;\e\e[8h\e\e[?2501h\e\\'
+      end
+
+      # starship reads these through env_var and renders nothing when unset.
+      # Re-evaluated every prompt with the same predicate as the mode sends
+      # above, so a client reattaching from a non-bidi terminal erases them.
+      function __kitty_bidi_prompt_marks --on-event fish_prompt
+        if set -q TMUX
+          tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'
+        else
+          set -q KITTY_BIDI
+        end
+        and set -gx KITTY_BIDI_LRM \u200e
+        and set -gx KITTY_BIDI_FSI \u2068
+        or set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
+      end
+
+      # Only starship's prompt render needs the marks; erasing them before each
+      # command keeps them out of children (a tmux server started here would
+      # hand them to a bash pane attached from a plain terminal).
+      function __kitty_bidi_prompt_marks_clear --on-event fish_preexec
+        set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
       end
     '';
 
