@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  options,
   osConfig,
   ...
 }: let
@@ -10,6 +11,17 @@
     osConfig.nix-config.terminal.kittyBidi.enable
     && pkgs.stdenv.hostPlatform.isLinux
     && osConfig.desktop.isEnabled;
+
+  baseTmux = options.programs.tmux-og.tmuxPackage.default;
+  bidiTmux = pkgs.symlinkJoin {
+    name = "${baseTmux.name}-kitty-bidi";
+    paths = [baseTmux];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/tmux --run 'if [ -n "''${KITTY_BIDI-}" ]; then set -- -T bidi "$@"; fi'
+    '';
+    meta.mainProgram = "tmux";
+  };
 
   mkKittyTheme = p: ''
     foreground              ${p.text}
@@ -75,11 +87,16 @@ in {
   # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
   # fork; stock kitty and other terminals never receive them.
   #
-  # tmux draws on the alternate screen, where kitty saves and clears the bidi
-  # mode. Inside tmux the sequence goes through passthrough before every
-  # prompt (the tmux client-attached hook below covers the attach itself).
-  # KITTY_BIDI is copied into the session env on attach, so reading it tells
-  # whether the client attached right now is a kitty-bidi window.
+  # Inside tmux the sequences go to the pane unconditionally on kitty-bidi
+  # hosts: the fork tracks the mode per pane and emits isolates only to
+  # clients with the bidi feature (a client without it sees upstream's output
+  # unchanged), so a pane mirrored onto another host's tmux still sets its
+  # mode. KITTY_BIDI is copied into the session env on attach and is read
+  # only by the prompt-mark predicate.
+  #
+  # kitty-bidi reports the same TERM as stock kitty, so a terminal-features
+  # entry cannot tell them apart. `-T bidi` is per client, and wrapping the
+  # package covers the kitty `shell` launcher, `tmux attach` and `tmux new`.
   programs = {
     fish.interactiveShellInit = lib.mkIf kittyBidi ''
       if set -q KITTY_BIDI; and not set -q TMUX
@@ -88,13 +105,13 @@ in {
 
       function __kitty_bidi_tmux --on-event fish_prompt
         set -q TMUX; or return
-        tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'; or return
-        printf '\ePtmux;\e\e[8h\e\e[?2501h\e\\'
+        printf '\e[8h\e[?2501h'
       end
 
       # starship reads these through env_var and renders nothing when unset.
-      # Re-evaluated every prompt with the same predicate as the mode sends
-      # above, so a client reattaching from a non-bidi terminal erases them.
+      # Re-evaluated every prompt. Inside tmux they follow the session env's
+      # KITTY_BIDI (the attached client), so a client reattaching from a
+      # non-bidi terminal erases them; the mode sends above are unconditional.
       function __kitty_bidi_prompt_marks --on-event fish_prompt
         if set -q TMUX
           tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'
@@ -114,14 +131,12 @@ in {
       end
     '';
 
-    # Attaching enters the alternate screen and kitty clears the bidi mode, but
-    # no prompt is drawn then, so the hook re-sends it straight to the attaching
-    # client's tty (no passthrough needed) when that client set KITTY_BIDI. The
-    # -c test skips control-mode clients, which have no tty.
-    tmux-og.extraConfig = lib.mkIf kittyBidi ''
-      set -ga update-environment KITTY_BIDI
-      set-hook -g client-attached[90] 'run-shell -b "tmux show-environment -t #{q:hook_session} KITTY_BIDI | grep -q ^KITTY_BIDI= && [ -c #{q:hook_client} ] && printf \"\\033[8h\\033[?2501h\" > #{q:hook_client}"'
-    '';
+    tmux-og = {
+      extraConfig = lib.mkIf kittyBidi ''
+        set -ga update-environment KITTY_BIDI
+      '';
+      tmuxPackage = lib.mkIf kittyBidi bidiTmux;
+    };
   };
 
   programs.kitty = {
