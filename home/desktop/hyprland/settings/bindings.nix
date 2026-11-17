@@ -115,6 +115,10 @@ in {
     hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
     hl.bind(mainMod .. " + M", hl.dsp.window.move({ workspace = "special:magic" }))
 
+    -- Messaging special workspace (zapfast, Telegram)
+    hl.bind(mainMod .. " + X", hl.dsp.workspace.toggle_special("comm"))
+    hl.bind(mainMod .. " + SHIFT + X", hl.dsp.window.move({ workspace = "special:comm" }))
+
     -- === MOVE WINDOW TO WORKSPACE (SUPER+SHIFT+[1-9]) ===
     hl.bind(mainMod .. " + SHIFT + 1", hl.dsp.window.move({ workspace = 1 }))
     hl.bind(mainMod .. " + SHIFT + 2", hl.dsp.window.move({ workspace = 2 }))

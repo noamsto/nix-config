@@ -54,7 +54,8 @@
     libinput-gestures
 
     # social
-    ferdium
+    zapfast
+    telegram-desktop
     zoom-us
 
     # Claude Desktop (FHS variant so MCP servers find their interpreters)
