@@ -55,6 +55,7 @@
       nerd-fonts.ubuntu
 
       inter-nerdfont
+      (google-fonts.override {fonts = ["Heebo"];})
     ];
 
     # user defined fonts
@@ -69,8 +70,11 @@
         "Source Serif Pro"
         "Noto Color Emoji"
       ];
+      # Inter and Noto Sans have no Hebrew glyphs; without Heebo here, fallback lands on DejaVu Sans
       sansSerif = [
         "Inter Nerd Font"
+        "Heebo"
+        "Noto Sans Hebrew"
         "Noto Sans"
         "Noto Sans CJK SC"
         "Noto Sans CJK TC"
