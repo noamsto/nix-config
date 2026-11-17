@@ -109,8 +109,9 @@ in {
       end
 
       # starship reads these through env_var and renders nothing when unset.
-      # Re-evaluated every prompt with the same predicate as the mode sends
-      # above, so a client reattaching from a non-bidi terminal erases them.
+      # Re-evaluated every prompt. Inside tmux they follow the session env's
+      # KITTY_BIDI (the attached client), so a client reattaching from a
+      # non-bidi terminal erases them; the mode sends above are unconditional.
       function __kitty_bidi_prompt_marks --on-event fish_prompt
         if set -q TMUX
           tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'
