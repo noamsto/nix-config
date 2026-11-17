@@ -123,6 +123,16 @@ inputs: [
     });
   })
 
+  # Pins an unreleased fork commit (noamsto/tmux-fingers PR #2, OSC 8 hyperlink
+  # hints). Drop once upstream releases it and nixpkgs picks it up.
+  (final: prev: {
+    tmuxPlugins =
+      prev.tmuxPlugins
+      // {
+        fingers = final.callPackage ../packages/tmux-fingers {inherit (prev.tmuxPlugins) mkTmuxPlugin;};
+      };
+  })
+
   # sesh builds with Go 1.27 and rebuilds go-mockery with it for its preBuild,
   # but mockery 3.8.0 vendors golang.org/x/tools v0.49.0, which can't decode
   # Go 1.27.2 export data (v5 > 4), so both mockery's checks and sesh's mock
