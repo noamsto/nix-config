@@ -104,7 +104,7 @@ in
         on-window-detected = [
           (wsAssign "net.kovidgoyal.kitty" "1" false) # Hyprland: kitty → WS1 silent
           (wsAssign "org.mozilla.firefox" "2" true) # Hyprland: firefox → WS2 (follow)
-          (wsAssign "org.ferdium.ferdium-app" "5" false) # Hyprland: ferdium → WS5 silent
+          (wsAssign "ru.keepcoder.Telegram" "5" false) # Hyprland: telegram → special:comm; no special workspaces here, keep the old Ferdium WS5 placement
           (wsAssign "com.tinyspeck.slackmacgap" "5" false) # Hyprland: slack → WS5 (not yet installed)
           (wsAssign "us.zoom.xos" "5" false) # Hyprland: zoom → WS5 (not yet installed)
           (wsAssign "com.github.th-ch.youtube-music" "9" false) # Hyprland: music → WS9 silent

@@ -269,8 +269,12 @@
         workspace = "5";
       }
       {
-        match = {class = "^(ferdium)$";};
-        workspace = "5 silent";
+        match = {class = "^(zapfast)$";};
+        workspace = "special:comm silent";
+      }
+      {
+        match = {class = "^(org\\.telegram\\.desktop|TelegramDesktop)$";};
+        workspace = "special:comm silent";
       }
       {
         match = {class = "^(zoom)$";};
