@@ -221,6 +221,12 @@
     # one its CI built, so every rebuild compiles it from source instead of
     # substituting from lazytmux.cachix.org.
     tmux-og.url = "github:noamsto/tmux-og";
+    # Owner fork of tmux adding the per-pane `bidi` terminal feature; output is
+    # byte-identical to upstream while the feature is off.
+    tmux-og.inputs.tmux-upstream = {
+      url = "github:noamsto/tmux/66e640b951f32207ce26a8e2aedd4f6d8cb6308f";
+      flake = false;
+    };
 
     # agent-smith CC plugin engine (extractor/analyst/applier binaries); the
     # plugin itself is enabled via settings.json's extraKnownMarketplaces.
