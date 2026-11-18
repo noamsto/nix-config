@@ -111,8 +111,6 @@
         # lingering lock client, never replaces one while the session is locked.
         aegis-lock-guard = import ../home/desktop/hyprland/aegis-lock-check.nix {inherit pkgs;};
 
-        # Overlapping theme-apply runs must not empty app configs; btop keeps its
-        # settings on a read-only file; the apply lock serialises runs.
         theme-apply = import ../home/theme/check.nix {inherit pkgs;};
 
         # Runs workspace-manager undocked with noctalia dead: it must still reload

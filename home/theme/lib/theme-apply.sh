@@ -52,10 +52,9 @@ log_warn() {
 # Ensure state directory exists
 mkdir -p "$STATE_DIR"
 
-# Serialise theme-apply runs: overlapping runs (login restore vs. a mode-change
-# hook, a repeated remote fan-out) would otherwise interleave their in-place
-# rewrites. Waiting rather than skipping means no request is dropped. The fd
-# stays open until the process exits.
+# Serialise theme-apply runs so overlapping in-place rewrites never interleave.
+# Waiting rather than skipping means no request is dropped. The fd stays open
+# until the process exits.
 theme_apply_lock() {
   exec {THEME_APPLY_LOCK_FD}>"$STATE_DIR/theme-apply.lock"
   flock -x -w 60 "$THEME_APPLY_LOCK_FD" || {
