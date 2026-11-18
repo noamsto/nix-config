@@ -11,6 +11,7 @@
     osConfig.nix-config.terminal.kittyBidi.enable
     && pkgs.stdenv.hostPlatform.isLinux
     && osConfig.desktop.isEnabled;
+  bidiShell = osConfig.nix-config.terminal.bidiShell.enable || kittyBidi;
 
   baseTmux = options.programs.tmux-og.tmuxPackage.default;
   bidiTmux = pkgs.symlinkJoin {
@@ -87,49 +88,54 @@ in {
   # The kitty-bidi wrapper sets KITTY_BIDI, so the sequences only go to the
   # fork; stock kitty and other terminals never receive them.
   #
-  # Inside tmux the sequences go to the pane unconditionally on kitty-bidi
-  # hosts: the fork tracks the mode per pane and emits isolates only to
-  # clients with the bidi feature (a client without it sees upstream's output
-  # unchanged), so a pane mirrored onto another host's tmux still sets its
-  # mode. KITTY_BIDI is copied into the session env on attach and is read
-  # only by the prompt-mark predicate.
+  # Inside tmux the mode goes to the pane unconditionally (`bidiShell`: on for
+  # `bidiShell.enable` or kittyBidi): the fork tracks the mode per pane and
+  # emits isolates only to clients with the bidi feature, so a pane mirrored
+  # onto another host's tmux still sets its mode. The outside-tmux send, prompt
+  # marks, `update-environment` and the `-T bidi` wrapper are kittyBidi-only;
+  # KITTY_BIDI is copied into the session env on attach and is read only by the
+  # prompt-mark predicate.
   #
   # kitty-bidi reports the same TERM as stock kitty, so a terminal-features
   # entry cannot tell them apart. `-T bidi` is per client, and wrapping the
   # package covers the kitty `shell` launcher, `tmux attach` and `tmux new`.
   programs = {
-    fish.interactiveShellInit = lib.mkIf kittyBidi ''
-      if set -q KITTY_BIDI; and not set -q TMUX
-        printf '\e[8h\e[?2501h'
-      end
-
-      function __kitty_bidi_tmux --on-event fish_prompt
-        set -q TMUX; or return
-        printf '\e[8h\e[?2501h'
-      end
-
-      # starship reads these through env_var and renders nothing when unset.
-      # Re-evaluated every prompt. Inside tmux they follow the session env's
-      # KITTY_BIDI (the attached client), so a client reattaching from a
-      # non-bidi terminal erases them; the mode sends above are unconditional.
-      function __kitty_bidi_prompt_marks --on-event fish_prompt
-        if set -q TMUX
-          tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'
-        else
-          set -q KITTY_BIDI
+    fish.interactiveShellInit = lib.mkMerge [
+      (lib.mkIf kittyBidi ''
+        if set -q KITTY_BIDI; and not set -q TMUX
+          printf '\e[8h\e[?2501h'
         end
-        and set -gx KITTY_BIDI_LRM \u200e
-        and set -gx KITTY_BIDI_FSI \u2068
-        or set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
-      end
+      '')
+      (lib.mkIf bidiShell ''
+        function __kitty_bidi_tmux --on-event fish_prompt
+          set -q TMUX; or return
+          printf '\e[8h\e[?2501h'
+        end
+      '')
+      (lib.mkIf kittyBidi ''
+        # starship reads these through env_var and renders nothing when unset.
+        # Re-evaluated every prompt. Inside tmux they follow the session env's
+        # KITTY_BIDI (the attached client), so a client reattaching from a
+        # non-bidi terminal erases them; the mode sends above are unconditional.
+        function __kitty_bidi_prompt_marks --on-event fish_prompt
+          if set -q TMUX
+            tmux show-environment KITTY_BIDI 2>/dev/null | string match -q 'KITTY_BIDI=*'
+          else
+            set -q KITTY_BIDI
+          end
+          and set -gx KITTY_BIDI_LRM \u200e
+          and set -gx KITTY_BIDI_FSI \u2068
+          or set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
+        end
 
-      # Only starship's prompt render needs the marks; erasing them before each
-      # command keeps them out of children (a tmux server started here would
-      # hand them to a bash pane attached from a plain terminal).
-      function __kitty_bidi_prompt_marks_clear --on-event fish_preexec
-        set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
-      end
-    '';
+        # Only starship's prompt render needs the marks; erasing them before each
+        # command keeps them out of children (a tmux server started here would
+        # hand them to a bash pane attached from a plain terminal).
+        function __kitty_bidi_prompt_marks_clear --on-event fish_preexec
+          set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
+        end
+      '')
+    ];
 
     tmux-og = {
       extraConfig = lib.mkIf kittyBidi ''
