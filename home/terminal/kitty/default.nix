@@ -128,10 +128,13 @@ in {
           or set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
         end
 
+        # The prompt ends in an open FSI; a PDI closes it before the command's
+        # output. Only emitted when this prompt actually printed the FSI.
         # Only starship's prompt render needs the marks; erasing them before each
         # command keeps them out of children (a tmux server started here would
         # hand them to a bash pane attached from a plain terminal).
         function __kitty_bidi_prompt_marks_clear --on-event fish_preexec
+          set -q KITTY_BIDI_FSI; and printf '\u2069'
           set -e KITTY_BIDI_LRM KITTY_BIDI_FSI
         end
       '')
