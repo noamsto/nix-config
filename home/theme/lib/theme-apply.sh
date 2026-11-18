@@ -237,6 +237,7 @@ update_kitty() {
     local final_config
     final_config=$(mktemp "${kitty_config}.XXXXXX") || {
       record_failure "kitty"
+      rm -f "$tmp_config"
       return 1
     }
     {
