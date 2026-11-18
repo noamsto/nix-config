@@ -23,6 +23,10 @@
       # shellcheck source=/dev/null
       source "${paletteEnv.libScript}"
 
+      # Take the lock before reading the appearance: a run that waits must apply
+      # the theme as it is when it gets the lock, not as it was when it started.
+      theme_apply_lock
+
       # Resolve macOS appearance. AppleInterfaceStyle is "Dark" in dark mode and
       # absent (read exits non-zero) in light mode. Absolute path: the Home
       # Manager activation entry below runs this with activate's own PATH, which
@@ -33,8 +37,6 @@
       else
         theme=light
       fi
-
-      theme_apply_lock
 
       # Debounce: skip if already applied (the watched plist changes for many
       # unrelated reasons). The shared theme-state.json is the only record, so

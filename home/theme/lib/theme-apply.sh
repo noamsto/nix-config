@@ -54,8 +54,8 @@ mkdir -p "$STATE_DIR"
 
 # Serialise theme-apply runs: overlapping runs (login restore vs. a mode-change
 # hook, a repeated remote fan-out) would otherwise interleave their in-place
-# rewrites. Waiting rather than skipping applies the latest request last. The
-# fd stays open until the process exits.
+# rewrites. Waiting rather than skipping means no request is dropped. The fd
+# stays open until the process exits.
 theme_apply_lock() {
   exec {THEME_APPLY_LOCK_FD}>"$STATE_DIR/theme-apply.lock"
   flock -x -w 60 "$THEME_APPLY_LOCK_FD" || {
@@ -100,7 +100,7 @@ write_state() {
   timestamp=$(date -Iseconds)
 
   local tmp_state
-  tmp_state=$(mktemp "${STATE_FILE}.XXXXXX")
+  tmp_state=$(mktemp "${STATE_FILE}.XXXXXX") || return 1
   jq -n \
     --arg theme "$theme" \
     --arg timestamp "$timestamp" \
@@ -221,7 +221,10 @@ update_kitty() {
   # Update kitty.conf for new instances (atomically)
   if [[ -f $kitty_config ]]; then
     local tmp_config
-    tmp_config=$(mktemp "${kitty_config}.XXXXXX")
+    tmp_config=$(mktemp "${kitty_config}.XXXXXX") || {
+      record_failure "kitty"
+      return 1
+    }
 
     grep -v "^# theme-toggle:" "$kitty_config" 2>/dev/null |
       grep -v "^include.*/kitty/themes/" |
@@ -232,7 +235,10 @@ update_kitty() {
     }
 
     local final_config
-    final_config=$(mktemp "${kitty_config}.XXXXXX")
+    final_config=$(mktemp "${kitty_config}.XXXXXX") || {
+      record_failure "kitty"
+      return 1
+    }
     {
       echo "# theme-toggle: catppuccin theme"
       echo "include ${theme_file}"
@@ -289,7 +295,10 @@ update_starship() {
   fi
 
   local tmp_config
-  tmp_config=$(mktemp "${starship_config}.XXXXXX")
+  tmp_config=$(mktemp "${starship_config}.XXXXXX") || {
+    record_failure "starship"
+    return 1
+  }
   sed "s/^palette = .*/palette = \"$starship_palette\"/" "$starship_config" >"$tmp_config" || {
     record_failure "starship"
     rm -f "$tmp_config"
@@ -383,7 +392,10 @@ update_btop() {
   fi
 
   local tmp_config
-  tmp_config=$(mktemp "${btop_config}.XXXXXX")
+  tmp_config=$(mktemp "${btop_config}.XXXXXX") || {
+    record_failure "btop"
+    return 1
+  }
   local color_line="color_theme = \"${btop_theme}.theme\""
 
   # Read through a Home Manager symlink, so a non-writable file keeps its
@@ -601,7 +613,10 @@ update_yazi() {
   # Prepend custom entries to the flavor's own [icon].dirs when it has one
   # (a second `dirs` key is a TOML error); otherwise add the array after [icon].
   local tmp_config
-  tmp_config=$(mktemp "${yazi_config}.XXXXXX")
+  tmp_config=$(mktemp "${yazi_config}.XXXXXX") || {
+    record_failure "yazi"
+    return 1
+  }
   awk -v dirs="$custom_dirs" '
     NR == FNR {
       if (/^\[/) in_icon = ($0 == "[icon]")

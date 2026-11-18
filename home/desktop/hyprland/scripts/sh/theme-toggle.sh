@@ -101,7 +101,10 @@ EOF
     if [[ -f $ini ]]; then
       # Remove existing theme keys, then append updated values
       local tmp
-      tmp=$(mktemp "${ini}.XXXXXX")
+      tmp=$(mktemp "${ini}.XXXXXX") || {
+        record_failure "gtk"
+        return 1
+      }
       grep -v -E '^gtk-(application-prefer-dark-theme|theme-name|icon-theme-name)=' "$ini" >"$tmp" 2>/dev/null || true
       {
         printf 'gtk-application-prefer-dark-theme=%d\n' "$prefer_dark"
@@ -266,7 +269,10 @@ update_ghostty() {
 
   # Update theme line in config (atomically)
   local tmp_config
-  tmp_config=$(mktemp "${ghostty_config}.XXXXXX")
+  tmp_config=$(mktemp "${ghostty_config}.XXXXXX") || {
+    record_failure "ghostty"
+    return 1
+  }
   sed "s|^theme = .*|theme = ${theme_name}|" "$ghostty_config" >"$tmp_config" || {
     record_failure "ghostty"
     rm -f "$tmp_config"
@@ -322,7 +328,10 @@ EOF
   else
     # File is writable, update in place
     local tmp_config
-    tmp_config=$(mktemp "${k9s_config}.XXXXXX")
+    tmp_config=$(mktemp "${k9s_config}.XXXXXX") || {
+      record_failure "k9s"
+      return 1
+    }
     sed "s/skin: catppuccin-.*/skin: $k9s_skin/" "$k9s_config" >"$tmp_config" || {
       record_failure "k9s"
       rm -f "$tmp_config"
@@ -354,7 +363,10 @@ update_kvantum() {
   fi
 
   local tmp_config
-  tmp_config=$(mktemp "${kvantum_config}.XXXXXX")
+  tmp_config=$(mktemp "${kvantum_config}.XXXXXX") || {
+    record_failure "kvantum"
+    return 1
+  }
   if ! cat >"$tmp_config" <<EOF
 [General]
 theme=$kvantum_theme
@@ -456,7 +468,10 @@ update_kde_colorscheme() {
   local theme="$1"
   local kdeglobals="${XDG_CONFIG_HOME}/kdeglobals"
   local tmp_kdeglobals
-  tmp_kdeglobals=$(mktemp "${kdeglobals}.XXXXXX")
+  tmp_kdeglobals=$(mktemp "${kdeglobals}.XXXXXX") || {
+    record_failure "kde"
+    return 1
+  }
   log_debug "Updating KDE colorscheme to $theme"
 
   if [[ $theme == "light" ]]; then
@@ -552,7 +567,10 @@ update_foot() {
   fi
 
   local tmp_config
-  tmp_config=$(mktemp "${foot_config}.XXXXXX")
+  tmp_config=$(mktemp "${foot_config}.XXXXXX") || {
+    record_failure "foot"
+    return 1
+  }
 
   # Update include line and font weight in foot.ini
   # Remove any existing weight suffix, then add the appropriate one
