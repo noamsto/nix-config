@@ -17,14 +17,43 @@ in {
   wayland.windowManager.hyprland.extraLuaFiles."bindings".content = ''
     local mainMod = "SUPER"
 
+    -- A shown special workspace (comm, magic) covers the regular one; the
+    -- launcher and workspace keys hide it first, so their window isn't
+    -- opened or focused behind it.
+    local function hideSpecial()
+      local special = hl.get_active_special_workspace()
+      if special then
+        hl.dispatch(hl.dsp.workspace.toggle_special((special.name:gsub("^special:", ""))))
+      end
+      return special ~= nil
+    end
+
+    local function focusWorkspace(ws)
+      return function()
+        hideSpecial()
+        hl.dispatch(hl.dsp.focus({ workspace = ws }))
+      end
+    end
+
+    -- ws: the workspace window_rule.nix sends the app to. Leaving a special
+    -- workspace lands there; elsewhere the launch stays where you are.
+    local function launch(cmd, ws)
+      return function()
+        if hideSpecial() and ws then
+          hl.dispatch(hl.dsp.focus({ workspace = ws }))
+        end
+        hl.dispatch(hl.dsp.exec_cmd(cmd))
+      end
+    end
+
     -- === APPLICATION LAUNCHERS ===
-    hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("${terminal} --single-instance --instance-group=hypr"))
-    hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("${fileManager}"))
-    hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("${browser}"))
-    hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("sesh-launcher"))
-    hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("obsidian"))
-    hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("${youtube-music}"))
-    hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("pavucontrol"))
+    hl.bind(mainMod .. " + C", launch("${terminal} --single-instance --instance-group=hypr", 1))
+    hl.bind(mainMod .. " + E", launch("${fileManager}"))
+    hl.bind(mainMod .. " + B", launch("${browser}", 2))
+    hl.bind(mainMod .. " + A", launch("sesh-launcher", 1))
+    hl.bind(mainMod .. " + N", launch("obsidian"))
+    hl.bind(mainMod .. " + Y", launch("${youtube-music}", 9))
+    hl.bind(mainMod .. " + SHIFT + V", launch("pavucontrol"))
 
     -- === WINDOW MANAGEMENT ===
     hl.bind(mainMod .. " + Q", hl.dsp.window.close())
@@ -85,19 +114,19 @@ in {
     hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
 
     -- === WORKSPACE SWITCHING (SUPER+[1-9]) ===
-    hl.bind(mainMod .. " + 1", hl.dsp.focus({ workspace = 1 }))
-    hl.bind(mainMod .. " + 2", hl.dsp.focus({ workspace = 2 }))
-    hl.bind(mainMod .. " + 3", hl.dsp.focus({ workspace = 3 }))
-    hl.bind(mainMod .. " + 4", hl.dsp.focus({ workspace = 4 }))
-    hl.bind(mainMod .. " + 5", hl.dsp.focus({ workspace = 5 }))
-    hl.bind(mainMod .. " + 6", hl.dsp.focus({ workspace = 6 }))
-    hl.bind(mainMod .. " + 7", hl.dsp.focus({ workspace = 7 }))
-    hl.bind(mainMod .. " + 8", hl.dsp.focus({ workspace = 8 }))
-    hl.bind(mainMod .. " + 9", hl.dsp.focus({ workspace = 9 }))
+    hl.bind(mainMod .. " + 1", focusWorkspace(1))
+    hl.bind(mainMod .. " + 2", focusWorkspace(2))
+    hl.bind(mainMod .. " + 3", focusWorkspace(3))
+    hl.bind(mainMod .. " + 4", focusWorkspace(4))
+    hl.bind(mainMod .. " + 5", focusWorkspace(5))
+    hl.bind(mainMod .. " + 6", focusWorkspace(6))
+    hl.bind(mainMod .. " + 7", focusWorkspace(7))
+    hl.bind(mainMod .. " + 8", focusWorkspace(8))
+    hl.bind(mainMod .. " + 9", focusWorkspace(9))
 
     -- Quick workspace shortcuts
-    hl.bind(mainMod .. " + D", hl.dsp.focus({ workspace = 1 })) -- Development (kitty)
-    hl.bind(mainMod .. " + W", hl.dsp.focus({ workspace = 2 })) -- Web (browsers)
+    hl.bind(mainMod .. " + D", focusWorkspace(1)) -- Development (kitty)
+    hl.bind(mainMod .. " + W", focusWorkspace(2)) -- Web (browsers)
 
     -- Cycle through windows (Tab)
     hl.bind(mainMod .. " + Tab", hl.dsp.window.cycle_next())
