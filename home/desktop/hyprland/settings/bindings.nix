@@ -56,7 +56,12 @@ in {
     hl.bind(mainMod .. " + SHIFT + V", launch("pavucontrol"))
 
     -- === WINDOW MANAGEMENT ===
-    hl.bind(mainMod .. " + Q", hl.dsp.window.close())
+    -- In a shown special workspace SUPER+Q hides it: its apps stay running there.
+    hl.bind(mainMod .. " + Q", function()
+      if not hideSpecial() then
+        hl.dispatch(hl.dsp.window.close())
+      end
+    end)
     hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = 1 }))       -- maximize (with gaps)
     hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 0 })) -- true fullscreen
     hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())

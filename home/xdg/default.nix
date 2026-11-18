@@ -20,7 +20,7 @@
   # per-profile Firefox and the Wayland flags on Chromium keep applying.
   browserRouter = pkgs.writeShellApplication {
     name = "browser-router";
-    runtimeInputs = [pkgs.coreutils];
+    runtimeInputs = [pkgs.coreutils pkgs.hyprland pkgs.jq];
     text = ''
       chromium=${lib.getExe config.programs.chromium.finalPackage}
       firefox=${lib.getExe config.programs.firefox.finalPackage}
@@ -48,6 +48,24 @@
           other_urls+=("$url")
         fi
       done
+
+      # A link clicked in a shown special workspace (comm) would open behind it,
+      # since neither browser asks for focus: hide it and go to the browser's
+      # workspace from window_rule.nix (Firefox 2, Chromium 3).
+      leave_special() {
+        [ -n "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || return 0
+        local special
+        special=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .specialWorkspace.name')
+        [ -n "$special" ] || return 0
+        hyprctl dispatch "hl.dsp.workspace.toggle_special(\"''${special#special:}\")" >/dev/null
+        hyprctl dispatch "hl.dsp.focus({ workspace = $1 })" >/dev/null
+      }
+
+      if [ "''${#other_urls[@]}" -gt 0 ]; then
+        leave_special 2 || true
+      else
+        leave_special 3 || true
+      fi
 
       # Detach so the router exits immediately, as a MIME handler should.
       if [ "''${#meet_urls[@]}" -gt 0 ]; then
