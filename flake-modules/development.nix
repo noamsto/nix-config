@@ -111,6 +111,8 @@
         # lingering lock client, never replaces one while the session is locked.
         aegis-lock-guard = import ../home/desktop/hyprland/aegis-lock-check.nix {inherit pkgs;};
 
+        theme-apply = import ../home/theme/check.nix {inherit pkgs;};
+
         # Runs workspace-manager undocked with noctalia dead: it must still reload
         # Hyprland instead of dying on the pgrep lookup.
         workspace-manager = import ../home/desktop/hyprland/workspace-manager-check.nix {inherit pkgs;};

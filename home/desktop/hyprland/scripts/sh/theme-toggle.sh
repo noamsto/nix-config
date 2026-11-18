@@ -100,13 +100,18 @@ EOF
 
     if [[ -f $ini ]]; then
       # Remove existing theme keys, then append updated values
-      local tmp="${ini}.tmp"
+      local tmp
+      tmp=$(mktemp "${ini}.XXXXXX") || {
+        record_failure "gtk"
+        return 1
+      }
       grep -v -E '^gtk-(application-prefer-dark-theme|theme-name|icon-theme-name)=' "$ini" >"$tmp" 2>/dev/null || true
       {
         printf 'gtk-application-prefer-dark-theme=%d\n' "$prefer_dark"
         printf 'gtk-theme-name=%s\n' "$gtk_theme_name"
         printf 'gtk-icon-theme-name=%s\n' "$icon_theme"
       } >>"$tmp"
+      chmod 644 "$tmp"
       mv "$tmp" "$ini"
     fi
   done
@@ -263,12 +268,17 @@ update_ghostty() {
   fi
 
   # Update theme line in config (atomically)
-  local tmp_config="${ghostty_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${ghostty_config}.XXXXXX") || {
+    record_failure "ghostty"
+    return 1
+  }
   sed "s|^theme = .*|theme = ${theme_name}|" "$ghostty_config" >"$tmp_config" || {
     record_failure "ghostty"
     rm -f "$tmp_config"
     return 1
   }
+  chmod 644 "$tmp_config"
   mv "$tmp_config" "$ghostty_config"
 
   # Signal running ghostty instances to reload config
@@ -305,8 +315,6 @@ EOF
     return 0
   fi
 
-  local tmp_config="${k9s_config}.tmp"
-
   if [[ ! -w $k9s_config ]]; then
     # File not writable (HM symlink or read-only), recreate it
     rm -f "$k9s_config"
@@ -319,11 +327,17 @@ EOF
     chmod 644 "$k9s_config"
   else
     # File is writable, update in place
+    local tmp_config
+    tmp_config=$(mktemp "${k9s_config}.XXXXXX") || {
+      record_failure "k9s"
+      return 1
+    }
     sed "s/skin: catppuccin-.*/skin: $k9s_skin/" "$k9s_config" >"$tmp_config" || {
       record_failure "k9s"
       rm -f "$tmp_config"
       return 1
     }
+    chmod 644 "$tmp_config"
     mv "$tmp_config" "$k9s_config"
   fi
 }
@@ -348,7 +362,11 @@ update_kvantum() {
     return 1
   fi
 
-  local tmp_config="${kvantum_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${kvantum_config}.XXXXXX") || {
+    record_failure "kvantum"
+    return 1
+  }
   if ! cat >"$tmp_config" <<EOF
 [General]
 theme=$kvantum_theme
@@ -358,6 +376,7 @@ EOF
     rm -f "$tmp_config"
     return 1
   fi
+  chmod 644 "$tmp_config"
   mv "$tmp_config" "$kvantum_config"
 }
 
@@ -448,7 +467,11 @@ update_vicinae() {
 update_kde_colorscheme() {
   local theme="$1"
   local kdeglobals="${XDG_CONFIG_HOME}/kdeglobals"
-  local tmp_kdeglobals="${kdeglobals}.tmp"
+  local tmp_kdeglobals
+  tmp_kdeglobals=$(mktemp "${kdeglobals}.XXXXXX") || {
+    record_failure "kde"
+    return 1
+  }
   log_debug "Updating KDE colorscheme to $theme"
 
   if [[ $theme == "light" ]]; then
@@ -501,6 +524,7 @@ LookAndFeelPackage=org.kde.breezedark.desktop
 EOF
   fi
 
+  chmod 644 "$tmp_kdeglobals"
   mv "$tmp_kdeglobals" "$kdeglobals" || {
     record_failure "kde"
     rm -f "$tmp_kdeglobals"
@@ -542,7 +566,11 @@ update_foot() {
     return 0
   fi
 
-  local tmp_config="${foot_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${foot_config}.XXXXXX") || {
+    record_failure "foot"
+    return 1
+  }
 
   # Update include line and font weight in foot.ini
   # Remove any existing weight suffix, then add the appropriate one
@@ -554,6 +582,7 @@ update_foot() {
     rm -f "$tmp_config"
     return 1
   }
+  chmod 644 "$tmp_config"
   mv "$tmp_config" "$foot_config"
 
   # Signal running foot instances to reload config
@@ -665,6 +694,7 @@ toggle_theme() {
   # Fallback: toggle all apps except Noctalia to avoid potential cycle
   # (If we updated Noctalia here, its hook might re-trigger us)
   log_debug "Using fallback theme toggle"
+  theme_apply_lock
   local current
   current=$(get_current_theme)
   local new_theme
@@ -695,6 +725,7 @@ apply_theme_command() {
     exit 1
   fi
 
+  theme_apply_lock
   log_debug "Applying theme (from Noctalia hook): $theme"
 
   # Apply to all apps except Noctalia (it already changed)
@@ -720,6 +751,7 @@ apply_theme_command() {
 
 # Restore theme (called at login)
 restore_theme() {
+  theme_apply_lock
   local current
   current=$(get_current_theme)
   log_debug "Restoring theme: $current"
@@ -733,6 +765,7 @@ restore_theme() {
 
 # Sync/retry failed updates
 sync_theme() {
+  theme_apply_lock
   local current
   current=$(get_current_theme)
 
