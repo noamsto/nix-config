@@ -2866,17 +2866,17 @@
     "tmux-upstream_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1794924565,
-        "narHash": "sha256-ktb+ceU3NIw4kWme8Sh7u/2hsrMe6NuesIi2J7XBBz4=",
+        "lastModified": 1795027674,
+        "narHash": "sha256-G3xFZBG+aLthGqyeXwdNa/tJeu5geOi+N+ORyWGkMFg=",
         "owner": "noamsto",
         "repo": "tmux",
-        "rev": "52896d4d07119fc117c2aa3528b9cc30306630cf",
+        "rev": "c40a5b0efd674762fd3c79e64036449c3729e676",
         "type": "github"
       },
       "original": {
         "owner": "noamsto",
         "repo": "tmux",
-        "rev": "52896d4d07119fc117c2aa3528b9cc30306630cf",
+        "rev": "c40a5b0efd674762fd3c79e64036449c3729e676",
         "type": "github"
       }
     },
