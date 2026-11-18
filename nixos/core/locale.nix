@@ -56,6 +56,8 @@
 
       inter-nerdfont
       (google-fonts.override {fonts = ["Heebo"];})
+      # zapfast picks its own Hebrew face; see the package for why it needs this one
+      (callPackage ../../packages/heebo-sans-hebrew.nix {})
     ];
 
     # user defined fonts
