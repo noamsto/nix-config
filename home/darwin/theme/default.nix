@@ -34,6 +34,8 @@
         theme=light
       fi
 
+      theme_apply_lock
+
       # Debounce: skip if already applied (the watched plist changes for many
       # unrelated reasons). The shared theme-state.json is the only record, so
       # a missing or unparseable file never debounces (get_current_theme

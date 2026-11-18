@@ -31,6 +31,7 @@ in {
     gnused
     gawk
     findutils
+    flock
     jq
     tmux
     fish

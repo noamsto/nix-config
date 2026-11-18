@@ -52,6 +52,18 @@ log_warn() {
 # Ensure state directory exists
 mkdir -p "$STATE_DIR"
 
+# Serialise theme-apply runs: overlapping runs (login restore vs. a mode-change
+# hook, a repeated remote fan-out) would otherwise interleave their in-place
+# rewrites. Waiting rather than skipping applies the latest request last. The
+# fd stays open until the process exits.
+theme_apply_lock() {
+  exec {THEME_APPLY_LOCK_FD}>"$STATE_DIR/theme-apply.lock"
+  flock -x -w 60 "$THEME_APPLY_LOCK_FD" || {
+    log_error "timed out waiting for the theme-apply lock"
+    exit 1
+  }
+}
+
 # Migrate from legacy plain text state file
 migrate_legacy_state() {
   if [[ -f $LEGACY_STATE_FILE && ! -f $STATE_FILE ]]; then
@@ -87,12 +99,17 @@ write_state() {
   local timestamp
   timestamp=$(date -Iseconds)
 
-  local tmp_state="${STATE_FILE}.tmp"
+  local tmp_state
+  tmp_state=$(mktemp "${STATE_FILE}.XXXXXX")
   jq -n \
     --arg theme "$theme" \
     --arg timestamp "$timestamp" \
     --argjson failed "$failed_json" \
-    '{theme: $theme, timestamp: $timestamp, failed: $failed, version: 1}' >"$tmp_state"
+    '{theme: $theme, timestamp: $timestamp, failed: $failed, version: 1}' >"$tmp_state" || {
+    rm -f "$tmp_state"
+    return 1
+  }
+  chmod 644 "$tmp_state"
   mv "$tmp_state" "$STATE_FILE"
   log_debug "State saved: theme=$theme, failed=$failed_json"
 }
@@ -203,7 +220,8 @@ update_kitty() {
 
   # Update kitty.conf for new instances (atomically)
   if [[ -f $kitty_config ]]; then
-    local tmp_config="${kitty_config}.tmp"
+    local tmp_config
+    tmp_config=$(mktemp "${kitty_config}.XXXXXX")
 
     grep -v "^# theme-toggle:" "$kitty_config" 2>/dev/null |
       grep -v "^include.*/kitty/themes/" |
@@ -213,7 +231,8 @@ update_kitty() {
       return 1
     }
 
-    local final_config="${kitty_config}.final"
+    local final_config
+    final_config=$(mktemp "${kitty_config}.XXXXXX")
     {
       echo "# theme-toggle: catppuccin theme"
       echo "include ${theme_file}"
@@ -221,8 +240,8 @@ update_kitty() {
       cat "$tmp_config"
     } >"$final_config"
     rm -f "$tmp_config"
-    mv "$final_config" "$tmp_config"
-    mv "$tmp_config" "$kitty_config"
+    chmod 644 "$final_config"
+    mv "$final_config" "$kitty_config"
   fi
 }
 
@@ -269,12 +288,14 @@ update_starship() {
     return 0
   fi
 
-  local tmp_config="${starship_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${starship_config}.XXXXXX")
   sed "s/^palette = .*/palette = \"$starship_palette\"/" "$starship_config" >"$tmp_config" || {
     record_failure "starship"
     rm -f "$tmp_config"
     return 1
   }
+  chmod 644 "$tmp_config"
   mv "$tmp_config" "$starship_config"
 }
 
@@ -361,22 +382,23 @@ update_btop() {
     return 0
   fi
 
-  # Use atomic tmp-file-mv pattern
-  local tmp_config="${btop_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${btop_config}.XXXXXX")
+  local color_line="color_theme = \"${btop_theme}.theme\""
 
+  # Read through a Home Manager symlink, so a non-writable file keeps its
+  # other settings when replaced by a regular file.
+  sed "s/^color_theme = .*/${color_line}/" "$btop_config" >"$tmp_config" || {
+    record_failure "btop"
+    rm -f "$tmp_config"
+    return 1
+  }
+  grep -q '^color_theme = ' "$tmp_config" || echo "$color_line" >>"$tmp_config"
+  chmod 644 "$tmp_config"
   if [[ ! -w $btop_config ]]; then
-    # File not writable, recreate it
     rm -f "$btop_config"
-    echo "color_theme = \"${btop_theme}.theme\"" >"$btop_config"
-    chmod 644 "$btop_config"
-  else
-    sed "s/^color_theme = .*/color_theme = \"${btop_theme}.theme\"/" "$btop_config" >"$tmp_config" || {
-      record_failure "btop"
-      rm -f "$tmp_config"
-      return 1
-    }
-    mv "$tmp_config" "$btop_config"
   fi
+  mv "$tmp_config" "$btop_config"
 }
 
 # Update lazydocker theme (copies pre-generated config from themes directory)
@@ -578,7 +600,8 @@ update_yazi() {
 
   # Prepend custom entries to the flavor's own [icon].dirs when it has one
   # (a second `dirs` key is a TOML error); otherwise add the array after [icon].
-  local tmp_config="${yazi_config}.tmp"
+  local tmp_config
+  tmp_config=$(mktemp "${yazi_config}.XXXXXX")
   awk -v dirs="$custom_dirs" '
     NR == FNR {
       if (/^\[/) in_icon = ($0 == "[icon]")
@@ -589,7 +612,12 @@ update_yazi() {
     in_icon && has_dirs && /^dirs[ \t]*=[ \t]*\[/ { print; print dirs; next }
     !has_dirs && /^\[icon\]$/ { print; print "dirs = ["; print dirs; print "]"; next }
     { print }
-  ' "$yazi_config" "$yazi_config" >"$tmp_config" && mv "$tmp_config" "$yazi_config"
+  ' "$yazi_config" "$yazi_config" >"$tmp_config" || {
+    rm -f "$tmp_config"
+    return 1
+  }
+  chmod 644 "$tmp_config"
+  mv "$tmp_config" "$yazi_config"
 }
 
 # Update bat syntax highlighter theme.

@@ -47,9 +47,11 @@
 
       case "''${1:-toggle}" in
       apply)
+        theme_apply_lock
         apply_headless "''${2:-}"
         ;;
       toggle)
+        theme_apply_lock
         if [[ "$(get_current_theme)" == "dark" ]]; then
           apply_headless light
         else
