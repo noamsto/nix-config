@@ -13,6 +13,7 @@
       {
         deja-vu = pkgs.callPackage ./deja-vu.nix {};
         gh-repo-defaults = pkgs.callPackage ./gh-repo-defaults {};
+        heebo-sans-hebrew = pkgs.callPackage ./heebo-sans-hebrew.nix {};
         linear-cli = pkgs.callPackage ./linear-cli.nix {};
         lock-commit = pkgs.callPackage ./lock-commit.nix {};
         inherit pi-bolt;
