@@ -36,23 +36,32 @@ in {
     end
 
     -- ws: the workspace window_rule.nix sends the app to. Leaving a special
-    -- workspace lands there; elsewhere the launch stays where you are.
-    local function launch(cmd, ws)
+    -- workspace lands there, and if a window whose class matches the Lua
+    -- pattern `class` is already on it, that is the destination: nothing new
+    -- is launched. Elsewhere the launch stays where you are.
+    local function launch(cmd, ws, class)
       return function()
         if hideSpecial() and ws then
           hl.dispatch(hl.dsp.focus({ workspace = ws }))
+          if class then
+            for _, w in ipairs(hl.get_windows({ workspace = ws })) do
+              if w.class:match(class) then
+                return
+              end
+            end
+          end
         end
         hl.dispatch(hl.dsp.exec_cmd(cmd))
       end
     end
 
     -- === APPLICATION LAUNCHERS ===
-    hl.bind(mainMod .. " + C", launch("${terminal} --single-instance --instance-group=hypr", 1))
+    hl.bind(mainMod .. " + C", launch("${terminal} --single-instance --instance-group=hypr", 1, "^kitty$"))
     hl.bind(mainMod .. " + E", launch("${fileManager}"))
-    hl.bind(mainMod .. " + B", launch("${browser}", 2))
+    hl.bind(mainMod .. " + B", launch("${browser}", 2, "^firefox$"))
     hl.bind(mainMod .. " + A", launch("sesh-launcher", 1))
     hl.bind(mainMod .. " + N", launch("obsidian"))
-    hl.bind(mainMod .. " + Y", launch("${youtube-music}", 9))
+    hl.bind(mainMod .. " + Y", launch("${youtube-music}", 9, "^com%.github%.th_ch%.youtube_music$"))
     hl.bind(mainMod .. " + SHIFT + V", launch("pavucontrol"))
 
     -- === WINDOW MANAGEMENT ===
