@@ -48,6 +48,10 @@ pkgs.writeShellApplication {
 
     restarted=0
     openSubtitlesActive=0
+    openSubtitlesName=
+    if jq -e '.openSubtitles != null' "$cfg" > /dev/null; then
+      openSubtitlesName=$(jq -r .openSubtitles.name "$cfg")
+    fi
     if jq -e '.plugins | length > 0' "$cfg" > /dev/null; then
       plugins_json=$(api "$base/Plugins")
       if printf '%s' "$plugins_json" | jq -e 'any(.[]; .Status == "Restart")' > /dev/null; then
@@ -62,7 +66,7 @@ pkgs.writeShellApplication {
       for name in "''${plugins[@]}"; do
         if printf '%s' "$plugins_json" | jq -e --arg n "$name" 'any(.[]; .Name == $n and .Status == "Active")' > /dev/null; then
           echo "plugin $name: active"
-          if [ "$name" = "Open Subtitles" ]; then
+          if [ "$name" = "$openSubtitlesName" ]; then
             openSubtitlesActive=1
           fi
         else
@@ -98,11 +102,14 @@ pkgs.writeShellApplication {
       passwordFile=$(jq -r .openSubtitles.passwordFile "$cfg")
       configUrl="$base/Plugins/$pluginId/Configuration"
       # Credential values reach jq only via --rawfile and curl only via stdin; never echo $current.
+      # jq stderr is dropped because its errors quote operands, which include the credentials.
       if ! current=$(api "$configUrl"); then
         fail "Open Subtitles: reading configuration failed"
-      elif printf '%s' "$current" | jq -e --rawfile u "$usernameFile" --rawfile p "$passwordFile" '.Username == ($u | trim) and .Password == ($p | trim) and (.CredentialsInvalid | not)' > /dev/null; then
+      elif printf '%s' "$current" | jq -e --rawfile u "$usernameFile" --rawfile p "$passwordFile" 'type == "object" and .Username == ($u | trim) and .Password == ($p | trim) and (.CredentialsInvalid | not)' > /dev/null 2>&1; then
         echo "Open Subtitles: credentials up to date"
-      elif printf '%s' "$current" | jq -c --rawfile u "$usernameFile" --rawfile p "$passwordFile" '. + {Username: ($u | trim), Password: ($p | trim), CredentialsInvalid: false}' | post "$configUrl"; then
+      elif ! merged=$(printf '%s' "$current" | jq -c --rawfile u "$usernameFile" --rawfile p "$passwordFile" 'if type != "object" then error("unexpected configuration shape") else . + {Username: ($u | trim), Password: ($p | trim), CredentialsInvalid: false} end' 2> /dev/null); then
+        fail "Open Subtitles: unexpected configuration shape"
+      elif printf '%s' "$merged" | post "$configUrl"; then
         echo "Open Subtitles: credentials updated"
       else
         fail "Open Subtitles: updating credentials failed"

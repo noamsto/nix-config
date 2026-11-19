@@ -48,6 +48,7 @@
       if decl.openSubtitles == null
       then null
       else {
+        name = openSubtitlesName;
         pluginId = openSubtitlesId;
         usernameFile = toString decl.openSubtitles.usernameSecret;
         passwordFile = toString decl.openSubtitles.passwordSecret;
@@ -122,9 +123,10 @@ in {
         example = [openSubtitlesName];
         description = ''
           Jellyfin plugin catalog names for Jellarr to install. Jellyfin loads a
-          newly installed plugin only after a restart, so Jellyfin is restarted
-          once, right after the Jellarr run that installed it (interrupting
-          playback), and that Jellarr run is re-run so it finishes cleanly.
+          plugin only after a restart, so whenever any installed plugin waits for
+          one (a Jellarr install or Jellyfin's plugin auto-update), the
+          jellarr-post run after the next Jellarr run restarts Jellyfin once
+          (interrupting playback) and re-runs Jellarr so it finishes cleanly.
         '';
       };
 

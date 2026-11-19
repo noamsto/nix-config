@@ -64,7 +64,16 @@
                 if plugin is None or plugin["Status"] == "Restart":
                     return self.reply(404)
                 if method == "GET":
-                    return self.reply(200, state["configs"].get(pid, {}))
+                    cfg = state["configs"].get(pid, {})
+                    if state.get("rawConfig"):
+                        data = cfg.encode()
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(data)))
+                        self.end_headers()
+                        self.wfile.write(data)
+                        return
+                    return self.reply(200, cfg)
                 if method == "POST":
                     state["configs"][pid] = json.loads(raw)
                     state["configPosts"] += 1
@@ -122,7 +131,7 @@ in
     OSID=4b9ed42f-5185-48b5-9803-6ff2989014c4
     OSN=4b9ed42f518548b598036ff2989014c4
     OSCRED=$(jq -n --arg id "$OSID" --arg u $TMPDIR/user.txt --arg p $TMPDIR/pass.txt \
-      '{pluginId: $id, usernameFile: $u, passwordFile: $p}')
+      '{name: "Open Subtitles", pluginId: $id, usernameFile: $u, passwordFile: $p}')
     MOVIES='[{"name":"Movies","options":{"SubtitleDownloadLanguages":["heb"],"RequirePerfectSubtitleMatch":false}}]'
 
     MOCKPID=
@@ -281,6 +290,21 @@ in
     [ "$RC" != 0 ] || fail "8: expected a non-zero exit"
     state
     expect "8 counters" "$(sj '[.configPosts, .libraryPosts, .restarts]')" '[0,0,0]'
+    stop_mock
+
+    # (9) non-object configuration: fails closed with no POST and no credential in the log
+    cat > $TMPDIR/fix9.json <<JSON
+    {"rawConfig": true,
+     "plugins": [{"Name": "Open Subtitles", "Id": "$OSN", "Version": "1.0", "Status": "Active"}],
+     "configs": {"$OSN": "\"x\""}, "folders": []}
+    JSON
+    start_mock $TMPDIR/fix9.json
+    mkcfg $TMPDIR/cfg9.json $TMPDIR/key.txt '["Open Subtitles"]' "$OSCRED" '[]'
+    run_case case9 $TMPDIR/cfg9.json
+    [ "$RC" != 0 ] || fail "9: expected a non-zero exit"
+    grep -q 'Open Subtitles: unexpected configuration shape' "$CASELOG" || fail "9: missing failure message"
+    state
+    expect "9 counters" "$(sj '[.configPosts, .libraryPosts, .restarts]')" '[0,0,0]'
     stop_mock
 
     # (4) log hygiene: no secret value reaches any script or systemctl log

@@ -70,7 +70,7 @@ in
       || fail "post libraries" $post
     jq -e '.plugins == ["Open Subtitles"]' $post >/dev/null \
       || fail "post plugins" $post
-    jq -e '[.openSubtitles | .. | strings] | all(. == "/run/secrets/opensubtitles-username" or . == "/run/secrets/opensubtitles-password" or . == "4b9ed42f-5185-48b5-9803-6ff2989014c4")' $post >/dev/null \
+    jq -e '[.openSubtitles | .. | strings] | all(. == "/run/secrets/opensubtitles-username" or . == "/run/secrets/opensubtitles-password" or . == "4b9ed42f-5185-48b5-9803-6ff2989014c4" or . == "Open Subtitles")' $post >/dev/null \
       || fail "post openSubtitles holds an unexpected string" $post
 
     # post unit
