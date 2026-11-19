@@ -5,13 +5,55 @@
   utils,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf types genAttrs optionalAttrs getExe;
+  inherit (lib) mkEnableOption mkOption mkIf types genAttrs optionalAttrs getExe filter filterAttrs optional unique;
   cfg = config.services.jellyfinHost;
   decl = cfg.declarative;
 
   # Raw Jellarr API key -> systemd environment file. /run is tmpfs, so the key
   # service rewrites this on every boot before the sync service reads it.
   jellarrEnvFile = "/run/jellarr/env";
+
+  baseUrl = "http://localhost:8096";
+
+  openSubtitlesName = "Open Subtitles";
+  openSubtitlesId = "4b9ed42f-5185-48b5-9803-6ff2989014c4";
+
+  # Absolute and outside the store: toJSON would copy a Nix path literal into
+  # the store, so those must fail at evaluation.
+  secretPath = types.pathWith {
+    inStore = false;
+    absolute = true;
+  };
+
+  plugins = unique (decl.plugins ++ optional (decl.openSubtitles != null) openSubtitlesName);
+
+  libraryPatches = filter (l: l.options != {}) (map (l: {
+      inherit (l) name;
+      options = filterAttrs (_: v: v != null) {
+        SubtitleDownloadLanguages = l.subtitleDownloadLanguages;
+        SkipSubtitlesIfEmbeddedSubtitlesPresent = l.skipSubtitlesIfEmbeddedSubtitlesPresent;
+        SkipSubtitlesIfAudioTrackMatches = l.skipSubtitlesIfAudioTrackMatches;
+        RequirePerfectSubtitleMatch = l.requirePerfectSubtitleMatch;
+      };
+    })
+    decl.libraries);
+
+  postConfig = pkgs.writeText "jellarr-post.json" (builtins.toJSON {
+    inherit baseUrl plugins;
+    apiKeyFile = toString decl.apiKeySecret;
+    jellyfinUnit = "jellyfin.service";
+    jellarrUnit = "jellarr.service";
+    readyTimeout = 120;
+    openSubtitles =
+      if decl.openSubtitles == null
+      then null
+      else {
+        pluginId = openSubtitlesId;
+        usernameFile = toString decl.openSubtitles.usernameSecret;
+        passwordFile = toString decl.openSubtitles.passwordSecret;
+      };
+    libraries = libraryPatches;
+  });
 
   httpPorts = [8096 8920];
   # Clients broadcast on 7359/udp to find the server; 1900/udp is the DLNA/SSDP
@@ -74,6 +116,45 @@ in {
         '';
       };
 
+      plugins = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = [openSubtitlesName];
+        description = ''
+          Jellyfin plugin catalog names for Jellarr to install. Jellyfin loads a
+          newly installed plugin only after a restart, so Jellyfin is restarted
+          once, right after the Jellarr run that installed it (interrupting
+          playback), and that Jellarr run is re-run so it finishes cleanly.
+        '';
+      };
+
+      openSubtitles = mkOption {
+        type = types.nullOr (types.submodule {
+          options = {
+            usernameSecret = mkOption {
+              type = secretPath;
+              description = ''
+                Path to the secret file holding the opensubtitles.com username,
+                not the account email (the plugin invalidates an `@` username).
+              '';
+            };
+            passwordSecret = mkOption {
+              type = secretPath;
+              description = "Path to the secret file holding the opensubtitles.com password.";
+            };
+          };
+        });
+        default = null;
+        description = ''
+          Install the Open Subtitles plugin (added to `plugins`) and log it in.
+          The files are read at runtime by a root oneshot and never copied into
+          the store. Each holds the raw value; surrounding whitespace, including
+          the trailing newline, is stripped. A changed or invalidated login is
+          rewritten and resets the plugin's `CredentialsInvalid` flag. There is
+          no custom API key option: upstream removed it.
+        '';
+      };
+
       libraries = mkOption {
         type = types.listOf (types.submodule {
           options = {
@@ -98,6 +179,35 @@ in {
               type = types.str;
               description = "Absolute path to the library's media folder.";
             };
+            subtitleDownloadLanguages = mkOption {
+              type = types.nullOr (types.listOf (types.strMatching "[a-z]{3}"));
+              default = null;
+              example = ["heb"];
+              description = ''
+                Languages to download subtitles for, as ISO 639-2 three-letter
+                codes. The scheduled subtitle download task does nothing
+                without it. `null` leaves Jellyfin's value alone.
+              '';
+            };
+            skipSubtitlesIfEmbeddedSubtitlesPresent = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = "Skip downloading when the video has embedded subtitles. `null` leaves Jellyfin's value alone.";
+            };
+            skipSubtitlesIfAudioTrackMatches = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = "Skip downloading when an audio track is in a download language. `null` leaves Jellyfin's value alone.";
+            };
+            requirePerfectSubtitleMatch = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = ''
+                Only accept subtitles matched by file hash. Jellyfin defaults to
+                true, and hash matches rarely exist for less common languages.
+                `null` leaves Jellyfin's value alone.
+              '';
+            };
           };
         });
         default = [];
@@ -105,7 +215,8 @@ in {
           Libraries to ensure exist. Jellarr only creates missing ones and never
           removes; a library that already exists is left alone (updates are a
           separate, currently buggy upstream path, so declare existing
-          libraries as they are).
+          libraries as they are). The subtitle options are the exception: they
+          are applied to existing libraries too, by `jellarr-post`.
         '';
       };
 
@@ -277,7 +388,7 @@ in {
       config =
         {
           version = 1;
-          base_url = "http://localhost:8096";
+          base_url = baseUrl;
 
           # jellarr's runtime Zod schema requires `system`, even though the Nix
           # module declares it nullable and omits it when unset. An empty object
@@ -322,7 +433,26 @@ in {
               inherit (user) subtitleLanguagePreference subtitleMode;
             })
             decl.users;
+        }
+        // optionalAttrs (plugins != []) {
+          plugins = map (name: {inherit name;}) plugins;
         };
+    };
+
+    # Runs after jellarr even when jellarr fails: the run that installs a plugin
+    # fails reading the not-yet-loaded plugin's configuration.
+    systemd.services.jellarr-post = mkIf (decl.enable && (plugins != [] || libraryPatches != [])) {
+      description = "Apply Jellyfin plugin credentials and library subtitle options";
+      wantedBy = ["jellarr.service"];
+      after = ["jellarr.service" "jellarr-key.service"];
+      path = [pkgs.systemd];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+        PrivateTmp = true;
+        UMask = "0077";
+        ExecStart = "${getExe (import ./jellyfin-declarative.nix {inherit pkgs;})} ${postConfig}";
+      };
     };
   };
 }
