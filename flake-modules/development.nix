@@ -120,6 +120,10 @@
         # Runs jellyfin-known-proxies against a missing, populated and
         # element-less network.xml, plus an idempotent rerun.
         jellyfin-known-proxies = import ../nixos/services/jellyfin-known-proxies-check.nix {inherit pkgs;};
+
+        # Runs jellyfin-declarative against a mock Jellyfin API and a stub
+        # systemctl: convergence, idempotence, failure paths and log hygiene.
+        jellyfin-declarative = import ../nixos/services/jellyfin-declarative-check.nix {inherit pkgs;};
       }
       // lib.optionalAttrs (system == "x86_64-linux") {
         # The Nix-served LazyVim config, headless in the sandbox (x86_64-linux: the
@@ -130,6 +134,13 @@
             inherit (inputs.self.nixosConfigurations.example) config;
           in
             config.home-manager.users.${config.username};
+        };
+
+        # The example host with declarative Jellyfin, Open Subtitles and library
+        # subtitle options: generated config and units hold secret paths only.
+        jellyfin-declarative-eval = import ../nixos/services/jellyfin-declarative-eval-check.nix {
+          inherit pkgs;
+          inherit (inputs.self.nixosConfigurations) example;
         };
       };
 
