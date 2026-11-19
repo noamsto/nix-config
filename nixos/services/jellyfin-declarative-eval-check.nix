@@ -59,7 +59,6 @@ in
     jq -e 'all(.plugins[]; has("configuration") | not)' $cfg >/dev/null \
       || fail "config has plugin configuration" $cfg
 
-    # jellarr-post JSON
     jq -e '.openSubtitles.usernameFile == "/run/secrets/opensubtitles-username"' $post >/dev/null \
       || fail "post usernameFile" $post
     jq -e '.openSubtitles.passwordFile == "/run/secrets/opensubtitles-password"' $post >/dev/null \
@@ -73,7 +72,6 @@ in
     jq -e '[.openSubtitles | .. | strings] | all(. == "/run/secrets/opensubtitles-username" or . == "/run/secrets/opensubtitles-password" or . == "4b9ed42f-5185-48b5-9803-6ff2989014c4" or . == "Open Subtitles")' $post >/dev/null \
       || fail "post openSubtitles holds an unexpected string" $post
 
-    # post unit
     grep -q '^After=.*jellarr\.service' $postUnit || fail "post unit After" $postUnit
     grep -q '^User=root$' $postUnit || fail "post unit User" $postUnit
 
