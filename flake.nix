@@ -224,7 +224,7 @@
     # Owner fork of tmux adding the per-pane `bidi` terminal feature; output is
     # byte-identical to upstream while the feature is off.
     tmux-og.inputs.tmux-upstream = {
-      url = "github:noamsto/tmux/c40a5b0efd674762fd3c79e64036449c3729e676";
+      url = "github:noamsto/tmux/4bd3b34aba3eee096b7dc1adccd0ebbba00f1673";
       flake = false;
     };
 
