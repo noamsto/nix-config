@@ -16,7 +16,7 @@
   libx11,
   wayland,
 }: let
-  version = "0.50.0-bidi";
+  version = "0.51.0-bidi";
 
   src = fetchFromGitHub {
     owner = "noamsto";
