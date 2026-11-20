@@ -63,13 +63,15 @@
   #
   # The Dispatch tab execs `dispatch` by PATH lookup, and dispatch
   # itself resolves `wt`/`gh`/`direnv` from ambient PATH rather than
-  # wrapping them (dispatcher flake.nix).
+  # wrapping them (dispatcher flake.nix). crew's remote relay (`--host`
+  # workers) execs `ssh` the same way.
   servicePath = lib.makeBinPath [
     config.programs.tmux-og.tmuxPackage
     pkgs.git
     pkgs.gh
     pkgs.worktrunk
     pkgs.direnv
+    pkgs.openssh
     inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.crew
     inputs.dispatcher.packages.${pkgs.stdenv.hostPlatform.system}.dispatch
   ];
