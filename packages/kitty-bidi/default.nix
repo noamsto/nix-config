@@ -16,13 +16,13 @@
   libx11,
   wayland,
 }: let
-  version = "0.50.0-bidi";
+  version = "0.51.0-bidi";
 
   src = fetchFromGitHub {
     owner = "noamsto";
     repo = "kitty";
-    rev = "b64cd1a443948d5ca64239f5f5dc8d34e150a6d6";
-    hash = "sha256-B86BNMD2AaPAu4cZf+/k/BJo3Ck7LEvNWFHFWXfzRcM=";
+    rev = "373c8b9ace71cf73c006ad926dafc854a43c2b38";
+    hash = "sha256-3QQGLG5wmgr3leSsHwaWn+JI1hzgTzbQxe7IQeuLnZE=";
   };
 
   unwrapped = kitty.overrideAttrs (old: {
@@ -33,7 +33,7 @@
       ((buildGo126Module {
         pname = "kitty-bidi-go-modules";
         inherit src version;
-        vendorHash = "sha256-5wgAGak7sXy5MlgPoQA/vGnq2CKnS0kjugiV77tDDj4=";
+        vendorHash = "sha256-nK+3w5iJwz7INdWm3q3dWcbRrKpyf7CmC0BRXdI0lFA=";
       }))
       goModules
       ;
