@@ -47,6 +47,14 @@ STUB
   grep -Eq '^dispatch hl\.dsp\.exec_cmd\(".*/bin/xresources-apply docked"\)$' "$HYPRCTL_LOG"
 }
 
+@test "unparseable monitors output: exits non-zero and dispatches nothing" {
+  export MONITORS_JSON='garbage'
+  export MONITORS_RC=0
+  run bash "$POST_APPLY"
+  [ "$status" -ne 0 ]
+  [ ! -s "$HYPRCTL_LOG" ]
+}
+
 @test "hyprctl monitors failing: exits non-zero and dispatches nothing" {
   export MONITORS_JSON=''
   export MONITORS_RC=1

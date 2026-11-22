@@ -11,6 +11,7 @@ hyprmoncfg replaced hyprdynamicmonitors. hyprmoncfgd owns layout, clamshell pane
 
 - [ ] **Close lid**: panel off, workspace 9 moves to the right monitor (when the profile's `monitor_order` lists right first), no suspend
 - [ ] **Open lid**: panel back
+- [ ] **Undock with the lid shut**: suspends at once (logind sees no external display)
 
 ## Lid, undocked
 
@@ -23,7 +24,7 @@ hyprmoncfg replaced hyprdynamicmonitors. hyprmoncfgd owns layout, clamshell pane
 
 - [ ] **Resume with lid open**: panel lit
 - [ ] **Undock while suspended, then resume**: panel lit, no phantom outputs
-- [ ] `hyprmoncfg doctor` passes
+- [ ] `hyprmoncfg doctor` prints `OK … hyprland.lua loads … hyprmoncfg-monitors.lua last` and no `PROBLEM` line
 
 ## Debugging
 

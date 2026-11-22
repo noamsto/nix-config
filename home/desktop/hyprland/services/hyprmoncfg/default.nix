@@ -25,6 +25,8 @@
       // p) (generated // profiles);
   };
 in {
+  warnings = lib.optional (isLaptop && internal == null) "nix-config.desktop.monitors.internal is unset: no `laptop` hyprmoncfg profile is generated, so the undocked layout, laptop-scale and Xft.dpi are not applied.";
+
   home.packages = [pkgs.hyprmoncfg];
 
   # Only profiles/ is a store link: hyprmoncfgd writes state into its base dir.

@@ -117,7 +117,7 @@ If outputs stay enabled after undocking while suspended, reintroduce a oneshot o
 hyprctl eval 'hl.monitor({ output = "<name>", disabled = true })'
 ```
 
-The removed `hyprdynamicmonitors-resume` service did this.
+The removed `hyprdynamicmonitors-resume` service did this: see `git show d03f2e75:nixos/laptop/suspend-handling.nix`. It runs as root, so it must export `XDG_RUNTIME_DIR=/run/user/<uid>` and pick the newest `HYPRLAND_INSTANCE_SIGNATURE` with `ls -t /run/user/<uid>/hypr/`; a stale socket dir otherwise gives "Couldn't connect".
 
 ## Debugging
 
