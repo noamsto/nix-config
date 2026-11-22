@@ -1,4 +1,4 @@
-{applyKeyed, ...}: {
+_: {
   lib,
   osConfig,
   ...
@@ -7,7 +7,7 @@
   wallpapersDir = osConfig.nix-config.wallpapers.directory;
 in {
   imports = [
-    (applyKeyed ./hyprdynamicmonitors)
+    ./hyprmoncfg
     ./libinput-gestures.nix
     ./polkit-agent-reregister.nix
   ];

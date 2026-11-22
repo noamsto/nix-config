@@ -3,7 +3,13 @@
   config,
   lib,
   ...
-}: {
+}: let
+  inherit (config.machine) isLaptop serverMode;
+  lidAction =
+    if isLaptop && !serverMode
+    then "suspend"
+    else "ignore";
+in {
   imports = [
     ./networking.nix
     (applyKeyed ./nix.nix)
@@ -80,10 +86,12 @@
     fstrim.enable = true;
     fstrim.interval = "daily";
 
-    # Disable logind lid handling - let hyprdynamicmonitors manage it
+    # logind suspends on lid close unless docked, an external display is
+    # connected, or a handle-lid-switch inhibitor (system-awake) is held; it
+    # re-checks while the lid stays shut. serverMode laptops stay awake.
     logind.settings.Login = {
-      HandleLidSwitch = "ignore";
-      HandleLidSwitchExternalPower = "ignore";
+      HandleLidSwitch = lidAction;
+      HandleLidSwitchExternalPower = lidAction;
       HandleLidSwitchDocked = "ignore";
       HandleSuspendKey = "ignore";
       # systemd 259: Sleep() D-Bus method defaults to suspend-then-hibernate,

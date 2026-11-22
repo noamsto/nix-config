@@ -243,8 +243,6 @@ in {
         update = "sudo nixos-rebuild switch";
         ns = "nix-search-tv print | fzf --height 40% --preview 'nix-search-tv preview {}' --scheme=history --bind 'ctrl-/:change-preview-window(down|hidden|)'";
 
-        hdm = "hyprdynamicmonitors";
-
         # Claude Code
         c = "claude";
         cc = "claude --continue";

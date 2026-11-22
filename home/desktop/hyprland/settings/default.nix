@@ -1,10 +1,20 @@
-{config, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   pointer = config.home.pointerCursor;
   cursorName = pointer.name;
   iconThemeName = config.gtk.iconTheme.name;
 in {
   imports = [./bindings.nix ./window_rule.nix ./animations.nix ./reload.nix];
   wayland.windowManager.hyprland = {
+    extraConfig = lib.mkAfter ''
+      -- hyprmoncfg cannot add its include to this read-only file. It must stay
+      -- last and re-run on every reload: hyprmoncfg verifies its generated file
+      -- executed and rolls the apply back otherwise.
+      do local path = os.getenv("HOME") .. "/.config/hypr/hyprmoncfg-monitors.lua"; local file = io.open(path, "r"); if file then file:close(); dofile(path) end end
+    '';
     settings = {
       # Everything here nests inside hl.config({...}) — Hyprland exposes no
       # per-section hl.general()/hl.decoration()/... functions, only hl.config.
@@ -184,19 +194,16 @@ in {
       hl.env("CHROMIUM_USER_FLAGS", "--disable-accelerated-2d-canvas")
       hl.env("QS_ICON_THEME", "${iconThemeName}")
 
-      -- Fallback monitor config. HDM's profile output (monitors.lua) is
-      -- required after this and overrides it; Hyprland has no hl.source(), so
-      -- HDM writes Lua and we pull it in via require.
+      -- Fallback monitor config; hyprmoncfg's generated rules load after it, from the end of hyprland.lua.
       hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
-      pcall(require, "monitors")
 
       -- exec-once equivalent
       hl.on("hyprland.start", function()
         hl.exec_cmd("hyprctl setcursor ${cursorName} ${toString pointer.size}")
         hl.exec_cmd("theme-toggle restore")
         -- Re-apply the active monitor profile's X resources (Xft.dpi), recorded
-        -- by workspace-manager; until HDM's first switch of the session it may
-        -- replay the previous session's profile.
+        -- by hyprmoncfg-post-apply; until hyprmoncfgd's first apply of the
+        -- session it may replay the previous session's profile.
         hl.exec_cmd("xresources-apply")
         -- Propagate Wayland env to fish (universal vars) and tmux (global env)
         hl.exec_cmd("fish -c 'set -Ux HYPRLAND_INSTANCE_SIGNATURE $HYPRLAND_INSTANCE_SIGNATURE; set -Ux WAYLAND_DISPLAY $WAYLAND_DISPLAY'")

@@ -66,63 +66,6 @@ services.udev.extraRules = ''
 - Receiver stays active, immediately sends HID events on keypress
 - hypridle detects activity and runs `on-resume` (DPMS on)
 
-### 4. hyprdynamicmonitors-resume Service Issues
-
-#### 4a. Service Can't Connect to Hyprland (Original Issue)
-
-**Problem**: Service runs as root but needs to communicate with user's Hyprland session.
-
-**Root Cause**: Missing `XDG_RUNTIME_DIR` export.
-
-**Solution**: Export environment variables for user session.
-
-#### 4b. Stale Socket Selection (2026-01-28)
-
-**Problem**: Resume service connects to stale/old Hyprland socket instead of active one.
-
-**Root Cause**: `ls /run/user/1000/hypr/ | head -1` picks alphabetically first directory, which may be from a previous session that hasn't been cleaned up.
-
-**Symptoms in journal**:
-```
-Couldn't connect to /run/user/1000/hypr/ab1d80f3..._OLD_SIGNATURE/.socket.sock. (4)
-```
-
-**Solution**: Use `ls -t` to sort by modification time (most recent first), and verify socket responds:
-```bash
-export HYPRLAND_INSTANCE_SIGNATURE=$(ls -t /run/user/1000/hypr/ 2>/dev/null | head -1)
-# Also verify socket is accessible before proceeding
-hyprctl monitors &>/dev/null || exit 0
-```
-
-#### 4c. Lockscreen Crash on Resume (2026-01-28)
-
-**Problem**: Lockscreen occasionally crashes when opening laptop lid after suspend.
-
-**Root Cause**: Race condition - DPMS turns on before laptop monitor (eDP-1) is enabled:
-1. Docked with lid closed: eDP-1 is disabled
-2. User undocks while asleep, opens lid to wake
-3. Resume service disables phantom external monitors
-4. DPMS turns on
-5. Lockscreen tries to render but eDP-1 is still disabled → crash
-
-**Solution**: Enable eDP-1 with safe defaults BEFORE turning on DPMS:
-```bash
-# Enable laptop monitor first (lockscreen needs a render target)
-hyprctl keyword monitor "eDP-1,preferred,auto,2.0"
-sleep 0.3
-# Now safe to turn on display
-hyprctl dispatch dpms on
-sleep 0.2
-# HDM will refine monitor config
-systemctl --user restart hyprdynamicmonitors.service
-```
-
-#### 4d. Duplicate Resume Services (2026-01-28)
-
-**Problem**: Both system-level and user-level services were restarting HDM on resume, causing race conditions.
-
-**Solution**: Removed user-level `hyprdynamicmonitors-resume` service. Only the system-level service in `nixos/laptop/suspend-handling.nix` handles resume now.
-
 ## Wake Source Detection (Future Reference)
 
 If dock wake becomes functional and we want to differentiate dock vs AC wakes:
@@ -151,26 +94,41 @@ cat /proc/acpi/wakeup
 # LID   S4  *enabled  platform:PNP0C0D:00
 ```
 
-### 5. Lid Close Not Triggering Suspend (Race Condition)
+## Ownership
 
-**Problem**: Sometimes closing the lid doesn't trigger suspend, especially if other events (AC plug/unplug) occur during the 2s debounce window.
+| Concern | Owner | Notes |
+|---------|-------|-------|
+| Lid-close suspend | systemd-logind | `HandleLidSwitch` / `HandleLidSwitchExternalPower` = suspend on laptops that are not `serverMode`; `HandleLidSwitchDocked` = ignore (serverMode ignores the lid entirely) |
+| `system-awake` semantics | systemd-logind | The timed `handle-lid-switch:sleep` inhibitor blocks suspend while held. logind re-checks a closed lid continuously, so releasing the inhibitor (expiry or `system-awake off`), or unplugging the last external with the lid shut, suspends at once |
+| Post-boot / post-resume holdoff | systemd-logind | `HoldoffTimeoutSec` = 30 s: lid events inside it are ignored |
+| Monitor layout, workspace planner | hyprmoncfgd (user service) | Profile `exec` runs `hyprmoncfg-post-apply`, which sets Xft.dpi via `xresources-apply` |
+| Clamshell panel-off | hyprmoncfgd | Panel disabled when docked with the lid shut |
+| Resume DPMS wake, panel rescue | hyprmoncfgd | Retries until a render target exists, so the lockscreen does not crash |
+| Idle lock, DPMS, suspend | hypridle | `after_sleep_cmd` is empty; displays are woken by hyprmoncfgd |
+| Spurious AC-plug wakes | kernel `acpi.ec_no_wakeup=1` | See issue 1 |
 
-**Root Cause**: HDM monitors power events and re-evaluates profiles when AC state changes. If a power event occurs during the suspend debounce:
-1. HDM kills the `workspace-manager` script
-2. The debounce loop dies before reaching `systemctl suspend`
-3. Suspend never happens
+`SleepOperation = "suspend"` is set because systemd 259 defaults the `Sleep()` D-Bus method to suspend-then-hibernate, which resolves to hybrid-sleep; anything calling `Sleep()` would otherwise hibernate unexpectedly. The login settings live in `nixos/core/default.nix`; the 30 s holdoff is logind's default.
 
-**Solution**: Spawn suspend handler as a detached process using `setsid`:
-- Parent creates lock file, spawns handler via `setsid bash -c "..." &`
-- Handler runs in its own session, immune to parent termination
-- HDM can kill/restart parent scripts freely
-- Handler completes debounce and suspend independently
+## If phantom monitors return
 
-**Lock file mechanism**:
-- Lock created in parent BEFORE spawning (prevents race)
-- Lock cleaned up by handler via `trap ... EXIT`
-- Stale locks (>30s) are removed automatically
-- Prevents duplicate handlers from spawning
+If outputs stay enabled after undocking while suspended, reintroduce a oneshot ordered after `suspend.target` that disables the DRM-disconnected outputs:
+
+```bash
+hyprctl eval 'hl.monitor({ output = "<name>", disabled = true })'
+```
+
+The removed `hyprdynamicmonitors-resume` service did this: see `git show d03f2e75:nixos/laptop/suspend-handling.nix`. It runs as root, so it must export `XDG_RUNTIME_DIR=/run/user/<uid>` and pick the newest `HYPRLAND_INSTANCE_SIGNATURE` with `ls -t /run/user/<uid>/hypr/`; a stale socket dir otherwise gives "Couldn't connect".
+
+## Debugging
+
+```bash
+journalctl --user -u hyprmoncfgd -f
+hyprmoncfg status
+hyprmoncfg doctor
+systemd-inhibit --list
+busctl get-property org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager Docked
+journalctl -u systemd-logind
+```
 
 ## Current Configuration Summary
 
@@ -178,9 +136,9 @@ cat /proc/acpi/wakeup
 |---------|----------|----------|
 | Block AC spurious wake | `acpi.ec_no_wakeup=1` | host config in the private host flake |
 | Logitech USB wake | udev rule disable autosuspend | `nixos/core/pc.nix` |
-| Phantom monitors on resume | hyprdynamicmonitors-resume service | `nixos/laptop/suspend-handling.nix` |
-| Lockscreen crash prevention | Enable eDP-1 before DPMS on | `nixos/laptop/suspend-handling.nix` |
-| Lid close suspend | Detached setsid handler with debounce | `home/.../scripts/workspace-manager.sh` |
+| Lid close suspend | systemd-logind lid switch handling | `nixos/core/default.nix` (`logind.settings.Login`) |
+| Monitor layout, panel rescue, resume DPMS wake | hyprmoncfgd | `home/desktop/hyprland/services/hyprmoncfg/` |
+| Keep-awake | timed logind inhibitor | `home/desktop/hyprland/scripts/system-awake.nix` |
 
 ## References
 

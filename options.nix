@@ -4,6 +4,9 @@
   pkgs,
   ...
 }: {
+  imports = [
+    (lib.mkRemovedOptionModule ["nix-config" "desktop" "monitors" "configFile"] "hyprdynamicmonitors was replaced by hyprmoncfg. Set nix-config.desktop.monitors.internal (the built-in panel's make/model/serial, as `hyprmoncfg monitors` prints them) and put docked layouts in nix-config.desktop.monitors.profiles (bodies of ~/.config/hyprmoncfg/profiles/<name>.json, e.g. from `hyprmoncfg save`).")
+  ];
   options = {
     desktop = {
       mode = lib.mkOption {
@@ -75,9 +78,9 @@
         type = lib.types.bool;
         default = false;
         description = ''
-          Run this host as an always-on headless server: disable autonomous
-          suspend (lid-close fallback timer and idle suspend) so SSH/tmux
-          sessions survive a closed lid. Thermal emergency suspend stays active.
+          Run this host as an always-on headless server: logind ignores the
+          lid and idle suspend is dropped, so SSH/tmux sessions survive a
+          closed lid. Thermal emergency suspend stays active.
           Flip back to false to restore normal laptop power behavior.
         '';
       };
@@ -253,11 +256,92 @@
           default = null;
           description = "Image linked as ~/.face; null links nothing.";
         };
-        monitors.configFile = lib.mkOption {
-          type = lib.types.path;
-          default = ./home/desktop/hyprland/services/hyprdynamicmonitors/config.toml;
-          defaultText = lib.literalExpression "./home/desktop/hyprland/services/hyprdynamicmonitors/config.toml";
-          description = "The hyprdynamicmonitors config.toml.";
+        monitors = {
+          internal = lib.mkOption {
+            type = lib.types.nullOr (lib.types.submodule {
+              options = {
+                make = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Panel make, as `hyprmoncfg monitors` prints it.";
+                };
+                model = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Panel model, as `hyprmoncfg monitors` prints it.";
+                };
+                serial = lib.mkOption {
+                  type = lib.types.str;
+                  default = "";
+                  description = "Panel serial, as `hyprmoncfg monitors` prints it; empty when it reports none.";
+                };
+              };
+            });
+            default = null;
+            description = ''
+              Hardware identity of the built-in panel. On laptops it generates
+              the `laptop` hyprmoncfg profile (panel at laptop-scale, workspaces
+              1-9). Null generates none: hyprmoncfg matches by hardware identity
+              only, so no host-agnostic default is possible.
+            '';
+          };
+          profiles = lib.mkOption {
+            type = lib.types.attrsOf (pkgs.formats.json {}).type;
+            default = {};
+            description = ''
+              Extra hyprmoncfg profiles by name, each the body of
+              `~/.config/hyprmoncfg/profiles/<name>.json`. `name` defaults to the
+              attribute name and `exec` to the Xft.dpi post-apply hook. An entry
+              named `laptop` replaces the generated one.
+            '';
+            example = lib.literalExpression ''
+              let
+                output = key: serial: x: {
+                  inherit key serial x;
+                  make = "Samsung";
+                  model = "LS27A600U";
+                  mode = "2560x1440@60";
+                  width = 2560;
+                  height = 1440;
+                  refresh = 60;
+                  y = 0;
+                  scale = 1.0;
+                  enabled = true;
+                  transform = 0;
+                };
+                rule = workspace: output_key: default: {
+                  inherit workspace output_key default;
+                };
+              in {
+                docked-home = {
+                  outputs = [
+                    (output "left" "SERIAL-L" 0)
+                    (output "right" "SERIAL-R" 2560)
+                    {
+                      key = "laptop";
+                      make = "Example";
+                      model = "EXAMPLE-PANEL";
+                      serial = "";
+                      x = 5120;
+                      y = 0;
+                      scale = 1.25;
+                      enabled = true;
+                      width = 0;
+                      height = 0;
+                      refresh = 0;
+                    }
+                  ];
+                  workspaces = {
+                    enabled = true;
+                    strategy = "manual";
+                    monitor_order = ["right" "left" "laptop"];
+                    rules =
+                      map (ws: rule (toString ws) "left" (ws == 1)) (lib.range 1 4)
+                      ++ map (ws: rule (toString ws) "right" (ws == 5)) (lib.range 5 8)
+                      ++ [(rule "9" "laptop" false)];
+                  };
+                };
+              }
+            '';
+          };
         };
       };
       wallpapers = {

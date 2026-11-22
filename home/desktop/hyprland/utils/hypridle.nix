@@ -28,8 +28,7 @@ in {
       general = {
         lock_cmd = lib.getExe aegis-lock-guard;
         before_sleep_cmd = "${loginctl-lock}";
-        # Display turn-on is handled by hyprdynamicmonitors-resume service
-        # to ensure monitor configuration is stable before lockscreen renders
+        # hyprmoncfgd wakes the displays after resume
         after_sleep_cmd = "";
         ignore_dbus_inhibit = false;
         # The DPMS listener's on-resume is skipped when an inhibitor toggle re-registers listeners

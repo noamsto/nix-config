@@ -113,9 +113,11 @@
 
         theme-apply = import ../home/theme/check.nix {inherit pkgs;};
 
-        # Runs workspace-manager undocked with noctalia dead: it must still reload
-        # Hyprland instead of dying on the pgrep lookup.
-        workspace-manager = import ../home/desktop/hyprland/workspace-manager-check.nix {inherit pkgs;};
+        # hyprmoncfg's post-apply hook against a stub hyprctl, and the generated
+        # profile directory against hyprmoncfg's own validator.
+        hyprmoncfg-post-apply = (import ../home/desktop/hyprland/hyprmoncfg-check.nix {inherit pkgs;}).post-apply;
+        hyprmoncfg-profiles-valid = (import ../home/desktop/hyprland/hyprmoncfg-check.nix {inherit pkgs;}).profiles-valid;
+        hyprmoncfg-profiles-invalid = (import ../home/desktop/hyprland/hyprmoncfg-check.nix {inherit pkgs;}).profiles-invalid;
 
         # Runs jellyfin-known-proxies against a missing, populated and
         # element-less network.xml, plus an idempotent rerun.
@@ -135,6 +137,12 @@
           in
             config.home-manager.users.${config.username};
         };
+
+        # The deployed hyprmoncfg profiles dir validates itself while building.
+        hyprmoncfg-profiles-example-desktop = let
+          inherit (inputs.self.nixosConfigurations.example-desktop) config;
+        in
+          config.home-manager.users.${config.username}.xdg.configFile."hyprmoncfg/profiles".source;
 
         # The example host with declarative Jellyfin, Open Subtitles and library
         # subtitle options: generated config and units hold secret paths only.
