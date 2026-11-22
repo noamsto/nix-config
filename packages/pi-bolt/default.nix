@@ -6,7 +6,7 @@
   libxcb,
   runtimeShell,
 }: let
-  version = "1.2.1";
+  version = "1.3.0";
   system = stdenv.hostPlatform.system;
 
   # Default (non-JIT) build. Do not edit version or hashes by hand: bump.sh
@@ -14,15 +14,15 @@
   platforms = {
     x86_64-linux = {
       target = "linux-x64";
-      hash = "sha256-2xyqfwenM6QCZ3Vp/kT9oVwZpCQC8JQNWmk068yd9No=";
+      hash = "sha256-bRXlc9fu6/7PEMHhurKI3rD/13PZMVtoLAwy/ts66lg=";
     };
     aarch64-linux = {
       target = "linux-arm64";
-      hash = "sha256-8LmXeO0ka/GsrrPQ5eYypPyFcIgKNTgcYWn4uapfnMQ=";
+      hash = "sha256-KhoeJCuwT2mEruuCz1kH8ra42DBkwg+2td6YNmmEQnc=";
     };
     aarch64-darwin = {
       target = "darwin-arm64";
-      hash = "sha256-fMLU8nVBr0jZdqjDADKu23q90M8VRK4VIp2II2Ok2K0=";
+      hash = "sha256-EHmzyJsJVJHO+0u8l4/3HiI6ie+DoQqwgO8nUDyUNK4=";
     };
   };
   platform = platforms.${system} or (throw "pi-bolt: unsupported system ${system}");
@@ -32,11 +32,11 @@
   compileAssets = {
     kit = {
       target = "kit-linux-x64";
-      hash = "sha256-tQqPN6z2nSE+PUc/Rn7a1H32Wt034nWcdtmLsEcoEg0=";
+      hash = "sha256-DaW8S47kF9e/GKms3obgZwhairhepgdXi9a0scYayKY=";
     };
     runtime = {
       target = "runtime-linux-x64";
-      hash = "sha256-JdfExfjaUb0hzY7ChOmbDa22u0f6nO7QcS6eMJPckzc=";
+      hash = "sha256-iBab0pNzmQXFpQSORdpmvMaAi0fm2fgkgeKLiSlcgvQ=";
     };
   };
 in
