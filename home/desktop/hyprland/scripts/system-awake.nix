@@ -1,53 +1,22 @@
 {pkgs, ...}: let
-  # Wraps `timeout Ns systemd-inhibit ... sleep infinity`. On natural timer
-  # expiry — and only then — manually triggers suspend if the lid is closed.
-  # workspace-manager.sh skips its lid-close suspend handler whenever our
-  # inhibit is held, and HDM only fires on lid edge transitions, so without
-  # this nothing re-evaluates "lid is still closed" once the inhibit lifts.
-  #
-  # `set -e` is deliberately omitted: we capture `timeout`'s exit code in
-  # `$?` to distinguish natural expiry (rc=124) from external SIGTERM, and
-  # `set -e` would abort before the assignment runs.
+  # Wraps `timeout Ns systemd-inhibit ... sleep infinity`. Nothing here
+  # suspends: logind re-evaluates a closed lid as soon as the inhibitor goes
+  # away (natural expiry or `system-awake off`) and suspends then.
   system-awake-session = pkgs.writeShellScript "system-awake-session" ''
     #!/usr/bin/env bash
-    set -uo pipefail
+    set -euo pipefail
     duration="$1"
     tag="$2"
     scope="$3"
     label="$4"
-    state_file="''${XDG_RUNTIME_DIR:-/tmp}/system-awake.state.json"
 
-    ${pkgs.coreutils}/bin/timeout "''${duration}s" \
+    exec ${pkgs.coreutils}/bin/timeout "''${duration}s" \
       ${pkgs.systemd}/bin/systemd-inhibit \
       --what=sleep:handle-lid-switch \
       --who=hyprland \
       --why="$tag ($scope $label)" \
       --mode=block \
       ${pkgs.coreutils}/bin/sleep infinity
-    rc=$?
-
-    (( rc == 124 )) || exit 0
-    # cmd_off / cmd_extend remove $state_file before pkill, so its absence
-    # signals user-initiated termination racing our natural expiry.
-    [[ -f "$state_file" ]] || exit 0
-
-    lid_closed=0
-    if ${pkgs.glib}/bin/gdbus call --system \
-        --dest org.freedesktop.UPower \
-        --object-path /org/freedesktop/UPower \
-        --method org.freedesktop.DBus.Properties.Get \
-        org.freedesktop.UPower LidIsClosed 2>/dev/null | grep -q 'true'; then
-      lid_closed=1
-    else
-      for f in /proc/acpi/button/lid/*/state; do
-        [[ -e "$f" ]] || continue
-        ${pkgs.gnugrep}/bin/grep -qi closed "$f" 2>/dev/null && lid_closed=1
-        break
-      done
-    fi
-    if (( lid_closed )); then
-      ${pkgs.systemd}/bin/systemctl suspend || true
-    fi
   '';
 
   # Keep-awake backend. Cycles of states:
@@ -73,7 +42,6 @@
     PERSIST_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/system-awake"
     LAST_FILE="$PERSIST_DIR/last.json"
     TAG="noams-system-awake"
-    WRAPPER_NAME="system-awake-session"
     SCHEMA_VERSION=1
 
     mkdir -p "$PERSIST_DIR"
@@ -160,12 +128,9 @@
       done
     }
 
-    # Order matters: kill the session wrapper first so a natural-expiry
-    # race can't reach its post-cleanup `systemctl suspend`. The wrapper's
-    # argv contains $WRAPPER_NAME but not "systemd-inhibit", so the inhibitor
-    # pattern alone wouldn't match it.
+    # The session's `timeout ... systemd-inhibit --why=$TAG ...` argv matches
+    # this pattern, so killing it also stops the timer.
     kill_session() {
-      pkill -f "$WRAPPER_NAME" 2>/dev/null || true
       pkill -f "systemd-inhibit.*$TAG" 2>/dev/null || true
     }
 
@@ -266,8 +231,6 @@
       new_label=$(format_label "$(( new_end - started_epoch ))")
 
       # Wipe state and tear down old session without touching last.json/notification.
-      # Removing the state file before pkill lets the wrapper's post-rc check
-      # detect a concurrent natural expiry and bail out before suspending.
       rm -f "$STATE_FILE"
       kill_session
       wait_inhibitor_gone

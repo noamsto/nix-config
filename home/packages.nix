@@ -47,9 +47,6 @@
     };
 
   desktop-packages = with pkgs; [
-    # Hyprland dynamic monitor management
-    inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default
-
     # Advanced touchpad gesture support
     libinput-gestures
 

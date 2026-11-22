@@ -19,6 +19,11 @@
   desktop.mode = "hyprland";
   machine.type = "laptop";
   nix-config.terminal.kittyBidi.enable = true;
+  # Fixture identity so the generated laptop profile is built and validated.
+  nix-config.desktop.monitors.internal = {
+    make = "Example";
+    model = "EXAMPLE-PANEL";
+  };
 
   priors.personalStore = {
     id = "example-personal-store";

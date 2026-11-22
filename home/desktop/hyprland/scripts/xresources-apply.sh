@@ -8,8 +8,9 @@
 #
 # Hyprland's `hyprland.start` hook calls the no-argument form, so a Hyprland
 # (and thus XWayland) restart re-applies the profile that was active before the
-# restart. workspace-manager calls the one-argument form on every switch, which
-# both applies the resources and records the profile for that replay.
+# restart. hyprmoncfg-post-apply (every hyprmoncfg profile's exec) calls the
+# one-argument form after each apply, which both applies the resources and
+# records the profile for that replay.
 
 set -euo pipefail
 

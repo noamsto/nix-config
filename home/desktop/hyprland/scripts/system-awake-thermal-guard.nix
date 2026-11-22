@@ -1,7 +1,8 @@
 {pkgs, ...}: let
   # Thermal watchdog that forces suspend if the laptop gets dangerously hot
-  # while `system-awake` is active. HDM-profile-aware: the "sustained high
-  # temp" trip only fires when undocked + lid closed (i.e. likely in a bag).
+  # while `system-awake` is active. Dock-aware (reads DRM connector state): the
+  # "sustained high temp" trip only fires when undocked + lid closed (i.e.
+  # likely in a bag).
   # The "critical" trip fires unconditionally as a last resort.
   #
   # Thresholds:
