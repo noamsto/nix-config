@@ -2569,6 +2569,7 @@
         "wrappers": "wrappers",
         "wtc": "wtc",
         "xremap": "xremap",
+        "ytm-rs": "ytm-rs",
         "zr": "zr"
       }
     },
@@ -3154,6 +3155,26 @@
         "owner": "k0kubun",
         "ref": "v0.15.18",
         "repo": "xremap",
+        "type": "github"
+      }
+    },
+    "ytm-rs": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795409930,
+        "narHash": "sha256-vqHZfyB1OHrUMZk5aA+Rx+2nNZvkesGJvYuSdzTbTlI=",
+        "owner": "grapedjuice",
+        "repo": "ytm-rs",
+        "rev": "a04be8fa7e5f34f78463dc0664c690ee88bbd2e1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "grapedjuice",
+        "repo": "ytm-rs",
         "type": "github"
       }
     },

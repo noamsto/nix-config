@@ -11,7 +11,6 @@
       # Imported unconditionally so it's available on darwin too; the desktop
       # tree consumes the same palette for its GTK/catppuccin bits.
       ./theme
-      ./desktop/youtube-music
       (applyKeyed ./terminal)
       ./xdg
       ./git

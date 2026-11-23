@@ -12,10 +12,10 @@
     ./xcodebuildmcp.nix
   ];
 
-  # GUI apps not covered by Homebrew casks. pear-desktop (Electron YouTube Music
-  # wrapper) has no matching cask but a working aarch64-darwin build; AeroSpace
-  # binds Hyper+Y to launch it, mirroring the Hyprland $mainMod+Y bind.
-  home.packages = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin [pkgs.pear-desktop];
+  # GUI apps not covered by Homebrew casks. ytm-rs (YouTube Music client) has no
+  # matching cask, so it is repackaged from the release zip; AeroSpace binds
+  # Hyper+Y to launch it, mirroring the Hyprland $mainMod+Y bind.
+  home.packages = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin [pkgs.ytm-rs];
 
   # NOTE: trust.json is no longer managed here. Homebrew 6.0's `brew bundle`
   # self-grants trust (the Brewfile marks entries `trusted: true`) and *writes*

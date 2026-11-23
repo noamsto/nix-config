@@ -269,6 +269,11 @@
     # substituting from wtc.cachix.org.
     wtc.url = "github:noamsto/wtc";
 
+    ytm-rs = {
+      url = "github:grapedjuice/ytm-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zr = {
       url = "github:noamsto/zr";
       inputs.nixpkgs.follows = "nixpkgs";

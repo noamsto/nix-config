@@ -107,7 +107,7 @@ in
           (wsAssign "ru.keepcoder.Telegram" "5" false) # Hyprland: telegram → special:comm (no special workspaces here)
           (wsAssign "com.tinyspeck.slackmacgap" "5" false) # Hyprland: slack → WS5 (not yet installed)
           (wsAssign "us.zoom.xos" "5" false) # Hyprland: zoom → WS5 (not yet installed)
-          (wsAssign "com.github.th-ch.youtube-music" "9" false) # Hyprland: music → WS9 silent
+          (wsAssign "io.github.grapedjuice.ytm-rs" "9" false) # Hyprland: music → WS9 silent
           (floatApp "org.videolan.vlc") # Hyprland: vlc float
           (floatApp "com.apple.calculator") # Hyprland: calculator float
         ];
@@ -158,9 +158,9 @@ in
             "${hyper}-c" = "exec-and-forget open -a kitty";
             "${hyper}-b" = "exec-and-forget open -a Firefox";
             "${hyper}-e" = "exec-and-forget open -a Finder";
-            # Electron apps must launch as a .app bundle (the raw inner binary
-            # can't find its Helper apps), so `open` the bundle rather than getExe.
-            "${hyper}-y" = "exec-and-forget open ${pkgs.pear-desktop}/Applications/YouTube\\ Music.app";
+            # Launch the .app bundle via `open` so macOS registers it as a proper
+            # GUI app (bundle id for wsAssign above), rather than running the raw binary.
+            "${hyper}-y" = "exec-and-forget open ${pkgs.ytm-rs}/Applications/ytm-rs.app";
           }
           // focusWorkspace # Hyprland: SUPER + 1-9 (workspace)
           // moveToWorkspace; # Hyprland: SUPER + Shift + 1-9 (movetoworkspace)

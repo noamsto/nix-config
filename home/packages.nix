@@ -76,7 +76,7 @@
     losslesscut-bin
 
     youtube-tui
-    pear-desktop
+    ytm-rs
 
     sublime-merge
 
