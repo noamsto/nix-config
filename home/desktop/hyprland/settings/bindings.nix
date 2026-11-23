@@ -6,7 +6,7 @@
   terminal = "kitty";
   fileManager = "${lib.getExe pkgs.thunar}";
   browser = "${lib.getExe pkgs.firefox} -P personal";
-  youtube-music = "${lib.getExe pkgs.pear-desktop}";
+  ytm = "${lib.getExe pkgs.ytm-rs}";
   aegis-lock-guard = import ../scripts/aegis-lock-scripts.nix {inherit pkgs;} "aegis-lock-guard";
 
   # Run a program only if it's not already running
@@ -61,7 +61,7 @@ in {
     hl.bind(mainMod .. " + B", launch("${browser}", 2, "^firefox$"))
     hl.bind(mainMod .. " + A", launch("sesh-launcher", 1))
     hl.bind(mainMod .. " + N", launch("obsidian"))
-    hl.bind(mainMod .. " + Y", launch("${youtube-music}", 9, "^com%.github%.th_ch%.youtube_music$"))
+    hl.bind(mainMod .. " + Y", launch("${ytm}", 9, "^ytm%-rs$"))
     hl.bind(mainMod .. " + SHIFT + V", launch("pavucontrol"))
 
     -- === WINDOW MANAGEMENT ===
@@ -204,7 +204,7 @@ in {
     hl.bind("XF86Tools", hl.dsp.exec_cmd("sherpa-dictate toggle"))
 
     -- Media: launch YTM if not running
-    hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce youtube-music}"))
+    hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("${runOnce ytm}"))
 
     -- === MOUSE BINDS ===
     hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })

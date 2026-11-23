@@ -281,7 +281,7 @@
         workspace = "5";
       }
       {
-        match = {class = "^(com.github.th_ch.youtube_music|spotify)$";};
+        match = {class = "^(ytm-rs|spotify)$";};
         workspace = "9 silent";
       }
       {

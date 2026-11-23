@@ -45,6 +45,15 @@ inputs: [
     argonaut = inputs.argonaut.packages.${final.stdenv.hostPlatform.system}.default;
   })
 
+  # Upstream's flake only exposes Linux packages, so indexing it by a darwin
+  # system would fail; macOS repackages the release zip instead.
+  (final: _: {
+    ytm-rs =
+      if final.stdenv.hostPlatform.isLinux
+      then inputs.ytm-rs.packages.${final.stdenv.hostPlatform.system}.ytm-rs
+      else final.callPackage ../packages/ytm-rs-macos.nix {};
+  })
+
   (final: _prev: {
     inherit (inputs.llm-agents.packages.${final.stdenv.hostPlatform.system}) claude-code cursor-agent pi;
     # Amp with process.title wrapper so it shows as "amp" instead of "node" in ps

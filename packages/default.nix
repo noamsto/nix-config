@@ -28,12 +28,16 @@
           ];
         };
       }
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+        ytm-rs-macos = pkgs.callPackage ./ytm-rs-macos.nix {};
+      }
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         claude-squad = pkgs.callPackage ./claude-squad {};
         halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
         kitty-bidi = pkgs.callPackage ./kitty-bidi {};
         kitty-bidi-unwrapped = (pkgs.callPackage ./kitty-bidi {}).unwrapped;
         sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
+        inherit (pkgs) ytm-rs;
       }
       # AirConnect ships only static x86_64-linux binaries (meta.platforms), so
       # evaluating it on aarch64-linux fails.
