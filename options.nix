@@ -206,7 +206,7 @@
         kittyBidi.enable = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = "Install an opt-in `kitty-bidi` terminal (the noamsto/kitty gpu fork with bidi support) beside the regular kitty. Linux hosts with a desktop only; ignored elsewhere.";
+          description = "Use the noamsto/kitty gpu fork (bidi support) as the system `kitty` instead of stock kitty, with `KITTY_BIDI=1` set. Linux hosts with a desktop only; ignored elsewhere.";
         };
         bidiShell.enable = lib.mkOption {
           type = lib.types.bool;
