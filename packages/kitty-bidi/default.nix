@@ -4,8 +4,7 @@
   fetchFromGitHub,
   buildGo126Module,
   makeBinaryWrapper,
-  makeDesktopItem,
-  runCommand,
+  symlinkJoin,
   nerd-fonts,
   fribidi,
   brotli,
@@ -75,27 +74,24 @@
         ln -s ${nerd-fonts.symbols-only}/share/fonts/truetype $XDG_DATA_HOME/fonts/
       '';
   });
-
-  desktopItem = makeDesktopItem {
-    name = "kitty-bidi";
-    desktopName = "Kitty (bidi)";
-    exec = "kitty-bidi";
-    icon = "kitty";
-    terminal = false;
-    categories = ["System" "TerminalEmulator"];
-  };
 in
-  runCommand "kitty-bidi-${version}" {
+  symlinkJoin {
+    name = "kitty-bidi-${version}";
+    # The fork's own kitty.desktop, kitty-open.desktop, icons and terminfo
+    # stand in for stock kitty's, so only one set is installed.
+    paths = [unwrapped unwrapped.terminfo];
     nativeBuildInputs = [makeBinaryWrapper];
     passthru = {inherit unwrapped;};
+    # KITTY_BIDI is set in the environment rather than via `-o env=...`: a
+    # leading option breaks `kitty @`, `kitty +kitten` and `kitty +open`, and the
+    # variable still reaches the shells kitty spawns.
+    postBuild = ''
+      rm $out/bin/kitty
+      makeWrapper ${unwrapped}/bin/kitty $out/bin/kitty --set KITTY_BIDI 1
+    '';
     meta = {
       inherit (unwrapped.meta) homepage license platforms;
-      description = "Kitty with bidirectional text support, installed as kitty-bidi";
-      mainProgram = "kitty-bidi";
+      description = "Kitty with bidirectional text support, replacing stock kitty";
+      mainProgram = "kitty";
     };
-  } ''
-    makeWrapper ${unwrapped}/bin/kitty $out/bin/kitty-bidi \
-      --add-flags "-o env=KITTY_BIDI=1"
-    install -Dm444 ${desktopItem}/share/applications/kitty-bidi.desktop \
-      $out/share/applications/kitty-bidi.desktop
-  ''
+  }

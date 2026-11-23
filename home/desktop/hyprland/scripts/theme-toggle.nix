@@ -21,8 +21,8 @@
         networkmanagerapplet
         libsForQt5.qtstyleplugin-kvantum
         quickshell
-        kitty
-      ]);
+      ])
+      ++ [config.programs.kitty.package];
     text = ''
       ${paletteEnv.exports}
       export NOTIFY_ICON_LIGHT="${notifyIconLight}"
