@@ -44,6 +44,50 @@
     }
   '';
 
+  # The in-app-menu plugin hardcodes white text and hover tints, and its bar
+  # background reads --titlebar-background-color, which maps to the unremapped
+  # --ytmusic-color-black3, so the bar stays dark in Latte. Override by stable
+  # attributes (its goober class names are hashed) with !important.
+  ytmTitleBar = pkgs.writeText "ytm-title-bar.css" ''
+    html:not(.style-scope) {
+      --titlebar-background-color: var(--ctp-mantle) !important;
+    }
+    nav[data-ytmd-main-panel],
+    ul[data-ytmd-sub-panel] {
+      color: var(--ctp-text) !important;
+    }
+    ul[data-ytmd-sub-panel] {
+      background-color: var(--ctp-mantle) !important;
+    }
+    nav[data-ytmd-main-panel] button,
+    nav[data-ytmd-main-panel] li,
+    nav[data-ytmd-main-panel] svg,
+    ul[data-ytmd-sub-panel] li > svg,
+    ul[data-ytmd-sub-panel] li > span {
+      color: var(--ctp-text) !important;
+    }
+    nav[data-ytmd-main-panel] li:hover,
+    nav[data-ytmd-main-panel] button:hover,
+    ul[data-ytmd-sub-panel] li:hover {
+      background-color: var(--ctp-surface0) !important;
+    }
+    nav[data-ytmd-main-panel] li:active,
+    nav[data-ytmd-main-panel] button:active,
+    ul[data-ytmd-sub-panel] li:active,
+    nav[data-ytmd-main-panel] [data-selected='true'],
+    ul[data-ytmd-sub-panel] [data-selected='true'] {
+      background-color: var(--ctp-surface1) !important;
+    }
+    nav[data-ytmd-main-panel] hr,
+    ul[data-ytmd-sub-panel] hr {
+      background-color: var(--ctp-surface1) !important;
+    }
+    /* Keep the plugin's red hover on the window-close button. */
+    nav[data-ytmd-main-panel] div > button:last-of-type:hover {
+      background-color: rgba(255, 0, 0, 0.5) !important;
+    }
+  '';
+
   # One file that auto-switches via prefers-color-scheme: Mocha when the system
   # (portal/OS) reports dark, Latte when light. Wrapping each whole flavor file
   # in @media is valid here — neither file has @charset/@import.
@@ -53,10 +97,12 @@
       echo '@media (prefers-color-scheme: dark) {'
       cat ${ytmSrc}/src/mocha.css
       cat ${ytmSurfaceTokens}
+      cat ${ytmTitleBar}
       echo '}'
       echo '@media (prefers-color-scheme: light) {'
       cat ${ytmSrc}/src/latte.css
       cat ${ytmSurfaceTokens}
+      cat ${ytmTitleBar}
       # Upstream leaves the nav logo as YT's dark-mode asset (white "Music"
       # wordmark), invisible on Latte's light background. Swap in a Latte variant
       # whose wordmark is recolored to --ctp-text; the red play button is intact.
