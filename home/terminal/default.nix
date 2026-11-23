@@ -103,6 +103,14 @@ in {
     LC_CTYPE = "en_US.UTF-8";
   };
 
+  # .direnv/ caches paths into the checkout it was built in, and the devshell hook rebuilds it.
+  # Appended to the tmux-og-owned worktrunk config, which exposes no extra-settings option.
+  xdg.configFile."worktrunk/config.toml".text = lib.mkAfter ''
+
+    [step.copy-ignored]
+    exclude = [".direnv/"]
+  '';
+
   # Eza icon overrides matching yazi custom icons (theme-toggle.sh update_yazi)
   # Schema: filenames/extensions are top-level, each entry is { icon: { glyph: <char> } }
   xdg.configFile."eza/theme.yml".text = let
