@@ -29,6 +29,12 @@
         subdir = "skills/productivity";
         filter.maxDepth = 1;
       };
+      # The forged skill, from its own flake input.
+      forged = {
+        path = inputs.forged;
+        subdir = "skills";
+        filter.maxDepth = 1;
+      };
     };
 
     skills.enable = [
@@ -48,6 +54,8 @@
       # Model-invoked, so it shadows superpowers:writing-skills by the
       # precedence asserted in CLAUDE.global.md.
       "writing-for-agents"
+      # Teaches agents to query the forged PR-state cache daemon.
+      "forged"
     ];
 
     # `link` is load-bearing: it renders as per-file home.file symlinks, while

@@ -235,6 +235,17 @@
     # built against its own lock; following ours would fork the derivation.
     resolved.url = "github:noamsto/resolved";
 
+    # forged PR-state cache daemon: Home Manager module + agent skill. Unlike
+    # the inputs above it publishes no binary cache, so following our nixpkgs
+    # costs no substitutes and avoids a second nixpkgs in the lock.
+    forged = {
+      url = "github:noamsto/forged";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs.git-hooks-nix.follows = "pre-commit-hooks";
+    };
+
     # Cross-engine agent hook router. One manifest of handlers renders into
     # Claude Code's, Codex's, Cursor's and Pi's native hook config in a single
     # `hookyard install` pass, owned by home/ai/hookyard.
