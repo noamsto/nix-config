@@ -7,6 +7,7 @@ is only reachable through the Interactions API, so this translates between them.
 import base64
 import json
 import os
+import re
 import socket
 import sys
 import urllib.error
@@ -16,11 +17,26 @@ from email import policy
 from email.parser import BytesParser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import silence
+
 DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com"
 DEFAULT_MODEL = "gemini-3.5-transcribe"
 MAX_BODY_BYTES = 16 * 1024 * 1024
 # Top of the range Gemini's docs say gives best results for custom_vocabulary.
 VOCABULARY_LIMIT = 100
+PROMPT_TAIL_CHARS = 2000
+TOKEN = re.compile(r"[\w'’-]+")
+STOPWORDS = frozenset(
+    ["that", "this", "with", "have", "from", "they", "will", "would", "there", "their", "what", "about", "which", "when", "your", "said", "than", "them", "then", "were", "been", "some", "could", "other", "into", "more", "also", "just", "only", "very", "such", "over", "after", "before", "because", "while", "where", "these", "those", "here", "does", "done", "being", "should", "might", "shall", "really", "still", "even", "much", "many", "most", "each", "every", "both", "through", "during", "between", "under", "again", "further", "once", "same", "עבור", "אבל", "כמו", "גם", "אם", "כי", "זאת", "הזה", "הוא", "היא", "הם", "הן", "אנחנו", "אתה", "אתם", "יש", "אין", "כל", "רק", "עוד", "לפני", "אחרי", "כאן", "שם", "מאוד"]
+)
+
+
+@dataclass
+class TrimConfig:
+    vad_model: str
+    max_silence_ms: int = 300
+    pad_ms: int = 200
+    threshold: float = 0.5
 
 
 @dataclass
@@ -33,10 +49,18 @@ class Config:
     timeout_secs: float = 20.0
     base_url: str = DEFAULT_BASE_URL
     smart: bool = False
+    trim: TrimConfig | None = None
 
     def __post_init__(self):
         if len(self.vocabulary) > VOCABULARY_LIMIT:
             raise ValueError(f"custom vocabulary has {len(self.vocabulary)} terms; the limit is {VOCABULARY_LIMIT}")
+
+
+@dataclass
+class Result:
+    text: str
+    seconds_in: float
+    seconds_sent: float
 
 
 class UpstreamError(Exception):
@@ -115,15 +139,48 @@ def call_gemini(base_url, api_key, timeout_secs, model, input_parts, generation_
     return text
 
 
-def transcribe(config, audio, mime_type):
+def context_terms(prompt, vocabulary, limit=12):
+    """Rare words of the preceding text, for custom_vocabulary: Gemini Transcribe has no context field."""
+    seen = {term.casefold() for term in vocabulary}
+    terms = []
+    for token in TOKEN.findall(prompt[-PROMPT_TAIL_CHARS:]):
+        key = token.casefold()
+        if len(token) < 4 or key in STOPWORDS or key in seen:
+            continue
+        seen.add(key)
+        terms.append(token)
+    return terms[len(terms) - min(limit, len(terms)) :]
+
+
+def transcribe(config, audio, mime_type, prompt=None):
+    seconds_in = seconds_sent = 0.0
+    if config.trim:
+        trimmed = silence.trim(
+            audio,
+            config.trim.vad_model,
+            config.trim.max_silence_ms,
+            config.trim.pad_ms,
+            config.trim.threshold,
+        )
+        seconds_in = trimmed.seconds_in
+        if not trimmed.speech:
+            return Result("", seconds_in, 0.0)
+        if trimmed.processed:
+            audio, mime_type = trimmed.audio, "audio/wav"
+            seconds_sent = trimmed.seconds_sent
+    vocabulary = list(config.vocabulary)
+    if prompt:
+        extra = context_terms(prompt, vocabulary)
+        room = min(len(extra), max(0, VOCABULARY_LIMIT - len(vocabulary)))
+        vocabulary += extra[len(extra) - room :]
     transcription = {}
-    if config.vocabulary:
-        transcription["custom_vocabulary"] = config.vocabulary
+    if vocabulary:
+        transcription["custom_vocabulary"] = vocabulary
     if config.language_codes:
         transcription["language_codes"] = config.language_codes
     if config.smart:
         transcription["mode"] = "smart"
-    return call_gemini(
+    text = call_gemini(
         config.base_url,
         config.api_key,
         config.timeout_secs,
@@ -131,6 +188,7 @@ def transcribe(config, audio, mime_type):
         [audio_part(audio, mime_type)],
         {"transcription_config": transcription},
     )
+    return Result(text, seconds_in, seconds_sent)
 
 
 def parse_multipart(content_type, body):
@@ -157,6 +215,16 @@ def make_handler(config):
             # Method, path and status only: no headers, no bodies.
             status = args[1] if len(args) > 1 else "?"
             sys.stderr.write(f"voxtype-gemini: {self.command} {self.path.split('?')[0]} -> {status}\n")
+
+        def log_audio(self, result):
+            # Seconds only: never audio, transcript or prompt text.
+            if not result.seconds_in:
+                line = "audio unprocessed"
+            else:
+                line = f"audio in={result.seconds_in:.2f}s sent={result.seconds_sent:.2f}s"
+                if not result.seconds_sent:
+                    line += " (no speech)"
+            sys.stderr.write(f"voxtype-gemini: {line}\n")
 
         def reply(self, status, payload):
             data = json.dumps(payload).encode()
@@ -196,11 +264,15 @@ def make_handler(config):
             mime_type, audio = parts["file"]
             if not mime_type.startswith("audio/"):
                 mime_type = "audio/wav"
+            # a multipart prompt part has no bytes payload
+            prompt_bytes = parts.get("prompt", (None, None))[1]
+            prompt = prompt_bytes.decode("utf-8", errors="replace") if isinstance(prompt_bytes, bytes) else None
             try:
-                text = transcribe(config, audio, mime_type)
+                result = transcribe(config, audio, mime_type, prompt)
             except UpstreamError as err:
                 return self.reply(err.status, {"error": str(err)})
-            self.reply(200, {"text": text})
+            self.log_audio(result)
+            self.reply(200, {"text": result.text})
 
     return Handler
 
@@ -215,6 +287,20 @@ def split_list(value):
 
 def smart_from_environ(environ):
     return environ.get("VOXTYPE_GEMINI_SMART") == "1"
+
+
+def trim_config_from_environ(environ):
+    if environ.get("VOXTYPE_GEMINI_SILENCE_TRIM", "1") in ("0", "false", ""):
+        return None
+    vad_model = environ.get("VOXTYPE_GEMINI_VAD_MODEL")
+    if not vad_model:
+        raise SystemExit("VOXTYPE_GEMINI_VAD_MODEL is not set")
+    return TrimConfig(
+        vad_model=vad_model,
+        max_silence_ms=int(environ.get("VOXTYPE_GEMINI_SILENCE_MAX_MS", "300")),
+        pad_ms=int(environ.get("VOXTYPE_GEMINI_SILENCE_PAD_MS", "200")),
+        threshold=float(environ.get("VOXTYPE_GEMINI_VAD_THRESHOLD", "0.5")),
+    )
 
 
 def config_from_environ(environ):
@@ -237,6 +323,7 @@ def config_from_environ(environ):
         timeout_secs=float(environ.get("VOXTYPE_GEMINI_TIMEOUT_SECS", "20")),
         base_url=environ.get("VOXTYPE_GEMINI_BASE_URL", DEFAULT_BASE_URL),
         smart=smart_from_environ(environ),
+        trim=trim_config_from_environ(environ),
     )
 
 

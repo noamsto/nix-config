@@ -2,6 +2,8 @@
   perSystem = {pkgs, ...}: let
     piExtensions = pkgs.callPackage ./pi-extensions {};
     pi-bolt = pkgs.callPackage ./pi-bolt {};
+    silero-vad = pkgs.callPackage ./silero-vad.nix {};
+    voxtype-gemini = pkgs.callPackage ./voxtype-gemini {inherit silero-vad;};
   in {
     # linear-cli ships prebuilt binaries for both linux and darwin, and the pi
     # extensions are portable npm packages, so both live outside the Linux-only
@@ -36,8 +38,8 @@
         halo-wlan0-suspend-repro = pkgs.callPackage ./halo-wlan0-suspend-repro {};
         kitty-bidi = pkgs.callPackage ./kitty-bidi {};
         kitty-bidi-unwrapped = (pkgs.callPackage ./kitty-bidi {}).unwrapped;
-        sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
-        voxtype-gemini = pkgs.callPackage ./voxtype-gemini {};
+        sherpa-dictate = pkgs.callPackage ./sherpa-dictate {inherit silero-vad voxtype-gemini;};
+        inherit voxtype-gemini;
         inherit (pkgs) ytm-rs;
       }
       # AirConnect ships only static x86_64-linux binaries (meta.platforms), so

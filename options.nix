@@ -393,6 +393,35 @@
           default = false;
           description = "Whether Gemini applies smart transcription, which removes disfluencies and applies spoken voice edits such as self-corrections. Off keeps the verbatim transcript.";
         };
+        silenceTrim = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether the adapter shortens long silences before sending audio to Gemini, which bills per second of audio.";
+          };
+          maxSilenceMs = lib.mkOption {
+            type = lib.types.ints.positive;
+            default = 300;
+            description = "Silences longer than this many milliseconds are shortened to it before the audio is sent to Gemini.";
+          };
+          paddingMs = lib.mkOption {
+            type = lib.types.ints.unsigned;
+            default = 200;
+            description = "Milliseconds of silence kept around speech at the start and end of a clip.";
+          };
+        };
+        phrase = {
+          pauseSecs = lib.mkOption {
+            type = lib.types.numbers.positive;
+            default = 0.9;
+            description = "sherpa-dictate's Gemini phrase mode cuts a phrase at pauses of at least this many seconds.";
+          };
+          minSecs = lib.mkOption {
+            type = lib.types.numbers.nonnegative;
+            default = 1.5;
+            description = "Phrases shorter than this many seconds are merged into the next one.";
+          };
+        };
       };
       hardware.thinkpad.enable = lib.mkOption {
         type = lib.types.bool;

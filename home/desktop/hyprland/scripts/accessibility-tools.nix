@@ -12,6 +12,15 @@
   geminiAdapter = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.voxtype-gemini;
   # Quote the whole assignment; systemd expands \, " and % (specifiers) inside it.
   envAssign = name: value: "\"${name}=${lib.replaceStrings ["\\" "\"" "%"] ["\\\\" "\\\"" "%%"] value}\"";
+  sherpaDictate = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate;
+  silenceEnv = {
+    VOXTYPE_GEMINI_SILENCE_TRIM =
+      if gemini.silenceTrim.enable
+      then "1"
+      else "0";
+    VOXTYPE_GEMINI_SILENCE_MAX_MS = toString gemini.silenceTrim.maxSilenceMs;
+    VOXTYPE_GEMINI_SILENCE_PAD_MS = toString gemini.silenceTrim.paddingMs;
+  };
 in {
   home.packages =
     lib.optional geminiActive geminiAdapter
@@ -25,7 +34,17 @@ in {
           disabledTests = old.disabledTests ++ ["test_remove_spaces_in_chi"];
         }))
       # Streaming dictation, complementing voxtype's push-to-talk
-      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
+      (
+        if geminiActive
+        then
+          sherpaDictate.override {
+            geminiPhrases = {
+              url = "http://127.0.0.1:${toString gemini.port}";
+              inherit (gemini.phrase) pauseSecs minSecs;
+            };
+          }
+        else sherpaDictate
+      )
     ];
 
   home.sessionVariables = lib.mkIf geminiActive ({
@@ -33,7 +52,10 @@ in {
       # voxtype-stt-compare reads these so it measures what dictation sends.
       VOXTYPE_GEMINI_VOCABULARY = lib.concatStringsSep "," gemini.vocabulary;
       VOXTYPE_GEMINI_LANGUAGE_CODES = lib.concatStringsSep "," gemini.languageCodes;
+      VOXTYPE_GEMINI_PHRASE_PAUSE_SECS = toString gemini.phrase.pauseSecs;
+      VOXTYPE_GEMINI_PHRASE_MIN_SECS = toString gemini.phrase.minSecs;
     }
+    // silenceEnv
     // lib.optionalAttrs gemini.smartTranscription {VOXTYPE_GEMINI_SMART = "1";});
 
   # The key stays in keyFile: the adapter reads the path at startup, so it
@@ -51,6 +73,9 @@ in {
           (envAssign "VOXTYPE_GEMINI_MODEL" gemini.model)
           (envAssign "VOXTYPE_GEMINI_VOCABULARY" (lib.concatStringsSep "," gemini.vocabulary))
           (envAssign "VOXTYPE_GEMINI_LANGUAGE_CODES" (lib.concatStringsSep "," gemini.languageCodes))
+          (envAssign "VOXTYPE_GEMINI_SILENCE_TRIM" silenceEnv.VOXTYPE_GEMINI_SILENCE_TRIM)
+          (envAssign "VOXTYPE_GEMINI_SILENCE_MAX_MS" silenceEnv.VOXTYPE_GEMINI_SILENCE_MAX_MS)
+          (envAssign "VOXTYPE_GEMINI_SILENCE_PAD_MS" silenceEnv.VOXTYPE_GEMINI_SILENCE_PAD_MS)
         ]
         ++ lib.optional gemini.smartTranscription (envAssign "VOXTYPE_GEMINI_SMART" "1");
       MemoryMax = "512M";
@@ -108,7 +133,13 @@ in {
       parakeet.model = "parakeet-tdt-0.6b-v3";
       whisper =
         {
-          model = "large-v3-turbo";
+          # The OSD shows "engine · whisper.model". Remote mode never resolves
+          # `model` (remote_model is what is sent, and nothing downloads), so it
+          # is only the label.
+          model =
+            if geminiActive
+            then gemini.model
+            else "large-v3-turbo";
         }
         // lib.optionalAttrs geminiActive {
           mode = "remote";
