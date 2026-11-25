@@ -1040,7 +1040,7 @@ class MergeConsumersTest(unittest.TestCase):
             ["noamsto/consumer-a"],
         )
 
-    def test_variable_only(self):
+    def test_secret_only(self):
         self.assertEqual(
             botcore.merge_consumers([], '["noamsto/consumer-b"]'),
             ["noamsto/consumer-b"],
@@ -1055,31 +1055,69 @@ class MergeConsumersTest(unittest.TestCase):
             ["noamsto/consumer-a", "noamsto/tmux-og", "noamsto/consumer-b"],
         )
 
-    def test_empty_and_whitespace_variable(self):
-        for extra in ("", "  ", "\n"):
-            with self.subTest(extra=extra):
+    def test_empty_and_whitespace_secret(self):
+        for secret in ("", "  ", "\n"):
+            with self.subTest(secret=secret):
                 self.assertEqual(
-                    botcore.merge_consumers(["noamsto/consumer-a"], extra),
+                    botcore.merge_consumers(["noamsto/consumer-a"], secret),
                     ["noamsto/consumer-a"],
                 )
 
-    def test_malformed_json_variable(self):
+    def test_malformed_json_secret(self):
         with self.assertRaises(botcore.ConfigError) as ctx:
             botcore.merge_consumers([], "[")
-        self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+        self.assertEqual(str(ctx.exception), "CASCADE_CONSUMERS is not valid JSON")
 
-    def test_non_list_variable(self):
+    def test_non_list_secret(self):
         with self.assertRaises(botcore.ConfigError) as ctx:
-            botcore.merge_consumers([], "{}")
-        self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+            botcore.merge_consumers([], '{"noamsto/consumer-c": 1}')
+        self.assertEqual(
+            str(ctx.exception), "CASCADE_CONSUMERS must be a JSON array"
+        )
+        self.assertNotIn("noamsto/consumer-c", str(ctx.exception))
 
-    def test_bad_variable_entries(self):
-        for extra in ('["other/x"]', '["noamsto/.."]', '["noamsto/a\\nb"]'):
-            with self.subTest(extra=extra), self.assertRaises(
+    def test_bad_secret_entries_indexed_not_quoted(self):
+        for secret, index, entry in (
+            ('["other/x"]', 0, "other/x"),
+            ('["noamsto/consumer-a", "noamsto/.."]', 1, "noamsto/.."),
+            ('["noamsto/a\\nb"]', 0, "noamsto/a\nb"),
+        ):
+            with self.subTest(secret=secret), self.assertRaises(
                 botcore.ConfigError
             ) as ctx:
-                botcore.merge_consumers([], extra)
-            self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+                botcore.merge_consumers([], secret)
+            msg = str(ctx.exception)
+            self.assertEqual(
+                msg,
+                f"CASCADE_CONSUMERS entry #{index} is not a noamsto/<repo> string",
+            )
+            self.assertNotIn(entry, msg)
+
+    def test_non_string_secret_entry(self):
+        with self.assertRaises(botcore.ConfigError) as ctx:
+            botcore.merge_consumers([], '["noamsto/consumer-a", 7]')
+        self.assertEqual(
+            str(ctx.exception),
+            "CASCADE_CONSUMERS entry #1 is not a noamsto/<repo> string",
+        )
+
+    def test_duplicate_secret_entry_indexed_not_quoted(self):
+        with self.assertRaises(botcore.ConfigError) as ctx:
+            botcore.merge_consumers(
+                [], '["noamsto/consumer-b", "noamsto/consumer-b"]'
+            )
+        msg = str(ctx.exception)
+        self.assertEqual(msg, "CASCADE_CONSUMERS entry #1 is a duplicate")
+        self.assertNotIn("noamsto/consumer-b", msg)
+
+    def test_secret_entry_matching_file_is_not_a_duplicate(self):
+        self.assertEqual(
+            botcore.merge_consumers(
+                ["noamsto/consumer-a"],
+                '["noamsto/consumer-a", "noamsto/consumer-b"]',
+            ),
+            ["noamsto/consumer-a", "noamsto/consumer-b"],
+        )
 
     def test_invalid_file_still_raises(self):
         with self.assertRaises(botcore.ConfigError):

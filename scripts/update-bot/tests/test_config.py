@@ -1,9 +1,9 @@
 """The cascade config files parse and name real root inputs.
 
-.github/upstreams.json maps a source repo to the root input that pins it, and
-.github/consumers.json lists the repos notified when it bumps. The nix check
-copies both, plus flake.lock, into src/, so look there first and fall back to
-the repo tree.
+.github/upstreams.json maps a source repo to the root input that pins it.
+.github/consumers.json is empty by default; the CASCADE_CONSUMERS secret
+supplies recipients this public repo must not name. The nix check copies both
+plus flake.lock into src/, so look there first and fall back to the repo tree.
 """
 
 import json
@@ -39,7 +39,9 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(upstreams["noamsto/tmux-og"], "tmux-og")
 
     def test_consumers(self):
-        botcore.parse_consumers(json.loads(config_file("consumers.json").read_text()))
+        doc = json.loads(config_file("consumers.json").read_text())
+        self.assertEqual(botcore.parse_consumers(doc), [])
+        self.assertEqual(doc, [])
 
     def test_upstreams_are_root_inputs(self):
         lock = json.loads(lock_file().read_text())

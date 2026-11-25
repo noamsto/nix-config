@@ -49,24 +49,33 @@ def parse_consumers(doc: object) -> list[str]:
     return out
 
 
-def merge_consumers(file_doc: object, extra: str) -> list[str]:
-    """Recipients from `.github/consumers.json` plus the CASCADE_CONSUMERS variable.
+def merge_consumers(file_doc: object, secret: str) -> list[str]:
+    """Recipients from `.github/consumers.json` plus the CASCADE_CONSUMERS secret.
 
-    The variable is a JSON array using the parse_consumers rules; entries are
-    de-duplicated, the file's first. An empty or whitespace variable adds nothing.
+    The secret is a JSON array of noamsto/<repo>; entries are de-duplicated
+    against the file and each other, the file's first. An empty or whitespace
+    secret adds nothing. A malformed secret is reported by entry index only,
+    so no secret content can reach a public log.
     """
     out = parse_consumers(file_doc)
-    if not extra.strip():
+    if not secret.strip():
         return out
     try:
-        doc = json.loads(extra)
+        doc = json.loads(secret)
     except json.JSONDecodeError:
         raise ConfigError("CASCADE_CONSUMERS is not valid JSON") from None
-    try:
-        parsed = parse_consumers(doc)
-    except ConfigError as e:
-        raise ConfigError(f"CASCADE_CONSUMERS: {e}") from None
-    return out + [entry for entry in parsed if entry not in out]
+    if not isinstance(doc, list):
+        raise ConfigError("CASCADE_CONSUMERS must be a JSON array")
+    entries: list[str] = []
+    for i, entry in enumerate(doc):
+        if not isinstance(entry, str) or not UPSTREAM_RE.fullmatch(entry):
+            raise ConfigError(
+                f"CASCADE_CONSUMERS entry #{i} is not a noamsto/<repo> string"
+            )
+        if entry in entries:
+            raise ConfigError(f"CASCADE_CONSUMERS entry #{i} is a duplicate")
+        entries.append(entry)
+    return out + [entry for entry in entries if entry not in out]
 
 
 # Library, toolkit, kernel and toolchain families: pinning one of these to an

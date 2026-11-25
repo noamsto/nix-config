@@ -508,6 +508,38 @@ class SelectCliTest(unittest.TestCase):
         self.assertEqual(outputs["mode"], "full")
         self.assertEqual(outputs["source"], "")
 
+
+def run_cli(argv, env):
+    """Run update_bot.main() with argv/env, recording prints and outputs in order."""
+    events: list[tuple[str, str]] = []
+    code = 0
+    with (
+        mock.patch.object(sys, "argv", argv),
+        mock.patch.dict(os.environ, env, clear=True),
+        mock.patch.object(
+            update_bot,
+            "set_output",
+            side_effect=lambda k, v: events.append(("output", f"{k}={v}")),
+        ),
+        mock.patch(
+            "builtins.print", side_effect=lambda *a: events.append(("print", a[0]))
+        ),
+    ):
+        try:
+            update_bot.main()
+        except SystemExit as e:
+            code = e.code if isinstance(e.code, int) else 1
+    return events, code
+
+
+def outputs(events):
+    return dict(value.split("=", 1) for kind, value in events if kind == "output")
+
+
+def printed(events):
+    return [value for kind, value in events if kind == "print"]
+
+
 class RecipientsCliTest(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
@@ -522,60 +554,124 @@ class RecipientsCliTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text)
 
-    def run_recipients(self, extra: str):
-        outputs: list[tuple[str, str]] = []
-        printed: list[str] = []
-        code = 0
-        with (
-            mock.patch.object(
-                sys, "argv", ["update_bot.py", "recipients", f"--extra={extra}"]
-            ),
-            mock.patch.object(
-                update_bot, "set_output", side_effect=lambda k, v: outputs.append((k, v))
-            ),
-            mock.patch("builtins.print", side_effect=lambda *a: printed.append(a[0])),
-        ):
-            try:
-                update_bot.main()
-            except SystemExit as e:
-                code = e.code if isinstance(e.code, int) else 1
-        return dict(outputs), printed, code
+    def run_recipients(self, secret=None):
+        env = {} if secret is None else {"CASCADE_CONSUMERS": secret}
+        return run_cli(["update_bot.py", "recipients"], env)
 
-    def test_file_and_extra_merged_deduped_and_compact(self):
+    def test_file_and_secret_merged_deduped_compact_indexes(self):
         self.write(
             ".github/consumers.json", '["noamsto/consumer-a", "noamsto/tmux-og"]\n'
         )
-        outputs, _, code = self.run_recipients(
-            '["noamsto/tmux-og", "noamsto/consumer-b"]'
-        )
-        merged = '["noamsto/consumer-a","noamsto/tmux-og","noamsto/consumer-b"]'
+        events, code = self.run_recipients('["noamsto/tmux-og", "noamsto/consumer-b"]')
         self.assertEqual(code, 0)
-        self.assertEqual(outputs, {"consumers": merged})
+        self.assertEqual(outputs(events), {"indexes": "[0,1,2]"})
+        self.assertEqual(printed(events), [])
 
-    def test_missing_file_uses_extra_only(self):
-        outputs, _, code = self.run_recipients('["noamsto/consumer-b"]')
+    def test_empty_file_and_unset_secret_is_empty(self):
+        self.write(".github/consumers.json", "[]\n")
+        events, code = self.run_recipients()
         self.assertEqual(code, 0)
-        self.assertEqual(outputs, {"consumers": '["noamsto/consumer-b"]'})
+        self.assertEqual(outputs(events), {"indexes": "[]"})
 
-    def test_empty_extra_uses_file_only(self):
+    def test_missing_file_and_unset_secret_is_empty(self):
+        events, code = self.run_recipients()
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs(events), {"indexes": "[]"})
+
+    def test_missing_file_uses_secret_only(self):
+        events, code = self.run_recipients('["noamsto/consumer-b"]')
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs(events), {"indexes": "[0]"})
+
+    def test_empty_secret_uses_file_only(self):
         self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
-        outputs, _, code = self.run_recipients("")
+        events, code = self.run_recipients("")
         self.assertEqual(code, 0)
-        self.assertEqual(outputs, {"consumers": '["noamsto/consumer-a"]'})
+        self.assertEqual(outputs(events), {"indexes": "[0]"})
 
-    def test_malformed_extra_fails_loudly(self):
+    def test_malformed_secret_fails_loudly_without_content(self):
         self.write(".github/consumers.json", "[]\n")
-        outputs, printed, code = self.run_recipients("[")
-        self.assertNotEqual(code, 0)
-        self.assertEqual(outputs, {})
-        self.assertTrue(any("::error::recipients" in line for line in printed))
+        events, code = self.run_recipients('["other/consumer-c"]')
+        self.assertEqual(code, 1)
+        self.assertEqual(outputs(events), {})
+        lines = printed(events)
+        self.assertTrue(any("::error::recipients" in line for line in lines))
+        self.assertFalse(any("other/consumer-c" in line for line in lines))
 
-    def test_extra_starting_with_dash_parses_and_fails_validation(self):
+    def test_invalid_json_secret_fails(self):
+        events, code = self.run_recipients("[")
+        self.assertEqual(code, 1)
+        self.assertEqual(outputs(events), {})
+        lines = printed(events)
+        self.assertTrue(
+            any("CASCADE_CONSUMERS is not valid JSON" in line for line in lines)
+        )
+
+
+class RecipientCliTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, old_cwd)
+
+    def write(self, rel: str, text: str) -> None:
+        path = self.tmp / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def run_recipient(self, index, secret=None):
+        env = {} if secret is None else {"CASCADE_CONSUMERS": secret}
+        return run_cli(["update_bot.py", "recipient", f"--index={index}"], env)
+
+    def test_index_1_masks_secret_before_outputs(self):
+        self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
+        events, code = self.run_recipient("1", '["noamsto/consumer-b"]')
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            events,
+            [
+                ("print", "::add-mask::noamsto/consumer-b"),
+                ("print", "::add-mask::consumer-b"),
+                ("output", "repo=noamsto/consumer-b"),
+                ("output", "name=consumer-b"),
+            ],
+        )
+
+    def test_file_entry_resolves_by_index(self):
+        self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
+        events, code = self.run_recipient("0", '["noamsto/consumer-b"]')
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            outputs(events), {"repo": "noamsto/consumer-a", "name": "consumer-a"}
+        )
+
+    def test_out_of_range_index_fails(self):
+        self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
+        events, code = self.run_recipient("1")
+        self.assertEqual(code, 1)
+        self.assertEqual(outputs(events), {})
+        lines = printed(events)
+        self.assertTrue(any(line.startswith("::error::recipient") for line in lines))
+
+    def test_non_integer_index_fails(self):
+        self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
+        events, code = self.run_recipient("x")
+        self.assertEqual(code, 1)
+        self.assertEqual(outputs(events), {})
+        lines = printed(events)
+        self.assertTrue(any(line.startswith("::error::recipient") for line in lines))
+
+    def test_malformed_secret_fails_without_content(self):
         self.write(".github/consumers.json", "[]\n")
-        outputs, printed, code = self.run_recipients("-x")
-        self.assertNotEqual(code, 0)
-        self.assertEqual(outputs, {})
-        self.assertTrue(any("::error::recipients" in line for line in printed))
+        events, code = self.run_recipient("0", '["other/consumer-c"]')
+        self.assertEqual(code, 1)
+        self.assertEqual(outputs(events), {})
+        lines = printed(events)
+        self.assertTrue(any(line.startswith("::error::recipient") for line in lines))
+        self.assertFalse(any("other/consumer-c" in line for line in lines))
 
 
 class PrepareNarrowTest(unittest.TestCase):

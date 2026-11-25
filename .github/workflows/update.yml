@@ -57,12 +57,14 @@ defaults:
 # input always moves to its newest upstream).
 #
 # Notify: after any run squash-merges on main, one repository_dispatch per
-# recipient: the entries of .github/consumers.json plus the repo variable
-# CASCADE_CONSUMERS (a JSON array of noamsto/<repo>, for recipients this public
-# repo must not name). A malformed variable fails the recipients job after
-# landing, before notify. The App private key lives only in the notify job,
-# which checks out nothing and runs no repo code; notify is skipped while
-# vars.CASCADE_APP_ID is unset.
+# recipient. Recipients are the entries of .github/consumers.json (public, empty
+# by default) plus the repo secret CASCADE_CONSUMERS (a JSON array of
+# noamsto/<repo> this public repo must not name); the secret is masked in logs
+# and the job names (matrix values) show only an index. A malformed secret fails
+# the recipients job after landing. Recipients and notify run only while
+# vars.CASCADE_APP_ID is set; notify is skipped when the recipient list is empty.
+# The App private key lives only in the notify job, which runs only update_bot.py
+# from this run's own github.sha.
 #
 # Concurrency: one shared `update` group with cancel-in-progress false, so
 # on-demand runs never race the nightly and bursts coalesce into the newest
@@ -450,9 +452,9 @@ jobs:
           fi
           gh workflow run update.yml --ref main "${args[@]}"
 
-  # Recipients = .github/consumers.json plus vars.CASCADE_CONSUMERS, which keeps
-  # a private recipient out of this public repo; a malformed variable fails this
-  # job.
+  # Recipients = .github/consumers.json plus the CASCADE_CONSUMERS secret
+  # (recipients this public repo must not name; a secret so Actions masks it).
+  # Outputs only indexes; a malformed secret fails this job.
   recipients:
     needs: [land]
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && vars.CASCADE_APP_ID != '' }}
@@ -460,34 +462,40 @@ jobs:
     permissions:
       contents: read
     outputs:
-      consumers: ${{ steps.recipients.outputs.consumers }}
+      indexes: ${{ steps.recipients.outputs.indexes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Recipients
         id: recipients
         env:
-          EXTRA: ${{ vars.CASCADE_CONSUMERS }}
-        run: python3 scripts/update-bot/update_bot.py recipients --extra="$EXTRA"
+          CASCADE_CONSUMERS: ${{ secrets.CASCADE_CONSUMERS }}
+        run: python3 scripts/update-bot/update_bot.py recipients
 
   # One repository_dispatch per recipient after any run squash-merges on main.
-  # No checkout and no repo code: the App private key never shares a job with
-  # `nix run .#lock-commit` from freshly updated inputs.
+  # It checks out this run's own github.sha and runs only update_bot.py from it
+  # before the token exists, never code from the freshly updated inputs
+  # (`nix run .#lock-commit` stays in land), so the App key never shares a job
+  # with it.
   notify:
     needs: [land, recipients]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && needs.recipients.result == 'success' && needs.recipients.outputs.consumers != '[]' && needs.recipients.outputs.consumers != '' && vars.CASCADE_APP_ID != '' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && needs.recipients.result == 'success' && needs.recipients.outputs.indexes != '[]' && needs.recipients.outputs.indexes != '' && vars.CASCADE_APP_ID != '' }}
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        consumer: ${{ fromJSON(needs.recipients.outputs.consumers) }}
+        index: ${{ fromJSON(needs.recipients.outputs.indexes) }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Recipient
         id: recipient
         env:
-          CONSUMER: ${{ matrix.consumer }}
-        run: echo "name=${CONSUMER#noamsto/}" >>"$GITHUB_OUTPUT"
+          CASCADE_CONSUMERS: ${{ secrets.CASCADE_CONSUMERS }}
+          INDEX: ${{ matrix.index }}
+        run: python3 scripts/update-bot/update_bot.py recipient --index="$INDEX"
 
       - name: Token
         id: token
@@ -502,7 +510,7 @@ jobs:
       - name: Send upstream-updated
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
-          CONSUMER: ${{ matrix.consumer }}
+          CONSUMER: ${{ steps.recipient.outputs.repo }}
           BODY: '{"event_type":"upstream-updated","client_payload":{"source":"${{ github.repository }}","rev":"${{ needs.land.outputs.landed-sha }}"}}'
         run: |
           jq -e . <<<"$BODY" >/dev/null

@@ -7,7 +7,8 @@ full: "combined / split-nixpkgs / split-inputs\n(mode == full, unchanged)"
 narrow: "NEW narrow job\nupdate-attempt.yml attempt: narrow" {style.stroke: green}
 finalize: "finalize --mode\nbotcore.finalize | NEW finalize_narrow"
 land: "land: PR + squash merge\nNEW Landed sha step"
-notify: "NEW notify job (matrix .github/consumers.json)\ncreate-github-app-token -> POST /dispatches" {style.stroke: green}
+recipients: "NEW recipients job\n.github/consumers.json + CASCADE_CONSUMERS secret\noutputs indexes only" {style.stroke: green}
+notify: "NEW notify job (matrix: index)\nmask entry -> create-github-app-token -> POST /dispatches" {style.stroke: green}
 hosts: "private host flake" {shape: oval}
 skip: "skip: ::notice::, run ends green" {shape: oval}
 cron -> select
@@ -18,4 +19,4 @@ prepare -> full: "full"
 prepare -> narrow: "narrow"
 full -> finalize
 narrow -> finalize
-finalize -> land -> notify -> hosts: "upstream-updated {source, rev}"
+finalize -> land -> recipients -> notify -> hosts: "upstream-updated {source, rev}"

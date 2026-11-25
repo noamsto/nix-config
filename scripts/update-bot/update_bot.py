@@ -99,15 +99,42 @@ def cmd_select(args) -> None:
 
 
 def cmd_recipients(args) -> None:
-    """Publish the notify recipients: consumers.json plus CASCADE_CONSUMERS."""
+    """Publish the notify recipient indexes: consumers.json plus CASCADE_CONSUMERS."""
     try:
-        consumers = botcore.merge_consumers(
-            read_json(".github/consumers.json", []), args.extra
+        merged = botcore.merge_consumers(
+            read_json(".github/consumers.json", []),
+            os.environ.get("CASCADE_CONSUMERS", ""),
         )
     except botcore.ConfigError as e:
         print(f"::error::recipients: {e}")
         sys.exit(1)
-    set_output("consumers", json.dumps(consumers, separators=(",", ":")))
+    set_output("indexes", json.dumps(list(range(len(merged))), separators=(",", ":")))
+
+
+def cmd_recipient(args) -> None:
+    """Resolve one recipient index, masking the entry before any output."""
+    try:
+        merged = botcore.merge_consumers(
+            read_json(".github/consumers.json", []),
+            os.environ.get("CASCADE_CONSUMERS", ""),
+        )
+    except botcore.ConfigError as e:
+        print(f"::error::recipient: {e}")
+        sys.exit(1)
+    try:
+        index = int(args.index)
+    except ValueError:
+        print("::error::recipient: --index must be an integer")
+        sys.exit(1)
+    if not 0 <= index < len(merged):
+        print(f"::error::recipient: --index {index} is out of range")
+        sys.exit(1)
+    repo = merged[index]
+    name = repo.removeprefix("noamsto/")
+    print(f"::add-mask::{repo}")
+    print(f"::add-mask::{name}")
+    set_output("repo", repo)
+    set_output("name", name)
 
 
 # --- prepare ---------------------------------------------------------------
@@ -629,7 +656,9 @@ def main() -> None:
         return p
 
     add("select", cmd_select, event={}, source={}, rev={})
-    add("recipients", cmd_recipients, extra={})
+    p = sub.add_parser("recipients")
+    p.set_defaults(fn=cmd_recipients)
+    add("recipient", cmd_recipient, index={})
     p = add("prepare", cmd_prepare, out={})
     p.add_argument("--only", default="")
     add(
