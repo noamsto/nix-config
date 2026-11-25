@@ -12,6 +12,8 @@
 # - lazygit via config.yml swap (requires restart)
 # - lazydocker via config.yml swap (requires restart)
 # - btop via btop.conf theme setting (requires restart)
+# - Telegram via the portal color-scheme (needs Settings > Chat Settings >
+#   Auto-night mode enabled once in its UI)
 #
 # Requires app restart:
 # - Qt/Kvantum apps (Dolphin, etc.)
@@ -44,6 +46,8 @@ update_gtk_theme() {
     gtk_theme_variant="Adwaita:dark"
   fi
 
+  # The color-scheme change makes xdg-desktop-portal-gtk emit SettingChanged
+  # (org.freedesktop.appearance); Telegram's portal Qt theme follows it.
   # Use dconf load to write all values atomically (single portal notification)
   if [[ $theme == "light" ]]; then
     if ! dconf load /org/gnome/desktop/interface/ <<'EOF'
