@@ -1789,6 +1789,15 @@ in
           "$(bash_payload "$repo" "$long"$'\n'"echo \"\$(env)\"")" \
           'bare env/printenv'
 
+        # Comment-dense input costs the scanners whole-string work per `#`, so the
+        # guard denies it up front as too long to verify rather than overrunning
+        # the hook's time budget and abstaining.
+        dense=$(printf '#\n%.0s' $(seq 1 8000))
+        assert_blocked "secret-read denies env after 8000 comment-dense lines as too long to verify" \
+          guards.pi.secret-read deny \
+          "$(bash_payload "$repo" "$dense"$'\nenv')" \
+          'too long'
+
         assert_allowed "secret-read lets backticked env in a comment through" \
           guards.pi.secret-read abstain \
           "$(bash_payload "$repo" $'# use `env` here')"
