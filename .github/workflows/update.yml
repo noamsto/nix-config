@@ -452,9 +452,7 @@ jobs:
           fi
           gh workflow run update.yml --ref main "${args[@]}"
 
-  # Recipients = .github/consumers.json plus the CASCADE_CONSUMERS secret
-  # (recipients this public repo must not name; a secret so Actions masks it).
-  # Outputs only indexes; a malformed secret fails this job.
+  # Outputs only recipient indexes, never names (see Notify in the header).
   recipients:
     needs: [land]
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && vars.CASCADE_APP_ID != '' }}
@@ -473,10 +471,9 @@ jobs:
         run: python3 scripts/update-bot/update_bot.py recipients
 
   # One repository_dispatch per recipient after any run squash-merges on main.
-  # It checks out this run's own github.sha and runs only update_bot.py from it
-  # before the token exists, never code from the freshly updated inputs
-  # (`nix run .#lock-commit` stays in land), so the App key never shares a job
-  # with it.
+  # Runs only this run's own update_bot.py, before the token exists; code from
+  # the freshly updated inputs (`nix run .#lock-commit`) stays in land, away
+  # from the App key.
   notify:
     needs: [land, recipients]
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && needs.recipients.result == 'success' && needs.recipients.outputs.indexes != '[]' && needs.recipients.outputs.indexes != '' && vars.CASCADE_APP_ID != '' }}

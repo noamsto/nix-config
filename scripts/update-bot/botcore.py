@@ -52,9 +52,9 @@ def parse_consumers(doc: object) -> list[str]:
 def merge_consumers(file_doc: object, secret: str) -> list[str]:
     """Recipients from `.github/consumers.json` plus the CASCADE_CONSUMERS secret.
 
-    The secret is a JSON array of noamsto/<repo>; entries are de-duplicated
-    against the file and each other, the file's first. An empty or whitespace
-    secret adds nothing. A malformed secret is reported by entry index only,
+    The secret is a JSON array of noamsto/<repo>. An entry already in the file
+    is dropped (the file's come first); a duplicate within the secret is an
+    error. An empty or whitespace secret adds nothing. A malformed secret is reported by entry index only,
     so no secret content can reach a public log.
     """
     out = parse_consumers(file_doc)
