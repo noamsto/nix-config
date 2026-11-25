@@ -1,0 +1,14 @@
+direction: right
+toggle: theme-toggle.sh\n_run_updates_parallel
+chain: update_tmux_kitty (new) {
+  tmux: update_tmux\nreloads @thm_bg
+  kitty: update_kitty\nkitty @ set-colors
+  tmux -> kitty: then
+}
+tmuxd: tmux server\npane OSC 11 reply = @thm_bg
+pi: pi (pane, mode 2031)
+toggle -> chain
+chain.kitty -> tmuxd: "CSI ?997"
+tmuxd -> pi: "CSI ?997 forwarded"
+pi -> tmuxd: "OSC 11 query"
+tmuxd -> pi: "fresh colour" {style.stroke: green}

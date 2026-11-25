@@ -50,7 +50,7 @@
       fi
 
       _run_updates_neutral "$theme" \
-        update_kitty update_fish update_starship update_btop update_tmux \
+        update_tmux_kitty update_fish update_starship update_btop \
         update_lazydocker update_process_compose update_bat update_delta \
         update_fzf update_yazi update_lazygit
 

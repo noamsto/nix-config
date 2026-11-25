@@ -659,8 +659,8 @@ apply_theme_from_noctalia() {
   log_debug "Applying theme from Noctalia: $theme"
   _run_updates_parallel "$theme" \
     update_gtk_theme update_gtk_css update_hyprland_borders \
-    update_ghostty update_kitty update_foot \
-    update_fish update_starship update_tmux \
+    update_ghostty update_foot \
+    update_fish update_starship update_tmux_kitty \
     update_k9s update_lazygit update_lazydocker \
     update_btop update_bat update_delta update_fzf \
     update_yazi update_kvantum update_process_compose \
@@ -673,8 +673,8 @@ apply_theme() {
   log_debug "Applying theme: $theme"
   _run_updates_parallel "$theme" \
     update_gtk_theme update_gtk_css update_hyprland_borders \
-    update_ghostty update_kitty update_foot \
-    update_fish update_starship update_tmux \
+    update_ghostty update_foot \
+    update_fish update_starship update_tmux_kitty \
     update_k9s update_lazygit update_lazydocker \
     update_btop update_bat update_delta update_fzf \
     update_yazi update_kvantum update_noctalia \
