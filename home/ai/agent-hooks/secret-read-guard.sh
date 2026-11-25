@@ -269,8 +269,8 @@ CC_POS=0 CC_OPEN=0
 # CC_POS/CC_OPEN, so callers must scan left to right; a call going backwards
 # restarts from 0. mask_quotes, scan_substs and dequote reset the state on
 # entry so it can never describe another string; find_paren_end does not, and
-# must only be called from scan_substs on the same `s`. A `${` cannot straddle a fold boundary: s[i] is
-# always `#`, and the check on s[i-1] already ruled out `$`.
+# must only be called from scan_substs on the same `s`. A `${` cannot straddle
+# a fold boundary: s[i] is always `#`, and the s[i-1] check already ruled out `$`.
 comment_at() {
   local i=$1 seg head j
   if ((i > 0)); then
@@ -877,12 +877,11 @@ dequote_char() {
 # ceilings.
 # Bytes are only a proxy: quote-dense text (`'a' "b" ...`, ~2.1s) and a `<<-`
 # line of thousands of tabs still cost more than their size and can pass 4s
-# under the budget (#407). Each `#` is charged comment_weight extra bytes because
-# every one still costs a few whole-string slices in the scanners. A `#` in a
-# heredoc body reaches comment_at only through find_paren_end inside a `$(...)`
-# there, and that body is charged at the substitution site. Counting `#` inside
-# quotes and URL fragments errs toward denying. The `#`s are counted only after
-# the byte check passes, since the strip is quadratic in the non-`#` characters.
+# under the budget (#407). Each `#` is charged comment_weight extra bytes (hash_charge)
+# because every one still costs a few whole-string slices in the scanners; `#`
+# inside quotes or URL fragments are counted too, which errs toward denying. They
+# are counted only after the byte check passes: the strip behind the count is
+# quadratic in the non-`#` characters.
 scan_budget=16384
 comment_weight=8
 max_command_len=524288
