@@ -30,6 +30,9 @@ in {
 
   home.sessionVariables = lib.mkIf geminiActive {
     VOXTYPE_GEMINI_KEY_FILE = gemini.keyFile;
+    # voxtype-stt-compare reads these so it measures what dictation sends.
+    VOXTYPE_GEMINI_VOCABULARY = lib.concatStringsSep "," gemini.vocabulary;
+    VOXTYPE_GEMINI_LANGUAGE_CODES = lib.concatStringsSep "," gemini.languageCodes;
   };
 
   # The key stays in keyFile: the adapter reads the path at startup, so it
