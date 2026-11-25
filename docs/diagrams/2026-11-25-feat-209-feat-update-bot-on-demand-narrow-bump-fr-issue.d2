@@ -1,0 +1,11 @@
+direction: right
+cron: "schedule 02:17 / workflow_dispatch" {shape: oval}
+upstream: "noamsto/tmux-og main green" {shape: oval}
+prepare: "update.yml prepare\nupdate_bot.py prepare (3 trees)"
+attempts: "combined / split-nixpkgs / split-inputs\nupdate-attempt.yml -> build.yml"
+finalize: "update.yml finalize\nbotcore.finalize"
+land: "update.yml land\nGITHUB_TOKEN squash merge"
+hosts: "private host flake\nnightly host update" {shape: oval}
+cron -> prepare -> attempts -> finalize -> land
+upstream -> prepare: "missing: no trigger\nwaits up to a day" {style.stroke-dash: 5; style.stroke: red}
+land -> hosts: "missing: GITHUB_TOKEN merge\nstarts nothing downstream" {style.stroke-dash: 5; style.stroke: red}

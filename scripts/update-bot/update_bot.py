@@ -16,7 +16,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import botcore
 
-TREES = ("combined", "nixpkgs", "inputs")
 NIX = ["nix", "--extra-experimental-features", "nix-command flakes"]
 CAND_RE = re.compile(r"^[A-Za-z0-9_+-][A-Za-z0-9._+-]*$")
 FALLBACK_LINE = re.compile(
@@ -63,7 +62,65 @@ def sh(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
 
+# --- select ----------------------------------------------------------------
+
+
+def cmd_select(args) -> None:
+    try:
+        upstreams = botcore.parse_upstreams(read_json(".github/upstreams.json", {}))
+    except botcore.ConfigError as e:
+        sys.exit(f"select: {e}")
+    lock = read_json("flake.lock")
+    pins = read_json("pins.json", {"frozenInputs": [], "pins": []})
+    result = botcore.select_run(
+        event=args.event,
+        source=args.source,
+        rev=args.rev,
+        upstreams=upstreams,
+        lock=lock,
+        frozen=pins.get("frozenInputs", []),
+    )
+    mode = result["mode"]
+    narrow = mode == "narrow"
+    set_output("mode", mode)
+    set_output("input", result.get("input", "") if narrow else "")
+    set_output("source", result.get("source", "") if narrow else "")
+    set_output("rev", result.get("rev", "") if narrow else "")
+    if mode == "skip":
+        print(f"::notice::on-demand run skipped: {result['why']}")
+    elif narrow:
+        print(
+            f"::notice::on-demand: {result['source']} announced {result['rev']}; "
+            f"moving {result['input']}"
+        )
+
+
+# --- recipients -------------------------------------------------------------
+
+
+def cmd_recipients(args) -> None:
+    """Publish the notify recipients: consumers.json plus CASCADE_CONSUMERS."""
+    try:
+        consumers = botcore.merge_consumers(
+            read_json(".github/consumers.json", []), args.extra
+        )
+    except botcore.ConfigError as e:
+        print(f"::error::recipients: {e}")
+        sys.exit(1)
+    set_output("consumers", json.dumps(consumers, separators=(",", ":")))
+
+
 # --- prepare ---------------------------------------------------------------
+
+
+def narrow_location(lock: dict, name: str) -> str:
+    """The full locked rev of name, or its short narHash if it has no rev."""
+    rev = botcore.locked_rev(lock, name)
+    if rev:
+        return rev
+    ref = lock["nodes"]["root"]["inputs"][name]
+    nar = lock["nodes"][ref].get("locked", {}).get("narHash", "")
+    return nar.split("-", 1)[-1][:7] if nar else "an unknown revision"
 
 
 def cmd_prepare(args) -> None:
@@ -75,16 +132,23 @@ def cmd_prepare(args) -> None:
     nixpkgs_side, inputs_side = botcore.input_sets(
         base_lock, base_pins.get("frozenInputs", [])
     )
-    names = {
-        "combined": nixpkgs_side + inputs_side,
-        "nixpkgs": nixpkgs_side,
-        "inputs": inputs_side,
-    }
+    if args.only:
+        if args.only not in inputs_side:
+            sys.exit(f"prepare: {args.only} is not an updateable root input")
+        names = {"narrow": [args.only]}
+    else:
+        names = {
+            "combined": nixpkgs_side + inputs_side,
+            "nixpkgs": nixpkgs_side,
+            "inputs": inputs_side,
+        }
+    narrow_changed = False
+    narrow_lock = None
     try:
-        for tree in TREES:
+        for tree, update in names.items():
             lock_path.write_bytes(base_bytes)
-            if names[tree]:
-                subprocess.run([*NIX, "flake", "update", *names[tree]], check=True)
+            if update:
+                subprocess.run([*NIX, "flake", "update", *update], check=True)
             new_lock = json.loads(lock_path.read_text())
             if botcore.locked_rev(new_lock, "nixpkgs") != botcore.locked_rev(
                 base_lock, "nixpkgs"
@@ -97,8 +161,20 @@ def cmd_prepare(args) -> None:
             write(out / tree / "pins.json", pins_text)
             changed = new_lock != base_lock or pins_text != botcore.dump_pins(base_pins)
             set_output(f"{tree}-changed", "true" if changed else "false")
+            if tree == "narrow":
+                narrow_changed = changed
+                narrow_lock = new_lock
     finally:
         lock_path.write_bytes(base_bytes)
+    if args.only:
+        if narrow_changed:
+            where = narrow_location(narrow_lock, args.only)
+            print(f"::notice::{args.only} locked at {where}")
+        else:
+            print(
+                f"::notice::{args.only} is already at its newest upstream; "
+                "nothing to do"
+            )
 
 
 # --- analyze ---------------------------------------------------------------
@@ -421,12 +497,30 @@ def cmd_decide(args) -> None:
 
 
 def cmd_finalize(args) -> None:
-    final = botcore.finalize(
-        {"combined": args.combined, "nixpkgs": args.nixpkgs, "inputs": args.inputs}
-    )
+    failed = False
+    if args.mode == "narrow":
+        final = botcore.finalize_narrow(args.narrow)
+        if final["land"] == "":
+            reason = args.narrow or "not run"
+            sentence = (
+                f"on-demand update of {args.input} did not land ({reason}); "
+                "the next nightly retries it"
+            )
+            print(f"::error::{sentence}")
+            summary = os.environ.get("GITHUB_STEP_SUMMARY")
+            if summary:
+                with open(summary, "a") as fh:
+                    fh.write(sentence + "\n")
+            failed = True
+    else:
+        final = botcore.finalize(
+            {"combined": args.combined, "nixpkgs": args.nixpkgs, "inputs": args.inputs}
+        )
     write("final.json", json.dumps(final, indent=2) + "\n")
     set_output("land", final["land"])
     set_output("blocked", "true" if final["blocked"] else "false")
+    if failed:
+        sys.exit(1)
 
 
 def cmd_check_main(args) -> None:
@@ -495,6 +589,7 @@ def cmd_pr_body(args) -> None:
         advanced=args.advanced == "true",
         today=now,
         run_url=run_url(),
+        trigger=(args.source, args.rev) if args.source else None,
     )
     write(args.out, body)
 
@@ -531,8 +626,12 @@ def main() -> None:
         for flag, kw in flags.items():
             p.add_argument("--" + flag.replace("_", "-"), required=True, **kw)
         p.set_defaults(fn=fn)
+        return p
 
-    add("prepare", cmd_prepare, out={})
+    add("select", cmd_select, event={}, source={}, rev={})
+    add("recipients", cmd_recipients, extra={})
+    p = add("prepare", cmd_prepare, out={})
+    p.add_argument("--only", default="")
     add(
         "analyze",
         cmd_analyze,
@@ -555,7 +654,10 @@ def main() -> None:
         tree={},
         out={},
     )
-    add("finalize", cmd_finalize, combined={}, nixpkgs={}, inputs={})
+    p = add("finalize", cmd_finalize, combined={}, nixpkgs={}, inputs={})
+    p.add_argument("--mode", choices=["full", "narrow"], default="full")
+    p.add_argument("--narrow", default="")
+    p.add_argument("--input", default="")
     add(
         "check-main",
         cmd_check_main,
@@ -563,7 +665,7 @@ def main() -> None:
         rerun={"choices": ["true", "false"]},
     )
     add("advance-fallback", cmd_advance_fallback, base_lock={})
-    add(
+    p = add(
         "pr-body",
         cmd_pr_body,
         attempt={},
@@ -572,6 +674,8 @@ def main() -> None:
         advanced={"choices": ["true", "false"]},
         out={},
     )
+    p.add_argument("--source", default="")
+    p.add_argument("--rev", default="")
     add("issue-body", cmd_issue_body, final={}, reports={}, out={})
 
     args = ap.parse_args()

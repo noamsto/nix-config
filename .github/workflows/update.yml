@@ -13,6 +13,16 @@ on:
         description: Fresh run started because main moved during the previous run
         type: boolean
         default: false
+      source:
+        description: "On-demand narrow run: noamsto/<repo>, a key of .github/upstreams.json (see header)"
+        type: string
+        default: ""
+      rev:
+        description: "On-demand narrow run: 40-hex upstream commit for source (see header)"
+        type: string
+        default: ""
+  repository_dispatch:
+    types: [upstream-updated]
 
 permissions:
   contents: read
@@ -25,10 +35,41 @@ defaults:
   run:
     shell: bash
 
+# Triggers: the 02:17 nightly (schedule); workflow_dispatch, with no inputs (the
+# full manual/rerun path) or with source/rev (the on-demand narrow path and its
+# rerun); and repository_dispatch upstream-updated from a producer whose input
+# this repo tracks.
+#
+# Narrow mode: prepare locks only the input that the announced source maps to in
+# .github/upstreams.json, then the same attempt gate and land path run. A narrow
+# block fails the run (error annotation and the step summary) instead of touching
+# the update-blocked issue (the nightly retries and reports there).
+#
 # Trust invariant: schedule and dispatch runs only, on main only (every job gates
-# on github.ref). Every job checks out this run's own github.sha (the default
-# checkout); the only other bytes are flake.lock/pins.json artifacts produced by
-# this run's jobs. Never the bot branch or a PR head.
+# on github.ref and the public repo). Every job checks out this run's own
+# github.sha (the default checkout); the only other bytes are flake.lock/
+# pins.json artifacts produced by this run's jobs. Never the bot branch or a PR
+# head. The dispatch payload and the source/rev inputs are untrusted data: they
+# enter only via step env into update_bot.py select, which allowlists source
+# against .github/upstreams.json and shape-checks rev as 40 hex; only validated
+# values reach outputs, commands, the PR body or redispatch. Nothing from the
+# payload is checked out or used as a ref, and rev never pins anything (the
+# input always moves to its newest upstream).
+#
+# Notify: after any run squash-merges on main, one repository_dispatch per
+# recipient: the entries of .github/consumers.json plus the repo variable
+# CASCADE_CONSUMERS (a JSON array of noamsto/<repo>, for recipients this public
+# repo must not name). A malformed variable fails the recipients job after
+# landing, before notify. The App private key lives only in the notify job,
+# which checks out nothing and runs no repo code; notify is skipped while
+# vars.CASCADE_APP_ID is unset.
+#
+# Concurrency: one shared `update` group with cancel-in-progress false, so
+# on-demand runs never race the nightly and bursts coalesce into the newest
+# pending run; a pending nightly can be replaced by a newer on-demand run and
+# slips to the next night. A narrow run force-pushes bot/flake-update, so it can
+# rewrite a nightly PR left open by a main-moved race; the full content returns
+# at the next nightly.
 #
 # Job conditions: GitHub's implicit success() skips a job whenever any ancestor
 # was skipped, so every job after prepare starts with !cancelled() and checks the
@@ -38,19 +79,37 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && !github.event.repository.private }}
     runs-on: ubuntu-latest
     outputs:
+      mode: ${{ steps.select.outputs.mode }}
+      input: ${{ steps.select.outputs.input }}
+      source: ${{ steps.select.outputs.source }}
+      rev: ${{ steps.select.outputs.rev }}
       combined-changed: ${{ steps.prepare.outputs.combined-changed }}
       nixpkgs-changed: ${{ steps.prepare.outputs.nixpkgs-changed }}
       inputs-changed: ${{ steps.prepare.outputs.inputs-changed }}
+      narrow-changed: ${{ steps.prepare.outputs.narrow-changed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Untrusted dispatch payload: env only (see the trust invariant).
+      - name: Select
+        id: select
+        env:
+          EVENT: ${{ github.event_name }}
+          SOURCE: ${{ github.event.client_payload.source || inputs.source || '' }}
+          REV: ${{ github.event.client_payload.rev || inputs.rev || '' }}
+        run: python3 scripts/update-bot/update_bot.py select --event="$EVENT" --source="$SOURCE" --rev="$REV"
+
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        if: ${{ steps.select.outputs.mode != 'skip' }}
         with:
           extra-conf: accept-flake-config = true
 
       - name: Prepare trees
         id: prepare
-        run: python3 scripts/update-bot/update_bot.py prepare --out "$RUNNER_TEMP/trees"
+        if: ${{ steps.select.outputs.mode != 'skip' }}
+        env:
+          INPUT: ${{ steps.select.outputs.input }}
+        run: python3 scripts/update-bot/update_bot.py prepare --out "$RUNNER_TEMP/trees" ${INPUT:+--only "$INPUT"}
 
       - name: Upload combined tree
         if: ${{ steps.prepare.outputs.combined-changed == 'true' }}
@@ -79,10 +138,19 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Upload narrow tree
+        if: ${{ steps.prepare.outputs.narrow-changed == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tree-narrow-0
+          path: ${{ runner.temp }}/trees/narrow
+          if-no-files-found: error
+          retention-days: 7
+
   # An unchanged combined tree ends the run: no build, PR or issue.
   combined:
     needs: prepare
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.mode == 'full' && needs.prepare.outputs.combined-changed == 'true' }}
     uses: ./.github/workflows/update-attempt.yml
     with:
       attempt: combined
@@ -100,7 +168,7 @@ jobs:
   # on its own.
   split-nixpkgs:
     needs: [prepare, combined]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.mode == 'full' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
     uses: ./.github/workflows/update-attempt.yml
     with:
       attempt: nixpkgs
@@ -112,7 +180,7 @@ jobs:
 
   split-inputs:
     needs: [prepare, combined]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.mode == 'full' && needs.prepare.outputs.combined-changed == 'true' && needs.combined.outputs.result != 'land' && needs.prepare.outputs.nixpkgs-changed == 'true' && needs.prepare.outputs.inputs-changed == 'true' }}
     uses: ./.github/workflows/update-attempt.yml
     with:
       attempt: inputs
@@ -122,9 +190,22 @@ jobs:
       R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
       R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
 
+  # Only the announced input, through the same gate as a full attempt.
+  narrow:
+    needs: prepare
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.mode == 'narrow' && needs.prepare.outputs.narrow-changed == 'true' }}
+    uses: ./.github/workflows/update-attempt.yml
+    with:
+      attempt: narrow
+      tree-artifact: tree-narrow-0
+    secrets:
+      NIX_CACHE_SIGNING_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NIX_CACHE_SIGNING_KEY || '' }}
+      R2_ACCESS_KEY_ID: ${{ github.ref == 'refs/heads/main' && secrets.R2_ACCESS_KEY_ID || '' }}
+      R2_SECRET_ACCESS_KEY: ${{ github.ref == 'refs/heads/main' && secrets.R2_SECRET_ACCESS_KEY || '' }}
+
   finalize:
-    needs: [prepare, combined, split-nixpkgs, split-inputs]
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && needs.prepare.outputs.combined-changed == 'true' }}
+    needs: [prepare, combined, split-nixpkgs, split-inputs, narrow]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.prepare.result == 'success' && (needs.prepare.outputs.combined-changed == 'true' || needs.prepare.outputs.narrow-changed == 'true') }}
     runs-on: ubuntu-latest
     outputs:
       land: ${{ steps.finalize.outputs.land }}
@@ -143,13 +224,18 @@ jobs:
           COMBINED_TREE: ${{ needs.combined.outputs.tree-artifact }}
           NIXPKGS_TREE: ${{ needs.split-nixpkgs.outputs.tree-artifact }}
           INPUTS_TREE: ${{ needs.split-inputs.outputs.tree-artifact }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+          NARROW: ${{ needs.narrow.outputs.result }}
+          NARROW_TREE: ${{ needs.narrow.outputs.tree-artifact }}
+          INPUT: ${{ needs.prepare.outputs.input }}
         run: |
-          python3 scripts/update-bot/update_bot.py finalize --combined "$COMBINED" --nixpkgs "$NIXPKGS" --inputs "$INPUTS"
+          python3 scripts/update-bot/update_bot.py finalize --combined "$COMBINED" --nixpkgs "$NIXPKGS" --inputs "$INPUTS" --mode "$MODE" --narrow "$NARROW" --input "$INPUT"
           land=$(jq -r .land final.json)
           case "$land" in
             combined) tree="$COMBINED_TREE" ;;
             nixpkgs) tree="$NIXPKGS_TREE" ;;
             inputs) tree="$INPUTS_TREE" ;;
+            narrow) tree="$NARROW_TREE" ;;
             *) tree="" ;;
           esac
           echo "land-tree=$tree" >>"$GITHUB_OUTPUT"
@@ -163,7 +249,7 @@ jobs:
           retention-days: 7
 
   land:
-    needs: [finalize]
+    needs: [prepare, finalize]
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.finalize.result == 'success' && needs.finalize.outputs.land != '' }}
     runs-on: ubuntu-latest
     permissions:
@@ -172,6 +258,7 @@ jobs:
       issues: write
     outputs:
       dispatch: ${{ steps.main.outputs.dispatch }}
+      landed-sha: ${{ steps.landed.outputs.sha }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -203,10 +290,13 @@ jobs:
         env:
           ATTEMPT: ${{ needs.finalize.outputs.land }}
           ADVANCED: ${{ steps.fallback.outputs.advanced }}
+          SOURCE: ${{ needs.prepare.outputs.source }}
+          REV: ${{ needs.prepare.outputs.rev }}
         run: |
           python3 scripts/update-bot/update_bot.py pr-body --attempt "$ATTEMPT" \
             --base-lock "$RUNNER_TEMP/base-lock.json" --base-pins "$RUNNER_TEMP/base-pins.json" \
-            --advanced "$ADVANCED" --out "$RUNNER_TEMP/pr-body.md"
+            --advanced "$ADVANCED" --out "$RUNNER_TEMP/pr-body.md" \
+            --source "$SOURCE" --rev "$REV"
 
       - name: Commit
         id: commit
@@ -303,6 +393,25 @@ jobs:
             echo "merged=false" >>"$GITHUB_OUTPUT"
           fi
 
+      # Notify sends this sha; a red step here means consumers were not notified.
+      - name: Landed sha
+        id: landed
+        if: ${{ steps.merge.outputs.merged == 'true' }}
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          sha=""
+          for _ in 1 2 3; do
+            sha=$(gh pr view "$PR" --json mergeCommit --jq '.mergeCommit.oid // empty' || true)
+            [[ $sha =~ ^[0-9a-f]{40}$ ]] && break
+            sleep 5
+          done
+          if [[ ! $sha =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::could not read the squash commit of PR #$PR; consumers were not notified"
+            exit 1
+          fi
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+
       - name: Close blocked issue
         if: ${{ steps.merge.outputs.merged == 'true' && needs.finalize.outputs.land == 'combined' }}
         env:
@@ -312,7 +421,8 @@ jobs:
             gh issue close "$n" --comment "The combined update landed in #$PR."
           done
 
-  # Main moved during the run, so land published nothing: start one fresh run.
+  # Main moved during the run, so land published nothing: start one fresh run,
+  # carrying the validated narrow request (source/rev) when there is one.
   # A separate job keeps actions: write away from land, which runs code from the
   # freshly updated inputs (nix run .#lock-commit); the token could otherwise
   # dispatch cache-gc with deletion. This job runs nothing from the repo.
@@ -320,7 +430,7 @@ jobs:
   # "events triggered by the GITHUB_TOKEN do not create new workflow runs"); the
   # new run queues in the update concurrency group until this one ends.
   redispatch:
-    needs: [land]
+    needs: [prepare, land]
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.dispatch == 'true' }}
     runs-on: ubuntu-latest
     permissions:
@@ -330,7 +440,73 @@ jobs:
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Start fresh run
-        run: gh workflow run update.yml --ref main -f rerun=true
+        env:
+          SOURCE: ${{ needs.prepare.outputs.source }}
+          REV: ${{ needs.prepare.outputs.rev }}
+        run: |
+          args=(-f rerun=true)
+          if [[ -n "$SOURCE" ]]; then
+            args+=(-f "source=$SOURCE" -f "rev=$REV")
+          fi
+          gh workflow run update.yml --ref main "${args[@]}"
+
+  # Recipients = .github/consumers.json plus vars.CASCADE_CONSUMERS, which keeps
+  # a private recipient out of this public repo; a malformed variable fails this
+  # job.
+  recipients:
+    needs: [land]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && vars.CASCADE_APP_ID != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      consumers: ${{ steps.recipients.outputs.consumers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Recipients
+        id: recipients
+        env:
+          EXTRA: ${{ vars.CASCADE_CONSUMERS }}
+        run: python3 scripts/update-bot/update_bot.py recipients --extra="$EXTRA"
+
+  # One repository_dispatch per recipient after any run squash-merges on main.
+  # No checkout and no repo code: the App private key never shares a job with
+  # `nix run .#lock-commit` from freshly updated inputs.
+  notify:
+    needs: [land, recipients]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !github.event.repository.private && needs.land.outputs.landed-sha != '' && needs.recipients.result == 'success' && needs.recipients.outputs.consumers != '[]' && needs.recipients.outputs.consumers != '' && vars.CASCADE_APP_ID != '' }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    strategy:
+      fail-fast: false
+      matrix:
+        consumer: ${{ fromJSON(needs.recipients.outputs.consumers) }}
+    steps:
+      - name: Recipient
+        id: recipient
+        env:
+          CONSUMER: ${{ matrix.consumer }}
+        run: echo "name=${CONSUMER#noamsto/}" >>"$GITHUB_OUTPUT"
+
+      - name: Token
+        id: token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          app-id: ${{ vars.CASCADE_APP_ID }}
+          private-key: ${{ secrets.CASCADE_APP_PRIVATE_KEY }}
+          owner: noamsto
+          repositories: ${{ steps.recipient.outputs.name }}
+          permission-contents: write
+
+      - name: Send upstream-updated
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          CONSUMER: ${{ matrix.consumer }}
+          BODY: '{"event_type":"upstream-updated","client_payload":{"source":"${{ github.repository }}","rev":"${{ needs.land.outputs.landed-sha }}"}}'
+        run: |
+          jq -e . <<<"$BODY" >/dev/null
+          gh api --method POST "repos/$CONSUMER/dispatches" --input - <<<"$BODY"
 
   # One open update-blocked issue, its body replaced each run the combined tree
   # does not land (also when a half landed).

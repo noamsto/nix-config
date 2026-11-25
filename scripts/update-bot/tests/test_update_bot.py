@@ -3,6 +3,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from argparse import Namespace
@@ -398,6 +399,319 @@ class NixJsonTeeTest(unittest.TestCase):
         proc, files = self.run_wrapper(*args, capture_dir=False)
         self.assert_transparent(proc, args)
         self.assertEqual(files, [])
+
+
+def cli_lock(tmux_rev: str = "c" * 40) -> dict:
+    return {
+        "nodes": {
+            "root": {
+                "inputs": {
+                    "nixpkgs": "nixpkgs",
+                    "nixpkgs-fallback": "nixpkgs-fallback",
+                    "tmux-og": "tmux-og",
+                }
+            },
+            "nixpkgs": {
+                "locked": {"rev": "d" * 40},
+                "original": {
+                    "type": "github",
+                    "owner": "NixOS",
+                    "repo": "nixpkgs",
+                    "ref": "nixos-unstable",
+                },
+            },
+            "nixpkgs-fallback": {"locked": {"rev": "d" * 40}},
+            "tmux-og": {"locked": {"rev": tmux_rev}},
+        }
+    }
+
+
+class SelectCliTest(unittest.TestCase):
+    REV = "a" * 40
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, old_cwd)
+        self.write(".github/upstreams.json", '{"noamsto/tmux-og": "tmux-og"}\n')
+        self.write("flake.lock", json.dumps(cli_lock()) + "\n")
+        self.write("pins.json", '{"frozenInputs": [], "pins": []}\n')
+
+    def write(self, rel: str, text: str) -> None:
+        path = self.tmp / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def run_select(self, *argv: str):
+        outputs: list[tuple[str, str]] = []
+        printed: list[str] = []
+        with (
+            mock.patch.object(sys, "argv", ["update_bot.py", "select", *argv]),
+            mock.patch.object(
+                update_bot, "set_output", side_effect=lambda k, v: outputs.append((k, v))
+            ),
+            mock.patch("builtins.print", side_effect=lambda *a: printed.append(a[0])),
+        ):
+            update_bot.main()
+        return dict(outputs), printed
+
+    def test_narrow_selection(self):
+        outputs, printed = self.run_select(
+            "--event=repository_dispatch",
+            "--source=noamsto/tmux-og",
+            f"--rev={self.REV}",
+        )
+        self.assertEqual(
+            outputs,
+            {
+                "mode": "narrow",
+                "input": "tmux-og",
+                "source": "noamsto/tmux-og",
+                "rev": self.REV,
+            },
+        )
+        self.assertIn(
+            f"::notice::on-demand: noamsto/tmux-og announced {self.REV}; moving tmux-og",
+            printed,
+        )
+
+    def test_unknown_source_skips(self):
+        outputs, printed = self.run_select(
+            "--event=repository_dispatch",
+            "--source=noamsto/unknown",
+            f"--rev={self.REV}",
+        )
+        self.assertEqual(outputs["mode"], "skip")
+        self.assertEqual(outputs["input"], "")
+        self.assertTrue(any(p.startswith("::notice::") for p in printed))
+
+    def test_source_starting_with_dash_parses(self):
+        outputs, _ = self.run_select(
+            "--event=repository_dispatch",
+            "--source=-x",
+            f"--rev={self.REV}",
+        )
+        self.assertEqual(outputs["mode"], "skip")
+
+    def test_missing_upstreams_skips_dispatch_and_runs_schedule(self):
+        (self.tmp / ".github/upstreams.json").unlink()
+        outputs, _ = self.run_select(
+            "--event=repository_dispatch",
+            "--source=noamsto/tmux-og",
+            f"--rev={self.REV}",
+        )
+        self.assertEqual(outputs["mode"], "skip")
+        outputs, _ = self.run_select("--event=schedule", "--source=", "--rev=")
+        self.assertEqual(outputs["mode"], "full")
+        self.assertEqual(outputs["source"], "")
+
+class RecipientsCliTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, old_cwd)
+
+    def write(self, rel: str, text: str) -> None:
+        path = self.tmp / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+    def run_recipients(self, extra: str):
+        outputs: list[tuple[str, str]] = []
+        printed: list[str] = []
+        code = 0
+        with (
+            mock.patch.object(
+                sys, "argv", ["update_bot.py", "recipients", f"--extra={extra}"]
+            ),
+            mock.patch.object(
+                update_bot, "set_output", side_effect=lambda k, v: outputs.append((k, v))
+            ),
+            mock.patch("builtins.print", side_effect=lambda *a: printed.append(a[0])),
+        ):
+            try:
+                update_bot.main()
+            except SystemExit as e:
+                code = e.code if isinstance(e.code, int) else 1
+        return dict(outputs), printed, code
+
+    def test_file_and_extra_merged_deduped_and_compact(self):
+        self.write(
+            ".github/consumers.json", '["noamsto/consumer-a", "noamsto/tmux-og"]\n'
+        )
+        outputs, _, code = self.run_recipients(
+            '["noamsto/tmux-og", "noamsto/consumer-b"]'
+        )
+        merged = '["noamsto/consumer-a","noamsto/tmux-og","noamsto/consumer-b"]'
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs, {"consumers": merged})
+
+    def test_missing_file_uses_extra_only(self):
+        outputs, _, code = self.run_recipients('["noamsto/consumer-b"]')
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs, {"consumers": '["noamsto/consumer-b"]'})
+
+    def test_empty_extra_uses_file_only(self):
+        self.write(".github/consumers.json", '["noamsto/consumer-a"]\n')
+        outputs, _, code = self.run_recipients("")
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs, {"consumers": '["noamsto/consumer-a"]'})
+
+    def test_malformed_extra_fails_loudly(self):
+        self.write(".github/consumers.json", "[]\n")
+        outputs, printed, code = self.run_recipients("[")
+        self.assertNotEqual(code, 0)
+        self.assertEqual(outputs, {})
+        self.assertTrue(any("::error::recipients" in line for line in printed))
+
+    def test_extra_starting_with_dash_parses_and_fails_validation(self):
+        self.write(".github/consumers.json", "[]\n")
+        outputs, printed, code = self.run_recipients("-x")
+        self.assertNotEqual(code, 0)
+        self.assertEqual(outputs, {})
+        self.assertTrue(any("::error::recipients" in line for line in printed))
+
+
+class PrepareNarrowTest(unittest.TestCase):
+    BASE_REV = "a" * 40
+    NEW_REV = "b" * 40
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, old_cwd)
+        self.pins = {"frozenInputs": [], "pins": []}
+        self.lock_path = self.tmp / "flake.lock"
+        self.lock_path.write_text(json.dumps(cli_lock(self.BASE_REV)) + "\n")
+        (self.tmp / "pins.json").write_text(json.dumps(self.pins) + "\n")
+        self.out = self.tmp / "out"
+
+    def prepare(self, only: str, changed: bool):
+        base_bytes = self.lock_path.read_bytes()
+        calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append(list(cmd))
+            if changed and cmd[-3:] == ["flake", "update", "tmux-og"]:
+                self.lock_path.write_text(json.dumps(cli_lock(self.NEW_REV)) + "\n")
+            return subprocess.CompletedProcess(cmd, 0)
+
+        outputs: list[tuple[str, str]] = []
+        with (
+            mock.patch.object(update_bot.subprocess, "run", fake_run),
+            mock.patch.object(
+                update_bot, "set_output", side_effect=lambda k, v: outputs.append((k, v))
+            ),
+            mock.patch("builtins.print"),
+        ):
+            update_bot.cmd_prepare(Namespace(out=str(self.out), only=only))
+        return calls, dict(outputs), base_bytes
+
+    def test_only_writes_narrow_tree_and_restores_lock(self):
+        calls, outputs, base_bytes = self.prepare("tmux-og", changed=True)
+        self.assertEqual(outputs, {"narrow-changed": "true"})
+        self.assertEqual(sorted(p.name for p in self.out.iterdir()), ["narrow"])
+        narrow = self.out / "narrow"
+        self.assertEqual(
+            json.loads((narrow / "flake.lock").read_text())["nodes"]["tmux-og"]["locked"][
+                "rev"
+            ],
+            self.NEW_REV,
+        )
+        self.assertEqual((narrow / "pins.json").read_text(), botcore.dump_pins(self.pins))
+        self.assertEqual(self.lock_path.read_bytes(), base_bytes)
+        self.assertEqual([c[-3:] for c in calls], [["flake", "update", "tmux-og"]])
+
+    def test_unchanged_lock_reports_false(self):
+        calls, outputs, base_bytes = self.prepare("tmux-og", changed=False)
+        self.assertEqual(outputs, {"narrow-changed": "false"})
+        self.assertEqual(self.lock_path.read_bytes(), base_bytes)
+        self.assertEqual([c[-3:] for c in calls], [["flake", "update", "tmux-og"]])
+
+    def test_only_must_be_an_input_side_root_input(self):
+        with self.assertRaises(SystemExit):
+            self.prepare("nixpkgs", changed=False)
+
+
+class FinalizeCliTest(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = pathlib.Path(tmp.name)
+        old_cwd = os.getcwd()
+        os.chdir(self.tmp)
+        self.addCleanup(os.chdir, old_cwd)
+        self.summary = self.tmp / "summary.md"
+        env = mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(self.summary)})
+        env.start()
+        self.addCleanup(env.stop)
+
+    def finalize(self, mode="full", narrow="", input=""):
+        args = Namespace(
+            combined="", nixpkgs="", inputs="", mode=mode, narrow=narrow, input=input
+        )
+        outputs: list[tuple[str, str]] = []
+        printed: list[str] = []
+        code = 0
+        with (
+            mock.patch.object(
+                update_bot, "set_output", side_effect=lambda k, v: outputs.append((k, v))
+            ),
+            mock.patch("builtins.print", side_effect=lambda *a: printed.append(a[0])),
+        ):
+            try:
+                update_bot.cmd_finalize(args)
+            except SystemExit as exc:
+                code = exc.code
+        return dict(outputs), printed, code
+
+    def test_narrow_block_errors_and_summarizes(self):
+        outputs, printed, code = self.finalize(
+            mode="narrow", narrow="block", input="tmux-og"
+        )
+        self.assertNotEqual(code, 0)
+        self.assertEqual(outputs, {"land": "", "blocked": "false"})
+        sentence = (
+            "on-demand update of tmux-og did not land (block); "
+            "the next nightly retries it"
+        )
+        self.assertIn(f"::error::{sentence}", printed)
+        self.assertIn(sentence, self.summary.read_text())
+        self.assertEqual(
+            json.loads((self.tmp / "final.json").read_text()),
+            {"land": "", "blocked": False, "sides": ["narrow"], "interaction": False},
+        )
+
+    def test_narrow_not_run_errors_and_says_not_run(self):
+        outputs, printed, code = self.finalize(mode="narrow", narrow="", input="tmux-og")
+        self.assertNotEqual(code, 0)
+        self.assertEqual(outputs, {"land": "", "blocked": "false"})
+        self.assertTrue(any("(not run)" in p for p in printed))
+        self.assertTrue(any(p.startswith("::error::") for p in printed))
+        self.assertIn("(not run)", self.summary.read_text())
+        self.assertTrue((self.tmp / "final.json").is_file())
+
+    def test_narrow_land(self):
+        outputs, _, code = self.finalize(mode="narrow", narrow="land", input="tmux-og")
+        self.assertEqual(code, 0)
+        self.assertEqual(outputs, {"land": "narrow", "blocked": "false"})
+        self.assertFalse(self.summary.exists())
+
+    def test_full_mode_matches_botcore(self):
+        outputs, _, code = self.finalize(mode="full")
+        self.assertEqual(code, 0)
+        expected = botcore.finalize({"combined": "", "nixpkgs": "", "inputs": ""})
+        self.assertEqual(outputs["land"], expected["land"])
+        self.assertEqual(outputs["blocked"], "true" if expected["blocked"] else "false")
 
 
 if __name__ == "__main__":

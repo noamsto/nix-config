@@ -2,6 +2,7 @@ import copy
 import json
 import unittest
 from pathlib import Path
+from typing import ClassVar
 
 import botcore
 
@@ -836,6 +837,332 @@ class RenderIssueBodyTest(unittest.TestCase):
         self.assertIn("Landed instead: **nixpkgs**", body)
         self.assertIn('"frozenInputs": [..., "<input>"]', body)
         self.assertNotIn('"mode": "hold"', body)
+
+
+class SelectRunTest(unittest.TestCase):
+    REV = "a" * 40
+    UPSTREAMS: ClassVar[dict[str, str]] = {
+        "noamsto/tmux-og": "tmux-og",
+        "noamsto/np": "nixpkgs",
+        "noamsto/fb": "nixpkgs-fallback",
+        "noamsto/fz": "frozen-thing",
+        "noamsto/fo": "followed",
+        "noamsto/gone": "absent",
+    }
+    FROZEN: ClassVar[list[str]] = ["frozen-thing"]
+
+    def lock(self):
+        return {
+            "nodes": {
+                "root": {
+                    "inputs": {
+                        "nixpkgs": "nixpkgs",
+                        "nixpkgs-fallback": "nixpkgs-fallback",
+                        "tmux-og": "tmux-og",
+                        "frozen-thing": "frozen-thing",
+                        "followed": ["nixpkgs"],
+                    }
+                },
+                "nixpkgs": {
+                    "locked": {"rev": self.REV},
+                    "original": {
+                        "type": "github",
+                        "owner": "NixOS",
+                        "repo": "nixpkgs",
+                        "ref": "nixos-unstable",
+                    },
+                },
+                "nixpkgs-fallback": {"locked": {"rev": self.REV}},
+                "tmux-og": {"locked": {"rev": self.REV}},
+                "frozen-thing": {"locked": {"rev": self.REV}},
+            }
+        }
+
+    def select(self, event, source="", rev=""):
+        return botcore.select_run(
+            event=event,
+            source=source,
+            rev=rev,
+            upstreams=self.UPSTREAMS,
+            lock=self.lock(),
+            frozen=self.FROZEN,
+        )
+
+    def test_schedule_is_full(self):
+        self.assertEqual(self.select("schedule"), {"mode": "full"})
+
+    def test_workflow_dispatch_without_source_is_full(self):
+        self.assertEqual(
+            self.select("workflow_dispatch", rev=self.REV), {"mode": "full"}
+        )
+
+    def test_repository_dispatch_allowlisted_narrows(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/tmux-og", self.REV),
+            {
+                "mode": "narrow",
+                "input": "tmux-og",
+                "source": "noamsto/tmux-og",
+                "rev": self.REV,
+            },
+        )
+
+    def test_workflow_dispatch_with_source_narrows(self):
+        self.assertEqual(
+            self.select("workflow_dispatch", "noamsto/tmux-og", self.REV)["mode"],
+            "narrow",
+        )
+
+    def test_unknown_source_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/unknown", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_case_variant_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/TMUX-OG", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_malformed_rev_skips(self):
+        for rev in (
+            "",
+            "a" * 39,
+            "a" * 41,
+            "A" * 40,
+            self.REV + "\n",
+            "g" * 40,
+        ):
+            with self.subTest(rev=rev):
+                self.assertEqual(
+                    self.select("repository_dispatch", "noamsto/tmux-og", rev)[
+                        "mode"
+                    ],
+                    "skip",
+                )
+
+    def test_mapped_input_absent_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/gone", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_mapped_input_follows_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/fo", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_mapped_input_frozen_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/fz", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_mapped_input_always_excluded_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/fb", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_mapped_input_nixpkgs_side_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "noamsto/np", self.REV)["mode"],
+            "skip",
+        )
+
+    def test_empty_source_on_repository_dispatch_skips(self):
+        self.assertEqual(
+            self.select("repository_dispatch", "", self.REV)["mode"], "skip"
+        )
+
+    def test_unknown_event_skips(self):
+        self.assertEqual(self.select("push", "noamsto/tmux-og", self.REV)["mode"], "skip")
+
+    def test_skip_reason_has_no_raw_newline(self):
+        got = self.select(
+            "repository_dispatch", "x\n::set-output name=mode::narrow", self.REV
+        )
+        self.assertEqual(got["mode"], "skip")
+        self.assertNotIn("\n", got["why"])
+
+
+class ParseConfigTest(unittest.TestCase):
+    def test_upstreams_valid(self):
+        self.assertEqual(
+            botcore.parse_upstreams({"noamsto/tmux-og": "tmux-og"}),
+            {"noamsto/tmux-og": "tmux-og"},
+        )
+
+    def test_upstreams_invalid(self):
+        for doc in (
+            [],
+            "x",
+            None,
+            {"tmux-og": "tmux-og"},
+            {"other/x": "tmux-og"},
+            {"noamsto/": "tmux-og"},
+            {"noamsto/.": "tmux-og"},
+            {"noamsto/..": "tmux-og"},
+            {"noamsto/a/b": "tmux-og"},
+            {"noamsto/tmux-og": 1},
+            {"noamsto/tmux-og": ""},
+            {"noamsto/tmux-og": "two words"},
+        ):
+            with self.subTest(doc=doc), self.assertRaises(botcore.ConfigError):
+                botcore.parse_upstreams(doc)
+
+    def test_consumers_valid(self):
+        self.assertEqual(
+            botcore.parse_consumers(["noamsto/consumer-a", "noamsto/tmux-og"]),
+            ["noamsto/consumer-a", "noamsto/tmux-og"],
+        )
+        self.assertEqual(botcore.parse_consumers([]), [])
+
+    def test_consumers_invalid(self):
+        for doc in (
+            "x",
+            None,
+            {},
+            [1],
+            ["noamsto/consumer-a", "noamsto/consumer-a"],
+            ["noamsto/.."],
+        ):
+            with self.subTest(doc=doc), self.assertRaises(botcore.ConfigError):
+                botcore.parse_consumers(doc)
+
+
+class MergeConsumersTest(unittest.TestCase):
+    def test_file_only(self):
+        self.assertEqual(
+            botcore.merge_consumers(["noamsto/consumer-a"], ""),
+            ["noamsto/consumer-a"],
+        )
+
+    def test_variable_only(self):
+        self.assertEqual(
+            botcore.merge_consumers([], '["noamsto/consumer-b"]'),
+            ["noamsto/consumer-b"],
+        )
+
+    def test_both_with_overlap_deduped_file_first(self):
+        self.assertEqual(
+            botcore.merge_consumers(
+                ["noamsto/consumer-a", "noamsto/tmux-og"],
+                '["noamsto/tmux-og", "noamsto/consumer-b"]',
+            ),
+            ["noamsto/consumer-a", "noamsto/tmux-og", "noamsto/consumer-b"],
+        )
+
+    def test_empty_and_whitespace_variable(self):
+        for extra in ("", "  ", "\n"):
+            with self.subTest(extra=extra):
+                self.assertEqual(
+                    botcore.merge_consumers(["noamsto/consumer-a"], extra),
+                    ["noamsto/consumer-a"],
+                )
+
+    def test_malformed_json_variable(self):
+        with self.assertRaises(botcore.ConfigError) as ctx:
+            botcore.merge_consumers([], "[")
+        self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+
+    def test_non_list_variable(self):
+        with self.assertRaises(botcore.ConfigError) as ctx:
+            botcore.merge_consumers([], "{}")
+        self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+
+    def test_bad_variable_entries(self):
+        for extra in ('["other/x"]', '["noamsto/.."]', '["noamsto/a\\nb"]'):
+            with self.subTest(extra=extra), self.assertRaises(
+                botcore.ConfigError
+            ) as ctx:
+                botcore.merge_consumers([], extra)
+            self.assertIn("CASCADE_CONSUMERS", str(ctx.exception))
+
+    def test_invalid_file_still_raises(self):
+        with self.assertRaises(botcore.ConfigError):
+            botcore.merge_consumers("x", '["noamsto/consumer-b"]')
+
+
+class FinalizeNarrowTest(unittest.TestCase):
+    def test_land(self):
+        self.assertEqual(
+            botcore.finalize_narrow("land"),
+            {"land": "narrow", "blocked": False, "sides": [], "interaction": False},
+        )
+
+    def test_block(self):
+        self.assertEqual(
+            botcore.finalize_narrow("block"),
+            {
+                "land": "",
+                "blocked": False,
+                "sides": ["narrow"],
+                "interaction": False,
+            },
+        )
+
+    def test_not_run(self):
+        self.assertEqual(
+            botcore.finalize_narrow(""),
+            {"land": "", "blocked": False, "sides": [], "interaction": False},
+        )
+
+
+class DecideNarrowTest(unittest.TestCase):
+    def decide(self, reps, nixpkgs_moved=True):
+        base_pins = load("pins-base.json")
+        return botcore.decide(
+            attempt="narrow",
+            round_=1,
+            max_rounds=3,
+            reports=reps,
+            expected_jobs=JOBS,
+            base_pins=base_pins,
+            cur_pins=botcore.drop_auto_pins(base_pins),
+            nixpkgs_rev=NP_NEW,
+            nixpkgs_moved=nixpkgs_moved,
+            today=TODAY,
+            run_url=RUN,
+        )
+
+    def test_failing_narrow_blocks(self):
+        got = self.decide(reports({"check": [failure("btop")]}))
+        self.assertEqual(got["action"], "block")
+        self.assertEqual(got["why"], "the narrow attempt never repins")
+
+    def test_green_narrow_lands(self):
+        self.assertEqual(self.decide(reports())["action"], "land")
+
+
+class RenderPrBodyTriggerTest(unittest.TestCase):
+    REV = "a" * 40
+
+    def render(self, **kw):
+        return botcore.render_pr_body(
+            attempt="combined",
+            base_lock=load("lock-base.json"),
+            new_lock=load("lock-new.json"),
+            base_pins=load("pins-base.json"),
+            new_pins=load("pins-base.json"),
+            fallback_rev=NP_BASE,
+            fallback_age_days=14,
+            advanced=False,
+            today=TODAY,
+            run_url=RUN,
+            **kw,
+        )
+
+    def test_on_demand_heading_and_trigger_line(self):
+        body = self.render(trigger=("noamsto/tmux-og", self.REV))
+        self.assertTrue(body.startswith("## On-demand flake update"))
+        self.assertIn(f"Triggered by `noamsto/tmux-og` at `{self.REV[:12]}`", body)
+        self.assertIn("Landed attempt: **combined**", body)
+
+    def test_none_matches_no_kwarg(self):
+        self.assertEqual(self.render(trigger=None), self.render())
 
 
 if __name__ == "__main__":
