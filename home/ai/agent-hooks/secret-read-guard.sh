@@ -253,14 +253,25 @@ bs=$'\\'
 # which keeps them linear in practice.
 scan_window=128
 
+# Fold state for comment_at: whether an unclosed `${` is open at the text before
+# CC_POS. Each scanner resets both on entry.
+CC_POS=0 CC_OPEN=0
+
 # Succeeds, setting COMMENT_END to the index of the newline ending the comment
 # (or the string length), iff s[i] starts a shell comment: an unquoted `#` at a
 # word start. Deliberately not a comment: `#` after `)`, `<`, `>` (`$(x)#y`,
 # `<#`) or after a backslash-escaped char, and `#` inside an open `${` (`${#a}`,
 # `${x:- #$(cmd)}`), where substitutions still run. Callers pass only unquoted
 # positions and call it from `if` conditions (a failing return would trip set -e).
+#
+# Reads the caller's `s` (bash dynamic scope): passing a long string per call
+# costs more than the scan. Folds only the text since the previous call into
+# CC_POS/CC_OPEN, so callers must scan left to right; a call going backwards
+# restarts from 0. Each scanner resets the state on entry so it can never
+# describe another string. A `${` cannot straddle a fold boundary: s[i] is
+# always `#`, and the check on s[i-1] already ruled out `$`.
 comment_at() {
-  local s=$1 i=$2 pre rest
+  local i=$1 seg head j
   if ((i > 0)); then
     case ${s:i-1:1} in
     ' ' | $'\t' | $'\n' | ';' | '&' | '|' | '(') ;;
@@ -268,15 +279,30 @@ comment_at() {
     esac
     if ((i > 1)) && [[ ${s:i-2:1} == "$bs" ]]; then return 1; fi
   fi
-  pre=${s:0:i}
-  rest=${pre%\$\{*}
-  if [[ $rest != "$pre" ]]; then
-    rest=${pre:${#rest}}
-    if [[ $rest != *'}'* && $rest != *$'\n'* ]]; then return 1; fi
+  if ((i < CC_POS)); then CC_POS=0 CC_OPEN=0; fi
+  seg=${s:CC_POS:i-CC_POS}
+  head=${seg%\$\{*}
+  if [[ $head != "$seg" ]]; then
+    seg=${seg:${#head}}
+    if [[ $seg == *['}'$'\n']* ]]; then CC_OPEN=0; else CC_OPEN=1; fi
+  elif [[ $seg == *['}'$'\n']* ]]; then
+    CC_OPEN=0
   fi
-  rest=${s:i}
-  rest=${rest%%$'\n'*}
-  COMMENT_END=$((i + ${#rest}))
+  CC_POS=$i
+  if ((CC_OPEN)); then return 1; fi
+  j=$i
+  while
+    seg=${s:j:scan_window}
+    [[ -n $seg ]]
+  do
+    if [[ $seg == *$'\n'* ]]; then
+      seg=${seg%%$'\n'*}
+      COMMENT_END=$((j + ${#seg}))
+      return 0
+    fi
+    j=$((j + scan_window))
+  done
+  COMMENT_END=${#s}
 }
 
 # Replaces every character inside a '...' or "..." span (quotes included)
@@ -303,6 +329,7 @@ mask_quotes() {
   local s=$1 out='' i=0 c q seg pad span_re w
   local len=${#s}
   local run_re="^[^$bs#'\"]+"
+  CC_POS=0 CC_OPEN=0
   while ((i < len)); do
     w=${s:i:scan_window}
     c=${w:0:1}
@@ -310,7 +337,7 @@ mask_quotes() {
       out+=$c
       out+=${w:1:1}
       i=$((i + 2))
-    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+    elif [[ $c == '#' ]] && comment_at "$i"; then
       seg=${s:i:COMMENT_END-i}
       seg=${seg//\'/ }
       out+=${seg//\"/ }
@@ -613,7 +640,7 @@ find_paren_end() {
     else
       case $c in
       '#')
-        if comment_at "$s" "$i"; then i=$COMMENT_END; fi
+        if comment_at "$i"; then i=$COMMENT_END; fi
         ;;
       "'")
         st[sp]=S
@@ -651,6 +678,7 @@ scan_substs() {
   local s=$1 plain=$2 i=0 len c dq=0 body out n w
   local run_re="^[^$bs\`\$#'\"]+" sq_run_re="^[^']+"
   len=${#s}
+  CC_POS=0 CC_OPEN=0
   while ((i < len)); do
     w=${s:i:scan_window}
     c=${w:0:1}
@@ -684,7 +712,7 @@ scan_substs() {
     elif ((dq)); then
       if [[ $c == '"' ]]; then dq=0; fi
       i=$((i + 1))
-    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+    elif [[ $c == '#' ]] && comment_at "$i"; then
       i=$COMMENT_END
     elif [[ $c == "'" ]]; then
       i=$((i + 1))
@@ -768,13 +796,14 @@ dequote() {
   local run_re="^[^$bs#'\"\$]+" meta=$' \t\n\r\v\f;&|()<>'
   DEQUOTED=''
   DEQUOTED_MAP=()
+  CC_POS=0 CC_OPEN=0
   while ((i < len)); do
     w=${s:i:scan_window}
     c=${w:0:1}
     if [[ $c == "$bs" ]] && ((i + 1 < len)); then
       if [[ ${w:1:1} != $'\n' ]]; then dequote_char "${w:1:1}" $((i + 1)); fi
       i=$((i + 2))
-    elif [[ $c == '#' ]] && comment_at "$s" "$i"; then
+    elif [[ $c == '#' ]] && comment_at "$i"; then
       for ((k = i; k < COMMENT_END; k++)); do DEQUOTED_MAP+=("$k"); done
       DEQUOTED+=${s:i:COMMENT_END-i}
       i=$COMMENT_END
@@ -845,11 +874,15 @@ dequote_char() {
 # nested $(...) ~0.8s, a 12KB python heredoc ~1.4s, a 9KB unquoted heredoc
 # ~0.1s, and 3000 heredoc markers ~3.1s; realistic commands sit far below both
 # ceilings.
-# Bytes are only a proxy: comment-dense text (comment_at copies the string per
-# `#`), quote-dense text (`'a' "b" ...`, ~2.1s) and a `<<-` line of thousands of
-# tabs still cost more than their size and can pass 4s under the budget (#405,
-# #407).
+# Bytes are only a proxy: quote-dense text (`'a' "b" ...`, ~2.1s) and a `<<-`
+# line of thousands of tabs still cost more than their size and can pass 4s
+# under the budget (#407). Each `#` is charged comment_weight extra bytes because
+# every one still costs a few whole-string slices in the scanners. A `#` in a
+# heredoc body reaches comment_at only through find_paren_end inside a `$(...)`
+# there, and that body is charged at the substitution site. Counting `#` inside
+# quotes and URL fragments errs toward denying.
 scan_budget=16384
+comment_weight=8
 max_command_len=524288
 scanned=0
 
@@ -857,6 +890,12 @@ scanned=0
 over_scan_budget() {
   scanned=$((scanned + $1))
   ((scanned > scan_budget))
+}
+
+# Sets HASH_CHARGE to the extra bytes to charge for the `#`s in $1.
+hash_charge() {
+  local h=${1//[^#]/}
+  HASH_CHARGE=$((${#h} * comment_weight))
 }
 
 deny() {
@@ -1004,7 +1043,8 @@ Bash)
     strip_heredocs "$command"
     size=${#HD_VIEW}
     for body in "${HD_PLAIN[@]}"; do size=$((size + ${#body})); done
-    if over_scan_budget "$size"; then
+    hash_charge "$HD_VIEW"
+    if over_scan_budget $((size + HASH_CHARGE)); then
       unverified=1
     else
       masked=$(mask_quotes "$HD_VIEW")
@@ -1037,7 +1077,8 @@ Bash)
     if ((collect_flags[wi])); then
       collect_substs
       for body in "${SUBST_BODIES[@]}"; do
-        if ((${#worklist[@]} >= 300)) || over_scan_budget "${#body}"; then
+        hash_charge "$body"
+        if ((${#worklist[@]} >= 300)) || over_scan_budget $((${#body} + HASH_CHARGE)); then
           unverified=1
           break
         fi
@@ -1065,7 +1106,8 @@ Bash)
     arg_start=$((DEQUOTED_MAP[${#local_prefix} + ${#match} - 1] + 1))
     decode_word "$cur" "$arg_start"
     sub=$DECODED_WORD
-    if over_scan_budget $((${#sub} + ${#cur} - DECODE_WORD_END)); then
+    hash_charge "$sub${cur:DECODE_WORD_END}"
+    if over_scan_budget $((${#sub} + ${#cur} - DECODE_WORD_END + HASH_CHARGE)); then
       unverified=1
       continue
     fi

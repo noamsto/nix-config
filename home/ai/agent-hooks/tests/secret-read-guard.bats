@@ -649,6 +649,75 @@ assert_allow() {
   assert_deny
 }
 
+# Comment-dense input: every `#` costs the scanners whole-string work, so the
+# guard must decide quickly (deny "too long") instead of running into the hook's
+# time budget, where an overrun abstains and fails open.
+assert_reason_contains() {
+  jq -e --arg w "$1" '.hookSpecificOutput.permissionDecisionReason | contains($w)' \
+    <<<"$output" >/dev/null || {
+    echo "$output"
+    return 1
+  }
+}
+
+# Runs guard_bash on $1 and sets ELAPSED_US to the wall time in microseconds.
+guard_bash_timed() {
+  local t0=${EPOCHREALTIME//[.,]/}
+  guard_bash "$1"
+  ELAPSED_US=$((${EPOCHREALTIME//[.,]/} - t0))
+}
+
+@test "deny: env after 1500 comment-dense lines" {
+  local body
+  body=$(printf '#\n%.0s' $(seq 1 1500))
+  guard_bash "$body"$'\nenv'
+  assert_deny
+  assert_reason_contains 'bare env/printenv'
+}
+
+@test "allow: 1500 comment-dense lines then echo" {
+  local body
+  body=$(printf '#\n%.0s' $(seq 1 1500))
+  guard_bash "$body"$'\necho hi'
+  assert_allow
+}
+
+@test "deny: comment-dense '#\\n' x6000 decides within 2s" {
+  local body
+  body=$(printf '#\n%.0s' $(seq 1 6000))
+  guard_bash_timed "$body"$'\nenv'
+  ((ELAPSED_US < 2000000)) || {
+    echo "took ${ELAPSED_US}us"
+    return 1
+  }
+  assert_deny
+  assert_reason_contains 'too long'
+}
+
+@test "deny: comment-dense '#\\n' x8000 decides within 2s" {
+  local body
+  body=$(printf '#\n%.0s' $(seq 1 8000))
+  guard_bash_timed "$body"$'\nenv'
+  ((ELAPSED_US < 2000000)) || {
+    echo "took ${ELAPSED_US}us"
+    return 1
+  }
+  assert_deny
+  assert_reason_contains 'too long'
+}
+
+@test "deny: comment-dense 'a #\\n' x4000 decides within 2s" {
+  local body
+  body=$(printf 'a #\n%.0s' $(seq 1 4000))
+  guard_bash_timed "$body"$'\nenv'
+  ((ELAPSED_US < 2000000)) || {
+    echo "took ${ELAPSED_US}us"
+    return 1
+  }
+  assert_deny
+  assert_reason_contains 'too long'
+}
+
 @test "allow: bash -c 'echo hi'" {
   guard_bash $'bash -c \'echo hi\''
   assert_allow
