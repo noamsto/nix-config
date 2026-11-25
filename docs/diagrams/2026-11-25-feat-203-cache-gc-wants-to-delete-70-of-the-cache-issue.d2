@@ -1,0 +1,17 @@
+direction: right
+
+push: "Check on main (build.yml)\nnix_cache.py push"
+r2: "R2 bucket\nnarinfos + nars" {shape: cylinder}
+gc: "Cache GC (cache-gc.yml)\nnix_cache.py gc"
+mark: "mark(): walk roots\nlive = R2 nodes reachable"
+plan: "plan_gc(): live + 3d grace\n> 60% -> abort, exit 1"
+var: "NIX_CACHE_GC_DELETE\nunset: dry run only" {style.stroke: red}
+red: "main tip red" {style.stroke: red}
+
+push -> r2: "adds objects"
+gc -> mark
+mark -> plan
+r2 -> plan: "listing"
+var -> plan: "never deletes:\nstale objects accumulate" {style.stroke: red}
+plan -> red: "over limit (since 11-21)" {style.stroke: red}
+push -> mark: "race 11-24: root pushed\nafter mark => closure not live" {style.stroke-dash: 3; style.stroke: red}
