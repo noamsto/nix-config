@@ -37,6 +37,7 @@
         kitty-bidi = pkgs.callPackage ./kitty-bidi {};
         kitty-bidi-unwrapped = (pkgs.callPackage ./kitty-bidi {}).unwrapped;
         sherpa-dictate = pkgs.callPackage ./sherpa-dictate {};
+        voxtype-gemini = pkgs.callPackage ./voxtype-gemini {};
         inherit (pkgs) ytm-rs;
       }
       # AirConnect ships only static x86_64-linux binaries (meta.platforms), so

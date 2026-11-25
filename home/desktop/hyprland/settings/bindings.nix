@@ -1,8 +1,13 @@
 {
   lib,
+  osConfig,
   pkgs,
   ...
 }: let
+  geminiCfg = osConfig.nix-config.voxtype.gemini;
+  geminiActive = geminiCfg.enable && geminiCfg.keyFile != null;
+  # Offline Parakeet fallback for when Gemini Transcribe is unreachable
+  parakeetFallbackBind = lib.optionalString geminiActive ''hl.bind(mainMod .. " + ALT + SHIFT + A", hl.dsp.exec_cmd("voxtype record toggle --model parakeet-tdt-0.6b-v3"))'';
   terminal = "kitty";
   fileManager = "${lib.getExe pkgs.thunar}";
   browser = "${lib.getExe pkgs.firefox} -P personal";
@@ -197,6 +202,7 @@ in {
     -- === ACCESSIBILITY ===
     hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("normcap"))
     hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("voxtype record toggle"))
+    ${parakeetFallbackBind}
     hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("sherpa-dictate toggle"))
     -- xremap emits KEY_F13 when Right Alt is tapped rather than held, but xkb
     -- maps that keycode to the XF86Tools keysym, and Hyprland matches on
