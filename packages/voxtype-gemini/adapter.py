@@ -18,7 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com"
 DEFAULT_MODEL = "gemini-3.5-transcribe"
-MAX_BODY_BYTES = 64 * 1024 * 1024
+MAX_BODY_BYTES = 16 * 1024 * 1024
 
 
 @dataclass
@@ -48,21 +48,36 @@ def audio_part(audio, mime_type):
 
 def build_interaction(base_url, model, input_parts, generation_config=None):
     url = f"{base_url.rstrip('/')}/v1beta/interactions"
-    body = {"model": f"models/{model}", "input": input_parts}
+    body = {"model": f"models/{model}", "input": input_parts, "store": False}
     if generation_config:
         body["generation_config"] = generation_config
     return url, body
 
 
 def extract_text(response):
+    """Return the transcript, or None when the response has no model_output step."""
+    if not isinstance(response, dict):
+        return None
     texts = []
+    found = False
     for step in response.get("steps", []):
         if step.get("type") != "model_output":
             continue
+        found = True
         for content in step.get("content", []):
             if content.get("type") == "text":
                 texts.append(content.get("text", ""))
-    return "".join(texts).strip()
+    return "".join(texts).strip() if found else None
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Never follow a redirect: it would carry the API key header along."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+OPENER = urllib.request.build_opener(NoRedirect)
 
 
 def call_gemini(base_url, api_key, timeout_secs, model, input_parts, generation_config=None):
@@ -75,7 +90,7 @@ def call_gemini(base_url, api_key, timeout_secs, model, input_parts, generation_
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout_secs) as response:
+        with OPENER.open(request, timeout=timeout_secs) as response:
             payload = json.load(response)
     except urllib.error.HTTPError as err:
         raise UpstreamError(502, f"upstream returned HTTP {err.code}") from None
@@ -87,7 +102,10 @@ def call_gemini(base_url, api_key, timeout_secs, model, input_parts, generation_
         raise UpstreamError(502, "upstream unreachable") from None
     except (OSError, ValueError):
         raise UpstreamError(502, "upstream sent an unreadable response") from None
-    return extract_text(payload)
+    text = extract_text(payload)
+    if text is None:
+        raise UpstreamError(502, "upstream returned no transcript")
+    return text
 
 
 def transcribe(config, audio, mime_type):
@@ -123,6 +141,9 @@ def parse_multipart(content_type, body):
 
 def make_handler(config):
     class Handler(BaseHTTPRequestHandler):
+        # Bounds a stalled client (slowloris) on both header and body reads.
+        timeout = 30
+
         def log_message(self, format, *args):
             # Method, path and status only: no headers, no bodies.
             status = args[1] if len(args) > 1 else "?"
@@ -136,7 +157,18 @@ def make_handler(config):
             self.end_headers()
             self.wfile.write(data)
 
+        def local_request(self):
+            # A browser page can POST to loopback (CSRF) or reach it via a
+            # rebound DNS name; real clients send neither Origin nor a foreign Host.
+            port = self.server.server_address[1]
+            return "Origin" not in self.headers and self.headers.get("Host") in (
+                f"127.0.0.1:{port}",
+                f"localhost:{port}",
+            )
+
         def do_POST(self):
+            if not self.local_request():
+                return self.reply(403, {"error": "forbidden"})
             if self.path.split("?")[0] != "/v1/audio/transcriptions":
                 return self.reply(404, {"error": "not found"})
             try:

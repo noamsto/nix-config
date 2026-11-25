@@ -381,7 +381,7 @@
         vocabulary = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = ["nix" "tmux" "Hyprland" "voxtype" "dispatcher" "worktree" "sops" "pi" "Claude" "Codex" "GitHub" "PR"];
-          description = "Custom vocabulary sent with each request, so jargon is spelled right.";
+          description = "Custom vocabulary sent with each request, so jargon is spelled right. Only this list reaches Gemini: voxtype's own vocabulary and profile prompt are not forwarded.";
         };
         languageCodes = lib.mkOption {
           type = lib.types.listOf lib.types.str;

@@ -10,6 +10,8 @@
   gemini = osConfig.nix-config.voxtype.gemini;
   geminiActive = gemini.enable && gemini.keyFile != null;
   geminiAdapter = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.voxtype-gemini;
+  # Quote the whole assignment; systemd expands \, " and % (specifiers) inside it.
+  envAssign = name: value: "\"${name}=${lib.replaceStrings ["\\" "\"" "%"] ["\\\\" "\\\"" "%%"] value}\"";
 in {
   home.packages =
     lib.optional geminiActive geminiAdapter
@@ -39,12 +41,21 @@ in {
       Restart = "on-failure";
       RestartSec = 5;
       Environment = [
-        "VOXTYPE_GEMINI_KEY_FILE=${gemini.keyFile}"
-        "VOXTYPE_GEMINI_PORT=${toString gemini.port}"
-        "VOXTYPE_GEMINI_MODEL=${gemini.model}"
-        "\"VOXTYPE_GEMINI_VOCABULARY=${lib.concatStringsSep "\\n" gemini.vocabulary}\""
-        "VOXTYPE_GEMINI_LANGUAGE_CODES=${lib.concatStringsSep "," gemini.languageCodes}"
+        (envAssign "VOXTYPE_GEMINI_KEY_FILE" gemini.keyFile)
+        (envAssign "VOXTYPE_GEMINI_PORT" (toString gemini.port))
+        (envAssign "VOXTYPE_GEMINI_MODEL" gemini.model)
+        (envAssign "VOXTYPE_GEMINI_VOCABULARY" (lib.concatStringsSep "," gemini.vocabulary))
+        (envAssign "VOXTYPE_GEMINI_LANGUAGE_CODES" (lib.concatStringsSep "," gemini.languageCodes))
       ];
+      MemoryMax = "512M";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      # AF_UNIX: name resolution may go through systemd-resolved over a unix socket
+      RestrictAddressFamilies = ["AF_UNIX" "AF_INET" "AF_INET6"];
+      LockPersonality = true;
+      SystemCallArchitectures = "native";
     };
     Install.WantedBy = ["default.target"];
   };
@@ -84,7 +95,7 @@ in {
     settings = {
       engine =
         if geminiActive
-        then lib.mkForce "whisper"
+        then "whisper"
         else "parakeet";
       # Recording is driven by the Hyprland keybind, not voxtype's evdev listener
       hotkey.enabled = false;
@@ -94,7 +105,7 @@ in {
           model = "large-v3-turbo";
         }
         // lib.optionalAttrs geminiActive {
-          backend = "remote";
+          mode = "remote";
           remote_endpoint = "http://127.0.0.1:${toString gemini.port}";
           remote_model = gemini.model;
           remote_timeout_secs = 30;

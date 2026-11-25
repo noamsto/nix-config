@@ -17,11 +17,15 @@ FLASH_LITE_PROMPT = (
     "Keep each word in the language it was spoken in; do not translate. "
     "Output only the transcript."
 )
-UNAVAILABLE = "<unavailable>"
 
 
 def gemini_transcribe(key, clip):
-    config = adapter.Config(api_key=key, language_codes=["he-IL", "en-US"], timeout_secs=60)
+    config = adapter.Config(
+        api_key=key,
+        vocabulary=adapter.split_list(os.environ.get("VOXTYPE_GEMINI_VOCABULARY", "")),
+        language_codes=adapter.split_list(os.environ.get("VOXTYPE_GEMINI_LANGUAGE_CODES", "")),
+        timeout_secs=60,
+    )
     return adapter.transcribe(config, clip.read_bytes(), "audio/wav")
 
 
@@ -47,14 +51,16 @@ def parakeet(clip):
         timeout=120,
         check=True,
     )
-    return result.stdout.strip()
+    # stdout carries log lines, then a blank line, then the transcript.
+    _, separator, transcript = result.stdout.strip().rpartition("\n\n")
+    return transcript.strip() if separator else ""
 
 
 def attempt(fn, *args):
     try:
-        return fn(*args) or UNAVAILABLE
-    except (adapter.UpstreamError, OSError, subprocess.SubprocessError):
-        return UNAVAILABLE
+        return fn(*args)
+    except (adapter.UpstreamError, OSError, subprocess.SubprocessError) as err:
+        return f"<error: {err}>"
 
 
 def main():

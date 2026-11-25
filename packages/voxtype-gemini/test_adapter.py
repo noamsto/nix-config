@@ -19,7 +19,9 @@ AUDIO = b"RIFF\r\n\x00\xff\xfe--boundary\r\n\r\n\x80\x81\r\n" * 3 + b"\r\n"
 
 
 class FakeGemini:
-    def __init__(self, status=200, text="hello shalom", delay=0.0):
+    def __init__(self, status=200, text="hello shalom", delay=0.0, raw=None, location=None):
+        self.raw = raw
+        self.location = location
         self.status = status
         self.text = text
         self.delay = delay
@@ -36,7 +38,7 @@ class FakeGemini:
                 outer.requests.append((self.path, {k.lower(): v for k, v in self.headers.items()}, json.loads(body)))
                 if outer.delay:
                     outer.release.wait(outer.delay)
-                payload = json.dumps(
+                payload = outer.raw if outer.raw is not None else json.dumps(
                     {
                         "steps": [
                             {"type": "thought", "content": [{"type": "text", "text": "ignored"}]},
@@ -51,6 +53,8 @@ class FakeGemini:
                     }
                 ).encode()
                 self.send_response(outer.status)
+                if outer.location:
+                    self.send_header("Location", outer.location)
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
@@ -109,9 +113,11 @@ class AdapterTest(unittest.TestCase):
         self.server = server
         return f"http://127.0.0.1:{server.server_address[1]}/v1/audio/transcriptions"
 
-    def post(self, url, fields):
+    def post(self, url, fields, headers=None):
         body, ctype = multipart(fields)
-        request = urllib.request.Request(url, data=body, headers={"Content-Type": ctype}, method="POST")
+        request = urllib.request.Request(
+            url, data=body, headers={"Content-Type": ctype, **(headers or {})}, method="POST"
+        )
         try:
             with urllib.request.urlopen(request, timeout=10) as response:
                 return response.status, response.read()
@@ -134,6 +140,7 @@ class AdapterTest(unittest.TestCase):
         self.assertEqual(path, "/v1beta/interactions")
         self.assertEqual(headers["x-goog-api-key"], FAKE_KEY)
         self.assertEqual(sent["model"], "models/gemini-3.5-transcribe")
+        self.assertIs(sent["store"], False)
         (part,) = sent["input"]
         self.assertEqual(part["type"], "audio")
         self.assertEqual(part["mime_type"], "audio/wav")
@@ -170,6 +177,45 @@ class AdapterTest(unittest.TestCase):
             self.assertNotIn(FAKE_KEY.encode(), body)
         self.assertTrue(self.stderr.getvalue())
         self.assertNotIn(FAKE_KEY, self.stderr.getvalue())
+
+    def test_origin_header_is_forbidden(self):
+        fake = FakeGemini()
+        url = self.start(fake)
+        status, body = self.post(url, self.audio_fields(), {"Origin": "https://evil.example"})
+        self.assertEqual(status, 403)
+        self.assertEqual(json.loads(body), {"error": "forbidden"})
+        self.assertEqual(fake.requests, [])
+
+    def test_foreign_host_is_forbidden(self):
+        fake = FakeGemini()
+        url = self.start(fake)
+        status, _ = self.post(url, self.audio_fields(), {"Host": "rebind.example:80"})
+        self.assertEqual(status, 403)
+        self.assertEqual(fake.requests, [])
+
+    def test_localhost_host_is_allowed(self):
+        fake = FakeGemini()
+        url = self.start(fake)
+        port = self.server.server_address[1]
+        status, _ = self.post(url, self.audio_fields(), {"Host": f"localhost:{port}"})
+        self.assertEqual(status, 200)
+
+    def test_redirect_is_not_followed(self):
+        target = FakeGemini()
+        self.addCleanup(target.close)
+        fake = FakeGemini(status=302, location=f"{target.url}/v1beta/interactions")
+        url = self.start(fake)
+        status, _ = self.post(url, self.audio_fields())
+        self.assertEqual(status, 502)
+        self.assertEqual(target.requests, [])
+
+    def test_response_without_model_output_is_502(self):
+        for raw in (b'{"steps": []}', b"[]", b'{"steps": [{"type": "thought"}]}'):
+            fake = FakeGemini(raw=raw)
+            url = self.start(fake)
+            status, body = self.post(url, self.audio_fields())
+            self.assertEqual(status, 502)
+            self.assertEqual(json.loads(body), {"error": "upstream returned no transcript"})
 
     def test_binds_loopback_only(self):
         self.start(FakeGemini())
