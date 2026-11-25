@@ -19,6 +19,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com"
 DEFAULT_MODEL = "gemini-3.5-transcribe"
 MAX_BODY_BYTES = 16 * 1024 * 1024
+# Top of the range Gemini's docs say gives best results for custom_vocabulary.
+VOCABULARY_LIMIT = 100
 
 
 @dataclass
@@ -30,6 +32,11 @@ class Config:
     language_codes: list[str] = field(default_factory=list)
     timeout_secs: float = 20.0
     base_url: str = DEFAULT_BASE_URL
+    smart: bool = False
+
+    def __post_init__(self):
+        if len(self.vocabulary) > VOCABULARY_LIMIT:
+            raise ValueError(f"custom vocabulary has {len(self.vocabulary)} terms; the limit is {VOCABULARY_LIMIT}")
 
 
 class UpstreamError(Exception):
@@ -114,6 +121,8 @@ def transcribe(config, audio, mime_type):
         transcription["custom_vocabulary"] = config.vocabulary
     if config.language_codes:
         transcription["language_codes"] = config.language_codes
+    if config.smart:
+        transcription["mode"] = "smart"
     return call_gemini(
         config.base_url,
         config.api_key,
@@ -204,6 +213,10 @@ def split_list(value):
     return [item.strip() for item in value.replace(",", "\n").splitlines() if item.strip()]
 
 
+def smart_from_environ(environ):
+    return environ.get("VOXTYPE_GEMINI_SMART") == "1"
+
+
 def config_from_environ(environ):
     key_file = environ.get("VOXTYPE_GEMINI_KEY_FILE")
     if not key_file:
@@ -223,6 +236,7 @@ def config_from_environ(environ):
         language_codes=split_list(environ.get("VOXTYPE_GEMINI_LANGUAGE_CODES", "")),
         timeout_secs=float(environ.get("VOXTYPE_GEMINI_TIMEOUT_SECS", "20")),
         base_url=environ.get("VOXTYPE_GEMINI_BASE_URL", DEFAULT_BASE_URL),
+        smart=smart_from_environ(environ),
     )
 
 

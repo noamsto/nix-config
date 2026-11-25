@@ -28,12 +28,13 @@ in {
       inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
     ];
 
-  home.sessionVariables = lib.mkIf geminiActive {
-    VOXTYPE_GEMINI_KEY_FILE = gemini.keyFile;
-    # voxtype-stt-compare reads these so it measures what dictation sends.
-    VOXTYPE_GEMINI_VOCABULARY = lib.concatStringsSep "," gemini.vocabulary;
-    VOXTYPE_GEMINI_LANGUAGE_CODES = lib.concatStringsSep "," gemini.languageCodes;
-  };
+  home.sessionVariables = lib.mkIf geminiActive ({
+      VOXTYPE_GEMINI_KEY_FILE = gemini.keyFile;
+      # voxtype-stt-compare reads these so it measures what dictation sends.
+      VOXTYPE_GEMINI_VOCABULARY = lib.concatStringsSep "," gemini.vocabulary;
+      VOXTYPE_GEMINI_LANGUAGE_CODES = lib.concatStringsSep "," gemini.languageCodes;
+    }
+    // lib.optionalAttrs gemini.smartTranscription {VOXTYPE_GEMINI_SMART = "1";});
 
   # The key stays in keyFile: the adapter reads the path at startup, so it
   # never reaches the unit, the store or the process arguments.
@@ -43,13 +44,15 @@ in {
       ExecStart = "${geminiAdapter}/bin/voxtype-gemini-adapter";
       Restart = "on-failure";
       RestartSec = 5;
-      Environment = [
-        (envAssign "VOXTYPE_GEMINI_KEY_FILE" gemini.keyFile)
-        (envAssign "VOXTYPE_GEMINI_PORT" (toString gemini.port))
-        (envAssign "VOXTYPE_GEMINI_MODEL" gemini.model)
-        (envAssign "VOXTYPE_GEMINI_VOCABULARY" (lib.concatStringsSep "," gemini.vocabulary))
-        (envAssign "VOXTYPE_GEMINI_LANGUAGE_CODES" (lib.concatStringsSep "," gemini.languageCodes))
-      ];
+      Environment =
+        [
+          (envAssign "VOXTYPE_GEMINI_KEY_FILE" gemini.keyFile)
+          (envAssign "VOXTYPE_GEMINI_PORT" (toString gemini.port))
+          (envAssign "VOXTYPE_GEMINI_MODEL" gemini.model)
+          (envAssign "VOXTYPE_GEMINI_VOCABULARY" (lib.concatStringsSep "," gemini.vocabulary))
+          (envAssign "VOXTYPE_GEMINI_LANGUAGE_CODES" (lib.concatStringsSep "," gemini.languageCodes))
+        ]
+        ++ lib.optional gemini.smartTranscription (envAssign "VOXTYPE_GEMINI_SMART" "1");
       MemoryMax = "512M";
       NoNewPrivileges = true;
       PrivateTmp = true;

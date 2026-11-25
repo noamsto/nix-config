@@ -388,6 +388,11 @@
           default = ["he-IL" "en-US"];
           description = "Language codes the audio may contain.";
         };
+        smartTranscription = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether Gemini applies smart transcription, which removes disfluencies and applies spoken voice edits such as self-corrections. Off keeps the verbatim transcript.";
+        };
       };
       hardware.thinkpad.enable = lib.mkOption {
         type = lib.types.bool;
