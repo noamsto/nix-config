@@ -150,6 +150,45 @@ class AdapterTest(unittest.TestCase):
             {"custom_vocabulary": ["NixOS", "Hyprland", "voxtype"], "language_codes": ["he-IL", "en-US"]},
         )
 
+    def test_smart_transcription_sets_mode(self):
+        fake = FakeGemini()
+        url = self.start(fake, VOXTYPE_GEMINI_SMART="1")
+        self.post(url, self.audio_fields())
+        self.assertEqual(
+            fake.requests[0][2]["generation_config"]["transcription_config"],
+            {
+                "custom_vocabulary": ["NixOS", "Hyprland", "voxtype"],
+                "language_codes": ["he-IL", "en-US"],
+                "mode": "smart",
+            },
+        )
+
+    def test_request_never_asks_for_diarization_or_timestamps(self):
+        for smart in ("0", "1"):
+            fake = FakeGemini()
+            url = self.start(fake, VOXTYPE_GEMINI_SMART=smart)
+            self.post(url, self.audio_fields())
+            body = fake.requests[0][2]
+            self.assertNotIn("diarization_mode", json.dumps(body))
+            self.assertNotIn("timestamp_granularities", json.dumps(body))
+            self.assertLessEqual(len(body["generation_config"]["transcription_config"]["custom_vocabulary"]), 100)
+
+    def test_smart_flag_defaults_off(self):
+        self.assertFalse(adapter.config_from_environ({"VOXTYPE_GEMINI_KEY_FILE": self.key_file}).smart)
+
+    def test_vocabulary_limit(self):
+        def config(count):
+            return adapter.config_from_environ(
+                {
+                    "VOXTYPE_GEMINI_KEY_FILE": self.key_file,
+                    "VOXTYPE_GEMINI_VOCABULARY": ",".join(f"term{i}" for i in range(count)),
+                }
+            )
+
+        config(100)
+        with self.assertRaises(ValueError):
+            config(101)
+
     def test_upstream_error_is_502_quickly(self):
         fake = FakeGemini(status=500)
         url = self.start(fake)

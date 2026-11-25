@@ -1,4 +1,4 @@
-"""Compare Gemini Transcribe, Gemini flash-lite and local Parakeet on a clip directory.
+"""Compare Gemini Transcribe, Gemini flash-lite, gemini-3.8-flash and local Parakeet on a clip directory.
 
 Clips should be 16 kHz mono WAV, the format voxtype records.
 """
@@ -12,6 +12,7 @@ from pathlib import Path
 import adapter
 
 FLASH_LITE_MODEL = "gemini-3.5-flash-lite"
+FLASH_3_8_MODEL = "gemini-3.8-flash"
 FLASH_LITE_PROMPT = (
     "Transcribe this audio verbatim. The speech may mix Hebrew and English. "
     "Keep each word in the language it was spoken in; do not translate. "
@@ -25,21 +26,22 @@ def gemini_transcribe(key, clip):
         vocabulary=adapter.split_list(os.environ.get("VOXTYPE_GEMINI_VOCABULARY", "")),
         language_codes=adapter.split_list(os.environ.get("VOXTYPE_GEMINI_LANGUAGE_CODES", "")),
         timeout_secs=60,
+        smart=adapter.smart_from_environ(os.environ),
     )
     return adapter.transcribe(config, clip.read_bytes(), "audio/wav")
 
 
-def flash_lite(key, clip):
+def flash_verbatim(key, clip, model, thinking_level):
     return adapter.call_gemini(
         adapter.DEFAULT_BASE_URL,
         key,
         60,
-        FLASH_LITE_MODEL,
+        model,
         [
             {"type": "text", "text": FLASH_LITE_PROMPT},
             adapter.audio_part(clip.read_bytes(), "audio/wav"),
         ],
-        {"thinking_level": "minimal"},
+        {"thinking_level": thinking_level},
     )
 
 
@@ -79,8 +81,10 @@ def main():
         print(f"== {clip.name}")
         for label, fn, fn_args in (
             ("Gemini Transcribe", gemini_transcribe, (key, clip)),
-            (FLASH_LITE_MODEL, flash_lite, (key, clip)),
+            (FLASH_LITE_MODEL, flash_verbatim, (key, clip, FLASH_LITE_MODEL, "minimal")),
             ("Parakeet (local)", parakeet, (clip,)),
+            # gemini-3.8-flash cannot turn thinking off and rejects minimal, so low is its floor.
+            (FLASH_3_8_MODEL, flash_verbatim, (key, clip, FLASH_3_8_MODEL, "low")),
         ):
             print(f"  {label:<24} {attempt(fn, *fn_args)}")
 
