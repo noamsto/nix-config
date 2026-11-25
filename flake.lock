@@ -31,11 +31,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795611576,
-        "narHash": "sha256-SVs51zv0gzvIF0i6peZMIvQRJQ/SMwuVOESZ4LL44lc=",
+        "lastModified": 1795636380,
+        "narHash": "sha256-rRZGRNz2CkzkM481zKYnPEmQ/tAXE1zCcCD0SLrYhTU=",
         "owner": "noamsto",
         "repo": "aeye",
-        "rev": "dcf7e7aaa2962f7f6d651c8d679308e6c465a2c0",
+        "rev": "8ea33809898d095bc853358532866f9ee50b96a0",
         "type": "github"
       },
       "original": {
@@ -2798,11 +2798,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1795638345,
-        "narHash": "sha256-L3hDDHYPPwfhAhNMZHReS8ReLs9BwppLKPA0/RU7088=",
+        "lastModified": 1795639836,
+        "narHash": "sha256-HyjnheT3rOdA6mfe+5TMpMVPFiat9OpJxbpqXd7H1A0=",
         "owner": "noamsto",
         "repo": "tmux-og",
-        "rev": "071d36207b882592352c3759c4ea4cac8a344bed",
+        "rev": "c72b41bf8926c647002daf060740cf8f23af7e7c",
         "type": "github"
       },
       "original": {
