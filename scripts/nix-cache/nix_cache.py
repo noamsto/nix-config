@@ -748,6 +748,7 @@ class GcPlan:
     delete_nars: list
     retained_bytes: int
     abort_reason: str | None = None
+    over_limit: bool = False
 
 
 GC_HOUR = datetime.timedelta(hours=1)
@@ -830,8 +831,8 @@ def plan_gc(
     nars = {o.key: o for o in counted if o.key.startswith("nar/")}
     total_bytes = sum(o.size for o in counted)
 
-    def abort(reason):
-        return GcPlan([], [], total_bytes, reason)
+    def abort(reason, over_limit=False):
+        return GcPlan([], [], total_bytes, reason, over_limit)
 
     # Pushes only add objects and GC runs serialised, so a listed narinfo that
     # cannot be fetched is an anomaly; its nar would lose its only reference.
@@ -940,7 +941,8 @@ def plan_gc(
     if not force and deleted / len(counted) > GC_MAX_DELETE_FRACTION:
         return abort(
             f"would delete {deleted} of {len(counted)} objects "
-            f"(over {GC_MAX_DELETE_FRACTION:.0%}); pass --force to override"
+            f"(over {GC_MAX_DELETE_FRACTION:.0%}); pass --force to override",
+            over_limit=True,
         )
     return GcPlan(delete_narinfos, delete_nars, retained)
 
@@ -1039,9 +1041,11 @@ def fetch_narinfos(keys, base_url, fetch=fetch_text):
 
 
 def mark(jobs, lookup_fn):
-    """(live hashes, pin hashes, reference holes) over every job. Roots are
-    strict: an evaluation error or a null attribute raises EvalError."""
-    live, pin_hashes, holes = set(), set(), set()
+    """(live hashes, pin hashes, reference holes, absent roots) over every job.
+    An absent root is a root found on no cache; walk does not expand it, so its
+    closure is missing from the live set. Roots are strict: an evaluation error
+    or a null attribute raises EvalError."""
+    live, pin_hashes, holes, absent_roots = set(), set(), set(), set()
     for job in jobs.values():
         pins = eval_pins(job["pins"])
         roots = list(pins.values())
@@ -1057,7 +1061,9 @@ def mark(jobs, lookup_fn):
                 live.add(hash_)
             elif node.kind == "absent" and node.parents:
                 holes.add(hash_)
-    return live | pin_hashes, pin_hashes, holes
+            elif node.kind == "absent":
+                absent_roots.add(node.name)
+    return live | pin_hashes, pin_hashes, holes, absent_roots
 
 
 def cmd_gc(args):
@@ -1074,7 +1080,7 @@ def cmd_gc(args):
     caches = load_caches(REPO_ROOT)
 
     try:
-        live, pin_hashes, holes = mark(
+        live, pin_hashes, holes, absent_roots = mark(
             jobs, lambda hash_: lookup(hash_, caches, fetch=fetch_text)
         )
         rclone = rclone_binary()
@@ -1089,6 +1095,14 @@ def cmd_gc(args):
     except (FetchError, EvalError, RuntimeError) as err:
         print(f"::error::gc aborted: {err}")
         return fail(str(err))
+
+    print(f"live: {len(live)} R2 hashes")
+    absent_names = ", ".join(sorted(absent_roots))
+    if absent_roots:
+        print(
+            "::warning::root on no cache, its closure is not in the live set: "
+            f"{absent_names}"
+        )
 
     now = datetime.datetime.now(datetime.UTC)
     plan = plan_gc(
@@ -1108,8 +1122,14 @@ def cmd_gc(args):
         print(f"::error::gc aborted: {err}")
         return fail(str(err))
     if plan.abort_reason:
+        if plan.over_limit and args.warn_over_limit and not args.delete:
+            print(f"::warning::gc would abort: {plan.abort_reason}")
+            return 0
         print(f"::error::gc aborted: {plan.abort_reason}")
         print(f"listed {plan.retained_bytes} bytes")
+        return 1
+    if args.delete and absent_roots:
+        print(f"::error::gc aborted: root on no cache (push pending or failed): {absent_names}")
         return 1
 
     sizes = {o.key: o.size for o in objects}
@@ -1164,6 +1184,7 @@ def build_parser():
     p = sub.add_parser("gc", help="delete unreachable objects from R2")
     p.add_argument("--delete", action="store_true", help="delete; default is a dry run")
     p.add_argument("--force", action="store_true", help="allow deleting over 60%% of objects")
+    p.add_argument("--warn-over-limit", action="store_true", help="a dry run reports an over-limit plan as a warning, not a failure")
     p.add_argument("--grace-days", type=float, default=3)
     p.add_argument("--budget-bytes", type=int, default=7 * 10**9)
     p.add_argument("--r2-bucket", default=os.environ.get("R2_BUCKET"))

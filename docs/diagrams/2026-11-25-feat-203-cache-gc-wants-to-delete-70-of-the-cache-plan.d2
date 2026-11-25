@@ -1,0 +1,20 @@
+direction: right
+
+push: "Check on main (build.yml)\nnix_cache.py push"
+r2: "R2 bucket\nnarinfos + nars" {shape: cylinder}
+gc: "Cache GC (cache-gc.yml)\nnix_cache.py gc"
+mark: "mark(): walk roots\nnow also returns absent_roots" {style.stroke: green}
+plan: "plan_gc(): 60% cap unchanged\nGcPlan.over_limit set" {style.stroke: green}
+warn: "scheduled dry run:\n--warn-over-limit => ::warning::, exit 0" {style.stroke: green}
+logs: "log: live: N R2 hashes\n::warning:: root on no cache" {style.stroke: green}
+guard: "--delete + absent root:\nabort before any delete" {style.stroke: green}
+owner: "owner: run delete=true force=true\nonce live: line looks healthy" {style.stroke-dash: 3}
+
+push -> r2
+gc -> mark
+mark -> logs
+mark -> guard
+mark -> plan
+r2 -> plan: listing
+plan -> warn: "over limit, dry run"
+plan -> owner: "stale cache needs a real delete"

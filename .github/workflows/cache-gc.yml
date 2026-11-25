@@ -4,7 +4,8 @@ name: Cache GC
 # (scripts/nix-cache/nix_cache.py gc). A dry-run report unless deletion is asked
 # for: on the schedule by the repository variable NIX_CACHE_GC_DELETE = 'true', on
 # a dispatch by its delete input alone. Uses the R2 credentials only, never the
-# signing key.
+# signing key. A scheduled dry run reports an over-limit plan as a warning
+# instead of failing; delete runs and manual dispatches still fail on it.
 on:
   schedule:
     # 08:17 UTC: after the 02:17 update run has pushed its builds.
@@ -50,4 +51,4 @@ jobs:
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: python3 scripts/nix-cache/nix_cache.py gc ${{ (github.event_name == 'workflow_dispatch' && inputs.delete || github.event_name == 'schedule' && vars.NIX_CACHE_GC_DELETE == 'true') && '--delete' || '' }} ${{ inputs.force && '--force' || '' }}
+        run: python3 scripts/nix-cache/nix_cache.py gc ${{ (github.event_name == 'workflow_dispatch' && inputs.delete || github.event_name == 'schedule' && vars.NIX_CACHE_GC_DELETE == 'true') && '--delete' || '' }} ${{ inputs.force && '--force' || '' }} ${{ github.event_name == 'schedule' && '--warn-over-limit' || '' }}
