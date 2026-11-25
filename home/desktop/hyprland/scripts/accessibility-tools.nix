@@ -1,24 +1,58 @@
 {inputs, ...}: {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }: let
   palette = config.theme.palette.dark;
   voxtype = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.onnx;
+  gemini = osConfig.nix-config.voxtype.gemini;
+  geminiActive = gemini.enable && gemini.keyFile != null;
+  geminiAdapter = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.voxtype-gemini;
 in {
-  home.packages = [
-    # OCR tool - select area and copy text
-    # (English and Hebrew only: the default bundle ships every language, ~1 GB)
-    ((pkgs.normcap.override {
-        tesseract4 = pkgs.tesseract4.override {enableLanguages = ["eng" "heb"];};
-      }).overrideAttrs (old: {
-        # These tests OCR Chinese and Japanese, whose data is no longer built in.
-        disabledTests = old.disabledTests ++ ["test_remove_spaces_in_chi"];
-      }))
-    # Streaming dictation, complementing voxtype's push-to-talk
-    inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
-  ];
+  home.packages =
+    lib.optional geminiActive geminiAdapter
+    ++ [
+      # OCR tool - select area and copy text
+      # (English and Hebrew only: the default bundle ships every language, ~1 GB)
+      ((pkgs.normcap.override {
+          tesseract4 = pkgs.tesseract4.override {enableLanguages = ["eng" "heb"];};
+        }).overrideAttrs (old: {
+          # These tests OCR Chinese and Japanese, whose data is no longer built in.
+          disabledTests = old.disabledTests ++ ["test_remove_spaces_in_chi"];
+        }))
+      # Streaming dictation, complementing voxtype's push-to-talk
+      inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.sherpa-dictate
+    ];
+
+  home.sessionVariables = lib.mkIf geminiActive {
+    VOXTYPE_GEMINI_KEY_FILE = gemini.keyFile;
+  };
+
+  # The key stays in keyFile: the adapter reads the path at startup, so it
+  # never reaches the unit, the store or the process arguments.
+  systemd.user.services.voxtype-gemini-adapter = lib.mkIf geminiActive {
+    Unit.Description = "Gemini Transcribe adapter for voxtype";
+    Service = {
+      ExecStart = "${geminiAdapter}/bin/voxtype-gemini-adapter";
+      Restart = "on-failure";
+      RestartSec = 5;
+      Environment = [
+        "VOXTYPE_GEMINI_KEY_FILE=${gemini.keyFile}"
+        "VOXTYPE_GEMINI_PORT=${toString gemini.port}"
+        "VOXTYPE_GEMINI_MODEL=${gemini.model}"
+        "\"VOXTYPE_GEMINI_VOCABULARY=${lib.concatStringsSep "\\n" gemini.vocabulary}\""
+        "VOXTYPE_GEMINI_LANGUAGE_CODES=${lib.concatStringsSep "," gemini.languageCodes}"
+      ];
+    };
+    Install.WantedBy = ["default.target"];
+  };
+
+  systemd.user.services.voxtype.Unit = lib.mkIf geminiActive {
+    After = ["voxtype-gemini-adapter.service"];
+    Wants = ["voxtype-gemini-adapter.service"];
+  };
 
   services.voxtype = {
     enable = true;
@@ -48,11 +82,24 @@ in {
     };
 
     settings = {
-      engine = "parakeet";
+      engine =
+        if geminiActive
+        then lib.mkForce "whisper"
+        else "parakeet";
       # Recording is driven by the Hyprland keybind, not voxtype's evdev listener
       hotkey.enabled = false;
       parakeet.model = "parakeet-tdt-0.6b-v3";
-      whisper.model = "large-v3-turbo";
+      whisper =
+        {
+          model = "large-v3-turbo";
+        }
+        // lib.optionalAttrs geminiActive {
+          backend = "remote";
+          remote_endpoint = "http://127.0.0.1:${toString gemini.port}";
+          remote_model = gemini.model;
+          remote_timeout_secs = 30;
+          language = "auto";
+        };
 
       osd = {
         frontend = "quickshell";

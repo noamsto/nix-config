@@ -357,6 +357,38 @@
           description = "Directory of images linked as ~/Pictures/Wallpapers for the Noctalia shuffle; null links nothing.";
         };
       };
+      voxtype.gemini = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether voxtype transcribes through Gemini Transcribe (via a local adapter) instead of the local Parakeet model. Takes effect only once keyFile is set too.";
+        };
+        keyFile = lib.mkOption {
+          type = lib.types.nullOr (lib.types.strMatching "/.*");
+          default = null;
+          description = "Absolute path to a file holding only the Gemini API key, readable by the user. A string, not a path, so the key never lands in the Nix store. Null leaves Gemini transcription inactive.";
+        };
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 8923;
+          description = "Loopback port the adapter listens on.";
+        };
+        model = lib.mkOption {
+          type = lib.types.str;
+          default = "gemini-3.5-transcribe";
+          description = "Gemini transcription model the adapter calls.";
+        };
+        vocabulary = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = ["nix" "tmux" "Hyprland" "voxtype" "dispatcher" "worktree" "sops" "pi" "Claude" "Codex" "GitHub" "PR"];
+          description = "Custom vocabulary sent with each request, so jargon is spelled right.";
+        };
+        languageCodes = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = ["he-IL" "en-US"];
+          description = "Language codes the audio may contain.";
+        };
+      };
       hardware.thinkpad.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
