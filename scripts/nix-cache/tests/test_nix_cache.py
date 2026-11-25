@@ -427,6 +427,7 @@ class PlanGcTest(unittest.TestCase):
         plan = self.plan(self.pair("a") + self.pair("b"), live={H["b"]},
                          holes={H["c"]})
         self.assertIn("reference", plan.abort_reason)
+        self.assertFalse(plan.over_limit)
         self.assertEqual((plan.delete_narinfos, plan.delete_nars), ([], []))
 
     def test_abort_over_sixty_percent_without_force(self):
@@ -436,6 +437,7 @@ class PlanGcTest(unittest.TestCase):
         objs = self.pair("a") + self.pair("b") + self.pair("c") + self.pair("d")
         plan = self.plan(objs, live={H["d"]})
         self.assertIn("--force", plan.abort_reason)
+        self.assertTrue(plan.over_limit)
         self.assertEqual((plan.delete_narinfos, plan.delete_nars), ([], []))
 
     def test_force_overrides_sixty_percent_cap(self):
@@ -863,6 +865,44 @@ class WalkTest(unittest.TestCase):
             nc.walk([f"/nix/store/{base('a')}"], lookup_fn)
 
 
+class MarkTest(unittest.TestCase):
+    def run_mark(self, roots, r2, absent_refs=()):
+        """roots: store paths; r2: chars present in R2, each referencing
+        `absent_refs`; every other hash is absent."""
+
+        def lookup_fn(hash_):
+            for char in r2:
+                if hash_ == H[char]:
+                    text = narinfo_text(char, [base(c) for c in absent_refs])
+                    return "r2", nc.parse_narinfo(text)
+            return "absent", None
+
+        paths = {f"r{i}": f"/nix/store/{base(c)}" for i, c in enumerate(roots)}
+        jobs = {"sys": {"roots": ["sel"], "pins": ["pins"]}}
+        with (
+            mock.patch.object(nc, "eval_pins", lambda selector: {}),
+            mock.patch.object(nc, "eval_selector", lambda selector: paths),
+        ):
+            return nc.mark(jobs, lookup_fn)
+
+    def test_root_in_r2_is_live(self):
+        live, _, holes, absent_roots = self.run_mark("a", "a")
+        self.assertEqual(live, {H["a"]})
+        self.assertEqual((holes, absent_roots), (set(), set()))
+
+    def test_absent_root_is_reported_and_not_live(self):
+        live, _, holes, absent_roots = self.run_mark("a", "")
+        self.assertEqual(live, set())
+        self.assertEqual(absent_roots, {base("a")})
+        self.assertEqual(holes, set())
+
+    def test_absent_reference_of_an_r2_root_is_a_hole(self):
+        live, _, holes, absent_roots = self.run_mark("a", "a", absent_refs="b")
+        self.assertEqual(live, {H["a"]})
+        self.assertEqual(holes, {H["b"]})
+        self.assertEqual(absent_roots, set())
+
+
 class RealiseTest(unittest.TestCase):
     def run_realise(self, pins, build_pins=True, failing=()):
         calls = []
@@ -1036,7 +1076,7 @@ class CmdPushTest(unittest.TestCase):
 
 
 class GcCommandTest(unittest.TestCase):
-    def args(self, delete=True):
+    def args(self, delete=True, warn_over_limit=False):
         return argparse.Namespace(
             secrets={"R2_ACCESS_KEY_ID": "id", "R2_SECRET_ACCESS_KEY": "secret"},
             r2_bucket="bucket",
@@ -1045,10 +1085,12 @@ class GcCommandTest(unittest.TestCase):
             grace_days=3,
             budget_bytes=BIG,
             delete=delete,
+            warn_over_limit=warn_over_limit,
         )
 
     def run_gc(self, listings, fetches, holes=(), live=(), state=None,
-               write_error=None, read_error=None, delete=True):
+               write_error=None, read_error=None, delete=True,
+               warn_over_limit=False, absent=()):
         """Returns (code, stdout, deletes); `self.events` is the ordered log of
         state writes and deletes, `self.writes` the states written."""
         deletes = []
@@ -1075,7 +1117,7 @@ class GcCommandTest(unittest.TestCase):
         out, err = io.StringIO(), io.StringIO()
         patches = {
             "load_caches": lambda root: CACHES,
-            "mark": lambda jobs, fn: (set(live), set(), set(holes)),
+            "mark": lambda jobs, fn: (set(live), set(), set(holes), set(absent)),
             "rclone_binary": lambda: "/fake/rclone",
             "r2_env": lambda endpoint, creds: {},
             "list_objects": lambda remote, rclone, env: next(list_calls),
@@ -1090,7 +1132,7 @@ class GcCommandTest(unittest.TestCase):
                 stack.enter_context(mock.patch.object(nc, name, value))
             stack.enter_context(contextlib.redirect_stdout(out))
             stack.enter_context(contextlib.redirect_stderr(err))
-            code = nc.cmd_gc(self.args(delete))
+            code = nc.cmd_gc(self.args(delete, warn_over_limit))
         return code, out.getvalue(), deletes
 
     def old_pair_listing(self):
@@ -1103,6 +1145,75 @@ class GcCommandTest(unittest.TestCase):
 
     def texts(self):
         return {f"{H[c]}.narinfo": narinfo_text(c) for c in "ab"}
+
+    def over_limit_listing(self):
+        return [
+            obj(key)
+            for c in "abcd"
+            for key in (f"{H[c]}.narinfo", f"nar/{H[c]}.nar.zst")
+        ]
+
+    def over_limit_texts(self):
+        return {f"{H[c]}.narinfo": narinfo_text(c) for c in "abcd"}
+
+    def run_over_limit(self, **kwargs):
+        return self.run_gc(
+            [self.over_limit_listing()], [self.over_limit_texts()], live={H["d"]},
+            **kwargs,
+        )
+
+    def test_warn_over_limit_dry_run_warns_and_exits_zero(self):
+        code, out, deletes = self.run_over_limit(warn_over_limit=True, delete=False)
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::gc would abort: would delete", out)
+        self.assertNotIn("::error::", out)
+        self.assertEqual(len(self.writes), 1)
+        self.assertEqual(deletes, [])
+
+    def test_warn_over_limit_never_softens_a_deleting_run(self):
+        code, out, deletes = self.run_over_limit(warn_over_limit=True, delete=True)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: would delete", out)
+        self.assertEqual(deletes, [])
+
+    def test_over_limit_dry_run_without_the_flag_fails(self):
+        code, out, _ = self.run_over_limit(delete=False)
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: would delete", out)
+
+    def test_warn_over_limit_does_not_soften_other_aborts(self):
+        code, out, _ = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], holes={H["c"]}, live={H["b"]},
+            warn_over_limit=True, delete=False,
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: reference found on no cache", out)
+
+    def test_live_count_is_printed(self):
+        code, out, _ = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], live={H["b"]}, delete=False
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("live: 1 R2 hashes", out)
+
+    def test_absent_root_warns_in_a_dry_run(self):
+        code, out, _ = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], live={H["b"]}, delete=False,
+            absent={base("c")},
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::root on no cache", out)
+        self.assertIn(base("c"), out)
+
+    def test_absent_root_aborts_a_deleting_run_after_the_state_write(self):
+        code, out, deletes = self.run_gc(
+            [self.old_pair_listing()], [self.texts()], live={H["b"]},
+            absent={base("c")},
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("::error::gc aborted: root on no cache", out)
+        self.assertEqual(deletes, [])
+        self.assertEqual(len(self.writes), 1)
 
     def test_every_abort_exits_one_with_error_and_listed_bytes(self):
         code, out, deletes = self.run_gc(
