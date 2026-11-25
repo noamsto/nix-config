@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       attempt:
-        description: combined, nixpkgs or inputs
+        description: combined, nixpkgs, inputs or narrow
         type: string
         required: true
       tree-artifact:

@@ -48,10 +48,15 @@
         # Direct bats regression suite for the pi openrouter auth.json upsert script.
         pi-openrouter-auth = import ../home/ai/pi/openrouter-auth-check.nix {inherit pkgs;};
 
-        # Unit tests of the flake-update bot's pin selection and failure-to-attr logic.
+        # Unit tests of the flake-update bot's pin selection and failure-to-attr
+        # logic; the two cascade config files and flake.lock are copied in for the
+        # config test.
         update-bot = pkgs.runCommand "update-bot-tests" {nativeBuildInputs = [pkgs.python3];} ''
           cp -r ${../scripts/update-bot} src
           chmod -R u+w src
+          cp ${../.github/upstreams.json} src/upstreams.json
+          cp ${../.github/consumers.json} src/consumers.json
+          cp ${../flake.lock} src/flake.lock
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover src
           touch $out
         '';

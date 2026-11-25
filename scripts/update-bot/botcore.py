@@ -10,6 +10,74 @@ from collections.abc import Iterable
 
 ALWAYS_EXCLUDED = ("nixpkgs-fallback", "nixpkgs-bambu")
 
+# `fullmatch` throughout: these guard untrusted payload/config text against
+# workflow-command injection, so a trailing newline or a partial match is fatal.
+UPSTREAM_RE = re.compile(r"noamsto/[A-Za-z0-9_-][A-Za-z0-9._-]*")
+INPUT_NAME_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_-]*")
+REV40_RE = re.compile(r"[0-9a-f]{40}")
+
+
+class ConfigError(ValueError):
+    """A trusted config file (.github/upstreams.json, consumers.json) is malformed."""
+
+
+def parse_upstreams(doc: object) -> dict[str, str]:
+    """Validate a `.github/upstreams.json` document: source repo -> root input."""
+    if not isinstance(doc, dict):
+        raise ConfigError("upstreams must be a JSON object")
+    out = {}
+    for key, value in doc.items():
+        if not isinstance(key, str) or not UPSTREAM_RE.fullmatch(key):
+            raise ConfigError(f"bad upstream source {json.dumps(str(key)[:80])}")
+        if not isinstance(value, str) or not INPUT_NAME_RE.fullmatch(value):
+            raise ConfigError(f"bad upstream input {json.dumps(str(value)[:80])} for {json.dumps(key[:80])}")
+        out[key] = value
+    return out
+
+
+def parse_consumers(doc: object) -> list[str]:
+    """Validate a `.github/consumers.json` document: unique upstream repos."""
+    if not isinstance(doc, list):
+        raise ConfigError("consumers must be a JSON array")
+    out = []
+    for entry in doc:
+        if not isinstance(entry, str) or not UPSTREAM_RE.fullmatch(entry):
+            raise ConfigError(f"bad consumer {json.dumps(str(entry)[:80])}")
+        if entry in out:
+            raise ConfigError(f"duplicate consumer {json.dumps(entry[:80])}")
+        out.append(entry)
+    return out
+
+
+def merge_consumers(file_doc: object, secret: str) -> list[str]:
+    """Recipients from `.github/consumers.json` plus the CASCADE_CONSUMERS secret.
+
+    The secret is a JSON array of noamsto/<repo>. An entry already in the file
+    is dropped (the file's come first); a duplicate within the secret is an
+    error. An empty or whitespace secret adds nothing. A malformed secret is reported by entry index only,
+    so no secret content can reach a public log.
+    """
+    out = parse_consumers(file_doc)
+    if not secret.strip():
+        return out
+    try:
+        doc = json.loads(secret)
+    except json.JSONDecodeError:
+        raise ConfigError("CASCADE_CONSUMERS is not valid JSON") from None
+    if not isinstance(doc, list):
+        raise ConfigError("CASCADE_CONSUMERS must be a JSON array")
+    entries: list[str] = []
+    for i, entry in enumerate(doc):
+        if not isinstance(entry, str) or not UPSTREAM_RE.fullmatch(entry):
+            raise ConfigError(
+                f"CASCADE_CONSUMERS entry #{i} is not a noamsto/<repo> string"
+            )
+        if entry in entries:
+            raise ConfigError(f"CASCADE_CONSUMERS entry #{i} is a duplicate")
+        entries.append(entry)
+    return out + [entry for entry in entries if entry not in out]
+
+
 # Library, toolkit, kernel and toolchain families: pinning one of these to an
 # older nixpkgs would mix ABIs, so they are never treated as leaves.
 DENYLIST = (
@@ -115,6 +183,46 @@ def input_sets(lock: dict, frozen: list[str]) -> tuple[list[str], list[str]]:
         )
         (nixpkgs_side if is_nixpkgs else inputs_side).append(name)
     return nixpkgs_side, inputs_side
+
+
+def select_run(
+    *, event: str, source: str, rev: str, upstreams: dict[str, str], lock: dict, frozen: list[str]
+) -> dict:
+    """Pick the run mode from the trigger and validate a narrow request.
+
+    Schedule and a source-less workflow_dispatch are the full nightly; a
+    repository_dispatch (or a dispatch carrying `source`) is a narrow request
+    for one allowlisted input. Any `why` that quotes payload text is
+    json.dumps-ed so a crafted value cannot inject a workflow command.
+    """
+    if event == "schedule" or (event == "workflow_dispatch" and source == ""):
+        return {"mode": "full"}
+    if event not in ("repository_dispatch", "workflow_dispatch"):
+        return {"mode": "skip", "why": f"unsupported event {json.dumps(str(event)[:80])}"}
+    if not REV40_RE.fullmatch(rev):
+        return {"mode": "skip", "why": f"malformed rev {json.dumps(str(rev)[:80])}"}
+    if source not in upstreams:
+        return {
+            "mode": "skip",
+            "why": f"source {json.dumps(source[:80])} is not in .github/upstreams.json",
+        }
+    name = upstreams[source]
+    if _root_node(lock, name) is None:
+        return {
+            "mode": "skip",
+            "why": f"input {json.dumps(name[:80])} is not a locked root input",
+        }
+    if name in ALWAYS_EXCLUDED or name in frozen:
+        return {
+            "mode": "skip",
+            "why": f"input {json.dumps(name[:80])} is excluded or frozen",
+        }
+    if name in input_sets(lock, [])[0]:
+        return {
+            "mode": "skip",
+            "why": f"input {json.dumps(name[:80])} is on the nixpkgs side",
+        }
+    return {"mode": "narrow", "input": name, "source": source, "rev": rev}
 
 
 def locked_rev(lock: dict, name: str) -> str | None:
@@ -406,6 +514,16 @@ def finalize(results: dict[str, str]) -> dict:
     }
 
 
+def finalize_narrow(result: str) -> dict:
+    """finalize for a narrow run, which never reports to the update-blocked issue."""
+    return {
+        "land": "narrow" if result == "land" else "",
+        "blocked": False,
+        "sides": ["narrow"] if result == "block" else [],
+        "interaction": False,
+    }
+
+
 def main_moved(run_sha: str, main_sha: str, rerun: bool) -> dict:
     """Publish only onto the commit this run built against.
 
@@ -476,8 +594,12 @@ def render_pr_body(
     advanced: bool,
     today: str,
     run_url: str,
+    trigger: tuple[str, str] | None = None,
 ) -> str:
-    out = ["## Nightly flake update", "", f"Landed attempt: **{attempt}**"]
+    heading = "## On-demand flake update" if trigger else "## Nightly flake update"
+    out = [heading, "", f"Landed attempt: **{attempt}**"]
+    if trigger:
+        out.append(f"Triggered by `{trigger[0]}` at `{trigger[1][:12]}`")
     if run_url:
         out.append(f"Run: {run_url}")
 
