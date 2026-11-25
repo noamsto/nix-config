@@ -1,0 +1,13 @@
+direction: right
+toggle: theme-toggle.sh\n_run_updates_parallel
+kitty: update_kitty\nkitty @ set-colors
+tmux: update_tmux\nreloads @thm_bg (~1s)
+tmuxd: tmux server\npane OSC 11 reply = @thm_bg
+pi: pi (pane, mode 2031)
+toggle -> kitty: parallel
+toggle -> tmux: parallel
+kitty -> tmuxd: "CSI ?997 (immediately)"
+tmuxd -> pi: "CSI ?997 forwarded"
+pi -> tmuxd: "OSC 11 query"
+tmuxd -> pi: "stale colour" {style.stroke: red}
+tmux -> tmuxd: "palette fresh too late" {style.stroke-dash: 3}

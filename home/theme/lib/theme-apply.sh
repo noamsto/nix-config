@@ -758,3 +758,12 @@ update_tmux() {
     return 1
   fi
 }
+
+# kitty's colour change makes it report CSI ?997 to tmux, which forwards it to
+# panes subscribed to mode 2031; those apps then re-query OSC 11, and tmux
+# answers from @thm_bg. Run kitty only after tmux has reloaded its palette, or
+# the apps read the stale colour and keep their old theme.
+update_tmux_kitty() {
+  update_tmux "$1" || true
+  update_kitty "$1"
+}
