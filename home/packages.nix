@@ -46,6 +46,28 @@
       '';
     };
 
+  # Telegram takes system dark mode from Qt's colorScheme, which the
+  # kvantum/qt5ct platform themes don't report. The portal platform theme tracks
+  # org.freedesktop.appearance, so the toggle reaches it. The D-Bus service file
+  # is rewritten because activation would otherwise bypass the wrapper. Trade-off:
+  # platform theme integration (fonts, icons, dialogs) comes from the portal for
+  # Telegram only. Enable Settings > Chat Settings > Auto-night mode once; it is
+  # stored in binary tdata.
+  telegram-desktop = pkgs.symlinkJoin {
+    name = "telegram-desktop-portal-theme";
+    paths = [pkgs.telegram-desktop];
+    buildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/Telegram --set QT_QPA_PLATFORMTHEME xdgdesktopportal
+      rm $out/share/dbus-1/services/org.telegram.desktop.service
+      cat > $out/share/dbus-1/services/org.telegram.desktop.service <<EOF
+      [D-BUS Service]
+      Name=org.telegram.desktop
+      Exec=$out/bin/Telegram
+      EOF
+    '';
+  };
+
   desktop-packages = with pkgs; [
     # Advanced touchpad gesture support
     libinput-gestures
