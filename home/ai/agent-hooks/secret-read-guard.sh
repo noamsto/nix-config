@@ -267,8 +267,9 @@ CC_POS=0 CC_OPEN=0
 # Reads the caller's `s` (bash dynamic scope): passing a long string per call
 # costs more than the scan. Folds only the text since the previous call into
 # CC_POS/CC_OPEN, so callers must scan left to right; a call going backwards
-# restarts from 0. Each scanner resets the state on entry so it can never
-# describe another string. A `${` cannot straddle a fold boundary: s[i] is
+# restarts from 0. mask_quotes, scan_substs and dequote reset the state on
+# entry so it can never describe another string; find_paren_end does not, and
+# must only be called from scan_substs on the same `s`. A `${` cannot straddle a fold boundary: s[i] is
 # always `#`, and the check on s[i-1] already ruled out `$`.
 comment_at() {
   local i=$1 seg head j
@@ -880,7 +881,8 @@ dequote_char() {
 # every one still costs a few whole-string slices in the scanners. A `#` in a
 # heredoc body reaches comment_at only through find_paren_end inside a `$(...)`
 # there, and that body is charged at the substitution site. Counting `#` inside
-# quotes and URL fragments errs toward denying.
+# quotes and URL fragments errs toward denying. The `#`s are counted only after
+# the byte check passes, since the strip is quadratic in the non-`#` characters.
 scan_budget=16384
 comment_weight=8
 max_command_len=524288
@@ -1043,8 +1045,10 @@ Bash)
     strip_heredocs "$command"
     size=${#HD_VIEW}
     for body in "${HD_PLAIN[@]}"; do size=$((size + ${#body})); done
-    hash_charge "$HD_VIEW"
-    if over_scan_budget $((size + HASH_CHARGE)); then
+    if over_scan_budget "$size" || {
+      hash_charge "$HD_VIEW"
+      over_scan_budget "$HASH_CHARGE"
+    }; then
       unverified=1
     else
       masked=$(mask_quotes "$HD_VIEW")
@@ -1077,8 +1081,10 @@ Bash)
     if ((collect_flags[wi])); then
       collect_substs
       for body in "${SUBST_BODIES[@]}"; do
-        hash_charge "$body"
-        if ((${#worklist[@]} >= 300)) || over_scan_budget $((${#body} + HASH_CHARGE)); then
+        if ((${#worklist[@]} >= 300)) || over_scan_budget "${#body}" || {
+          hash_charge "$body"
+          over_scan_budget "$HASH_CHARGE"
+        }; then
           unverified=1
           break
         fi

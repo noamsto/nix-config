@@ -718,6 +718,38 @@ guard_bash_timed() {
   assert_reason_contains 'too long'
 }
 
+# Fed through stdin: one argv string this long exceeds the per-argument limit.
+guard_command_timed() {
+  local json t0=${EPOCHREALTIME//[.,]/}
+  json=$(printf '%s' "$1" | jq -Rs '{tool_name:"Bash",tool_input:{command:.}}')
+  guard_json "$json"
+  ELAPSED_US=$((${EPOCHREALTIME//[.,]/} - t0))
+}
+
+@test "deny: a 500KB single line is denied as too long without scanning it, within 1s" {
+  local line
+  line=$(head -c 500000 /dev/zero | tr '\0' a)
+  guard_command_timed "$line"$'\nenv'
+  ((ELAPSED_US < 1000000)) || {
+    echo "took ${ELAPSED_US}us"
+    return 1
+  }
+  assert_deny
+  assert_reason_contains 'too long'
+}
+
+@test "deny: a 500KB quoted heredoc body is denied as too long without scanning it, within 1s" {
+  local body
+  body=$(head -c 500000 /dev/zero | tr '\0' a)
+  guard_command_timed "bash <<'EOF'"$'\n'"$body"$'\nEOF\nenv'
+  ((ELAPSED_US < 1000000)) || {
+    echo "took ${ELAPSED_US}us"
+    return 1
+  }
+  assert_deny
+  assert_reason_contains 'too long'
+}
+
 @test "allow: bash -c 'echo hi'" {
   guard_bash $'bash -c \'echo hi\''
   assert_allow
