@@ -74,10 +74,16 @@ start() {
   fi
   mkdir -p "$runtime"
   # stop() clears the pidfile at once, so a second press during the drain would
-  # otherwise enter start() too and the two listeners would overwrite each
-  # other's pid. Only one start proceeds; fd 9 is closed before returning.
+  # otherwise enter start() too. A press that finds the lock held cancels the
+  # pending start instead. A press in the instant after the holder's last cancel
+  # check and before the pidfile write is not caught.
   exec 9>"$runtime/start.lock"
-  flock -n 9 || return 0
+  if ! flock -n 9; then
+    touch "$runtime/start.cancel"
+    notify-send -t 2000 -r 9042 "Dictation" "Cancelled"
+    return 0
+  fi
+  rm -f "$runtime/start.cancel"
   running && return 0
   # A stop during the Gemini drain leaves the old group typing its last
   # phrases; starting beside it would interleave and reorder text.
@@ -91,6 +97,11 @@ start() {
       if kill -0 -- -"$old" 2>/dev/null; then
         notify-send -t 2000 -r 9042 "Dictation" "Finishing previous phrases…"
         for _ in $(seq 100); do
+          if [ -f "$runtime/start.cancel" ]; then
+            rm -f "$runtime/start.cancel"
+            exec 9>&-
+            return 0
+          fi
           kill -0 -- -"$old" 2>/dev/null || break
           sleep 0.1
         done
@@ -98,6 +109,11 @@ start() {
       fi
       rm -f "$runtime/draining"
     fi
+  fi
+  if [ -f "$runtime/start.cancel" ]; then
+    rm -f "$runtime/start.cancel"
+    exec 9>&-
+    return 0
   fi
   : >"$runtime/log"
   setsid "$0" __listen 9>&- &
