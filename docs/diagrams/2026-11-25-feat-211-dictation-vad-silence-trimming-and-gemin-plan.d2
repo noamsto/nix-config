@@ -1,0 +1,20 @@
+direction: right
+mic: Built-in mic
+sherpa: "sherpa-dictate.sh\nmode: gemini | local"
+phrases: "phrases.py (new)\nSilero VAD, Merger, OrderedEmitter" {style.fill: "#d6f5d6"}
+local: "Parakeet fallback\n(adapter down)"
+wtype: wtype
+voxtype: "voxtype\nlabel: gemini model" {style.fill: "#d6f5d6"}
+adapter: "adapter.py\n+prompt field" {style.fill: "#d6f5d6"}
+silence: "silence.py (new)\nSilero VAD, collapse >300 ms, pad 200 ms" {style.fill: "#d6f5d6"}
+gemini: "Gemini Transcribe"
+mic -> sherpa
+sherpa -> phrases: gemini mode
+phrases -> adapter: "phrase + prompt (prev text)"
+adapter -> silence
+silence -> gemini: "seconds sent logged"
+silence -> adapter: "no speech: empty text, no call"
+phrases -> local: "on error"
+phrases -> wtype: "spoken order"
+mic -> voxtype
+voxtype -> adapter

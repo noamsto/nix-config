@@ -1,9 +1,19 @@
 # shellcheck shell=bash
 # Prepended by default.nix, which supplies the shebang along with
-# VAD_MODEL, MODEL_DIR and DEVICE.
+# VAD_MODEL, MODEL_DIR, DEVICE, GEMINI_URL, PHRASE_PAUSE and PHRASE_MIN.
 
 runtime="${XDG_RUNTIME_DIR:-/tmp}/sherpa-dictate"
 pidfile="$runtime/pid"
+
+# auto picks gemini only when the adapter URL is configured; asking for gemini
+# without it is an error rather than a silent downgrade to the local model.
+resolve_mode() {
+  case "${SHERPA_DICTATE_MODE:-auto}" in
+  gemini) echo gemini ;;
+  local) echo local ;;
+  *) if [ -n "$GEMINI_URL" ]; then echo gemini; else echo local; fi ;;
+  esac
+}
 
 running() {
   [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null
@@ -23,9 +33,18 @@ running() {
 # re-capitalizes a segment that opened with one. It runs after tee so the log
 # keeps the raw transcript. A segment that was nothing but filler leaves bare
 # punctuation, which the alnum check refuses to type.
-fillers='(uh|um|er|ah|eh|hmm|hm|mm|mhm)'
+filler_words='uh|um|er|ah|eh|hmm|hm|mm|mhm'
+fillers="($filler_words)"
 
 listen() {
+  if [ "$(resolve_mode)" = gemini ]; then
+    # exec keeps the pidfile on the python process; it prints "Please speak"
+    # once capture is open, which start() polls for.
+    exec voxtype-gemini-phrases --url "$GEMINI_URL" --pause "$PHRASE_PAUSE" \
+      --min-phrase "$PHRASE_MIN" --local-model-dir "$MODEL_DIR" \
+      --vad-model "$VAD_MODEL" --device "$DEVICE" --fillers "$filler_words" \
+      >"$runtime/log" 2>&1
+  fi
   stdbuf -oL sherpa-onnx-vad-alsa-offline-asr \
     --silero-vad-model="$VAD_MODEL" \
     --encoder="$MODEL_DIR/encoder.int8.onnx" \
@@ -49,10 +68,44 @@ listen() {
 
 start() {
   running && return 0
+  if [ "${SHERPA_DICTATE_MODE:-auto}" = gemini ] && [ -z "$GEMINI_URL" ]; then
+    notify-send -t 3000 -r 9042 "Dictation" "Gemini mode needs the adapter enabled"
+    exit 1
+  fi
   mkdir -p "$runtime"
+  # stop() clears the pidfile at once, so a second press during the drain would
+  # otherwise enter start() too and the two listeners would overwrite each
+  # other's pid. Only one start proceeds; fd 9 is closed before returning.
+  exec 9>"$runtime/start.lock"
+  flock -n 9 || return 0
+  running && return 0
+  # A stop during the Gemini drain leaves the old group typing its last
+  # phrases; starting beside it would interleave and reorder text.
+  if [ -f "$runtime/draining" ]; then
+    # A leftover file whose pid was reused would stall the wait on an
+    # unrelated group.
+    if [ $(($(date +%s) - $(stat -c %Y "$runtime/draining"))) -gt 15 ]; then
+      rm -f "$runtime/draining"
+    else
+      old=$(cat "$runtime/draining")
+      if kill -0 -- -"$old" 2>/dev/null; then
+        notify-send -t 2000 -r 9042 "Dictation" "Finishing previous phrases…"
+        for _ in $(seq 100); do
+          kill -0 -- -"$old" 2>/dev/null || break
+          sleep 0.1
+        done
+        kill -KILL -- -"$old" 2>/dev/null || true
+      fi
+      rm -f "$runtime/draining"
+    fi
+  fi
   : >"$runtime/log"
-  setsid "$0" __listen &
+  setsid "$0" __listen 9>&- &
   echo $! >"$pidfile"
+  # stop() must signal the way this listener was started, not the way the
+  # stop call's environment would resolve.
+  resolve_mode >"$runtime/mode"
+  exec 9>&-
 
   # Loading Parakeet takes ~3s, and announcing "listening" before the
   # recognizer exists invites talking into a mic that is not capturing yet.
@@ -73,11 +126,20 @@ start() {
 
 stop() {
   if running; then
-    # setsid made the child a group leader; kill the group so the ASR process
-    # and the wtype reader both go down.
-    kill -- -"$(cat "$pidfile")" 2>/dev/null || true
+    pid=$(cat "$pidfile")
+    mode=$(cat "$runtime/mode" 2>/dev/null || true)
+    if [ "$mode" = gemini ]; then
+      # The CLI ends its own arecord on SIGTERM and then drains queued phrases;
+      # a group signal would also kill a wtype that is mid-type.
+      echo "$pid" >"$runtime/draining"
+      kill "$pid" 2>/dev/null || true
+    else
+      # setsid made the child a group leader; kill the group so the ASR process
+      # and the wtype reader both go down.
+      kill -- -"$pid" 2>/dev/null || true
+    fi
   fi
-  rm -f "$pidfile"
+  rm -f "$pidfile" "$runtime/mode"
   notify-send -t 1500 -r 9042 "Dictation" "Stopped"
 }
 
@@ -88,9 +150,10 @@ toggle) if running; then stop; else start; fi ;;
 status)
   running && echo listening || echo stopped
   ;;
+mode) resolve_mode ;;
 __listen) listen ;;
 *)
-  echo "usage: sherpa-dictate [start|stop|toggle|status]" >&2
+  echo "usage: sherpa-dictate [start|stop|toggle|status|mode]" >&2
   exit 1
   ;;
 esac

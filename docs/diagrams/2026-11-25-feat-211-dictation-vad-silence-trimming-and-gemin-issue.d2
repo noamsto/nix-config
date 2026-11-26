@@ -1,0 +1,15 @@
+direction: right
+mic: Built-in mic
+sherpa: "sherpa-dictate.sh\n(sherpa-onnx VAD + ASR)"
+local: "Parakeet (local, English only)"
+wtype: wtype
+voxtype: "voxtype\n(push to talk)"
+adapter: "adapter.py\nPOST /v1/audio/transcriptions"
+gemini: "Gemini Transcribe\nbilled per audio second"
+mic -> sherpa: "continuous"
+sherpa -> local: "segments"
+local -> wtype: "ignores Hebrew"
+mic -> voxtype: "press/stop"
+voxtype -> adapter: "whole clip, silence included"
+adapter -> gemini: "all seconds billed"
+adapter -> voxtype: "silent clip: 502" {style.stroke: red}
