@@ -210,7 +210,7 @@
   # Workers get their settings.json from dispatcher, not this activation.
   managedSettings = {
     # grep/find/ls ship off by default.
-    defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls"];
+    defaultTools = ["read" "bash" "edit" "write" "grep" "find" "ls" "codemode"];
     defaultProvider =
       if isLocalServer
       then "Lemonade"
