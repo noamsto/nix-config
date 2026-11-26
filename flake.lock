@@ -2428,11 +2428,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1795633592,
-        "narHash": "sha256-Gaoc0g5ngb6axrZ7nLxmm4QtvWdVYREaRZvyRNQjR2Q=",
+        "lastModified": 1795694915,
+        "narHash": "sha256-+gf60W/uaAdapbEwAd4F7WCJHhVrhlFXsle29eesnvk=",
         "owner": "noamsto",
         "repo": "prdash",
-        "rev": "88db40daa39f7ca936887d8ee055bb36b1d329e5",
+        "rev": "ae568ecf38a56a1a0c4624ae54fd9f84323f1705",
         "type": "github"
       },
       "original": {
@@ -2798,11 +2798,11 @@
         "tmux-upstream": "tmux-upstream_2"
       },
       "locked": {
-        "lastModified": 1795679028,
-        "narHash": "sha256-dRPvvx/fhaPv27hICQeumBoKgLlCfV0sp7bxzJrwgHo=",
+        "lastModified": 1795696288,
+        "narHash": "sha256-sR4E/PwbcBxDa5W3fqtFuiT1hMBjAB6qMbZ2y5p6weY=",
         "owner": "noamsto",
         "repo": "tmux-og",
-        "rev": "70318e1d681c80775bf4e6875b9f38eae11e3256",
+        "rev": "9af8f887dc44d750069676a8ee6d93d0e6d220fe",
         "type": "github"
       },
       "original": {
@@ -2822,11 +2822,11 @@
         "tmux-upstream": "tmux-upstream"
       },
       "locked": {
-        "lastModified": 1795637349,
-        "narHash": "sha256-p1GhOQFKAErDYw2OnITvOsotRU4vYRBdfMW094WLLjg=",
+        "lastModified": 1795694919,
+        "narHash": "sha256-6jBrtD0xVbRxCMamBdQwO+KKIRGLMmqLAH4Uo/JXfkc=",
         "owner": "noamsto",
         "repo": "tmux-remux",
-        "rev": "1b84d577bccec263d4fd7654b9b0a735122fee8e",
+        "rev": "d88b2d97af274e05a7fc8a96f20c239814c46fd6",
         "type": "github"
       },
       "original": {
