@@ -75,9 +75,8 @@ start() {
   mkdir -p "$runtime"
   # stop() clears the pidfile at once, so a second press during the drain would
   # otherwise enter start() too. A press that finds the lock held cancels the
-  # pending start instead; the holder polls for that during the drain and checks
-  # again before opening the mic. A press in the instant between that last check
-  # and the pidfile write is not caught.
+  # pending start instead. A press in the instant after the holder's last cancel
+  # check and before the pidfile write is not caught.
   exec 9>"$runtime/start.lock"
   if ! flock -n 9; then
     touch "$runtime/start.cancel"
